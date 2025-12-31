@@ -4,7 +4,8 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Danh sách sản phẩm | My shop",
-  description: "Khám phá các sản phẩm công nghệ mới nhất: điện thoại, laptop, phụ kiện chính hãng.",
+  description:
+    "Khám phá các sản phẩm công nghệ mới nhất: điện thoại, laptop, phụ kiện chính hãng.",
   alternates: {
     canonical: `${SITE_URL}/products`,
   },
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 
 const products = [
   {
-    slug: "iphone-15-pro",
+    slug: "iphone-15-pro-max",
     name: "iPhone 15 Pro",
     price: "$999",
   },
