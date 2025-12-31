@@ -204,12 +204,12 @@ const Header = () => {
                      <button className={headerIconClass}>
                         <Heart className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700" />
                      </button>
-                     <button className={headerIconClass}>
+                     <Link href={"/cart"} className={headerIconClass}>
                         <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700" />
                         <span className="absolute bottom-0 right-0 bg-warning text-primary font-semibold text-xs w-4 h-4 lg:w-5 lg:h-5 rounded-full flex items-center justify-center text-[10px] lg:text-xs">
                            2
                         </span>
-                     </button>
+                     </Link>
 
                      {/* User Menu with Dropdown */}
                      <div className="relative" ref={userMenuRef}>
@@ -303,7 +303,7 @@ const Header = () => {
                         <span>Theo dõi đơn hàng</span>
                      </Link>
                      <Link
-                        href="#"
+                        href="/cart"
                         className="flex items-center gap-2 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg px-3"
                         onClick={() => setMobileMenuOpen(false)}
                      >
