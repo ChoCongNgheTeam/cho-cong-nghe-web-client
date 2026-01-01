@@ -2,16 +2,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CartItemWithDetails } from "../../../../types/cart.types";
+import { CartItemWithDetails } from "@/lib/types/cart.types";
 import {
   getCartItems,
   updateCartItemQuantity,
   removeCartItem,
   removeCartItems,
-} from "@/lib/actions/cart.actions";
+} from "@/lib/actions/cart.action";
 import { toast } from "sonner";
 
-// 🎨 MOCK DATA - Xóa phần này khi có database thật
 const MOCK_CART_ITEMS: CartItemWithDetails[] = [
   {
     id: 1,
@@ -69,16 +68,14 @@ export function useCart() {
   const loadCart = async () => {
     setIsLoading(true);
     
-    // 🎨 Dùng mock data nếu USE_MOCK_DATA = true
     if (USE_MOCK_DATA) {
       setTimeout(() => {
         setItems(MOCK_CART_ITEMS);
         setIsLoading(false);
-      }, 500); // Giả lập loading
+      }, 500); 
       return;
     }
 
-    // Code gốc khi có database
     try {
       const result = await getCartItems();
       if (result.success && result.data) {
