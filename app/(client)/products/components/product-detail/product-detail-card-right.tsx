@@ -8,10 +8,12 @@ import Link from "next/link";
 
 interface ProductDetailRightProps {
   product?: Product;
+  onReviewClick?: () => void;
 }
 
 export default function ProductDetailRight({
   product = mockProduct,
+  onReviewClick,
 }: ProductDetailRightProps = {}) {
   // Dung lượng
   const storage = product.variants[0].attributes.find(
@@ -91,9 +93,13 @@ export default function ProductDetailRight({
           <FaStar className="text-yellow-400 text-xs sm:text-sm" />
           <span>{product.rating_average}</span>
         </div>
-        <Link href="#" className="text-[#1250dc] hover:underline">
+        {/* Thêm onClick vào link đánh giá */}
+        <button
+          onClick={onReviewClick}
+          className="text-[#1250dc] hover:underline hover:text-[#0d3ba8] transition-colors"
+        >
           {product.ratingCount} đánh giá
-        </Link>
+        </button>
         <span>|</span>
         <Link href="#" className="text-[#1250dc] hover:underline">
           Thông số kỹ thuật
