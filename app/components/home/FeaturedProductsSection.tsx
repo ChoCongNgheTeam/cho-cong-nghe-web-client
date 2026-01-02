@@ -108,6 +108,7 @@ export default function FeaturedProductsSection() {
               scroll-smooth
               -mx-2 px-2
               snap-x snap-mandatory
+              scrollbar-hide
             "
           >
             {featuredProducts.map((product) => (

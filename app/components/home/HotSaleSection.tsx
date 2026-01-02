@@ -7,6 +7,9 @@ import ProductCard from "@/components/home/ProductCard";
 export default function HotSaleSection() {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   const CARD_WIDTH = 260 + 16; // card + gap
   const MAX_INDEX = hotProducts.length - 1;
@@ -28,6 +31,8 @@ export default function HotSaleSection() {
     if (activeIndex < MAX_INDEX) scrollToIndex(activeIndex + 1);
   };
 
+
+
   return (
     <section className="bg-[#fdf2f2] py-8 mb-6 rounded-lg">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,7 +53,6 @@ export default function HotSaleSection() {
             onClick={handlePrev}
             disabled={activeIndex === 0}
             className="
-              hidden md:flex
               absolute
               left-0
               top-1/2
@@ -58,7 +62,7 @@ export default function HotSaleSection() {
               rounded-full
               bg-white
               shadow
-              items-center justify-center
+              flex items-center justify-center
               disabled:opacity-30
               opacity-0
               pointer-events-none
@@ -76,7 +80,6 @@ export default function HotSaleSection() {
             onClick={handleNext}
             disabled={activeIndex === MAX_INDEX}
             className="
-              hidden md:flex
               absolute
               right-0
               top-1/2
@@ -86,7 +89,7 @@ export default function HotSaleSection() {
               rounded-full
               bg-white
               shadow
-              items-center justify-center
+              flex items-center justify-center
               disabled:opacity-30
               opacity-0
               pointer-events-none
@@ -99,7 +102,7 @@ export default function HotSaleSection() {
             ▶
           </button>
 
-          {/* MOBILE SCROLL */}
+          {/* SCROLL HORIZONTAL */}
           <div
             ref={sliderRef}
             className="
@@ -108,7 +111,6 @@ export default function HotSaleSection() {
               scrollbar-hide
               snap-x snap-mandatory
               -mx-4 px-4 pb-3
-              md:hidden
             "
           >
             {hotProducts.map((product) => (
@@ -116,15 +118,6 @@ export default function HotSaleSection() {
                 key={product.id}
                 className="flex-shrink-0 w-[240px] sm:w-[260px] snap-start"
               >
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
-
-          {/* DESKTOP GRID */}
-          <div className="hidden md:grid md:grid-cols-5 md:gap-6">
-            {hotProducts.map((product) => (
-              <div key={product.id} className="w-full">
                 <ProductCard product={product} />
               </div>
             ))}
