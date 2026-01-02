@@ -40,3 +40,26 @@ body {
 html.dark body {
   @apply bg-gray-900 text-gray-100;
 }
+
+/* Ẩn scrollbar mặc định */
+.hover-scrollbar {
+  scrollbar-width: none;          /* Firefox */
+}
+
+.hover-scrollbar::-webkit-scrollbar {
+  height: 0;
+}
+
+/* Khi hover thì hiện scrollbar */
+.hover-scrollbar:hover {
+  scrollbar-width: thin;
+}
+
+.hover-scrollbar:hover::-webkit-scrollbar {
+  height: 6px;
+}
+
+.hover-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 999px;
+}
