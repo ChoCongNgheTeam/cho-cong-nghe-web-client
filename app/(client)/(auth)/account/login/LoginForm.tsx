@@ -45,21 +45,20 @@ const LoginForm = () => {
 
    return (
       <div className="sm:pr-0 md:pr-8 lg:pr-10 lg:px-0">
-         <h1 className="text-2xl sm:text-3xl mb-2 text-primary-darker">
+         <h1 className="text-2xl sm:text-3xl mb-2 text-primary-darker md:text-2xl">
             Đăng nhập
          </h1>
-         <p className="text-sm sm:text-base text-neutral-darker mb-6 sm:mb-8">
+         <p className="text-sm sm:text-base text-neutral-darker mb-6 sm:mb-8 md:hidden lg:block">
             Chào mừng bạn đã trở lại. Đăng nhập để nhận thêm các ưu đãi và các
             phần thưởng hấp dẫn khác
          </p>
-
          {error && (
             <div className="mb-4 p-3 bg-promotion-light border border-promotion text-promotion-dark rounded-lg text-sm">
                {error}
             </div>
          )}
 
-         <div className="space-y-4 sm:space-y-6">
+         <div className="space-y-4 sm:space-y-6 md:mt-4">
             <div>
                <label className="block mb-2 text-primary">
                   Tên đăng nhập *
@@ -71,7 +70,7 @@ const LoginForm = () => {
                      value={userName}
                      onChange={(e) => setUsername(e.target.value)}
                      placeholder="Vui lòng nhập tên đăng nhập hoặc số điện thoại"
-                     className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+                     className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                      required
                      disabled={loading}
                   />
@@ -87,7 +86,7 @@ const LoginForm = () => {
                      value={password}
                      onChange={(e) => setPassword(e.target.value)}
                      placeholder="Mật khẩu"
-                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                      required
                      disabled={loading}
                   />
@@ -122,7 +121,7 @@ const LoginForm = () => {
             <button
                onClick={handleSubmit}
                disabled={loading}
-               className="w-full bg-primary text-white py-2.5 sm:py-3 rounded-lg font-medium hover:bg-primary-hover active:bg-primary-dark transition cursor-pointer text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+               className="w-full bg-primary dark:bg-accent text-white dark:text-primary-darker py-2.5 sm:py-3 rounded-lg font-medium hover:bg-primary-hover dark:hover:bg-accent-hover active:bg-primary-dark dark:active:bg-accent-active transition cursor-pointer text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
                {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
@@ -132,7 +131,7 @@ const LoginForm = () => {
                   <div className="w-full border-t border-neutral"></div>
                </div>
                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-neutral-darker">
+                  <span className="px-2 bg-neutral-light text-neutral-darker">
                      Hoặc
                   </span>
                </div>
@@ -141,7 +140,7 @@ const LoginForm = () => {
             <div className="flex justify-center flex-col gap-3 sm:gap-4">
                <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral-light hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light"
                   disabled={loading}
                >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -169,7 +168,7 @@ const LoginForm = () => {
 
                <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral-light hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light"
                   disabled={loading}
                >
                   <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
@@ -182,13 +181,13 @@ const LoginForm = () => {
 
                <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral-light hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light"
                   disabled={loading}
                >
                   <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6">
                      <path
                         d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.09l-.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
-                        fill="#000"
+                        className="fill-primary"
                      />
                   </svg>
                   <span className="text-primary font-medium">
