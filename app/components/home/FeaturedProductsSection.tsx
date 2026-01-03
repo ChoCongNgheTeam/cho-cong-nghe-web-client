@@ -1,96 +1,125 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { featuredProducts } from "../../data/featuredProducts";
-import Button from "../ui/button";
 import ProductCard from "./ProductCard";
 
-// Format giá: 1.390.000 đ
-const formatPrice = (price: number) =>
-  price.toLocaleString("vi-VN") + " đ";
-
 export default function FeaturedProductsSection() {
-  const mainProduct = featuredProducts[0];
-  const productList = featuredProducts.slice(1);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const CARD_WIDTH = 260 + 16; // card width + gap
+  const MAX_INDEX = featuredProducts.length - 1;
+
+  const scrollToIndex = (index: number) => {
+    if (!sliderRef.current) return;
+    sliderRef.current.scrollTo({
+      left: index * CARD_WIDTH,
+      behavior: "smooth",
+    });
+    setActiveIndex(index);
+  };
+
+  const handlePrev = () => {
+    if (activeIndex > 0) scrollToIndex(activeIndex - 1);
+  };
+
+  const handleNext = () => {
+    if (activeIndex < MAX_INDEX) scrollToIndex(activeIndex + 1);
+  };
 
   return (
-    <section className="bg-[#fdf2f2] py-8 mb-6 rounded-lg">
-      <div className="container mx-auto px-6">
-        <div className="flex gap-8">
+    <section className="py-8 mb-6 bg-white rounded-lg">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* TITLE */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold">Sản phẩm nổi bật</h2>
+          <a
+            href="#featured"
+            className="text-sm text-blue-600 hover:text-blue-700"
+          >
+            Xem tất cả →
+          </a>
+        </div>
 
-          {/* ================= LEFT SIDEBAR ================= */}
-          <aside className="w-72 flex-shrink-0 space-y-6">
+        {/* SLIDER WRAPPER */}
+        <div className="relative group">
+          {/* LEFT BUTTON */}
+          <button
+            onClick={handlePrev}
+            disabled={activeIndex === 0}
+            className="
+              absolute
+              left-0
+              top-1/2
+              -translate-y-1/2
+              z-10
+              w-10 h-10
+              rounded-full
+              bg-white
+              shadow
+              flex items-center justify-center
+              disabled:opacity-30
+              opacity-0
+              pointer-events-none
+              transition-all
+              duration-300
+              group-hover:opacity-100
+              group-hover:pointer-events-auto
+            "
+          >
+            ◀
+          </button>
 
-            {/* Banner */}
-            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-6 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-yellow-300 text-orange-600 font-bold text-sm px-3 py-1 rounded-bl-2xl">
-                -{mainProduct.variant.discount}%
-              </div>
+          {/* RIGHT BUTTON */}
+          <button
+            onClick={handleNext}
+            disabled={activeIndex === MAX_INDEX}
+            className="
+              absolute
+              right-0
+              top-1/2
+              -translate-y-1/2
+              z-10
+              w-10 h-10
+              rounded-full
+              bg-white
+              shadow
+              flex items-center justify-center
+              disabled:opacity-30
+              opacity-0
+              pointer-events-none
+              transition-all
+              duration-300
+              group-hover:opacity-100
+              group-hover:pointer-events-auto
+            "
+          >
+            ▶
+          </button>
 
-              <h3 className="text-2xl font-bold mb-2">Ưu đãi đặc biệt</h3>
-              <p className="text-sm mb-4 opacity-90">
-                Tiết kiệm đến {mainProduct.variant.discount}%
-              </p>
-
-              <Button
-                variant="yellow"
-                className="bg-white text-orange-600 hover:bg-gray-100"
+          {/* SLIDER */}
+          <div
+            ref={sliderRef}
+            className="
+              flex
+              gap-4
+              overflow-x-auto
+              scroll-smooth
+              -mx-2 px-2
+              snap-x snap-mandatory
+              scrollbar-hide
+            "
+          >
+            {featuredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="flex-shrink-0 w-[240px] sm:w-[260px] snap-start"
               >
-                Mua ngay
-              </Button>
-            </div>
-
-            {/* Product nổi bật */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-              <div className="aspect-square bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-5xl">
-                📺
+                <ProductCard product={product} />
               </div>
-
-              <h4 className="font-medium text-sm mb-3 line-clamp-2">
-                {mainProduct.name}
-              </h4>
-
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-red-600">
-                  {formatPrice(mainProduct.variant.price)}
-                </span>
-                <span className="block text-sm text-gray-400 line-through">
-                  {formatPrice(mainProduct.variant.originalPrice)}
-                </span>
-              </div>
-
-              <Button variant="yellow" className="w-full">
-                Mua ngay
-              </Button>
-            </div>
-          </aside>
-
-          {/* ================= RIGHT CONTENT ================= */}
-          <main className="flex-1">
-
-            {/* Tabs */}
-<div className="flex justify-center mb-6">
-  <div className="flex gap-6 border-b border-gray-200">
-    <button className="font-medium text-gray-900 border-b-2 border-yellow-400 pb-3">
-      Mới bán
-    </button>
-    <button className="text-gray-500 hover:text-gray-900 pb-3">
-      Đang giảm giá
-    </button>
-    <button className="text-gray-500 hover:text-gray-900 pb-3">
-      Sản phẩm mới
-    </button>
-  </div>
-</div>
-
-
-            {/* Product grid – DÙNG COMPONENT CHUNG */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {productList.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-          </main>
+            ))}
+          </div>
         </div>
       </div>
     </section>
