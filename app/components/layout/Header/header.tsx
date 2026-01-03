@@ -104,7 +104,7 @@ const Header = () => {
          </div>
 
          {/* Main Header */}
-         <div className="border-b border-gray-200 bg-warning md:bg-transparent">
+         <div className="border-b border-gray-200 bg-accent md:bg-transparent">
             <div className="container py-3 md:py-4">
                {/* Mobile Header */}
                <div className="flex md:hidden items-center justify-between">
@@ -161,9 +161,10 @@ const Header = () => {
                   </Link>
 
                   {/* Menu Button */}
-                  <div className="flex items-center">
-                     <button className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
+                  <div>
+                     <button className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer flex gap-1">
                         <Menu className="w-6 h-6" />
+                        Danh mục
                      </button>
                   </div>
 
@@ -175,10 +176,10 @@ const Header = () => {
                            placeholder="Tìm kiếm sản phẩm..."
                            value={searchQuery}
                            onChange={(e) => setSearchQuery(e.target.value)}
-                           className="w-full pl-4 pr-48 lg:pr-60  py-2.5 lg:py-3 border-2 border-warning rounded-full focus:outline-none focus:border-warning-hover text-sm lg:text-base"
+                           className="w-full pl-4 pr-48 lg:pr-60  py-2.5 lg:py-3 border-2 border-accent rounded-full focus:outline-none focus:border-accent-hover text-sm lg:text-base"
                         />
 
-                        <div className="absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden bg-white border-2 border-warning border-l-0 rounded-r-full">
+                        <div className="absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden bg-white border-2 border-accent border-l-0 rounded-r-full">
                            <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-gray-600 hover:text-gray-900 border-r border-gray-300 cursor-pointer">
                               <span className="hidden xl:inline">
                                  Tất cả các danh mục
@@ -189,7 +190,7 @@ const Header = () => {
                                  className="w-4 h-4 lg:w-6 lg:h-6 rotate-90"
                               />
                            </button>
-                           <button className="flex items-center justify-center px-3 lg:px-4 bg-warning hover:bg-warning-hover transition-colors cursor-pointer">
+                           <button className="flex items-center justify-center px-3 lg:px-4 bg-accent hover:bg-accent-hover transition-colors cursor-pointer">
                               <Search className="w-4 h-4 lg:w-5 lg:h-5 text-gray-900" />
                            </button>
                         </div>
@@ -206,7 +207,7 @@ const Header = () => {
                      </button>
                      <button className={headerIconClass}>
                         <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700" />
-                        <span className="absolute bottom-0 right-0 bg-warning text-primary font-semibold text-xs w-4 h-4 lg:w-5 lg:h-5 rounded-full flex items-center justify-center text-[10px] lg:text-xs">
+                        <span className="absolute bottom-0 right-0 bg-accent text-primary font-semibold text-xs w-4 h-4 lg:w-5 lg:h-5 rounded-full flex items-center justify-center text-[10px] lg:text-xs">
                            2
                         </span>
                      </button>
@@ -232,9 +233,9 @@ const Header = () => {
                            placeholder="Tìm kiếm sản phẩm..."
                            value={searchQuery}
                            onChange={(e) => setSearchQuery(e.target.value)}
-                           className="w-full pl-4 pr-12 py-2.5 border-2 border-warning sm:border-warning-hover rounded-full focus:outline-none focus:border-warning-hover"
+                           className="w-full pl-4 pr-12 py-2.5 border-2 border-accent sm:border-accent-hover rounded-full focus:outline-none focus:border-accent-hover"
                         />
-                        <button className="absolute right-0 top-0 bottom-0 px-4 bg-warning sm:bg-warning-dark hover:bg-warning-hover transition-colors rounded-r-full">
+                        <button className="absolute right-0 top-0 bottom-0 px-4 bg-accent sm:bg-accent-dark hover:bg-accent-hover transition-colors rounded-r-full">
                            <Search className="w-5 h-5 text-gray-900" />
                         </button>
                      </div>

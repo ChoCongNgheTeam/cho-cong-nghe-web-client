@@ -23,7 +23,7 @@ const RegisterForm = () => {
                   <input
                      type="text"
                      placeholder="Tên đăng nhập"
-                     className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-warning"
+                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
                   />
                </div>
             </div>
@@ -35,7 +35,7 @@ const RegisterForm = () => {
                   <input
                      type="email"
                      placeholder="Địa chỉ Email"
-                     className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-warning"
+                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
                   />
                </div>
             </div>
@@ -47,7 +47,7 @@ const RegisterForm = () => {
                   <input
                      type={showPassword ? "text" : "password"}
                      placeholder="Mật khẩu của bạn"
-                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-warning"
+                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
                   />
                   <button
                      type="button"
@@ -66,7 +66,7 @@ const RegisterForm = () => {
                   <input
                      type={showConfirmPassword ? "text" : "password"}
                      placeholder="Nhập lại mật khẩu"
-                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-warning"
+                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
                   />
                   <button
                      type="button"
@@ -91,7 +91,7 @@ const RegisterForm = () => {
                   <input
                      type="tel"
                      placeholder="Số điện thoại"
-                     className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-warning"
+                     className="w-full pl-10 pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
                   />
                </div>
             </div>
@@ -101,7 +101,7 @@ const RegisterForm = () => {
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="mt-0.5 sm:mt-1 mr-2 w-4 h-4 shrink-0"
+                  className="mt-0.5 sm:mt-1 mr-2 w-4 h-4 shrink-0 accent-accent"
                />
                <span className="text-xs sm:text-sm text-gray-600">
                   Bạn đồng ý với tất cả{" "}
@@ -112,10 +112,7 @@ const RegisterForm = () => {
                </span>
             </label>
 
-            <button
-               type="submit"
-               className="w-full bg-gray-900 text-white py-2.5 sm:py-3 rounded-lg font-medium hover:bg-gray-800 transition cursor-pointer text-sm sm:text-base"
-            >
+            <button className="w-full bg-primary text-white py-2.5 sm:py-3 rounded-lg font-medium hover:bg-primary-hover active:bg-primary-dark transition cursor-pointer text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed">
                Đăng ký
             </button>
          </form>

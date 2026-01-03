@@ -38,7 +38,7 @@ const AuthPage = () => {
             <div className="relative flex border-b border-gray-200">
                {/* Animated underline */}
                <div
-                  className="absolute bottom-0 h-0.5 bg-warning transition-all duration-300 ease-in-out"
+                  className="absolute bottom-0 h-0.5 bg-accent transition-all duration-300 ease-in-out"
                   style={{
                      width: "50%",
                      left: activeTab === "login" ? "0%" : "50%",
