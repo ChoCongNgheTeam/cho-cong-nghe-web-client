@@ -3,13 +3,12 @@
 
 import { CartItemWithDetails } from "@/lib/types/cart.types";
 import { useState, useEffect, useCallback } from "react";
-import { CartItemWithDetails } from "../../../../types/cart.types";
 import {
-  getCartItems,
-  updateCartItemQuantity,
-  removeCartItem,
-  removeCartItems,
-} from "@/lib/actions/cart.actions";
+   getCartItems,
+   updateCartItemQuantity,
+   removeCartItem,
+   removeCartItems,
+} from "@/lib/actions/cart.action";
 import { toast } from "sonner";
 const MOCK_CART_ITEMS: CartItemWithDetails[] = [
    {
@@ -68,47 +67,48 @@ export function useCart() {
       loadCart();
    }, []);
 
-  const loadCart = async () => {
-    setIsLoading(true);
-    
-    // 🎨 Dùng mock data nếu USE_MOCK_DATA = true
-    if (USE_MOCK_DATA) {
-      setTimeout(() => {
-        setItems(MOCK_CART_ITEMS);
-        setIsLoading(false);
-      }, 500); // Giả lập loading
-      return;
-    }
+   const loadCart = async () => {
+      setIsLoading(true);
 
-    // Code gốc khi có database
-    try {
-      const result = await getCartItems();
-      if (result.success && result.data) {
-        const formattedItems = result.data.map(item => ({
-          id: item.id,
-          product_variant_id: item.product_variant_id,
-          product_name: item.product_variant?.product?.name || "",
-          variant_name: formatVariantName(
-            item.product_variant?.variants_attributes || []
-          ),
-          price: item.unit_price,
-          original_price: item.product_variant?.price || item.unit_price,
-          quantity: item.quantity,
-          image_url:
-            item.product_variant?.product_variant_images?.[0]?.img_url || "",
-          unit_price: item.unit_price,
-          discount_value: item.discount_value,
-          selected: false,
-        }));
-        setItems(formattedItems);
+      // 🎨 Dùng mock data nếu USE_MOCK_DATA = true
+      if (USE_MOCK_DATA) {
+         setTimeout(() => {
+            setItems(MOCK_CART_ITEMS);
+            setIsLoading(false);
+         }, 500); // Giả lập loading
+         return;
       }
-    } catch (error) {
-      console.error("Error loading cart:", error);
-      toast.error("Không thể tải giỏ hàng");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+      // Code gốc khi có database
+      try {
+         const result = await getCartItems();
+         if (result.success && result.data) {
+            const formattedItems = result.data.map((item) => ({
+               id: item.id,
+               product_variant_id: item.product_variant_id,
+               product_name: item.product_variant?.product?.name || "",
+               variant_name: formatVariantName(
+                  item.product_variant?.variants_attributes || []
+               ),
+               price: item.unit_price,
+               original_price: item.product_variant?.price || item.unit_price,
+               quantity: item.quantity,
+               image_url:
+                  item.product_variant?.product_variant_images?.[0]?.img_url ||
+                  "",
+               unit_price: item.unit_price,
+               discount_value: item.discount_value,
+               selected: false,
+            }));
+            setItems(formattedItems);
+         }
+      } catch (error) {
+         console.error("Error loading cart:", error);
+         toast.error("Không thể tải giỏ hàng");
+      } finally {
+         setIsLoading(false);
+      }
+   };
 
    // Format variant attributes to display name
    const formatVariantName = (attributes: any[]) => {
