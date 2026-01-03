@@ -64,31 +64,35 @@
    --red: 203 28 34;
    --red-hover: 183 25 31;
    --red-dark: 152 21 26;
-   /* YELLOW (warning) */
-   --yellow-light: 255 251 230;
-   --yellow: 255 215 0;
-   --yellow-hover: 229 194 0;
-   --yellow-active: 203 172 0;
-   --yellow-dark: 191 161 0;
+}
 
-   /* NEUTRAL */
-   --neutral-light: 253 253 253;
-   --neutral: 230 230 230;
-   --neutral-dark: 173 173 173;
-   --neutral-darker: 81 81 81;
+/* ===================== DARK MODE COLORS ===================== */
+:root.dark {
+   /* ACCENT / Yellow - sáng hơn để nổi bật trên nền tối */
+   --yellow-light: 40 35 10;
+   --yellow: 250 204 21;
+   --yellow-hover: 234 179 8;
+   --yellow-active: 250 204 21;
+   --yellow-dark: 202 138 4;
 
-   /* BLUE (primary) */
-   --blue-light: 235 236 237;
-   --blue: 51 62 72;
-   --blue-hover: 38 41 56;
-   --blue-dark: 38 47 54;
-   --blue-darker: 18 22 25;
+   /* NEUTRAL - đảo ngược gradient */
+   --neutral-light: 15 23 42; /* slate-900 - background chính */
+   --neutral: 30 41 59; /* slate-800 - các card, section */
+   --neutral-dark: 71 85 105; /* slate-600 - border, divider */
+   --neutral-darker: 203 213 225; /* slate-300 - text phụ */
 
-   /* RED (danger) */
-   --red-light: 250 232 233;
-   --red: 203 28 34;
-   --red-hover: 183 25 31;
-   --red-dark: 152 21 26;
+   /* PRIMARY / Blue - text sáng trên nền tối */
+   --blue-light: 30 41 59; /* slate-800 */
+   --blue: 226 232 240; /* slate-200 - text chính */
+   --blue-hover: 241 245 249; /* slate-100 - text hover */
+   --blue-dark: 248 250 252; /* slate-50 */
+   --blue-darker: 255 255 255; /* white */
+
+   /* PROMOTION / Red - đỏ sáng hơn */
+   --red-light: 69 10 10;
+   --red: 248 113 113; /* red-400 */
+   --red-hover: 239 68 68; /* red-500 */
+   --red-dark: 220 38 38; /* red-600 */
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
@@ -170,6 +174,7 @@ body {
    background-color: rgb(var(--neutral-light));
    color: rgb(var(--blue));
    font-family: "Poppins", sans-serif;
+   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Mobile (mặc định): < 640px        → Không có prefix
