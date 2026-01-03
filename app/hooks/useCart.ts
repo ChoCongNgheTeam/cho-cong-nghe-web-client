@@ -9,7 +9,35 @@ import {
    removeCartItem,
    removeCartItems,
 } from "@/lib/actions/cart.action";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
+interface ProductVariantAttribute {
+  attributes_option?: {
+    attribute?: {
+      name: string;
+    };
+    value: string;
+  };
+}
+
+interface CartItemFromAPI {
+  id: number;
+  product_variant_id: number;
+  quantity: number;
+  unit_price: number;
+  discount_value: number;
+  product_variant?: {
+    price?: number;
+    product?: {
+      name: string;
+    };
+    variants_attributes?: ProductVariantAttribute[];
+    product_variant_images?: Array<{
+      img_url: string;
+    }>;
+  };
+}
+
+// ============ Mock Data ============
 const MOCK_CART_ITEMS: CartItemWithDetails[] = [
    {
       id: 1,
@@ -62,10 +90,21 @@ export function useCart() {
    const [isLoading, setIsLoading] = useState(true);
    const [selectAll, setSelectAll] = useState(false);
 
-   // Load cart items on mount
-   useEffect(() => {
-      loadCart();
-   }, []);
+  // Load cart items on mount
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  // Format variant attributes to display name
+  const formatVariantName = (attributes: ProductVariantAttribute[]): string => {
+    if (!attributes || attributes.length === 0) return "";
+    return attributes
+      .map(
+        attr =>
+          `${attr.attributes_option?.attribute?.name}: ${attr.attributes_option?.value}`
+      )
+      .join(", ");
+  };
 
    const loadCart = async () => {
       setIsLoading(true);
@@ -79,47 +118,34 @@ export function useCart() {
          return;
       }
 
-      // Code gốc khi có database
-      try {
-         const result = await getCartItems();
-         if (result.success && result.data) {
-            const formattedItems = result.data.map((item) => ({
-               id: item.id,
-               product_variant_id: item.product_variant_id,
-               product_name: item.product_variant?.product?.name || "",
-               variant_name: formatVariantName(
-                  item.product_variant?.variants_attributes || []
-               ),
-               price: item.unit_price,
-               original_price: item.product_variant?.price || item.unit_price,
-               quantity: item.quantity,
-               image_url:
-                  item.product_variant?.product_variant_images?.[0]?.img_url ||
-                  "",
-               unit_price: item.unit_price,
-               discount_value: item.discount_value,
-               selected: false,
-            }));
-            setItems(formattedItems);
-         }
-      } catch (error) {
-         console.error("Error loading cart:", error);
-         toast.error("Không thể tải giỏ hàng");
-      } finally {
-         setIsLoading(false);
+    try {
+      const result = await getCartItems();
+      if (result.success && Array.isArray(result.data)) {
+        const formattedItems = result.data.map((item: CartItemFromAPI) => ({
+          id: item.id,
+          product_variant_id: item.product_variant_id,
+          product_name: item.product_variant?.product?.name || "",
+          variant_name: formatVariantName(
+            item.product_variant?.variants_attributes || []
+          ),
+          price: item.unit_price,
+          original_price: item.product_variant?.price || item.unit_price,
+          quantity: item.quantity,
+          image_url:
+            item.product_variant?.product_variant_images?.[0]?.img_url || "",
+          unit_price: item.unit_price,
+          discount_value: item.discount_value,
+          selected: false,
+        }));
+        setItems(formattedItems);
       }
-   };
-
-   // Format variant attributes to display name
-   const formatVariantName = (attributes: any[]) => {
-      if (!attributes || attributes.length === 0) return "";
-      return attributes
-         .map(
-            (attr) =>
-               `${attr.attributes_option?.attribute?.name}: ${attr.attributes_option?.value}`
-         )
-         .join(", ");
-   };
+    } catch (error) {
+      console.error("Error loading cart:", error);
+      toast.error("Không thể tải giỏ hàng. Vui lòng thử lại sau");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
    // Toggle select all
    const toggleSelectAll = useCallback(() => {
@@ -166,27 +192,23 @@ export function useCart() {
             prev.map((i) => (i.id === id ? { ...i, quantity: newQuantity } : i))
          );
 
-         try {
-            const result = await updateCartItemQuantity(id, newQuantity);
-            if (!result.success) {
-               setItems((prev) =>
-                  prev.map((i) =>
-                     i.id === id ? { ...i, quantity: item.quantity } : i
-                  )
-               );
-               toast.error("Không thể cập nhật số lượng");
-            }
-         } catch (error) {
-            setItems((prev) =>
-               prev.map((i) =>
-                  i.id === id ? { ...i, quantity: item.quantity } : i
-               )
-            );
-            toast.error("Không thể cập nhật số lượng");
-         }
-      },
-      [items]
-   );
+    try {
+      const result = await updateCartItemQuantity(id, newQuantity);
+      if (!result.success) {
+        setItems(prev =>
+          prev.map(i => (i.id === id ? { ...i, quantity: item.quantity } : i))
+        );
+        toast.error("Không thể cập nhật số lượng");
+      } else {
+        toast.success("Đã cập nhật số lượng");
+      }
+    } catch (error) {
+      setItems(prev =>
+        prev.map(i => (i.id === id ? { ...i, quantity: item.quantity } : i))
+      );
+      toast.error("Không thể cập nhật số lượng");
+    }
+  }, [items]);
 
    // Remove single item (mock version)
    const removeItem = useCallback(async (id: number) => {
