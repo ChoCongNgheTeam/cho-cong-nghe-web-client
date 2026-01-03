@@ -9,8 +9,36 @@ import {
   removeCartItem,
   removeCartItems,
 } from "@/lib/actions/cart.action";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 
+interface ProductVariantAttribute {
+  attributes_option?: {
+    attribute?: {
+      name: string;
+    };
+    value: string;
+  };
+}
+
+interface CartItemFromAPI {
+  id: number;
+  product_variant_id: number;
+  quantity: number;
+  unit_price: number;
+  discount_value: number;
+  product_variant?: {
+    price?: number;
+    product?: {
+      name: string;
+    };
+    variants_attributes?: ProductVariantAttribute[];
+    product_variant_images?: Array<{
+      img_url: string;
+    }>;
+  };
+}
+
+// ============ Mock Data ============
 const MOCK_CART_ITEMS: CartItemWithDetails[] = [
   {
     id: 1,
@@ -65,6 +93,17 @@ export function useCart() {
     loadCart();
   }, []);
 
+  // Format variant attributes to display name
+  const formatVariantName = (attributes: ProductVariantAttribute[]): string => {
+    if (!attributes || attributes.length === 0) return "";
+    return attributes
+      .map(
+        attr =>
+          `${attr.attributes_option?.attribute?.name}: ${attr.attributes_option?.value}`
+      )
+      .join(", ");
+  };
+
   const loadCart = async () => {
     setIsLoading(true);
     
@@ -78,8 +117,8 @@ export function useCart() {
 
     try {
       const result = await getCartItems();
-      if (result.success && result.data) {
-        const formattedItems = result.data.map(item => ({
+      if (result.success && Array.isArray(result.data)) {
+        const formattedItems = result.data.map((item: CartItemFromAPI) => ({
           id: item.id,
           product_variant_id: item.product_variant_id,
           product_name: item.product_variant?.product?.name || "",
@@ -99,21 +138,10 @@ export function useCart() {
       }
     } catch (error) {
       console.error("Error loading cart:", error);
-      toast.error("Không thể tải giỏ hàng");
+      toast.error("Không thể tải giỏ hàng. Vui lòng thử lại sau");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Format variant attributes to display name
-  const formatVariantName = (attributes: any[]) => {
-    if (!attributes || attributes.length === 0) return "";
-    return attributes
-      .map(
-        attr =>
-          `${attr.attributes_option?.attribute?.name}: ${attr.attributes_option?.value}`
-      )
-      .join(", ");
   };
 
   // Toggle select all
@@ -163,6 +191,8 @@ export function useCart() {
           prev.map(i => (i.id === id ? { ...i, quantity: item.quantity } : i))
         );
         toast.error("Không thể cập nhật số lượng");
+      } else {
+        toast.success("Đã cập nhật số lượng");
       }
     } catch (error) {
       setItems(prev =>
