@@ -1,12 +1,12 @@
 // app/(client)/cart/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, ChevronRight, ChevronUp, Tag, ShoppingCart } from "lucide-react";
+import { Trash2, Plus, Minus, ChevronRight, ChevronUp, ShoppingCart } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
 import Image from "next/image";
-import CartSidebar from "./components/cartsidebar";
+import CartSidebar from "./components/CartSidebar";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 
 export default function CartPage() {
@@ -30,10 +30,29 @@ export default function CartPage() {
   const [usePoints, setUsePoints] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
-  const [selectedPromotion, setSelectedPromotion] = useState<string>("");
+  
+  // Voucher & Promotion states
+  const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
+  const [promotionValue, setPromotionValue] = useState(0);
+  const [appliedVoucherCode, setAppliedVoucherCode] = useState("");
+  const [appliedVoucherValue, setAppliedVoucherValue] = useState(0);
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN").format(price) + "₫";
+  const formatPrice = useCallback((price: number) =>
+    new Intl.NumberFormat("vi-VN").format(price) + "₫", []);
+
+  const handleSelectPromotions = useCallback((promotionIds: string[], totalValue: number) => {
+    setSelectedPromotions(promotionIds);
+    setPromotionValue(totalValue);
+  }, []);
+
+  const handleApplyVoucher = useCallback((code: string, value: number) => {
+    setAppliedVoucherCode(code);
+    setAppliedVoucherValue(value);
+  }, []);
+
+  // Calculate final totals with voucher
+  const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
+  const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
   if (isLoading) {
     return (
@@ -264,54 +283,73 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN - Summary - Hidden on mobile/tablet */}
+            {/* RIGHT COLUMN - Summary (Desktop only) */}
             <div className="hidden lg:block lg:col-span-1 space-y-3 sm:space-y-4">
-              {/* Voucher + Points Combined Box */}
-              <div className="rounded-lg bg-white shadow-sm divide-y divide-neutral">
-                {/* Voucher - Click to open modal */}
+              {/* Gifts Box */}
+              <div className="rounded-lg bg-white border border-neutral shadow-sm">
+                <button className="flex w-full items-center justify-between p-3 sm:p-4 transition hover:bg-neutral-light">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🎁</span>
+                    <span className="text-sm font-medium text-primary-darker">
+                      Quà tặng
+                    </span>
+                  </div>
+                  <span className="text-sm text-neutral-dark">Xem quà ({selectedPromotions.length})</span>
+                </button>
+              </div>
+
+              {/* Voucher - Click to open modal */}
+              <div className="rounded-lg bg-white border border-neutral shadow-sm">
                 <button 
                   onClick={() => setShowVoucherModal(true)}
                   className="flex w-full items-center justify-between p-3 sm:p-4 transition hover:bg-accent-light group"
                 >
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <Tag className="h-5 w-5 sm:h-6 sm:w-6 text-accent-dark" />
-                    <span className="text-xs sm:text-sm font-medium text-accent-dark">
-                      Chọn hoặc nhập ưu đãi
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-lg flex-shrink-0">🏷️</span>
+                    <div className="flex flex-col items-start min-w-0">
+                      <span className="text-sm font-medium text-primary-darker">
+                        Chọn hoặc nhập ưu đãi
+                      </span>
+                      {appliedVoucherCode && (
+                        <span className="text-xs text-accent-dark font-semibold truncate w-full">
+                          {appliedVoucherCode} • -{formatPrice(appliedVoucherValue)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-primary transition-colors flex-shrink-0" />
+                </button>
+              </div>
+
+              {/* Points */}
+              <div className="rounded-lg bg-white border border-neutral shadow-sm p-3 sm:p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🪙</span>
+                    <span className="text-sm text-primary-darker">
+                      Đổi <span className="font-semibold">0</span> điểm (≈<span className="font-semibold">0₫</span>)
                     </span>
                   </div>
-                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-neutral-dark group-hover:text-accent-dark transition-colors" />
-                </button>
-
-                {/* Points */}
-                <div className="p-3 sm:p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base sm:text-lg">🪙</span>
-                      <span className="text-xs sm:text-sm text-primary-darker">
-                        Đổi 0 điểm (≈0₫)
-                      </span>
-                    </div>
-                    <label className="relative inline-flex cursor-pointer items-center">
-                      <input
-                        type="checkbox"
-                        checked={usePoints}
-                        onChange={(e) => setUsePoints(e.target.checked)}
-                        className="peer sr-only"
-                      />
-                      <div className="peer h-5 w-9 sm:h-6 sm:w-11 rounded-full bg-neutral after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:rounded-full after:border after:border-neutral-dark after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent"></div>
-                    </label>
-                  </div>
+                  <label className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      checked={usePoints}
+                      onChange={(e) => setUsePoints(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="peer h-6 w-11 rounded-full bg-neutral after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-neutral-dark after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent"></div>
+                  </label>
                 </div>
               </div>
 
               {/* Order Summary Box */}
-              <div className="rounded-lg bg-white shadow-sm">
+              <div className="rounded-lg bg-white border border-neutral shadow-sm">
                 <div className="p-3 sm:p-4">
                   <h3 className="mb-3 text-sm sm:text-base font-semibold text-primary-darker">
                     Thông tin đơn hàng
                   </h3>
 
-                  <div className="space-y-2 text-xs sm:text-sm">
+                  <div className="space-y-2.5 text-sm">
                     <div className="flex justify-between">
                       <span className="text-neutral-darker">Tổng tiền</span>
                       <span className="font-medium text-primary-darker">
@@ -321,38 +359,40 @@ export default function CartPage() {
 
                     <div className="flex justify-between">
                       <span className="text-neutral-darker">Tổng khuyến mãi</span>
-                      <span className="font-medium text-promotion">
+                      <span className="font-medium text-primary-darker">
+                        -{formatPrice(totalDiscountWithVoucher)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between pl-4">
+                      <span className="text-neutral-dark text-xs">Giảm giá sản phẩm</span>
+                      <span className="text-primary-darker text-sm">
                         -{formatPrice(totalDiscount)}
                       </span>
                     </div>
 
-                    <div className="flex justify-between pl-3 sm:pl-4">
-                      <span className="text-neutral-dark">Giảm giá sản phẩm</span>
-                      <span className="text-neutral-darker">
-                        {formatPrice(totalDiscount)}
+                    <div className="flex justify-between pl-4">
+                      <span className="text-neutral-dark text-xs">Voucher</span>
+                      <span className="text-primary-darker text-sm font-medium">
+                        {appliedVoucherValue > 0 ? `-${formatPrice(appliedVoucherValue)}` : "0₫"}
                       </span>
                     </div>
 
-                    <div className="flex justify-between pl-3 sm:pl-4">
-                      <span className="text-neutral-dark">Voucher</span>
-                      <span className="text-neutral-darker">0₫</span>
-                    </div>
-
-                    <div className="border-t border-neutral pt-2 mt-2">
+                    <div className="border-t border-neutral pt-2.5 mt-2.5">
                       <div className="flex justify-between items-center">
-                        <span className="font-semibold text-primary-darker">
+                        <span className="font-semibold text-primary-darker text-sm">
                           Cần thanh toán
                         </span>
-                        <span className="text-lg sm:text-xl font-bold text-promotion">
-                          {formatPrice(finalTotal)}
+                        <span className="text-xl font-bold text-promotion">
+                          {formatPrice(finalTotalWithVoucher)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 pt-1">
+                    <div className="flex items-center gap-1 pt-2">
                       <span className="text-xs text-neutral-darker">Điểm thưởng</span>
                       <span className="text-sm">🪙</span>
-                      <span className="text-xs sm:text-sm font-medium text-accent-dark">
+                      <span className="text-sm font-medium text-accent-dark">
                         +{rewardPoints.toLocaleString()}
                       </span>
                     </div>
@@ -372,10 +412,10 @@ export default function CartPage() {
                 {/* Checkout Button */}
                 <Link
                   href="/checkout"
-                  className={`block w-full rounded-b-lg py-3 sm:py-3.5 text-center text-sm sm:text-base font-semibold transition ${
+                  className={`block w-full rounded-b-lg py-3.5 text-center text-base font-semibold transition ${
                     selectedItems.length === 0
                       ? "cursor-not-allowed bg-neutral text-neutral-dark"
-                      : "bg-accent text-primary-darker hover:bg-accent-hover"
+                      : "bg-accent text-primary-darker hover:bg-accent-hover shadow-lg"
                   }`}
                   onClick={(e) => {
                     if (selectedItems.length === 0) {
@@ -383,7 +423,7 @@ export default function CartPage() {
                     }
                   }}
                 >
-                  Xác nhận đơn ({selectedItems.length})
+                  Xác nhận đơn
                 </Link>
               </div>
             </div>
@@ -396,29 +436,35 @@ export default function CartPage() {
               >
                 <ShoppingCart className="h-5 w-5 flex-shrink-0" />
                 <span className="flex-1 text-left">Xem đơn hàng ({selectedItems.length})</span>
-                <span className="font-bold flex-shrink-0">{formatPrice(finalTotal)}</span>
+                <span className="font-bold flex-shrink-0">{formatPrice(finalTotalWithVoucher)}</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* Cart Sidebar for mobile/tablet */}
+        {/* Cart Sidebar - Show on mobile/tablet only */}
         <CartSidebar
           isOpen={showSidebar}
           onClose={() => setShowSidebar(false)}
           subtotal={subtotal}
-          totalDiscount={totalDiscount}
-          finalTotal={finalTotal}
+          totalDiscount={totalDiscountWithVoucher}
+          finalTotal={finalTotalWithVoucher}
           rewardPoints={rewardPoints}
           selectedItemsCount={selectedItems.length}
+          appliedVoucherCode={appliedVoucherCode}
+          appliedVoucherValue={appliedVoucherValue}
+          onOpenVoucherModal={() => setShowVoucherModal(true)}
         />
 
-        {/* Voucher Modal for desktop */}
+        {/* Voucher Modal */}
         <VoucherPromotionModal
           isOpen={showVoucherModal}
           onClose={() => setShowVoucherModal(false)}
-          selectedPromotion={selectedPromotion}
-          onSelectPromotion={setSelectedPromotion}
+          selectedPromotions={selectedPromotions}
+          onSelectPromotions={handleSelectPromotions}
+          appliedVoucherCode={appliedVoucherCode}
+          appliedVoucherValue={appliedVoucherValue}
+          onApplyVoucher={handleApplyVoucher}
         />
       </div>
     </div>

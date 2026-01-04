@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/cart.action";
 import toast from "react-hot-toast";
 
+// ============ TypeScript Interfaces ============
 interface ProductVariantAttribute {
   attributes_option?: {
     attribute?: {

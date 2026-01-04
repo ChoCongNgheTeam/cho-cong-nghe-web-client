@@ -1,26 +1,42 @@
-import Link from "next/link";
+"use client";
+import { useState } from "react";
+import CarouselBanner from "@/components/home/CarouselBanner";
+import HotSaleSection from "@/components/home/HotSaleSection";
+import FeaturedProductsSection from "@/components/home/FeaturedProductsSection";
+import AccessoriesSection from "@/components/home/AccessoriesSection";
+import ComputerPartsSection from "@/components/home/ComputerPartsSection";
+import ReviewsSection from "@/components/home/ReviewsSection";
+import BrandsSection from "@/components/home/BrandsSection";
+import NewsSection from "@/components/home/NewsSection";
+import FeaturedCategories from "@/components/home/FeaturedCategories";
+import { slides } from "@/data/slides";
 
 export default function HomePage() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const prevSlide = () =>
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16">
-      <h1 className="mb-4 text-4xl font-bold">Chào mừng bạn đến với MyShop</h1>
+    <div className="bg-gray-50 min-h-screen">
+      <CarouselBanner
+        currentSlide={currentSlide}
+        setCurrentSlide={setCurrentSlide}
+        nextSlide={nextSlide}
+        prevSlide={prevSlide}
+      />
 
-      <p className="mb-8 max-w-2xl text-gray-600">
-        Nơi bạn có thể khám phá sản phẩm chất lượng với trải nghiệm mượt mà và tối ưu SEO.
-      </p>
-
-      <div className="flex gap-4">
-        <Link
-          href="/products"
-          className="rounded-md bg-black px-6 py-3 text-white hover:bg-gray-800"
-        >
-          Xem sản phẩm
-        </Link>
-
-        <Link href="/blog" className="rounded-md border px-6 py-3 hover:bg-gray-100">
-          Đọc blog
-        </Link>
+      <div className="max-w-7xl mx-auto">
+        <FeaturedCategories />
+        <HotSaleSection />
+        <FeaturedProductsSection />
+        <AccessoriesSection />
+        <ComputerPartsSection />
+        <BrandsSection />
+        <ReviewsSection />
+        <NewsSection />
       </div>
-    </section>
+    </div>
   );
 }

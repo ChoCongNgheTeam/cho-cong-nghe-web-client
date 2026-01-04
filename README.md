@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛒 Chợ Công Nghệ – Web Client
 
-## Getting Started
+Frontend cho dự án **Chợ Công Nghệ**, được xây dựng với **Next.js (App Router)**, **React**, **TypeScript** và **Tailwind CSS**.
 
-First, run the development server:
+## 📋 Yêu cầu hệ thống
+
+- **Node.js**: >= 20.x
+- **npm / yarn / pnpm / bun**
+- **Backend API** đã chạy (xem README backend)
+
+## 🚀 Hướng dẫn cài đặt
+
+### 1. Clone Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <https://github.com/ChoCongNgheTeam/cho-cong-nghe-web-client.git>
+cd cho-cong-nghe-web-client
+```
+### 2. Cấu hình Environment Variables
+Tạo file `.env.local` ở thư mục root và cấu hình theo template sau:
+
+```env
+# Public (client-side)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Server-only
+INTERNAL_API_SECRET=xxx
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> ⚠️ **Lưu ý**: 
+Chỉ biến bắt đầu bằng NEXT_PUBLIC_ mới dùng ở client
+INTERNAL_API_SECRET chỉ dùng phía server (App Router)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Cài đặt Dependencies
+```bash
+npm install
+```
+### 4. Chạy Development Server
+```bash
+npm run dev
+```
+Frontend chạy tại:
+👉 http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 5.📦 Scripts Available
+```bash
+npm run dev     # Development
+npm run build   # Build production
+npm run start   # Run production
+npm run lint    # Lint code
+```
 
-## Learn More
+## 📁 Cấu trúc dự án
+cho-cong-nghe-web-client/
+├── .next/
+├── app/
+│   ├── (admin)/
+│   ├── (client)/
+│   ├── api/
+│   ├── components/
+│   ├── config/
+│   ├── contexts/
+│   ├── helpers/
+│   ├── hooks/
+│   ├── lib/
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── sitemap.ts
+├── node_modules/
+├── public/
+├── .env.local
+├── .gitignore
+├── eslint.config.mjs
+├── middlewares.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── pnpm-lock.yaml
+├── postcss.config.mjs
+├── README.md
+└── robots.ts
 
-To learn more about Next.js, take a look at the following resources:
+## 🔗 Kết nối Backend
+Frontend gọi API thông qua:
+```bash
+process.env.NEXT_PUBLIC_API_BASE_URL
+```
+Backend mặc định chạy tại:
+👉 `http://localhost:5000`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🤝 Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Tạo branch mới từ `develop`
+2. Commit changes của bạn
+3. Push lên GitHub
+4. Tạo Pull Request
 
-## Deploy on Vercel
+## 📞 Liên hệ
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Nếu gặp vấn đề, liên hệ team leader để được hỗ trợ.
