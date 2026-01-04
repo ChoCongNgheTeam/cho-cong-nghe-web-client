@@ -1,48 +1,84 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function ThemeToggle() {
-  // ✅ Khởi tạo state từ localStorage
-  const [dark, setDark] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("theme") === "dark";
-  });
+interface ToggleSwitchProps {
+   defaultValue?: boolean;
+   onChange?: (value: boolean) => void;
+   className?: string;
+}
 
-  // ✅ Chỉ sync DOM + localStorage (KHÔNG setState)
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [dark]);
+export default function ToggleSwitch({
+   defaultValue = false,
+   onChange,
+   className = "",
+}: ToggleSwitchProps) {
+   const [isLight, setIsLight] = useState(defaultValue);
 
-  const toggleTheme = () => {
-    setDark((prev) => !prev);
-  };
+   // Load dark mode preference on mount
+   useEffect(() => {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+         "(prefers-color-scheme: dark)"
+      ).matches;
+      const shouldBeDark =
+         savedTheme === "dark" || (!savedTheme && prefersDark);
 
-  return (
-    <button
-      onClick={toggleTheme}
-      aria-label="Toggle theme"
-      className="relative w-14 h-8 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors"
-    >
-      {/* Nút tròn */}
-      <span
-        className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform duration-300 ${
-          dark ? "translate-x-6" : ""
-        }`}
-      />
+      setIsLight(!shouldBeDark); // isLight = true means light mode
+      if (shouldBeDark) {
+         document.documentElement.classList.add("dark");
+      }
+   }, []);
 
-      {/* Icon */}
-      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs">
-        🌞
-      </span>
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
-        🌙
-      </span>
-    </button>
-  );
+   const handleToggle = () => {
+      const newIsLight = !isLight;
+      setIsLight(newIsLight);
+
+      // Update dark mode
+      if (newIsLight) {
+         // Switching to light mode
+         document.documentElement.classList.remove("dark");
+         localStorage.setItem("theme", "light");
+      } else {
+         // Switching to dark mode
+         document.documentElement.classList.add("dark");
+         localStorage.setItem("theme", "dark");
+      }
+
+      onChange?.(newIsLight);
+   };
+
+   return (
+      <div
+         onClick={handleToggle}
+         className={`hidden xl:block fixed z-[100] left-3 top-[60vh] w-10 h-28 rounded-full cursor-pointer shadow-lg opacity-70  hover:opacity-100 transition-all duration-300 ${
+            isLight ? "bg-primary-dark" : "bg-neutral-dark"
+         } ${className}`}
+      >
+         <div
+            className={`absolute top-4 left-0 w-full text-center text-xs font-medium transition-opacity duration-300 ${
+               isLight
+                  ? "opacity-100 text-neutral-light"
+                  : "opacity-40 text-primary-darker"
+            }`}
+         >
+            Dark
+         </div>
+         <div
+            className={`absolute w-8 h-12 bg-neutral-light rounded-full left-1 shadow-md flex items-center justify-center text-[10px] font-semibold text-primary transition-all duration-300 ${
+               isLight ? "top-[60px]" : "top-1"
+            }`}
+         >
+            {isLight ? "Light" : "Dark"}
+         </div>
+         <div
+            className={`absolute bottom-4 left-0 w-full text-center text-xs font-medium transition-opacity duration-300 ${
+               isLight
+                  ? "opacity-40 text-neutral"
+                  : "opacity-100 text-neutral-light"
+            }`}
+         >
+            Light
+         </div>
+      </div>
+   );
 }

@@ -1,5 +1,6 @@
 import Header from "@/components/layout/Header/header";
 import Footer from "@/components/layout/Footer/footer";
+import ToggleSwitch from "@/components/ui/ThemeToggle";
 
 export default function ClientLayout({
    children,
@@ -9,6 +10,7 @@ export default function ClientLayout({
    return (
       <>
          <Header />
+         <ToggleSwitch defaultValue={false} />
          <main className="min-h-screen">{children}</main>
          <Footer />
       </>
