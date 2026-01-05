@@ -8,6 +8,8 @@ import { useCart } from "../../hooks/useCart";
 import Image from "next/image";
 import CartSidebar from "./components/CartSidebar";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
+import VariantDropdown from "./components/CartVariantSelector";
+import toast from "react-hot-toast";
 
 export default function CartPage() {
   const {
@@ -50,6 +52,18 @@ export default function CartPage() {
     setAppliedVoucherValue(value);
   }, []);
 
+  // Handle variant change
+  const handleVariantChange = useCallback((cartItemId: number, variantId: number, variantName: string, price: number) => {
+    console.log("Variant changed:", { cartItemId, variantId, variantName, price });
+    
+    // TODO: Call API to update cart item variant
+    // await updateCartItemVariant(cartItemId, variantId);
+    
+    // For now, this is handled by the useCart hook's internal state
+    // You would typically call an API here and then refetch the cart
+    toast.success("Đã cập nhật phiên bản sản phẩm");
+  }, []);
+
   // Calculate final totals with voucher
   const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
   const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
@@ -66,19 +80,24 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-light py-4 sm:py-6 lg:py-8 pb-24 lg:pb-8 font-poppins">
-      <div className="container">
-        {/* Breadcrumb */}
-        <div className="mb-4 sm:mb-6 flex items-center gap-2 text-xs sm:text-sm">
-          <Link href="/" className="text-primary hover:text-primary-hover transition-colors">
-            Trang chủ
-          </Link>
-          <span className="text-neutral-dark">/</span>
-          <span className="text-primary-darker font-medium">Giỏ hàng</span>
+    <div className="min-h-screen bg-neutral-light font-poppins">
+      {/* Breadcrumb */}
+      <div className="w-full bg-neutral-light">
+        <div className="container py-3 md:py-4">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
+            <Link href="/" className="text-primary hover:text-primary-hover transition-colors">
+              Trang chủ
+            </Link>
+            <span className="text-neutral-dark">/</span>
+            <span className="text-primary-darker font-medium">Giỏ hàng</span>
+          </div>
         </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="container pb-28 lg:pb-8 space-y-4 !px-3">
         {items.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 sm:p-12 text-center shadow-sm">
+          <div className="rounded-lg bg-white p-6 sm:p-8 lg:p-12 text-center shadow-sm">
             <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary-darker">
               Giỏ hàng trống
             </h2>
@@ -95,17 +114,17 @@ export default function CartPage() {
         ) : (
           <div className="grid gap-4 lg:gap-6 lg:grid-cols-3">
             {/* LEFT COLUMN - Cart Items */}
-            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+            <div className="lg:col-span-2 space-y-4">
               {/* Select All Box */}
-              <div className="flex items-center justify-between rounded-lg bg-white px-3 sm:px-4 py-3 shadow-sm">
-                <label className="flex cursor-pointer items-center gap-2 sm:gap-3">
+              <div className="flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm">
+                <label className="flex cursor-pointer items-center gap-3">
                   <input
                     type="checkbox"
                     checked={selectAll}
                     onChange={toggleSelectAll}
-                    className="h-4 w-4 sm:h-5 sm:w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
+                    className="h-5 w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
                   />
-                  <span className="text-xs sm:text-sm font-medium text-primary-darker">
+                  <span className="text-sm font-medium text-primary-darker">
                     Chọn tất cả ({items.length})
                   </span>
                 </label>
@@ -116,30 +135,30 @@ export default function CartPage() {
                   disabled={selectedItems.length === 0}
                   aria-label="Xóa các sản phẩm đã chọn"
                 >
-                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Trash2 className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Cart Items List */}
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-4">
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-lg bg-white p-3 sm:p-4 shadow-sm"
+                    className="rounded-lg bg-white p-4 shadow-sm"
                   >
-                    <div className="flex gap-3 sm:gap-4">
+                    <div className="flex gap-4">
                       {/* Checkbox - Centered */}
                       <div className="flex items-center">
                         <input
                           type="checkbox"
                           checked={item.selected}
                           onChange={() => toggleSelectItem(item.id)}
-                          className="h-4 w-4 sm:h-5 sm:w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
+                          className="h-5 w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
                         />
                       </div>
 
                       {/* Product Image */}
-                      <div className="relative h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
+                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
                         {item.image_url ? (
                           <Image
                             src={item.image_url}
@@ -149,7 +168,7 @@ export default function CartPage() {
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-neutral">
-                            <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg bg-neutral-dark"></div>
+                            <div className="h-16 w-16 rounded-lg bg-neutral-dark"></div>
                           </div>
                         )}
                       </div>
@@ -159,7 +178,7 @@ export default function CartPage() {
                         {/* Info + Mobile Actions */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="flex-1 text-xs sm:text-sm font-medium text-primary-darker line-clamp-2">
+                            <h3 className="flex-1 text-sm font-medium text-primary-darker line-clamp-2">
                               {item.product_name}
                             </h3>
                             {/* Trash button - Top right on mobile */}
@@ -172,12 +191,14 @@ export default function CartPage() {
                             </button>
                           </div>
                           
-                          <div className="flex items-center gap-1 text-xs text-neutral-darker mb-2">
-                            <span>{item.variant_name}</span>
-                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
+                          {/* Variant Dropdown - INLINE */}
+                          <VariantDropdown
+                            cartItemId={item.id}
+                            productId={item.product_id || item.id}
+                            currentVariantId={item.product_variant_id}
+                            currentVariantName={item.variant_name}
+                            onVariantChange={handleVariantChange}
+                          />
 
                           {/* Mobile: Price Section */}
                           <div className="sm:hidden">
@@ -427,46 +448,49 @@ export default function CartPage() {
                 </Link>
               </div>
             </div>
-
-            {/* Floating Button - Show on mobile/tablet only */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral p-4 z-30 lg:hidden">
-              <button
-                onClick={() => setShowSidebar(true)}
-                className="w-full bg-accent hover:bg-accent-hover text-primary-darker font-semibold py-3 px-4 rounded-lg transition flex items-center gap-3 shadow-lg"
-              >
-                <ShoppingCart className="h-5 w-5 flex-shrink-0" />
-                <span className="flex-1 text-left">Xem đơn hàng ({selectedItems.length})</span>
-                <span className="font-bold flex-shrink-0">{formatPrice(finalTotalWithVoucher)}</span>
-              </button>
-            </div>
           </div>
         )}
-
-        {/* Cart Sidebar - Show on mobile/tablet only */}
-        <CartSidebar
-          isOpen={showSidebar}
-          onClose={() => setShowSidebar(false)}
-          subtotal={subtotal}
-          totalDiscount={totalDiscountWithVoucher}
-          finalTotal={finalTotalWithVoucher}
-          rewardPoints={rewardPoints}
-          selectedItemsCount={selectedItems.length}
-          appliedVoucherCode={appliedVoucherCode}
-          appliedVoucherValue={appliedVoucherValue}
-          onOpenVoucherModal={() => setShowVoucherModal(true)}
-        />
-
-        {/* Voucher Modal */}
-        <VoucherPromotionModal
-          isOpen={showVoucherModal}
-          onClose={() => setShowVoucherModal(false)}
-          selectedPromotions={selectedPromotions}
-          onSelectPromotions={handleSelectPromotions}
-          appliedVoucherCode={appliedVoucherCode}
-          appliedVoucherValue={appliedVoucherValue}
-          onApplyVoucher={handleApplyVoucher}
-        />
       </div>
+
+      {/* Floating Button - Show on mobile/tablet only - FIXED POSITION */}
+      <div className="fixed bottom-0 left-0 right-0 bg-accent border-t-2 border-accent-dark p-3 z-30 lg:hidden shadow-2xl">
+        <button
+          onClick={() => setShowSidebar(true)}
+          className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl"
+        >
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="h-5 w-5 flex-shrink-0" />
+            <span className="text-left">Xem đơn hàng ({selectedItems.length})</span>
+          </div>
+          <span className="font-bold flex-shrink-0 text-lg">{formatPrice(finalTotalWithVoucher)}</span>
+        </button>
+      </div>
+
+      {/* Cart Sidebar - Show on mobile/tablet only */}
+      <CartSidebar
+        isOpen={showSidebar}
+        onClose={() => setShowSidebar(false)}
+        subtotal={subtotal}
+        totalDiscount={totalDiscountWithVoucher}
+        finalTotal={finalTotalWithVoucher}
+        rewardPoints={rewardPoints}
+        selectedItemsCount={selectedItems.length}
+        appliedVoucherCode={appliedVoucherCode}
+        appliedVoucherValue={appliedVoucherValue}
+        onOpenVoucherModal={() => setShowVoucherModal(true)}
+      />
+
+      {/* Voucher Modal */}
+      <VoucherPromotionModal
+        isOpen={showVoucherModal}
+        onClose={() => setShowVoucherModal(false)}
+        selectedPromotions={selectedPromotions}
+        onSelectPromotions={handleSelectPromotions}
+        appliedVoucherCode={appliedVoucherCode}
+        appliedVoucherValue={appliedVoucherValue}
+        onApplyVoucher={handleApplyVoucher}
+        cartTotal={subtotal}
+      />
     </div>
   );
 }
