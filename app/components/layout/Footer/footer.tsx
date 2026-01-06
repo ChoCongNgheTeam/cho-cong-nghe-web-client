@@ -432,7 +432,7 @@ const Footer = () => {
             </div>
          </div>
          <div className="border-t border-gray-700">
-            <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="container py-6">
                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-sm text-gray-400">
                   <div className="space-y-1">
                      <p>© Bản quyền thuộc về ChoCongNghe</p>

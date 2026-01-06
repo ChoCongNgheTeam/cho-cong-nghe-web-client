@@ -9,7 +9,7 @@ const RegisterForm = () => {
 
    return (
       <div className="sm:pl-0 md:pl-8 lg:pl-10 lg:px-0">
-         <h1 className="text-3xl mb-3 text-primary-darker md:text-2xl text-center md:text-left">
+         <h1 className="text-3xl mb-3 text-primary-darker md:text-2xl text-center">
             Đăng ký
          </h1>
          <p className="text-base sm:text-lg text-neutral-darker mb-6 sm:mb-8 md:hidden lg:block">

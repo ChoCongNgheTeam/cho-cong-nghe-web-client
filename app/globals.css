@@ -125,15 +125,22 @@
 
    --font-poppins: "Poppins", sans-serif;
 }
-
 /* ===================== UTILITIES ===================== */
 @layer utilities {
    .container {
       width: 100%;
       margin-left: auto;
       margin-right: auto;
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding-left: 0.75rem; /* Giảm từ 1rem xuống 0.75rem cho màn hình nhỏ */
+      padding-right: 0.75rem;
+   }
+
+   /* Extra small devices - dưới 375px */
+   @media (min-width: 375px) {
+      .container {
+         padding-left: 1rem;
+         padding-right: 1rem;
+      }
    }
 
    @media (min-width: 640px) {

@@ -45,7 +45,7 @@ const LoginForm = () => {
 
    return (
       <div className="sm:pr-0 md:pr-8 lg:pr-10 lg:px-0">
-         <h1 className="text-3xl mb-3 text-primary-darker md:text-2xl text-center md:text-left">
+         <h1 className="text-3xl mb-3 text-primary-darker md:text-2xl text-center">
             Đăng nhập
          </h1>
          <p className="text-base sm:text-lg text-neutral-darker mb-6 sm:mb-8 md:hidden lg:block">
