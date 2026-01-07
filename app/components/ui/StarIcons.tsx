@@ -5,7 +5,7 @@ type StarIconProps = {
 
 export default function StarIcon({
   filled = true,
-  className = "w-3 h-3",
+  className = "w-2 h-2",
 }: StarIconProps) {
   return (
     <svg
