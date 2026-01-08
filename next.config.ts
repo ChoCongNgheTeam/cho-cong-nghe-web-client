@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
       "cdn2.fptshop.com.vn",
     ],
   },
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;

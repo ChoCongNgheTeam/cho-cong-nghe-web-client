@@ -1,65 +1,170 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { FaStar, FaGift, FaCog, FaShoppingCart, FaTruck } from "react-icons/fa";
-import { mockProduct, type Product } from "../../_lib/mockProduct";
+import { ProductDetail } from "@/lib/types/product";
 import Link from "next/link";
+import ProductSpecsModal, {
+  type ProductSpecsModalRef,
+} from "./ProductSpecsModal";
 
 interface ProductDetailRightProps {
-  product?: Product;
+  // product?: Product;
+  product?: ProductDetail;
   onReviewClick?: () => void;
 }
+type ColorOption = {
+  value: string;
+  image?: string;
+};
 
 export default function ProductDetailRight({
-  product = mockProduct,
+  product,
   onReviewClick,
 }: ProductDetailRightProps = {}) {
-  // Dung lượng
-  const storage = product.variants[0].attributes.find(
-    (attr) => attr.name === "Bộ nhớ trong"
-  )?.value;
-  const colorAttr = product.variants[0].attributes.find(
-    (attr) => attr.name === "Màu sắc"
-  );
-  // Màu sắc
-  const colors = Array.isArray(colorAttr?.value) ? colorAttr.value : [];
-  const [selectedColor, setSelectedColor] = useState(colors?.[0]);
+  /* ============================================================================
+   * GUARD
+   * ========================================================================== */
+  if (!product) {
+    return <div>Loading...</div>;
+  }
 
-  // Phương thức thanh toán
+  /* ============================================================================
+   * REFS
+   * ========================================================================== */
+  const modalRef = useRef<ProductSpecsModalRef>(null);
+
+  // Hàm mở modal từ component cha
+  const openDialog = () => {
+    modalRef.current?.open();
+  };
+
+  /* ============================================================================
+   * MOCK DATA – SPECS MODAL (TẠM THỜI)
+   * ========================================================================== */
+  const mockProductSpecs = {
+    name: "Nubia A76 4GB 128GB (NFC)",
+    image:
+      "https://bizweb.dktcdn.net/100/177/937/products/nubia-a76-19-2136.jpg?v=1756891533433",
+    specs: {
+      general: [
+        { label: "Thương hiệu", value: "Nubia" },
+        { label: "Model", value: "A76" },
+        { label: "Năm ra mắt", value: "2024" },
+        { label: "Bảo hành", value: "18 tháng" },
+      ],
+      design: [
+        { label: "Kích thước", value: "167.3 x 77.37 x 8.3 mm" },
+        { label: "Trọng lượng sản phẩm", value: "197 g" },
+        { label: "Chất liệu khung viền", value: "Nhựa" },
+        { label: "Chất liệu mặt lưng", value: "Nhựa" },
+        { label: "Kháng nước/bụi", value: "Không" },
+      ],
+      cpu: [
+        { label: "Phiên bản CPU", value: "Unisoc T7250" },
+        { label: "Loại CPU", value: "Octa-Core" },
+        { label: "Số nhân", value: "8" },
+        { label: "Tốc độ tối đa", value: "1.8 GHz" },
+        { label: "GPU", value: "Mali-G57" },
+      ],
+      memory: [
+        { label: "RAM", value: "4 GB" },
+        { label: "Bộ nhớ trong", value: "128 GB" },
+        { label: "Hỗ trợ thẻ nhớ", value: "MicroSD, tối đa 512 GB" },
+      ],
+      display: [
+        { label: "Kích thước màn hình", value: "6.75 inch" },
+        { label: "Công nghệ màn hình", value: "IPS LCD" },
+        { label: "Độ phân giải", value: "HD+ (720 x 1600 pixels)" },
+        { label: "Tần số quét", value: "90 Hz" },
+        { label: "Độ sáng tối đa", value: "450 nits" },
+        { label: "Dung lượng pin", value: "5000 mAh" },
+        { label: "Hỗ trợ sạc", value: "Sạc nhanh 18W" },
+        { label: "Loại pin", value: "Li-Po" },
+      ],
+    },
+  };
+
+  /* ============================================================================
+   * PRODUCT DATA
+   * ========================================================================== */
+
+  // Dung lượng (Storage)
+  const storage =
+    product.variants?.[0]?.variantAttributes?.find(
+      (attr) => attr.attributeOption?.attribute?.name === "Storage"
+    )?.attributeOption?.value ?? "";
+
+  // Màu sắc (unique + ảnh đại diện)
+  const colors: ColorOption[] = Array.from(
+    new Map(
+      product.variants.flatMap((variant) => {
+        const colorAttr = variant.variantAttributes.find(
+          (attr) => attr.attributeOption.attribute.name === "Color"
+        );
+
+        if (!colorAttr) return [];
+
+        return [
+          [
+            colorAttr.attributeOption.value,
+            {
+              value: colorAttr.attributeOption.value,
+              image: variant.images?.[0]?.imageUrl,
+            },
+          ],
+        ];
+      })
+    ).values()
+  );
+
+  /* ============================================================================
+   * STATE
+   * ========================================================================== */
+  const [selectedColor, setSelectedColor] = useState<string>(
+    colors[0]?.value ?? ""
+  );
+
   const [activePayment, setActivePayment] = useState(0);
 
-  // State cho countdown timer
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 9,
     seconds: 51,
   });
 
+  /* ============================================================================
+   * EFFECTS
+   * ========================================================================== */
   useEffect(() => {
-    // Tính thời gian kết thúc (hôm nay 23:59:59)
-    const now = new Date();
     const endTime = new Date();
+    // Tạo thời điểm kết thúc: hôm nay lúc 23:59:59
     endTime.setHours(23, 59, 59, 999);
 
+    // Hàm cập nhật thời gian còn lại
     const updateTimer = () => {
-      const current = new Date();
-      const difference = endTime.getTime() - current.getTime();
-
-      if (difference > 0) {
-        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((difference / (1000 * 60)) % 60);
-        const seconds = Math.floor((difference / 1000) % 60);
-
-        setTimeLeft({ hours, minutes, seconds });
-      } else {
+      const diff = endTime.getTime() - Date.now();
+      //  Nếu đã hết thời gian → set về 0 và dừng
+      if (diff <= 0) {
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        return;
       }
+      // Chuyển mili-giây sang giờ / phút / giây
+      setTimeLeft({
+        // Số giờ còn lại trong ngày
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        // Số phút còn lại
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        // Số giây còn lại
+        seconds: Math.floor((diff / 1000) % 60),
+      });
     };
-
+    //  Gọi ngay lần đầu để không bị trễ 1s khi render
     updateTimer();
+    // Cập nhật mỗi giây
     const interval = setInterval(updateTimer, 1000);
-
+    // Cleanup khi component unmount (tránh memory leak)
     return () => clearInterval(interval);
   }, []);
 
@@ -91,19 +196,22 @@ export default function ProductDetailRight({
         <span className="text-gray-500">{product.variants[0].code}</span>
         <div className="flex items-center gap-1">
           <FaStar className="text-yellow-400 text-xs sm:text-sm" />
-          <span>{product.rating_average}</span>
+          <span>{product.ratingAverage}</span>
         </div>
         {/* Thêm onClick vào link đánh giá */}
         <button
           onClick={onReviewClick}
-          className="text-[#1250dc] hover:underline hover:text-[#0d3ba8] transition-colors"
+          className="text-[#1250dc] hover:underline hover:text-[#0d3ba8] transition-colors cursor-pointer"
         >
           {product.ratingCount} đánh giá
         </button>
         <span>|</span>
-        <Link href="#" className="text-[#1250dc] hover:underline">
+        <button
+          onClick={openDialog}
+          className="text-[#1250dc] hover:underline cursor-pointer"
+        >
           Thông số kỹ thuật
-        </Link>
+        </button>
       </div>
 
       {/* Storage Selection */}
@@ -122,22 +230,33 @@ export default function ProductDetailRight({
       {/* Color Selection */}
       <div className="flex flex-col sm:flex-row text-xs sm:text-sm items-start sm:items-center gap-2 sm:gap-4">
         <span className="w-full sm:w-24 font-medium">Màu sắc:</span>
+
         <div className="flex flex-wrap gap-2">
-          {colors.map((color, index) => {
-            const isActive = selectedColor === color;
+          {colors.map((color) => {
+            const isActive = selectedColor === color.value;
+
             return (
               <span
-                key={index}
-                onClick={() => setSelectedColor(color)}
-                className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden
-                  ${
-                    isActive
-                      ? "border-red-700"
-                      : "border-gray-300 text-gray-600"
-                  }
-                  hover:bg-red-50 transition-colors`}
+                key={color.value}
+                onClick={() => setSelectedColor(color.value)}
+                className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2
+            ${
+              isActive
+                ? "border-red-700 text-red-700"
+                : "border-gray-300 text-gray-600"
+            }
+            hover:bg-red-50 transition-colors`}
               >
-                {color}
+                {color.image && (
+                  <img
+                    src={color.image}
+                    alt={color.value}
+                    className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
+                  />
+                )}
+
+                {color.value}
+
                 {isActive && (
                   <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-red-500">
                     <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
@@ -313,7 +432,7 @@ export default function ProductDetailRight({
         <div>
           {/* Payment Logos */}
           <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-5 gap-4 sm:gap-2 p-3">
-            {product.payments?.map((pay, index) => {
+            {/* {product.payments?.map((pay, index) => {
               const isActive = activePayment === index;
               return (
                 <div
@@ -342,12 +461,12 @@ export default function ProductDetailRight({
                   )}
                 </div>
               );
-            })}
+            })} */}
           </div>
 
           {/* Payment Description */}
           <div className="px-3 sm:px-4 pt-3 text-xs sm:text-sm text-gray-900">
-            <span>{product.payments?.[activePayment]?.description}</span>
+            {/* <span>{product.payments?.[activePayment]?.description}</span> */}
           </div>
           <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2">
             <span className="text-xs sm:text-sm text-gray-500">
@@ -414,16 +533,17 @@ export default function ProductDetailRight({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-        <button className="flex items-center justify-center gap-2 text-red-600 font-bold py-3 rounded-lg transition hover:bg-red-50 border border-red-600 sm:flex-1">
+        <button className="flex items-center justify-center gap-2 text-red-600 font-bold py-3 rounded-lg transition hover:bg-red-50 border border-red-600 sm:flex-1 cursor-pointer">
           <FaShoppingCart size={24} className="sm:w-7 sm:h-7" />
         </button>
-        <button className="flex-1 sm:flex-[2] bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg transition text-sm sm:text-base">
+        <button className="flex-1 sm:flex-[2] bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg transition text-sm sm:text-base cursor-pointer">
           Mua ngay
         </button>
-        <button className="flex-1 sm:flex-[2] bg-black text-white hover:bg-gray-700 font-bold py-3 rounded-lg transition text-sm sm:text-base">
+        <button className="flex-1 sm:flex-[2] bg-black text-white hover:bg-gray-700 font-bold py-3 rounded-lg transition text-sm sm:text-base cursor-pointer">
           Trả góp 0%
         </button>
       </div>
+      <ProductSpecsModal ref={modalRef} productSpecs={mockProductSpecs} />
     </div>
   );
 }

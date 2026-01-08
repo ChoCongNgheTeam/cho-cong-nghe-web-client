@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, Search } from "lucide-react";
 import ProductCompareModal from "./product-compare-modal";
 
@@ -117,7 +117,7 @@ export default function ProductComparison() {
 
   const [visibleCount, setVisibleCount] = useState(getInitialVisibleCount());
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleWindowResize = () => {
       setVisibleCount(getVisibleCountByDeviceSize(window.innerWidth));
     };
@@ -205,7 +205,7 @@ export default function ProductComparison() {
 
       {/* Products Grid */}
       <div className="relative">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
           {visibleProducts.map((product, index) => (
             <div
               key={product.id}
@@ -216,12 +216,13 @@ export default function ProductComparison() {
               } transition-all duration-300`}
             >
               {/* Product Image */}
-              <div className="aspect-square mb-2 sm:mb-3 lg:mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-gray-300 rounded">
-                  <img src={product.image} alt="" />
-                </div>
+              <div className="aspect-square  rounded-lg overflow-hidden flex items-center justify-center">
+                <img
+                  src={product.image}
+                  alt=""
+                  className="w-[80%] h-[80%] object-cover"
+                />
               </div>
-
               {/* Product Name */}
               <h3 className="font-medium text-xs sm:text-sm mb-2 sm:mb-3 h-8 sm:h-10 line-clamp-2">
                 {product.name}

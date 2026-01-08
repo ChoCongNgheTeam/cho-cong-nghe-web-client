@@ -66,7 +66,7 @@ export default function ProductDetailSection1() {
             }`}
             onClick={() => setActiveTab("meohay")}
           >
-            Xem nhanh mẹo hay
+            Xem nhanh
           </button>
         </div>
 

@@ -1,8 +1,10 @@
 import { SITE_URL } from "@/config/site.config";
 import { notFound } from "next/navigation";
-import { mockProduct } from "../_lib/mockProduct";
+
 import { ProductDetailContent } from "./product-detail-content";
 import { generateMetadata } from "./metadata";
+import { getProductBySlug } from "../_lib/get-product-by-slug";
+import { ProductDetail } from "@/lib/types/product";
 
 type ProductDetailProps = {
   params: Promise<{
@@ -13,15 +15,24 @@ type ProductDetailProps = {
 export default async function ProductDetailPage({
   params,
 }: ProductDetailProps) {
+  // Await params trong Next.js 15+
   const { slug } = await params;
-  const productName = slug.replace(/-/g, " ");
 
-  // Giả lập check (sau này thay bằng fetch)
-  if (!productName) {
+  let product: ProductDetail;
+
+  try {
+    product = await getProductBySlug(slug);
+    console.log(product);
+  } catch (error) {
     notFound();
   }
 
-  return <ProductDetailContent />;
+  // Extra safety (optional)
+  if (!product) {
+    notFound();
+  }
+
+  return <ProductDetailContent product={product} />;
 }
 
 export { generateMetadata };

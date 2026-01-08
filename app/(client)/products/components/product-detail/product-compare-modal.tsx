@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Search, X } from "lucide-react";
 
 interface Product {
@@ -91,11 +91,11 @@ export default function ProductCompareModal({
           </div>
 
           {/* Suggested Products */}
-          <div className="mb-8">
+          <div>
             <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-800">
               Gợi ý sản phẩm cùng phân khúc
             </h3>
-            <div className="space-y-3 min-h-[100vh]">
+            <div className="space-y-3 min-h-[80vh]">
               {suggestedProducts.length > 0 ? (
                 suggestedProducts.map((product) => (
                   <div
