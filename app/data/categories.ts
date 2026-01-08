@@ -25,3 +25,31 @@ export const computerParts = [
   { id: 19, name: "Ổ cứng HDD", slug: "o-cung-hdd", icon: "💿" },
   { id: 20, name: "Card mạng", slug: "card-mang", icon: "🌐" },
 ];
+
+export const homeCategories = [
+  {
+    title: "Công nghệ",
+    items: [
+      { id: 1, name: "Laptop", icon: "💻" },
+      { id: 2, name: "Màn hình", icon: "🖥️" },
+      { id: 3, name: "Máy tính bảng", icon: "📱" },
+      { id: 4, name: "Điện thoại", icon: "📲" },
+    ],
+  },
+  {
+    title: "Phụ kiện",
+    items: [
+      { id: 5, name: "Tai nghe", icon: "🎧" },
+      { id: 6, name: "Loa", icon: "🔊" },
+      { id: 7, name: "Máy chiếu", icon: "📽️" },
+      { id: 8, name: "Đồng hồ", icon: "⌚" },
+    ],
+  },
+  {
+    title: "Nghiện nhà",
+    items: [
+      { id: 9, name: "Máy sưởi", icon: "🔥" },
+      { id: 10, name: "Máy sấy", icon: "🌀" },
+    ],
+  },
+];

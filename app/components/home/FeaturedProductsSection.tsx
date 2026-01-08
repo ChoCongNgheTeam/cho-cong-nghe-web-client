@@ -1,125 +1,101 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { featuredProducts } from "../../data/featuredProducts";
 import ProductCard from "./ProductCard";
+import Button from "../ui/button";
 
 export default function FeaturedProductsSection() {
+  const mainProduct = featuredProducts[0];
+  const productList = featuredProducts.slice(1, 5);
+
   const sliderRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const [isDesktop, setIsDesktop] = useState(false);
 
-  const CARD_WIDTH = 260 + 16; // card width + gap
-  const MAX_INDEX = featuredProducts.length - 1;
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  const scrollToIndex = (index: number) => {
+  const onMouseDown = (e: React.MouseEvent) => {
     if (!sliderRef.current) return;
-    sliderRef.current.scrollTo({
-      left: index * CARD_WIDTH,
-      behavior: "smooth",
-    });
-    setActiveIndex(index);
+    isDown.current = true;
+    startX.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeft.current = sliderRef.current.scrollLeft;
   };
-
-  const handlePrev = () => {
-    if (activeIndex > 0) scrollToIndex(activeIndex - 1);
-  };
-
-  const handleNext = () => {
-    if (activeIndex < MAX_INDEX) scrollToIndex(activeIndex + 1);
+  const stopDrag = () => (isDown.current = false);
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDown.current || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    sliderRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
   return (
-    <section className="py-8 mb-6 bg-white rounded-lg">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* TITLE */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold">Sản phẩm nổi bật</h2>
-          <a
-            href="#featured"
-            className="text-sm text-blue-600 hover:text-blue-700"
-          >
-            Xem tất cả →
-          </a>
-        </div>
+    <section className="bg-[#fdf2f2] py-6 mb-6 rounded-lg">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="flex gap-6 w-full">
 
-        {/* SLIDER WRAPPER */}
-        <div className="relative group">
-          {/* LEFT BUTTON */}
-          <button
-            onClick={handlePrev}
-            disabled={activeIndex === 0}
-            className="
-              absolute
-              left-0
-              top-1/2
-              -translate-y-1/2
-              z-10
-              w-10 h-10
-              rounded-full
-              bg-white
-              shadow
-              flex items-center justify-center
-              disabled:opacity-30
-              opacity-0
-              pointer-events-none
-              transition-all
-              duration-300
-              group-hover:opacity-100
-              group-hover:pointer-events-auto
-            "
-          >
-            ◀
-          </button>
+          {/* ===== BANNER TRÁI ===== */}
+          <div className="shrink-0 w-55 lg:w-60">
+            <div className="relative bg-linear-to-b from-yellow-400 to-orange-500 rounded-xl p-4 text-white h-full flex flex-col justify-between">
+              {/* DISCOUNT */}
+              <span className="absolute top-2 right-2 bg-yellow-200 text-orange-600 text-xs font-bold px-2 py-0.5 rounded">
+                -{mainProduct.variant.discount}%
+              </span>
 
-          {/* RIGHT BUTTON */}
-          <button
-            onClick={handleNext}
-            disabled={activeIndex === MAX_INDEX}
-            className="
-              absolute
-              right-0
-              top-1/2
-              -translate-y-1/2
-              z-10
-              w-10 h-10
-              rounded-full
-              bg-white
-              shadow
-              flex items-center justify-center
-              disabled:opacity-30
-              opacity-0
-              pointer-events-none
-              transition-all
-              duration-300
-              group-hover:opacity-100
-              group-hover:pointer-events-auto
-            "
-          >
-            ▶
-          </button>
-
-          {/* SLIDER */}
-          <div
-            ref={sliderRef}
-            className="
-              flex
-              gap-4
-              overflow-x-auto
-              scroll-smooth
-              -mx-2 px-2
-              snap-x snap-mandatory
-              scrollbar-hide
-            "
-          >
-            {featuredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="flex-shrink-0 w-[240px] sm:w-[260px] snap-start"
-              >
-                <ProductCard product={product} />
+              {/* CONTENT */}
+              <div>
+                <h3 className="font-bold text-lg mb-1">Ưu đãi đặc biệt</h3>
+                <p className="text-xs opacity-90">
+                  Tiết kiệm đến {mainProduct.variant.discount}%
+                </p>
               </div>
-            ))}
+
+              {/* CTA */}
+              <Link href={`/products/${mainProduct.slug}`}>
+                <Button
+                  variant="yellow-outline"
+                  className="text-orange-600 font-semibold text-sm"
+                >
+                  Mua ngay
+                </Button>
+              </Link>
+            </div>
           </div>
+
+          {/* ===== SLIDER PHẢI ===== */}
+          <div className="flex-1 overflow-hidden">
+            <div
+              ref={sliderRef}
+              className="flex gap-4 overflow-x-auto select-none cursor-grab py-2"
+              style={{
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
+              onMouseDown={isDesktop ? onMouseDown : undefined}
+              onMouseUp={isDesktop ? stopDrag : undefined}
+              onMouseLeave={isDesktop ? stopDrag : undefined}
+              onMouseMove={isDesktop ? onMouseMove : undefined}
+            >
+              {productList.map((product) => (
+                <div
+                  key={product.id}
+                  className="shrink-0 w-70 sm:w-60"
+                >
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

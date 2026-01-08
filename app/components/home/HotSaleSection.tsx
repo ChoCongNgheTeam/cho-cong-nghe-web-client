@@ -1,127 +1,83 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { hotProducts } from "../../data/hotProducts";
-import ProductCard from "@/components/home/ProductCard";
+import ProductCard from "./ProductCard";
 
 export default function HotSaleSection() {
   const sliderRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const [isDesktop, setIsDesktop] = useState(false);
 
-  const CARD_WIDTH = 260 + 16; // card + gap
-  const MAX_INDEX = hotProducts.length - 1;
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  const scrollToIndex = (index: number) => {
+  const onMouseDown = (e: React.MouseEvent) => {
     if (!sliderRef.current) return;
-    sliderRef.current.scrollTo({
-      left: index * CARD_WIDTH,
-      behavior: "smooth",
-    });
-    setActiveIndex(index);
+    isDown.current = true;
+    startX.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeft.current = sliderRef.current.scrollLeft;
   };
-
-  const handlePrev = () => {
-    if (activeIndex > 0) scrollToIndex(activeIndex - 1);
+  const onMouseLeave = () => (isDown.current = false);
+  const onMouseUp = () => (isDown.current = false);
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDown.current || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    sliderRef.current.scrollLeft = scrollLeft.current - walk;
   };
-
-  const handleNext = () => {
-    if (activeIndex < MAX_INDEX) scrollToIndex(activeIndex + 1);
-  };
-
-
 
   return (
-    <section className="bg-[#fdf2f2] py-8 mb-6 rounded-lg">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-color-neutral-light py-8 mb-6 rounded-lg transition-colors">
+      <div className="container mx-auto px-4 lg:px-8">
         {/* TITLE */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-red-600">
+          <h2 className="text-xl lg:text-2xl font-bold text-color-promotion flex items-center gap-2">
             🔥 Hot Sale
           </h2>
-          <a className="text-sm text-red-600 hover:text-red-700">
+          <Link
+            href="/hot-sale"
+            className="text-sm text-color-promotion hover:text-color-promotion-hover hover:underline transition-colors"
+          >
             Xem tất cả →
-          </a>
+          </Link>
         </div>
 
-        {/* SLIDER WRAPPER */}
-        <div className="relative group">
-          {/* LEFT BUTTON */}
-          <button
-            onClick={handlePrev}
-            disabled={activeIndex === 0}
-            className="
-              absolute
-              left-0
-              top-1/2
-              -translate-y-1/2
-              z-10
-              w-10 h-10
-              rounded-full
-              bg-white
-              shadow
-              flex items-center justify-center
-              disabled:opacity-30
-              opacity-0
-              pointer-events-none
-              transition-all
-              duration-300
-              group-hover:opacity-100
-              group-hover:pointer-events-auto
-            "
-          >
-            ◀
-          </button>
-
-          {/* RIGHT BUTTON */}
-          <button
-            onClick={handleNext}
-            disabled={activeIndex === MAX_INDEX}
-            className="
-              absolute
-              right-0
-              top-1/2
-              -translate-y-1/2
-              z-10
-              w-10 h-10
-              rounded-full
-              bg-white
-              shadow
-              flex items-center justify-center
-              disabled:opacity-30
-              opacity-0
-              pointer-events-none
-              transition-all
-              duration-300
-              group-hover:opacity-100
-              group-hover:pointer-events-auto
-            "
-          >
-            ▶
-          </button>
-
-          {/* SCROLL HORIZONTAL */}
-          <div
-            ref={sliderRef}
-            className="
-              flex gap-4
-              overflow-x-auto
-              scrollbar-hide
-              snap-x snap-mandatory
-              -mx-4 px-4 pb-3
-            "
-          >
-            {hotProducts.map((product) => (
-              <div
-                key={product.id}
-                className="flex-shrink-0 w-[240px] sm:w-[260px] snap-start"
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
+        {/* SLIDER */}
+        <div
+          ref={sliderRef}
+          className="flex gap-4 overflow-x-auto select-none cursor-grab scrollbar-none"
+          onMouseDown={isDesktop ? onMouseDown : undefined}
+          onMouseLeave={isDesktop ? onMouseLeave : undefined}
+          onMouseUp={isDesktop ? onMouseUp : undefined}
+          onMouseMove={isDesktop ? onMouseMove : undefined}
+          style={{
+            scrollbarWidth: "none", // Firefox
+            msOverflowStyle: "none", // IE 10+
+          }}
+        >
+          {hotProducts.map((product) => (
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="
+  shrink-0
+  w-[85%]
+  sm:w-[45%]
+  lg:w-[calc((100%-64px)/5)]
+"
+            >
+              <ProductCard product={product} />
+            </Link>
+          ))}
         </div>
       </div>
     </section>

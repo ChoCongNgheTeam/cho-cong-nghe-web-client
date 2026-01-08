@@ -1,30 +1,90 @@
+import { accessories } from "@/data/categories";
 
-import { accessories } from "../../data/categories";
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string;
+}
 
 export default function AccessoriesSection() {
   return (
-    <div className=" py-8 mb-6 rounded-lg shadow-sm">
-      <div className="container mx-auto px-6">
-        <h2 className="text-2xl font-bold mb-6">Phụ kiện</h2>
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-4">
-          {accessories.map((category) => (
-            <a key={category.id} href={`#${category.slug}`} className="text-center group cursor-pointer">
-              <div className="w-full aspect-square bg-linear-to-br from-gray-50 to-gray-100 rounded-lg mb-2 flex items-center justify-center group-hover:shadow-md transition-all group-hover:scale-105">
-                <span className="text-4xl">{category.icon}</span>
+    <section className="py-8 mb-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-xl sm:text-2xl font-bold mb-5">
+          Phụ kiện công nghệ
+        </h2>
+
+        {/* SCROLL HORIZONTAL */}
+        <div
+          className="
+            flex
+            gap-5
+            overflow-x-auto
+            snap-x snap-mandatory
+            pb-3
+
+            sm:gap-6
+            md:grid
+            md:grid-cols-6
+            md:gap-8
+            md:overflow-visible
+          "
+        >
+          {accessories.map((category: Category) => (
+            <a
+              key={category.id}
+              href={`#${category.slug}`}
+              className="
+                snap-start
+                shrink-0
+                w-22
+                sm:w-25
+
+                md:w-auto
+                text-center
+                group
+              "
+            >
+              <div
+                className="
+                  w-full
+                  aspect-square
+                  bg-linear-to-br
+                  from-gray-50
+                  to-gray-100
+                  rounded-xl
+                  flex
+                  items-center
+                  justify-center
+                  mb-2
+
+                  transition-all
+                  group-hover:shadow-md
+                  group-hover:scale-105
+                "
+              >
+                <span className="text-3xl sm:text-4xl">
+                  {category.icon}
+                </span>
               </div>
-              <p className="text-xs font-medium group-hover:text-blue-600 transition-colors">{category.name}</p>
+
+              <p
+                className="
+                  text-xs
+                  sm:text-sm
+                  font-medium
+                  leading-tight
+                  group-hover:text-blue-600
+                  transition-colors
+                "
+              >
+                {category.name}
+              </p>
             </a>
-          ))}
-          {[...Array(6)].map((_, i) => (
-            <div key={`extra-${i}`} className="text-center group cursor-pointer">
-              <div className="w-full aspect-square bg-linear-to-br from-gray-50 to-gray-100 rounded-lg mb-2 flex items-center justify-center group-hover:shadow-md transition-all">
-                <span className="text-4xl">📦</span>
-              </div>
-              <p className="text-xs font-medium">Phụ kiện khác</p>
-            </div>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

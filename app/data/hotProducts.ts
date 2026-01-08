@@ -79,4 +79,21 @@ export const hotProducts = [
     reviewCount: 67,
     tag: "TRAGOP 0%"
   },
+  
+ {
+    id: 6,
+    name: "Samsung Smart TV QLED 8K 65 inch",
+    slug: "samsung-qled-8k-65",
+    brand: "Samsung",
+    variant: {
+      code: "SQLED-8K-65",
+      price: 89990000,
+      originalPrice: 119990000,
+      discount: 25,
+      stock: 15
+    },
+    rating: 4.6,
+    reviewCount: 67,
+    tag: "TRAGOP 0%"
+  }, 
 ];

@@ -16,7 +16,7 @@ export const featuredProducts = [
   },
   {
     id: 2,
-    name: "Sony WH-1000XM5 Wireless Headphones",
+    name: "Sony WH-1000XM5 Headphones",
     slug: "sony-wh1000xm5",
     brand: "Sony",
     variant: {

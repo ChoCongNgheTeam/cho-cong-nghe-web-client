@@ -6,10 +6,12 @@ import FeaturedProductsSection from "@/components/home/FeaturedProductsSection";
 import AccessoriesSection from "@/components/home/AccessoriesSection";
 import ComputerPartsSection from "@/components/home/ComputerPartsSection";
 import ReviewsSection from "@/components/home/ReviewsSection";
-import BrandsSection from "@/components/home/BrandsSection";
+
 import NewsSection from "@/components/home/NewsSection";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import { slides } from "@/data/slides";
+import TetPromoSection from "@/components/home/TetPromoSection";
+import ViewedProductsSection from "@/components/home/ViewedProductsSection";
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -27,15 +29,18 @@ export default function HomePage() {
         prevSlide={prevSlide}
       />
 
-      <div className="max-w-7xl mx-auto">
+      <div className="container mx-auto">
         <FeaturedCategories />
         <HotSaleSection />
+        <TetPromoSection/>
         <FeaturedProductsSection />
         <AccessoriesSection />
         <ComputerPartsSection />
-        <BrandsSection />
+        <HotSaleSection />
+        <HotSaleSection />
         <ReviewsSection />
         <NewsSection />
+        <ViewedProductsSection/>
       </div>
     </div>
   );
