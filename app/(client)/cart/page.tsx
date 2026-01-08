@@ -14,7 +14,8 @@ import {
 import { useCart } from "../../hooks/useCart";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
-import CartSidebar from "./components/cartsidebar";
+import VariantDropdown from "./components/CartVariantSelector";
+import toast from "react-hot-toast";
 
 export default function CartPage() {
    const {
@@ -57,10 +58,22 @@ export default function CartPage() {
       []
    );
 
-   const handleApplyVoucher = useCallback((code: string, value: number) => {
-      setAppliedVoucherCode(code);
-      setAppliedVoucherValue(value);
-   }, []);
+  const handleApplyVoucher = useCallback((code: string, value: number) => {
+    setAppliedVoucherCode(code);
+    setAppliedVoucherValue(value);
+  }, []);
+
+  // Handle variant change
+  const handleVariantChange = useCallback((cartItemId: number, variantId: number, variantName: string, price: number) => {
+    console.log("Variant changed:", { cartItemId, variantId, variantName, price });
+    
+    // TODO: Call API to update cart item variant
+    // await updateCartItemVariant(cartItemId, variantId);
+    
+    // For now, this is handled by the useCart hook's internal state
+    // You would typically call an API here and then refetch the cart
+    toast.success("Đã cập nhật phiên bản sản phẩm");
+  }, []);
 
    // Calculate final totals with voucher
    const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
@@ -79,137 +92,126 @@ export default function CartPage() {
       );
    }
 
-   return (
-      <div className="min-h-screen bg-neutral-light py-3 sm:py-4 md:py-6 lg:py-8 pb-20 sm:pb-24 lg:pb-8 font-poppins">
-         <div className="container">
-            {/* Breadcrumb */}
-            <div className="mb-3 sm:mb-4 md:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs flex-wrap">
-               <Link
-                  href="/"
-                  className="text-primary hover:text-primary-hover transition-colors whitespace-nowrap"
-               >
-                  Trang chủ
-               </Link>
-               <span className="text-neutral-dark">/</span>
-               <span className="text-primary-darker font-medium whitespace-nowrap">
-                  Giỏ hàng
-               </span>
-            </div>
+  return (
+    <div className="min-h-screen bg-neutral-light font-poppins">
+      {/* Breadcrumb */}
+      <div className="w-full bg-neutral-light">
+        <div className="container py-3 md:py-4">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
+            <Link href="/" className="text-primary hover:text-primary-hover transition-colors">
+              Trang chủ
+            </Link>
+            <span className="text-neutral-dark">/</span>
+            <span className="text-primary-darker font-medium">Giỏ hàng</span>
+          </div>
+        </div>
+      </div>
 
-            {items.length === 0 ? (
-               <div className="rounded-lg bg-white p-6 sm:p-8 md:p-12 text-center shadow-sm">
-                  <h2 className="mb-2 text-base sm:text-lg md:text-xl font-semibold text-primary-darker">
-                     Giỏ hàng trống
-                  </h2>
-                  <p className="mb-4 sm:mb-6 text-xs sm:text-sm md:text-base text-neutral-darker">
-                     Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm
-                  </p>
-                  <Link
-                     href="/products"
-                     className="inline-block rounded-lg bg-accent px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base font-semibold text-primary-darker transition hover:bg-accent-hover"
+      {/* Main Content */}
+      <div className="container pb-28 lg:pb-8 space-y-4 !px-3">
+        {items.length === 0 ? (
+          <div className="rounded-lg bg-white p-6 sm:p-8 lg:p-12 text-center shadow-sm">
+            <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary-darker">
+              Giỏ hàng trống
+            </h2>
+            <p className="mb-6 text-sm sm:text-base text-neutral-darker">
+              Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm
+            </p>
+            <Link
+              href="/products"
+              className="inline-block rounded-lg bg-accent px-6 sm:px-8 py-2.5 sm:py-3 font-semibold text-primary-darker transition hover:bg-accent-hover"
+            >
+              Mua sắm ngay
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:gap-6 lg:grid-cols-3">
+            {/* LEFT COLUMN - Cart Items */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Select All Box */}
+              <div className="flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={toggleSelectAll}
+                    className="h-5 w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
+                  />
+                  <span className="text-sm font-medium text-primary-darker">
+                    Chọn tất cả ({items.length})
+                  </span>
+                </label>
+
+                <button
+                  onClick={removeSelectedItems}
+                  className="text-neutral-darker transition hover:text-promotion disabled:cursor-not-allowed disabled:text-neutral-dark"
+                  disabled={selectedItems.length === 0}
+                  aria-label="Xóa các sản phẩm đã chọn"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Cart Items List */}
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-lg bg-white p-4 shadow-sm"
                   >
-                     Mua sắm ngay
-                  </Link>
-               </div>
-            ) : (
-               <div className="grid gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-3">
-                  {/* LEFT COLUMN - Cart Items */}
-                  <div className="lg:col-span-2 space-y-2.5 sm:space-y-3 md:space-y-4">
-                     {/* Select All Box */}
-                     <div className="flex items-center justify-between rounded-lg bg-white px-2.5 sm:px-3 md:px-4 py-2.5 sm:py-3 shadow-sm">
-                        <label className="flex cursor-pointer items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 flex-1">
-                           <input
-                              type="checkbox"
-                              checked={selectAll}
-                              onChange={toggleSelectAll}
-                              className="h-4 w-4 sm:h-5 sm:w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent shrink-0"
-                           />
-                           <span className="text-xs sm:text-sm font-medium text-primary-darker truncate">
-                              Chọn tất cả ({items.length})
-                           </span>
-                        </label>
+                    <div className="flex gap-4">
+                      {/* Checkbox - Centered */}
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={item.selected}
+                          onChange={() => toggleSelectItem(item.id)}
+                          className="h-5 w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
+                        />
+                      </div>
 
-                        <button
-                           onClick={removeSelectedItems}
-                           className="text-neutral-darker transition hover:text-promotion disabled:cursor-not-allowed disabled:text-neutral-dark shrink-0 ml-1.5 sm:ml-2"
-                           disabled={selectedItems.length === 0}
-                           aria-label="Xóa các sản phẩm đã chọn"
-                        >
-                           <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                     </div>
+                      {/* Product Image */}
+                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.product_name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-neutral">
+                            <div className="h-16 w-16 rounded-lg bg-neutral-dark"></div>
+                          </div>
+                        )}
+                      </div>
 
-                     {/* Cart Items List */}
-                     <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
-                        {items.map((item) => (
-                           <div
-                              key={item.id}
-                              className="rounded-lg bg-white p-2.5 sm:p-3 md:p-4 shadow-sm"
-                           >
-                              <div className="flex gap-2 sm:gap-3">
-                                 {/* Checkbox */}
-                                 <div className="flex items-start shrink-0 pt-1">
-                                    <input
-                                       type="checkbox"
-                                       checked={item.selected}
-                                       onChange={() =>
-                                          toggleSelectItem(item.id)
-                                       }
-                                       className="h-4 w-4 sm:h-5 sm:w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
-                                    />
-                                 </div>
-
-                                 {/* Product Image */}
-                                 <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
-                                    {item.image_url ? (
-                                       <Image
-                                          src={item.image_url}
-                                          alt={item.product_name}
-                                          fill
-                                          className="object-cover"
-                                       />
-                                    ) : (
-                                       <div className="flex h-full w-full items-center justify-center bg-neutral">
-                                          <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-lg bg-neutral-dark"></div>
-                                       </div>
-                                    )}
-                                 </div>
-
-                                 {/* Product Details */}
-                                 <div className="flex-1 min-w-0 flex flex-col gap-1.5 sm:gap-2">
-                                    {/* Top: Name + Delete (Mobile) */}
-                                    <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                                       <h3 className="flex-1 text-xs sm:text-sm font-medium text-primary-darker line-clamp-2 min-w-0 break-words">
-                                          {item.product_name}
-                                       </h3>
-                                       <button
-                                          onClick={() => removeItem(item.id)}
-                                          className="sm:hidden text-neutral-dark transition hover:text-promotion shrink-0"
-                                          aria-label="Xóa sản phẩm"
-                                       >
-                                          <Trash2 className="h-4 w-4" />
-                                       </button>
-                                    </div>
-
-                                    {/* Variant Name */}
-                                    <div className="flex items-center gap-1 text-xs text-neutral-darker min-w-0">
-                                       <span className="truncate">
-                                          {item.variant_name}
-                                       </span>
-                                       <svg
-                                          className="h-3 w-3 shrink-0"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                       >
-                                          <path
-                                             strokeLinecap="round"
-                                             strokeLinejoin="round"
-                                             strokeWidth={2}
-                                             d="M19 9l-7 7-7-7"
-                                          />
-                                       </svg>
-                                    </div>
+                      {/* Product Details */}
+                      <div className="flex flex-1 flex-col sm:flex-row sm:justify-between gap-3">
+                        {/* Info + Mobile Actions */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="flex-1 text-sm font-medium text-primary-darker line-clamp-2">
+                              {item.product_name}
+                            </h3>
+                            {/* Trash button - Top right on mobile */}
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="sm:hidden text-neutral-dark transition hover:text-promotion flex-shrink-0"
+                              aria-label="Xóa sản phẩm"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                          
+                          {/* Variant Dropdown - INLINE */}
+                          <VariantDropdown
+                            cartItemId={item.id}
+                            productId={item.product_id || item.id}
+                            currentVariantId={item.product_variant_id}
+                            currentVariantName={item.variant_name}
+                            onVariantChange={handleVariantChange}
+                          />
 
                                     {/* MOBILE LAYOUT */}
                                     <div className="sm:hidden space-y-1.5 sm:space-y-2">
@@ -474,70 +476,67 @@ export default function CartPage() {
                            )}
                         </div>
 
-                        {/* Checkout Button */}
-                        <Link
-                           href="/checkout"
-                           className={`block w-full rounded-b-lg py-3.5 text-center text-base font-semibold transition ${
-                              selectedItems.length === 0
-                                 ? "cursor-not-allowed bg-neutral text-neutral-dark"
-                                 : "bg-accent text-primary-darker hover:bg-accent-hover shadow-lg"
-                           }`}
-                           onClick={(e) => {
-                              if (selectedItems.length === 0) {
-                                 e.preventDefault();
-                              }
-                           }}
-                        >
-                           Xác nhận đơn
-                        </Link>
-                     </div>
-                  </div>
-
-                  {/* Floating Button - Mobile/Tablet */}
-                  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral p-2.5 sm:p-4 z-30 lg:hidden">
-                     <div className="container">
-                        <button
-                           onClick={() => setShowSidebar(true)}
-                           className="w-full bg-accent hover:bg-accent-hover text-primary-darker font-semibold py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg transition flex items-center gap-2 sm:gap-3 shadow-lg"
-                        >
-                           <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-                           <span className="flex-1 text-left text-xs sm:text-sm md:text-base min-w-0 truncate">
-                              Xem đơn hàng ({selectedItems.length})
-                           </span>
-                           <span className="font-bold text-xs sm:text-sm md:text-base shrink-0 whitespace-nowrap">
-                              {formatPrice(finalTotalWithVoucher)}
-                           </span>
-                        </button>
-                     </div>
-                  </div>
-               </div>
-            )}
-
-            {/* Cart Sidebar */}
-            <CartSidebar
-               isOpen={showSidebar}
-               onClose={() => setShowSidebar(false)}
-               subtotal={subtotal}
-               totalDiscount={totalDiscountWithVoucher}
-               finalTotal={finalTotalWithVoucher}
-               rewardPoints={rewardPoints}
-               selectedItemsCount={selectedItems.length}
-               appliedVoucherCode={appliedVoucherCode}
-               appliedVoucherValue={appliedVoucherValue}
-               onOpenVoucherModal={() => setShowVoucherModal(true)}
-            />
-
-            {/* Voucher Modal */}
-            <VoucherPromotionModal
-               isOpen={showVoucherModal}
-               onClose={() => setShowVoucherModal(false)}
-               selectedPromotions={selectedPromotions}
-               onSelectPromotions={handleSelectPromotions}
-               appliedVoucherCode={appliedVoucherCode}
-               appliedVoucherValue={appliedVoucherValue}
-               onApplyVoucher={handleApplyVoucher}
-            />
-         </div>
+                {/* Checkout Button */}
+                <Link
+                  href="/checkout"
+                  className={`block w-full rounded-b-lg py-3.5 text-center text-base font-semibold transition ${
+                    selectedItems.length === 0
+                      ? "cursor-not-allowed bg-neutral text-neutral-dark"
+                      : "bg-accent text-primary-darker hover:bg-accent-hover shadow-lg"
+                  }`}
+                  onClick={(e) => {
+                    if (selectedItems.length === 0) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  Xác nhận đơn
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-   );
+
+      {/* Floating Button - Show on mobile/tablet only - FIXED POSITION */}
+      <div className="fixed bottom-0 left-0 right-0 bg-accent border-t-2 border-accent-dark p-3 z-30 lg:hidden shadow-2xl">
+        <button
+          onClick={() => setShowSidebar(true)}
+          className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl"
+        >
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="h-5 w-5 flex-shrink-0" />
+            <span className="text-left">Xem đơn hàng ({selectedItems.length})</span>
+          </div>
+          <span className="font-bold flex-shrink-0 text-lg">{formatPrice(finalTotalWithVoucher)}</span>
+        </button>
+      </div>
+
+      {/* Cart Sidebar - Show on mobile/tablet only */}
+      <CartSidebar
+        isOpen={showSidebar}
+        onClose={() => setShowSidebar(false)}
+        subtotal={subtotal}
+        totalDiscount={totalDiscountWithVoucher}
+        finalTotal={finalTotalWithVoucher}
+        rewardPoints={rewardPoints}
+        selectedItemsCount={selectedItems.length}
+        appliedVoucherCode={appliedVoucherCode}
+        appliedVoucherValue={appliedVoucherValue}
+        onOpenVoucherModal={() => setShowVoucherModal(true)}
+      />
+
+      {/* Voucher Modal */}
+      <VoucherPromotionModal
+        isOpen={showVoucherModal}
+        onClose={() => setShowVoucherModal(false)}
+        selectedPromotions={selectedPromotions}
+        onSelectPromotions={handleSelectPromotions}
+        appliedVoucherCode={appliedVoucherCode}
+        appliedVoucherValue={appliedVoucherValue}
+        onApplyVoucher={handleApplyVoucher}
+        cartTotal={subtotal}
+      />
+    </div>
+  );
 }

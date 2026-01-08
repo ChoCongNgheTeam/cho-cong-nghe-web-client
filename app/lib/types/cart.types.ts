@@ -81,6 +81,7 @@ export interface Inventory {
 export interface CartItemWithDetails {
   id: number;
   product_variant_id: number;
+  product_id?: number; 
   product_name: string;
   variant_name: string;
   price: number;
