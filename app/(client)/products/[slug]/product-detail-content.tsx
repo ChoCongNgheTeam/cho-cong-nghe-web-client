@@ -59,21 +59,19 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
 
       {/* Product Detail Section 1 */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6">
-       
-          <ProductDetailSection1 />
-        
+        <ProductDetailSection1 />
       </div>
 
       {/* Product Review Section */}
       <div className="bg-gray-400/10  pt-4 sm:pt-6 " ref={reviewsRef}>
-        <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+        <div >
           <ProductReview />
         </div>
       </div>
 
       {/* Compare Products Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
-        <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+        <div>
           <CompareProducts />
         </div>
       </div>

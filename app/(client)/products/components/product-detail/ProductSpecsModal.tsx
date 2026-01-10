@@ -80,9 +80,13 @@ const ProductSpecsModal = forwardRef<
   useImperativeHandle(ref, () => ({
     open: () => {
       dialogRef.current?.showModal();
+      // Ngăn scroll của body khi modal mở
+      document.body.style.overflow = "hidden";
     },
     close: () => {
       dialogRef.current?.close();
+      // Khôi phục scroll của body khi modal đóng
+      document.body.style.overflow = "";
     },
   }));
 
@@ -187,6 +191,8 @@ const ProductSpecsModal = forwardRef<
    */
   const closeDialog = () => {
     dialogRef.current?.close();
+    // Khôi phục scroll của body
+    document.body.style.overflow = "";
   };
 
   // --------------------------------------------------------------------------
@@ -237,16 +243,7 @@ const ProductSpecsModal = forwardRef<
             - Focus trap built-in
             - Semantic HTML
         ==================================================================== */}
-      <dialog
-        ref={dialogRef}
-        className="specs-dialog"
-        onClick={(e) => {
-          // Click vào backdrop (chính dialog element) để đóng
-          if (e.target === dialogRef.current) {
-            closeDialog();
-          }
-        }}
-      >
+      <dialog ref={dialogRef} className="specs-dialog">
         <div className="dialog-content">
           {/* ================================================================
                 HEADER - Sticky top với tiêu đề và nút đóng
