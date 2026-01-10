@@ -252,15 +252,15 @@ const ProductSpecsModal = forwardRef<
                 HEADER - Sticky top với tiêu đề và nút đóng
             ================================================================ */}
           <div className="dialog-header">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-primary dark:text-primary">
               Thông số kỹ thuật
             </h2>
             <button
               onClick={closeDialog}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full hover:bg-neutral dark:hover:bg-neutral transition-colors"
               aria-label="Đóng modal"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-primary dark:text-primary" />
             </button>
           </div>
 
@@ -273,9 +273,9 @@ const ProductSpecsModal = forwardRef<
               <img
                 src={productSpecs.image}
                 alt={productSpecs.name}
-                className="w-24 h-24 object-cover rounded bg-gray-50 p-1"
+                className="w-24 h-24 object-cover rounded bg-neutral dark:bg-neutral p-1"
               />
-              <p className="font-medium text-base text-gray-900">
+              <p className="font-medium text-base text-primary dark:text-primary">
                 {productSpecs.name}
               </p>
             </div>
@@ -289,7 +289,7 @@ const ProductSpecsModal = forwardRef<
                   - Auto scroll đến tab active
                   - Sticky khi scroll body
               ============================================================ */}
-            <div className="sticky top-0 bg-white z-10 -mx-4 px-4 pb-3 border-y border-gray-200 p-4 mt-6">
+            <div className="sticky top-0 bg-neutral-light dark:bg-neutral-light z-10 -mx-4 px-4 pb-3 border-y border-neutral-dark dark:border-neutral-dark p-4 mt-6">
               <div
                 ref={tabsListRef}
                 className="flex overflow-x-auto gap-6 select-none"
@@ -316,8 +316,8 @@ const ProductSpecsModal = forwardRef<
                     }}
                     className={`flex-shrink-0 px-2 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                       selectedTab === index
-                        ? "text-blue-600 border-blue-600" // Active state
-                        : "text-gray-600 border-transparent hover:text-blue-500" // Default/Hover
+                        ? "text-accent dark:text-accent border-accent dark:border-accent" // Active state
+                        : "text-neutral-darker dark:text-neutral-darker border-transparent hover:text-accent-hover dark:hover:text-accent-hover" // Default/Hover
                     }`}
                     style={{ userSelect: "none" }} // Không cho select text khi kéo
                   >
@@ -339,17 +339,17 @@ const ProductSpecsModal = forwardRef<
                     key={index}
                     className={`flex justify-between py-3 gap-4 ${
                       index !== tabs[selectedTab].data.length - 1
-                        ? "border-b border-gray-100" // Border cho tất cả trừ item cuối
+                        ? "border-b border-neutral dark:border-neutral" // Border cho tất cả trừ item cuối
                         : ""
                     }`}
                   >
                     {/* Label - Tên thông số */}
-                    <span className="text-gray-600 font-medium">
+                    <span className="text-neutral-darker dark:text-neutral-darker font-medium">
                       {spec.label}
                     </span>
 
                     {/* Value - Giá trị thông số */}
-                    <span className="text-gray-900 text-right font-semibold">
+                    <span className="text-primary dark:text-primary text-right font-semibold">
                       {spec.value}
                     </span>
                   </div>
@@ -381,6 +381,12 @@ const ProductSpecsModal = forwardRef<
           backdrop-filter: blur(2px); /* Blur nhẹ background */
         }
 
+        /* Dark mode - Backdrop tối hơn */
+        :global(.dark) .specs-dialog::backdrop {
+          background: rgba(0, 0, 0, 0.7); /* Đen 70% opacity */
+          backdrop-filter: blur(4px); /* Blur nhiều hơn */
+        }
+
         /* Layout khi dialog open - Đẩy content sang bên phải */
         .specs-dialog[open] {
           display: flex;
@@ -393,10 +399,16 @@ const ProductSpecsModal = forwardRef<
           width: 100%;
           max-width: 28rem; /* 448px */
           height: 100%;
-          background: white;
+          background: rgb(var(--neutral-light));
           box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15); /* Shadow bên trái */
           display: flex;
           flex-direction: column;
+          transition: background-color 0.3s ease;
+        }
+
+        /* Dark mode - Shadow mạnh hơn */
+        :global(.dark) .dialog-content {
+          box-shadow: -4px 0 32px rgba(0, 0, 0, 0.5);
         }
 
         /* Header section - Fixed top */
@@ -405,8 +417,9 @@ const ProductSpecsModal = forwardRef<
           align-items: center;
           justify-content: space-between;
           padding: 1rem;
-          border-bottom: 1px solid #e5e7eb;
-          background: white;
+          border-bottom: 1px solid rgb(var(--neutral-dark));
+          background: rgb(var(--neutral-light));
+          transition: all 0.3s ease;
         }
 
         /* Body section - Scrollable area */
@@ -414,6 +427,26 @@ const ProductSpecsModal = forwardRef<
           flex: 1; /* Take remaining space */
           overflow-y: auto; /* Enable vertical scroll */
           padding: 1rem;
+          background: rgb(var(--neutral-light));
+          transition: background-color 0.3s ease;
+        }
+
+        /* Custom scrollbar cho dialog body */
+        .dialog-body::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .dialog-body::-webkit-scrollbar-track {
+          background: rgb(var(--neutral));
+        }
+
+        .dialog-body::-webkit-scrollbar-thumb {
+          background: rgb(var(--neutral-dark));
+          border-radius: 4px;
+        }
+
+        .dialog-body::-webkit-scrollbar-thumb:hover {
+          background: rgb(var(--neutral-darker));
         }
 
         /* Responsive - Full width on mobile */

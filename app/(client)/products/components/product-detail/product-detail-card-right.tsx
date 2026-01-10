@@ -19,6 +19,10 @@ type ColorOption = {
   image?: string;
 };
 
+type StorageOption = {
+  value: string;
+};
+
 export default function ProductDetailRight({
   product,
   onReviewClick,
@@ -27,7 +31,7 @@ export default function ProductDetailRight({
    * GUARD
    * ========================================================================== */
   if (!product) {
-    return <div>Loading...</div>;
+    return <div className="text-primary dark:text-primary">Loading...</div>;
   }
 
   /* ============================================================================
@@ -91,10 +95,26 @@ export default function ProductDetailRight({
    * ========================================================================== */
 
   // Dung lượng (Storage)
-  const storage =
-    product.variants?.[0]?.variantAttributes?.find(
-      (attr) => attr.attributeOption?.attribute?.name === "Storage"
-    )?.attributeOption?.value ?? "";
+  const storages: StorageOption[] = Array.from(
+    new Map(
+      product.variants.flatMap((variant) => {
+        const storageAttr = variant.variantAttributes.find(
+          (attr) => attr.attributeOption.attribute.name === "Storage"
+        );
+
+        if (!storageAttr) return [];
+
+        return [
+          [
+            storageAttr.attributeOption.value,
+            {
+              value: storageAttr.attributeOption.value,
+            },
+          ],
+        ];
+      })
+    ).values()
+  );
 
   // Màu sắc (unique + ảnh đại diện)
   const colors: ColorOption[] = Array.from(
@@ -124,6 +144,10 @@ export default function ProductDetailRight({
    * ========================================================================== */
   const [selectedColor, setSelectedColor] = useState<string>(
     colors[0]?.value ?? ""
+  );
+
+  const [selectedStorage, setSelectedStorage] = useState(
+    storages[0]?.value ?? ""
   );
 
   const [activePayment, setActivePayment] = useState(0);
@@ -187,28 +211,32 @@ export default function ProductDetailRight({
       </div>
 
       {/* Product Title */}
-      <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold">
+      <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary dark:text-primary transition-colors duration-300">
         {product.name}
       </h2>
 
       {/* Rating & Links */}
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-        <span className="text-gray-500">{product.variants[0].code}</span>
+        <span className="text-neutral-darker dark:text-neutral-darker transition-colors duration-300">
+          {product.variants[0].code}
+        </span>
         <div className="flex items-center gap-1">
-          <FaStar className="text-yellow-400 text-xs sm:text-sm" />
-          <span>{product.ratingAverage}</span>
+          <FaStar className="text-accent dark:text-accent text-xs sm:text-sm" />
+          <span className="text-primary dark:text-primary">
+            {product.ratingAverage}
+          </span>
         </div>
         {/* Thêm onClick vào link đánh giá */}
         <button
           onClick={onReviewClick}
-          className="text-[#1250dc] hover:underline hover:text-[#0d3ba8] transition-colors cursor-pointer"
+          className="text-accent dark:text-accent hover:underline hover:text-accent-hover dark:hover:text-accent-hover transition-colors cursor-pointer"
         >
           {product.ratingCount} đánh giá
         </button>
-        <span>|</span>
+        <span className="text-neutral-darker dark:text-neutral-darker">|</span>
         <button
           onClick={openDialog}
-          className="text-[#1250dc] hover:underline cursor-pointer"
+          className="text-accent dark:text-accent hover:underline hover:text-accent-hover dark:hover:text-accent-hover transition-colors cursor-pointer"
         >
           Thông số kỹ thuật
         </button>
@@ -216,20 +244,46 @@ export default function ProductDetailRight({
 
       {/* Storage Selection */}
       <div className="flex flex-col sm:flex-row text-xs sm:text-sm items-start sm:items-center gap-2 sm:gap-4 py-3 sm:py-4">
-        <span className="w-full sm:w-24 font-medium">Dung lượng:</span>
-        <span className="border rounded-sm px-3 py-2 sm:px-4 sm:py-3 font-bold border-red-700 cursor-pointer relative overflow-hidden">
-          {storage}
-          <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-red-500">
-            <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-              ✓
-            </span>
-          </div>
+        <span className="w-full sm:w-24 font-medium text-primary dark:text-primary transition-colors duration-300">
+          Dung lượng:
         </span>
+
+        <div className="flex flex-wrap gap-2">
+          {storages.map((storage) => {
+            const isActive = selectedStorage === storage.value;
+
+            return (
+              <span
+                key={storage.value}
+                onClick={() => setSelectedStorage(storage.value)}
+                className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 font-bold cursor-pointer relative overflow-hidden transition-colors duration-300
+            ${
+              isActive
+                ? "border-promotion dark:border-promotion text-promotion dark:text-promotion bg-neutral-light dark:bg-neutral"
+                : "border-neutral-dark dark:border-neutral-dark text-primary dark:text-primary bg-neutral-light dark:bg-neutral"
+            }
+          `}
+              >
+                {storage.value}
+
+                {isActive && (
+                  <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion dark:border-t-promotion">
+                    <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
+                      ✓
+                    </span>
+                  </div>
+                )}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       {/* Color Selection */}
       <div className="flex flex-col sm:flex-row text-xs sm:text-sm items-start sm:items-center gap-2 sm:gap-4">
-        <span className="w-full sm:w-24 font-medium">Màu sắc:</span>
+        <span className="w-full sm:w-24 font-medium text-primary dark:text-primary transition-colors duration-300">
+          Màu sắc:
+        </span>
 
         <div className="flex flex-wrap gap-2">
           {colors.map((color) => {
@@ -239,13 +293,12 @@ export default function ProductDetailRight({
               <span
                 key={color.value}
                 onClick={() => setSelectedColor(color.value)}
-                className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2
-            ${
-              isActive
-                ? "border-red-700 text-red-700"
-                : "border-gray-300 text-gray-600"
-            }
-            hover:bg-red-50 transition-colors`}
+                className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300 ${
+                  isActive
+                    ? "border-promotion dark:border-promotion text-promotion dark:text-promotion bg-promotion-light dark:bg-neutral"
+                    : "border-neutral-dark dark:border-neutral-dark text-neutral-darker dark:text-neutral-darker bg-neutral-light dark:bg-neutral"
+                }
+            hover:bg-promotion-light dark:hover:bg-neutral`}
               >
                 {color.image && (
                   <img
@@ -258,7 +311,7 @@ export default function ProductDetailRight({
                 {color.value}
 
                 {isActive && (
-                  <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-red-500">
+                  <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion dark:border-t-promotion">
                     <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
                       ✓
                     </span>
@@ -275,30 +328,30 @@ export default function ProductDetailRight({
         <img
           src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
           alt="Banner"
-          className="w-full h-auto"
+          className="w-full h-auto rounded-lg"
         />
       </div>
 
       {/* Price Section */}
-      <div className="bg-yellow-50 p-3 sm:p-4 rounded-lg mb-4 border border-yellow-300">
+      <div className="bg-accent-light dark:bg-neutral p-3 sm:p-4 rounded-lg mb-4 border border-accent dark:border-neutral-dark transition-colors duration-300">
         {/* Main Price */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex flex-col gap-2 flex-1">
             <div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <h3 className="text-2xl sm:text-3xl font-bold text-primary dark:text-primary transition-colors duration-300">
                 {(product.variants[0].price || 0).toLocaleString("vi-VN")}₫
               </h3>
               <div className="flex gap-2 items-center">
-                <span className="text-xs sm:text-sm text-gray-500 line-through">
+                <span className="text-xs sm:text-sm text-neutral-darker dark:text-neutral-darker line-through transition-colors duration-300">
                   {(product.variants[0].price || 0).toLocaleString("vi-VN")}₫
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-red-600">
+                <span className="text-xs sm:text-sm font-bold text-promotion dark:text-promotion">
                   3%
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-yellow-600 text-xs sm:text-sm border border-yellow-600 rounded-full px-2 py-1">
+              <span className="text-accent-dark dark:text-accent text-xs sm:text-sm border border-accent-dark dark:border-accent rounded-full px-2 py-1 transition-colors duration-300">
                 💰 +8.697 Điểm thưởng
               </span>
             </div>
@@ -306,23 +359,27 @@ export default function ProductDetailRight({
 
           {/* Installment Option */}
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <p className="border border-gray-300 px-2 py-1 rounded-full bg-white text-gray-700 text-xs whitespace-nowrap">
+            <p className="border border-neutral-dark dark:border-neutral-dark px-2 py-1 rounded-full bg-neutral-light dark:bg-neutral text-neutral-darker dark:text-neutral-darker text-xs whitespace-nowrap transition-colors duration-300">
               Hoặc
             </p>
             <div className="text-xs sm:text-sm">
-              <p className="text-gray-600">Trả góp</p>
+              <p className="text-neutral-darker dark:text-neutral-darker transition-colors duration-300">
+                Trả góp
+              </p>
               <p className="mt-1">
-                <span className="font-semibold text-base sm:text-lg">
+                <span className="font-semibold text-base sm:text-lg text-primary dark:text-primary transition-colors duration-300">
                   1.448.342đ
                 </span>
-                <span className="text-xs sm:text-sm">/tháng</span>
+                <span className="text-xs sm:text-sm text-primary dark:text-primary">
+                  /tháng
+                </span>
               </p>
             </div>
           </div>
         </div>
 
         {/* Voucher Banner */}
-        <div className="bg-gradient-to-r from-red-700 to-orange-600 p-3 sm:p-4 rounded-lg text-white mt-3 sm:mt-4">
+        <div className="bg-gradient-to-r from-promotion-dark to-orange-600 dark:from-promotion to-orange-500 p-3 sm:p-4 rounded-lg text-white mt-3 sm:mt-4 transition-all duration-300">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
             <div className="flex-1">
               <p className="font-bold mb-1 sm:mb-2 text-sm sm:text-base">
@@ -340,39 +397,43 @@ export default function ProductDetailRight({
 
         {/* Promotions */}
         <div className="mt-3 sm:mt-4">
-          <p className="font-semibold mb-2 text-xs sm:text-sm">
+          <p className="font-semibold mb-2 text-xs sm:text-sm text-primary dark:text-primary transition-colors duration-300">
             Chọn 1 trong các khuyến mãi sau:
           </p>
 
           {/* Flash Sale */}
-          <div className="bg-yellow-50 border-yellow-300 border rounded-lg p-2 sm:p-3 mb-3">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-2 bg-red-100 p-2 rounded">
-              <span className="text-red-600 font-bold text-xs sm:text-sm">
+          <div className="bg-accent-light dark:bg-neutral border-accent dark:border-neutral-dark border rounded-lg p-2 sm:p-3 mb-3 transition-colors duration-300">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-2 bg-promotion-light dark:bg-neutral p-2 rounded transition-colors duration-300">
+              <span className="text-promotion dark:text-promotion font-bold text-xs sm:text-sm">
                 🔔 GIÁ SỐC ONLINE
               </span>
-              <span className="text-yellow-600 text-xs font-semibold">
+              <span className="text-accent-dark dark:text-accent text-xs font-semibold">
                 🔥 Đã bán 5/10 suất
               </span>
             </div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <p className="text-xs text-gray-600">Giảm ngay</p>
-                <p className="text-base sm:text-lg font-bold text-red-600">
+                <p className="text-xs text-neutral-darker dark:text-neutral-darker transition-colors duration-300">
+                  Giảm ngay
+                </p>
+                <p className="text-base sm:text-lg font-bold text-promotion dark:text-promotion">
                   1.000.000đ
                 </p>
               </div>
               <div className="w-full sm:w-auto sm:text-right">
-                <p className="text-xs text-gray-600 mb-1">Kết thúc sau</p>
+                <p className="text-xs text-neutral-darker dark:text-neutral-darker mb-1 transition-colors duration-300">
+                  Kết thúc sau
+                </p>
                 <div className="flex gap-1 text-xs sm:text-sm font-bold">
-                  <span className="bg-gray-800 text-white px-2 py-1 rounded">
+                  <span className="bg-primary-dark dark:bg-primary-darker text-neutral-light dark:text-primary px-2 py-1 rounded transition-colors duration-300">
                     {String(timeLeft.hours).padStart(2, "0")}
                   </span>
-                  <span>:</span>
-                  <span className="bg-gray-800 text-white px-2 py-1 rounded">
+                  <span className="text-primary dark:text-primary">:</span>
+                  <span className="bg-primary-dark dark:bg-primary-darker text-neutral-light dark:text-primary px-2 py-1 rounded transition-colors duration-300">
                     {String(timeLeft.minutes).padStart(2, "0")}
                   </span>
-                  <span>:</span>
-                  <span className="bg-gray-800 text-white px-2 py-1 rounded">
+                  <span className="text-primary dark:text-primary">:</span>
+                  <span className="bg-primary-dark dark:bg-primary-darker text-neutral-light dark:text-primary px-2 py-1 rounded transition-colors duration-300">
                     {String(timeLeft.seconds).padStart(2, "0")}
                   </span>
                 </div>
@@ -381,11 +442,11 @@ export default function ProductDetailRight({
           </div>
 
           {/* Promotion Details */}
-          <div className="border rounded-lg p-3 bg-white">
-            <p className="font-semibold text-xs sm:text-sm mb-2">
+          <div className="border rounded-lg p-3 bg-neutral-light dark:bg-neutral border-neutral-dark dark:border-neutral-dark transition-colors duration-300">
+            <p className="font-semibold text-xs sm:text-sm mb-2 text-primary dark:text-primary transition-colors duration-300">
               Khuyến mãi 1
             </p>
-            <ul className="text-xs sm:text-sm text-gray-700 space-y-2">
+            <ul className="text-xs sm:text-sm text-neutral-darker dark:text-neutral-darker space-y-2 transition-colors duration-300">
               <li>✓ Giảm ngay 200.000đ áp dụng đến 25/12</li>
               <li>
                 ✓ AirPods/Ốp Lưng phụ kiện nhập khẩu giảm đến 500.000đ khi mua
@@ -397,7 +458,7 @@ export default function ProductDetailRight({
         </div>
 
         {/* Student Promotion */}
-        <div className="bg-pink-100 border border-pink-300 rounded-lg p-3 sm:p-4 mt-3 sm:mt-4">
+        <div className="bg-pink-100 dark:bg-neutral border border-pink-300 dark:border-neutral-dark rounded-lg p-3 sm:p-4 mt-3 sm:mt-4 transition-colors duration-300">
           <div className="flex gap-3 sm:gap-4">
             <div className="bg-gradient-to-b from-purple-400 to-purple-600 p-2 sm:p-3 rounded text-white text-center min-w-[60px] sm:min-w-[80px] flex-shrink-0">
               <p className="text-xs font-bold">Đặc quyền</p>
@@ -405,13 +466,13 @@ export default function ProductDetailRight({
               <p className="text-xs">Giáo viên</p>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-xs sm:text-sm mb-1">
+              <p className="text-xs sm:text-sm mb-1 text-primary-darker transition-colors duration-300">
                 Đặc quyền HSSV - Giáo viên
               </p>
-              <p className="text-xs sm:text-sm text-gray-700 mb-2">
+              <p className="text-xs sm:text-sm text-primary-darker mb-2 transition-colors duration-300">
                 Giảm ngay 200.000đ
               </p>
-              <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs sm:text-sm font-semibold transition-colors">
+              <button className="bg-promotion hover:bg-promotion-hover dark:bg-promotion dark:hover:bg-promotion-hover text-white px-3 py-1.5 rounded text-xs sm:text-sm font-semibold transition-colors">
                 Xác thực ngay
               </button>
             </div>
@@ -420,56 +481,27 @@ export default function ProductDetailRight({
       </div>
 
       {/* Payment Promotions */}
-      <div className="flex flex-col border border-gray-300 rounded-lg mb-4">
-        <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 border-b border-gray-300 bg-gray-100 rounded-t-lg">
-          <p className="text-sm sm:text-base font-semibold">
+      <div className="flex flex-col border border-neutral-dark dark:border-neutral-dark rounded-lg mb-4 transition-colors duration-300">
+        <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 border-b border-neutral-dark dark:border-neutral-dark bg-neutral dark:bg-neutral rounded-t-lg transition-colors duration-300">
+          <p className="text-sm sm:text-base font-semibold text-primary dark:text-primary transition-colors duration-300">
             Khuyến mãi thanh toán
           </p>
-          <button className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm transition-colors">
+          <button className="text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover text-xs sm:text-sm transition-colors">
             Xem tất cả
           </button>
         </div>
-        <div>
+        <div className="bg-neutral-light dark:bg-neutral-light transition-colors duration-300">
           {/* Payment Logos */}
           <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-5 gap-4 sm:gap-2 p-3">
-            {/* {product.payments?.map((pay, index) => {
-              const isActive = activePayment === index;
-              return (
-                <div
-                  key={pay.id}
-                  className="relative flex justify-center"
-                  onMouseEnter={() => setActivePayment(index)}
-                  onClick={() => setActivePayment(index)}
-                >
-                  <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center
-                      rounded-lg border bg-white cursor-pointer transition
-                      ${
-                        isActive
-                          ? "border-gray-500"
-                          : "border-gray-300 hover:border-gray-400"
-                      }`}
-                  >
-                    <img
-                      src={pay.logo}
-                      alt={pay.name}
-                      className="object-contain max-h-[30px] max-w-[35px] sm:max-h-[35px] sm:max-w-[40px] lg:max-h-[40px] lg:max-w-[50px]"
-                    />
-                  </div>
-                  {isActive && (
-                    <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-gray-500" />
-                  )}
-                </div>
-              );
-            })} */}
+            {/* Payment logos would go here */}
           </div>
 
           {/* Payment Description */}
-          <div className="px-3 sm:px-4 pt-3 text-xs sm:text-sm text-gray-900">
-            {/* <span>{product.payments?.[activePayment]?.description}</span> */}
+          <div className="px-3 sm:px-4 pt-3 text-xs sm:text-sm text-primary dark:text-primary transition-colors duration-300">
+            {/* Payment description */}
           </div>
           <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2">
-            <span className="text-xs sm:text-sm text-gray-500">
+            <span className="text-xs sm:text-sm text-neutral-darker dark:text-neutral-darker transition-colors duration-300">
               HSD: 30/4/2025
             </span>
           </div>
@@ -477,52 +509,52 @@ export default function ProductDetailRight({
       </div>
 
       {/* Gifts & Benefits */}
-      <div className="flex flex-col border border-gray-300 rounded-lg mb-4">
-        <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 border-b border-gray-300 bg-gray-100 rounded-t-lg">
-          <p className="text-sm sm:text-base font-semibold">
+      <div className="flex flex-col border border-neutral-dark dark:border-neutral-dark rounded-lg mb-4 transition-colors duration-300">
+        <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 border-b border-neutral-dark dark:border-neutral-dark bg-neutral dark:bg-neutral rounded-t-lg transition-colors duration-300">
+          <p className="text-sm sm:text-base font-semibold text-primary dark:text-primary transition-colors duration-300">
             Quà tặng và ưu đãi khác
           </p>
         </div>
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm bg-neutral-light dark:bg-neutral-light transition-colors duration-300">
           <div className="flex items-start gap-3 my-3">
-            <FaGift className="text-red-600 text-base sm:text-lg flex-shrink-0 mt-0.5" />
+            <FaGift className="text-promotion dark:text-promotion text-base sm:text-lg flex-shrink-0 mt-0.5" />
             <div className="flex flex-col min-w-0">
-              <span className="break-words">
+              <span className="break-words text-primary dark:text-primary transition-colors duration-300">
                 Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy
               </span>
               <Link
                 href="#"
-                className="text-blue-600 hover:text-blue-800 hover:underline"
+                className="text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover hover:underline transition-colors"
               >
                 Xem chi tiết
               </Link>
             </div>
           </div>
           <div className="flex items-center gap-3 mb-3">
-            <p className="text-gray-500 whitespace-nowrap text-xs sm:text-sm">
+            <p className="text-neutral-darker dark:text-neutral-darker whitespace-nowrap text-xs sm:text-sm transition-colors duration-300">
               Ưu đãi
             </p>
-            <span className="border border-gray-500 w-full"></span>
+            <span className="border border-neutral-dark dark:border-neutral-dark w-full"></span>
           </div>
           <div className="flex items-start gap-3 mb-3">
-            <FaCog className="text-gray-600 text-base sm:text-lg flex-shrink-0 mt-0.5" />
-            <span className="break-words">
+            <FaCog className="text-neutral-darker dark:text-neutral-darker text-base sm:text-lg flex-shrink-0 mt-0.5 transition-colors duration-300" />
+            <span className="break-words text-primary dark:text-primary transition-colors duration-300">
               Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
               <Link
                 href="#"
-                className="text-blue-600 hover:text-blue-800 hover:underline"
+                className="text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover hover:underline transition-colors"
               >
                 Xem chi tiết
               </Link>
             </span>
           </div>
           <div className="flex items-start gap-3 mb-3">
-            <FaCog className="text-gray-600 text-base sm:text-lg flex-shrink-0 mt-0.5" />
-            <span className="break-words">
+            <FaCog className="text-neutral-darker dark:text-neutral-darker text-base sm:text-lg flex-shrink-0 mt-0.5 transition-colors duration-300" />
+            <span className="break-words text-primary dark:text-primary transition-colors duration-300">
               Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
               <Link
                 href="#"
-                className="text-blue-600 hover:text-blue-800 hover:underline"
+                className="text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover hover:underline transition-colors"
               >
                 Xem chi tiết
               </Link>
@@ -533,13 +565,13 @@ export default function ProductDetailRight({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-        <button className="flex items-center justify-center gap-2 text-red-600 font-bold py-3 rounded-lg transition hover:bg-red-50 border border-red-600 sm:flex-1 cursor-pointer">
+        <button className="flex items-center justify-center gap-2 text-promotion dark:text-promotion py-3 rounded-lg transition-colors hover:bg-promotion-light dark:hover:bg-neutral border border-promotion dark:border-promotion sm:flex-1 cursor-pointer bg-neutral-light dark:bg-neutral-light">
           <FaShoppingCart size={24} className="sm:w-7 sm:h-7" />
         </button>
-        <button className="flex-1 sm:flex-[2] bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg transition text-sm sm:text-base cursor-pointer">
+        <button className="flex-1 sm:flex-[2] bg-promotion hover:bg-promotion-hover dark:bg-promotion dark:hover:bg-promotion-hover text-neutral-light dark:text-primary-darker py-3 rounded-lg transition-colors text-sm sm:text-base cursor-pointer">
           Mua ngay
         </button>
-        <button className="flex-1 sm:flex-[2] bg-black text-white hover:bg-gray-700 font-bold py-3 rounded-lg transition text-sm sm:text-base cursor-pointer">
+        <button className="flex-1 sm:flex-[2] bg-primary-dark hover:bg-primary-hover dark:bg-primary-light dark:hover:bg-neutral text-neutral-light dark:text-primary-darker py-3 rounded-lg transition-colors text-sm sm:text-base cursor-pointer">
           Trả góp 0%
         </button>
       </div>

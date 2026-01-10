@@ -160,7 +160,7 @@ export default function ImageCarouselBanner({
 
   // --------------------------------------------------------------------------
   // MODAL FUNCTIONS - Các hàm quản lý modal
-  // ------
+  // --------------------------------------------------------------------------
 
   /**
    * Mở modal thông số kỹ thuật
@@ -189,7 +189,7 @@ export default function ImageCarouselBanner({
     <>
       <div>
         {/* IMAGE CAROUSEL */}
-        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-white rounded-lg shadow-2xl">
+        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light dark:bg-neutral rounded-lg shadow-2xl transition-colors duration-300">
           <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={currentImage}
@@ -201,7 +201,7 @@ export default function ImageCarouselBanner({
 
           <button
             onClick={goToPrevious}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 dark:bg-neutral/90 hover:bg-neutral-light dark:hover:bg-neutral text-primary dark:text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
             aria-label="Ảnh trước"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -209,14 +209,14 @@ export default function ImageCarouselBanner({
 
           <button
             onClick={goToNext}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 dark:bg-neutral/90 hover:bg-neutral-light dark:hover:bg-neutral text-primary dark:text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
             aria-label="Ảnh sau"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
-          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-gray-800 text-white px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10">
-            <div className="text-xs text-gray-300 mt-1">
+          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 dark:bg-primary-darker/80 text-neutral-light dark:text-primary px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
+            <div className="text-xs text-neutral dark:text-neutral-darker mt-1">
               {currentAbsoluteIndex}/{totalImages}
             </div>
           </div>
@@ -235,12 +235,12 @@ export default function ImageCarouselBanner({
                   onClick={() => goToGroup(index)}
                   className={`relative group rounded-lg overflow-hidden transition-all duration-300 ${
                     index === currentGroupIndex
-                      ? "ring-1 ring-blue-500 scale-105"
-                      : "ring-2 ring-gray-300 hover:ring-blue-300 hover:scale-105"
+                      ? "ring-2 ring-accent dark:ring-accent scale-105"
+                      : "ring-2 ring-neutral-dark dark:ring-neutral-dark hover:ring-accent dark:hover:ring-accent hover:scale-105"
                   }`}
                   aria-label={`Xem nhóm ảnh ${variant.code}`}
                 >
-                  <div className="relative h-16 sm:h-20 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="relative h-16 sm:h-20 flex items-center justify-center bg-neutral dark:bg-neutral rounded-lg overflow-hidden transition-colors duration-300">
                     <img
                       src={thumbnailUrl}
                       alt={variant.code}
@@ -252,7 +252,7 @@ export default function ImageCarouselBanner({
                     />
                   </div>
 
-                  <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-black/60 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded backdrop-blur-sm">
+                  <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-primary-darker/80 dark:bg-primary-darker/90 text-neutral-light dark:text-primary text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded backdrop-blur-sm transition-colors duration-300">
                     {index + 1}
                   </div>
                 </button>
@@ -263,37 +263,39 @@ export default function ImageCarouselBanner({
           {/* PRODUCT HIGHLIGHTS */}
           <div className="mt-6">
             <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-              <h2 className="font-semibold">Thông số nổi bật</h2>
+              <h2 className="font-semibold text-primary dark:text-primary">
+                Thông số nổi bật
+              </h2>
               <button
                 onClick={openDialog}
-                className="border border-red-500 px-4 sm:px-6 py-1 rounded-full text-sm sm:text-base text-red-500 cursor-pointer hover:bg-red-500 hover:text-white transition-colors duration-200"
+                className="border border-promotion dark:border-promotion px-4 sm:px-6 py-1 rounded-full text-sm sm:text-base text-promotion dark:text-promotion cursor-pointer hover:bg-promotion dark:hover:bg-promotion hover:text-neutral-light dark:hover:text-primary-darker transition-colors duration-200"
               >
                 Xem tất cả thông số
               </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-gray-300 pb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark dark:border-neutral-dark pb-6 transition-colors duration-300">
               {/* Màn hình */}
               <div className="flex-1">
-                <span className="text-sm opacity-70">
+                <span className="text-sm text-neutral-darker dark:text-neutral-darker">
                   {screenHighlight?.highlight.title || "Màn hình"}
                 </span>
                 <div className="flex items-center gap-2 mt-3 sm:mt-6">
-                  <MdPhoneIphone size={28} className="opacity-50" />
-                  <span className="text-base font-semibold">
+                  <MdPhoneIphone size={28} className="text-neutral-darker dark:text-neutral-darker" />
+                  <span className="text-base font-semibold text-primary dark:text-primary">
                     {screenHighlight?.value || "N/A"}
                   </span>
                 </div>
               </div>
 
               {/* Camera */}
-              <div className="flex-1 sm:border-l sm:border-r sm:px-6 lg:px-12 border-gray-300">
-                <span className="text-sm opacity-70">
+              <div className="flex-1 sm:border-l sm:border-r sm:px-6 lg:px-12 border-neutral-dark dark:border-neutral-dark transition-colors duration-300">
+                <span className="text-sm text-neutral-darker dark:text-neutral-darker">
                   {cameraHighlight?.highlight.title || "Camera"}
                 </span>
                 <div className="flex items-center gap-2 mt-3 sm:mt-6">
-                  <IoRadioButtonOn size={28} className="opacity-50" />
-                  <span className="text-base font-semibold">
+                  <IoRadioButtonOn size={28} className="text-neutral-darker dark:text-neutral-darker" />
+                  <span className="text-base font-semibold text-primary dark:text-primary">
                     {cameraHighlight?.value || "N/A"}
                   </span>
                 </div>
@@ -301,12 +303,12 @@ export default function ImageCarouselBanner({
 
               {/* Chip/RAM */}
               <div className="flex-1 h-[100%]">
-                <span className="text-sm opacity-70">
+                <span className="text-sm text-neutral-darker dark:text-neutral-darker">
                   {ramHighlight?.highlight.title || "Chip"}
                 </span>
                 <div className="flex items-center gap-2 mt-3 sm:mt-6">
-                  <MdMemory size={28} className="opacity-50" />
-                  <span className="text-base font-semibold">
+                  <MdMemory size={28} className="text-neutral-darker dark:text-neutral-darker" />
+                  <span className="text-base font-semibold text-primary dark:text-primary">
                     {ramHighlight?.value || "N/A"}
                   </span>
                 </div>
@@ -317,26 +319,34 @@ export default function ImageCarouselBanner({
           {/* PRODUCT POLICIES */}
           <div>
             <div className="flex flex-col sm:flex-row justify-between mt-4 items-start sm:items-center gap-2">
-              <h2 className="text-base font-semibold">Chính sách sản phẩm</h2>
-              <button className="text-base text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
+              <h2 className="text-base font-semibold text-primary dark:text-primary">
+                Chính sách sản phẩm
+              </h2>
+              <button className="text-base text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover hover:underline cursor-pointer transition-colors duration-200">
                 Tìm hiểu thêm
               </button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-6">
               <div className="flex items-center gap-2 sm:mr-12">
-                <MdVerified size={28} className="opacity-50" />
-                <p className="text-sm">Hàng chính hãng - Bảo hành 18 tháng</p>
+                <MdVerified size={28} className="text-neutral-darker dark:text-neutral-darker" />
+                <p className="text-sm text-primary dark:text-primary">
+                  Hàng chính hãng - Bảo hành 18 tháng
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <FaShippingFast size={28} className="opacity-50" />
-                <p className="text-sm">Miễn phí giao hàng toàn quốc</p>
+                <FaShippingFast size={28} className="text-neutral-darker dark:text-neutral-darker" />
+                <p className="text-sm text-primary dark:text-primary">
+                  Miễn phí giao hàng toàn quốc
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <FaUserCog size={28} className="opacity-50" />
-                <p className="text-sm">Kỹ thuật viên hỗ trợ trực tuyến</p>
+                <FaUserCog size={28} className="text-neutral-darker dark:text-neutral-darker" />
+                <p className="text-sm text-primary dark:text-primary">
+                  Kỹ thuật viên hỗ trợ trực tuyến
+                </p>
               </div>
             </div>
           </div>

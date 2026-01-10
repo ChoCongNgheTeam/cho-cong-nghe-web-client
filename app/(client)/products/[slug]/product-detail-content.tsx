@@ -54,16 +54,14 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
 
       {/* Product Detail Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
-        <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
-          <ProductDetailSection />
-        </div>
+        <ProductDetailSection />
       </div>
 
       {/* Product Detail Section 1 */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6">
-        <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+       
           <ProductDetailSection1 />
-        </div>
+        
       </div>
 
       {/* Product Review Section */}
