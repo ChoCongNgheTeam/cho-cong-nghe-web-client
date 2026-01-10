@@ -1,6 +1,6 @@
 export const featuredProducts = [
   {
-    id: 6,
+    id: 1,
     name: "LG Smart TV NanoCell 65 Inch 4K 65NANO81TSA",
     slug: "lg-nanocell-65-4k",
     brand: "LG",
@@ -9,13 +9,13 @@ export const featuredProducts = [
       price: 15490000,
       originalPrice: 20990000,
       discount: 26,
-      stock: 22
+      stock: 22,
     },
     rating: 4.5,
-    reviewCount: 145
+    reviewCount: 145,
   },
   {
-    id: 7,
+    id: 2,
     name: "Sony WH-1000XM5 Wireless Headphones",
     slug: "sony-wh1000xm5",
     brand: "Sony",
@@ -24,14 +24,14 @@ export const featuredProducts = [
       price: 8990000,
       originalPrice: 10990000,
       discount: 18,
-      stock: 78
+      stock: 78,
     },
     rating: 4.9,
-    reviewCount: 312
+    reviewCount: 312,
   },
   {
-    id: 8,
-    name: "Dell XPS 13 Plus i7-13700H 16GB 512GB",
+    id: 3,
+    name: "Dell XPS 13 Plus i7 16GB 512GB",
     slug: "dell-xps-13-plus",
     brand: "Dell",
     variant: {
@@ -39,13 +39,13 @@ export const featuredProducts = [
       price: 38990000,
       originalPrice: 45990000,
       discount: 15,
-      stock: 18
+      stock: 18,
     },
     rating: 4.7,
-    reviewCount: 89
+    reviewCount: 89,
   },
   {
-    id: 9,
+    id: 4,
     name: "Apple Watch Series 9 GPS 45mm",
     slug: "apple-watch-s9-45mm",
     brand: "Apple",
@@ -54,9 +54,24 @@ export const featuredProducts = [
       price: 11990000,
       originalPrice: 13990000,
       discount: 14,
-      stock: 95
+      stock: 95,
     },
     rating: 4.8,
-    reviewCount: 203
+    reviewCount: 203,
+  },
+  {
+    id: 5,
+    name: "iPad Air M1 WiFi 64GB",
+    slug: "ipad-air-m1-64gb",
+    brand: "Apple",
+    variant: {
+      code: "IPAD-AIR-M1",
+      price: 14990000,
+      originalPrice: 17990000,
+      discount: 17,
+      stock: 40,
+    },
+    rating: 4.6,
+    reviewCount: 167,
   },
 ];

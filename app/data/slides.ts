@@ -1,23 +1,23 @@
 export const slides = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&h=500&q=80",
     title: "Sản phẩm công nghệ mới",
     description: "Khám phá các sản phẩm công nghệ hàng đầu",
-    buttonText: "Mua ngay"
+    buttonText: "Mua ngay",
   },
   {
     id: 2,
-    image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1600&h=500&q=80",
     title: "Giảm giá đặc biệt",
-    description: "Tiết kiệm đến 50% cho các sản phẩm chọn lọc",
-    buttonText: "Xem ngay"
+    description: "Tiết kiệm đến 50% cho sản phẩm chọn lọc",
+    buttonText: "Xem ngay",
   },
   {
     id: 3,
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=1200&h=400&fit=crop",
-    title: "Phụ kiện chất lượng",
-    description: "Các phụ kiện công nghệ chính hãng",
-    buttonText: "Khám phá"
-  }
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1600&h=500&q=80",
+    title: "Phụ kiện công nghệ",
+    description: "Chính hãng – Giá tốt mỗi ngày",
+    buttonText: "Khám phá",
+  },
 ];

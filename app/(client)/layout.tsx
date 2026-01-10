@@ -1,12 +1,18 @@
 import Header from "@/components/layout/Header/header";
 import Footer from "@/components/layout/Footer/footer";
+import ToggleSwitch from "@/components/ui/ThemeToggle";
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Header />
-      <main className="min-h-screen">{children}</main>
-      {/* <Footer /> */}
-    </>
-  );
+export default function ClientLayout({
+   children,
+}: {
+   children: React.ReactNode;
+}) {
+   return (
+      <>
+         <Header />
+         <ToggleSwitch defaultValue={false} />
+         <main className="min-h-screen">{children}</main>
+         <Footer />
+      </>
+   );
 }
