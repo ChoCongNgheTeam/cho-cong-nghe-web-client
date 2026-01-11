@@ -8,10 +8,11 @@ type ProductCardProps = {
   product: Product;
 };
 
-const formatPrice = (price: number) =>
-  price.toLocaleString("vi-VN") + " đ";
+const formatPrice = (price: number) => price.toLocaleString("vi-VN") + " đ";
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const discount = product.variant.originalPrice - product.variant.price;
+
   const discountPercent = Math.round(
     ((product.variant.originalPrice - product.variant.price) /
       product.variant.originalPrice) *
