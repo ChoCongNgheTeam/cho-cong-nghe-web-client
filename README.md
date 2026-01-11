@@ -1,9 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛒 Chợ Công Nghệ – Web Client
 
-## Getting Started
+Frontend cho dự án **Chợ Công Nghệ**, được xây dựng với **Next.js (App Router)**, **React**, **TypeScript** và **Tailwind CSS**.
 
-First, run the development server:
+## 📋 Yêu cầu hệ thống
 
+- **Node.js**: >= 20.x
+- **npm / yarn / pnpm / bun**
+- **Backend API** đã chạy (xem README backend)
+
+## 🚀 Hướng dẫn cài đặt
+
+### 1. Clone Repository
+
+```bash
+git clone <https://github.com/ChoCongNgheTeam/cho-cong-nghe-web-client.git>
+cd cho-cong-nghe-web-client
+```
+### 2. Cấu hình Environment Variables
+Tạo file `.env.local` ở thư mục root và cấu hình theo template sau:
+
+```env
+# Public (client-side)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Server-only
+INTERNAL_API_SECRET=xxx
+```
+
+> ⚠️ **Lưu ý**: 
+Chỉ biến bắt đầu bằng NEXT_PUBLIC_ mới dùng ở client
+INTERNAL_API_SECRET chỉ dùng phía server (App Router)
+
+### 3. Cài đặt Dependencies
+```bash
+npm install
+```
+### 4. Chạy Development Server
 ```bash
 npm run dev
 ```

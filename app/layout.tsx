@@ -24,7 +24,10 @@ export default function RootLayout({
    children: React.ReactNode;
 }>) {
    return (
-      <html lang="en">
+      <html lang="vi" suppressHydrationWarning>
+         <head>
+            <meta name="color-scheme" content="ligessHark" />
+         </head>
          <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
          >

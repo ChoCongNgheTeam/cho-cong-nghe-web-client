@@ -1,11 +1,31 @@
-import React from "react";
-import { Facebook, Twitter, Instagram, Music } from "lucide-react";
+"use client";
+import React, { useState } from "react";
+import { Facebook, Twitter, Instagram, Music, ChevronDown } from "lucide-react";
+
+interface OpenSections {
+   about: boolean;
+   policy: boolean;
+   payment: boolean;
+}
 
 const Footer = () => {
+   const [openSections, setOpenSections] = useState<OpenSections>({
+      about: false,
+      policy: false,
+      payment: false,
+   });
+
+   const toggleSection = (section: keyof OpenSections): void => {
+      setOpenSections((prev) => ({
+         ...prev,
+         [section]: !prev[section],
+      }));
+   };
+
    return (
       <footer className="bg-gray-900 text-white">
          <div className="bg-gray-800 py-8">
-            <div className="container">
+            <div className="container mx-auto px-4">
                <h2 className="text-xl font-bold mb-2">
                   Hệ thống ChoCongNghe trên toàn quốc
                </h2>
@@ -15,7 +35,7 @@ const Footer = () => {
                </p>
             </div>
          </div>
-         <div className="container py-12">
+         <div className="container mx-auto px-4 py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                <div>
                   <h3 className="text-xl font-bold mb-6">ChoCongNghe.</h3>
@@ -85,9 +105,24 @@ const Footer = () => {
                      </div>
                   </div>
                </div>
+
                <div>
-                  <h4 className="font-semibold mb-4">VỀ CHÚNG TÔI</h4>
-                  <ul className="space-y-2 text-sm text-gray-300">
+                  <button
+                     onClick={() => toggleSection("about")}
+                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
+                  >
+                     <h4 className="font-semibold">VỀ CHÚNG TÔI</h4>
+                     <ChevronDown
+                        className={`w-5 h-5 md:hidden transition-transform ${
+                           openSections.about ? "rotate-180" : ""
+                        }`}
+                     />
+                  </button>
+                  <ul
+                     className={`space-y-2 text-sm text-gray-300 ${
+                        openSections.about ? "block" : "hidden md:block"
+                     }`}
+                  >
                      <li>
                         <a
                            href="#"
@@ -170,9 +205,24 @@ const Footer = () => {
                      </li>
                   </ul>
                </div>
+
                <div>
-                  <h4 className="font-semibold mb-4">CHÍNH SÁCH</h4>
-                  <ul className="space-y-2 text-sm text-gray-300">
+                  <button
+                     onClick={() => toggleSection("policy")}
+                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
+                  >
+                     <h4 className="font-semibold">CHÍNH SÁCH</h4>
+                     <ChevronDown
+                        className={`w-5 h-5 md:hidden transition-transform ${
+                           openSections.policy ? "rotate-180" : ""
+                        }`}
+                     />
+                  </button>
+                  <ul
+                     className={`space-y-2 text-sm text-gray-300 ${
+                        openSections.policy ? "block" : "hidden md:block"
+                     }`}
+                  >
                      <li>
                         <a
                            href="#"
@@ -263,110 +313,126 @@ const Footer = () => {
                      </li>
                   </ul>
                </div>
+
                <div>
-                  <h4 className="font-semibold mb-4">HỖ TRỢ THANH TOÁN</h4>
-                  <div className="grid grid-cols-3 gap-2 mb-6">
-                     <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-blue-700 font-bold text-lg italic">
-                           VISA
-                        </span>
-                     </div>
-                     <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                        <div className="flex items-center gap-0.5">
-                           <div className="w-5 h-5 bg-red-500 rounded-full opacity-80"></div>
-                           <div className="w-5 h-5 bg-yellow-500 rounded-full opacity-80 -ml-2"></div>
+                  <button
+                     onClick={() => toggleSection("payment")}
+                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
+                  >
+                     <h4 className="font-semibold">HỖ TRỢ THANH TOÁN</h4>
+                     <ChevronDown
+                        className={`w-5 h-5 md:hidden transition-transform ${
+                           openSections.payment ? "rotate-180" : ""
+                        }`}
+                     />
+                  </button>
+                  <div
+                     className={`${
+                        openSections.payment ? "block" : "hidden md:block"
+                     }`}
+                  >
+                     <div className="grid grid-cols-3 gap-2 mb-6">
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-blue-700 font-bold text-lg italic">
+                              VISA
+                           </span>
                         </div>
-                     </div>
-                     <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-blue-900 font-bold text-sm">
-                           JCB
-                        </span>
-                     </div>
-                     <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-blue-600 font-bold text-xs">
-                           AMEX
-                        </span>
-                     </div>
-                     <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-green-700 font-semibold text-xs">
-                           COD
-                        </span>
-                     </div>
-                     <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-purple-700 font-semibold text-xs">
-                           Trả góp
-                        </span>
-                     </div>
-                     <div className="bg-pink-600 rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-white font-bold text-sm">
-                           MoMo
-                        </span>
-                     </div>
-                     <div className="bg-blue-500 rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-white font-bold text-xs">
-                           ZaloPay
-                        </span>
-                     </div>
-                     <div className="bg-blue-600 rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-white font-bold text-xs">
-                           VNPAY
-                        </span>
-                     </div>
-                     <div className="bg-red-600 rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-white font-semibold text-xs">
-                           Home Credit
-                        </span>
-                     </div>
-                     <div className="bg-black rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-white font-semibold text-xs">
-                           {" "}
-                           Pay
-                        </span>
-                     </div>
-                     <div className="bg-blue-700 rounded p-2 flex items-center justify-center h-12">
-                        <span className="text-white font-semibold text-xs">
-                           Samsung Pay
-                        </span>
-                     </div>
-                  </div>
-                  <h4 className="font-semibold mb-4">CHỨNG NHẬN</h4>
-                  <div className="flex gap-2">
-                     <div className="bg-white rounded p-2 flex items-center justify-center w-16 h-16">
-                        <div className="text-center">
-                           <div className="text-blue-600 font-bold text-xs">
-                              BCT
-                           </div>
-                           <div className="text-gray-600 text-[8px]">
-                              Đã thông báo
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <div className="flex items-center gap-0.5">
+                              <div className="w-5 h-5 bg-red-500 rounded-full opacity-80"></div>
+                              <div className="w-5 h-5 bg-yellow-500 rounded-full opacity-80 -ml-2"></div>
                            </div>
                         </div>
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-blue-900 font-bold text-sm">
+                              JCB
+                           </span>
+                        </div>
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-blue-600 font-bold text-xs">
+                              AMEX
+                           </span>
+                        </div>
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-green-700 font-semibold text-xs">
+                              COD
+                           </span>
+                        </div>
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-purple-700 font-semibold text-xs">
+                              Trả góp
+                           </span>
+                        </div>
+                        <div className="bg-pink-600 rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-bold text-sm">
+                              MoMo
+                           </span>
+                        </div>
+                        <div className="bg-blue-500 rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-bold text-xs">
+                              ZaloPay
+                           </span>
+                        </div>
+                        <div className="bg-blue-600 rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-bold text-xs">
+                              VNPAY
+                           </span>
+                        </div>
+                        <div className="bg-red-600 rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-semibold text-xs">
+                              Home Credit
+                           </span>
+                        </div>
+                        <div className="bg-black rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-semibold text-xs">
+                              Apple Pay
+                           </span>
+                        </div>
+                        <div className="bg-blue-700 rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-semibold text-xs">
+                              Samsung Pay
+                           </span>
+                        </div>
                      </div>
-                     <div className="bg-blue-700 rounded p-2 flex items-center justify-center w-16 h-16">
-                        <span className="text-white font-bold text-xs text-center">
-                           DMCA
-                        </span>
-                     </div>
-                     <div className="bg-green-600 rounded-full p-2 flex items-center justify-center w-16 h-16">
-                        <svg
-                           className="w-8 h-8 text-white"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="3"
-                              d="M5 13l4 4L19 7"
-                           ></path>
-                        </svg>
+                     <h4 className="font-semibold mb-4">CHỨNG NHẬN</h4>
+                     <div className="flex gap-2">
+                        <div className="bg-white rounded p-2 flex items-center justify-center w-16 h-16">
+                           <div className="text-center">
+                              <div className="text-blue-600 font-bold text-xs">
+                                 BCT
+                              </div>
+                              <div className="text-gray-600 text-[8px]">
+                                 Đã thông báo
+                              </div>
+                           </div>
+                        </div>
+                        <div className="bg-blue-700 rounded p-2 flex items-center justify-center w-16 h-16">
+                           <span className="text-white font-bold text-xs text-center">
+                              DMCA
+                           </span>
+                        </div>
+                        <div className="bg-green-600 rounded-full p-2 flex items-center justify-center w-16 h-16">
+                           <svg
+                              className="w-8 h-8 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                           >
+                              <path
+                                 strokeLinecap="round"
+                                 strokeLinejoin="round"
+                                 strokeWidth="3"
+                                 d="M5 13l4 4L19 7"
+                              ></path>
+                           </svg>
+                        </div>
                      </div>
                   </div>
                </div>
             </div>
          </div>
          <div className="border-t border-gray-700">
-            <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="container py-6">
                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-sm text-gray-400">
                   <div className="space-y-1">
                      <p>© Bản quyền thuộc về ChoCongNghe</p>
