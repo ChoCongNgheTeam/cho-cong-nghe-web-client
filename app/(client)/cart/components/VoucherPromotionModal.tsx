@@ -221,6 +221,7 @@ export default function VoucherPromotionModal({
       const filtered = MOCK_VOUCHERS.filter((v) => v.is_active);
       setAvailableVouchers(filtered);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, cartTotal]);
 
   // Initialize when modal opens
@@ -243,6 +244,7 @@ export default function VoucherPromotionModal({
         setVoucherError("");
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, selectedPromotions, appliedVoucherCode]);
 
   // Handle body scroll

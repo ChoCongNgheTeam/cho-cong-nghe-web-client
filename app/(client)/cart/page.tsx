@@ -131,7 +131,7 @@ export default function CartPage() {
 
                 <button
                   onClick={removeSelectedItems}
-                  className="text-neutral-darker transition hover:text-promotion disabled:cursor-not-allowed disabled:text-neutral-dark"
+                  className="text-neutral-darker transition hover:text-primary-darker disabled:cursor-not-allowed disabled:text-neutral-dark"
                   disabled={selectedItems.length === 0}
                   aria-label="Xóa các sản phẩm đã chọn"
                 >
@@ -184,7 +184,7 @@ export default function CartPage() {
                             {/* Trash button - Top right on mobile */}
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="sm:hidden text-neutral-dark transition hover:text-promotion flex-shrink-0"
+                              className="sm:hidden text-neutral-dark transition hover:text-primary-darker flex-shrink-0"
                               aria-label="Xóa sản phẩm"
                             >
                               <Trash2 className="h-5 w-5" />
@@ -291,7 +291,7 @@ export default function CartPage() {
                           {/* Delete Button */}
                           <button
                             onClick={() => removeItem(item.id)}
-                            className="text-neutral-dark transition hover:text-promotion"
+                            className="text-neutral-dark transition hover:text-primary-darker"
                             aria-label="Xóa sản phẩm"
                           >
                             <Trash2 className="h-5 w-5" />
