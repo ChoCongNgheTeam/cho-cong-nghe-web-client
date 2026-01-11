@@ -13,7 +13,13 @@ import CompareProducts from "../components/product-detail/product-detail-compare
 import ProductDetailSuggest from "../components/product-detail/product-detail-suggest";
 import ProductsViewed from "../components/product-detail/products-viewed";
 
-export function ProductDetailContent() {
+import { ProductDetail } from "@/lib/types/product";
+
+interface ProductDetailContentProps {
+  product: ProductDetail;
+}
+
+export function ProductDetailContent({ product }: ProductDetailContentProps) {
   const reviewsRef = useRef<HTMLDivElement>(null);
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
@@ -25,18 +31,21 @@ export function ProductDetailContent() {
   return (
     <div>
       {/* Hero Section - Product Info */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 mt-4 sm:mt-6 lg:mt-8">
+      <div className="container sm:px-6 lg:px-12 mt-4 sm:mt-6 lg:mt-8">
         <div>
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
             {/* Left - Product Banner */}
             <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
-              <ProductDetailBanner />
+              <ProductDetailBanner product={product} />
             </div>
 
             {/* Right - Product Card */}
             <div className="w-full lg:w-[40%]">
               <div className="lg:sticky lg:top-4 lg:h-fit">
-                <ProductDetailRight onReviewClick={scrollToReviews} />
+                <ProductDetailRight
+                  product={product}
+                  onReviewClick={scrollToReviews}
+                />
               </div>
             </div>
           </div>
@@ -44,45 +53,41 @@ export function ProductDetailContent() {
       </div>
 
       {/* Product Detail Section */}
-      <div className="bg-gray-500/10 pt-4 sm:pt-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
-          <ProductDetailSection />
-        </div>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
+        <ProductDetailSection />
       </div>
 
       {/* Product Detail Section 1 */}
-      <div className="bg-gray-500/10 pt-4 sm:pt-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
-          <ProductDetailSection1 />
-        </div>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6">
+        <ProductDetailSection1 />
       </div>
 
       {/* Product Review Section */}
-      <div className="bg-gray-500/10  pt-4 sm:pt-6 " ref={reviewsRef}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+      <div className="bg-gray-400/10  pt-4 sm:pt-6 " ref={reviewsRef}>
+        <div >
           <ProductReview />
         </div>
       </div>
 
       {/* Compare Products Section */}
-      <div className="bg-gray-500/10 pt-4 sm:pt-6 ">
-        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
+        <div>
           <CompareProducts />
         </div>
       </div>
       {/* Suggest Products Section */}
-      <div className="bg-gray-500/10 pt-4 sm:pt-6 ">
-        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
+        <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
           <ProductDetailSuggest />
         </div>
       </div>
-      <div className="bg-gray-500/10 p-4 sm:pt-6 ">
-        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+      <div className="bg-gray-400/10 p-4 sm:pt-6 ">
+        <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
           <ProductsViewed />
         </div>
       </div>
-      <div className="p-2 sm:pt-6 bg-gray-500/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12  rounded-lg">
+      <div className="p-2 sm:pt-6 bg-gray-400/10">
+        <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12  rounded-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             <div className="flex flex-col gap-2 justify-center items-center">
               <BsPatchCheckFill size={48} className="text-red-500" />

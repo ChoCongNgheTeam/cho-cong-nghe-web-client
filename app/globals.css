@@ -2,39 +2,39 @@
 
 /* ===================== POPPINS LOCAL ===================== */
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Light.ttf") format("truetype");
-   font-weight: 300;
-   font-style: normal;
-   font-display: swap;
+  font-family: "Poppins";
+  src: url("/fonts/poppins/Poppins-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
-   font-weight: 400;
-   font-style: normal;
-   font-display: swap;
+  font-family: "Poppins";
+  src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Medium.ttf") format("truetype");
-   font-weight: 500;
-   font-style: normal;
-   font-display: swap;
+  font-family: "Poppins";
+  src: url("/fonts/poppins/Poppins-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
-   font-weight: 600;
-   font-style: normal;
-   font-display: swap;
+  font-family: "Poppins";
+  src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
-   font-weight: 700;
-   font-style: normal;
-   font-display: swap;
+  font-family: "Poppins";
+  src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* ===================== RAW COLOR TOKENS ===================== */
@@ -47,11 +47,11 @@
    --yellow-active: 203 172 0;
    --yellow-dark: 191 161 0;
 
-   /* NEUTRAL */
-   --neutral-light: 253 253 253;
-   --neutral: 230 230 230;
-   --neutral-dark: 173 173 173;
-   --neutral-darker: 81 81 81;
+  /* NEUTRAL */
+  --neutral-light: 253 253 253;
+  --neutral: 230 230 230;
+  --neutral-dark: 173 173 173;
+  --neutral-darker: 81 81 81;
 
    /* PRIMARY / Blue */
    /* PRIMARY / Blue */
@@ -126,7 +126,7 @@
    --color-neutral-dark: rgb(var(--neutral-dark));
    --color-neutral-darker: rgb(var(--neutral-darker));
 
-   --font-poppins: "Poppins", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
 }
 /* ===================== UTILITIES ===================== */
 @layer utilities {
@@ -158,19 +158,19 @@
       }
    }
 
-   @media (min-width: 1024px) {
-      .container {
-         max-width: 1240px;
-         padding-left: 1.5rem;
-         padding-right: 1.5rem;
-      }
-   }
+  @media (min-width: 1024px) {
+    .container {
+      max-width: 1240px;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
 
-   @media (min-width: 1280px) {
-      .container {
-         max-width: 1280px;
-      }
-   }
+  @media (min-width: 1280px) {
+    .container {
+      max-width: 1280px;
+    }
+  }
 
    @media (min-width: 1536px) {
       .container {

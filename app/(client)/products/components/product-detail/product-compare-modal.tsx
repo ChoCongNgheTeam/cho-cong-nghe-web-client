@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, X } from "lucide-react";
 
 interface Product {
@@ -39,6 +39,19 @@ export default function ProductCompareModal({
 }: ProductCompareModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Ngăn scroll layout khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   // Lọc sản phẩm gợi ý (cùng phân khúc, không phải sản phẩm hiện tại)
   const suggestedProducts = useMemo(() => {
     const filtered = allProducts.filter(
@@ -59,18 +72,18 @@ export default function ProductCompareModal({
   const canAddMore = selectedProducts.length < maxCompareProducts;
 
   return (
-    <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-end">
-      <div className="bg-white rounded-t-2xl sm:rounded-lg w-full sm:max-w-2xl h-[100vh] sm:h-auto sm:max-h-[100vh] flex flex-col">
+    <div className="fixed inset-0 bg-primary-darker/50 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-end">
+      <div className="bg-neutral-light rounded-t-2xl sm:rounded-lg w-full sm:max-w-2xl h-[100vh] sm:h-auto sm:max-h-[100vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
-          <h2 className="text-xl sm:text-2xl font-bold">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-dark">
+          <h2 className="text-xl sm:text-2xl font-bold text-primary">
             Chọn sản phẩm so sánh
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-neutral rounded-lg transition-colors"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 text-primary" />
           </button>
         </div>
 
@@ -79,31 +92,31 @@ export default function ProductCompareModal({
           {/* Search Input */}
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-darker" />
               <input
                 type="text"
                 placeholder="Nhập sản phẩm bạn muốn so sánh"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent bg-neutral-light text-primary"
               />
             </div>
           </div>
 
           {/* Suggested Products */}
-          <div className="mb-8">
-            <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-800">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-primary">
               Gợi ý sản phẩm cùng phân khúc
             </h3>
-            <div className="space-y-3 min-h-[100vh]">
+            <div className="space-y-3 min-h-[80vh]">
               {suggestedProducts.length > 0 ? (
                 suggestedProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 p-3 border border-neutral-dark rounded-lg hover:bg-neutral transition-colors"
                   >
                     {/* Product Image */}
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral rounded-lg flex-shrink-0 overflow-hidden">
                       <img
                         src={product.image}
                         alt={product.name}
@@ -113,20 +126,20 @@ export default function ProductCompareModal({
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm sm:text-base text-gray-900 line-clamp-2">
+                      <h4 className="font-medium text-sm sm:text-base text-primary line-clamp-2">
                         {product.name}
                       </h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-base sm:text-lg font-bold text-red-600">
+                        <span className="text-base sm:text-lg font-bold text-promotion">
                           {product.price}
                         </span>
                         {product.oldPrice && (
-                          <span className="text-xs sm:text-sm text-gray-400 line-through">
+                          <span className="text-xs sm:text-sm text-neutral-darker line-through">
                             {product.oldPrice}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                      <div className="text-xs sm:text-sm text-neutral-darker mt-1">
                         {product.screenSize} • {product.battery}
                       </div>
                     </div>
@@ -137,10 +150,10 @@ export default function ProductCompareModal({
                       disabled={!canAddMore && !isProductSelected(product.id)}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex-shrink-0 ${
                         isProductSelected(product.id)
-                          ? "bg-green-100 text-green-700 border border-green-300"
+                          ? "bg-accent-light text-accent border border-accent"
                           : canAddMore
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          ? "bg-accent text-primary-darker hover:bg-accent-hover"
+                          : "bg-neutral text-neutral-darker cursor-not-allowed"
                       }`}
                     >
                       {isProductSelected(product.id) ? "✓ Đã thêm" : "Thêm vào"}
@@ -148,7 +161,7 @@ export default function ProductCompareModal({
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-neutral-darker">
                   {searchQuery
                     ? "Không tìm thấy sản phẩm phù hợp"
                     : "Không có sản phẩm gợi ý"}
@@ -160,22 +173,22 @@ export default function ProductCompareModal({
 
         {/* Selected Products */}
         {selectedProducts.length > 0 && (
-          <div className="border-t p-4 sm:p-6 bg-gray-50">
-            <h3 className="text-base font-semibold mb-3 text-gray-800">
+          <div className="border-t border-neutral-dark p-4 sm:p-6 bg-neutral">
+            <h3 className="text-base font-semibold mb-3 text-primary">
               Sản phẩm đã chọn ({selectedProducts.length}/{maxCompareProducts})
             </h3>
             <div className="flex flex-wrap gap-2 mb-4">
               {selectedProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2"
+                  className="flex items-center gap-2 bg-neutral-light border border-neutral-dark rounded-lg px-3 py-2"
                 >
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-10 h-10 rounded object-cover"
                   />
-                  <span className="text-sm font-medium text-gray-700 flex-1">
+                  <span className="text-sm font-medium text-primary flex-1">
                     {product.name.substring(0, 20)}...
                   </span>
                   {/* Add Button */}
@@ -184,10 +197,10 @@ export default function ProductCompareModal({
                     disabled={!canAddMore && !isProductSelected(product.id)}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex-shrink-0 ${
                       isProductSelected(product.id)
-                        ? "bg-green-100 text-green-700 border border-green-300"
+                        ? "bg-accent-light text-accent border border-accent"
                         : canAddMore
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        ? "bg-accent text-primary-darker hover:bg-accent-hover"
+                        : "bg-neutral text-neutral-darker cursor-not-allowed"
                     }`}
                   >
                     {isProductSelected(product.id) ? "✓ Đã thêm" : "Thêm vào"}
@@ -199,17 +212,17 @@ export default function ProductCompareModal({
         )}
 
         {/* Footer */}
-        <div className="border-t p-4 sm:p-6 flex gap-3">
+        <div className="border-t border-neutral-dark p-4 sm:p-6 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2.5 border border-neutral-dark rounded-lg font-medium text-primary hover:bg-neutral transition-colors"
           >
             Xóa tất cả
           </button>
           <button
             onClick={onCompare}
             disabled={selectedProducts.length === 0}
-            className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 bg-promotion text-white rounded-lg font-medium hover:bg-promotion-hover transition-colors disabled:bg-neutral disabled:cursor-not-allowed"
           >
             So sánh ngay
           </button>
