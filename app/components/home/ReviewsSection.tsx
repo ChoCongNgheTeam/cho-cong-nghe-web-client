@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { reviews } from "../../data/reviews";
+import Image from "next/image";
 
 export default function ReviewsSection() {
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -99,14 +100,17 @@ export default function ReviewsSection() {
             {reviews.map((review) => (
               <div
                 key={review.id}
-                className="flex-shrink-0 w-[260px] sm:w-[280px] snap-start cursor-pointer group"
+                className="shrink-0 w-65 sm:w-70 snap-start cursor-pointer group"
               >
                 <div className="rounded-lg aspect-video mb-3 overflow-hidden relative">
-                  <img
-                    src={review.thumbnail}
-                    alt={review.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <Image
+  src={review.thumbnail}
+  alt={review.title}
+  width={300}
+  height={200}
+  className="w-full h-full object-cover"
+/>
+
                   <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
                       <span className="text-2xl ml-1">▶</span>
@@ -115,7 +119,7 @@ export default function ReviewsSection() {
                 </div>
 
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 bg-linear-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
                     {review.author[0]}
                   </div>
                   <div>
