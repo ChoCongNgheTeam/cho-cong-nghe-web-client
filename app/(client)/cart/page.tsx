@@ -129,7 +129,7 @@ export default function CartPage() {
          {/* Main Content */}
          <div className="container pb-28 lg:pb-8 space-y-4 !px-3">
             {items.length === 0 ? (
-               <div className="rounded-lg bg-white p-6 sm:p-8 lg:p-12 text-center shadow-sm">
+               <div className="rounded-lg bg-neutral-light p-6 sm:p-8 lg:p-12 text-center shadow-sm">
                   <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary-darker">
                      Giỏ hàng trống
                   </h2>
@@ -148,7 +148,7 @@ export default function CartPage() {
                   {/* LEFT COLUMN - Cart Items */}
                   <div className="lg:col-span-2 space-y-4">
                      {/* Select All Box */}
-                     <div className="flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm">
+                     <div className="flex items-center justify-between rounded-lg bg-neutral-light px-4 py-3 border border-neutral">
                         <label className="flex cursor-pointer items-center gap-3">
                            <input
                               type="checkbox"
@@ -163,7 +163,7 @@ export default function CartPage() {
 
                         <button
                            onClick={removeSelectedItems}
-                           className="text-neutral-darker transition hover:text-promotion disabled:cursor-not-allowed disabled:text-neutral-dark"
+                           className="text-neutral-darker transition hover:text-primary-darker disabled:cursor-not-allowed disabled:text-neutral-dark"
                            disabled={selectedItems.length === 0}
                            aria-label="Xóa các sản phẩm đã chọn"
                         >
@@ -176,7 +176,7 @@ export default function CartPage() {
                         {items.map((item) => (
                            <div
                               key={item.id}
-                              className="rounded-lg bg-white p-4 shadow-sm"
+                              className="rounded-lg bg-neutral-light p-4 border border-neutral"
                            >
                               <div className="flex gap-4">
                                  {/* Checkbox - Centered */}
@@ -218,7 +218,7 @@ export default function CartPage() {
                                           {/* Trash button - Top right on mobile */}
                                           <button
                                              onClick={() => removeItem(item.id)}
-                                             className="sm:hidden text-neutral-dark transition hover:text-promotion flex-shrink-0"
+                                             className="sm:hidden text-neutral-dark transition hover:text-primary-darker flex-shrink-0"
                                              aria-label="Xóa sản phẩm"
                                           >
                                              <Trash2 className="h-5 w-5" />
@@ -236,26 +236,27 @@ export default function CartPage() {
                                           onVariantChange={handleVariantChange}
                                        />
 
-                                       {/* MOBILE LAYOUT */}
-                                       <div className="sm:hidden space-y-1.5 sm:space-y-2">
-                                          {/* Price */}
-                                          <div className="flex flex-col">
-                                             <span className="text-xs sm:text-sm font-semibold text-promotion">
-                                                {formatPrice(item.price)}
-                                             </span>
-                                             {item.original_price >
-                                                item.price && (
-                                                <span className="text-xs text-neutral-dark line-through">
-                                                   {formatPrice(
-                                                      item.original_price
-                                                   )}
+                                       {/* Mobile: Price Section */}
+                                       <div className="sm:hidden">
+                                          <div className="flex items-center justify-between mb-3">
+                                             <div className="flex flex-col">
+                                                <span className="text-sm font-semibold text-promotion">
+                                                   {formatPrice(item.price)}
                                                 </span>
-                                             )}
+                                                {item.original_price >
+                                                   item.price && (
+                                                   <span className="text-xs text-neutral-dark line-through">
+                                                      {formatPrice(
+                                                         item.original_price
+                                                      )}
+                                                   </span>
+                                                )}
+                                             </div>
                                           </div>
 
                                           {/* Quantity + Total */}
-                                          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-                                             <div className="flex items-center gap-1">
+                                          <div className="flex items-center justify-between">
+                                             <div className="flex items-center gap-2">
                                                 <button
                                                    onClick={() =>
                                                       updateQuantity(
@@ -263,95 +264,94 @@ export default function CartPage() {
                                                          -1
                                                       )
                                                    }
-                                                   className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                                                   className="flex h-8 w-8 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
                                                    disabled={item.quantity <= 1}
                                                    aria-label="Giảm số lượng"
                                                 >
-                                                   <Minus className="h-3 w-3" />
+                                                   <Minus className="h-4 w-4" />
                                                 </button>
-                                                <span className="w-7 text-center text-xs sm:text-sm font-medium text-primary-darker">
+                                                <span className="w-8 text-center text-sm font-medium text-primary-darker">
                                                    {item.quantity}
                                                 </span>
                                                 <button
                                                    onClick={() =>
                                                       updateQuantity(item.id, 1)
                                                    }
-                                                   className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light shrink-0"
+                                                   className="flex h-8 w-8 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light"
                                                    aria-label="Tăng số lượng"
                                                 >
-                                                   <Plus className="h-3 w-3" />
+                                                   <Plus className="h-4 w-4" />
                                                 </button>
                                              </div>
 
-                                             <span className="text-xs sm:text-sm font-bold text-promotion shrink-0 whitespace-nowrap">
+                                             <span className="text-base font-bold text-promotion">
                                                 {formatPrice(
                                                    item.price * item.quantity
                                                 )}
                                              </span>
                                           </div>
                                        </div>
+                                    </div>
 
-                                       {/* DESKTOP LAYOUT */}
-                                       <div className="hidden sm:flex items-center gap-2 lg:gap-3 flex-wrap">
-                                          {/* Price Column */}
-                                          <div className="flex flex-col items-start shrink-0">
-                                             <span className="text-sm lg:text-base font-semibold text-promotion whitespace-nowrap">
-                                                {formatPrice(item.price)}
-                                             </span>
-                                             {item.original_price >
-                                                item.price && (
-                                                <span className="text-xs text-neutral-dark line-through whitespace-nowrap">
-                                                   {formatPrice(
-                                                      item.original_price
-                                                   )}
-                                                </span>
-                                             )}
-                                          </div>
-
-                                          {/* Quantity Controls */}
-                                          <div className="flex items-center gap-1 shrink-0">
-                                             <button
-                                                onClick={() =>
-                                                   updateQuantity(item.id, -1)
-                                                }
-                                                className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
-                                                disabled={item.quantity <= 1}
-                                                aria-label="Giảm số lượng"
-                                             >
-                                                <Minus className="h-3 w-3" />
-                                             </button>
-                                             <span className="w-7 text-center text-sm font-medium text-primary-darker">
-                                                {item.quantity}
-                                             </span>
-                                             <button
-                                                onClick={() =>
-                                                   updateQuantity(item.id, 1)
-                                                }
-                                                className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light"
-                                                aria-label="Tăng số lượng"
-                                             >
-                                                <Plus className="h-3 w-3" />
-                                             </button>
-                                          </div>
-
-                                          {/* Total Price */}
-                                          <div className="flex-1 text-right min-w-0">
-                                             <span className="text-sm lg:text-base font-semibold text-promotion whitespace-nowrap">
+                                    {/* Desktop: Price + Quantity + Total + Delete */}
+                                    <div className="hidden sm:flex items-center gap-4 lg:gap-6">
+                                       {/* Price */}
+                                       <div className="flex flex-col items-end min-w-[80px]">
+                                          <span className="text-sm lg:text-base font-semibold text-promotion">
+                                             {formatPrice(item.price)}
+                                          </span>
+                                          {item.original_price > item.price && (
+                                             <span className="text-xs text-neutral-dark line-through">
                                                 {formatPrice(
-                                                   item.price * item.quantity
+                                                   item.original_price
                                                 )}
                                              </span>
-                                          </div>
+                                          )}
+                                       </div>
 
-                                          {/* Delete Button */}
+                                       {/* Quantity Controls */}
+                                       <div className="flex items-center gap-2">
                                           <button
-                                             onClick={() => removeItem(item.id)}
-                                             className="text-neutral-dark transition hover:text-promotion shrink-0"
-                                             aria-label="Xóa sản phẩm"
+                                             onClick={() =>
+                                                updateQuantity(item.id, -1)
+                                             }
+                                             className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
+                                             disabled={item.quantity <= 1}
+                                             aria-label="Giảm số lượng"
                                           >
-                                             <Trash2 className="h-5 w-5" />
+                                             <Minus className="h-3 w-3" />
+                                          </button>
+                                          <span className="w-8 text-center text-sm font-medium text-primary-darker">
+                                             {item.quantity}
+                                          </span>
+                                          <button
+                                             onClick={() =>
+                                                updateQuantity(item.id, 1)
+                                             }
+                                             className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light"
+                                             aria-label="Tăng số lượng"
+                                          >
+                                             <Plus className="h-3 w-3" />
                                           </button>
                                        </div>
+
+                                       {/* Total Price */}
+                                       <div className="min-w-[100px] text-right">
+                                          <span className="text-sm lg:text-base font-semibold text-promotion">
+                                             {formatPrice(
+                                                item.price * item.quantity
+                                             )}
+                                          </span>
+                                       </div>
+
+                                       {/* Delete Button */}
+                                       <button
+                                          onClick={() => removeItem(item.id)}
+                                          className="text-neutral-dark transition hover:text-primary-darker"
+                                          aria-label="Xóa sản phẩm"
+                                       >
+                                          <Trash2 className="h-5 w-5" />
+                                       </button>
                                     </div>
                                  </div>
                               </div>
@@ -363,29 +363,29 @@ export default function CartPage() {
                   {/* RIGHT COLUMN - Summary (Desktop only) */}
                   <div className="hidden lg:block lg:col-span-1 space-y-3 sm:space-y-4">
                      {/* Gifts Box */}
-                     <div className="rounded-lg bg-white border border-neutral shadow-sm">
+                     <div className="rounded-lg bg-neutral-light border border-neutral">
                         <button className="flex w-full items-center justify-between p-3 sm:p-4 transition hover:bg-neutral-light">
-                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <span className="text-lg shrink-0">🎁</span>
-                              <span className="text-sm font-medium text-primary-darker truncate">
+                           <div className="flex items-center gap-3">
+                              <span className="text-lg">🎁</span>
+                              <span className="text-sm font-medium text-primary-darker">
                                  Quà tặng
                               </span>
                            </div>
-                           <span className="text-sm text-neutral-dark shrink-0 ml-2 whitespace-nowrap">
+                           <span className="text-sm text-neutral-dark">
                               Xem quà ({selectedPromotions.length})
                            </span>
                         </button>
                      </div>
 
-                     {/* Voucher */}
-                     <div className="rounded-lg bg-white border border-neutral shadow-sm">
+                     {/* Voucher - Click to open modal */}
+                     <div className="rounded-lg bg-neutral-light">
                         <button
                            onClick={() => setShowVoucherModal(true)}
-                           className="flex w-full items-center justify-between p-3 sm:p-4 transition hover:bg-accent-light group"
+                           className="flex w-full items-center justify-between p-3 sm:p-4 hover:bg-accent-light group bg-neutral-light border border-neutral rounded-lg"
                         >
                            <div className="flex items-center gap-3 flex-1 min-w-0">
                               <span className="text-lg shrink-0">🏷️</span>
-                              <div className="flex flex-col items-start min-w-0 flex-1">
+                              <div className="flex flex-col items-start min-w-0">
                                  <span className="text-sm font-medium text-primary-darker">
                                     Chọn hoặc nhập ưu đãi
                                  </span>
@@ -397,22 +397,22 @@ export default function CartPage() {
                                  )}
                               </div>
                            </div>
-                           <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-primary transition-colors shrink-0 ml-2" />
+                           <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-primary transition-colors shrink-0" />
                         </button>
                      </div>
 
                      {/* Points */}
-                     <div className="rounded-lg bg-white border border-neutral shadow-sm p-3 sm:p-4">
-                        <div className="flex items-center justify-between gap-2">
-                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className="text-lg shrink-0">🪙</span>
-                              <span className="text-sm text-primary-darker truncate">
+                     <div className="rounded-lg p-3 sm:p-4 bg-neutral-light border border-neutral">
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-2">
+                              <span className="text-lg">🪙</span>
+                              <span className="text-sm text-primary-darker">
                                  Đổi <span className="font-semibold">0</span>{" "}
                                  điểm (≈
                                  <span className="font-semibold">0₫</span>)
                               </span>
                            </div>
-                           <label className="relative inline-flex cursor-pointer items-center shrink-0">
+                           <label className="relative inline-flex cursor-pointer items-center">
                               <input
                                  type="checkbox"
                                  checked={usePoints}
@@ -426,46 +426,46 @@ export default function CartPage() {
                         </div>
                      </div>
 
-                     {/* Order Summary */}
-                     <div className="rounded-lg bg-white border border-neutral shadow-sm">
+                     {/* Order Summary Box */}
+                     <div className="rounded-lg bg-neutral-light border border-neutral">
                         <div className="p-3 sm:p-4">
                            <h3 className="mb-3 text-sm sm:text-base font-semibold text-primary-darker">
                               Thông tin đơn hàng
                            </h3>
 
                            <div className="space-y-2.5 text-sm">
-                              <div className="flex justify-between gap-2">
+                              <div className="flex justify-between">
                                  <span className="text-neutral-darker">
                                     Tổng tiền
                                  </span>
-                                 <span className="font-medium text-primary-darker shrink-0 whitespace-nowrap">
+                                 <span className="font-medium text-primary-darker">
                                     {formatPrice(subtotal)}
                                  </span>
                               </div>
 
-                              <div className="flex justify-between gap-2">
+                              <div className="flex justify-between">
                                  <span className="text-neutral-darker">
                                     Tổng khuyến mãi
                                  </span>
-                                 <span className="font-medium text-primary-darker shrink-0 whitespace-nowrap">
+                                 <span className="font-medium text-primary-darker">
                                     -{formatPrice(totalDiscountWithVoucher)}
                                  </span>
                               </div>
 
-                              <div className="flex justify-between pl-4 gap-2">
+                              <div className="flex justify-between pl-4">
                                  <span className="text-neutral-dark text-xs">
                                     Giảm giá sản phẩm
                                  </span>
-                                 <span className="text-primary-darker text-sm shrink-0 whitespace-nowrap">
+                                 <span className="text-primary-darker text-sm">
                                     -{formatPrice(totalDiscount)}
                                  </span>
                               </div>
 
-                              <div className="flex justify-between pl-4 gap-2">
+                              <div className="flex justify-between pl-4">
                                  <span className="text-neutral-dark text-xs">
                                     Voucher
                                  </span>
-                                 <span className="text-primary-darker text-sm font-medium shrink-0 whitespace-nowrap">
+                                 <span className="text-primary-darker text-sm font-medium">
                                     {appliedVoucherValue > 0
                                        ? `-${formatPrice(appliedVoucherValue)}`
                                        : "0₫"}
@@ -473,11 +473,11 @@ export default function CartPage() {
                               </div>
 
                               <div className="border-t border-neutral pt-2.5 mt-2.5">
-                                 <div className="flex justify-between items-center gap-2">
+                                 <div className="flex justify-between items-center">
                                     <span className="font-semibold text-primary-darker text-sm">
                                        Cần thanh toán
                                     </span>
-                                    <span className="text-xl font-bold text-promotion shrink-0 whitespace-nowrap">
+                                    <span className="text-xl font-bold text-promotion">
                                        {formatPrice(finalTotalWithVoucher)}
                                     </span>
                                  </div>
