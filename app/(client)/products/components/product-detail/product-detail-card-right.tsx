@@ -10,8 +10,11 @@ import ProductSpecsModal, {
 } from "./ProductSpecsModal";
 
 interface ProductDetailRightProps {
-  // product?: Product;
   product?: ProductDetail;
+  selectedColor?: string;
+  selectedStorage?: string;
+  onColorChange?: (color: string) => void;
+  onStorageChange?: (storage: string) => void;
   onReviewClick?: () => void;
 }
 type ColorOption = {
@@ -25,6 +28,10 @@ type StorageOption = {
 
 export default function ProductDetailRight({
   product,
+  selectedColor: propSelectedColor,
+  selectedStorage: propSelectedStorage,
+  onColorChange,
+  onStorageChange,
   onReviewClick,
 }: ProductDetailRightProps = {}) {
   /* ============================================================================
@@ -94,63 +101,41 @@ export default function ProductDetailRight({
    * PRODUCT DATA
    * ========================================================================== */
 
-  // Dung lượng (Storage)
-  const storages: StorageOption[] = Array.from(
-    new Map(
-      product.variants.flatMap((variant) => {
-        const storageAttr = variant.variantAttributes.find(
-          (attr) => attr.attributeOption.attribute.name === "Storage"
-        );
+  // Dung lượng (Storage) từ availableOptions
+  const storages: StorageOption[] = (() => {
+    const storageOption = product.availableOptions?.find(
+      (opt) => opt.attribute === "Storage"
+    );
+    return (
+      storageOption?.values?.map((val) => ({
+        value: val.value,
+      })) || []
+    );
+  })();
 
-        if (!storageAttr) return [];
+  // Màu sắc (Color) từ availableOptions
+  const colors: ColorOption[] = (() => {
+    const colorOption = product.availableOptions?.find(
+      (opt) => opt.attribute === "Color"
+    );
+    if (!colorOption?.values) return [];
 
-        return [
-          [
-            storageAttr.attributeOption.value,
-            {
-              value: storageAttr.attributeOption.value,
-            },
-          ],
-        ];
-      })
-    ).values()
-  );
-
-  // Màu sắc (unique + ảnh đại diện)
-  const colors: ColorOption[] = Array.from(
-    new Map(
-      product.variants.flatMap((variant) => {
-        const colorAttr = variant.variantAttributes.find(
-          (attr) => attr.attributeOption.attribute.name === "Color"
-        );
-
-        if (!colorAttr) return [];
-
-        return [
-          [
-            colorAttr.attributeOption.value,
-            {
-              value: colorAttr.attributeOption.value,
-              image: variant.images?.[0]?.imageUrl,
-            },
-          ],
-        ];
-      })
-    ).values()
-  );
+    return colorOption.values.map((val) => {
+      // Tìm variant đầu tiên có màu này để lấy ảnh
+      const firstVariantId = val.variantIds?.[0];
+      const variant = product.variants.find((v) => v.id === firstVariantId);
+      return {
+        value: val.value,
+        image: variant?.images?.[0]?.imageUrl,
+      };
+    });
+  })();
 
   /* ============================================================================
-   * STATE
+   * STATE - Dùng props từ parent nếu có, không thì dùng state local
    * ========================================================================== */
-  const [selectedColor, setSelectedColor] = useState<string>(
-    colors[0]?.value ?? ""
-  );
-
-  const [selectedStorage, setSelectedStorage] = useState(
-    storages[0]?.value ?? ""
-  );
-
-  const [activePayment, setActivePayment] = useState(0);
+  const selectedColor = propSelectedColor || colors[0]?.value || "";
+  const selectedStorage = propSelectedStorage || storages[0]?.value || "";
 
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
@@ -255,7 +240,9 @@ export default function ProductDetailRight({
             return (
               <span
                 key={storage.value}
-                onClick={() => setSelectedStorage(storage.value)}
+                onClick={() => {
+                  onStorageChange?.(storage.value);
+                }}
                 className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 font-bold cursor-pointer relative overflow-hidden transition-colors duration-300
             ${
               isActive
@@ -292,7 +279,9 @@ export default function ProductDetailRight({
             return (
               <span
                 key={color.value}
-                onClick={() => setSelectedColor(color.value)}
+                onClick={() => {
+                  onColorChange?.(color.value);
+                }}
                 className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300 ${
                   isActive
                     ? "border-promotion dark:border-promotion text-promotion dark:text-promotion bg-promotion-light dark:bg-neutral"

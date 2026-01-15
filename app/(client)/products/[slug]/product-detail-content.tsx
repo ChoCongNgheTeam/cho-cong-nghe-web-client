@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
@@ -21,6 +21,33 @@ interface ProductDetailContentProps {
 
 export function ProductDetailContent({ product }: ProductDetailContentProps) {
   const reviewsRef = useRef<HTMLDivElement>(null);
+
+  // Khởi tạo selected color và storage từ availableOptions
+  const initialColor =
+    product.availableOptions?.find((opt) => opt.attribute === "Color")?.values?.[0]?.value || "";
+  const initialStorage =
+    product.availableOptions?.find((opt) => opt.attribute === "Storage")?.values?.[0]?.value || "";
+
+  const [selectedColor, setSelectedColor] = useState(initialColor);
+  const [selectedStorage, setSelectedStorage] = useState(initialStorage);
+
+  // Tìm variant khớp với color và storage được chọn
+  const selectedVariant = product.variants.find((variant) => {
+    const colorMatch = product.availableOptions
+      ?.find((opt) => opt.attribute === "Color")
+      ?.values?.find(
+        (val) => val.value === selectedColor && val.variantIds?.includes(variant.id)
+      );
+
+    const storageMatch = product.availableOptions
+      ?.find((opt) => opt.attribute === "Storage")
+      ?.values?.find(
+        (val) => val.value === selectedStorage && val.variantIds?.includes(variant.id)
+      );
+
+    return colorMatch && storageMatch;
+  }) || product.variants[0];
+
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -36,7 +63,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
             {/* Left - Product Banner */}
             <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
-              <ProductDetailBanner product={product} />
+              <ProductDetailBanner product={product} selectedVariant={selectedVariant} />
             </div>
 
             {/* Right - Product Card */}
@@ -44,6 +71,10 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
               <div className="lg:sticky lg:top-4 lg:h-fit">
                 <ProductDetailRight
                   product={product}
+                  selectedColor={selectedColor}
+                  selectedStorage={selectedStorage}
+                  onColorChange={setSelectedColor}
+                  onStorageChange={setSelectedStorage}
                   onReviewClick={scrollToReviews}
                 />
               </div>
