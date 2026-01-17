@@ -3,7 +3,6 @@
 
 import React from "react";
 import { X, ChevronRight } from "lucide-react";
-import Link from "next/link";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -16,6 +15,7 @@ interface CartSidebarProps {
   appliedVoucherCode?: string;
   appliedVoucherValue?: number;
   onOpenVoucherModal?: () => void;
+  onCheckout: () => void; // ✅ Added this prop
 }
 
 export default function CartSidebar({
@@ -29,9 +29,17 @@ export default function CartSidebar({
   appliedVoucherCode = "",
   appliedVoucherValue = 0,
   onOpenVoucherModal,
+  onCheckout, // ✅ Destructure the new prop
 }: CartSidebarProps) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
+
+  // ✅ Handle checkout - close sidebar first then navigate
+  const handleCheckout = () => {
+    if (selectedItemsCount === 0) return;
+    onClose();
+    onCheckout();
+  };
 
   if (!isOpen) return null;
 
@@ -159,23 +167,19 @@ export default function CartSidebar({
               </div>
             </div>
 
-            {/* Checkout Button */}
+            {/* Checkout Button - ✅ Changed from Link to button */}
             <div className="p-3">
-              <Link
-                href="/checkout"
+              <button
+                onClick={handleCheckout}
+                disabled={selectedItemsCount === 0}
                 className={`block w-full rounded-lg py-3.5 text-center text-base font-semibold transition shadow-lg ${
                   selectedItemsCount === 0
-                    ? "cursor-not-allowed bg-neutral text-neutral-dark"
-                    : "bg-accent text-primary-darker hover:bg-accent-hover"
+                    ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
+                    : "bg-accent text-primary-darker hover:bg-accent-hover active:scale-[0.98]"
                 }`}
-                onClick={(e) => {
-                  if (selectedItemsCount === 0) {
-                    e.preventDefault();
-                  }
-                }}
               >
-                Xác nhận đơn
-              </Link>
+                Xác nhận đơn ({selectedItemsCount} sản phẩm)
+              </button>
             </div>
           </div>
         </div>
