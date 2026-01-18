@@ -39,18 +39,18 @@ export default function CartSidebar({
       <>
          {/* Backdrop */}
          <div
-            className="fixed inset-0 bg-primary-darker/50 backdrop-blur-sm z-[70] lg:hidden"
+            className="fixed inset-0 bg-primary-darker/50 backdrop-blur-sm z-70 lg:hidden"
             onClick={onClose}
          />
 
          {/* Sidebar */}
-         <div className="fixed inset-x-0 bottom-0 z-[70] lg:hidden">
+         <div className="fixed inset-x-0 bottom-0 z-70 lg:hidden">
             <div
                className="bg-neutral-light rounded-t-2xl shadow-2xl flex flex-col animate-slide-up"
                style={{ maxHeight: "calc(100vh - 120px)" }}
             >
                {/* Header - Compact */}
-               <div className="flex items-center justify-between px-4 py-3 border-b border-neutral bg-gradient-to-r from-accent/5 to-accent/10">
+               <div className="flex items-center justify-between px-4 py-3 border-b border-neutral bg-linear-to-r from-accent/5 to-accent/10">
                   <div className="flex items-center gap-2">
                      <span className="text-xl">🎁</span>
                      <span className="text-sm font-semibold text-primary-darker">
@@ -79,7 +79,7 @@ export default function CartSidebar({
                            className="flex w-full items-center justify-between p-3 transition hover:bg-accent/5 group"
                         >
                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                              <div className="shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
                                  <span className="text-lg">🏷️</span>
                               </div>
                               <div className="flex flex-col items-start min-w-0">
@@ -98,7 +98,7 @@ export default function CartSidebar({
                                  )}
                               </div>
                            </div>
-                           <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-accent transition-colors flex-shrink-0" />
+                           <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-accent transition-colors shrink-0" />
                         </button>
                      </div>
                   )}
@@ -107,7 +107,7 @@ export default function CartSidebar({
                   <div className="px-4 py-3 border-b border-neutral">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                           <div className="shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
                               <span className="text-base">🪙</span>
                            </div>
                            <div className="flex flex-col">
@@ -121,7 +121,7 @@ export default function CartSidebar({
                         </div>
                         <label className="relative inline-flex cursor-pointer items-center">
                            <input type="checkbox" className="peer sr-only" />
-                           <div className="peer h-6 w-11 rounded-full bg-neutral-dark/30 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50 shadow-inner"></div>
+                           <div className="peer h-6 w-11 rounded-full bg-neutral-dark/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50 shadow-inner"></div>
                         </label>
                      </div>
                   </div>
