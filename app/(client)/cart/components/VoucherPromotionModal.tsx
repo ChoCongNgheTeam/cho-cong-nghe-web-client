@@ -66,7 +66,7 @@ const MOCK_VOUCHERS: Voucher[] = [
       usage_limit: 1000,
       usage_count: 245,
       is_active: true,
-      created_at: "2025-01-01T00:00:00Z",
+      created_at: "2025-01-30T00:00:00Z",
    },
    {
       id: "v2",
@@ -176,13 +176,13 @@ export default function VoucherPromotionModal({
       MOCK_PROMOTIONS.map((promo) => ({
          ...promo,
          selected: false,
-      }))
+      })),
    );
    const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([]);
 
    const formatPrice = useCallback(
       (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫",
-      []
+      [],
    );
 
    const formatDate = useCallback((dateString: string) => {
@@ -202,7 +202,7 @@ export default function VoucherPromotionModal({
                : discount;
          }
       },
-      []
+      [],
    );
 
    // Check if voucher can be used
@@ -221,7 +221,7 @@ export default function VoucherPromotionModal({
 
          return true;
       },
-      []
+      [],
    );
 
    // Filter available vouchers based on cart total
@@ -240,7 +240,7 @@ export default function VoucherPromotionModal({
             prev.map((promo) => ({
                ...promo,
                selected: selectedPromotions.includes(promo.id),
-            }))
+            })),
          );
 
          if (appliedVoucherCode) {
@@ -259,11 +259,18 @@ export default function VoucherPromotionModal({
    // Handle body scroll
    useEffect(() => {
       if (isOpen) {
+         const scrollbarWidth =
+            window.innerWidth - document.documentElement.clientWidth;
+
+         document.body.style.paddingRight = `${scrollbarWidth}px`;
          document.body.style.overflow = "hidden";
       } else {
+         document.body.style.paddingRight = "0px";
          document.body.style.overflow = "unset";
       }
+
       return () => {
+         document.body.style.paddingRight = "0px";
          document.body.style.overflow = "unset";
       };
    }, [isOpen]);
@@ -274,7 +281,7 @@ export default function VoucherPromotionModal({
             ...promo,
             selected:
                promo.id === promotionId ? !promo.selected : promo.selected,
-         }))
+         })),
       );
    }, []);
 
@@ -286,7 +293,7 @@ export default function VoucherPromotionModal({
       }
 
       const voucher = MOCK_VOUCHERS.find(
-         (v) => v.code.toLowerCase() === voucherCode.toLowerCase()
+         (v) => v.code.toLowerCase() === voucherCode.toLowerCase(),
       );
 
       if (!voucher) {
@@ -305,8 +312,8 @@ export default function VoucherPromotionModal({
          if (cartTotal < voucher.min_order_value) {
             setVoucherError(
                `Đơn hàng tối thiểu ${formatPrice(
-                  voucher.min_order_value
-               )} để sử dụng mã này`
+                  voucher.min_order_value,
+               )} để sử dụng mã này`,
             );
          } else if (
             voucher.usage_limit &&
@@ -320,11 +327,11 @@ export default function VoucherPromotionModal({
 
             if (now < startDate) {
                setVoucherError(
-                  `Mã voucher có hiệu lực từ ${formatDate(voucher.start_date)}`
+                  `Mã voucher có hiệu lực từ ${formatDate(voucher.start_date)}`,
                );
             } else if (now > endDate) {
                setVoucherError(
-                  `Mã voucher đã hết hạn ngày ${formatDate(voucher.end_date)}`
+                  `Mã voucher đã hết hạn ngày ${formatDate(voucher.end_date)}`,
                );
             } else {
                setVoucherError("Không thể sử dụng mã voucher này");
@@ -393,7 +400,7 @@ export default function VoucherPromotionModal({
       <>
          {/* Backdrop */}
          <div
-            className="fixed inset-0 bg-primary-darker/50 backdrop-blur-sm z-[60] transition-opacity duration-300"
+            className="fixed inset-0 bg-neutral-light/70 backdrop-blur-sm z-[60] transition-opacity duration-300"
             onClick={onClose}
          />
 
@@ -457,7 +464,7 @@ export default function VoucherPromotionModal({
 
                      {voucherSuccess && appliedVoucherValue > 0 && (
                         <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                           <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                           <Check className="h-4 w-4 text-green-600 shrink-0" />
                            <span className="text-xs text-green-700">
                               Mã <strong>{appliedVoucherCode}</strong> đã áp
                               dụng - Giảm{" "}
@@ -478,7 +485,7 @@ export default function VoucherPromotionModal({
                               const canUse = canUseVoucher(voucher, cartTotal);
                               const discount = calculateDiscount(
                                  voucher,
-                                 cartTotal
+                                 cartTotal,
                               );
 
                               return (
@@ -491,7 +498,7 @@ export default function VoucherPromotionModal({
                                     }`}
                                  >
                                     {/* Icon */}
-                                    <div className="flex-shrink-0 w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                                    <div className="shrink-0 w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
                                        <Tag className="h-5 w-5 text-accent-dark" />
                                     </div>
 
@@ -510,7 +517,7 @@ export default function VoucherPromotionModal({
                                              onClick={() =>
                                                 copyVoucherCode(voucher.code)
                                              }
-                                             className="flex-shrink-0 p-1.5 hover:bg-accent-light rounded transition-colors"
+                                             className="shrink-0 p-1.5 hover:bg-accent-light rounded transition-colors"
                                              aria-label="Copy mã"
                                              data-voucher-code={voucher.code}
                                              disabled={!canUse}
@@ -529,7 +536,7 @@ export default function VoucherPromotionModal({
                                              <span className="px-2 py-0.5 bg-promotion-light text-promotion font-semibold rounded">
                                                 -
                                                 {formatPrice(
-                                                   voucher.discount_value
+                                                   voucher.discount_value,
                                                 )}
                                              </span>
                                           )}
@@ -538,7 +545,7 @@ export default function VoucherPromotionModal({
                                              <span className="text-neutral-dark">
                                                 Tối đa{" "}
                                                 {formatPrice(
-                                                   voucher.max_discount_amount
+                                                   voucher.max_discount_amount,
                                                 )}
                                              </span>
                                           )}
@@ -569,7 +576,7 @@ export default function VoucherPromotionModal({
                                              {cartTotal <
                                              voucher.min_order_value
                                                 ? `Đơn tối thiểu ${formatPrice(
-                                                     voucher.min_order_value
+                                                     voucher.min_order_value,
                                                   )}`
                                                 : "Không đủ điều kiện"}
                                           </p>
@@ -602,7 +609,7 @@ export default function VoucherPromotionModal({
                            >
                               <div className="flex items-start gap-3">
                                  {/* Icon */}
-                                 <div className="flex-shrink-0 w-10 h-10 bg-accent-light rounded-lg flex items-center justify-center">
+                                 <div className="shrink-0 w-10 h-10 bg-accent-light rounded-lg flex items-center justify-center">
                                     <span className="text-xl">🎁</span>
                                  </div>
 
@@ -613,11 +620,11 @@ export default function VoucherPromotionModal({
                                           {promo.title}
                                        </h4>
                                        {promo.selected ? (
-                                          <div className="flex-shrink-0 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                                          <div className="shrink-0 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
                                              <Check className="h-3 w-3 text-primary-darker" />
                                           </div>
                                        ) : (
-                                          <button className="flex-shrink-0 w-5 h-5 border-2 border-neutral rounded-full flex items-center justify-center hover:border-accent transition-colors">
+                                          <button className="shrink-0 w-5 h-5 border-2 border-neutral rounded-full flex items-center justify-center hover:border-accent transition-colors">
                                              <Plus className="h-3 w-3 text-neutral-dark" />
                                           </button>
                                        )}

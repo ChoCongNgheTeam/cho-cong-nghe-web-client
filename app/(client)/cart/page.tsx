@@ -1,8 +1,8 @@
-// app/(client)/cart/page.tsx
 "use client";
 
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
    Trash2,
    Plus,
@@ -15,10 +15,12 @@ import { useCart } from "../../hooks/useCart";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import VariantDropdown from "./components/CartVariantSelector";
+import OrderSummary from "@/components/odersummary/OrderSummary";
 import toast from "react-hot-toast";
 import CartSidebar from "./components/cartsidebar";
 
 export default function CartPage() {
+   const router = useRouter();
    const {
       items,
       isLoading,
@@ -48,7 +50,7 @@ export default function CartPage() {
 
    const formatPrice = useCallback(
       (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫",
-      []
+      [],
    );
 
    const handleSelectPromotions = useCallback(
@@ -56,7 +58,7 @@ export default function CartPage() {
          setSelectedPromotions(promotionIds);
          setPromotionValue(totalValue);
       },
-      []
+      [],
    );
 
    const handleApplyVoucher = useCallback((code: string, value: number) => {
@@ -70,7 +72,7 @@ export default function CartPage() {
          cartItemId: number,
          variantId: number,
          variantName: string,
-         price: number
+         price: number,
       ) => {
          console.log("Variant changed:", {
             cartItemId,
@@ -86,8 +88,56 @@ export default function CartPage() {
          // You would typically call an API here and then refetch the cart
          toast.success("Đã cập nhật phiên bản sản phẩm");
       },
-      []
+      [],
    );
+
+   // Handle checkout - Save selected items to localStorage and navigate
+   const handleCheckout = useCallback(() => {
+      if (selectedItems.length === 0) {
+         toast.error("Vui lòng chọn ít nhất một sản phẩm");
+         return;
+      }
+
+      // Calculate final total with voucher
+      const finalTotalWithVoucher = Math.max(
+         0,
+         finalTotal - appliedVoucherValue,
+      );
+      const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
+
+      // Lưu TẤT CẢ thông tin vào localStorage
+      const checkoutData = {
+         selectedItems: selectedItems,
+         selectedPromotions: selectedPromotions,
+         promotionValue: promotionValue,
+         appliedVoucherCode: appliedVoucherCode,
+         appliedVoucherValue: appliedVoucherValue,
+         subtotal: subtotal,
+         totalDiscount: totalDiscountWithVoucher,
+         finalTotal: finalTotalWithVoucher,
+         rewardPoints: rewardPoints,
+               usePoints: usePoints, 
+
+      };
+
+      localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+
+      // Navigate to checkout page
+      router.push("/checkout");
+   }, [
+      selectedItems,
+      selectedPromotions,
+      promotionValue,
+      appliedVoucherCode,
+      appliedVoucherValue,
+      subtotal,
+      totalDiscount,
+      finalTotal,
+      rewardPoints,
+      router,
+         usePoints, 
+
+   ]);
 
    // Calculate final totals with voucher
    const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
@@ -98,16 +148,14 @@ export default function CartPage() {
          <div className="flex min-h-screen items-center justify-center bg-neutral-light">
             <div className="text-center">
                <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-neutral border-t-accent"></div>
-               <p className="text-neutral-darker font-poppins">
-                  Đang tải giỏ hàng...
-               </p>
+               <p className="text-neutral-darker">Đang tải giỏ hàng...</p>
             </div>
          </div>
       );
    }
 
    return (
-      <div className="min-h-screen bg-neutral-light font-poppins">
+      <div className="min-h-screen bg-neutral-light">
          {/* Breadcrumb */}
          <div className="w-full bg-neutral-light">
             <div className="container py-3 md:py-4">
@@ -163,7 +211,7 @@ export default function CartPage() {
 
                         <button
                            onClick={removeSelectedItems}
-                           className="text-neutral-darker transition hover:text-primary-darker disabled:cursor-not-allowed disabled:text-neutral-dark"
+                           className="text-neutral-darker transition hover:text-primary-darker disabled:cursor-not-allowed disabled:text-neutral-dark cursor-pointer"
                            disabled={selectedItems.length === 0}
                            aria-label="Xóa các sản phẩm đã chọn"
                         >
@@ -192,7 +240,7 @@ export default function CartPage() {
                                  </div>
 
                                  {/* Product Image */}
-                                 <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
+                                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
                                     {item.image_url ? (
                                        <Image
                                           src={item.image_url}
@@ -218,7 +266,7 @@ export default function CartPage() {
                                           {/* Trash button - Top right on mobile */}
                                           <button
                                              onClick={() => removeItem(item.id)}
-                                             className="sm:hidden text-neutral-dark transition hover:text-primary-darker flex-shrink-0"
+                                             className="sm:hidden text-neutral-dark transition hover:text-primary-darker shrink-0"
                                              aria-label="Xóa sản phẩm"
                                           >
                                              <Trash2 className="h-5 w-5" />
@@ -247,7 +295,7 @@ export default function CartPage() {
                                                    item.price && (
                                                    <span className="text-xs text-neutral-dark line-through">
                                                       {formatPrice(
-                                                         item.original_price
+                                                         item.original_price,
                                                       )}
                                                    </span>
                                                 )}
@@ -261,7 +309,7 @@ export default function CartPage() {
                                                    onClick={() =>
                                                       updateQuantity(
                                                          item.id,
-                                                         -1
+                                                         -1,
                                                       )
                                                    }
                                                    className="flex h-8 w-8 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
@@ -286,7 +334,7 @@ export default function CartPage() {
 
                                              <span className="text-base font-bold text-promotion">
                                                 {formatPrice(
-                                                   item.price * item.quantity
+                                                   item.price * item.quantity,
                                                 )}
                                              </span>
                                           </div>
@@ -303,7 +351,7 @@ export default function CartPage() {
                                           {item.original_price > item.price && (
                                              <span className="text-xs text-neutral-dark line-through">
                                                 {formatPrice(
-                                                   item.original_price
+                                                   item.original_price,
                                                 )}
                                              </span>
                                           )}
@@ -339,7 +387,7 @@ export default function CartPage() {
                                        <div className="min-w-[100px] text-right">
                                           <span className="text-sm lg:text-base font-semibold text-promotion">
                                              {formatPrice(
-                                                item.price * item.quantity
+                                                item.price * item.quantity,
                                              )}
                                           </span>
                                        </div>
@@ -361,167 +409,23 @@ export default function CartPage() {
                   </div>
 
                   {/* RIGHT COLUMN - Summary (Desktop only) */}
-                  <div className="hidden lg:block lg:col-span-1 space-y-3 sm:space-y-4">
-                     {/* Gifts Box */}
-                     <div className="rounded-lg bg-neutral-light border border-neutral">
-                        <button className="flex w-full items-center justify-between p-3 sm:p-4 transition hover:bg-neutral-light">
-                           <div className="flex items-center gap-3">
-                              <span className="text-lg">🎁</span>
-                              <span className="text-sm font-medium text-primary-darker">
-                                 Quà tặng
-                              </span>
-                           </div>
-                           <span className="text-sm text-neutral-dark">
-                              Xem quà ({selectedPromotions.length})
-                           </span>
-                        </button>
-                     </div>
-
-                     {/* Voucher - Click to open modal */}
-                     <div className="rounded-lg bg-neutral-light">
-                        <button
-                           onClick={() => setShowVoucherModal(true)}
-                           className="flex w-full items-center justify-between p-3 sm:p-4 hover:bg-accent-light group bg-neutral-light border border-neutral rounded-lg"
-                        >
-                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <span className="text-lg shrink-0">🏷️</span>
-                              <div className="flex flex-col items-start min-w-0">
-                                 <span className="text-sm font-medium text-primary-darker">
-                                    Chọn hoặc nhập ưu đãi
-                                 </span>
-                                 {appliedVoucherCode && (
-                                    <span className="text-xs text-accent-dark font-semibold truncate w-full">
-                                       {appliedVoucherCode} • -
-                                       {formatPrice(appliedVoucherValue)}
-                                    </span>
-                                 )}
-                              </div>
-                           </div>
-                           <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-primary transition-colors shrink-0" />
-                        </button>
-                     </div>
-
-                     {/* Points */}
-                     <div className="rounded-lg p-3 sm:p-4 bg-neutral-light border border-neutral">
-                        <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-2">
-                              <span className="text-lg">🪙</span>
-                              <span className="text-sm text-primary-darker">
-                                 Đổi <span className="font-semibold">0</span>{" "}
-                                 điểm (≈
-                                 <span className="font-semibold">0₫</span>)
-                              </span>
-                           </div>
-                           <label className="relative inline-flex cursor-pointer items-center">
-                              <input
-                                 type="checkbox"
-                                 checked={usePoints}
-                                 onChange={(e) =>
-                                    setUsePoints(e.target.checked)
-                                 }
-                                 className="peer sr-only"
-                              />
-                              <div className="peer h-6 w-11 rounded-full bg-neutral after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-neutral-dark after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent"></div>
-                           </label>
-                        </div>
-                     </div>
-
-                     {/* Order Summary Box */}
-                     <div className="rounded-lg bg-neutral-light border border-neutral">
-                        <div className="p-3 sm:p-4">
-                           <h3 className="mb-3 text-sm sm:text-base font-semibold text-primary-darker">
-                              Thông tin đơn hàng
-                           </h3>
-
-                           <div className="space-y-2.5 text-sm">
-                              <div className="flex justify-between">
-                                 <span className="text-neutral-darker">
-                                    Tổng tiền
-                                 </span>
-                                 <span className="font-medium text-primary-darker">
-                                    {formatPrice(subtotal)}
-                                 </span>
-                              </div>
-
-                              <div className="flex justify-between">
-                                 <span className="text-neutral-darker">
-                                    Tổng khuyến mãi
-                                 </span>
-                                 <span className="font-medium text-primary-darker">
-                                    -{formatPrice(totalDiscountWithVoucher)}
-                                 </span>
-                              </div>
-
-                              <div className="flex justify-between pl-4">
-                                 <span className="text-neutral-dark text-xs">
-                                    Giảm giá sản phẩm
-                                 </span>
-                                 <span className="text-primary-darker text-sm">
-                                    -{formatPrice(totalDiscount)}
-                                 </span>
-                              </div>
-
-                              <div className="flex justify-between pl-4">
-                                 <span className="text-neutral-dark text-xs">
-                                    Voucher
-                                 </span>
-                                 <span className="text-primary-darker text-sm font-medium">
-                                    {appliedVoucherValue > 0
-                                       ? `-${formatPrice(appliedVoucherValue)}`
-                                       : "0₫"}
-                                 </span>
-                              </div>
-
-                              <div className="border-t border-neutral pt-2.5 mt-2.5">
-                                 <div className="flex justify-between items-center">
-                                    <span className="font-semibold text-primary-darker text-sm">
-                                       Cần thanh toán
-                                    </span>
-                                    <span className="text-xl font-bold text-promotion">
-                                       {formatPrice(finalTotalWithVoucher)}
-                                    </span>
-                                 </div>
-                              </div>
-
-                              <div className="flex items-center gap-1 pt-2">
-                                 <span className="text-xs text-neutral-darker">
-                                    Điểm thưởng
-                                 </span>
-                                 <span className="text-sm">🪙</span>
-                                 <span className="text-sm font-medium text-accent-dark">
-                                    +{rewardPoints.toLocaleString()}
-                                 </span>
-                              </div>
-                           </div>
-
-                           {showSummary && (
-                              <button
-                                 onClick={() => setShowSummary(!showSummary)}
-                                 className="mt-3 flex w-full items-center justify-center gap-1 text-xs sm:text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-                              >
-                                 Rút gọn
-                                 <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                              </button>
-                           )}
-                        </div>
-
-                        {/* Checkout Button */}
-                        <Link
-                           href="/checkout"
-                           className={`block w-full rounded-b-lg py-3.5 text-center text-base font-semibold transition ${
-                              selectedItems.length === 0
-                                 ? "cursor-not-allowed bg-neutral text-neutral-dark"
-                                 : "bg-accent text-primary-darker hover:bg-accent-hover shadow-lg"
-                           }`}
-                           onClick={(e) => {
-                              if (selectedItems.length === 0) {
-                                 e.preventDefault();
-                              }
-                           }}
-                        >
-                           Xác nhận đơn
-                        </Link>
-                     </div>
+                  <div className="hidden lg:block lg:col-span-1 border border-neutral">
+                     <OrderSummary
+                        subtotal={subtotal}
+                        totalDiscount={totalDiscountWithVoucher}
+                        finalTotal={finalTotalWithVoucher}
+                        rewardPoints={rewardPoints}
+                        selectedItemsCount={selectedItems.length}
+                        appliedVoucherCode={appliedVoucherCode}
+                        appliedVoucherValue={appliedVoucherValue}
+                        selectedPromotions={selectedPromotions}
+                        promotionValue={promotionValue}
+                        onOpenVoucherModal={() => setShowVoucherModal(true)}
+                        onCheckout={handleCheckout}
+                        buttonText="Xác nhận đơn"
+                        showTerms={false}
+                        isCheckoutPage={false}
+                     />
                   </div>
                </div>
             )}
@@ -534,12 +438,12 @@ export default function CartPage() {
                className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl"
             >
                <div className="flex items-center gap-3">
-                  <ShoppingCart className="h-5 w-5 flex-shrink-0" />
+                  <ShoppingCart className="h-5 w-5 shrink-0" />
                   <span className="text-left">
                      Xem đơn hàng ({selectedItems.length})
                   </span>
                </div>
-               <span className="font-bold flex-shrink-0 text-lg">
+               <span className="font-bold shrink-0 text-lg">
                   {formatPrice(finalTotalWithVoucher)}
                </span>
             </button>
@@ -557,6 +461,9 @@ export default function CartPage() {
             appliedVoucherCode={appliedVoucherCode}
             appliedVoucherValue={appliedVoucherValue}
             onOpenVoucherModal={() => setShowVoucherModal(true)}
+            onCheckout={handleCheckout}
+             usePoints={usePoints}           
+   onTogglePoints={setUsePoints}  
          />
 
          {/* Voucher Modal */}
