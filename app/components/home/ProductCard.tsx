@@ -1,9 +1,7 @@
 import { featuredProducts } from "../../data/featuredProducts";
 import StarIcon from "../ui/StarIcons";
-import HeartIcon from "../ui/HeartIcons";
 import Button from "../ui/button";
 
-// 🔥 LẤY TYPE TỪ MOCK DATA
 type Product = (typeof featuredProducts)[number];
 
 type ProductCardProps = {
@@ -16,107 +14,97 @@ export default function ProductCard({ product }: ProductCardProps) {
   const discount = product.variant.originalPrice - product.variant.price;
 
   const discountPercent = Math.round(
-    (discount / product.variant.originalPrice) * 100
+    ((product.variant.originalPrice - product.variant.price) /
+      product.variant.originalPrice) *
+      100
   );
 
-  return (
+   return (
     <div
       className="
-    white bg-[rgb(var(--card))]  text-[rgb(var(--foreground))]
- border border-gray-100 rounded-2xl p-4 shadow-sm relative flex flex-col"
+        h-[420px]
+        bg-white dark:bg-color-neutral
+        rounded-2xl
+        p-4
+        flex flex-col
+        border border-transparent
+        hover:border-red-100
+        shadow-[0_1px_4px_rgba(0,0,0,0.08)]
+        hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]
+        transition-all
+      "
     >
-      {/* Specs */}
-      <div className="absolute top-4 right-2 flex flex-col gap-2 items-center">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="flex flex-col items-center text-[10px] text-gray-600"
-          >
-            <div className="w-5 h-5 mb-1 opacity-60">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a10 10 0 0 1 10 10" />
-              </svg>
+      {/* IMAGE + SPECS */}
+      <div className="relative h-37.5 mb-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://th.bing.com/th/id/OIP.Mlwh_H7NhgRrom-aHx5n9QHaHa?w=176&h=180"
+          alt={product.name}
+          className="h-full object-contain -translate-x-4"
+        />
+
+        {/* SPECS */}
+        <div className="absolute right-0 top-0 flex flex-col gap-3">
+          {[1, 2, 3].map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-col items-center text-[9px] text-gray-500"
+            >
+              <div className="w-6 h-6 rounded-full border flex items-center justify-center">
+                📷
+              </div>
+              <span className="leading-tight text-center">
+                Độ phân giải<br />3MP
+              </span>
             </div>
-            <span className="leading-tight text-center">
-              Độ phân giải
-              <br />
-              3MP
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Image */}
-      <div className="h-40 mb-4 flex items-center justify-center text-5xl">
-        {product.brand === "Sony"
-          ? "🎧"
-          : product.brand === "Dell"
-          ? "💻"
-          : product.brand === "Apple"
-          ? "⌚"
-          : "📱"}
-      </div>
-
-      {/* Price */}
-      <div className="mb-2">
-        <div className="flex items-baseline gap-2">
-          {/* Giá bán */}
-          <span className="text-base font-semibold text-gray-900">
-            {formatPrice(product.variant.price)}
-          </span>
-
-          {/* Giá gốc */}
-          <span className="text-xs text-gray-400 line-through">
-            {formatPrice(product.variant.originalPrice)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3 mt-1">
-          {/* Số tiền giảm */}
-          <span className="text-green-600 text-xs font-medium">
-            Giảm {formatPrice(discount)}
-          </span>
-
-          {/* % giảm */}
-          <span className="text-red-500 text-sm font-semibold">
-            -{discountPercent}%
-          </span>
-        </div>
-      </div>
-
-      {/* Rating + Heart */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <StarIcon key={star} filled={star <= Math.floor(product.rating)} />
           ))}
-          <span className="text-xs text-gray-400 ml-1">(10 đánh giá)</span>
         </div>
-
-        <button className="text-red-400 hover:scale-110 transition-transform">
-          <HeartIcon className="w-6 h-6" />
-        </button>
       </div>
 
-      {/* Name */}
-      <h3 className="text-[15px] font-medium text-gray-800 leading-snug mb-4 flex-grow line-clamp-2">
+      {/* BADGE */}
+      <span className="w-fit bg-yellow-400 text-xs font-semibold px-3 py-1 rounded-full mb-2">
+        Còn 5/5 suất
+      </span>
+
+      {/* PRICE */}
+      <div className="flex justify-between items-start mb-2">
+        <div>
+          <div className="text-red-600 font-bold text-lg leading-tight">
+            {formatPrice(product.variant.price)}
+          </div>
+          <div className="text-gray-400 text-sm line-through">
+            {formatPrice(product.variant.originalPrice)}
+          </div>
+        </div>
+
+        <span className="w-10 h-10 bg-red-600 text-white text-sm font-bold rounded-full flex items-center justify-center">
+          -{discountPercent}%
+        </span>
+      </div>
+
+      {/* RATING + SOLD (KHÓA CHIỀU CAO) */}
+      <div className="h-[20px] flex items-center justify-between text-[11px] whitespace-nowrap mb-2">
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <StarIcon key={s} filled={s <= product.rating} />
+          ))}
+          <span className="text-gray-500 ml-1">(10)</span>
+        </div>
+
+        <span className="text-red-500 font-semibold">Đã bán 1.2k</span>
+      </div>
+
+      {/* NAME – KHÓA CHIỀU CAO */}
+      <h3 className="text-sm font-medium leading-snug line-clamp-2 h-[40px] mb-3">
         {product.name}
       </h3>
 
-      {/* CTA */}
+      {/* BUTTON DÍNH ĐÁY */}
       <Button
         variant="yellow"
-        clickSymbol="🛒"
-        notificationMessage={`Đã thêm ${product.name} vào giỏ hàng!`}
-        className="w-full py-3 text-lg font-bold rounded-xl cursor-pointer"
+        className="mt-auto w-full py-2 rounded-xl text-sm font-bold"
       >
-        mua ngay
+        Mua ngay
       </Button>
     </div>
   );

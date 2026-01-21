@@ -26,19 +26,19 @@ const AuthPage = () => {
             <div className="flex gap-2 sm:gap-3 text-sm sm:text-base">
                <Link
                   href="/"
-                  className="text-gray-600 hover:text-gray-900 hover:underline"
+                  className="text-neutral-darker hover:text-primary hover:underline"
                >
                   Trang chủ
                </Link>
-               <span className="text-gray-400">/</span>
-               <span className="font-medium">Tài khoản</span>
+               <span className="text-neutral-dark">/</span>
+               <span className="font-medium text-primary">Tài khoản</span>
             </div>
          </div>
          <div className="md:hidden mb-6">
-            <div className="relative flex border-b border-gray-200">
+            <div className="relative flex border-b border-neutral">
                {/* Animated underline */}
                <div
-                  className="absolute bottom-0 h-0.5 bg-warning transition-all duration-300 ease-in-out"
+                  className="absolute bottom-0 h-0.5 bg-accent transition-all duration-300 ease-in-out"
                   style={{
                      width: "50%",
                      left: activeTab === "login" ? "0%" : "50%",
@@ -49,8 +49,8 @@ const AuthPage = () => {
                   onClick={() => setActiveTab("login")}
                   className={`flex-1 py-3 text-center font-medium transition-colors ${
                      activeTab === "login"
-                        ? "text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
+                        ? "text-primary-darker"
+                        : "text-neutral-darker hover:text-primary"
                   }`}
                >
                   Đăng nhập
@@ -59,8 +59,8 @@ const AuthPage = () => {
                   onClick={() => setActiveTab("register")}
                   className={`flex-1 py-3 text-center font-medium transition-colors ${
                      activeTab === "register"
-                        ? "text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
+                        ? "text-primary-darker"
+                        : "text-neutral-darker hover:text-primary"
                   }`}
                >
                   Đăng ký
@@ -72,7 +72,7 @@ const AuthPage = () => {
          </div>
          <div className="hidden md:grid md:grid-cols-2 gap-0">
             {/* Login Form */}
-            <div className="border-r border-gray-200">
+            <div className="border-r border-neutral">
                <LoginForm />
             </div>
             <div>

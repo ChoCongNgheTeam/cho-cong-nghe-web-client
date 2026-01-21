@@ -2,181 +2,185 @@
 
 /* ===================== POPPINS LOCAL ===================== */
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/poppins/Poppins-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
+   font-family: "Poppins";
+   src: url("/fonts/poppins/Poppins-Light.ttf") format("truetype");
+   font-weight: 300;
+   font-style: normal;
+   font-display: swap;
 }
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+   font-family: "Poppins";
+   src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
+   font-weight: 400;
+   font-style: normal;
+   font-display: swap;
 }
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/poppins/Poppins-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+   font-family: "Poppins";
+   src: url("/fonts/poppins/Poppins-Medium.ttf") format("truetype");
+   font-weight: 500;
+   font-style: normal;
+   font-display: swap;
 }
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
+   font-family: "Poppins";
+   src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
+   font-weight: 600;
+   font-style: normal;
+   font-display: swap;
 }
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+   font-family: "Poppins";
+   src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
+   font-weight: 700;
+   font-style: normal;
+   font-display: swap;
 }
 
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
-  /* ACCENT / Yellow */
-  --yellow-light: 255 251 230;
-  --yellow: 255 215 0;
-  --yellow-hover: 229 194 0;
-  --yellow-active: 203 172 0;
-  --yellow-dark: 191 161 0;
+   /* ACCENT / Yellow */
+   /* ACCENT / Yellow */
+   --yellow-light: 255 251 230;
+   --yellow: 255 215 0;
+   --yellow-hover: 229 194 0;
+   --yellow-active: 203 172 0;
+   --yellow-dark: 191 161 0;
 
-  /* NEUTRAL */
-  --neutral-light: 253 253 253;
-  --neutral: 230 230 230;
-  --neutral-dark: 173 173 173;
-  --neutral-darker: 81 81 81;
+   /* NEUTRAL */
+   --neutral-light: 253 253 253;
+   --neutral: 230 230 230;
+   --neutral-dark: 173 173 173;
+   --neutral-darker: 81 81 81;
 
-  /* PRIMARY / Blue */
-  --blue-light: 235 236 237;
-  --blue: 51 62 72;
-  --blue-hover: 38 41 56;
-  --blue-dark: 38 47 54;
-  --blue-darker: 18 22 25;
+   /* PRIMARY / Blue */
+   /* PRIMARY / Blue */
+   --blue-light: 235 236 237;
+   --blue: 51 62 72;
+   --blue-hover: 38 41 56;
+   --blue-dark: 38 47 54;
+   --blue-darker: 18 22 25;
 
-  /* PROMOTION / Red */
-  --red-light: 250 232 233;
-  --red: 203 28 34;
-  --red-hover: 183 25 31;
-  --red-dark: 152 21 26;
+   /* PROMOTION / Red */
+   /* PROMOTION / Red */
+   --red-light: 250 232 233;
+   --red: 203 28 34;
+   --red-hover: 183 25 31;
+   --red-dark: 152 21 26;
 }
 
 /* ===================== DARK MODE COLORS ===================== */
 :root.dark {
-  /* ACCENT / Yellow - sáng hơn để nổi bật trên nền tối */
-  --yellow-light: 40 35 10;
-  --yellow: 250 204 21;
-  --yellow-hover: 234 179 8;
-  --yellow-active: 250 204 21;
-  --yellow-dark: 202 138 4;
+   /* ACCENT / Yellow - sáng hơn để nổi bật trên nền tối */
+   --yellow-light: 40 35 10;
+   --yellow: 250 204 21;
+   --yellow-hover: 234 179 8;
+   --yellow-active: 250 204 21;
+   --yellow-dark: 202 138 4;
 
-  /* NEUTRAL - đảo ngược gradient */
-  --neutral-light: 15 23 42; /* slate-900 - background chính */
-  --neutral: 30 41 59; /* slate-800 - các card, section */
-  --neutral-dark: 71 85 105; /* slate-600 - border, divider */
-  --neutral-darker: 203 213 225; /* slate-300 - text phụ */
+   /* NEUTRAL - đảo ngược gradient */
+   --neutral-light: 15 23 42; /* slate-900 - background chính */
+   --neutral: 30 41 59; /* slate-800 - các card, section */
+   --neutral-dark: 71 85 105; /* slate-600 - border, divider */
+   --neutral-darker: 203 213 225; /* slate-300 - text phụ */
 
-  /* PRIMARY / Blue - text sáng trên nền tối */
-  --blue-light: 30 41 59; /* slate-800 */
-  --blue: 226 232 240; /* slate-200 - text chính */
-  --blue-hover: 241 245 249; /* slate-100 - text hover */
-  --blue-dark: 248 250 252; /* slate-50 */
-  --blue-darker: 255 255 255; /* white */
+   /* PRIMARY / Blue - text sáng trên nền tối */
+   --blue-light: 30 41 59; /* slate-800 */
+   --blue: 226 232 240; /* slate-200 - text chính */
+   --blue-hover: 241 245 249; /* slate-100 - text hover */
+   --blue-dark: 248 250 252; /* slate-50 */
+   --blue-darker: 255 255 255; /* white */
 
-  /* PROMOTION / Red - đỏ sáng hơn */
-  --red-light: 69 10 10;
-  --red: 248 113 113; /* red-400 */
-  --red-hover: 239 68 68; /* red-500 */
-  --red-dark: 220 38 38; /* red-600 */
+   /* PROMOTION / Red - đỏ sáng hơn */
+   --red-light: 69 10 10;
+   --red: 248 113 113; /* red-400 */
+   --red-hover: 239 68 68; /* red-500 */
+   --red-dark: 220 38 38; /* red-600 */
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
 @theme {
-  /* ACCENT – CTA phụ, border highlight */
-  --color-accent-light: rgb(var(--yellow-light));
-  --color-accent: rgb(var(--yellow));
-  --color-accent-hover: rgb(var(--yellow-hover));
-  --color-accent-active: rgb(var(--yellow-active));
-  --color-accent-dark: rgb(var(--yellow-dark));
+   /* ACCENT – CTA phụ, border highlight */
+   --color-accent-light: rgb(var(--yellow-light));
+   --color-accent: rgb(var(--yellow));
+   --color-accent-hover: rgb(var(--yellow-hover));
+   --color-accent-active: rgb(var(--yellow-active));
+   --color-accent-dark: rgb(var(--yellow-dark));
 
-  /* PRIMARY – CTA chính */
-  --color-primary-light: rgb(var(--blue-light));
-  --color-primary: rgb(var(--blue));
-  --color-primary-hover: rgb(var(--blue-hover));
-  --color-primary-dark: rgb(var(--blue-dark));
-  --color-primary-darker: rgb(var(--blue-darker));
+   /* PRIMARY – CTA chính */
+   --color-primary-light: rgb(var(--blue-light));
+   --color-primary: rgb(var(--blue));
+   --color-primary-hover: rgb(var(--blue-hover));
+   --color-primary-dark: rgb(var(--blue-dark));
+   --color-primary-darker: rgb(var(--blue-darker));
 
-  /* PROMOTION – sale, discount, rating */
-  --color-promotion-light: rgb(var(--red-light));
-  --color-promotion: rgb(var(--red));
-  --color-promotion-hover: rgb(var(--red-hover));
-  --color-promotion-dark: rgb(var(--red-dark));
+   /* PROMOTION – sale, discount, rating */
+   --color-promotion-light: rgb(var(--red-light));
+   --color-promotion: rgb(var(--red));
+   --color-promotion-hover: rgb(var(--red-hover));
+   --color-promotion-dark: rgb(var(--red-dark));
 
-  /* NEUTRAL – text, border, background */
-  --color-neutral-light: rgb(var(--neutral-light));
-  --color-neutral: rgb(var(--neutral));
-  --color-neutral-dark: rgb(var(--neutral-dark));
-  --color-neutral-darker: rgb(var(--neutral-darker));
+   /* NEUTRAL – text, border, background */
+   --color-neutral-light: rgb(var(--neutral-light));
+   --color-neutral: rgb(var(--neutral));
+   --color-neutral-dark: rgb(var(--neutral-dark));
+   --color-neutral-darker: rgb(var(--neutral-darker));
 
-  --font-poppins: "Poppins", sans-serif;
+   --font-poppins: "Poppins", sans-serif;
 }
-
 /* ===================== UTILITIES ===================== */
 @layer utilities {
-  .container {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
+   .container {
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 0.75rem; /* Giảm từ 1rem xuống 0.75rem cho màn hình nhỏ */
+      padding-right: 0.75rem;
+   }
 
-  @media (min-width: 640px) {
-    .container {
-      max-width: 640px;
-    }
-  }
+   /* Extra small devices - dưới 375px */
+   @media (min-width: 375px) {
+      .container {
+         padding-left: 1rem;
+         padding-right: 1rem;
+      }
+   }
 
-  @media (min-width: 768px) {
-    .container {
-      max-width: 960px;
-    }
-  }
+   @media (min-width: 640px) {
+      .container {
+         max-width: 640px;
+      }
+   }
 
-  @media (min-width: 1024px) {
-    .container {
-      max-width: 1240px;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
-  }
+   @media (min-width: 768px) {
+      .container {
+         max-width: 960px;
+      }
+   }
 
-  @media (min-width: 1280px) {
-    .container {
-      max-width: 1280px;
-    }
-  }
+   @media (min-width: 1024px) {
+      .container {
+         max-width: 1240px;
+         padding-left: 1.5rem;
+         padding-right: 1.5rem;
+      }
+   }
 
-  @media (min-width: 1536px) {
-    .container {
-      max-width: 80rem;
-    }
-  }
+   @media (min-width: 1280px) {
+      .container {
+         max-width: 1240px;
+      }
+   }
 }
 
 /* ===================== GLOBAL ===================== */
 body {
-  background-color: rgb(var(--neutral-light));
-  color: rgb(var(--blue));
-  font-family: "Poppins", sans-serif;
-  transition:
-    background-color 0.5s ease,
-    color 0.5s ease;
+   background-color: rgb(var(--neutral-light));
+   color: rgb(var(--blue));
+   font-family: "Poppins", sans-serif;
+   transition:
+      background-color 0.5s ease,
+      color 0.5s ease;
 }
 
 /* Mobile (mặc định): < 640px        → Không có prefix

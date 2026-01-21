@@ -1,96 +1,101 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { featuredProducts } from "../../data/featuredProducts";
-import Button from "../ui/button";
 import ProductCard from "./ProductCard";
-
-// Format giá: 1.390.000 đ
-const formatPrice = (price: number) =>
-  price.toLocaleString("vi-VN") + " đ";
+import Button from "../ui/button";
 
 export default function FeaturedProductsSection() {
   const mainProduct = featuredProducts[0];
-  const productList = featuredProducts.slice(1);
+  const productList = featuredProducts.slice(1, 5);
+
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!sliderRef.current) return;
+    isDown.current = true;
+    startX.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeft.current = sliderRef.current.scrollLeft;
+  };
+  const stopDrag = () => (isDown.current = false);
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDown.current || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    sliderRef.current.scrollLeft = scrollLeft.current - walk;
+  };
 
   return (
-    <section className="bg-[#fdf2f2] py-8 mb-6 rounded-lg">
-      <div className="container mx-auto px-6">
-        <div className="flex gap-8">
+    <section className="bg-[#fdf2f2] py-6 mb-6 rounded-lg">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="flex gap-6 w-full">
 
-          {/* ================= LEFT SIDEBAR ================= */}
-          <aside className="w-72 flex-shrink-0 space-y-6">
-
-            {/* Banner */}
-            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-6 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-yellow-300 text-orange-600 font-bold text-sm px-3 py-1 rounded-bl-2xl">
+          {/* ===== BANNER TRÁI ===== */}
+          <div className="shrink-0 w-55 lg:w-60">
+            <div className="relative bg-linear-to-b from-yellow-400 to-orange-500 rounded-xl p-4 text-white h-full flex flex-col justify-between">
+              {/* DISCOUNT */}
+              <span className="absolute top-2 right-2 bg-yellow-200 text-orange-600 text-xs font-bold px-2 py-0.5 rounded">
                 -{mainProduct.variant.discount}%
+              </span>
+
+              {/* CONTENT */}
+              <div>
+                <h3 className="font-bold text-lg mb-1">Ưu đãi đặc biệt</h3>
+                <p className="text-xs opacity-90">
+                  Tiết kiệm đến {mainProduct.variant.discount}%
+                </p>
               </div>
 
-              <h3 className="text-2xl font-bold mb-2">Ưu đãi đặc biệt</h3>
-              <p className="text-sm mb-4 opacity-90">
-                Tiết kiệm đến {mainProduct.variant.discount}%
-              </p>
-
-              <Button
-                variant="yellow"
-                className="bg-white text-orange-600 hover:bg-gray-100"
-              >
-                Mua ngay
-              </Button>
+              {/* CTA */}
+              <Link href={`/products/${mainProduct.slug}`}>
+                <Button
+                  variant="yellow-outline"
+                  className="text-orange-600 font-semibold text-sm"
+                >
+                  Mua ngay
+                </Button>
+              </Link>
             </div>
+          </div>
 
-            {/* Product nổi bật */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-              <div className="aspect-square bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-5xl">
-                📺
-              </div>
-
-              <h4 className="font-medium text-sm mb-3 line-clamp-2">
-                {mainProduct.name}
-              </h4>
-
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-red-600">
-                  {formatPrice(mainProduct.variant.price)}
-                </span>
-                <span className="block text-sm text-gray-400 line-through">
-                  {formatPrice(mainProduct.variant.originalPrice)}
-                </span>
-              </div>
-
-              <Button variant="yellow" className="w-full">
-                Mua ngay
-              </Button>
-            </div>
-          </aside>
-
-          {/* ================= RIGHT CONTENT ================= */}
-          <main className="flex-1">
-
-            {/* Tabs */}
-<div className="flex justify-center mb-6">
-  <div className="flex gap-6 border-b border-gray-200">
-    <button className="font-medium text-gray-900 border-b-2 border-yellow-400 pb-3">
-      Mới bán
-    </button>
-    <button className="text-gray-500 hover:text-gray-900 pb-3">
-      Đang giảm giá
-    </button>
-    <button className="text-gray-500 hover:text-gray-900 pb-3">
-      Sản phẩm mới
-    </button>
-  </div>
-</div>
-
-
-            {/* Product grid – DÙNG COMPONENT CHUNG */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* ===== SLIDER PHẢI ===== */}
+          <div className="flex-1 overflow-hidden">
+            <div
+              ref={sliderRef}
+              className="flex gap-4 overflow-x-auto select-none cursor-grab py-2"
+              style={{
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
+              onMouseDown={isDesktop ? onMouseDown : undefined}
+              onMouseUp={isDesktop ? stopDrag : undefined}
+              onMouseLeave={isDesktop ? stopDrag : undefined}
+              onMouseMove={isDesktop ? onMouseMove : undefined}
+            >
               {productList.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <div
+                  key={product.id}
+                  className="shrink-0 w-70 sm:w-60"
+                >
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
+          </div>
 
-          </main>
         </div>
       </div>
     </section>

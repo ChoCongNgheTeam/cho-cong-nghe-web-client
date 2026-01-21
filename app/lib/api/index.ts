@@ -1,22 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
-const TOKEN_KEY = "access_token";
-export const tokenManager = {
-   getToken: (): string | null => {
-      if (typeof window === "undefined") return null;
-      return localStorage.getItem(TOKEN_KEY);
-   },
 
-   setToken: (token: string): void => {
-      if (typeof window === "undefined") return;
-      localStorage.setItem(TOKEN_KEY, token);
-   },
+class TokenManager {
+   private accessToken: string | null = null;
 
-   removeToken: (): void => {
-      if (typeof window === "undefined") return;
-      localStorage.removeItem(TOKEN_KEY);
-   },
-};
+   getToken(): string | null {
+      return this.accessToken;
+   }
+
+   setToken(token: string): void {
+      this.accessToken = token;
+   }
+
+   removeToken(): void {
+      this.accessToken = null;
+   }
+}
+
+export const tokenManager = new TokenManager();
 
 class ApiError extends Error {
    status: number;
@@ -34,11 +34,11 @@ class ApiRequest {
    private async request<T>(
       endpoint: string,
       options: RequestInit & {
-         noAuth?: boolean; // dùng cho API public (login, register)
-         params?: Record<string, any>; // query params
-         noRedirectOn401?: boolean; // tắt redirect khi 401
-         timeout?: number; // timeout (ms)
-      } = {}
+         noAuth?: boolean;
+         params?: Record<string, any>;
+         noRedirectOn401?: boolean;
+         timeout?: number;
+      } = {},
    ): Promise<T> {
       const {
          noAuth = false,
@@ -62,27 +62,26 @@ class ApiRequest {
             }
          });
          const queryString = searchParams.toString();
-         if (queryString) {
-            url += `?${queryString}`;
-         }
+         if (queryString) url += `?${queryString}`;
       }
 
       // Timeout controller
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      // Kiểm tra loại body
       const isFormData = fetchOptions.body instanceof FormData;
       const isJsonBody =
          fetchOptions.body &&
          typeof fetchOptions.body === "object" &&
          !isFormData;
+
       const token = !noAuth ? tokenManager.getToken() : null;
 
       try {
          const response = await fetch(url, {
             ...fetchOptions,
             signal: controller.signal,
+            credentials: "include", // ✅ GỬI COOKIE (refreshToken)
             headers: {
                ...(token ? { Authorization: `Bearer ${token}` } : {}),
                ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
@@ -95,15 +94,24 @@ class ApiRequest {
 
          clearTimeout(timeoutId);
 
-         if (response.status === 401) {
-            tokenManager.removeToken();
-
-            if (!noRedirectOn401 && typeof window !== "undefined") {
-               window.location.href = "/login?expired=1";
-            }
-            throw new ApiError("Unauthorized", 401);
+         // ✅ SILENT REFRESH: Kiểm tra header "x-access-token"
+         const newAccessToken = response.headers.get("x-access-token");
+         if (newAccessToken) {
+            console.log("[API] 🔄 Token auto-refreshed by backend");
+            tokenManager.setToken(newAccessToken);
          }
 
+         // ✅ XỬ LÝ 401
+         if (response.status === 401 && !noRedirectOn401) {
+            tokenManager.removeToken();
+
+            if (typeof window !== "undefined") {
+               window.location.href = "/login?expired=1";
+            }
+            throw new ApiError("Session expired", 401);
+         }
+
+         // ✅ XỬ LÝ LỖI KHÁC
          if (!response.ok) {
             let message = "Lỗi máy chủ";
             let errorData = null;
@@ -117,6 +125,7 @@ class ApiRequest {
             throw new ApiError(message, response.status, errorData);
          }
 
+         // ✅ TRẢ DATA
          if (response.status === 204) {
             return null as T;
          }
@@ -141,7 +150,6 @@ class ApiRequest {
       }
    }
 
-   // GET request
    get<T>(
       endpoint: string,
       options?: {
@@ -149,7 +157,7 @@ class ApiRequest {
          noAuth?: boolean;
          noRedirectOn401?: boolean;
          timeout?: number;
-      }
+      },
    ) {
       return this.request<T>(endpoint, {
          ...options,
@@ -157,7 +165,6 @@ class ApiRequest {
       });
    }
 
-   // POST request
    post<T>(
       endpoint: string,
       body?: any,
@@ -165,7 +172,7 @@ class ApiRequest {
          noAuth?: boolean;
          timeout?: number;
          headers?: HeadersInit;
-      }
+      },
    ) {
       return this.request<T>(endpoint, {
          ...options,
@@ -174,7 +181,6 @@ class ApiRequest {
       });
    }
 
-   // PUT request
    put<T>(
       endpoint: string,
       body?: any,
@@ -182,7 +188,7 @@ class ApiRequest {
          noAuth?: boolean;
          timeout?: number;
          headers?: HeadersInit;
-      }
+      },
    ) {
       return this.request<T>(endpoint, {
          ...options,
@@ -191,7 +197,6 @@ class ApiRequest {
       });
    }
 
-   // PATCH request
    patch<T>(
       endpoint: string,
       body?: any,
@@ -199,7 +204,7 @@ class ApiRequest {
          noAuth?: boolean;
          timeout?: number;
          headers?: HeadersInit;
-      }
+      },
    ) {
       return this.request<T>(endpoint, {
          ...options,
@@ -208,14 +213,13 @@ class ApiRequest {
       });
    }
 
-   // DELETE request
    delete<T>(
       endpoint: string,
       options?: {
          noAuth?: boolean;
          timeout?: number;
          headers?: HeadersInit;
-      }
+      },
    ) {
       return this.request<T>(endpoint, {
          ...options,
@@ -226,6 +230,4 @@ class ApiRequest {
 
 const apiRequest = new ApiRequest();
 export default apiRequest;
-
-// Export ApiError để có thể catch và xử lý
 export { ApiError };

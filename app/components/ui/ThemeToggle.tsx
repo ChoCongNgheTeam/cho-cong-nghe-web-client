@@ -1,48 +1,106 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { Sun, Moon } from "lucide-react";
 
-export default function ThemeToggle() {
-  // ✅ Khởi tạo state từ localStorage
-  const [dark, setDark] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("theme") === "dark";
-  });
+interface ToggleSwitchProps {
+   defaultValue?: boolean;
+   onChange?: (value: boolean) => void;
+   className?: string;
+}
 
-  // ✅ Chỉ sync DOM + localStorage (KHÔNG setState)
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [dark]);
+export default function ToggleSwitch({
+   defaultValue = false,
+   onChange,
+   className = "",
+}: ToggleSwitchProps) {
+   const [isDark, setIsDark] = useState(false);
+   const [mounted, setMounted] = useState(false);
 
-  const toggleTheme = () => {
-    setDark((prev) => !prev);
-  };
+   useEffect(() => {
+      setMounted(true);
+      
+      // CHỈ đọc từ localStorage, KHÔNG theo system preference
+      const savedTheme = localStorage.getItem("theme");
+      const shouldBeDark = savedTheme === "dark";
+      
+      setIsDark(shouldBeDark);
+      
+      // Force apply theme ngay khi mount
+      const html = document.documentElement;
+      if (shouldBeDark) {
+         html.classList.add("dark");
+         html.style.colorScheme = "dark";
+      } else {
+         html.classList.remove("dark");
+         html.style.colorScheme = "light";
+      }
+   }, []);
 
-  return (
-    <button
-      onClick={toggleTheme}
-      aria-label="Toggle theme"
-      className="relative w-14 h-8 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors"
-    >
-      {/* Nút tròn */}
-      <span
-        className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform duration-300 ${
-          dark ? "translate-x-6" : ""
-        }`}
-      />
+   const handleToggle = () => {
+      const newIsDark = !isDark;
+      setIsDark(newIsDark);
 
-      {/* Icon */}
-      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs">
-        🌞
-      </span>
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
-        🌙
-      </span>
-    </button>
-  );
+      const html = document.documentElement;
+      
+      if (newIsDark) {
+         html.classList.add("dark");
+         html.style.colorScheme = "dark";
+         localStorage.setItem("theme", "dark");
+      } else {
+         html.classList.remove("dark");
+         html.style.colorScheme = "light";
+         localStorage.setItem("theme", "light");
+      }
+
+      onChange?.(newIsDark);
+   };
+
+   // Prevent hydration mismatch
+   if (!mounted) {
+      return null;
+   }
+
+   return (
+      <div
+         onClick={handleToggle}
+         className={`hidden xl:block fixed z-[100] left-3 top-[60vh] w-10 h-28 rounded-full cursor-pointer shadow-lg opacity-70 hover:opacity-100 transition-all duration-300 ${
+            isDark ? "bg-neutral-dark" : "bg-primary-dark"
+         } ${className}`}
+      >
+         {/* Label Dark */}
+         <div
+            className={`absolute top-4 left-0 w-full text-center text-xs font-medium transition-opacity duration-300 ${
+               isDark
+                  ? "opacity-100 text-neutral-light"
+                  : "opacity-40 text-neutral"
+            }`}
+         >
+            Dark
+         </div>
+
+         {/* Toggle button */}
+         <div
+            className={`absolute w-8 h-12 bg-neutral-light rounded-full left-1 shadow-md flex items-center justify-center transition-all duration-300 ${
+               isDark ? "top-1" : "top-[60px]"
+            }`}
+         >
+            {isDark ? (
+               <Moon className="w-4 h-4 text-primary" />
+            ) : (
+               <Sun className="w-4 h-4 text-primary" />
+            )}
+         </div>
+
+         {/* Label Light */}
+         <div
+            className={`absolute bottom-4 left-0 w-full text-center text-xs font-medium transition-opacity duration-300 ${
+               isDark
+                  ? "opacity-40 text-neutral"
+                  : "opacity-100 text-neutral-light"
+            }`}
+         >
+            Light
+         </div>
+      </div>
+   );
 }
