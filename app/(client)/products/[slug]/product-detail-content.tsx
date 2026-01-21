@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
@@ -21,6 +21,22 @@ interface ProductDetailContentProps {
 
 export function ProductDetailContent({ product }: ProductDetailContentProps) {
   const reviewsRef = useRef<HTMLDivElement>(null);
+
+  // Khởi tạo selected color và storage từ availableOptions
+  const initialColor =
+    product.availableOptions?.find((opt) => opt.attribute === "Color")
+      ?.values?.[0]?.value || "";
+
+  const initialStorage =
+    product.availableOptions?.find((opt) => opt.attribute === "Storage")
+      ?.values?.[0]?.value || "";
+
+  const [selectedColor, setSelectedColor] = useState(initialColor);
+  const [selectedStorage, setSelectedStorage] = useState(initialStorage);
+
+  // Tìm variant khớp với color và storage được chọn
+  const selectedVariant = product.currentVariant;
+
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -36,7 +52,10 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
             {/* Left - Product Banner */}
             <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
-              <ProductDetailBanner product={product} />
+              <ProductDetailBanner
+                product={product}
+                selectedVariant={selectedVariant}
+              />
             </div>
 
             {/* Right - Product Card */}
@@ -44,6 +63,10 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
               <div className="lg:sticky lg:top-4 lg:h-fit">
                 <ProductDetailRight
                   product={product}
+                  selectedColor={selectedColor}
+                  selectedStorage={selectedStorage}
+                  onColorChange={setSelectedColor}
+                  onStorageChange={setSelectedStorage}
                   onReviewClick={scrollToReviews}
                 />
               </div>
@@ -59,21 +82,19 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
 
       {/* Product Detail Section 1 */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6">
-       
-          <ProductDetailSection1 />
-        
+        <ProductDetailSection1 />
       </div>
 
       {/* Product Review Section */}
       <div className="bg-gray-400/10  pt-4 sm:pt-6 " ref={reviewsRef}>
-        <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+        <div>
           <ProductReview />
         </div>
       </div>
 
       {/* Compare Products Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
-        <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+        <div>
           <CompareProducts />
         </div>
       </div>

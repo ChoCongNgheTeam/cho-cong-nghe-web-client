@@ -1,5 +1,10 @@
 "use client";
 import { useState } from "react";
+import { ProductDetail } from "@/lib/types/product";
+
+interface ProductDetailSection1Props {
+  product?: ProductDetail;
+}
 
 export default function ProductDetailSection1() {
   const [activeTab, setActiveTab] = useState("baiviet");
@@ -9,7 +14,9 @@ export default function ProductDetailSection1() {
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
         {/* Left - Mô tả sản phẩm */}
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-[2]">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-primary">Mô tả sản phẩm</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-primary">
+            Mô tả sản phẩm
+          </h2>
 
           <p className="font-semibold text-sm sm:text-base text-primary">
             Nubia A76 NFC được định vị là sản phẩm hướng đến nhóm người dùng phổ
@@ -45,7 +52,9 @@ export default function ProductDetailSection1() {
 
         {/* Right - Thông tin hay */}
         <div className="flex flex-col gap-3 lg:flex-1 mt-6 lg:mt-0">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-primary">Thông tin hay</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-primary">
+            Thông tin hay
+          </h2>
 
           {/* Tab Buttons */}
           <div className="flex gap-2 mb-2 sm:mb-4">
@@ -87,7 +96,9 @@ export default function ProductDetailSection1() {
             )}
             {activeTab === "meohay" && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-base sm:text-lg text-primary">Mẹo hay</h3>
+                <h3 className="font-semibold text-base sm:text-lg text-primary">
+                  Mẹo hay
+                </h3>
                 <p className="text-neutral-darker">
                   Đây là nội dung các mẹo hay nhanh chóng...
                 </p>

@@ -1,32 +1,25 @@
-/**
- * Định nghĩa các kiểu dữ liệu liên quan đến sản phẩm
- */
-/** Thương hiệu */
+/** ===== Brand ===== */
 export type Brand = {
   id: string;
   name: string;
+  slug: string;
 };
 
-/** Danh mục */
+/** ===== Category ===== */
 export type Category = {
   id: string;
   name: string;
   slug: string;
 };
 
-/** Sản phẩm trong danh mục */
-export type ProductCategory = {
-  category: Category;
-  isPrimary: boolean;
-};
-
-/* Kho hàng */
+/** ===== Inventory ===== */
 export type Inventory = {
   quantity: number;
   reservedQuantity: number;
+  available: number;
 };
 
-/* Hình ảnh sản phẩm */
+/** ===== Product Image ===== */
 export type ProductImage = {
   id: string;
   imageUrl: string;
@@ -34,61 +27,90 @@ export type ProductImage = {
   position: number;
 };
 
-/* Thuốc tính sản phẩm */
-export type Attribute = {
-  id: string;
-  name: string;
-};
-
-/* Tùy chọn thuộc tính */
-export type AttributeOption = {
+/** ===== Option Value ===== */
+export type OptionValue = {
   id: string;
   value: string;
-  attribute: Attribute;
+  label: string;
+  variantIds: string[];
 };
 
-export type VariantAttribute = {
-  id: string;
-  attributeOptionId: string;
-  attributeOption: AttributeOption;
-  createdAt: string;
+/** ===== Product Option ===== */
+export type ProductOption = {
+  attribute: "color" | "storage" | string;
+  values: OptionValue[];
 };
 
-/** Biến thể sản phẩm */
-export type ProductVariant = {
+/** ===== Price Range ===== */
+export type PriceRange = {
+  min: number;
+  max: number;
+};
+
+/** ===== Current Variant ===== */
+export type CurrentVariant = {
   id: string;
   code: string;
-  price: string;
-  weight: string;
+  price: number;
+  soldCount: number;
   isDefault: boolean;
   isActive: boolean;
+  available: boolean;
+  stockStatus: "in_stock" | "out_of_stock" | string;
   inventory: Inventory;
   images: ProductImage[];
-  variantAttributes: VariantAttribute[];
 };
 
-/** Chi tiết sản phẩm */
+/** ===== Rating ===== */
+export type Rating = {
+  average: number;
+  total: number;
+  distribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+};
+
+/** ===== Highlight ===== */
+export type Highlight = {
+  id: string;
+  key: string;
+  name: string;
+  icon: string;
+  unit: string | null;
+  value: string;
+};
+
+/** ===== Product Detail ===== */
 export type ProductDetail = {
   id: string;
   name: string;
-  description: string;
   slug: string;
-
-  brandId: string;
+  description: string;
   brand: Brand;
-
-  viewsCount: string;
-  ratingAverage: string;
-  ratingCount: number;
-
+  category: Category;
+  availableOptions: ProductOption[];
+  priceRange: PriceRange;
+  warranty: string;
+  stockStatus: "in_stock" | "out_of_stock" | string;
+  currentVariant: CurrentVariant;
+  rating: Rating;
+  viewsCount: number;
   isFeatured: boolean;
   isActive: boolean;
-
   createdAt: string;
   updatedAt: string;
+  highlights: Highlight[];
+  canReview: boolean;
+  orderItemId: string | null;
+};
 
-  productCategories: ProductCategory[];
-  variants: ProductVariant[];
-
-  highlights: any[]; // Chưa có cấu trúc cụ thể
+/** ===== API Response ===== */
+export type ProductDetailResponse = {
+  success: boolean;
+  data: ProductDetail;
+  message: string;
 };

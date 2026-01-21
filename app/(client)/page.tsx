@@ -25,7 +25,12 @@ export default function HomePage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <CarouselBanner currentSlide={currentSlide} setCurrentSlide={setCurrentSlide} nextSlide={nextSlide} prevSlide={prevSlide} />
+        <CarouselBanner
+          currentSlide={currentSlide}
+          setCurrentSlide={setCurrentSlide}
+          nextSlide={nextSlide}
+          prevSlide={prevSlide}
+        />
 
         <HotSaleSection />
 
@@ -37,15 +42,24 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold mb-6">Phụ kiện</h2>
             <div className="grid grid-cols-5 md:grid-cols-10 gap-4">
               {accessories.map((category) => (
-                <a key={category.id} href={`#${category.slug}`} className="text-center group cursor-pointer">
+                <a
+                  key={category.id}
+                  href={`#${category.slug}`}
+                  className="text-center group cursor-pointer"
+                >
                   <div className="w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg mb-2 flex items-center justify-center group-hover:shadow-md transition-all group-hover:scale-105">
                     <span className="text-4xl">{category.icon}</span>
                   </div>
-                  <p className="text-xs font-medium group-hover:text-blue-600 transition-colors">{category.name}</p>
+                  <p className="text-xs font-medium group-hover:text-blue-600 transition-colors">
+                    {category.name}
+                  </p>
                 </a>
               ))}
               {[...Array(6)].map((_, i) => (
-                <div key={`extra-${i}`} className="text-center group cursor-pointer">
+                <div
+                  key={`extra-${i}`}
+                  className="text-center group cursor-pointer"
+                >
                   <div className="w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg mb-2 flex items-center justify-center group-hover:shadow-md transition-all">
                     <span className="text-4xl">📦</span>
                   </div>
@@ -63,13 +77,22 @@ export default function HomePage() {
           <div className="container mx-auto px-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Góc Review cho bạn</h2>
-              <a href="#reviews" className="text-sm text-blue-600 hover:text-blue-700">Xem tất cả →</a>
+              <a
+                href="#reviews"
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Xem tất cả →
+              </a>
             </div>
             <div className="grid grid-cols-3 gap-6">
               {reviews.map((review) => (
                 <div key={review.id} className="group cursor-pointer">
                   <div className="rounded-lg aspect-video mb-3 overflow-hidden relative">
-                    <img src={review.thumbnail} alt={review.title} className="w-full h-full object-cover" />
+                    <img
+                      src={review.thumbnail}
+                      alt={review.title}
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="w-16 h-16  bg-opacity-90 rounded-full flex items-center justify-center">
                         <span className="text-2xl ml-1">▶</span>
@@ -82,10 +105,14 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">{review.author}</p>
-                      <p className="text-xs text-gray-500">{review.date} • {review.views} lượt xem</p>
+                      <p className="text-xs text-gray-500">
+                        {review.date} • {review.views} lượt xem
+                      </p>
                     </div>
                   </div>
-                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 transition-colors">{review.title}</h3>
+                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    {review.title}
+                  </h3>
                 </div>
               ))}
             </div>

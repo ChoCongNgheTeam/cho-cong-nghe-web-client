@@ -10,21 +10,31 @@ import ProductSpecsModal, {
 } from "./ProductSpecsModal";
 
 interface ProductDetailRightProps {
-  // product?: Product;
   product?: ProductDetail;
+  selectedColor?: string;
+  selectedStorage?: string;
+  onColorChange?: (color: string) => void;
+  onStorageChange?: (storage: string) => void;
   onReviewClick?: () => void;
 }
+
 type ColorOption = {
   value: string;
   image?: string;
+  label?: string;
 };
 
 type StorageOption = {
   value: string;
+  label?: string;
 };
 
 export default function ProductDetailRight({
   product,
+  selectedColor: propSelectedColor,
+  selectedStorage: propSelectedStorage,
+  onColorChange,
+  onStorageChange,
   onReviewClick,
 }: ProductDetailRightProps = {}) {
   /* ============================================================================
@@ -39,7 +49,6 @@ export default function ProductDetailRight({
    * ========================================================================== */
   const modalRef = useRef<ProductSpecsModalRef>(null);
 
-  // Hàm mở modal từ component cha
   const openDialog = () => {
     modalRef.current?.open();
   };
@@ -93,64 +102,41 @@ export default function ProductDetailRight({
   /* ============================================================================
    * PRODUCT DATA
    * ========================================================================== */
+  const storages: StorageOption[] = (() => {
+    const storageOption = product.availableOptions?.find(
+      (opt) => opt.attribute === "storage",
+    );
+    return (
+      storageOption?.values?.map((val) => ({
+        value: val.label,
+      })) || []
+    );
+  })();
 
-  // Dung lượng (Storage)
-  const storages: StorageOption[] = Array.from(
-    new Map(
-      product.variants.flatMap((variant) => {
-        const storageAttr = variant.variantAttributes.find(
-          (attr) => attr.attributeOption.attribute.name === "Storage"
-        );
+  const colors: ColorOption[] = (() => {
+    const colorOption = product.availableOptions?.find(
+      (opt) => opt.attribute === "color",
+    );
+    if (!colorOption?.values) return [];
 
-        if (!storageAttr) return [];
-
-        return [
-          [
-            storageAttr.attributeOption.value,
-            {
-              value: storageAttr.attributeOption.value,
-            },
-          ],
-        ];
-      })
-    ).values()
-  );
-
-  // Màu sắc (unique + ảnh đại diện)
-  const colors: ColorOption[] = Array.from(
-    new Map(
-      product.variants.flatMap((variant) => {
-        const colorAttr = variant.variantAttributes.find(
-          (attr) => attr.attributeOption.attribute.name === "Color"
-        );
-
-        if (!colorAttr) return [];
-
-        return [
-          [
-            colorAttr.attributeOption.value,
-            {
-              value: colorAttr.attributeOption.value,
-              image: variant.images?.[0]?.imageUrl,
-            },
-          ],
-        ];
-      })
-    ).values()
-  );
+    return colorOption.values.map((val) => {
+      const firstVariantId = val.variantIds?.[0];
+      const variant =
+        firstVariantId === product.currentVariant?.id
+          ? product.currentVariant
+          : undefined;
+      return {
+        value: val.label,
+        image: variant?.images?.[0]?.imageUrl,
+      };
+    });
+  })();
 
   /* ============================================================================
    * STATE
    * ========================================================================== */
-  const [selectedColor, setSelectedColor] = useState<string>(
-    colors[0]?.value ?? ""
-  );
-
-  const [selectedStorage, setSelectedStorage] = useState(
-    storages[0]?.value ?? ""
-  );
-
-  const [activePayment, setActivePayment] = useState(0);
+  const selectedColor = propSelectedColor || colors[0]?.value || "";
+  const selectedStorage = propSelectedStorage || storages[0]?.value || "";
 
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
@@ -163,32 +149,22 @@ export default function ProductDetailRight({
    * ========================================================================== */
   useEffect(() => {
     const endTime = new Date();
-    // Tạo thời điểm kết thúc: hôm nay lúc 23:59:59
     endTime.setHours(23, 59, 59, 999);
 
-    // Hàm cập nhật thời gian còn lại
     const updateTimer = () => {
       const diff = endTime.getTime() - Date.now();
-      //  Nếu đã hết thời gian → set về 0 và dừng
       if (diff <= 0) {
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
         return;
       }
-      // Chuyển mili-giây sang giờ / phút / giây
       setTimeLeft({
-        // Số giờ còn lại trong ngày
         hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        // Số phút còn lại
         minutes: Math.floor((diff / (1000 * 60)) % 60),
-        // Số giây còn lại
         seconds: Math.floor((diff / 1000) % 60),
       });
     };
-    //  Gọi ngay lần đầu để không bị trễ 1s khi render
     updateTimer();
-    // Cập nhật mỗi giây
     const interval = setInterval(updateTimer, 1000);
-    // Cleanup khi component unmount (tránh memory leak)
     return () => clearInterval(interval);
   }, []);
 
@@ -218,20 +194,19 @@ export default function ProductDetailRight({
       {/* Rating & Links */}
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
         <span className="text-neutral-darker dark:text-neutral-darker transition-colors duration-300">
-          {product.variants[0].code}
+          {product.currentVariant?.code}
         </span>
         <div className="flex items-center gap-1">
           <FaStar className="text-accent dark:text-accent text-xs sm:text-sm" />
           <span className="text-primary dark:text-primary">
-            {product.ratingAverage}
+            {product.rating.average.toFixed(1)}
           </span>
         </div>
-        {/* Thêm onClick vào link đánh giá */}
         <button
           onClick={onReviewClick}
           className="text-accent dark:text-accent hover:underline hover:text-accent-hover dark:hover:text-accent-hover transition-colors cursor-pointer"
         >
-          {product.ratingCount} đánh giá
+          {product.rating.total} đánh giá
         </button>
         <span className="text-neutral-darker dark:text-neutral-darker">|</span>
         <button
@@ -255,7 +230,9 @@ export default function ProductDetailRight({
             return (
               <span
                 key={storage.value}
-                onClick={() => setSelectedStorage(storage.value)}
+                onClick={() => {
+                  onStorageChange?.(storage.value);
+                }}
                 className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 font-bold cursor-pointer relative overflow-hidden transition-colors duration-300
             ${
               isActive
@@ -292,7 +269,9 @@ export default function ProductDetailRight({
             return (
               <span
                 key={color.value}
-                onClick={() => setSelectedColor(color.value)}
+                onClick={() => {
+                  onColorChange?.(color.value);
+                }}
                 className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300 ${
                   isActive
                     ? "border-promotion dark:border-promotion text-promotion dark:text-promotion bg-promotion-light dark:bg-neutral"
@@ -339,11 +318,12 @@ export default function ProductDetailRight({
           <div className="flex flex-col gap-2 flex-1">
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-primary dark:text-primary transition-colors duration-300">
-                {(product.variants[0].price || 0).toLocaleString("vi-VN")}₫
+                {(product.currentVariant?.price || 0).toLocaleString("vi-VN")}₫
               </h3>
               <div className="flex gap-2 items-center">
                 <span className="text-xs sm:text-sm text-neutral-darker dark:text-neutral-darker line-through transition-colors duration-300">
-                  {(product.variants[0].price || 0).toLocaleString("vi-VN")}₫
+                  {(product.currentVariant?.price || 0).toLocaleString("vi-VN")}
+                  ₫
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-promotion dark:text-promotion">
                   3%
@@ -575,6 +555,7 @@ export default function ProductDetailRight({
           Trả góp 0%
         </button>
       </div>
+
       <ProductSpecsModal ref={modalRef} productSpecs={mockProductSpecs} />
     </div>
   );
