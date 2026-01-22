@@ -56,9 +56,9 @@ const DesktopHeader = ({
                   placeholder="Tìm kiếm sản phẩm..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-4 pr-48 lg:pr-60 py-2.5 lg:py-3 border-2 border-accent rounded-full focus:outline-none focus:border-accent-hover text-sm lg:text-base bg-neutral-light text-primary placeholder:text-neutral-dark"
+                  className="w-full pl-4 pr-48 lg:pr-60 py-2.5 lg:py-3 border border-accent rounded-full focus:outline-none focus:border-accent-hover text-sm lg:text-base bg-neutral-light text-primary placeholder:text-neutral-dark"
                />
-               <div className="absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border-2 border-accent border-l-0 rounded-r-full">
+               <div className="absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-accent border-l-0 rounded-r-full">
                   <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral-dark cursor-pointer bg-neutral-light transition-colors">
                      <span className="hidden xl:inline">
                         Tất cả các danh mục

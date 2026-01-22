@@ -40,105 +40,180 @@
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
    /* ACCENT / Yellow */
-   /* ACCENT / Yellow */
    --yellow-light: 255 251 230;
-   --yellow: 255 215 0;
+   --yellow-light-hover: 255 249 217;
+   --yellow-light-active: 255 243 178;
+   --yellow-normal: 255 238 138;
+   --yellow: 254 215 0;
    --yellow-hover: 229 194 0;
    --yellow-active: 203 172 0;
    --yellow-dark: 191 161 0;
+   --yellow-dark-hover: 182 152 0;
+   --yellow-dark-active: 158 132 0;
+   --yellow-darker: 86 75 0;
 
    /* NEUTRAL */
    --neutral-light: 253 253 253;
+   --neutral-light-hover: 251 251 251;
+   --neutral-light-active: 247 247 247;
+   --neutral-normal: 230 230 230;
    --neutral: 230 230 230;
+   --neutral-hover: 207 207 207;
+   --neutral-active: 184 184 184;
    --neutral-dark: 173 173 173;
+   --neutral-dark-hover: 138 138 138;
+   --neutral-dark-active: 103 103 103;
    --neutral-darker: 81 81 81;
 
    /* PRIMARY / Blue */
-   /* PRIMARY / Blue */
-   --blue-light: 235 236 237;
-   --blue: 51 62 72;
-   --blue-hover: 38 41 56;
-   --blue-dark: 38 47 54;
-   --blue-darker: 18 22 25;
+   --primary-light: 235 236 237;
+   --primary-light-hover: 228 226 228;
+   --primary-light-active: 192 195 198;
+   --primary-normal: 51 62 72;
+   --primary: 51 62 72;
+   --primary-hover: 46 56 65;
+   --primary-active: 41 50 58;
+   --primary-dark: 38 47 54;
+   --primary-dark-hover: 31 37 43;
+   --primary-dark-active: 23 28 32;
+   --primary-darker: 18 22 25;
 
    /* PROMOTION / Red */
-   /* PROMOTION / Red */
-   --red-light: 250 232 233;
-   --red: 203 28 34;
-   --red-hover: 183 25 31;
-   --red-dark: 152 21 26;
+   --promotion-light: 250 232 233;
+   --promotion-light-hover: 247 221 222;
+   --promotion-light-active: 239 186 186;
+   --promotion-normal: 203 28 34;
+   --promotion: 203 28 34;
+   --promotion-hover: 183 25 31;
+   --promotion-active: 162 22 27;
+   --promotion-dark: 152 21 26;
+   --promotion-dark-hover: 122 17 20;
+   --promotion-dark-active: 91 13 15;
+   --promotion-darker: 71 10 12;
 }
 
 /* ===================== DARK MODE COLORS ===================== */
 :root.dark {
-   /* ACCENT / Yellow - sáng hơn để nổi bật trên nền tối */
+   /* ACCENT / Yellow */
    --yellow-light: 40 35 10;
+   --yellow-light-hover: 45 39 12;
+   --yellow-light-active: 50 43 14;
+   --yellow-normal: 234 179 8;
    --yellow: 250 204 21;
    --yellow-hover: 234 179 8;
-   --yellow-active: 250 204 21;
-   --yellow-dark: 202 138 4;
+   --yellow-active: 202 138 4;
+   --yellow-dark: 161 98 7;
+   --yellow-dark-hover: 133 77 14;
+   --yellow-dark-active: 113 63 18;
+   --yellow-darker: 92 53 16;
 
-   /* NEUTRAL - đảo ngược gradient */
-   --neutral-light: 15 23 42; /* slate-900 - background chính */
-   --neutral: 30 41 59; /* slate-800 - các card, section */
-   --neutral-dark: 71 85 105; /* slate-600 - border, divider */
-   --neutral-darker: 203 213 225; /* slate-300 - text phụ */
+   /* NEUTRAL */
+   --neutral-light: 15 23 42;
+   --neutral-light-hover: 20 28 47;
+   --neutral-light-active: 25 33 52;
+   --neutral-normal: 30 41 59;
+   --neutral: 30 41 59;
+   --neutral-hover: 51 65 85;
+   --neutral-active: 71 85 105;
+   --neutral-dark: 100 116 139;
+   --neutral-dark-hover: 148 163 184;
+   --neutral-dark-active: 186 199 213;
+   --neutral-darker: 226 232 240;
 
-   /* PRIMARY / Blue - text sáng trên nền tối */
-   --blue-light: 30 41 59; /* slate-800 */
-   --blue: 226 232 240; /* slate-200 - text chính */
-   --blue-hover: 241 245 249; /* slate-100 - text hover */
-   --blue-dark: 248 250 252; /* slate-50 */
-   --blue-darker: 255 255 255; /* white */
+   /* PRIMARY / Blue */
+   --primary-light: 30 41 59;
+   --primary-light-hover: 51 65 85;
+   --primary-light-active: 71 85 105;
+   --primary-normal: 203 213 225;
+   --primary: 226 232 240;
+   --primary-hover: 241 245 249;
+   --primary-active: 248 250 252;
+   --primary-dark: 248 250 252;
+   --primary-dark-hover: 251 252 253;
+   --primary-dark-active: 254 254 255;
+   --primary-darker: 255 255 255;
 
-   /* PROMOTION / Red - đỏ sáng hơn */
-   --red-light: 69 10 10;
-   --red: 248 113 113; /* red-400 */
-   --red-hover: 239 68 68; /* red-500 */
-   --red-dark: 220 38 38; /* red-600 */
+   /* PROMOTION / Red */
+   --promotion-light: 69 10 10;
+   --promotion-light-hover: 87 13 13;
+   --promotion-light-active: 127 29 29;
+   --promotion-normal: 239 68 68;
+   --promotion: 248 113 113;
+   --promotion-hover: 252 165 165;
+   --promotion-active: 254 202 202;
+   --promotion-dark: 220 38 38;
+   --promotion-dark-hover: 185 28 28;
+   --promotion-dark-active: 153 27 27;
+   --promotion-darker: 127 29 29;
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
 @theme {
-   /* ACCENT – CTA phụ, border highlight */
+   /* ACCENT */
    --color-accent-light: rgb(var(--yellow-light));
+   --color-accent-light-hover: rgb(var(--yellow-light-hover));
+   --color-accent-light-active: rgb(var(--yellow-light-active));
+   --color-accent-normal: rgb(var(--yellow-normal));
    --color-accent: rgb(var(--yellow));
    --color-accent-hover: rgb(var(--yellow-hover));
    --color-accent-active: rgb(var(--yellow-active));
    --color-accent-dark: rgb(var(--yellow-dark));
+   --color-accent-dark-hover: rgb(var(--yellow-dark-hover));
+   --color-accent-dark-active: rgb(var(--yellow-dark-active));
+   --color-accent-darker: rgb(var(--yellow-darker));
 
-   /* PRIMARY – CTA chính */
-   --color-primary-light: rgb(var(--blue-light));
-   --color-primary: rgb(var(--blue));
-   --color-primary-hover: rgb(var(--blue-hover));
-   --color-primary-dark: rgb(var(--blue-dark));
-   --color-primary-darker: rgb(var(--blue-darker));
+   /* PRIMARY */
+   --color-primary-light: rgb(var(--primary-light));
+   --color-primary-light-hover: rgb(var(--primary-light-hover));
+   --color-primary-light-active: rgb(var(--primary-light-active));
+   --color-primary-normal: rgb(var(--primary-normal));
+   --color-primary: rgb(var(--primary));
+   --color-primary-hover: rgb(var(--primary-hover));
+   --color-primary-active: rgb(var(--primary-active));
+   --color-primary-dark: rgb(var(--primary-dark));
+   --color-primary-dark-hover: rgb(var(--primary-dark-hover));
+   --color-primary-dark-active: rgb(var(--primary-dark-active));
+   --color-primary-darker: rgb(var(--primary-darker));
 
-   /* PROMOTION – sale, discount, rating */
-   --color-promotion-light: rgb(var(--red-light));
-   --color-promotion: rgb(var(--red));
-   --color-promotion-hover: rgb(var(--red-hover));
-   --color-promotion-dark: rgb(var(--red-dark));
+   /* PROMOTION */
+   --color-promotion-light: rgb(var(--promotion-light));
+   --color-promotion-light-hover: rgb(var(--promotion-light-hover));
+   --color-promotion-light-active: rgb(var(--promotion-light-active));
+   --color-promotion-normal: rgb(var(--promotion-normal));
+   --color-promotion: rgb(var(--promotion));
+   --color-promotion-hover: rgb(var(--promotion-hover));
+   --color-promotion-active: rgb(var(--promotion-active));
+   --color-promotion-dark: rgb(var(--promotion-dark));
+   --color-promotion-dark-hover: rgb(var(--promotion-dark-hover));
+   --color-promotion-dark-active: rgb(var(--promotion-dark-active));
+   --color-promotion-darker: rgb(var(--promotion-darker));
 
-   /* NEUTRAL – text, border, background */
+   /* NEUTRAL */
    --color-neutral-light: rgb(var(--neutral-light));
+   --color-neutral-light-hover: rgb(var(--neutral-light-hover));
+   --color-neutral-light-active: rgb(var(--neutral-light-active));
+   --color-neutral-normal: rgb(var(--neutral-normal));
    --color-neutral: rgb(var(--neutral));
+   --color-neutral-hover: rgb(var(--neutral-hover));
+   --color-neutral-active: rgb(var(--neutral-active));
    --color-neutral-dark: rgb(var(--neutral-dark));
+   --color-neutral-dark-hover: rgb(var(--neutral-dark-hover));
+   --color-neutral-dark-active: rgb(var(--neutral-dark-active));
    --color-neutral-darker: rgb(var(--neutral-darker));
 
    --font-poppins: "Poppins", sans-serif;
 }
+
 /* ===================== UTILITIES ===================== */
 @layer utilities {
    .container {
       width: 100%;
       margin-left: auto;
       margin-right: auto;
-      padding-left: 0.75rem; /* Giảm từ 1rem xuống 0.75rem cho màn hình nhỏ */
+      padding-left: 0.75rem;
       padding-right: 0.75rem;
    }
 
-   /* Extra small devices - dưới 375px */
    @media (min-width: 375px) {
       .container {
          padding-left: 1rem;
@@ -176,16 +251,9 @@
 /* ===================== GLOBAL ===================== */
 body {
    background-color: rgb(var(--neutral-light));
-   color: rgb(var(--blue));
+   color: rgb(var(--primary));
    font-family: "Poppins", sans-serif;
    transition:
-      background-color 0.5s ease,
-      color 0.5s ease;
+      background-color 0.3s ease,
+      color 0.3s ease;
 }
-
-/* Mobile (mặc định): < 640px        → Không có prefix
-sm: ≥ 640px (tablet nhỏ)          → sm:
-md: ≥ 768px (tablet)              → md:
-lg: ≥ 1024px (laptop)             → lg:
-xl: ≥ 1280px (desktop)            → xl:
-2xl: ≥ 1536px (large desktop)    → 2xl: */
