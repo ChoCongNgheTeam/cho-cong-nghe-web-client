@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Gpu, Package, Cpu } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ProductDetail, CurrentVariant } from "@/lib/types/product";
 import { MdPhoneIphone, MdMemory, MdVerified } from "react-icons/md";
 import { IoRadioButtonOn } from "react-icons/io5";
@@ -11,6 +11,12 @@ import ProductSpecsModal, {
 interface ProductDetailLeftProps {
   product: ProductDetail;
   selectedVariant?: CurrentVariant;
+    images: {
+    id: string;
+    imageUrl: string;
+    altText?: string;
+    position?: number;
+  }[];
 }
 
 // Mock data cho modal (giữ tạm để modal không bị lỗi)
@@ -57,61 +63,42 @@ const mockProductSpecs = {
   },
 };
 
-export default function ImageCarouselBanner({
+export default function ProductDetailBanner({
   product,
-  selectedVariant,
+  images,
 }: ProductDetailLeftProps) {
-  // Modal ref - Để gọi open/close từ modal component
   const modalRef = useRef<ProductSpecsModalRef>(null);
 
-  // Image carousel state - Quản lý carousel ảnh sản phẩm
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Dùng selectedVariant nếu có, không thì dùng currentVariant từ API
-  const variant = selectedVariant || product.currentVariant;
+  //  khi đổi images → reset về ảnh đầu
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [images]);
 
-  // Lấy gallery từ variant được chọn
-  const gallery = variant?.images || [];
+  const gallery = images || [];
   const currentImageObj = gallery[currentImageIndex];
   const currentImage = currentImageObj?.imageUrl || "";
   const totalImages = gallery.length;
 
-  /**
-   * Chuyển đến một ảnh cụ thể
-   */
-  const goToImage = (index: number) => {
-    setCurrentImageIndex(index);
-  };
+  const goToImage = (index: number) => setCurrentImageIndex(index);
 
-  /**
-   * Chuyển về ảnh trước đó
-   */
   const goToPrevious = () => {
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? gallery.length - 1 : prevIndex - 1,
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? gallery.length - 1 : prev - 1
     );
   };
 
-  /**
-   * Chuyển sang ảnh tiếp theo
-   */
   const goToNext = () => {
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === gallery.length - 1 ? 0 : prevIndex + 1,
+    setCurrentImageIndex((prev) =>
+      prev === gallery.length - 1 ? 0 : prev + 1
     );
   };
 
-  /**
-   * Mở modal thông số kỹ thuật
-   */
-  const openDialog = () => {
-    modalRef.current?.open();
-  };
+  const openDialog = () => modalRef.current?.open();
 
-  // Lấy highlights từ product data
   const highlights = product.highlights || [];
 
-  // Icon mapping
   const iconMap: Record<string, any> = {
     gpu: Gpu,
     storage: Package,

@@ -108,7 +108,8 @@ export default function ProductDetailRight({
     );
     return (
       storageOption?.values?.map((val) => ({
-        value: val.label,
+        label: val.label,
+        value: val.value,
       })) || []
     );
   })();
@@ -126,7 +127,8 @@ export default function ProductDetailRight({
           ? product.currentVariant
           : undefined;
       return {
-        value: val.label,
+        value: val.value,
+        label: val.label,
         image: variant?.images?.[0]?.imageUrl,
       };
     });
@@ -241,7 +243,7 @@ export default function ProductDetailRight({
             }
           `}
               >
-                {storage.value}
+                {storage.label}
 
                 {isActive && (
                   <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion dark:border-t-promotion">
@@ -287,7 +289,7 @@ export default function ProductDetailRight({
                   />
                 )}
 
-                {color.value}
+                {color.label}
 
                 {isActive && (
                   <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion dark:border-t-promotion">
