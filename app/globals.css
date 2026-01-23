@@ -90,6 +90,19 @@
    --promotion-dark-hover: 122 17 20;
    --promotion-dark-active: 91 13 15;
    --promotion-darker: 71 10 12;
+
+   /* BLACK */
+   --black-light: 245 245 245; /* #f5f5f5 - Light (gần trắng) */
+   --black-light-hover: 229 229 229; /* #e5e5e5 - Light:hover */
+   --black-light-active: 212 212 212; /* #d4d4d4 - Light:active */
+   --black-normal: 163 163 163; /* #a3a3a3 - Normal (xám trung bình) */
+   --black: 82 82 82; /* #525252 - Normal:default (xám đậm) */
+   --black-hover: 64 64 64; /* #404040 - Normal:hover */
+   --black-active: 38 38 38; /* #262626 - Normal:active */
+   --black-dark: 23 23 23; /* #171717 - Dark (gần đen) */
+   --black-dark-hover: 15 15 15; /* #0f0f0f - Dark:hover */
+   --black-dark-active: 10 10 10; /* #0a0a0a - Dark:active */
+   --black-darker: 0 0 0; /* #000000 - Darker (đen thuần) */
 }
 
 /* ===================== DARK MODE COLORS ===================== */
@@ -145,6 +158,19 @@
    --promotion-dark-hover: 185 28 28;
    --promotion-dark-active: 153 27 27;
    --promotion-darker: 127 29 29;
+
+   /* SECONDARY / Grayscale */
+   --secondary-light: 245 245 245; /* #f5f5f5 - Light */
+   --secondary-light-hover: 229 229 229; /* #e5e5e5 - Light:hover */
+   --secondary-light-active: 212 212 212; /* #d4d4d4 - Light:active */
+   --secondary-normal: 163 163 163; /* #a3a3a3 - Normal */
+   --secondary: 82 82 82; /* #525252 - Normal:default */
+   --secondary-hover: 64 64 64; /* #404040 - Normal:hover */
+   --secondary-active: 38 38 38; /* #262626 - Normal:active */
+   --secondary-dark: 23 23 23; /* #171717 - Dark */
+   --secondary-dark-hover: 15 15 15; /* #0f0f0f - Dark:hover */
+   --secondary-dark-active: 10 10 10; /* #0a0a0a - Dark:active */
+   --secondary-darker: 0 0 0; /* #000000 - Darker */
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
@@ -200,6 +226,19 @@
    --color-neutral-dark-hover: rgb(var(--neutral-dark-hover));
    --color-neutral-dark-active: rgb(var(--neutral-dark-active));
    --color-neutral-darker: rgb(var(--neutral-darker));
+
+   /* SECONDARY - text muted, borders, dividers, shadows */
+   --color-secondary-light: rgb(var(--secondary-light));
+   --color-secondary-light-hover: rgb(var(--secondary-light-hover));
+   --color-secondary-light-active: rgb(var(--secondary-light-active));
+   --color-secondary-normal: rgb(var(--secondary-normal));
+   --color-secondary: rgb(var(--secondary));
+   --color-secondary-hover: rgb(var(--secondary-hover));
+   --color-secondary-active: rgb(var(--secondary-active));
+   --color-secondary-dark: rgb(var(--secondary-dark));
+   --color-secondary-dark-hover: rgb(var(--secondary-dark-hover));
+   --color-secondary-dark-active: rgb(var(--secondary-dark-active));
+   --color-secondary-darker: rgb(var(--secondary-darker));
 
    --font-poppins: "Poppins", sans-serif;
 }
