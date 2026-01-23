@@ -39,143 +39,183 @@
 
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
-   /* ACCENT / Yellow */
-   --yellow-light: 255 251 230;
-   --yellow-light-hover: 255 249 217;
-   --yellow-light-active: 255 243 178;
-   --yellow-normal: 255 238 138;
-   --yellow: 254 215 0;
-   --yellow-hover: 229 194 0;
-   --yellow-active: 203 172 0;
-   --yellow-dark: 191 161 0;
-   --yellow-dark-hover: 182 152 0;
-   --yellow-dark-active: 158 132 0;
-   --yellow-darker: 86 75 0;
+   /* ========== ACCENT / YELLOW ========== */
+   /* Light */
+   --yellow-light: 255 251 230; /* #fffbe6 */
+   --yellow-light-hover: 255 249 217; /* #fff9d9 */
+   --yellow-light-active: 255 243 178; /* #fff3b2 */
+   /* Normal */
+   --yellow-normal: 255 238 138; /* #ffee8a */
+   --yellow: 254 215 0; /* #fed700 */
+   --yellow-hover: 229 194 0; /* #e5c200 */
+   --yellow-active: 203 172 0; /* #cbac00 */
+   /* Dark */
+   --yellow-dark: 191 161 0; /* #bfa100 */
+   --yellow-dark-hover: 182 152 0; /* #b69800 */
+   --yellow-dark-active: 158 132 0; /* #9e8400 */
+   /* Darker */
+   --yellow-darker: 86 75 0; /* #564b00 */
 
-   /* NEUTRAL */
-   --neutral-light: 253 253 253;
-   --neutral-light-hover: 251 251 251;
-   --neutral-light-active: 247 247 247;
-   --neutral-normal: 230 230 230;
-   --neutral: 230 230 230;
-   --neutral-hover: 207 207 207;
-   --neutral-active: 184 184 184;
-   --neutral-dark: 173 173 173;
-   --neutral-dark-hover: 138 138 138;
-   --neutral-dark-active: 103 103 103;
-   --neutral-darker: 81 81 81;
+   /* ========== NEUTRAL / GRAY ========== */
+   /* Light */
+   --neutral-light: 253 253 253; /* #fdfdfd */
+   --neutral-light-hover: 251 251 251; /* #fbfbfb */
+   --neutral-light-active: 247 247 247; /* #f7f7f7 */
+   /* Normal */
+   --neutral-normal: 230 230 230; /* #e6e6e6 */
+   --neutral: 230 230 230; /* #e6e6e6 */
+   --neutral-hover: 207 207 207; /* #cfcfcf */
+   --neutral-active: 184 184 184; /* #b8b8b8 */
+   /* Dark */
+   --neutral-dark: 173 173 173; /* #adadad */
+   --neutral-dark-hover: 138 138 138; /* #8a8a8a */
+   --neutral-dark-active: 103 103 103; /* #676767 */
+   /* Darker */
+   --neutral-darker: 81 81 81; /* #515151 */
 
-   /* PRIMARY / Blue */
-   --primary-light: 235 236 237;
-   --primary-light-hover: 228 226 228;
-   --primary-light-active: 192 195 198;
-   --primary-normal: 51 62 72;
-   --primary: 51 62 72;
-   --primary-hover: 46 56 65;
-   --primary-active: 41 50 58;
-   --primary-dark: 38 47 54;
-   --primary-dark-hover: 31 37 43;
-   --primary-dark-active: 23 28 32;
-   --primary-darker: 18 22 25;
+   /* ========== PRIMARY / BLUE ========== */
+   /* Light */
+   --primary-light: 235 236 237; /* #ebecee */
+   --primary-light-hover: 228 226 228; /* #e4e2e4 */
+   --primary-light-active: 192 195 198; /* #c0c3c6 */
+   /* Normal */
+   --primary-normal: 51 62 72; /* #333e48 */
+   --primary: 51 62 72; /* #333e48 */
+   --primary-hover: 46 56 65; /* #2e3841 */
+   --primary-active: 41 50 58; /* #29323a */
+   /* Dark */
+   --primary-dark: 38 47 54; /* #262f36 */
+   --primary-dark-hover: 31 37 43; /* #1f252b */
+   --primary-dark-active: 23 28 32; /* #171c20 */
+   /* Darker */
+   --primary-darker: 18 22 25; /* #121619 */
 
-   /* PROMOTION / Red */
-   --promotion-light: 250 232 233;
-   --promotion-light-hover: 247 221 222;
-   --promotion-light-active: 239 186 186;
-   --promotion-normal: 203 28 34;
-   --promotion: 203 28 34;
-   --promotion-hover: 183 25 31;
-   --promotion-active: 162 22 27;
-   --promotion-dark: 152 21 26;
-   --promotion-dark-hover: 122 17 20;
-   --promotion-dark-active: 91 13 15;
-   --promotion-darker: 71 10 12;
+   /* ========== PROMOTION / RED ========== */
+   /* Light */
+   --promotion-light: 250 232 233; /* #fae8e9 */
+   --promotion-light-hover: 247 221 222; /* #f7ddde */
+   --promotion-light-active: 239 186 186; /* #efbaba */
+   /* Normal */
+   --promotion-normal: 203 28 34; /* #cb1c22 */
+   --promotion: 203 28 34; /* #cb1c22 */
+   --promotion-hover: 183 25 31; /* #b7191f */
+   --promotion-active: 162 22 27; /* #a2161b */
+   /* Dark */
+   --promotion-dark: 152 21 26; /* #98151a */
+   --promotion-dark-hover: 122 17 20; /* #7a1114 */
+   --promotion-dark-active: 91 13 15; /* #5b0d0f */
+   /* Darker */
+   --promotion-darker: 71 10 12; /* #470a0c */
 
-   /* BLACK */
-   --black-light: 245 245 245; /* #f5f5f5 - Light (gần trắng) */
-   --black-light-hover: 229 229 229; /* #e5e5e5 - Light:hover */
-   --black-light-active: 212 212 212; /* #d4d4d4 - Light:active */
-   --black-normal: 163 163 163; /* #a3a3a3 - Normal (xám trung bình) */
-   --black: 82 82 82; /* #525252 - Normal:default (xám đậm) */
-   --black-hover: 64 64 64; /* #404040 - Normal:hover */
-   --black-active: 38 38 38; /* #262626 - Normal:active */
-   --black-dark: 23 23 23; /* #171717 - Dark (gần đen) */
-   --black-dark-hover: 15 15 15; /* #0f0f0f - Dark:hover */
-   --black-dark-active: 10 10 10; /* #0a0a0a - Dark:active */
-   --black-darker: 0 0 0; /* #000000 - Darker (đen thuần) */
+   /* ========== SECONDARY / GRAYSCALE ========== */
+   /* Light */
+   --secondary-light: 245 245 245; /* #f5f5f5 */
+   --secondary-light-hover: 229 229 229; /* #e5e5e5 */
+   --secondary-light-active: 212 212 212; /* #d4d4d4 */
+   /* Normal */
+   --secondary-normal: 163 163 163; /* #a3a3a3 */
+   --secondary: 82 82 82; /* #525252 */
+   --secondary-hover: 64 64 64; /* #404040 */
+   --secondary-active: 38 38 38; /* #262626 */
+   /* Dark */
+   --secondary-dark: 23 23 23; /* #171717 */
+   --secondary-dark-hover: 15 15 15; /* #0f0f0f */
+   --secondary-dark-active: 10 10 10; /* #0a0a0a */
+   /* Darker */
+   --secondary-darker: 0 0 0; /* #000000 */
 }
 
 /* ===================== DARK MODE COLORS ===================== */
 :root.dark {
-   /* ACCENT / Yellow */
-   --yellow-light: 40 35 10;
-   --yellow-light-hover: 45 39 12;
-   --yellow-light-active: 50 43 14;
-   --yellow-normal: 234 179 8;
-   --yellow: 250 204 21;
-   --yellow-hover: 234 179 8;
-   --yellow-active: 202 138 4;
-   --yellow-dark: 161 98 7;
-   --yellow-dark-hover: 133 77 14;
-   --yellow-dark-active: 113 63 18;
-   --yellow-darker: 92 53 16;
+   /* ========== ACCENT / YELLOW (DARK MODE) ========== */
+   /* Light */
+   --yellow-light: 40 35 10; /* #28230a */
+   --yellow-light-hover: 45 39 12; /* #2d270c */
+   --yellow-light-active: 50 43 14; /* #322b0e */
+   /* Normal */
+   --yellow-normal: 234 179 8; /* #eab308 */
+   --yellow: 250 204 21; /* #facc15 */
+   --yellow-hover: 234 179 8; /* #eab308 */
+   --yellow-active: 202 138 4; /* #ca8a04 */
+   /* Dark */
+   --yellow-dark: 161 98 7; /* #a16207 */
+   --yellow-dark-hover: 133 77 14; /* #854d0e */
+   --yellow-dark-active: 113 63 18; /* #713f12 */
+   /* Darker */
+   --yellow-darker: 92 53 16; /* #5c3510 */
 
-   /* NEUTRAL */
-   --neutral-light: 15 23 42;
-   --neutral-light-hover: 20 28 47;
-   --neutral-light-active: 25 33 52;
-   --neutral-normal: 30 41 59;
-   --neutral: 30 41 59;
-   --neutral-hover: 51 65 85;
-   --neutral-active: 71 85 105;
-   --neutral-dark: 100 116 139;
-   --neutral-dark-hover: 148 163 184;
-   --neutral-dark-active: 186 199 213;
-   --neutral-darker: 226 232 240;
+   /* ========== NEUTRAL / GRAY (DARK MODE) ========== */
+   /* Light */
+   --neutral-light: 15 23 42; /* #0f172a */
+   --neutral-light-hover: 20 28 47; /* #141c2f */
+   --neutral-light-active: 25 33 52; /* #192134 */
+   /* Normal */
+   --neutral-normal: 30 41 59; /* #1e293b */
+   --neutral: 30 41 59; /* #1e293b */
+   --neutral-hover: 51 65 85; /* #334155 */
+   --neutral-active: 71 85 105; /* #475569 */
+   /* Dark */
+   --neutral-dark: 100 116 139; /* #64748b */
+   --neutral-dark-hover: 148 163 184; /* #94a3b8 */
+   --neutral-dark-active: 186 199 213; /* #bac7d5 */
+   /* Darker */
+   --neutral-darker: 226 232 240; /* #e2e8f0 */
 
-   /* PRIMARY / Blue */
-   --primary-light: 30 41 59;
-   --primary-light-hover: 51 65 85;
-   --primary-light-active: 71 85 105;
-   --primary-normal: 203 213 225;
-   --primary: 226 232 240;
-   --primary-hover: 241 245 249;
-   --primary-active: 248 250 252;
-   --primary-dark: 248 250 252;
-   --primary-dark-hover: 251 252 253;
-   --primary-dark-active: 254 254 255;
-   --primary-darker: 255 255 255;
+   /* ========== PRIMARY / BLUE (DARK MODE) ========== */
+   /* Light */
+   --primary-light: 30 41 59; /* #1e293b */
+   --primary-light-hover: 51 65 85; /* #334155 */
+   --primary-light-active: 71 85 105; /* #475569 */
+   /* Normal */
+   --primary-normal: 203 213 225; /* #cbd5e1 */
+   --primary: 226 232 240; /* #e2e8f0 */
+   --primary-hover: 241 245 249; /* #f1f5f9 */
+   --primary-active: 248 250 252; /* #f8fafc */
+   /* Dark */
+   --primary-dark: 248 250 252; /* #f8fafc */
+   --primary-dark-hover: 251 252 253; /* #fbfcfd */
+   --primary-dark-active: 254 254 255; /* #fefeff */
+   /* Darker */
+   --primary-darker: 255 255 255; /* #ffffff */
 
-   /* PROMOTION / Red */
-   --promotion-light: 69 10 10;
-   --promotion-light-hover: 87 13 13;
-   --promotion-light-active: 127 29 29;
-   --promotion-normal: 239 68 68;
-   --promotion: 248 113 113;
-   --promotion-hover: 252 165 165;
-   --promotion-active: 254 202 202;
-   --promotion-dark: 220 38 38;
-   --promotion-dark-hover: 185 28 28;
-   --promotion-dark-active: 153 27 27;
-   --promotion-darker: 127 29 29;
+   /* ========== PROMOTION / RED (DARK MODE) ========== */
+   /* Light */
+   --promotion-light: 69 10 10; /* #450a0a */
+   --promotion-light-hover: 87 13 13; /* #570d0d */
+   --promotion-light-active: 127 29 29; /* #7f1d1d */
+   /* Normal */
+   --promotion-normal: 239 68 68; /* #ef4444 */
+   --promotion: 248 113 113; /* #f87171 */
+   --promotion-hover: 252 165 165; /* #fca5a5 */
+   --promotion-active: 254 202 202; /* #fecaca */
+   /* Dark */
+   --promotion-dark: 220 38 38; /* #dc2626 */
+   --promotion-dark-hover: 185 28 28; /* #b91c1c */
+   --promotion-dark-active: 153 27 27; /* #991b1b */
+   /* Darker */
+   --promotion-darker: 127 29 29; /* #7f1d1d */
 
-   /* SECONDARY / Grayscale */
-   --secondary-light: 245 245 245; /* #f5f5f5 - Light */
-   --secondary-light-hover: 229 229 229; /* #e5e5e5 - Light:hover */
-   --secondary-light-active: 212 212 212; /* #d4d4d4 - Light:active */
-   --secondary-normal: 163 163 163; /* #a3a3a3 - Normal */
-   --secondary: 82 82 82; /* #525252 - Normal:default */
-   --secondary-hover: 64 64 64; /* #404040 - Normal:hover */
-   --secondary-active: 38 38 38; /* #262626 - Normal:active */
-   --secondary-dark: 23 23 23; /* #171717 - Dark */
-   --secondary-dark-hover: 15 15 15; /* #0f0f0f - Dark:hover */
-   --secondary-dark-active: 10 10 10; /* #0a0a0a - Dark:active */
-   --secondary-darker: 0 0 0; /* #000000 - Darker */
+   /* ========== SECONDARY / GRAYSCALE (DARK MODE) ========== */
+   /* Light */
+   --secondary-light: 82 82 82; /* #525252 */
+   --secondary-light-hover: 100 100 100; /* #646464 */
+   --secondary-light-active: 115 115 115; /* #737373 */
+   /* Normal */
+   --secondary-normal: 163 163 163; /* #a3a3a3 */
+   --secondary: 212 212 212; /* #d4d4d4 */
+   --secondary-hover: 229 229 229; /* #e5e5e5 */
+   --secondary-active: 245 245 245; /* #f5f5f5 */
+   /* Dark */
+   --secondary-dark: 250 250 250; /* #fafafa */
+   --secondary-dark-hover: 252 252 252; /* #fcfcfc */
+   --secondary-dark-active: 254 254 254; /* #fefefe */
+   /* Darker */
+   --secondary-darker: 255 255 255; /* #ffffff */
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
 @theme {
-   /* ACCENT */
+   /* ========== ACCENT ========== */
    --color-accent-light: rgb(var(--yellow-light));
    --color-accent-light-hover: rgb(var(--yellow-light-hover));
    --color-accent-light-active: rgb(var(--yellow-light-active));
@@ -188,7 +228,7 @@
    --color-accent-dark-active: rgb(var(--yellow-dark-active));
    --color-accent-darker: rgb(var(--yellow-darker));
 
-   /* PRIMARY */
+   /* ========== PRIMARY ========== */
    --color-primary-light: rgb(var(--primary-light));
    --color-primary-light-hover: rgb(var(--primary-light-hover));
    --color-primary-light-active: rgb(var(--primary-light-active));
@@ -201,7 +241,7 @@
    --color-primary-dark-active: rgb(var(--primary-dark-active));
    --color-primary-darker: rgb(var(--primary-darker));
 
-   /* PROMOTION */
+   /* ========== PROMOTION ========== */
    --color-promotion-light: rgb(var(--promotion-light));
    --color-promotion-light-hover: rgb(var(--promotion-light-hover));
    --color-promotion-light-active: rgb(var(--promotion-light-active));
@@ -214,7 +254,7 @@
    --color-promotion-dark-active: rgb(var(--promotion-dark-active));
    --color-promotion-darker: rgb(var(--promotion-darker));
 
-   /* NEUTRAL */
+   /* ========== NEUTRAL ========== */
    --color-neutral-light: rgb(var(--neutral-light));
    --color-neutral-light-hover: rgb(var(--neutral-light-hover));
    --color-neutral-light-active: rgb(var(--neutral-light-active));
@@ -227,7 +267,7 @@
    --color-neutral-dark-active: rgb(var(--neutral-dark-active));
    --color-neutral-darker: rgb(var(--neutral-darker));
 
-   /* SECONDARY - text muted, borders, dividers, shadows */
+   /* ========== SECONDARY ========== */
    --color-secondary-light: rgb(var(--secondary-light));
    --color-secondary-light-hover: rgb(var(--secondary-light-hover));
    --color-secondary-light-active: rgb(var(--secondary-light-active));
@@ -240,6 +280,7 @@
    --color-secondary-dark-active: rgb(var(--secondary-dark-active));
    --color-secondary-darker: rgb(var(--secondary-darker));
 
+   /* ========== FONT ========== */
    --font-poppins: "Poppins", sans-serif;
 }
 
