@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
@@ -22,27 +22,80 @@ interface ProductDetailContentProps {
 export function ProductDetailContent({ product }: ProductDetailContentProps) {
   const reviewsRef = useRef<HTMLDivElement>(null);
 
-  // Khởi tạo selected color và storage từ availableOptions
-  const initialColor =
-    product.availableOptions?.find((opt) => opt.attribute === "Color")
-      ?.values?.[0]?.value || "";
+// Khởi tạo selected color và storage từ availableOptions
+  const colors  = product.availableOptions?.find(opt => opt.attribute === "color")?.values || [];
+  const storages = product.availableOptions?.find((opt) => opt.attribute === "storage")?.values || [];
+      
+  const [selectedColor, setSelectedColor] = useState(colors[0]?.value || "");
+  const [selectedStorage, setSelectedStorage] = useState(storages[0]?.value || "");
+  const [isUserSelectStorage, setIsUserSelectStorage] = useState(false); // Track user đã click dung lượng hay chưa
 
-  const initialStorage =
-    product.availableOptions?.find((opt) => opt.attribute === "Storage")
-      ?.values?.[0]?.value || "";
+// Khi thay đổi màu → nếu chưa click dung lượng thì reset, nếu đã click thì giữ nguyên
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
 
-  const [selectedColor, setSelectedColor] = useState(initialColor);
-  const [selectedStorage, setSelectedStorage] = useState(initialStorage);
+// Nếu user CHƯA chọn storage → reset về mặc định
+  if (!isUserSelectStorage) {
+    setSelectedStorage(storages[0]?.value || "");
+    }
+  };
 
-  // Tìm variant khớp với color và storage được chọn
+  const handleStorageChange = (storage: string) => {
+    setIsUserSelectStorage(true);
+    setSelectedStorage(storage);
+  };
+
+ useEffect(() => {
+  if (!selectedColor || selectedStorage) return;
+
+// Khi màu được chọn nhưng chưa có storage → set storage mặc định
+  const storages =
+    product.availableOptions?.find(
+      (opt) => opt.attribute === "storage")?.values || [];
+
+  if (storages.length > 0) {
+    setSelectedStorage(storages[0].value);
+    setIsUserSelectStorage(false); // Reset flag vì đang set storage mặc định
+  }
+}, [selectedColor]);
+
+// Tìm variant khớp với color và storage được chọn
   const selectedVariant = product.currentVariant;
 
+  const [variantImages, setVariantImages] = useState(
+  product.currentVariant?.images || []
+);
+
+// Call API lấy hình ảnh variant khi color hoặc storage thay đổi
+useEffect(() => {
+  if (!selectedColor || !selectedStorage) return;
+
+  const fetchVariant = async () => {
+    const res = await fetch(
+      `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`
+    );
+    const json = await res.json();
+
+    if (json.success) {
+      setVariantImages(json.data.images);
+    }
+  };
+
+  fetchVariant();
+}, [selectedColor, selectedStorage, product.slug])
+  
+// Hàm cuộn đến phần đánh giá
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
   };
+
+  useEffect(() => {
+  console.log("Color:", selectedColor);
+  console.log("Storage:", selectedStorage);
+}, [selectedColor, selectedStorage]);
 
   return (
     <div>
@@ -55,6 +108,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
               <ProductDetailBanner
                 product={product}
                 selectedVariant={selectedVariant}
+                images={variantImages}
               />
             </div>
 
@@ -65,8 +119,8 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
                   product={product}
                   selectedColor={selectedColor}
                   selectedStorage={selectedStorage}
-                  onColorChange={setSelectedColor}
-                  onStorageChange={setSelectedStorage}
+                  onColorChange={handleColorChange}
+                  onStorageChange={handleStorageChange}
                   onReviewClick={scrollToReviews}
                 />
               </div>
