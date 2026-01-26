@@ -1,6 +1,7 @@
 "use client";
 
 import { reviews } from "../../data/reviews";
+import Image from "next/image";
 
 export default function ReviewsSection() {
    return (

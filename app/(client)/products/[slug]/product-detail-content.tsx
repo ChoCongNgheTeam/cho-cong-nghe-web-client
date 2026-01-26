@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
@@ -21,12 +21,81 @@ interface ProductDetailContentProps {
 
 export function ProductDetailContent({ product }: ProductDetailContentProps) {
   const reviewsRef = useRef<HTMLDivElement>(null);
+
+// Khởi tạo selected color và storage từ availableOptions
+  const colors  = product.availableOptions?.find(opt => opt.attribute === "color")?.values || [];
+  const storages = product.availableOptions?.find((opt) => opt.attribute === "storage")?.values || [];
+      
+  const [selectedColor, setSelectedColor] = useState(colors[0]?.value || "");
+  const [selectedStorage, setSelectedStorage] = useState(storages[0]?.value || "");
+  const [isUserSelectStorage, setIsUserSelectStorage] = useState(false); // Track user đã click dung lượng hay chưa
+
+// Khi thay đổi màu → nếu chưa click dung lượng thì reset, nếu đã click thì giữ nguyên
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
+
+// Nếu user CHƯA chọn storage → reset về mặc định
+  if (!isUserSelectStorage) {
+    setSelectedStorage(storages[0]?.value || "");
+    }
+  };
+
+  const handleStorageChange = (storage: string) => {
+    setIsUserSelectStorage(true);
+    setSelectedStorage(storage);
+  };
+
+ useEffect(() => {
+  if (!selectedColor || selectedStorage) return;
+
+// Khi màu được chọn nhưng chưa có storage → set storage mặc định
+  const storages =
+    product.availableOptions?.find(
+      (opt) => opt.attribute === "storage")?.values || [];
+
+  if (storages.length > 0) {
+    setSelectedStorage(storages[0].value);
+    setIsUserSelectStorage(false); // Reset flag vì đang set storage mặc định
+  }
+}, [selectedColor]);
+
+// Tìm variant khớp với color và storage được chọn
+  const selectedVariant = product.currentVariant;
+
+  const [variantImages, setVariantImages] = useState(
+  product.currentVariant?.images || []
+);
+
+// Call API lấy hình ảnh variant khi color hoặc storage thay đổi
+useEffect(() => {
+  if (!selectedColor || !selectedStorage) return;
+
+  const fetchVariant = async () => {
+    const res = await fetch(
+      `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`
+    );
+    const json = await res.json();
+
+    if (json.success) {
+      setVariantImages(json.data.images);
+    }
+  };
+
+  fetchVariant();
+}, [selectedColor, selectedStorage, product.slug])
+  
+// Hàm cuộn đến phần đánh giá
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
   };
+
+  useEffect(() => {
+  console.log("Color:", selectedColor);
+  console.log("Storage:", selectedStorage);
+}, [selectedColor, selectedStorage]);
 
   return (
     <div>
@@ -36,7 +105,11 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
             {/* Left - Product Banner */}
             <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
-              <ProductDetailBanner product={product} />
+              <ProductDetailBanner
+                product={product}
+                selectedVariant={selectedVariant}
+                images={variantImages}
+              />
             </div>
 
             {/* Right - Product Card */}
@@ -44,6 +117,10 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
               <div className="lg:sticky lg:top-4 lg:h-fit">
                 <ProductDetailRight
                   product={product}
+                  selectedColor={selectedColor}
+                  selectedStorage={selectedStorage}
+                  onColorChange={handleColorChange}
+                  onStorageChange={handleStorageChange}
                   onReviewClick={scrollToReviews}
                 />
               </div>
@@ -64,7 +141,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
 
       {/* Product Review Section */}
       <div className="bg-gray-400/10  pt-4 sm:pt-6 " ref={reviewsRef}>
-        <div >
+        <div>
           <ProductReview />
         </div>
       </div>

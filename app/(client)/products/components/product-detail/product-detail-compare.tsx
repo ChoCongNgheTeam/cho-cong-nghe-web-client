@@ -131,7 +131,7 @@ export default function ProductComparison() {
   const firstProduct = products[0];
   const scrollableProducts = products.slice(
     currentIndex + 1,
-    currentIndex + visibleCount
+    currentIndex + visibleCount,
   );
   const visibleProducts = [firstProduct, ...scrollableProducts];
 
@@ -171,7 +171,7 @@ export default function ProductComparison() {
 
   const handleRemoveProduct = (productId: number) => {
     setSelectedCompareProducts((prev) =>
-      prev.filter((p) => p.id !== productId)
+      prev.filter((p) => p.id !== productId),
     );
   };
 
@@ -260,7 +260,9 @@ export default function ProductComparison() {
                     <div className="font-medium text-primary mb-1">
                       Kích thước màn hình
                     </div>
-                    <div className="text-neutral-darker">{product.screenSize}</div>
+                    <div className="text-neutral-darker">
+                      {product.screenSize}
+                    </div>
                   </div>
                   <div>
                     <div className="font-medium text-primary mb-1">
@@ -306,7 +308,7 @@ export default function ProductComparison() {
                     : "bg-neutral-dark hover:bg-neutral-darker"
                 }`}
               />
-            )
+            ),
           )}
         </div>
 

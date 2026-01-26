@@ -10,7 +10,7 @@ interface User {
    userName: string;
    fullName: string;
    role: string;
-   avatar?: string;
+   avatarImage?: string;
 }
 
 interface ApiResponse<T> {
@@ -18,17 +18,20 @@ interface ApiResponse<T> {
    message?: string;
    success?: boolean;
 }
+
 interface AuthContextType {
    user: User | null;
-   login: (userData: User) => Promise<void>;
-   logout: () => void;
+   login: (userData: User, accessToken: string) => Promise<void>;
+   logout: () => Promise<void>;
    loading: boolean;
    isAuthenticated: boolean;
    refreshUser: () => Promise<void>;
+   showWelcome: boolean;
+   setShowWelcome: (show: boolean) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
-   undefined
+   undefined,
 );
 
 export function AuthProvider({
@@ -39,39 +42,37 @@ export function AuthProvider({
    initialUser?: User | null;
 }) {
    const [user, setUser] = useState<User | null>(initialUser || null);
+   const [showWelcome, setShowWelcome] = useState(true);
    const [loading, setLoading] = useState(true);
    const router = useRouter();
 
    useEffect(() => {
       const checkAuth = async () => {
-         const token = tokenManager.getToken();
-
-         if (!token) {
-            setUser(null);
-            setLoading(false);
-            return;
-         }
-
-         if (initialUser) {
-            setUser(initialUser);
-            setLoading(false);
-            return;
-         }
-
          try {
+            // ✅ CHỈ GỌI 1 API DUY NHẤT
+            // Backend middleware tự động:
+            // - Kiểm tra accessToken
+            // - Nếu hết hạn → dùng refreshToken (cookie) cấp token mới
+            // - Trả token mới qua header "x-access-token"
+            // - ApiRequest tự động lưu token mới vào memory
             const response = await apiRequest.get<ApiResponse<User>>(
                "/users/me",
-               {
-                  noRedirectOn401: true,
-               }
+               { noRedirectOn401: true },
             );
 
             if (response?.data) {
                setUser(response.data);
+               console.log(
+                  "[AuthContext] ✅ Authenticated:",
+                  response.data.email,
+               );
             }
-         } catch (error) {
-            console.log("[AuthContext] No valid session");
-            tokenManager.removeToken();
+         } catch (error: any) {
+            if (error?.status === 401) {
+               console.log("[AuthContext] ⚠️ No valid session");
+            } else {
+               console.error("[AuthContext] ❌ Error:", error.message);
+            }
             setUser(null);
          } finally {
             setLoading(false);
@@ -79,7 +80,7 @@ export function AuthProvider({
       };
 
       checkAuth();
-   }, [initialUser]);
+   }, []);
 
    const refreshUser = async () => {
       try {
@@ -94,8 +95,11 @@ export function AuthProvider({
       }
    };
 
-   const login = async (userData: User) => {
+   const login = async (userData: User, accessToken: string) => {
+      tokenManager.setToken(accessToken);
       setUser(userData);
+      setShowWelcome(true);
+      // Cart merge logic
       const localCartStr = localStorage.getItem("cart");
       let hasLocalCart = false;
       if (localCartStr) {
@@ -106,8 +110,8 @@ export function AuthProvider({
             hasLocalCart = false;
          }
       }
+
       if (hasLocalCart) {
-         // Wait for cart merge event
          await new Promise((resolve) => {
             const handleMerge = () => {
                window.removeEventListener("cart-merged", handleMerge);
@@ -123,16 +127,40 @@ export function AuthProvider({
       } else {
          await new Promise((resolve) => setTimeout(resolve, 300));
       }
+
       const redirectPath = userData.role === "ADMIN" ? "/admin/dashboard" : "/";
       router.push(redirectPath);
       toast.success("Đăng nhập thành công");
    };
 
    const logout = async () => {
-      tokenManager.removeToken();
-      setUser(null);
-      router.push("/account");
-      toast.success("Đăng xuất thành công");
+      try {
+         await apiRequest.post(
+            "/auth/logout",
+            {},
+            {
+               noAuth: false,
+               timeout: 5000,
+            },
+         );
+      } catch (error: any) {
+         console.error("[Logout] Error:", error);
+
+         if (
+            error.message?.includes("kết nối") ||
+            error.message?.includes("timeout")
+         ) {
+            console.warn(
+               "[Logout] Network error, proceeding with local logout",
+            );
+         }
+      } finally {
+         tokenManager.removeToken();
+         setUser(null);
+         localStorage.removeItem("cart");
+         router.push("/account");
+         toast.success("Đăng xuất thành công");
+      }
    };
 
    return (
@@ -144,6 +172,8 @@ export function AuthProvider({
             loading,
             isAuthenticated: !!user,
             refreshUser,
+            showWelcome,
+            setShowWelcome,
          }}
       >
          {children}

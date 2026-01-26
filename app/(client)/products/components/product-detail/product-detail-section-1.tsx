@@ -1,5 +1,10 @@
 "use client";
 import { useState } from "react";
+import { ProductDetail } from "@/lib/types/product";
+
+interface ProductDetailSection1Props {
+  product?: ProductDetail;
+}
 
 export default function ProductDetailSection1() {
   const [activeTab, setActiveTab] = useState("baiviet");

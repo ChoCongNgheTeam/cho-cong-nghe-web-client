@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import apiRequest, { ApiError } from "@/lib/api";
 
 interface User {
    id: string;
@@ -11,36 +13,69 @@ interface User {
 }
 
 interface LoginResponse {
-   data: {
-      user: User;
-      token: string;
-   };
+   user: User;
+   accessToken: string;
    message?: string;
-   success?: boolean;
 }
 
 const LoginForm = () => {
+   const { login } = useAuth();
    const [showPassword, setShowPassword] = useState(false);
    const [userName, setUsername] = useState("");
    const [password, setPassword] = useState("");
+   const [rememberMe, setRememberMe] = useState(false);
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
 
-   const handleSubmit = (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setError("");
       setLoading(true);
 
-      // Simulate API call
-      setTimeout(() => {
-         if (userName && password) {
-            console.log("Login successful");
-            setError("");
+      try {
+         const response = await apiRequest.post<LoginResponse>(
+            "/auth/login",
+            {
+               userName: userName.trim(),
+               password,
+               rememberMe,
+            },
+            { noAuth: true },
+         );
+
+         console.log(response);
+         if (response?.user && response?.accessToken) {
+            await login(response.user, response.accessToken);
+            setTimeout(() => {
+               const redirectPath =
+                  response.user.role === "ADMIN" ? "/admin/dashboard" : "/";
+               window.location.href = redirectPath;
+            }, 3000);
          } else {
-            setError("Vui lòng điền đầy đủ thông tin");
+            setError("Phản hồi từ server không hợp lệ");
          }
+      } catch (err: any) {
+         console.error("[LoginForm] Error:", err);
+
+         if (err instanceof ApiError) {
+            switch (err.status) {
+               case 401:
+                  setError("Tên đăng nhập hoặc mật khẩu không chính xác");
+                  break;
+               case 429:
+                  setError(
+                     "Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau",
+                  );
+                  break;
+               default:
+                  setError(err.message || "Đăng nhập thất bại");
+            }
+         } else {
+            setError(err.message || "Không thể kết nối đến server");
+         }
+      } finally {
          setLoading(false);
-      }, 1000);
+      }
    };
 
    return (
@@ -52,13 +87,14 @@ const LoginForm = () => {
             Chào mừng bạn đã trở lại. Đăng nhập để nhận thêm các ưu đãi và các
             phần thưởng hấp dẫn khác
          </p>
+
          {error && (
             <div className="mb-4 p-2.5 bg-promotion-light border border-promotion text-promotion-dark rounded-lg text-base">
                {error}
             </div>
          )}
 
-         <div className="space-y-4 md:mt-4">
+         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4">
             <div>
                <label className="block mb-1.5 text-primary text-base">
                   Tên đăng nhập *
@@ -73,6 +109,7 @@ const LoginForm = () => {
                      className="w-full pl-10 pr-3 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                      required
                      disabled={loading}
+                     autoComplete="username"
                   />
                </div>
             </div>
@@ -91,6 +128,7 @@ const LoginForm = () => {
                      className="w-full pl-10 pr-11 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                      required
                      disabled={loading}
+                     autoComplete="current-password"
                   />
                   <button
                      type="button"
@@ -107,13 +145,15 @@ const LoginForm = () => {
                <label className="flex items-center cursor-pointer">
                   <input
                      type="checkbox"
+                     checked={rememberMe}
+                     onChange={(e) => setRememberMe(e.target.checked)}
                      className="mr-2 w-4 h-4 accent-accent cursor-pointer"
                      disabled={loading}
                   />
                   <span className="text-base text-primary">Nhớ mật khẩu</span>
                </label>
                <a
-                  href="#"
+                  href="/forgot-password"
                   className="text-base text-primary hover:text-primary-hover hover:underline"
                >
                   Quên mật khẩu?
@@ -121,7 +161,7 @@ const LoginForm = () => {
             </div>
 
             <button
-               onClick={handleSubmit}
+               type="submit"
                disabled={loading}
                className="w-full bg-accent text-primary-darker py-3 rounded-lg font-medium hover:bg-accent-hover active:bg-accent-active transition cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -197,7 +237,7 @@ const LoginForm = () => {
                   </span>
                </button>
             </div>
-         </div>
+         </form>
       </div>
    );
 };

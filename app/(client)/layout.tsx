@@ -11,7 +11,7 @@ export default function ClientLayout({
       <>
          <Header />
          <ToggleSwitch defaultValue={false} />
-         <main className="min-h-screen">{children}</main>
+         <main>{children}</main>
          <Footer />
       </>
    );
