@@ -16,6 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { DesktopHeaderProps } from "../types";
 import { headerIconClass } from "../ui/headerIconClass";
+import CategoryMegaMenu from "./CategoryMegaMenu";
 const DesktopHeader = ({
    searchQuery,
    isDarkMode,
@@ -29,7 +30,7 @@ const DesktopHeader = ({
    onLogout,
 }: DesktopHeaderProps) => {
    return (
-      <div className="hidden md:flex items-center justify-between gap-4 lg:gap-4">
+      <div className="hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
          {/* Logo */}
          <Link href="/" className="shrink-0">
             <Image
@@ -43,10 +44,11 @@ const DesktopHeader = ({
          </Link>
 
          {/* Menu Button */}
-         <button className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg cursor-pointer flex items-center gap-1 text-primary transition-colors">
+         {/* <button className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg cursor-pointer flex items-center gap-1 text-primary transition-colors">
             <Menu className="w-5 h-5 lg:w-6 lg:h-6" />
             <span className="hidden lg:inline">Danh mục</span>
-         </button>
+         </button> */}
+         <CategoryMegaMenu />
 
          {/* Search Bar */}
          <div className="flex-1 max-w-2xl">
