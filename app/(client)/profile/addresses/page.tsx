@@ -11,13 +11,13 @@ export default function NotificationsPage() {
     <div>
        {/* Header */}
       <h1 className="text-2xl font-semibold text-gray-800  text-left mt-2">
-        Thông báo của tôi
+        Sổ địa chỉ nhận hàng
       </h1>
           <div className="flex flex-col items-center justify-center py-10 px-4">
       {/* Empty Box Image */}
       <div className=" mb-2">
         <img
-          src="https://cdn2.fptshop.com.vn/unsafe/360x0/filters:format(webp):quality(75)/estore-v2/img/empty_state.png"
+          src="https://cdn2.fptshop.com.vn/unsafe/750x0/filters:format(webp):quality(75)/estore-v2/img/empty_address_book.png"
           alt="Không có đơn hàng"
           className="object-contain w-60 h-60 mx-auto"
         />
@@ -25,10 +25,10 @@ export default function NotificationsPage() {
 
       {/* Text */}
       <h3 className="text-lg font-semibold text-gray-800 mb-2">
-        Bạn chưa có thông báo nào
+        Bạn chưa có lưu địa chỉ nào
       </h3>
       <p className="text-gray-600 mb-6 text-center text-sm">
-        Cùng khám các dịch vụ tại ChoCongNghe Shop nhé!
+        Cập nhật địa chỉ ngay để có trải nghiệm mua hàng nhanh nhất!
       </p>
 
       {/* CTA Button */}

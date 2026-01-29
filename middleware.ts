@@ -7,9 +7,9 @@ export function middleware(req: NextRequest) {
   const isLoggedIn = false; // TODO: đọc cookie / token
 
   // Protect profile
-  if (pathname.startsWith("/profile") && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  // if (pathname.startsWith("/profile") && !isLoggedIn) {
+  //   return NextResponse.redirect(new URL("/login", req.url));
+  // }
 
   // Protect admin
   if (pathname.startsWith("/admin") && !isLoggedIn) {

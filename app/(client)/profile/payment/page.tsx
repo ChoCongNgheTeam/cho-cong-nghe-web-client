@@ -38,11 +38,12 @@ interface Order {
 // Tab configuration
 const tabs = [
   { id: "all", label: "Tất cả" },
-  { id: "processing", label: "Đang xử lý" },
-  { id: "shipping", label: "Đang giao" },
-  { id: "completed", label: "Hoàn tất" },
-  { id: "cancelled", label: "Đã hủy" },
-  { id: "returned", label: "Trả hàng" },
+  { id: "processing", label: "Tiền điện" },
+  { id: "shipping", label: "Tiền nước" },
+  { id: "completed", label: "Tiền internet" },
+  { id: "cancelled", label: "Truyền hình cáp" },
+  { id: "returned", label: "ĐT trả sau" },
+  { id: "returned", label: "Trả góp" },
 ];
 
 // Status configuration
@@ -93,7 +94,7 @@ export default function OrdersPage() {
     <div>
       {/* Header */}
       <h1 className="text-2xl font-semibold text-gray-800 mb-4 text-left mt-2">
-        Đơn hàng của tôi
+        Dịch vụ thu hộ đã thanh toán
       </h1>
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         {/* Tabs Header - No title, just tabs */}
@@ -148,10 +149,10 @@ function EmptyState() {
 
       {/* Text */}
       <h3 className="text-lg font-semibold text-gray-800 mb-2">
-        Bạn chưa có đơn hàng nào
+        Bạn chưa có dịch vụ đã thanh toán nào
       </h3>
       <p className="text-gray-600 mb-8 text-center text-sm">
-        Cùng khám phá hàng ngàn sản phẩm tại ChoCongNghe Shop nhé!
+        Cùng khám phá dịch vụ tại ChoCongNghe Shop nhé!
       </p>
 
       {/* CTA Button */}

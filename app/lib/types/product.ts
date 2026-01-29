@@ -37,7 +37,7 @@ export type OptionValue = {
 
 /** ===== Product Option ===== */
 export type ProductOption = {
-  attribute: "color" | "storage" | string;
+  type: "color" | "storage" | string;
   values: OptionValue[];
 };
 
@@ -114,3 +114,25 @@ export type ProductDetailResponse = {
   data: ProductDetail;
   message: string;
 };
+
+
+// Thông số kỹ thuật - từng item
+export interface SpecificationItem {
+  id: string;
+  key: string;
+  name: string;
+  icon: string;
+  unit: string | null;
+  value: string;
+}
+
+// Nhóm thông số kỹ thuật
+export interface SpecificationGroup {
+  groupName: string;
+  items: SpecificationItem[];
+}
+
+// Response API trả về
+export interface SpecificationsData {
+  specifications: SpecificationGroup[];
+}
