@@ -3,10 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastyProvider } from "./components/Toast";
-import Example1 from "./components/Modal/test";
-import FullFeaturedSlider from "./components/Slider/test";
-import Example from "./components/Toast/test";
-import Example11 from "./components/Modal/test";
+import { ThemeProvider } from "./contexts/ThemeContext";
 const geistSans = Geist({
    variable: "--font-geist-sans",
    subsets: ["latin"],
@@ -43,6 +40,7 @@ export default function RootLayout({
 }: Readonly<{
    children: React.ReactNode;
 }>) {
+   
    return (
       <html lang="vi" suppressHydrationWarning>
          <head>
@@ -53,8 +51,10 @@ export default function RootLayout({
          >
             <ToastyProvider>
                <AuthProvider>
-                  {/* <LayoutContent> */}
-                  {children}
+                  <ThemeProvider>
+                     {/* <LayoutContent> */}
+                     {children}
+                  </ThemeProvider>
                   {/* </LayoutContent> */}
                </AuthProvider>
             </ToastyProvider>

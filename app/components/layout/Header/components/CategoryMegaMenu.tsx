@@ -13,6 +13,8 @@ import {
    Wifi,
    Package,
    Sparkles,
+   X,
+   ChevronLeft,
 } from "lucide-react";
 
 interface Category {
@@ -47,6 +49,11 @@ const CategoryMegaMenu = () => {
    const [hoveredCategories, setHoveredCategories] = useState<Category[]>([]);
    const [loading, setLoading] = useState(true);
 
+   // Mobile states
+   const [mobileView, setMobileView] = useState<"main" | "subcategory">("main");
+   const [mobileSelectedCategory, setMobileSelectedCategory] =
+      useState<Category | null>(null);
+
    useEffect(() => {
       fetchCategories();
    }, []);
@@ -61,6 +68,9 @@ const CategoryMegaMenu = () => {
       } else {
          document.body.style.paddingRight = "0px";
          document.body.style.overflow = "unset";
+         // Reset mobile view when closing
+         setMobileView("main");
+         setMobileSelectedCategory(null);
       }
 
       return () => {
@@ -132,35 +142,30 @@ const CategoryMegaMenu = () => {
             const rows: GroupRow[] = [];
 
             // Group level 2 categories into rows
-            // For "Công nghệ & thiết bị số": group as [Đồng hồ, Máy tính bảng], [PC, Màn hình, Linh kiện], etc.
             if (level1Cat.slug === "cong-nghe-thiet-bi-so") {
                const children = level1Cat.children;
-               // Group 1: Đồng hồ, Máy tính bảng
                if (children.length >= 2) {
                   rows.push({
                      sectionTitle: level1Cat.name,
                      icon: getGroupIcon(children[0].slug),
-                     categories: children.slice(0, 2), // First 2 categories
+                     categories: children.slice(0, 2),
                   });
                }
-               // Group 2: PC, Màn hình, Linh kiện
                if (children.length >= 5) {
                   rows.push({
                      sectionTitle: level1Cat.name,
                      icon: getGroupIcon(children[2].slug),
-                     categories: children.slice(2, 5), // Next 3 categories
+                     categories: children.slice(2, 5),
                   });
                }
-               // Group 3: Máy in, Máy chiếu, Phần mềm (if any remaining)
                if (children.length > 5) {
                   rows.push({
                      sectionTitle: level1Cat.name,
                      icon: getGroupIcon(children[5].slug),
-                     categories: children.slice(5), // Remaining categories
+                     categories: children.slice(5),
                   });
                }
             } else {
-               // For other sections, create rows with 2-3 categories each
                for (let i = 0; i < level1Cat.children.length; i += 2) {
                   const groupCategories = level1Cat.children.slice(i, i + 2);
                   rows.push({
@@ -190,7 +195,6 @@ const CategoryMegaMenu = () => {
    };
 
    const handleGroupRowHover = (row: GroupRow) => {
-      // When hovering a row, show children from ALL categories in that row
       setHoveredCategories(row.categories);
    };
 
@@ -198,11 +202,22 @@ const CategoryMegaMenu = () => {
       setHoveredCategories([category]);
    };
 
+   // Mobile handlers
+   const handleMobileCategoryClick = (category: Category) => {
+      setMobileSelectedCategory(category);
+      setMobileView("subcategory");
+   };
+
+   const handleMobileBack = () => {
+      setMobileView("main");
+      setMobileSelectedCategory(null);
+   };
+
    if (loading) {
       return (
          <button className="p-2 hover:bg-neutral-light rounded-lg cursor-pointer flex items-center gap-1 text-primary transition-colors">
             <Menu className="w-5 h-5 lg:w-6 lg:h-6" />
-            <span className="hidden lg:inline">Đang tải...</span>
+            <span className="hidden lg:inline">Danh mục</span>
          </button>
       );
    }
@@ -242,8 +257,294 @@ const CategoryMegaMenu = () => {
             }
           `}</style>
 
-               {/* Mega Menu */}
-               <div className="absolute left-0 top-full mt-2 bg-primary-light rounded-lg shadow-2xl z-50 overflow-hidden flex">
+               {/* MOBILE VIEW - Full Screen Modal */}
+               <div className="fixed inset-0 bg-neutral-light z-50 lg:hidden flex flex-col">
+                  {/* Mobile Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-neutral bg-neutral-light sticky top-0 z-10">
+                     {mobileView === "subcategory" ? (
+                        <button
+                           onClick={handleMobileBack}
+                           className="flex items-center gap-2 text-primary"
+                        >
+                           <ChevronLeft className="w-5 h-5" />
+                           <span className="font-medium">Quay lại</span>
+                        </button>
+                     ) : (
+                        <h2 className="text-lg font-bold text-primary">
+                           Danh mục sản phẩm
+                        </h2>
+                     )}
+                     <button
+                        onClick={() => setIsOpen(false)}
+                        className="p-2 hover:bg-neutral-light rounded-lg transition-colors"
+                     >
+                        <X className="w-6 h-6 text-primary" />
+                     </button>
+                  </div>
+
+                  {/* Mobile Content */}
+                  <div className="flex-1 overflow-y-auto">
+                     {mobileView === "main" ? (
+                        // Main categories list
+                        <div className="p-4 space-y-2">
+                           {/* Single Categories */}
+                           {getSingleCategories().map((category) => (
+                              <button
+                                 key={category.id}
+                                 onClick={() =>
+                                    handleMobileCategoryClick(category)
+                                 }
+                                 className="w-full flex items-center justify-between p-4 bg-white rounded-lg border border-neutral hover:border-accent transition-colors"
+                              >
+                                 <div className="flex items-center gap-3">
+                                    {getLevel1Icon(category.slug)}
+                                    <span className="font-medium text-primary">
+                                       {category.name}
+                                    </span>
+                                 </div>
+                                 <ChevronRight className="w-5 h-5 text-neutral-dark" />
+                              </button>
+                           ))}
+
+                           {/* Grouped Sections */}
+                           {groupedSections.map((section, sectionIndex) => (
+                              <div key={sectionIndex} className="mt-4">
+                                 <h3 className="text-xs font-semibold text-secondary-normal uppercase tracking-wide px-2 mb-2">
+                                    {section.sectionTitle}
+                                 </h3>
+                                 {section.rows.map((row, rowIndex) => (
+                                    <button
+                                       key={rowIndex}
+                                       onClick={() => {
+                                          // For grouped rows, show all categories in the row
+                                          setMobileSelectedCategory(
+                                             row.categories[0],
+                                          );
+                                          setHoveredCategories(row.categories);
+                                          setMobileView("subcategory");
+                                       }}
+                                       className="w-full flex items-center justify-between p-4 bg-white rounded-lg border border-neutral hover:border-accent transition-colors mb-2"
+                                    >
+                                       <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          {row.icon}
+                                          <div className="flex flex-wrap items-center gap-1 text-sm text-left">
+                                             {row.categories.map((cat, idx) => (
+                                                <React.Fragment key={cat.id}>
+                                                   <span className="font-medium text-primary">
+                                                      {cat.name}
+                                                   </span>
+                                                   {idx <
+                                                      row.categories.length -
+                                                         1 && (
+                                                      <span className="text-neutral-dark">
+                                                         ,
+                                                      </span>
+                                                   )}
+                                                </React.Fragment>
+                                             ))}
+                                          </div>
+                                       </div>
+                                       <ChevronRight className="w-5 h-5 text-neutral-dark flex-shrink-0 ml-2" />
+                                    </button>
+                                 ))}
+                              </div>
+                           ))}
+                        </div>
+                     ) : (
+                        // Subcategory view
+                        <div className="p-4">
+                           {mobileSelectedCategory && (
+                              <>
+                                 {/* Category Header */}
+                                 <div className="flex items-center gap-2 mb-6 p-4 bg-white rounded-lg border border-neutral">
+                                    <Sparkles className="w-6 h-6 text-accent" />
+                                    <h3 className="text-lg font-bold text-primary">
+                                       {mobileSelectedCategory.name}
+                                    </h3>
+                                 </div>
+
+                                 {/* Special Brands Section for Phones */}
+                                 {mobileSelectedCategory.slug ===
+                                    "dien-thoai" && (
+                                    <div className="mb-6 p-4 bg-white rounded-lg border border-neutral">
+                                       <h4 className="text-sm font-semibold text-secondary mb-3">
+                                          Thương hiệu nổi bật
+                                       </h4>
+                                       <div className="grid grid-cols-2 gap-2">
+                                          {mobileSelectedCategory.children
+                                             ?.filter((child) =>
+                                                [
+                                                   "apple-iphone",
+                                                   "samsung",
+                                                   "xiaomi",
+                                                   "oppo",
+                                                   "honor",
+                                                ].includes(child.slug),
+                                             )
+                                             .map((brand) => (
+                                                <a
+                                                   key={brand.id}
+                                                   href={`/category/${brand.slug}`}
+                                                   className="flex items-center gap-2 p-3 bg-neutral-light border border-neutral rounded-lg hover:border-accent transition-all text-sm font-medium text-primary"
+                                                >
+                                                   <Smartphone className="w-4 h-4" />
+                                                   {brand.name.replace(
+                                                      " (iPhone)",
+                                                      "",
+                                                   )}
+                                                </a>
+                                             ))}
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Subcategories */}
+                                 {hoveredCategories.length === 1 &&
+                                 singleCategorySlugs.includes(
+                                    hoveredCategories[0].slug,
+                                 ) ? (
+                                    // Single category layout
+                                    <div className="space-y-4">
+                                       {mobileSelectedCategory.children
+                                          ?.filter(
+                                             (child) =>
+                                                child.slug !==
+                                                   "theo-phan-khuc-gia" &&
+                                                child.slug !== "theo-nhu-cau",
+                                          )
+                                          .map((level2Category) => (
+                                             <div
+                                                key={level2Category.id}
+                                                className="p-4 bg-white rounded-lg border border-neutral"
+                                             >
+                                                <h4 className="font-semibold text-primary mb-3 flex items-center gap-1">
+                                                   {level2Category.name}
+                                                   <ChevronRight className="w-4 h-4" />
+                                                </h4>
+                                                {level2Category.children
+                                                   ?.length > 0 && (
+                                                   <div className="space-y-2">
+                                                      {level2Category.children.map(
+                                                         (level3Item) => (
+                                                            <a
+                                                               key={
+                                                                  level3Item.id
+                                                               }
+                                                               href={`/category/${level3Item.slug}`}
+                                                               className="block text-sm text-secondary hover:text-accent transition-colors py-1"
+                                                            >
+                                                               {level3Item.name}
+                                                            </a>
+                                                         ),
+                                                      )}
+                                                   </div>
+                                                )}
+                                             </div>
+                                          ))}
+
+                                       {/* Price Range Section */}
+                                       {mobileSelectedCategory.children?.some(
+                                          (c) =>
+                                             c.slug === "theo-phan-khuc-gia",
+                                       ) && (
+                                          <div className="p-4 bg-white rounded-lg border border-neutral">
+                                             <h4 className="font-semibold text-primary mb-3 flex items-center gap-1">
+                                                Theo phân khúc giá
+                                                <ChevronRight className="w-4 h-4" />
+                                             </h4>
+                                             <div className="grid grid-cols-2 gap-2">
+                                                {mobileSelectedCategory.children
+                                                   .find(
+                                                      (c) =>
+                                                         c.slug ===
+                                                         "theo-phan-khuc-gia",
+                                                   )
+                                                   ?.children?.map((price) => (
+                                                      <a
+                                                         key={price.id}
+                                                         href={`/category/${price.slug}`}
+                                                         className="text-sm text-secondary hover:text-accent transition-colors py-1"
+                                                      >
+                                                         {price.name}
+                                                      </a>
+                                                   ))}
+                                             </div>
+                                          </div>
+                                       )}
+
+                                       {/* Theo nhu cầu Section */}
+                                       {mobileSelectedCategory.children?.some(
+                                          (c) => c.slug === "theo-nhu-cau",
+                                       ) && (
+                                          <div className="p-4 bg-white rounded-lg border border-neutral">
+                                             <h4 className="font-semibold text-primary mb-3 flex items-center gap-1">
+                                                Theo nhu cầu
+                                                <ChevronRight className="w-4 h-4" />
+                                             </h4>
+                                             <div className="grid grid-cols-2 gap-2">
+                                                {mobileSelectedCategory.children
+                                                   .find(
+                                                      (c) =>
+                                                         c.slug ===
+                                                         "theo-nhu-cau",
+                                                   )
+                                                   ?.children?.map((need) => (
+                                                      <a
+                                                         key={need.id}
+                                                         href={`/category/${need.slug}`}
+                                                         className="text-sm text-secondary hover:text-accent transition-colors py-1"
+                                                      >
+                                                         {need.name}
+                                                      </a>
+                                                   ))}
+                                             </div>
+                                          </div>
+                                       )}
+                                    </div>
+                                 ) : (
+                                    // Grouped categories layout
+                                    <div className="space-y-4">
+                                       {hoveredCategories.map((category) => (
+                                          <div
+                                             key={category.id}
+                                             className="p-4 bg-white rounded-lg border border-neutral"
+                                          >
+                                             <h4 className="font-semibold text-primary mb-3 flex items-center gap-1">
+                                                {category.name}
+                                                <ChevronRight className="w-4 h-4" />
+                                             </h4>
+                                             {category.children?.length > 0 ? (
+                                                <div className="space-y-2">
+                                                   {category.children.map(
+                                                      (child) => (
+                                                         <a
+                                                            key={child.id}
+                                                            href={`/category/${child.slug}`}
+                                                            className="block text-sm text-secondary hover:text-accent transition-colors py-1"
+                                                         >
+                                                            {child.name}
+                                                         </a>
+                                                      ),
+                                                   )}
+                                                </div>
+                                             ) : (
+                                                <p className="text-sm text-secondary-normal">
+                                                   Chưa có danh mục con
+                                                </p>
+                                             )}
+                                          </div>
+                                       ))}
+                                    </div>
+                                 )}
+                              </>
+                           )}
+                        </div>
+                     )}
+                  </div>
+               </div>
+
+               {/* DESKTOP VIEW - Mega Menu */}
+               <div className="hidden lg:flex absolute left-0 top-full mt-2 rounded-lg shadow-2xl z-50 overflow-hidden">
                   {/* Left Sidebar */}
                   <div className="w-80 bg-neutral-light border-r border-neutral max-h-[600px] overflow-y-auto custom-scrollbar">
                      {/* Single Categories */}
@@ -276,14 +577,14 @@ const CategoryMegaMenu = () => {
                      {groupedSections.map((section, sectionIndex) => {
                         return (
                            <div key={sectionIndex}>
-                              {/* Section Title - ONLY ONCE per section */}
+                              {/* Section Title */}
                               <div className="px-5 pt-4 pb-2">
                                  <span className="text-xs font-semibold text-secondary-normal uppercase tracking-wide">
                                     {section.sectionTitle}
                                  </span>
                               </div>
 
-                              {/* Group Rows - each row has multiple categories */}
+                              {/* Group Rows */}
                               {section.rows.map((row, rowIndex) => {
                                  const isRowHovered = hoveredCategories.some(
                                     (cat) =>
@@ -347,7 +648,7 @@ const CategoryMegaMenu = () => {
                            singleCategorySlugs.includes(
                               hoveredCategories[0].slug,
                            ) ? (
-                              // Single category view (for Điện thoại, Laptop, Điện máy, Phụ kiện)
+                              // Single category view
                               <>
                                  {/* Header */}
                                  <div className="flex items-center gap-2 mb-6">
@@ -359,7 +660,7 @@ const CategoryMegaMenu = () => {
 
                                  {hoveredCategories[0].children?.length > 0 && (
                                     <>
-                                       {/* Special Section - Brands (only for Điện thoại) */}
+                                       {/* Special Section - Brands */}
                                        {hoveredCategories[0].slug ===
                                           "dien-thoai" && (
                                           <div className="mb-6 pb-6 border-b border-neutral">
@@ -393,7 +694,7 @@ const CategoryMegaMenu = () => {
                                           </div>
                                        )}
 
-                                       {/* Main Grid - Level 2 Categories as columns with Level 3 inside */}
+                                       {/* Main Grid */}
                                        <div className="grid grid-cols-3 gap-x-8 gap-y-6 mb-6">
                                           {hoveredCategories[0].children
                                              .filter(
@@ -405,13 +706,11 @@ const CategoryMegaMenu = () => {
                                              )
                                              .map((level2Category) => (
                                                 <div key={level2Category.id}>
-                                                   {/* Level 2 - Column Header */}
                                                    <h4 className="font-semibold text-primary mb-2.5 flex items-center gap-1 hover:text-accent cursor-pointer transition-colors text-sm group">
                                                       {level2Category.name}
                                                       <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                                    </h4>
 
-                                                   {/* Level 3 - Items Inside Column */}
                                                    {level2Category.children
                                                       ?.length > 0 && (
                                                       <div className="space-y-1.5">
@@ -436,7 +735,7 @@ const CategoryMegaMenu = () => {
                                              ))}
                                        </div>
 
-                                       {/* Price Range Section (if exists) */}
+                                       {/* Price Range Section */}
                                        {hoveredCategories[0].children?.some(
                                           (c) =>
                                              c.slug === "theo-phan-khuc-gia",
@@ -466,7 +765,7 @@ const CategoryMegaMenu = () => {
                                           </div>
                                        )}
 
-                                       {/* Theo nhu cầu Section (if exists - for Laptop) */}
+                                       {/* Theo nhu cầu Section */}
                                        {hoveredCategories[0].children?.some(
                                           (c) => c.slug === "theo-nhu-cau",
                                        ) && (
@@ -509,19 +808,16 @@ const CategoryMegaMenu = () => {
                                  )}
                               </>
                            ) : (
-                              // Grouped categories view - render each category as a column (like first 4 categories)
+                              // Grouped categories view
                               <>
-                                 {/* Main Grid - Each category becomes a column */}
                                  <div className="grid grid-cols-3 gap-x-8 gap-y-6">
                                     {hoveredCategories.map((category) => (
                                        <div key={category.id}>
-                                          {/* Category Name as Column Header */}
                                           <h4 className="font-semibold text-primary mb-2.5 flex items-center gap-1 hover:text-accent cursor-pointer transition-colors text-sm group">
                                              {category.name}
                                              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                           </h4>
 
-                                          {/* Children Items in Column */}
                                           {category.children?.length > 0 ? (
                                              <div className="space-y-1.5">
                                                 {category.children.map(
