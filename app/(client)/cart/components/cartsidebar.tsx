@@ -1,47 +1,73 @@
-// components/cart/CartSidebar.tsx
 "use client";
 
 import React from "react";
 import { X, ChevronRight } from "lucide-react";
 
 interface CartSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  subtotal: number;
-  totalDiscount: number;
-  finalTotal: number;
-  rewardPoints: number;
-  selectedItemsCount: number;
-  appliedVoucherCode?: string;
-  appliedVoucherValue?: number;
-  onOpenVoucherModal?: () => void;
-  onCheckout: () => void; // ✅ Added this prop
+   isOpen: boolean;
+   onClose: () => void;
+   subtotal: number;
+   totalDiscount: number;
+   finalTotal: number;
+   rewardPoints: number;
+   selectedItemsCount: number;
+   appliedVoucherCode?: string;
+   appliedVoucherValue?: number;
+   onOpenVoucherModal?: () => void;
+   onCheckout: () => void;
+   // Props cho Checkout page
+   isCheckoutPage?: boolean;
+   showTerms?: boolean;
+   agreedToTerms?: boolean;
+   onTermsChange?: (checked: boolean) => void;
+   // Props cho Points
+   usePoints?: boolean;
+   onTogglePoints?: (checked: boolean) => void;
 }
 
 export default function CartSidebar({
-  isOpen,
-  onClose,
-  subtotal,
-  totalDiscount,
-  finalTotal,
-  rewardPoints,
-  selectedItemsCount,
-  appliedVoucherCode = "",
-  appliedVoucherValue = 0,
-  onOpenVoucherModal,
-  onCheckout, // ✅ Destructure the new prop
+   isOpen,
+   onClose,
+   subtotal,
+   totalDiscount,
+   finalTotal,
+   rewardPoints,
+   selectedItemsCount,
+   appliedVoucherCode = "",
+   appliedVoucherValue = 0,
+   onOpenVoucherModal,
+   onCheckout,
+   isCheckoutPage = false,
+   showTerms = false,
+   agreedToTerms = false,
+   onTermsChange,
+   usePoints = false,
+   onTogglePoints,
 }: CartSidebarProps) {
    const formatPrice = (price: number) =>
       new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-  // ✅ Handle checkout - close sidebar first then navigate
-  const handleCheckout = () => {
-    if (selectedItemsCount === 0) return;
-    onClose();
-    onCheckout();
-  };
+   const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
+   const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
-  if (!isOpen) return null;
+   const handleCheckout = () => {
+      if (selectedItemsCount === 0) return;
+      
+      if (showTerms && !agreedToTerms) {
+         const toastDiv = document.createElement("div");
+         toastDiv.className =
+            "fixed top-5 right-5 bg-promotion text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium";
+         toastDiv.textContent = "⚠️ Vui lòng đồng ý với điều khoản dịch vụ";
+         document.body.appendChild(toastDiv);
+         setTimeout(() => toastDiv.remove(), 3000);
+         return;
+      }
+      
+      onClose();
+      onCheckout();
+   };
+
+   if (!isOpen) return null;
 
    return (
       <>
@@ -62,7 +88,7 @@ export default function CartSidebar({
                   <div className="flex items-center gap-2">
                      <span className="text-xl">🎁</span>
                      <span className="text-sm font-semibold text-primary-darker">
-                        0 quà tặng
+                        {isCheckoutPage ? "Thông tin đơn hàng" : "0 quà tặng"}
                      </span>
                   </div>
                   <button
@@ -80,7 +106,10 @@ export default function CartSidebar({
                   {onOpenVoucherModal && (
                      <div className="border-b border-neutral">
                         <button
-                           onClick={() => {
+                           type="button"
+                           onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               onClose();
                               onOpenVoucherModal();
                            }}
@@ -101,7 +130,7 @@ export default function CartSidebar({
                                     </span>
                                  ) : (
                                     <span className="text-xs text-neutral-dark">
-                                       1.040.000₫
+                                       Chưa áp dụng
                                     </span>
                                  )}
                               </div>
@@ -111,7 +140,7 @@ export default function CartSidebar({
                      </div>
                   )}
 
-                  {/* Points Toggle */}
+                  {/* Points Toggle - Show on both Cart and Checkout */}
                   <div className="px-4 py-3 border-b border-neutral">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -128,7 +157,12 @@ export default function CartSidebar({
                            </div>
                         </div>
                         <label className="relative inline-flex cursor-pointer items-center">
-                           <input type="checkbox" className="peer sr-only" />
+                           <input 
+                              type="checkbox" 
+                              checked={usePoints}
+                              onChange={(e) => onTogglePoints?.(e.target.checked)}
+                              className="peer sr-only" 
+                           />
                            <div className="peer h-6 w-11 rounded-full bg-neutral-dark/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50 shadow-inner"></div>
                         </label>
                      </div>
@@ -136,62 +170,134 @@ export default function CartSidebar({
 
                   {/* Summary Section */}
                   <div className="px-4 py-4 space-y-2.5">
-                     <div className="flex justify-between text-sm">
-                        <span className="text-neutral-darker">Tổng tiền</span>
-                        <span className="font-medium text-primary-darker">
-                           {formatPrice(subtotal)}
-                        </span>
-                     </div>
+                     <h3 className="text-sm font-semibold text-primary-darker mb-3">
+                        Chi tiết thanh toán
+                     </h3>
 
-                     <div className="flex justify-between text-sm">
-                        <span className="text-neutral-darker">Tiết kiệm</span>
-                        <span className="font-medium text-promotion">
-                           {formatPrice(totalDiscount)}
-                        </span>
+                     <div className="space-y-2.5 text-sm">
+                        <div className="flex justify-between">
+                           <span className="text-neutral-darker">Tổng tiền</span>
+                           <span className="font-medium text-primary-darker">
+                              {formatPrice(subtotal)}
+                           </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                           <span className="text-neutral-darker">
+                              Tổng khuyến mãi
+                           </span>
+                           <span className="font-medium text-primary-darker">
+                              -{formatPrice(totalDiscountWithVoucher)}
+                           </span>
+                        </div>
+
+                        <div className="flex justify-between pl-4">
+                           <span className="text-neutral-dark text-xs">
+                              Giảm giá sản phẩm
+                           </span>
+                           <span className="text-primary-darker text-sm">
+                              -{formatPrice(totalDiscount)}
+                           </span>
+                        </div>
+
+                        <div className="flex justify-between pl-4">
+                           <span className="text-neutral-dark text-xs">
+                              Voucher
+                           </span>
+                           <span className="text-primary-darker text-sm font-medium">
+                              {appliedVoucherValue > 0
+                                 ? `-${formatPrice(appliedVoucherValue)}`
+                                 : "0₫"}
+                           </span>
+                        </div>
+
+                        {isCheckoutPage && (
+                           <div className="flex justify-between">
+                              <span className="text-neutral-darker">
+                                 Phí vận chuyển
+                              </span>
+                              <span className="font-medium text-accent-dark">
+                                 Miễn phí
+                              </span>
+                           </div>
+                        )}
+
+                        <div className="border-t border-neutral pt-2.5 mt-2.5">
+                           <div className="flex justify-between items-center">
+                              <span className="font-semibold text-primary-darker text-sm">
+                                 Cần thanh toán
+                              </span>
+                              <span className="text-xl font-bold text-promotion">
+                                 {formatPrice(finalTotalWithVoucher)}
+                              </span>
+                           </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 pt-2">
+                           <span className="text-xs text-neutral-darker">
+                              Điểm thưởng
+                           </span>
+                           <span className="text-sm">🪙</span>
+                           <span className="text-sm font-medium text-accent-dark">
+                              +{rewardPoints.toLocaleString()}
+                           </span>
+                        </div>
                      </div>
                   </div>
                </div>
 
                {/* Footer - Fixed at bottom */}
                <div className="border-t border-neutral bg-neutral-light">
-                  {/* Total Section */}
-                  <div className="px-4 py-3 bg-accent/5">
-                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-neutral-darker">
-                           Cần thanh toán
-                        </span>
-                        <span className="text-xl font-bold text-promotion">
-                           {formatPrice(finalTotal)}
-                        </span>
+                  {/* Terms Checkbox - Only show on Checkout page */}
+                  {showTerms && (
+                     <div className="px-4 pt-3 pb-2">
+                        <label className="flex gap-2 text-xs cursor-pointer items-start">
+                           <input
+                              type="checkbox"
+                              checked={agreedToTerms}
+                              onChange={(e) => onTermsChange?.(e.target.checked)}
+                              className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent"
+                           />
+                           <p className="text-neutral-darker leading-relaxed">
+                              Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
+                              <a
+                                 className="underline font-medium hover:text-promotion cursor-pointer text-primary"
+                                 href="#"
+                              >
+                                 Điều khoản dịch vụ
+                              </a>{" "}
+                              và{" "}
+                              <a
+                                 className="underline font-medium hover:text-promotion cursor-pointer text-primary"
+                                 href="#"
+                              >
+                                 Chính sách xử lý dữ liệu cá nhân
+                              </a>{" "}
+                              của ChoCongNghe.
+                           </p>
+                        </label>
                      </div>
-                     <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-xs text-neutral-dark">
-                           Tích lũy
-                        </span>
-                        <span className="text-sm">🪙</span>
-                        <span className="text-sm font-semibold text-accent-dark">
-                           +{rewardPoints.toLocaleString()}
-                        </span>
-                     </div>
-                  </div>
+                  )}
 
-            {/* Checkout Button - ✅ Changed from Link to button */}
-            <div className="p-3">
-              <button
-                onClick={handleCheckout}
-                disabled={selectedItemsCount === 0}
-                className={`block w-full rounded-lg py-3.5 text-center text-base font-semibold transition shadow-lg ${
-                  selectedItemsCount === 0
-                    ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
-                    : "bg-accent text-primary-darker hover:bg-accent-hover active:scale-[0.98]"
-                }`}
-              >
-                Xác nhận đơn ({selectedItemsCount} sản phẩm)
-              </button>
+                  {/* Checkout Button */}
+                  <div className="p-3">
+                     <button
+                        onClick={handleCheckout}
+                        disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
+                        className={`block w-full rounded-lg py-3.5 text-center text-base font-semibold transition shadow-lg ${
+                           selectedItemsCount === 0 || (showTerms && !agreedToTerms)
+                              ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
+                              : "bg-accent text-primary-darker hover:bg-accent-hover active:scale-[0.98]"
+                        }`}
+                     >
+                        {isCheckoutPage
+                           ? "Đặt hàng"
+                           : `Xác nhận đơn (${selectedItemsCount} sản phẩm)`}
+                     </button>
+                  </div>
+               </div>
             </div>
-          </div>
-        </div>
-      </div>
+         </div>
 
          <style jsx>{`
             @keyframes slide-up {

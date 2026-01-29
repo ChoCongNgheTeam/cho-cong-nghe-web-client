@@ -116,6 +116,8 @@ export default function CartPage() {
          totalDiscount: totalDiscountWithVoucher,
          finalTotal: finalTotalWithVoucher,
          rewardPoints: rewardPoints,
+               usePoints: usePoints, 
+
       };
 
       localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
@@ -133,6 +135,8 @@ export default function CartPage() {
       finalTotal,
       rewardPoints,
       router,
+         usePoints, 
+
    ]);
 
    // Calculate final totals with voucher
@@ -458,6 +462,8 @@ export default function CartPage() {
             appliedVoucherValue={appliedVoucherValue}
             onOpenVoucherModal={() => setShowVoucherModal(true)}
             onCheckout={handleCheckout}
+             usePoints={usePoints}           
+   onTogglePoints={setUsePoints}  
          />
 
          {/* Voucher Modal */}
