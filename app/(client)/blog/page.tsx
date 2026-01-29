@@ -1,54 +1,57 @@
-import type { Metadata } from "next";
-import { SITE_URL } from "@/config/site.config";
-import Link from "next/link";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Blog | Chia sẻ kiến thức Web & Next.js",
-  description:
-    "Blog chia sẻ kiến thức về Next.js, React, SEO, performance và kinh nghiệm phát triển web thực tế.",
-  alternates: {
-    canonical: `${SITE_URL}/blog`,
-  },
-  openGraph: {
-    title: "Blog | Chia sẻ kiến thức Web & Next.js",
-    description: "Các bài viết về Next.js, React, SEO và tối ưu hiệu năng website.",
-    url: `${SITE_URL}/blog`,
-    images: [
-      {
-        url: `${SITE_URL}/og/blog.jpg`,
-      },
-    ],
-  },
-};
+import { useState } from "react";
 
-const blogs = [
-  {
-    slug: "nextjs-app-router",
-    title: "Hiểu đúng Next.js App Router",
-    excerpt: "Giải thích App Router, layout, server component...",
-  },
-  {
-    slug: "seo-voi-nextjs",
-    title: "SEO hiệu quả với Next.js",
-    excerpt: "SSR, metadata và performance thực tế",
-  },
-];
+import BlogFeatured from "./components/blog-featured";
+import BlogNews from "./components/blog-news";
+import RelatedProducts from "./components/related-products";
+import BlogCategorySlider from "./components/blog-category-slider";
+import { BlogCategory } from "./_lib/blog.type";
 
 export default function BlogPage() {
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-16">
-      <h1 className="mb-8 text-3xl font-bold">Blog</h1>
+  // ✅ STATE CATEGORY ĐẶT Ở PAGE
+  const [category, setCategory] = useState<BlogCategory>("featured");
 
-      <div className="space-y-6">
-        {blogs.map((blog) => (
-          <article key={blog.slug} className="rounded-lg border p-6 hover:bg-gray-50">
-            <Link href={`/blog/${blog.slug}`}>
-              <h2 className="mb-2 text-xl font-semibold hover:underline">{blog.title}</h2>
-            </Link>
-            <p className="text-gray-600">{blog.excerpt}</p>
-          </article>
+  return (
+    <div className="container py-6 space-y-8">
+      {/* ===== BREADCRUMB ===== */}
+      <div className="text-sm text-secondary">
+        Trang chủ / <span className="text-primary font-medium">Tin tức</span>
+      </div>
+
+      {/* ===== TABS TEXT (nếu muốn giữ) ===== */}
+      <div className="flex gap-6 overflow-x-auto border-b border-neutral pb-3">
+        {[
+          "Nổi bật",
+          "Tin mới",
+          "Khuyến mãi",
+          "Đánh giá",
+          "Thủ thuật",
+          "Giải trí",
+        ].map((item) => (
+          <button
+            key={item}
+            className="text-sm font-medium whitespace-nowrap text-secondary hover:text-accent"
+          >
+            {item}
+          </button>
         ))}
       </div>
-    </section>
+
+      {/* ===== FEATURED (chỉ hiện khi chọn featured) ===== */}
+      {category === "featured" && <BlogFeatured />}
+
+      {/* ===== SẢN PHẨM LIÊN QUAN ===== */}
+      <RelatedProducts />
+
+      {/* ===== TIN MỚI (lọc theo category) ===== */}
+      <BlogNews category={category} />
+      {}
+     {/* ===== SLIDER DANH MỤC (Slidezy) ===== */}
+      <BlogCategorySlider
+        active={category}
+        onChange={setCategory}
+      />
+    </div>
   );
 }
