@@ -16,6 +16,7 @@ import {
    X,
    ChevronLeft,
 } from "lucide-react";
+import Link from "next/link";
 
 interface Category {
    id: string;
@@ -289,7 +290,8 @@ const CategoryMegaMenu = () => {
                         <div className="p-4 space-y-2">
                            {/* Single Categories */}
                            {getSingleCategories().map((category) => (
-                              <button
+                              <Link
+                                 href={`category/${category.slug}`}
                                  key={category.id}
                                  onClick={() =>
                                     handleMobileCategoryClick(category)
@@ -303,7 +305,7 @@ const CategoryMegaMenu = () => {
                                     </span>
                                  </div>
                                  <ChevronRight className="w-5 h-5 text-neutral-dark" />
-                              </button>
+                              </Link>
                            ))}
 
                            {/* Grouped Sections */}
@@ -316,7 +318,6 @@ const CategoryMegaMenu = () => {
                                     <button
                                        key={rowIndex}
                                        onClick={() => {
-                                          // For grouped rows, show all categories in the row
                                           setMobileSelectedCategory(
                                              row.categories[0],
                                           );
@@ -549,7 +550,8 @@ const CategoryMegaMenu = () => {
                   <div className="w-80 bg-neutral-light border-r border-neutral max-h-[600px] overflow-y-auto custom-scrollbar">
                      {/* Single Categories */}
                      {getSingleCategories().map((category) => (
-                        <div
+                        <Link
+                           href={`category/${category.slug}`}
                            key={category.id}
                            onMouseEnter={() =>
                               handleSingleCategoryHover(category)
@@ -570,7 +572,7 @@ const CategoryMegaMenu = () => {
                            {category.children?.length > 0 && (
                               <ChevronRight className="w-4 h-4 text-neutral-dark" />
                            )}
-                        </div>
+                        </Link>
                      ))}
 
                      {/* Grouped Sections */}

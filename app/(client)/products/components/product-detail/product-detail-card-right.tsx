@@ -16,26 +16,39 @@ interface ProductDetailRightProps {
   onColorChange?: (color: string) => void;
   onStorageChange?: (storage: string) => void;
   onReviewClick?: () => void;
+  selectedVariant?: ProductVariant;
+  availableOptions?: any[];
+}
+
+interface ProductVariant {
+  id: string;
+  price: number;
+  images?: { imageUrl: string }[];
+  sku?: string;
 }
 
 type ColorOption = {
   value: string;
   image?: string;
   label?: string;
+  enabled?: boolean;
 };
 
 type StorageOption = {
   value: string;
   label?: string;
+  type?: string;
 };
 
 export default function ProductDetailRight({
   product,
   selectedColor: propSelectedColor,
+  selectedVariant,
   selectedStorage: propSelectedStorage,
   onColorChange,
   onStorageChange,
   onReviewClick,
+  availableOptions,
 }: ProductDetailRightProps = {}) {
   /* ============================================================================
    * GUARD
@@ -104,7 +117,7 @@ export default function ProductDetailRight({
    * ========================================================================== */
   const storages: StorageOption[] = (() => {
     const storageOption = product.availableOptions?.find(
-      (opt) => opt.attribute === "storage",
+      (opt) => opt.type === "storage",
     );
     return (
       storageOption?.values?.map((val) => ({
@@ -115,23 +128,16 @@ export default function ProductDetailRight({
   })();
 
   const colors: ColorOption[] = (() => {
-    const colorOption = product.availableOptions?.find(
-      (opt) => opt.attribute === "color",
-    );
+    // ✅ SỬA: Dùng availableOptions thay vì product.availableOptions
+    const colorOption = availableOptions?.find((opt) => opt.type === "color");
     if (!colorOption?.values) return [];
 
-    return colorOption.values.map((val) => {
-      const firstVariantId = val.variantIds?.[0];
-      const variant =
-        firstVariantId === product.currentVariant?.id
-          ? product.currentVariant
-          : undefined;
-      return {
-        value: val.value,
-        label: val.label,
-        image: variant?.images?.[0]?.imageUrl,
-      };
-    });
+    return colorOption.values.map((val: any) => ({
+      value: val.value,
+      label: val.label,
+      enabled: val.enabled, // ✅ THÊM: Lấy enabled từ API
+      image: val.image?.imageUrl,
+    }));
   })();
 
   /* ============================================================================
@@ -265,42 +271,44 @@ export default function ProductDetailRight({
         </span>
 
         <div className="flex flex-wrap gap-2">
-          {colors.map((color) => {
-            const isActive = selectedColor === color.value;
+          {colors
+            .filter((color) => color.enabled) // ✅ THÊM: Lọc chỉ màu enabled
+            .map((color) => {
+              const isActive = selectedColor === color.value;
 
-            return (
-              <span
-                key={color.value}
-                onClick={() => {
-                  onColorChange?.(color.value);
-                }}
-                className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300 ${
-                  isActive
-                    ? "border-promotion dark:border-promotion text-promotion dark:text-promotion bg-promotion-light dark:bg-neutral"
-                    : "border-neutral-dark dark:border-neutral-dark text-neutral-darker dark:text-neutral-darker bg-neutral-light dark:bg-neutral"
-                }
+              return (
+                <span
+                  key={color.value}
+                  onClick={() => {
+                    onColorChange?.(color.value);
+                  }}
+                  className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300 ${
+                    isActive
+                      ? "border-promotion dark:border-promotion text-promotion dark:text-promotion bg-promotion-light dark:bg-neutral"
+                      : "border-neutral-dark dark:border-neutral-dark text-neutral-darker dark:text-neutral-darker bg-neutral-light dark:bg-neutral"
+                  }
             hover:bg-promotion-light dark:hover:bg-neutral`}
-              >
-                {color.image && (
-                  <img
-                    src={color.image}
-                    alt={color.value}
-                    className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
-                  />
-                )}
+                >
+                  {color.image && (
+                    <img
+                      src={color.image}
+                      alt={color.value}
+                      className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
+                    />
+                  )}
 
-                {color.label}
+                  {color.label}
 
-                {isActive && (
-                  <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion dark:border-t-promotion">
-                    <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-                      ✓
-                    </span>
-                  </div>
-                )}
-              </span>
-            );
-          })}
+                  {isActive && (
+                    <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion dark:border-t-promotion">
+                      <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
+                        ✓
+                      </span>
+                    </div>
+                  )}
+                </span>
+              );
+            })}
         </div>
       </div>
 
@@ -320,12 +328,21 @@ export default function ProductDetailRight({
           <div className="flex flex-col gap-2 flex-1">
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-primary dark:text-primary transition-colors duration-300">
-                {(product.currentVariant?.price || 0).toLocaleString("vi-VN")}₫
+                {(
+                  selectedVariant?.price ||
+                  product.currentVariant?.price ||
+                  0
+                ).toLocaleString("vi-VN")}
+                ₫
               </h3>
               <div className="flex gap-2 items-center">
                 <span className="text-xs sm:text-sm text-neutral-darker dark:text-neutral-darker line-through transition-colors duration-300">
-                  {(product.currentVariant?.price || 0).toLocaleString("vi-VN")}
-                  ₫
+                  {(
+                    selectedVariant?.price ||
+                    product.currentVariant?.price ||
+                    0
+                  ).toLocaleString("vi-VN")}
+                  ₫ ₫
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-promotion dark:text-promotion">
                   3%

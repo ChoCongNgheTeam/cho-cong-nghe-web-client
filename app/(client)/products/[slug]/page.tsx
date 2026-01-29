@@ -14,6 +14,7 @@ type ProductDetailProps = {
 
 export default async function ProductDetailPage({
   params,
+  
 }: ProductDetailProps) {
   // Await params trong Next.js 15+
   const { slug } = await params;
@@ -23,6 +24,10 @@ export default async function ProductDetailPage({
   try {
     product = await getProductBySlug(slug);
     console.log(product);
+    const sizeKB =
+  Buffer.byteLength(JSON.stringify(product), "utf8") / 1024;
+
+console.log(`Product size: ${sizeKB.toFixed(2)} KB`);
   } catch (error) {
     notFound();
   }
@@ -32,7 +37,9 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  return <ProductDetailContent product={product} />;
+  return <ProductDetailContent product={product} 
+  slug={slug}
+  />;
 }
 
 export { generateMetadata };

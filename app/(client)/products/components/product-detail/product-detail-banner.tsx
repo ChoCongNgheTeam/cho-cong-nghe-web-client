@@ -73,13 +73,16 @@ export default function ProductDetailBanner({
 
   //  khi đổi images → reset về ảnh đầu
   useEffect(() => {
+    if (images && images.length > 0) {
     setCurrentImageIndex(0);
+  }
   }, [images]);
 
   const gallery = images || [];
   const currentImageObj = gallery[currentImageIndex];
   const currentImage = currentImageObj?.imageUrl || "";
   const totalImages = gallery.length;
+ 
 
   const goToImage = (index: number) => setCurrentImageIndex(index);
 
