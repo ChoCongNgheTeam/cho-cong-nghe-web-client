@@ -1,6 +1,5 @@
-// app/(client)/page.tsx
-import HomePage from '@/components/home/page';
+import HomePage from "@/(client)/home/page";
 
-export default function Page() {
-  return <HomePage />;
+export default function Home() {
+   return <HomePage />;
 }
