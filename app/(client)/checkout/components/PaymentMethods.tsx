@@ -105,7 +105,7 @@ export default function PaymentMethods({
    return (
       <div className="bg-neutral-light rounded-lg shadow-sm">
          <div className="p-4 sm:p-5 border-b border-neutral">
-            <h2 className="text-sm sm:text-base font-semibold text-primary-darker">
+            <h2 className="text-sm sm:text-base font-semibold text-primary">
                Phương thức thanh toán
             </h2>
          </div>
@@ -145,11 +145,11 @@ export default function PaymentMethods({
 
                      <div className="flex-1 min-w-0 pt-0.5">
                         <div className="flex items-start gap-2">
-                           <span className="text-sm leading-tight text-primary-darker">
+                           <span className="text-sm leading-tight text-primary">
                               {method.name}
                            </span>
                            {method.badge && (
-                              <span className="text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0 font-medium bg-accent text-primary-darker">
+                              <span className="text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0 font-medium bg-accent text-primary">
                                  {method.badge}
                               </span>
                            )}

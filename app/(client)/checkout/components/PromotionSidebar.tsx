@@ -137,7 +137,7 @@ export default function PromotionSidebar({
             <div className="flex flex-col h-full">
                {/* Header */}
                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral shrink-0">
-                  <h2 className="text-base sm:text-lg font-semibold  text-primary-darker">
+                  <h2 className="text-base sm:text-lg font-semibold  text-primary">
                      Chọn hoặc nhập ưu đãi
                   </h2>
                   <button
@@ -162,7 +162,7 @@ export default function PromotionSidebar({
                      />
                      <button
                         onClick={handleApplyCode}
-                        className="px-6 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all hover:shadow-md bg-accent hover:bg-accent-hover text-primary-darker "
+                        className="px-6 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all hover:shadow-md bg-accent hover:bg-accent-hover text-primary "
                      >
                         Áp dụng
                      </button>
@@ -172,7 +172,7 @@ export default function PromotionSidebar({
                {/* Available Vouchers List */}
                <div className="flex-1 overflow-y-auto">
                   <div className="p-4 sm:p-5">
-                     <h3 className="text-sm font-semibold mb-3  text-primary-darker">
+                     <h3 className="text-sm font-semibold mb-3  text-primary">
                         Ưu đãi có sẵn
                      </h3>
 
@@ -198,14 +198,14 @@ export default function PromotionSidebar({
                                           : "bg-neutral"
                                     }`}
                                  >
-                                    <span className="font-bold text-xl text-primary-darker">
+                                    <span className="font-bold text-xl text-primary">
                                        %
                                     </span>
                                  </div>
 
                                  {/* Voucher Info */}
                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-semibold text-sm mb-1  text-primary-darker">
+                                    <h4 className="font-semibold text-sm mb-1  text-primary">
                                        {voucher.title}
                                     </h4>
                                     <p className="text-xs text-neutral-darker mb-2 ">
@@ -213,7 +213,7 @@ export default function PromotionSidebar({
                                     </p>
 
                                     <div className="flex items-center justify-between">
-                                       <span className="text-xs px-2 py-1 rounded bg-accent text-primary-darker ">
+                                       <span className="text-xs px-2 py-1 rounded bg-accent text-primary ">
                                           {voucher.code}
                                        </span>
                                        <span className="text-xs text-neutral-dark ">
@@ -227,7 +227,7 @@ export default function PromotionSidebar({
                                     (selectedVoucher === voucher.id ? (
                                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-accent">
                                           <svg
-                                             className="w-4 h-4 text-primary-darker"
+                                             className="w-4 h-4 text-primary"
                                              fill="none"
                                              strokeLinecap="round"
                                              strokeLinejoin="round"
@@ -264,7 +264,7 @@ export default function PromotionSidebar({
                      disabled={!selectedVoucher}
                      className={`w-full py-3 rounded-lg font-medium text-sm cursor-pointer transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed  ${
                         selectedVoucher
-                           ? "bg-accent hover:bg-accent-hover text-primary-darker"
+                           ? "bg-accent hover:bg-accent-hover text-primary"
                            : "bg-neutral text-neutral-darker"
                      }`}
                   >

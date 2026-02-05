@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
    Search,
    Heart,
@@ -20,26 +20,15 @@ import HeaderTop from "./components/HeaderTop";
 import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
 import { useUserMenu } from "@/hooks/useUserMenu";
+import { useTheme } from "@/hooks/useTheme";
+
 const Header = () => {
    const [searchQuery, setSearchQuery] = useState("");
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-   const [isDarkMode, setIsDarkMode] = useState(false);
-   const { user, logout, isAuthenticated } = useAuth();
+   const { user, logout, isAuthenticated, loading } = useAuth();
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
-   useEffect(() => {
-      const checkDarkMode = () => {
-         setIsDarkMode(document.documentElement.classList.contains("dark"));
-      };
-      checkDarkMode();
-      const observer = new MutationObserver(checkDarkMode);
-      observer.observe(document.documentElement, {
-         attributes: true,
-         attributeFilter: ["class"],
-      });
-
-      return () => observer.disconnect();
-   }, []);
+   const { isDark } = useTheme();
 
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -58,26 +47,61 @@ const Header = () => {
       return () => {
          document.removeEventListener("mousedown", handleClickOutside);
       };
-   }, [showUserMenu]);
+   }, [showUserMenu, userMenuRef, setShowUserMenu]);
+
+   // ✅ HYDRATION SAFE: Show skeleton only when loading (only when no initialUser)
+   if (loading) {
+      return (
+         <div className="w-full bg-neutral-light border-b border-neutral">
+            <HeaderTop isAuthenticated={false} />
+            <div className="bg-accent md:bg-transparent">
+               <div className="container py-1 md:py-2">
+                  {/* Mobile Skeleton */}
+                  <div className="flex md:hidden items-center justify-between">
+                     <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded" />
+                     <div className="w-32 h-10 bg-neutral/20 animate-pulse rounded" />
+                     <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded" />
+                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded" />
+                     </div>
+                  </div>
+
+                  {/* Desktop Skeleton */}
+                  <div className="hidden md:flex items-center justify-between gap-6 lg:gap-8">
+                     <div className="w-[220px] h-16 lg:h-20 bg-neutral/20 animate-pulse rounded" />
+                     <div className="w-[400px] lg:w-[500px] h-10 bg-neutral/20 animate-pulse rounded-full" />
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
+                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
+                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
+                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      );
+   }
 
    return (
       <div className="w-full bg-neutral-light border-b border-neutral">
          <HeaderTop isAuthenticated={isAuthenticated} />
+
          {/* Main Header */}
          <div className="bg-accent md:bg-transparent">
-            <div className="container py-3 md:py-4">
+            <div className="container py-1 md:py-2">
                <MobileHeader
                   mobileMenuOpen={mobileMenuOpen}
                   mobileSearchOpen={mobileSearchOpen}
                   searchQuery={searchQuery}
-                  isDarkMode={isDarkMode}
+                  isDarkMode={isDark}
                   onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
                   onSearchToggle={() => setMobileSearchOpen(!mobileSearchOpen)}
                   onSearchChange={setSearchQuery}
                />
                <DesktopHeader
                   searchQuery={searchQuery}
-                  isDarkMode={isDarkMode}
+                  isDarkMode={isDark}
                   isAuthenticated={isAuthenticated}
                   user={user}
                   showUserMenu={showUserMenu}

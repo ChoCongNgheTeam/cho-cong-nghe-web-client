@@ -10,9 +10,10 @@ export default function ClientLayout({
    return (
       <>
          <Header />
-         <ToggleSwitch defaultValue={false} />
+         <ToggleSwitch />
          <main>{children}</main>
          <Footer />
+         {/* <ProductForm /> */}
       </>
    );
 }

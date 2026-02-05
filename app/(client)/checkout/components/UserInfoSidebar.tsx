@@ -80,7 +80,7 @@ export default function UserInfoSidebar({
             <div className="flex flex-col h-full">
                {/* Header */}
                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral shrink-0">
-                  <h2 className="text-base sm:text-lg font-semibold text-primary-darker">
+                  <h2 className="text-base sm:text-lg font-semibold text-primary">
                      Thông tin người đặt
                   </h2>
                   <button
@@ -96,7 +96,7 @@ export default function UserInfoSidebar({
                <div className="flex-1 overflow-y-auto p-4 sm:p-5">
                   <div className="space-y-4">
                      <div>
-                        <label className="block text-sm font-medium mb-2 text-primary-darker">
+                        <label className="block text-sm font-medium mb-2 text-primary">
                            Họ và tên <span className="text-promotion">*</span>
                         </label>
                         <input
@@ -110,7 +110,7 @@ export default function UserInfoSidebar({
                      </div>
 
                      <div>
-                        <label className="block text-sm font-medium mb-2 text-primary-darker">
+                        <label className="block text-sm font-medium mb-2 text-primary">
                            Số điện thoại{" "}
                            <span className="text-promotion">*</span>
                         </label>
@@ -125,7 +125,7 @@ export default function UserInfoSidebar({
                      </div>
 
                      <div>
-                        <label className="block text-sm font-medium mb-2 text-primary-darker">
+                        <label className="block text-sm font-medium mb-2 text-primary">
                            Email
                         </label>
                         <input
@@ -144,7 +144,7 @@ export default function UserInfoSidebar({
                   <button
                      type="submit"
                      onClick={handleSubmit}
-                     className="w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm transition-all cursor-pointer hover:shadow-md bg-accent hover:bg-accent-hover text-primary-darker"
+                     className="w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm transition-all cursor-pointer hover:shadow-md bg-primary hover:bg-primary-hover text-neutral-light"
                   >
                      Xác nhận
                   </button>

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
-import apiRequest, { ApiError, tokenManager } from "@/lib/api";
+import apiRequest, { ApiError } from "@/lib/api";
 
 interface FormData {
    userName: string;
@@ -207,9 +207,7 @@ const RegisterForm: React.FC = () => {
 
    return (
       <div className="sm:pl-0 md:pl-8 lg:pl-10 lg:px-0">
-         <h1 className="text-2xl mb-3 text-primary-darker text-center">
-            Đăng ký
-         </h1>
+         <h1 className="text-2xl mb-3 text-primary text-center">Đăng ký</h1>
          <p className="text-base text-neutral-darker mb-5 md:hidden lg:block">
             Tạo tài khoản mới dành riêng cho bạn để có những trải nghiệm tốt
             nhất.
@@ -240,7 +238,7 @@ const RegisterForm: React.FC = () => {
                      value={formData.userName}
                      onChange={handleChange}
                      placeholder="Tên đăng nhập"
-                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                   />
                </div>
                {errors.userName && (
@@ -260,7 +258,7 @@ const RegisterForm: React.FC = () => {
                      value={formData.fullName}
                      onChange={handleChange}
                      placeholder="Nguyễn Văn A"
-                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                   />
                </div>
             </div>
@@ -277,7 +275,7 @@ const RegisterForm: React.FC = () => {
                      value={formData.email}
                      onChange={handleChange}
                      placeholder="Địa chỉ Email"
-                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                   />
                </div>
                {errors.email && (
@@ -297,7 +295,7 @@ const RegisterForm: React.FC = () => {
                      value={formData.password}
                      onChange={handleChange}
                      placeholder="Mật khẩu của bạn"
-                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                   />
                   <button
                      type="button"
@@ -324,7 +322,7 @@ const RegisterForm: React.FC = () => {
                      value={formData.confirmPassword}
                      onChange={handleChange}
                      placeholder="Nhập lại mật khẩu"
-                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-12 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                   />
                   <button
                      type="button"
@@ -359,7 +357,7 @@ const RegisterForm: React.FC = () => {
                      value={formData.phone}
                      onChange={handleChange}
                      placeholder="Số điện thoại"
-                     className="w-full pl-9 pr-10 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-9 pr-10 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                   />
                </div>
                {errors.phone && (
@@ -393,7 +391,7 @@ const RegisterForm: React.FC = () => {
                type="button"
                onClick={handleSubmit}
                disabled={loading}
-               className="w-full bg-accent text-primary-darker py-3 rounded-lg font-medium hover:bg-accent-hover active:bg-accent-active transition cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed"
+               className="w-full bg-primary-dark text-neutral-light py-3 rounded-lg font-medium hover:bg-primary-hover transition cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
                {loading ? "Đang xử lý..." : "Đăng ký"}
             </button>

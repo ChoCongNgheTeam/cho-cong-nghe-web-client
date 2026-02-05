@@ -39,118 +39,111 @@
 
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
-   /* ========== ACCENT / YELLOW ========== */
+   /* ========== ACCENT / INDIGO ========== */
    /* Light */
-   --yellow-light: 255 251 230; /* #fffbe6 */
-   --yellow-light-hover: 255 249 217; /* #fff9d9 */
-   --yellow-light-active: 255 243 178; /* #fff3b2 */
+   --accent-light: 233 245 248; /* #e9f8f8 */
+   --accent-light-hover: 224 233 251; /* #e0e9fb */
+   --accent-light-active: 199 215 247; /* #c7d7f7 */
    /* Normal */
-   --yellow-normal: 255 238 138; /* #ffee8a */
-   --yellow: 254 215 0; /* #fed700 */
-   --yellow-hover: 229 194 0; /* #e5c200 */
-   --yellow-active: 203 172 0; /* #cbac00 */
+   --accent: 73 121 228; /* #4970e4 */
+   --accent-hover: 63 106 208; /* #3f6ad0 */
+   --accent-active: 54 92 189; /* #365cbd */
    /* Dark */
-   --yellow-dark: 191 161 0; /* #bfa100 */
-   --yellow-dark-hover: 182 152 0; /* #b69800 */
-   --yellow-dark-active: 158 132 0; /* #9e8400 */
+   --accent-dark: 47 79 163; /* #2f4fa3 */
+   --accent-dark-hover: 38 63 130; /* #263f82 */
+   --accent-dark-active: 29 48 97; /* #1d3061 */
    /* Darker */
-   --yellow-darker: 86 75 0; /* #564b00 */
+   --accent-darker: 22 35 73; /* #162349 */
 
-   /* ========== NEUTRAL / GRAY ========== */
+   /* ========== NEUTRAL / WHITE ========== */
    /* Light */
    --neutral-light: 253 253 253; /* #fdfdfd */
    --neutral-light-hover: 251 251 251; /* #fbfbfb */
    --neutral-light-active: 247 247 247; /* #f7f7f7 */
    /* Normal */
-   --neutral-normal: 230 230 230; /* #e6e6e6 */
    --neutral: 230 230 230; /* #e6e6e6 */
-   --neutral-hover: 207 207 207; /* #cfcfcf */
-   --neutral-active: 184 184 184; /* #b8b8b8 */
+   --neutral-hover: 220 220 220; /* #dcdcdc */
+   --neutral-active: 216 216 216; /* #d8d8d8 */
    /* Dark */
-   --neutral-dark: 173 173 173; /* #adadad */
+   --neutral-dark: 169 169 169; /* #a9a9a9 */
    --neutral-dark-hover: 138 138 138; /* #8a8a8a */
    --neutral-dark-active: 103 103 103; /* #676767 */
    /* Darker */
    --neutral-darker: 81 81 81; /* #515151 */
 
-   /* ========== PRIMARY / BLUE ========== */
+   /* ========== PRIMARY / BLACK ========== */
    /* Light */
-   --primary-light: 235 236 237; /* #ebecee */
-   --primary-light-hover: 228 226 228; /* #e4e2e4 */
-   --primary-light-active: 192 195 198; /* #c0c3c6 */
+   --primary-light: 122 127 133; /* #7a7f85 */
+   --primary-light-hover: 82 82 94; /* #52525e */
+   --primary-light-active: 74 79 85; /* #4a4f55 */
    /* Normal */
-   --primary-normal: 51 62 72; /* #333e48 */
-   --primary: 51 62 72; /* #333e48 */
-   --primary-hover: 46 56 65; /* #2e3841 */
-   --primary-active: 41 50 58; /* #29323a */
+   --primary: 37 39 42; /* #25272a */
+   --primary-hover: 30 32 35; /* #1e2023 */
+   --primary-active: 22 24 27; /* #16181b */
    /* Dark */
-   --primary-dark: 38 47 54; /* #262f36 */
-   --primary-dark-hover: 31 37 43; /* #1f252b */
-   --primary-dark-active: 23 28 32; /* #171c20 */
+   --primary-dark: 15 17 19; /* #0f1113 */
+   --primary-dark-hover: 5 5 7; /* #050507 */
+   --primary-dark-active: 10 12 14; /* #0a0c0e */
    /* Darker */
-   --primary-darker: 18 22 25; /* #121619 */
+   --primary-darker: 0 0 0; /* #000000 */
 
    /* ========== PROMOTION / RED ========== */
    /* Light */
    --promotion-light: 250 232 233; /* #fae8e9 */
    --promotion-light-hover: 247 221 222; /* #f7ddde */
-   --promotion-light-active: 239 186 186; /* #efbaba */
+   --promotion-light-active: 239 185 186; /* #efb9ba */
    /* Normal */
-   --promotion-normal: 203 28 34; /* #cb1c22 */
    --promotion: 203 28 34; /* #cb1c22 */
    --promotion-hover: 183 25 31; /* #b7191f */
    --promotion-active: 162 22 27; /* #a2161b */
    /* Dark */
    --promotion-dark: 152 21 26; /* #98151a */
-   --promotion-dark-hover: 122 17 20; /* #7a1114 */
-   --promotion-dark-active: 91 13 15; /* #5b0d0f */
+   --promotion-dark-hover: 125 17 20; /* #7d1114 */
+   --promotion-dark-active: 91 9 15; /* #5b090f */
    /* Darker */
    --promotion-darker: 71 10 12; /* #470a0c */
 
-   /* ========== SECONDARY / GRAYSCALE ========== */
+   /* ========== DARK MODE / BLUE ========== */
    /* Light */
-   --secondary-light: 245 245 245; /* #f5f5f5 */
-   --secondary-light-hover: 229 229 229; /* #e5e5e5 */
-   --secondary-light-active: 212 212 212; /* #d4d4d4 */
+   --dark-light: 235 236 237; /* #ebecee */
+   --dark-light-hover: 224 226 228; /* #e0e2e4 */
+   --dark-light-active: 192 195 198; /* #c0c3c6 */
    /* Normal */
-   --secondary-normal: 163 163 163; /* #a3a3a3 */
-   --secondary: 82 82 82; /* #525252 */
-   --secondary-hover: 64 64 64; /* #404040 */
-   --secondary-active: 38 38 38; /* #262626 */
+   --dark: 51 62 72; /* #333e48 */
+   --dark-hover: 46 56 65; /* #2e3841 */
+   --dark-active: 41 50 58; /* #29323a */
    /* Dark */
-   --secondary-dark: 23 23 23; /* #171717 */
-   --secondary-dark-hover: 15 15 15; /* #0f0f0f */
-   --secondary-dark-active: 10 10 10; /* #0a0a0a */
+   --dark-dark: 38 47 54; /* #262f36 */
+   --dark-dark-hover: 31 37 43; /* #1f252b */
+   --dark-dark-active: 23 28 32; /* #171c20 */
    /* Darker */
-   --secondary-darker: 0 0 0; /* #000000 */
+   --dark-darker: 18 22 25; /* #121619 */
 }
 
 /* ===================== DARK MODE COLORS ===================== */
 :root.dark {
-   /* ========== ACCENT / YELLOW (DARK MODE) ========== */
+   /* ========== ACCENT / INDIGO (DARK MODE) ========== */
    /* Light */
-   --yellow-light: 40 35 10; /* #28230a */
-   --yellow-light-hover: 45 39 12; /* #2d270c */
-   --yellow-light-active: 50 43 14; /* #322b0e */
+   --accent-light: 22 35 73; /* #162349 */
+   --accent-light-hover: 29 48 97; /* #1d3061 */
+   --accent-light-active: 38 63 130; /* #263f82 */
    /* Normal */
-   --yellow-normal: 234 179 8; /* #eab308 */
-   --yellow: 250 204 21; /* #facc15 */
-   --yellow-hover: 234 179 8; /* #eab308 */
-   --yellow-active: 202 138 4; /* #ca8a04 */
+   --accent: 73 121 228; /* #4970e4 */
+   --accent-hover: 63 106 208; /* #3f6ad0 */
+   --accent-active: 54 92 189; /* #365cbd */
    /* Dark */
-   --yellow-dark: 161 98 7; /* #a16207 */
-   --yellow-dark-hover: 133 77 14; /* #854d0e */
-   --yellow-dark-active: 113 63 18; /* #713f12 */
+   --accent-dark: 199 215 247; /* #c7d7f7 */
+   --accent-dark-hover: 224 233 251; /* #e0e9fb */
+   --accent-dark-active: 233 245 248; /* #e9f8f8 */
    /* Darker */
-   --yellow-darker: 92 53 16; /* #5c3510 */
+   --accent-darker: 233 245 248; /* #e9f8f8 */
 
-   /* ========== NEUTRAL / GRAY (DARK MODE) ========== */
+   /* ========== NEUTRAL / WHITE (DARK MODE) ========== */
    /* Light */
-   --neutral-light: 15 23 42; /* #0f172a */
+   --neutral-light: 15 23 42; /* #0f172a - dark blue background */
    --neutral-light-hover: 20 28 47; /* #141c2f */
    --neutral-light-active: 25 33 52; /* #192134 */
    /* Normal */
-   --neutral-normal: 30 41 59; /* #1e293b */
    --neutral: 30 41 59; /* #1e293b */
    --neutral-hover: 51 65 85; /* #334155 */
    --neutral-active: 71 85 105; /* #475569 */
@@ -161,14 +154,13 @@
    /* Darker */
    --neutral-darker: 226 232 240; /* #e2e8f0 */
 
-   /* ========== PRIMARY / BLUE (DARK MODE) ========== */
+   /* ========== PRIMARY / BLACK (DARK MODE) ========== */
    /* Light */
    --primary-light: 30 41 59; /* #1e293b */
    --primary-light-hover: 51 65 85; /* #334155 */
    --primary-light-active: 71 85 105; /* #475569 */
    /* Normal */
-   --primary-normal: 203 213 225; /* #cbd5e1 */
-   --primary: 226 232 240; /* #e2e8f0 */
+   --primary: 226 232 240; /* #e2e8f0 - light text */
    --primary-hover: 241 245 249; /* #f1f5f9 */
    --primary-active: 248 250 252; /* #f8fafc */
    /* Dark */
@@ -184,7 +176,6 @@
    --promotion-light-hover: 87 13 13; /* #570d0d */
    --promotion-light-active: 127 29 29; /* #7f1d1d */
    /* Normal */
-   --promotion-normal: 239 68 68; /* #ef4444 */
    --promotion: 248 113 113; /* #f87171 */
    --promotion-hover: 252 165 165; /* #fca5a5 */
    --promotion-active: 254 202 202; /* #fecaca */
@@ -195,44 +186,41 @@
    /* Darker */
    --promotion-darker: 127 29 29; /* #7f1d1d */
 
-   /* ========== SECONDARY / GRAYSCALE (DARK MODE) ========== */
+   /* ========== DARK MODE / BLUE (DARK MODE) ========== */
    /* Light */
-   --secondary-light: 82 82 82; /* #525252 */
-   --secondary-light-hover: 100 100 100; /* #646464 */
-   --secondary-light-active: 115 115 115; /* #737373 */
+   --dark-light: 18 22 25; /* #121619 */
+   --dark-light-hover: 23 28 32; /* #171c20 */
+   --dark-light-active: 31 37 43; /* #1f252b */
    /* Normal */
-   --secondary-normal: 163 163 163; /* #a3a3a3 */
-   --secondary: 212 212 212; /* #d4d4d4 */
-   --secondary-hover: 229 229 229; /* #e5e5e5 */
-   --secondary-active: 245 245 245; /* #f5f5f5 */
+   --dark: 30 41 59; /* #1e293b */
+   --dark-hover: 51 65 85; /* #334155 */
+   --dark-active: 71 85 105; /* #475569 */
    /* Dark */
-   --secondary-dark: 250 250 250; /* #fafafa */
-   --secondary-dark-hover: 252 252 252; /* #fcfcfc */
-   --secondary-dark-active: 254 254 254; /* #fefefe */
+   --dark-dark: 192 195 198; /* #c0c3c6 */
+   --dark-dark-hover: 224 226 228; /* #e0e2e4 */
+   --dark-dark-active: 235 236 237; /* #ebecee */
    /* Darker */
-   --secondary-darker: 255 255 255; /* #ffffff */
+   --dark-darker: 235 236 237; /* #ebecee */
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
 @theme {
    /* ========== ACCENT ========== */
-   --color-accent-light: rgb(var(--yellow-light));
-   --color-accent-light-hover: rgb(var(--yellow-light-hover));
-   --color-accent-light-active: rgb(var(--yellow-light-active));
-   --color-accent-normal: rgb(var(--yellow-normal));
-   --color-accent: rgb(var(--yellow));
-   --color-accent-hover: rgb(var(--yellow-hover));
-   --color-accent-active: rgb(var(--yellow-active));
-   --color-accent-dark: rgb(var(--yellow-dark));
-   --color-accent-dark-hover: rgb(var(--yellow-dark-hover));
-   --color-accent-dark-active: rgb(var(--yellow-dark-active));
-   --color-accent-darker: rgb(var(--yellow-darker));
+   --color-accent-light: rgb(var(--accent-light));
+   --color-accent-light-hover: rgb(var(--accent-light-hover));
+   --color-accent-light-active: rgb(var(--accent-light-active));
+   --color-accent: rgb(var(--accent));
+   --color-accent-hover: rgb(var(--accent-hover));
+   --color-accent-active: rgb(var(--accent-active));
+   --color-accent-dark: rgb(var(--accent-dark));
+   --color-accent-dark-hover: rgb(var(--accent-dark-hover));
+   --color-accent-dark-active: rgb(var(--accent-dark-active));
+   --color-accent-darker: rgb(var(--accent-darker));
 
    /* ========== PRIMARY ========== */
    --color-primary-light: rgb(var(--primary-light));
    --color-primary-light-hover: rgb(var(--primary-light-hover));
    --color-primary-light-active: rgb(var(--primary-light-active));
-   --color-primary-normal: rgb(var(--primary-normal));
    --color-primary: rgb(var(--primary));
    --color-primary-hover: rgb(var(--primary-hover));
    --color-primary-active: rgb(var(--primary-active));
@@ -245,7 +233,6 @@
    --color-promotion-light: rgb(var(--promotion-light));
    --color-promotion-light-hover: rgb(var(--promotion-light-hover));
    --color-promotion-light-active: rgb(var(--promotion-light-active));
-   --color-promotion-normal: rgb(var(--promotion-normal));
    --color-promotion: rgb(var(--promotion));
    --color-promotion-hover: rgb(var(--promotion-hover));
    --color-promotion-active: rgb(var(--promotion-active));
@@ -258,7 +245,6 @@
    --color-neutral-light: rgb(var(--neutral-light));
    --color-neutral-light-hover: rgb(var(--neutral-light-hover));
    --color-neutral-light-active: rgb(var(--neutral-light-active));
-   --color-neutral-normal: rgb(var(--neutral-normal));
    --color-neutral: rgb(var(--neutral));
    --color-neutral-hover: rgb(var(--neutral-hover));
    --color-neutral-active: rgb(var(--neutral-active));
@@ -267,18 +253,17 @@
    --color-neutral-dark-active: rgb(var(--neutral-dark-active));
    --color-neutral-darker: rgb(var(--neutral-darker));
 
-   /* ========== SECONDARY ========== */
-   --color-secondary-light: rgb(var(--secondary-light));
-   --color-secondary-light-hover: rgb(var(--secondary-light-hover));
-   --color-secondary-light-active: rgb(var(--secondary-light-active));
-   --color-secondary-normal: rgb(var(--secondary-normal));
-   --color-secondary: rgb(var(--secondary));
-   --color-secondary-hover: rgb(var(--secondary-hover));
-   --color-secondary-active: rgb(var(--secondary-active));
-   --color-secondary-dark: rgb(var(--secondary-dark));
-   --color-secondary-dark-hover: rgb(var(--secondary-dark-hover));
-   --color-secondary-dark-active: rgb(var(--secondary-dark-active));
-   --color-secondary-darker: rgb(var(--secondary-darker));
+   /* ========== DARK MODE ========== */
+   --color-dark-light: rgb(var(--dark-light));
+   --color-dark-light-hover: rgb(var(--dark-light-hover));
+   --color-dark-light-active: rgb(var(--dark-light-active));
+   --color-dark: rgb(var(--dark));
+   --color-dark-hover: rgb(var(--dark-hover));
+   --color-dark-active: rgb(var(--dark-active));
+   --color-dark-dark: rgb(var(--dark-dark));
+   --color-dark-dark-hover: rgb(var(--dark-dark-hover));
+   --color-dark-dark-active: rgb(var(--dark-dark-active));
+   --color-dark-darker: rgb(var(--dark-darker));
 
    /* ========== FONT ========== */
    --font-poppins: "Poppins", sans-serif;

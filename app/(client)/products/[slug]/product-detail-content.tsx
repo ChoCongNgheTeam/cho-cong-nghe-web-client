@@ -4,6 +4,7 @@ import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
+
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
 import ProductDetailRight from "../components/product-detail/product-detail-card-right";
 import ProductDetailSection from "../components/product-detail/product-detail-section";
@@ -17,26 +18,39 @@ import { ProductDetail } from "@/lib/types/product";
 
 interface ProductDetailContentProps {
   product: ProductDetail;
+  slug: string;
 }
 
-export function ProductDetailContent({ product }: ProductDetailContentProps) {
+export function ProductDetailContent({
+  product,
+  slug,
+}: ProductDetailContentProps) {
   const reviewsRef = useRef<HTMLDivElement>(null);
 
-// Khởi tạo selected color và storage từ availableOptions
-  const colors  = product.availableOptions?.find(opt => opt.attribute === "color")?.values || [];
-  const storages = product.availableOptions?.find((opt) => opt.attribute === "storage")?.values || [];
-      
+  // Khởi tạo selected color và storage từ availableOptions
+  const colors =
+    product.availableOptions?.find((opt) => opt.type === "color")?.values || [];
+  const storages =
+    product.availableOptions?.find((opt) => opt.type === "storage")?.values ||
+    [];
+
   const [selectedColor, setSelectedColor] = useState(colors[0]?.value || "");
-  const [selectedStorage, setSelectedStorage] = useState(storages[0]?.value || "");
+  const [selectedStorage, setSelectedStorage] = useState(
+    storages[0]?.value || "",
+  );
   const [isUserSelectStorage, setIsUserSelectStorage] = useState(false); // Track user đã click dung lượng hay chưa
 
-// Khi thay đổi màu → nếu chưa click dung lượng thì reset, nếu đã click thì giữ nguyên
+  const [availableOptions, setAvailableOptions] = useState(
+    product.availableOptions || [],
+  );
+
+  // Khi thay đổi màu → nếu chưa click dung lượng thì reset, nếu đã click thì giữ nguyên
   const handleColorChange = (color: string) => {
     setSelectedColor(color);
 
-// Nếu user CHƯA chọn storage → reset về mặc định
-  if (!isUserSelectStorage) {
-    setSelectedStorage(storages[0]?.value || "");
+    // Nếu user CHƯA chọn storage → reset về mặc định
+    if (!isUserSelectStorage) {
+      setSelectedStorage(storages[0]?.value || "");
     }
   };
 
@@ -45,46 +59,48 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
     setSelectedStorage(storage);
   };
 
- useEffect(() => {
-  if (!selectedColor || selectedStorage) return;
+  useEffect(() => {
+    if (!selectedColor || selectedStorage) return;
 
-// Khi màu được chọn nhưng chưa có storage → set storage mặc định
-  const storages =
-    product.availableOptions?.find(
-      (opt) => opt.attribute === "storage")?.values || [];
+    // Khi màu được chọn nhưng chưa có storage → set storage mặc định
+    const storages =
+      product.availableOptions?.find((opt) => opt.type === "storage")?.values ||
+      [];
 
-  if (storages.length > 0) {
-    setSelectedStorage(storages[0].value);
-    setIsUserSelectStorage(false); // Reset flag vì đang set storage mặc định
-  }
-}, [selectedColor]);
+    if (storages.length > 0) {
+      setSelectedStorage(storages[0].value);
+      setIsUserSelectStorage(false); // Reset flag vì đang set storage mặc định
+    }
+  }, [selectedColor]);
 
-// Tìm variant khớp với color và storage được chọn
-  const selectedVariant = product.currentVariant;
+  // Tìm variant khớp với color và storage được chọn
+  const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
 
   const [variantImages, setVariantImages] = useState(
-  product.currentVariant?.images || []
-);
+    product.currentVariant?.images || [],
+  );
 
-// Call API lấy hình ảnh variant khi color hoặc storage thay đổi
-useEffect(() => {
-  if (!selectedColor || !selectedStorage) return;
+  // Call API lấy hình ảnh variant khi color hoặc storage thay đổi
+  useEffect(() => {
+    if (!selectedColor || !selectedStorage) return;
 
-  const fetchVariant = async () => {
-    const res = await fetch(
-      `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`
-    );
-    const json = await res.json();
+    const fetchVariant = async () => {
+      const res = await fetch(
+        `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
+      );
+      const json = await res.json();
 
-    if (json.success) {
-      setVariantImages(json.data.images);
-    }
-  };
+      if (json.success) {
+        setAvailableOptions(json.data.availableOptions);
+        setCurrentVariant(json.data.currentVariant);
+        setVariantImages(json.data.currentVariant.images);
+      }
+    };
 
-  fetchVariant();
-}, [selectedColor, selectedStorage, product.slug])
-  
-// Hàm cuộn đến phần đánh giá
+    fetchVariant();
+  }, [selectedColor, selectedStorage, product.slug]);
+
+  // Hàm cuộn đến phần đánh giá
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -93,37 +109,36 @@ useEffect(() => {
   };
 
   useEffect(() => {
-  console.log("Color:", selectedColor);
-  console.log("Storage:", selectedStorage);
-}, [selectedColor, selectedStorage]);
+    console.log("Color:", selectedColor);
+    console.log("Storage:", selectedStorage);
+  }, [selectedColor, selectedStorage]);
 
   return (
     <div>
       {/* Hero Section - Product Info */}
-      <div className="container sm:px-6 lg:px-12 mt-4 sm:mt-6 lg:mt-8">
-        <div>
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
-            {/* Left - Product Banner */}
-            <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
-              <ProductDetailBanner
+      <div className=" sm:px-6  mt-4 sm:mt-6 lg:mt-8 container">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
+          {/* Left - Product Banner */}
+          <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
+            <ProductDetailBanner
+              product={product}
+              selectedVariant={currentVariant}
+              images={variantImages}
+            />
+          </div>
+          {/* Right - Product Card */}
+          <div className="w-full lg:w-[40%]">
+            <div className="lg:sticky lg:top-4 lg:h-fit">
+              <ProductDetailRight
                 product={product}
-                selectedVariant={selectedVariant}
-                images={variantImages}
+                selectedVariant={currentVariant}
+                selectedColor={selectedColor}
+                selectedStorage={selectedStorage}
+                availableOptions={availableOptions}
+                onColorChange={handleColorChange}
+                onStorageChange={handleStorageChange}
+                onReviewClick={scrollToReviews}
               />
-            </div>
-
-            {/* Right - Product Card */}
-            <div className="w-full lg:w-[40%]">
-              <div className="lg:sticky lg:top-4 lg:h-fit">
-                <ProductDetailRight
-                  product={product}
-                  selectedColor={selectedColor}
-                  selectedStorage={selectedStorage}
-                  onColorChange={handleColorChange}
-                  onStorageChange={handleStorageChange}
-                  onReviewClick={scrollToReviews}
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -131,12 +146,14 @@ useEffect(() => {
 
       {/* Product Detail Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
-        <ProductDetailSection />
+        <div className=" !px-0">
+          <ProductDetailSection slug={slug} />
+        </div>
       </div>
 
       {/* Product Detail Section 1 */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6">
-        <ProductDetailSection1 />
+        <ProductDetailSection1 product={product} />
       </div>
 
       {/* Product Review Section */}
@@ -154,17 +171,17 @@ useEffect(() => {
       </div>
       {/* Suggest Products Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
-        <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+        <div className=" mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
           <ProductDetailSuggest />
         </div>
       </div>
       <div className="bg-gray-400/10 p-4 sm:pt-6 ">
-        <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+        <div className=" mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
           <ProductsViewed />
         </div>
       </div>
       <div className="p-2 sm:pt-6 bg-gray-400/10">
-        <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12  rounded-lg">
+        <div className=" sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12  rounded-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             <div className="flex flex-col gap-2 justify-center items-center">
               <BsPatchCheckFill size={48} className="text-red-500" />

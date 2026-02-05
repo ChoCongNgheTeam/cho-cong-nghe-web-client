@@ -412,12 +412,12 @@ export default function VoucherPromotionModal({
             >
                {/* Header */}
                <div className="flex items-center justify-between p-4 border-b border-neutral">
-                  <h2 className="text-lg font-semibold text-primary-darker">
+                  <h2 className="text-lg font-semibold text-primary">
                      Khuyến mãi và ưu đãi
                   </h2>
                   <button
                      onClick={onClose}
-                     className="p-2 hover:bg-neutral-light rounded-lg transition-colors"
+                     className="p-2 hover:bg-neutral-light rounded-lg transition-colors cursor-pointer"
                      aria-label="Đóng"
                   >
                      <X className="h-5 w-5 text-neutral-darker" />
@@ -428,7 +428,7 @@ export default function VoucherPromotionModal({
                <div className="flex-1 overflow-y-auto">
                   {/* Voucher Input Section */}
                   <div className="p-4 bg-neutral-light border-b border-neutral">
-                     <h3 className="text-sm font-semibold text-primary-darker mb-3">
+                     <h3 className="text-sm font-semibold text-primary mb-3">
                         Mã giảm giá
                      </h3>
                      <div className="flex items-center gap-2">
@@ -443,11 +443,11 @@ export default function VoucherPromotionModal({
                                  setVoucherSuccess(false);
                               }}
                               placeholder="Nhập mã giảm giá"
-                              className="w-full pl-10 pr-4 py-3 border border-neutral rounded-lg text-sm text-primary-darker placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                              className="w-full pl-10 pr-4 py-3 border border-neutral rounded-lg text-sm text-primary placeholder:text-neutral-dark focus:outline-none focus-1 focus:border-accent"
                            />
                         </div>
                         <button
-                           className="px-6 py-3 bg-accent hover:bg-accent-hover text-primary-darker font-semibold rounded-lg transition-colors text-sm whitespace-nowrap"
+                           className="px-6 py-3 bg-primary hover:bg-primary-hover text-neutral-light font-semibold rounded-lg transition-colors text-sm whitespace-nowrap cursor-pointer"
                            onClick={handleApplyVoucher}
                         >
                            Áp dụng
@@ -591,7 +591,7 @@ export default function VoucherPromotionModal({
 
                   {/* Promotions List */}
                   <div className="p-4">
-                     <h3 className="text-sm font-semibold text-primary-darker mb-3">
+                     <h3 className="text-sm font-semibold text-primary mb-3">
                         Khuyến mãi sản phẩm
                      </h3>
                      <div className="space-y-3">
@@ -616,12 +616,12 @@ export default function VoucherPromotionModal({
                                  {/* Content */}
                                  <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2 mb-1">
-                                       <h4 className="text-sm font-semibold text-primary-darker">
+                                       <h4 className="text-sm font-semibold text-primary">
                                           {promo.title}
                                        </h4>
                                        {promo.selected ? (
                                           <div className="shrink-0 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
-                                             <Check className="h-3 w-3 text-primary-darker" />
+                                             <Check className="h-3 w-3 text-primary" />
                                           </div>
                                        ) : (
                                           <button className="shrink-0 w-5 h-5 border-2 border-neutral rounded-full flex items-center justify-center hover:border-accent transition-colors">
@@ -645,7 +645,7 @@ export default function VoucherPromotionModal({
 
                      {/* Note */}
                      <div className="mt-4 p-3 bg-accent-light rounded-lg border border-accent">
-                        <p className="text-xs text-primary-darker">
+                        <p className="text-xs text-primary">
                            <span className="font-semibold">Lưu ý:</span> Một số
                            khuyến mãi không áp dụng đồng thời. Chọn khuyến mãi
                            phù hợp nhất với đơn hàng.
@@ -676,7 +676,7 @@ export default function VoucherPromotionModal({
                   </div>
                   <button
                      onClick={handleConfirm}
-                     className="w-full bg-accent hover:bg-accent-hover text-primary-darker font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-accent/30"
+                     className="w-full bg-primary hover:bg-primary-hover text-neutral-light font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-accent/30 cursor-pointer"
                   >
                      Xác nhận
                   </button>
