@@ -4,9 +4,6 @@ import { ProductDetail, CurrentVariant } from "@/lib/types/product";
 import { MdPhoneIphone, MdMemory, MdVerified } from "react-icons/md";
 import { IoRadioButtonOn } from "react-icons/io5";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
-import ProductSpecsModal, {
-  type ProductSpecsModalRef,
-} from "./ProductSpecsModal";
 
 interface ProductDetailLeftProps {
   product: ProductDetail;
@@ -67,7 +64,6 @@ export default function ProductDetailBanner({
   product,
   images,
 }: ProductDetailLeftProps) {
-  const modalRef = useRef<ProductSpecsModalRef>(null);
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -98,7 +94,6 @@ export default function ProductDetailBanner({
     );
   };
 
-  const openDialog = () => modalRef.current?.open();
 
   const highlights = product.highlights || [];
 
@@ -112,19 +107,19 @@ export default function ProductDetailBanner({
     <>
       <div>
         {/* IMAGE CAROUSEL */}
-        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light dark:bg-neutral rounded-lg shadow-2xl transition-colors duration-300">
+        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg shadow-xl transition-colors duration-300  py-6">
           <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={currentImage}
               className="max-w-full max-h-full object-contain transition-opacity duration-500"
               alt={currentImageObj?.altText || "Product image"}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0  pointer-events-none"></div>
           </div>
 
           <button
             onClick={goToPrevious}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 dark:bg-neutral/90 hover:bg-neutral-light dark:hover:bg-neutral text-primary dark:text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
             aria-label="Ảnh trước"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -132,14 +127,14 @@ export default function ProductDetailBanner({
 
           <button
             onClick={goToNext}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 dark:bg-neutral/90 hover:bg-neutral-light dark:hover:bg-neutral text-primary dark:text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
             aria-label="Ảnh sau"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
-          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 dark:bg-primary-darker/80 text-neutral-light dark:text-primary px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
-            <div className="text-xs text-neutral dark:text-neutral-darker mt-1">
+          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
+            <div className="text-xs text-neutral mt-1">
               {currentImageIndex + 1}/{totalImages}
             </div>
           </div>
@@ -147,69 +142,72 @@ export default function ProductDetailBanner({
 
         {/* THUMBNAILS */}
         <div className="mt-4">
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 lg:gap-6">
-            {gallery.map((image, index) => (
-              <button
-                key={image.id}
-                onClick={() => goToImage(index)}
-                className={`relative group rounded-lg overflow-hidden transition-all duration-300 ${
-                  index === currentImageIndex
-                    ? "ring-2 ring-accent dark:ring-accent scale-105"
-                    : "ring-2 ring-neutral-dark dark:ring-neutral-dark hover:ring-accent dark:hover:ring-accent hover:scale-105"
-                }`}
-                aria-label={`Xem ảnh ${index + 1}`}
-              >
-                <div className="relative h-16 sm:h-20 flex items-center justify-center bg-neutral dark:bg-neutral rounded-lg overflow-hidden transition-colors duration-300">
-                  <img
-                    src={image.imageUrl}
-                    alt={image.altText || `Product image ${index + 1}`}
-                    className={`max-w-full max-h-full object-contain transition-opacity duration-300 p-2 ${
-                      index === currentImageIndex
-                        ? "opacity-100"
-                        : "opacity-70 group-hover:opacity-100"
-                    }`}
-                  />
-                </div>
+       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
+  {gallery.map((image, index) => (
+    <button
+      key={image.id}
+      onClick={() => goToImage(index)}
+      className={`relative group rounded-xl overflow-hidden transition-all duration-300 ease-out ${
+        index === currentImageIndex
+          ? "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20 scale-105"
+          : "ring-1 ring-black/10 hover:ring-2 hover:ring-blue-500 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-105"
+      }`}
+      aria-label={`Xem ảnh ${index + 1}`}
+    >
+      {/* Container ảnh */}
+      <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
+        <img
+          src={image.imageUrl}
+          alt={image.altText || `Product image ${index + 1}`}
+          className={`w-full h-full object-contain transition-all duration-300 p-2.5 sm:p-3 ${
+            index === currentImageIndex
+              ? "opacity-100 scale-100"
+              : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
+          }`}
+        />
+        
+        {/* Overlay gradient khi hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      </div>
 
-                <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-primary-darker/80 dark:bg-primary-darker/90 text-neutral-light dark:text-primary text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded backdrop-blur-sm transition-colors duration-300">
-                  {index + 1}
-                </div>
-              </button>
-            ))}
-          </div>
+      {/* Badge số thứ tự */}
+      <div className={`absolute top-1.5 sm:top-2 left-1.5 sm:left-2 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium backdrop-blur-md transition-all duration-300 ${
+        index === currentImageIndex
+          ? "bg-blue-500 text-white shadow-md"
+          : "bg-black/40 text-white/90 group-hover:bg-blue-500 group-hover:text-white"
+      }`}>
+        {index + 1}
+      </div> 
+    </button>
+  ))}
+</div>
 
           {/* PRODUCT HIGHLIGHTS */}
-          <div className="mt-6">
-            <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-              <h2 className="font-semibold text-primary dark:text-primary">
+          <div className="mt-8 space-y-8">
+            <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+              <h2 className="font-semibold text-primary">
                 Thông số nổi bật
               </h2>
-              <button
-                onClick={openDialog}
-                className="border border-promotion dark:border-promotion px-4 sm:px-6 py-1 rounded-full text-sm sm:text-base text-promotion dark:text-promotion cursor-pointer hover:bg-promotion dark:hover:bg-promotion hover:text-neutral-light dark:hover:text-primary-darker transition-colors duration-200"
-              >
-                Xem tất cả thông số
-              </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark dark:border-neutral-dark pb-6 transition-colors duration-300">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
               {highlights.map((highlight, index) => {
                 const IconComponent = highlight?.icon
                   ? iconMap[highlight.icon]
                   : null;
                 return (
-                  <div className="flex-1" key={index}>
-                    <span className="text-sm text-neutral-darker dark:text-neutral-darker">
+                  <div className="flex-1" key={index}> 
+                    <span className="text-sm ">
                       {highlight?.name || "N/A"}
                     </span>
-                    <div className="flex items-center gap-2 mt-3 sm:mt-6">
+                    <div className="flex items-center gap-2  mt-2">
                       {IconComponent && (
                         <IconComponent
                           size={28}
-                          className="text-neutral-darker dark:text-neutral-darker"
+                          className=""
                         />
                       )}
-                      <span className="text-base font-semibold text-primary dark:text-primary">
+                      <span className="text-base font-semibold text-primary">
                         {highlight?.value || "N/A"}
                       </span>
                     </div>
@@ -221,22 +219,22 @@ export default function ProductDetailBanner({
 
           {/* PRODUCT POLICIES */}
           <div>
-            <div className="flex flex-col sm:flex-row justify-between mt-4 items-start sm:items-center gap-2">
-              <h2 className="text-base font-semibold text-primary dark:text-primary">
+            <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
+              <h2 className="text-base font-semibold text-primary">
                 Chính sách sản phẩm
               </h2>
-              <button className="text-base text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover hover:underline cursor-pointer transition-colors duration-200">
+              <button className="text-sm text-promotion hover:text-accent-hover hover:underline cursor-pointer transition-colors duration-200">
                 Tìm hiểu thêm
               </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
               <div className="flex items-center gap-2 sm:mr-12">
                 <MdVerified
                   size={28}
-                  className="text-neutral-darker dark:text-neutral-darker"
+                  className=""
                 />
-                <p className="text-sm text-primary dark:text-primary">
+                <p className="text-sm text-primary">
                   Hàng chính hãng - Bảo hành 18 tháng
                 </p>
               </div>
@@ -244,9 +242,9 @@ export default function ProductDetailBanner({
               <div className="flex items-center gap-2">
                 <FaShippingFast
                   size={28}
-                  className="text-neutral-darker dark:text-neutral-darker"
+                  className=""
                 />
-                <p className="text-sm text-primary dark:text-primary">
+                <p className="text-sm text-primary">
                   Miễn phí giao hàng toàn quốc
                 </p>
               </div>
@@ -254,9 +252,9 @@ export default function ProductDetailBanner({
               <div className="flex items-center gap-2">
                 <FaUserCog
                   size={28}
-                  className="text-neutral-darker dark:text-neutral-darker"
+                  className=""
                 />
-                <p className="text-sm text-primary dark:text-primary">
+                <p className="text-sm text-primary">
                   Kỹ thuật viên hỗ trợ trực tuyến
                 </p>
               </div>
@@ -265,7 +263,7 @@ export default function ProductDetailBanner({
         </div>
       </div>
 
-      <ProductSpecsModal ref={modalRef} productSpecs={mockProductSpecs} />
+   
     </>
   );
 }
