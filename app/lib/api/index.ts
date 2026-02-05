@@ -1,23 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
 
-class TokenManager {
-   private accessToken: string | null = null;
-
-   getToken(): string | null {
-      return this.accessToken;
-   }
-
-   setToken(token: string): void {
-      this.accessToken = token;
-   }
-
-   removeToken(): void {
-      this.accessToken = null;
-   }
-}
-
-export const tokenManager = new TokenManager();
-
 class ApiError extends Error {
    status: number;
    data?: any;
@@ -29,7 +11,6 @@ class ApiError extends Error {
       this.name = "ApiError";
    }
 }
-
 class ApiRequest {
    private async request<T>(
       endpoint: string,
@@ -75,15 +56,12 @@ class ApiRequest {
          typeof fetchOptions.body === "object" &&
          !isFormData;
 
-      const token = !noAuth ? tokenManager.getToken() : null;
-
       try {
          const response = await fetch(url, {
             ...fetchOptions,
             signal: controller.signal,
-            credentials: "include", // ✅ GỬI COOKIE (refreshToken)
+            credentials: "include", // ✅ GỬI COOKIE
             headers: {
-               ...(token ? { Authorization: `Bearer ${token}` } : {}),
                ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
                ...fetchOptions.headers,
             },
@@ -94,17 +72,74 @@ class ApiRequest {
 
          clearTimeout(timeoutId);
 
-         // ✅ SILENT REFRESH: Kiểm tra header "x-access-token"
-         const newAccessToken = response.headers.get("x-access-token");
-         if (newAccessToken) {
-            console.log("[API] 🔄 Token auto-refreshed by backend");
-            tokenManager.setToken(newAccessToken);
-         }
-
-         // ✅ XỬ LÝ 401
+         // ✅ XỬ LÝ 401 - Access token expired
          if (response.status === 401 && !noRedirectOn401) {
-            tokenManager.removeToken();
+            console.log("[API] ⚠️ 401 - Trying to refresh token...");
 
+            try {
+               const refreshResponse = await fetch(
+                  `${BASE_URL}/api/v1/auth/refresh`,
+                  {
+                     method: "POST",
+                     credentials: "include", // ✅ Gửi refreshToken cookie
+                  },
+               );
+
+               if (refreshResponse.ok) {
+                  console.log("[API] 🔄 Token refreshed successfully");
+
+                  // ✅ QUAN TRỌNG: Đợi một chút để browser cập nhật cookie
+                  await new Promise((resolve) => setTimeout(resolve, 100));
+
+                  // ✅ Retry request gốc với cookie mới
+                  const retryController = new AbortController();
+                  const retryTimeoutId = setTimeout(
+                     () => retryController.abort(),
+                     timeout,
+                  );
+
+                  const retryResponse = await fetch(url, {
+                     ...fetchOptions,
+                     signal: retryController.signal,
+                     credentials: "include", // ✅ Browser sẽ gửi cookie mới
+                     headers: {
+                        ...(isJsonBody
+                           ? { "Content-Type": "application/json" }
+                           : {}),
+                        ...fetchOptions.headers,
+                     },
+                     body: isJsonBody
+                        ? JSON.stringify(fetchOptions.body)
+                        : fetchOptions.body,
+                  });
+
+                  clearTimeout(retryTimeoutId);
+
+                  if (retryResponse.ok) {
+                     if (retryResponse.status === 204) {
+                        return null as T;
+                     }
+                     return (await retryResponse.json()) as T;
+                  }
+
+                  // Retry vẫn thất bại
+                  console.error("[API] ❌ Retry failed after refresh");
+                  throw new ApiError(
+                     "Retry failed after refresh",
+                     retryResponse.status,
+                  );
+               }
+
+               // Refresh thất bại
+               console.error(
+                  "[API] ❌ Refresh failed with status:",
+                  refreshResponse.status,
+               );
+            } catch (refreshError) {
+               console.error("[API] ❌ Refresh error:", refreshError);
+            }
+
+            // ❌ Redirect login nếu refresh thất bại
             if (typeof window !== "undefined") {
                window.location.href = "/login?expired=1";
             }

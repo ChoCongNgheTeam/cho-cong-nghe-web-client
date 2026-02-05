@@ -56,7 +56,7 @@ export default function OrderSummary({
                className="flex items-center gap-3 p-3 border-2 border-accent rounded-lg cursor-pointer transition-colors hover:border-accent-hover"
             >
                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-accent">
-                  <span className="font-bold text-primary-darker">%</span>
+                  <span className="font-bold text-primary">%</span>
                </div>
                <span className="text-sm font-medium flex-1 ">
                   Chọn hoặc nhập ưu đãi
@@ -82,7 +82,7 @@ export default function OrderSummary({
 
             {/* THÔNG TIN ĐƠN HÀNG */}
             <div className="pt-4 border-t border-neutral">
-               <h3 className="font-semibold mb-3 text-sm  text-primary-darker">
+               <h3 className="font-semibold mb-3 text-sm  text-primary">
                   Thông tin đơn hàng
                </h3>
 
@@ -112,7 +112,7 @@ export default function OrderSummary({
 
                {/* TỔNG THANH TOÁN */}
                <div className="flex justify-between items-center pt-3 mt-3 border-t border-neutral">
-                  <span className="font-semibold text-sm  text-primary-darker">
+                  <span className="font-semibold text-sm  text-primary">
                      Cần thanh toán
                   </span>
                   <span className="text-xl font-bold text-promotion ">
@@ -125,7 +125,7 @@ export default function OrderSummary({
                   <span className=" text-primary">Điểm thưởng</span>
                   <span className="flex items-center gap-1">
                      <span>⭐</span>
-                     <span className="font-medium  text-primary-darker">
+                     <span className="font-medium  text-primary">
                         +{points.toLocaleString()}
                      </span>
                   </span>
@@ -146,7 +146,7 @@ export default function OrderSummary({
                disabled={!agreedToTerms}
                className={`w-full py-3 rounded-lg text-base font-semibold shadow-md transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer  ${
                   agreedToTerms
-                     ? "bg-accent text-primary-darker hover:bg-accent-hover"
+                     ? "bg-accent text-primary hover:bg-accent-hover"
                      : "bg-neutral text-neutral-darker"
                }`}
             >
@@ -214,7 +214,7 @@ function Row({
          </span>
          <span
             className={`font-medium text-xs ${
-               success ? "text-green-600" : color || "text-primary-darker"
+               success ? "text-green-600" : color || "text-primary"
             }`}
          >
             {value}

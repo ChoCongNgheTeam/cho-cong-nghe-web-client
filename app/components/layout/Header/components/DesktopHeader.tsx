@@ -44,27 +44,38 @@ const DesktopHeader = ({
 
          {/* Search Bar */}
          <div className="flex-1 max-w-2xl">
-            <div className="relative">
+            <div
+               className="relative 
+                [&:has(input:focus)_.search-addon]:border-accent-hover"
+            >
                <input
                   type="text"
                   placeholder="Tìm kiếm sản phẩm..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-4 pr-48 lg:pr-60 py-2.5 lg:py-3 border border-accent rounded-full focus:outline-none focus:border-accent-hover text-sm lg:text-base bg-neutral-light text-primary placeholder:text-neutral-dark"
+                  className="w-full pl-4 pr-48 lg:pr-60 py-2.5 lg:py-3 
+                 border border-neutral rounded-full 
+                 focus:outline-none 
+                 focus:border-accent-hover
+                 text-sm lg:text-base 
+                 bg-neutral-light text-primary placeholder:text-neutral-dark"
                />
-               <div className="absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-accent border-l-0 rounded-r-full">
-                  <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral-dark cursor-pointer bg-neutral-light transition-colors">
+
+               <div
+                  className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch 
+                 overflow-hidden border border-neutral border-l-0 rounded-r-full
+                 transition-colors"
+               >
+                  <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors">
                      <span className="hidden xl:inline">
                         Tất cả các danh mục
                      </span>
                      <span className="xl:hidden">Danh mục</span>
-                     <ChevronsLeftRight
-                        strokeWidth={2}
-                        className="w-4 h-4 lg:w-5 lg:h-5 rotate-90"
-                     />
+                     <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
                   </button>
-                  <button className="flex items-center justify-center px-3 lg:px-4 bg-accent hover:bg-accent-hover transition-colors cursor-pointer">
-                     <Search className="w-4 h-4 lg:w-5 lg:h-5 text-primary-darker" />
+
+                  <button className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-accent-hover transition-colors cursor-pointer">
+                     <Search className="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
                   </button>
                </div>
             </div>
@@ -90,7 +101,7 @@ const DesktopHeader = ({
                title="Giỏ hàng"
             >
                <ShoppingCart className="lg:w-6 lg:h-6 text-primary" />
-               <span className="absolute bottom-0 -right-1 bg-accent text-primary-darker font-semibold text-xs w-5 h-5 rounded-full flex items-center justify-center">
+               <span className="absolute bottom-0 -right-1 bg-accent text-neutral-light font-semibold text-xs w-5 h-5 rounded-full flex items-center justify-center">
                   2
                </span>
             </Link>

@@ -116,8 +116,7 @@ export default function CartPage() {
          totalDiscount: totalDiscountWithVoucher,
          finalTotal: finalTotalWithVoucher,
          rewardPoints: rewardPoints,
-               usePoints: usePoints, 
-
+         usePoints: usePoints,
       };
 
       localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
@@ -135,8 +134,7 @@ export default function CartPage() {
       finalTotal,
       rewardPoints,
       router,
-         usePoints, 
-
+      usePoints,
    ]);
 
    // Calculate final totals with voucher
@@ -167,9 +165,7 @@ export default function CartPage() {
                      Trang chủ
                   </Link>
                   <span className="text-neutral-dark">/</span>
-                  <span className="text-primary-darker font-medium">
-                     Giỏ hàng
-                  </span>
+                  <span className="text-primary font-medium">Giỏ hàng</span>
                </div>
             </div>
          </div>
@@ -178,7 +174,7 @@ export default function CartPage() {
          <div className="container pb-28 lg:pb-8 space-y-4 !px-3">
             {items.length === 0 ? (
                <div className="rounded-lg bg-neutral-light p-6 sm:p-8 lg:p-12 text-center shadow-sm">
-                  <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary-darker">
+                  <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary">
                      Giỏ hàng trống
                   </h2>
                   <p className="mb-6 text-sm sm:text-base text-neutral-darker">
@@ -186,7 +182,7 @@ export default function CartPage() {
                   </p>
                   <Link
                      href="/products"
-                     className="inline-block rounded-lg bg-accent px-6 sm:px-8 py-2.5 sm:py-3 font-semibold text-primary-darker transition hover:bg-accent-hover"
+                     className="inline-block rounded-lg bg-accent px-6 sm:px-8 py-2.5 sm:py-3 font-semibold text-primary transition hover:bg-accent-hover"
                   >
                      Mua sắm ngay
                   </Link>
@@ -204,14 +200,14 @@ export default function CartPage() {
                               onChange={toggleSelectAll}
                               className="h-5 w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent"
                            />
-                           <span className="text-sm font-medium text-primary-darker">
+                           <span className="text-sm font-medium text-primary">
                               Chọn tất cả ({items.length})
                            </span>
                         </label>
 
                         <button
                            onClick={removeSelectedItems}
-                           className="text-neutral-darker transition hover:text-primary-darker disabled:cursor-not-allowed disabled:text-neutral-dark cursor-pointer"
+                           className="text-neutral-darker transition hover:text-primary disabled:cursor-not-allowed disabled:text-neutral-dark cursor-pointer"
                            disabled={selectedItems.length === 0}
                            aria-label="Xóa các sản phẩm đã chọn"
                         >
@@ -260,13 +256,13 @@ export default function CartPage() {
                                     {/* Info + Mobile Actions */}
                                     <div className="flex-1 min-w-0">
                                        <div className="flex items-start justify-between gap-2 mb-1">
-                                          <h3 className="flex-1 text-sm font-medium text-primary-darker line-clamp-2">
+                                          <h3 className="flex-1 text-sm font-medium text-primary line-clamp-2">
                                              {item.product_name}
                                           </h3>
                                           {/* Trash button - Top right on mobile */}
                                           <button
                                              onClick={() => removeItem(item.id)}
-                                             className="sm:hidden text-neutral-dark transition hover:text-primary-darker shrink-0"
+                                             className="sm:hidden text-neutral-dark transition hover:text-primary shrink-0 cursor-pointer"
                                              aria-label="Xóa sản phẩm"
                                           >
                                              <Trash2 className="h-5 w-5" />
@@ -318,7 +314,7 @@ export default function CartPage() {
                                                 >
                                                    <Minus className="h-4 w-4" />
                                                 </button>
-                                                <span className="w-8 text-center text-sm font-medium text-primary-darker">
+                                                <span className="w-8 text-center text-sm font-medium text-primary">
                                                    {item.quantity}
                                                 </span>
                                                 <button
@@ -363,20 +359,20 @@ export default function CartPage() {
                                              onClick={() =>
                                                 updateQuantity(item.id, -1)
                                              }
-                                             className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
+                                             className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                                              disabled={item.quantity <= 1}
                                              aria-label="Giảm số lượng"
                                           >
                                              <Minus className="h-3 w-3" />
                                           </button>
-                                          <span className="w-8 text-center text-sm font-medium text-primary-darker">
+                                          <span className="w-8 text-center text-sm font-medium text-primary">
                                              {item.quantity}
                                           </span>
                                           <button
                                              onClick={() =>
                                                 updateQuantity(item.id, 1)
                                              }
-                                             className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light"
+                                             className="flex h-7 w-7 items-center justify-center rounded border border-neutral text-neutral-darker transition hover:border-accent hover:bg-accent-light cursor-pointer"
                                              aria-label="Tăng số lượng"
                                           >
                                              <Plus className="h-3 w-3" />
@@ -395,7 +391,7 @@ export default function CartPage() {
                                        {/* Delete Button */}
                                        <button
                                           onClick={() => removeItem(item.id)}
-                                          className="text-neutral-dark transition hover:text-primary-darker"
+                                          className="text-neutral-dark transition hover:text-primary cursor-pointer"
                                           aria-label="Xóa sản phẩm"
                                        >
                                           <Trash2 className="h-5 w-5" />
@@ -462,8 +458,8 @@ export default function CartPage() {
             appliedVoucherValue={appliedVoucherValue}
             onOpenVoucherModal={() => setShowVoucherModal(true)}
             onCheckout={handleCheckout}
-             usePoints={usePoints}           
-   onTogglePoints={setUsePoints}  
+            usePoints={usePoints}
+            onTogglePoints={setUsePoints}
          />
 
          {/* Voucher Modal */}

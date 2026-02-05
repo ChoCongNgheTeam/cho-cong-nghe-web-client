@@ -21,9 +21,9 @@ const MobileHeader = ({
                aria-label="Menu"
             >
                {mobileMenuOpen ? (
-                  <X className="w-6 h-6 text-primary-darker" />
+                  <X className="w-6 h-6 text-primary" />
                ) : (
-                  <Menu className="w-6 h-6 text-primary-darker" />
+                  <Menu className="w-6 h-6 text-primary" />
                )}
             </button>
             <Link href={"/"} className="shrink-0">
@@ -42,35 +42,19 @@ const MobileHeader = ({
                   className="p-2 hover:bg-accent-hover dark:hover:bg-neutral rounded-lg transition-colors"
                   aria-label="Tìm kiếm"
                >
-                  <Search className="w-5 h-5 sm:w-6 sm:h-6 text-primary-darker" />
+                  <Search className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                </button>
                <Link
                   href="/cart"
                   className="p-2 hover:bg-accent-hover dark:hover:bg-neutral rounded-lg relative transition-colors"
                >
-                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-primary-darker" />
+                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   <span className="absolute -top-1 -right-1 bg-primary text-white dark:text-neutral-light font-semibold text-xs w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
                      2
                   </span>
                </Link>
             </div>
          </div>
-         {mobileSearchOpen && (
-            <div className="md:hidden mt-3 pb-2">
-               <div className="relative">
-                  <input
-                     type="text"
-                     placeholder="Tìm kiếm sản phẩm..."
-                     value={searchQuery}
-                     onChange={(e) => onSearchChange(e.target.value)}
-                     className="w-full pl-4 pr-12 py-2.5 border border-primary md:border-2 md:border-accent-hover rounded-full focus:outline-none bg-neutral-light text-primary placeholder:text-neutral-dark"
-                  />
-                  <button className="absolute right-0 top-0 bottom-0 px-4 bg-primary-dark hover:bg-accent-hover transition-colors rounded-r-full">
-                     <Search className="w-5 h-5 text-white dark:text-neutral-dark" />
-                  </button>
-               </div>
-            </div>
-         )}
       </>
    );
 };

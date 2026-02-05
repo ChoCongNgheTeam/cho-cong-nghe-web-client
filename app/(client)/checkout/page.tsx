@@ -164,8 +164,13 @@ export default function CheckoutPage() {
 
             const checkoutData: CheckoutData = JSON.parse(savedCheckoutData);
 
-            if (!checkoutData.selectedItems || checkoutData.selectedItems.length === 0) {
-               toast.error("Vui lòng chọn sản phẩm từ giỏ hàng", { id: loadingToast });
+            if (
+               !checkoutData.selectedItems ||
+               checkoutData.selectedItems.length === 0
+            ) {
+               toast.error("Vui lòng chọn sản phẩm từ giỏ hàng", {
+                  id: loadingToast,
+               });
                router.push("/cart");
                return;
             }
@@ -207,14 +212,20 @@ export default function CheckoutPage() {
             toast.success("Tải thông tin thành công", { id: loadingToast });
          } catch (error) {
             console.error("Error loading data:", error);
-            toast.error("Không thể tải thông tin. Vui lòng thử lại!", { id: loadingToast });
+            toast.error("Không thể tải thông tin. Vui lòng thử lại!", {
+               id: loadingToast,
+            });
          }
       };
 
       loadData();
    }, [router]);
 
-   const handleUserUpdate = (data: { name: string; phone: string; email: string }) => {
+   const handleUserUpdate = (data: {
+      name: string;
+      phone: string;
+      email: string;
+   }) => {
       if (userInfo) {
          setUserInfo({
             ...userInfo,
@@ -236,14 +247,19 @@ export default function CheckoutPage() {
       setAppliedVoucherValue(value);
    };
 
-   const handleSelectPromotions = (promotionIds: string[], totalValue: number) => {
+   const handleSelectPromotions = (
+      promotionIds: string[],
+      totalValue: number,
+   ) => {
       setSelectedPromotions(promotionIds);
       setPromotionValue(totalValue);
    };
 
    const handlePlaceOrder = async () => {
       if (!userInfo || !selectedAddress) {
-         toast.error("Vui lòng kiểm tra thông tin người đặt và địa chỉ giao hàng");
+         toast.error(
+            "Vui lòng kiểm tra thông tin người đặt và địa chỉ giao hàng",
+         );
          return;
       }
 
@@ -284,7 +300,9 @@ export default function CheckoutPage() {
          }, 1500);
       } catch (error) {
          console.error("Checkout error:", error);
-         toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!", { id: loadingToast });
+         toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!", {
+            id: loadingToast,
+         });
       }
    };
 
@@ -293,7 +311,9 @@ export default function CheckoutPage() {
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
             <div className="text-center">
                <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-neutral border-t-accent mb-4"></div>
-               <p className="text-neutral-darker">Đang tải thông tin đơn hàng...</p>
+               <p className="text-neutral-darker">
+                  Đang tải thông tin đơn hàng...
+               </p>
             </div>
          </div>
       );
@@ -356,14 +376,18 @@ export default function CheckoutPage() {
                               <p className="font-medium mb-1 text-xs sm:text-sm text-primary">
                                  Nhận tại: Văn Phòng
                               </p>
-                              <p className="font-semibold mb-1 text-sm text-primary-darker">
-                                 {selectedAddress.contact_name} • {selectedAddress.phone}
+                              <p className="font-semibold mb-1 text-sm text-primary">
+                                 {selectedAddress.contact_name} •{" "}
+                                 {selectedAddress.phone}
                               </p>
                               <p className="text-primary-dark text-sm font-medium">
                                  {selectedAddress.detail_address.split(",")[0]}
                               </p>
                               <p className="text-neutral-darker text-sm">
-                                 {selectedAddress.detail_address.split(",").slice(1).join(",")}
+                                 {selectedAddress.detail_address
+                                    .split(",")
+                                    .slice(1)
+                                    .join(",")}
                               </p>
                            </div>
                         )}
@@ -382,7 +406,9 @@ export default function CheckoutPage() {
                            </button>
                         </div>
                         <p className="text-primary-dark text-sm">
-                           Vào lúc <span className="font-semibold">{deliveryTime}</span>, ngày{" "}
+                           Vào lúc{" "}
+                           <span className="font-semibold">{deliveryTime}</span>
+                           , ngày{" "}
                            <span className="font-semibold">{deliveryDate}</span>
                         </p>
                      </div>
@@ -513,7 +539,7 @@ export default function CheckoutPage() {
                         <p className="font-medium mb-1 text-xs text-primary">
                            Nhận tại: Văn Phòng
                         </p>
-                        <p className="font-semibold mb-1 text-sm text-primary-darker">
+                        <p className="font-semibold mb-1 text-sm text-primary">
                            {selectedAddress.contact_name}
                         </p>
                         <p className="text-neutral-darker text-sm mb-2">

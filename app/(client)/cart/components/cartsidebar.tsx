@@ -52,7 +52,7 @@ export default function CartSidebar({
 
    const handleCheckout = () => {
       if (selectedItemsCount === 0) return;
-      
+
       if (showTerms && !agreedToTerms) {
          const toastDiv = document.createElement("div");
          toastDiv.className =
@@ -62,7 +62,7 @@ export default function CartSidebar({
          setTimeout(() => toastDiv.remove(), 3000);
          return;
       }
-      
+
       onClose();
       onCheckout();
    };
@@ -87,7 +87,7 @@ export default function CartSidebar({
                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral bg-linear-to-r from-accent/5 to-accent/10">
                   <div className="flex items-center gap-2">
                      <span className="text-xl">🎁</span>
-                     <span className="text-sm font-semibold text-primary-darker">
+                     <span className="text-sm font-semibold text-primary">
                         {isCheckoutPage ? "Thông tin đơn hàng" : "0 quà tặng"}
                      </span>
                   </div>
@@ -120,7 +120,7 @@ export default function CartSidebar({
                                  <span className="text-lg">🏷️</span>
                               </div>
                               <div className="flex flex-col items-start min-w-0">
-                                 <span className="text-sm font-medium text-primary-darker">
+                                 <span className="text-sm font-medium text-primary">
                                     Chọn hoặc nhập ưu đãi
                                  </span>
                                  {appliedVoucherCode ? (
@@ -148,7 +148,7 @@ export default function CartSidebar({
                               <span className="text-base">🪙</span>
                            </div>
                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-primary-darker">
+                              <span className="text-sm font-medium text-primary">
                                  Đổi 0 điểm
                               </span>
                               <span className="text-xs text-neutral-dark">
@@ -157,11 +157,13 @@ export default function CartSidebar({
                            </div>
                         </div>
                         <label className="relative inline-flex cursor-pointer items-center">
-                           <input 
-                              type="checkbox" 
+                           <input
+                              type="checkbox"
                               checked={usePoints}
-                              onChange={(e) => onTogglePoints?.(e.target.checked)}
-                              className="peer sr-only" 
+                              onChange={(e) =>
+                                 onTogglePoints?.(e.target.checked)
+                              }
+                              className="peer sr-only"
                            />
                            <div className="peer h-6 w-11 rounded-full bg-neutral-dark/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50 shadow-inner"></div>
                         </label>
@@ -170,14 +172,16 @@ export default function CartSidebar({
 
                   {/* Summary Section */}
                   <div className="px-4 py-4 space-y-2.5">
-                     <h3 className="text-sm font-semibold text-primary-darker mb-3">
+                     <h3 className="text-sm font-semibold text-primary mb-3">
                         Chi tiết thanh toán
                      </h3>
 
                      <div className="space-y-2.5 text-sm">
                         <div className="flex justify-between">
-                           <span className="text-neutral-darker">Tổng tiền</span>
-                           <span className="font-medium text-primary-darker">
+                           <span className="text-neutral-darker">
+                              Tổng tiền
+                           </span>
+                           <span className="font-medium text-primary">
                               {formatPrice(subtotal)}
                            </span>
                         </div>
@@ -186,7 +190,7 @@ export default function CartSidebar({
                            <span className="text-neutral-darker">
                               Tổng khuyến mãi
                            </span>
-                           <span className="font-medium text-primary-darker">
+                           <span className="font-medium text-primary">
                               -{formatPrice(totalDiscountWithVoucher)}
                            </span>
                         </div>
@@ -195,7 +199,7 @@ export default function CartSidebar({
                            <span className="text-neutral-dark text-xs">
                               Giảm giá sản phẩm
                            </span>
-                           <span className="text-primary-darker text-sm">
+                           <span className="text-primary text-sm">
                               -{formatPrice(totalDiscount)}
                            </span>
                         </div>
@@ -204,7 +208,7 @@ export default function CartSidebar({
                            <span className="text-neutral-dark text-xs">
                               Voucher
                            </span>
-                           <span className="text-primary-darker text-sm font-medium">
+                           <span className="text-primary text-sm font-medium">
                               {appliedVoucherValue > 0
                                  ? `-${formatPrice(appliedVoucherValue)}`
                                  : "0₫"}
@@ -224,7 +228,7 @@ export default function CartSidebar({
 
                         <div className="border-t border-neutral pt-2.5 mt-2.5">
                            <div className="flex justify-between items-center">
-                              <span className="font-semibold text-primary-darker text-sm">
+                              <span className="font-semibold text-primary text-sm">
                                  Cần thanh toán
                               </span>
                               <span className="text-xl font-bold text-promotion">
@@ -255,7 +259,9 @@ export default function CartSidebar({
                            <input
                               type="checkbox"
                               checked={agreedToTerms}
-                              onChange={(e) => onTermsChange?.(e.target.checked)}
+                              onChange={(e) =>
+                                 onTermsChange?.(e.target.checked)
+                              }
                               className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent"
                            />
                            <p className="text-neutral-darker leading-relaxed">
@@ -283,11 +289,15 @@ export default function CartSidebar({
                   <div className="p-3">
                      <button
                         onClick={handleCheckout}
-                        disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
+                        disabled={
+                           selectedItemsCount === 0 ||
+                           (showTerms && !agreedToTerms)
+                        }
                         className={`block w-full rounded-lg py-3.5 text-center text-base font-semibold transition shadow-lg ${
-                           selectedItemsCount === 0 || (showTerms && !agreedToTerms)
+                           selectedItemsCount === 0 ||
+                           (showTerms && !agreedToTerms)
                               ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
-                              : "bg-accent text-primary-darker hover:bg-accent-hover active:scale-[0.98]"
+                              : "bg-accent text-primary hover:bg-accent-hover active:scale-[0.98]"
                         }`}
                      >
                         {isCheckoutPage

@@ -68,10 +68,10 @@ export default function OrderSummary({
          <div className="p-4 space-y-3">
             {/* Gifts Box */}
             <div className="rounded-lg bg-neutral-light shadow-sm overflow-hidden">
-               <button className="flex w-full items-center justify-between p-3 transition hover:bg-neutral border-b border-neutral cursor-pointer">
+               <button className="flex w-full items-center justify-between p-3 transition hover:bg-accent-light border-b border-neutral cursor-pointer">
                   <div className="flex items-center gap-3">
                      <span className="text-lg">🎁</span>
-                     <span className="text-sm font-medium text-primary-darker">
+                     <span className="text-sm font-medium text-primary">
                         Quà tặng
                      </span>
                   </div>
@@ -91,7 +91,7 @@ export default function OrderSummary({
                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <span className="text-lg shrink-0">🏷️</span>
                         <div className="flex flex-col items-start min-w-0">
-                           <span className="text-sm font-medium text-primary-darker">
+                           <span className="text-sm font-medium text-primary">
                               Chọn hoặc nhập ưu đãi
                            </span>
                            {appliedVoucherCode && (
@@ -112,7 +112,7 @@ export default function OrderSummary({
                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                      <span className="text-lg">🪙</span>
-                     <span className="text-sm text-primary-darker">
+                     <span className="text-sm text-primary">
                         Đổi <span className="font-semibold">0</span> điểm (≈
                         <span className="font-semibold">0₫</span>)
                      </span>
@@ -132,7 +132,7 @@ export default function OrderSummary({
             {/* Order Summary */}
             <div className="rounded-lg bg-neutral-light shadow-sm">
                <div className="p-3 border-b border-neutral">
-                  <h3 className="mb-3 text-sm font-semibold text-primary-darker">
+                  <h3 className="mb-3 text-sm font-semibold text-primary">
                      Thông tin đơn hàng
                   </h3>
 
@@ -142,7 +142,7 @@ export default function OrderSummary({
                            <span className="text-neutral-darker">
                               Tổng tiền
                            </span>
-                           <span className="font-medium text-primary-darker">
+                           <span className="font-medium text-primary">
                               {formatPrice(subtotal)}
                            </span>
                         </div>
@@ -151,7 +151,7 @@ export default function OrderSummary({
                            <span className="text-neutral-darker">
                               Tổng khuyến mãi
                            </span>
-                           <span className="font-medium text-primary-darker">
+                           <span className="font-medium text-primary">
                               -{formatPrice(totalDiscountWithVoucher)}
                            </span>
                         </div>
@@ -160,7 +160,7 @@ export default function OrderSummary({
                            <span className="text-neutral-dark text-xs">
                               Giảm giá sản phẩm
                            </span>
-                           <span className="text-primary-darker text-sm">
+                           <span className="text-primary text-sm">
                               -{formatPrice(totalDiscount)}
                            </span>
                         </div>
@@ -169,7 +169,7 @@ export default function OrderSummary({
                            <span className="text-neutral-dark text-xs">
                               Voucher
                            </span>
-                           <span className="text-primary-darker text-sm font-medium">
+                           <span className="text-primary text-sm font-medium">
                               {appliedVoucherValue > 0
                                  ? `-${formatPrice(appliedVoucherValue)}`
                                  : "0₫"}
@@ -189,7 +189,7 @@ export default function OrderSummary({
 
                         <div className="border-t border-neutral pt-2.5 mt-2.5">
                            <div className="flex justify-between items-center">
-                              <span className="font-semibold text-primary-darker text-sm">
+                              <span className="font-semibold text-primary text-sm">
                                  Cần thanh toán
                               </span>
                               <span className="text-xl font-bold text-promotion">
@@ -229,8 +229,8 @@ export default function OrderSummary({
                   }
                   className={`block w-full rounded-b-lg py-3.5 text-center text-base font-semibold transition ${
                      selectedItemsCount === 0 || (showTerms && !agreedToTerms)
-                        ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
-                        : "bg-accent text-primary-darker hover:bg-accent-hover shadow-lg cursor-pointer"
+                        ? "cursor-not-allowed bg-primary text-neutral-light opacity-50"
+                        : "bg-primary text-neutral-light hover:bg-primary-hover shadow-lg cursor-pointer"
                   }`}
                >
                   {buttonText}
@@ -238,7 +238,7 @@ export default function OrderSummary({
 
                {/* Terms (Checkout only) - Below button */}
                {showTerms && (
-                  <div className="px-3 pb-3 pt-3 bg-neutral">
+                  <div className="px-3 pb-3 pt-3 bg-accent-light">
                      <label className="flex gap-2 text-xs cursor-pointer items-start">
                         <input
                            type="checkbox"
