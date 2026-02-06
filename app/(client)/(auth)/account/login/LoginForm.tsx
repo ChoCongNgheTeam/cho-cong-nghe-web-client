@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import apiRequest, { ApiError } from "@/lib/api";
-
+import { useRouter } from "next/navigation";
 interface User {
    id: string;
    email: string;
@@ -14,12 +14,12 @@ interface User {
 
 interface LoginResponse {
    user: User;
-   accessToken: string;
    message?: string;
 }
 
 const LoginForm = () => {
    const { login } = useAuth();
+   const router = useRouter();
    const [showPassword, setShowPassword] = useState(false);
    const [userName, setUsername] = useState("");
    const [password, setPassword] = useState("");
@@ -43,14 +43,12 @@ const LoginForm = () => {
             { noAuth: true },
          );
 
-         console.log(response);
-         if (response?.user && response?.accessToken) {
-            await login(response.user, response.accessToken);
-            setTimeout(() => {
-               const redirectPath =
-                  response.user.role === "ADMIN" ? "/admin/dashboard" : "/";
-               window.location.href = redirectPath;
-            }, 3000);
+         if (response?.user) {
+            // ✅ Gọi login để set user state và merge cart
+            await login(response.user);
+
+            // ⚠️ Login function đã có router.push() rồi
+            // KHÔNG CẦN setTimeout ở đây nữa
          } else {
             setError("Phản hồi từ server không hợp lệ");
          }
@@ -80,9 +78,7 @@ const LoginForm = () => {
 
    return (
       <div className="sm:pr-0 md:pr-8 lg:pr-10 lg:px-0">
-         <h1 className="text-2xl mb-3 text-primary-darker text-center">
-            Đăng nhập
-         </h1>
+         <h1 className="text-2xl mb-3 text-primary text-center">Đăng nhập</h1>
          <p className="text-base text-neutral-darker mb-5 md:hidden lg:block">
             Chào mừng bạn đã trở lại. Đăng nhập để nhận thêm các ưu đãi và các
             phần thưởng hấp dẫn khác
@@ -106,7 +102,7 @@ const LoginForm = () => {
                      value={userName}
                      onChange={(e) => setUsername(e.target.value)}
                      placeholder="Vui lòng nhập tên đăng nhập hoặc số điện thoại"
-                     className="w-full pl-10 pr-3 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-3 py-3 text-base border border-neutral rounded-lg focus:outline-none focus focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                      required
                      disabled={loading}
                      autoComplete="username"
@@ -125,7 +121,7 @@ const LoginForm = () => {
                      value={password}
                      onChange={(e) => setPassword(e.target.value)}
                      placeholder="Mật khẩu"
-                     className="w-full pl-10 pr-11 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
+                     className="w-full pl-10 pr-11 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
                      required
                      disabled={loading}
                      autoComplete="current-password"
@@ -163,7 +159,7 @@ const LoginForm = () => {
             <button
                type="submit"
                disabled={loading}
-               className="w-full bg-accent text-primary-darker py-3 rounded-lg font-medium hover:bg-accent-hover active:bg-accent-active transition cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed"
+               className="w-full bg-primary-dark text-neutral-light py-3 rounded-lg font-medium hover:bg-primary-hover transition cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
                {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>

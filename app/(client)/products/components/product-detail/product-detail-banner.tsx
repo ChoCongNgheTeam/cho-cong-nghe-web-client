@@ -6,102 +6,100 @@ import { IoRadioButtonOn } from "react-icons/io5";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
 
 interface ProductDetailLeftProps {
-  product: ProductDetail;
-  selectedVariant?: CurrentVariant;
-    images: {
-    id: string;
-    imageUrl: string;
-    altText?: string;
-    position?: number;
-  }[];
+   product: ProductDetail;
+   selectedVariant?: CurrentVariant;
+   images: {
+      id: string;
+      imageUrl: string;
+      altText?: string;
+      position?: number;
+   }[];
 }
 
 // Mock data cho modal (giữ tạm để modal không bị lỗi)
 const mockProductSpecs = {
-  name: "Nubia A76 4GB 128GB (NFC)",
-  image:
-    "https://bizweb.dktcdn.net/100/177/937/products/nubia-a76-19-2136.jpg?v=1756891533433",
-  specs: {
-    general: [
-      { label: "Thương hiệu", value: "Nubia" },
-      { label: "Model", value: "A76" },
-      { label: "Năm ra mắt", value: "2024" },
-      { label: "Bảo hành", value: "18 tháng" },
-    ],
-    design: [
-      { label: "Kích thước", value: "167.3 x 77.37 x 8.3 mm" },
-      { label: "Trọng lượng sản phẩm", value: "197 g" },
-      { label: "Chất liệu khung viền", value: "Nhựa" },
-      { label: "Chất liệu mặt lưng", value: "Nhựa" },
-      { label: "Kháng nước/bụi", value: "Không" },
-    ],
-    cpu: [
-      { label: "Phiên bản CPU", value: "Unisoc T7250" },
-      { label: "Loại CPU", value: "Octa-Core" },
-      { label: "Số nhân", value: "8" },
-      { label: "Tốc độ tối đa", value: "1.8 GHz" },
-      { label: "GPU", value: "Mali-G57" },
-    ],
-    memory: [
-      { label: "RAM", value: "4 GB" },
-      { label: "Bộ nhớ trong", value: "128 GB" },
-      { label: "Hỗ trợ thẻ nhớ", value: "MicroSD, tối đa 512 GB" },
-    ],
-    display: [
-      { label: "Kích thước màn hình", value: "6.75 inch" },
-      { label: "Công nghệ màn hình", value: "IPS LCD" },
-      { label: "Độ phân giải", value: "HD+ (720 x 1600 pixels)" },
-      { label: "Tần số quét", value: "90 Hz" },
-      { label: "Độ sáng tối đa", value: "450 nits" },
-      { label: "Dung lượng pin", value: "5000 mAh" },
-      { label: "Hỗ trợ sạc", value: "Sạc nhanh 18W" },
-      { label: "Loại pin", value: "Li-Po" },
-    ],
-  },
+   name: "Nubia A76 4GB 128GB (NFC)",
+   image: "https://bizweb.dktcdn.net/100/177/937/products/nubia-a76-19-2136.jpg?v=1756891533433",
+   specs: {
+      general: [
+         { label: "Thương hiệu", value: "Nubia" },
+         { label: "Model", value: "A76" },
+         { label: "Năm ra mắt", value: "2024" },
+         { label: "Bảo hành", value: "18 tháng" },
+      ],
+      design: [
+         { label: "Kích thước", value: "167.3 x 77.37 x 8.3 mm" },
+         { label: "Trọng lượng sản phẩm", value: "197 g" },
+         { label: "Chất liệu khung viền", value: "Nhựa" },
+         { label: "Chất liệu mặt lưng", value: "Nhựa" },
+         { label: "Kháng nước/bụi", value: "Không" },
+      ],
+      cpu: [
+         { label: "Phiên bản CPU", value: "Unisoc T7250" },
+         { label: "Loại CPU", value: "Octa-Core" },
+         { label: "Số nhân", value: "8" },
+         { label: "Tốc độ tối đa", value: "1.8 GHz" },
+         { label: "GPU", value: "Mali-G57" },
+      ],
+      memory: [
+         { label: "RAM", value: "4 GB" },
+         { label: "Bộ nhớ trong", value: "128 GB" },
+         { label: "Hỗ trợ thẻ nhớ", value: "MicroSD, tối đa 512 GB" },
+      ],
+      display: [
+         { label: "Kích thước màn hình", value: "6.75 inch" },
+         { label: "Công nghệ màn hình", value: "IPS LCD" },
+         { label: "Độ phân giải", value: "HD+ (720 x 1600 pixels)" },
+         { label: "Tần số quét", value: "90 Hz" },
+         { label: "Độ sáng tối đa", value: "450 nits" },
+         { label: "Dung lượng pin", value: "5000 mAh" },
+         { label: "Hỗ trợ sạc", value: "Sạc nhanh 18W" },
+         { label: "Loại pin", value: "Li-Po" },
+      ],
+   },
 };
 
 export default function ProductDetailBanner({
-  product,
-  images,
+   product,
+   images,
 }: ProductDetailLeftProps) {
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  //  khi đổi images → reset về ảnh đầu
-  useEffect(() => {
-    if (images && images.length > 0) {
-    setCurrentImageIndex(0);
-  }
-  }, [images]);
+   //  khi đổi images → reset về ảnh đầu
+   useEffect(() => {
+      if (images && images.length > 0) {
+         setCurrentImageIndex(0);
+      }
+   }, [images]);
 
-  const gallery = images || [];
-  const currentImageObj = gallery[currentImageIndex];
-  const currentImage = currentImageObj?.imageUrl || "";
-  const totalImages = gallery.length;
- 
+   const gallery = images || [];
+   const currentImageObj = gallery[currentImageIndex];
+   const currentImage = currentImageObj?.imageUrl || "";
+   const totalImages = gallery.length;
 
-  const goToImage = (index: number) => setCurrentImageIndex(index);
+   const goToImage = (index: number) => setCurrentImageIndex(index);
 
-  const goToPrevious = () => {
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? gallery.length - 1 : prev - 1
-    );
-  };
+   const goToPrevious = () => {
+      setCurrentImageIndex((prev) =>
+         prev === 0 ? gallery.length - 1 : prev - 1,
+      );
+   };
 
-  const goToNext = () => {
-    setCurrentImageIndex((prev) =>
-      prev === gallery.length - 1 ? 0 : prev + 1
-    );
-  };
+   const goToNext = () => {
+      setCurrentImageIndex((prev) =>
+         prev === gallery.length - 1 ? 0 : prev + 1,
+      );
+   };
 
 
-  const highlights = product.highlights || [];
+   const highlights = product.highlights || [];
 
-  const iconMap: Record<string, any> = {
-    gpu: Gpu,
-    storage: Package,
-    cpu: Cpu,
-  };
+   const iconMap: Record<string, any> = {
+      gpu: Gpu,
+      storage: Package,
+      cpu: Cpu,
+   };
 
   return (
     <>

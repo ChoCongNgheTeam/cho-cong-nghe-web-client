@@ -78,7 +78,7 @@ export default function AddressSidebar({
             <div className="flex flex-col h-full">
                {/* Header */}
                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral shrink-0">
-                  <h2 className="text-base sm:text-lg font-semibold text-primary-darker">
+                  <h2 className="text-base sm:text-lg font-semibold text-primary">
                      Chọn địa chỉ nhận hàng
                   </h2>
                   <button
@@ -107,7 +107,7 @@ export default function AddressSidebar({
                         key={address.id}
                         className={`border-2 rounded-lg p-3 sm:p-4 cursor-pointer transition-all ${
                            selected === address.id
-                              ? "border-accent bg-accent-light ring-2 ring-accent"
+                              ? "border-accent bg-accent-light ring-accent"
                               : "border-neutral-dark hover:border-neutral-darker hover:shadow-sm"
                         }`}
                         onClick={() => setSelected(address.id)}
@@ -121,7 +121,7 @@ export default function AddressSidebar({
                            />
                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                                 <span className="font-semibold text-sm text-primary-darker">
+                                 <span className="font-semibold text-sm text-primary">
                                     {address.contact_name}
                                  </span>
                                  <span className="text-neutral-darker text-sm">
@@ -141,7 +141,7 @@ export default function AddressSidebar({
                                  Nhận tại: Văn Phòng
                               </p>
 
-                              <p className="text-xs sm:text-sm font-medium mb-1 text-primary-darker">
+                              <p className="text-xs sm:text-sm font-medium mb-1 text-primary">
                                  {address.detail_address.split(",")[0]}
                               </p>
 
@@ -165,7 +165,7 @@ export default function AddressSidebar({
                <div className="p-4 sm:p-5 border-t border-neutral space-y-3 shrink-0">
                   <button
                      onClick={handleConfirm}
-                     className="w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm transition-all cursor-pointer hover:shadow-md bg-accent hover:bg-accent-hover text-primary-darker"
+                     className="w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm transition-all cursor-pointer hover:shadow-md bg-primary hover:bg-primary-hover text-neutral-light"
                   >
                      Xác nhận
                   </button>
@@ -174,7 +174,7 @@ export default function AddressSidebar({
                      onClick={(e) => {
                         e.preventDefault();
                      }}
-                     className="w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm border-2 transition-all cursor-pointer hover:bg-accent-light border-accent text-accent-dark"
+                     className="w-full py-2.5 sm:py-3 rounded-lg font-medium text-sm border-2 transition-all cursor-pointer hover:bg-primary-light border-primary text-primary"
                   >
                      Thêm địa chỉ
                   </button>

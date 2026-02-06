@@ -107,7 +107,7 @@ export default function TimeSlotSidebar({
             <div className="flex flex-col h-full">
                {/* Header */}
                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral shrink-0">
-                  <h2 className="text-lg sm:text-xl font-semibold text-primary-darker">
+                  <h2 className="text-lg sm:text-xl font-semibold text-primary">
                      Chọn thời gian nhận hàng
                   </h2>
                   <button
@@ -122,7 +122,7 @@ export default function TimeSlotSidebar({
                <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                   {/* Date Selection */}
                   <div className="mb-6">
-                     <p className="text-sm font-medium mb-3 text-primary-darker">
+                     <p className="text-sm font-medium mb-3 text-primary">
                         Chọn ngày nhận:
                      </p>
                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -133,7 +133,7 @@ export default function TimeSlotSidebar({
                               onClick={() => setSelectedDate(date.value)}
                               className={`py-3 px-2 rounded-lg border-2 text-center transition-all cursor-pointer ${
                                  selectedDate === date.value
-                                    ? "border-accent bg-accent text-primary-darker font-medium shadow-md"
+                                    ? "border-primary bg-primary text-neutral-light font-medium shadow-md"
                                     : "border-neutral-dark hover:border-neutral-darker hover:shadow-sm text-primary"
                               }`}
                            >
@@ -148,7 +148,7 @@ export default function TimeSlotSidebar({
 
                   {/* Time Slot Selection */}
                   <div>
-                     <p className="text-sm font-medium mb-3 text-primary-darker">
+                     <p className="text-sm font-medium mb-3 text-primary">
                         Chọn giờ nhận:
                      </p>
                      <div className="space-y-2">
@@ -169,7 +169,7 @@ export default function TimeSlotSidebar({
                                  className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer accent-accent"
                               />
                               <span
-                                 className={`text-sm ${selectedTime === slot.label ? "font-semibold text-primary-darker" : "text-primary"}`}
+                                 className={`text-sm ${selectedTime === slot.label ? "font-semibold text-primary" : "text-primary"}`}
                               >
                                  {slot.label}
                               </span>
@@ -182,11 +182,11 @@ export default function TimeSlotSidebar({
                   <div className="mt-6 p-4 bg-neutral rounded-lg border border-neutral-dark">
                      <p className="text-sm text-center text-primary">
                         Nhận hàng vào:{" "}
-                        <span className="font-semibold text-primary-darker">
+                        <span className="font-semibold text-primary">
                            Thứ Hai ({selectedDate}/01)
                         </span>
                         , lúc:{" "}
-                        <span className="font-semibold text-primary-darker">
+                        <span className="font-semibold text-primary">
                            {selectedTime}
                         </span>
                      </p>
@@ -198,7 +198,7 @@ export default function TimeSlotSidebar({
                   <button
                      type="button"
                      onClick={handleConfirm}
-                     className="w-full py-3 rounded-lg font-medium text-sm cursor-pointer transition-all hover:shadow-md bg-accent hover:bg-accent-hover text-primary-darker"
+                     className="w-full py-3 rounded-lg font-medium text-sm cursor-pointer transition-all hover:shadow-md bg-primary hover:bg-primary-hover text-neutral-light"
                   >
                      Xác nhận
                   </button>
@@ -209,7 +209,7 @@ export default function TimeSlotSidebar({
                         setSelectedDate("12");
                         setSelectedTime("9:00 -> 10:00");
                      }}
-                     className="w-full py-3 rounded-lg font-medium text-sm border-2 border-accent cursor-pointer transition-all hover:bg-accent-light text-accent-dark"
+                     className="w-full py-3 rounded-lg font-medium text-sm border-2 border-primary cursor-pointer transition-all hover:bg-accent-light text-primary"
                   >
                      Đặt lại thời gian sớm nhất
                   </button>

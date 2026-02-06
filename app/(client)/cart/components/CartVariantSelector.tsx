@@ -47,7 +47,7 @@ interface VariantDropdownProps {
       cartItemId: number,
       variantId: number,
       variantName: string,
-      price: number
+      price: number,
    ) => void;
 }
 
@@ -376,7 +376,7 @@ export default function VariantDropdown({
                <div className="py-1 max-h-[280px] overflow-y-auto">
                   {variants.map((variant) => {
                      const variantName = formatVariantName(
-                        variant.variants_attributes
+                        variant.variants_attributes,
                      );
                      const isSelected = variant.id === currentVariantId;
                      const isOutOfStock = variant.stock_count === 0;
@@ -390,10 +390,10 @@ export default function VariantDropdown({
                            disabled={isOutOfStock}
                            className={`w-full px-3 py-2.5 text-left text-sm transition-colors ${
                               isSelected
-                                 ? "bg-accent/10 text-primary-darker"
+                                 ? "bg-accent/10 text-primary"
                                  : isOutOfStock
-                                 ? "text-neutral-dark cursor-not-allowed opacity-50 bg-neutral-light/30"
-                                 : "hover:bg-neutral-light text-neutral-darker"
+                                   ? "text-neutral-dark cursor-not-allowed opacity-50 bg-neutral-light/30"
+                                   : "hover:bg-neutral-light text-neutral-darker"
                            }`}
                         >
                            <div className="flex items-start justify-between gap-2">

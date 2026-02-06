@@ -10,7 +10,7 @@ const AuthPage = () => {
    const tabParam = searchParams.get("tab");
 
    const [activeTab, setActiveTab] = useState<"login" | "register">(
-      tabParam === "register" ? "register" : "login"
+      tabParam === "register" ? "register" : "login",
    );
 
    // Sync với URL params khi thay đổi
@@ -49,7 +49,7 @@ const AuthPage = () => {
                   onClick={() => setActiveTab("login")}
                   className={`flex-1 py-3 text-center font-medium transition-colors ${
                      activeTab === "login"
-                        ? "text-primary-darker"
+                        ? "text-primary"
                         : "text-neutral-darker hover:text-primary"
                   }`}
                >
@@ -59,7 +59,7 @@ const AuthPage = () => {
                   onClick={() => setActiveTab("register")}
                   className={`flex-1 py-3 text-center font-medium transition-colors ${
                      activeTab === "register"
-                        ? "text-primary-darker"
+                        ? "text-primary"
                         : "text-neutral-darker hover:text-primary"
                   }`}
                >

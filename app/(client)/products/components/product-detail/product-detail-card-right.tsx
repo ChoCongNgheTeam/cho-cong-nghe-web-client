@@ -19,23 +19,23 @@ interface ProductDetailRightProps {
 }
 
 interface ProductVariant {
-  id: string;
-  price: number;
-  images?: { imageUrl: string }[];
-  sku?: string;
+   id: string;
+   price: number;
+   images?: { imageUrl: string }[];
+   sku?: string;
 }
 
 type ColorOption = {
-  value: string;
-  image?: string;
-  label?: string;
-  enabled?: boolean;
+   value: string;
+   image?: string;
+   label?: string;
+   enabled?: boolean;
 };
 
 type StorageOption = {
-  value: string;
-  label?: string;
-  type?: string;
+   value: string;
+   label?: string;
+   type?: string;
 };
 
 export default function ProductDetailRight({
@@ -56,87 +56,87 @@ export default function ProductDetailRight({
     return <div className="text-primary">Loading...</div>;
   }
 
-  /* ============================================================================
-   * PRODUCT DATA
-   * ========================================================================== */
-  const storages: StorageOption[] = (() => {
-    const storageOption = product.availableOptions?.find(
-      (opt) => opt.type === "storage",
-    );
-    return (
-      storageOption?.values?.map((val) => ({
-        label: val.label,
-        value: val.value,
-      })) || []
-    );
-  })();
+   /* ============================================================================
+    * PRODUCT DATA
+    * ========================================================================== */
+   const storages: StorageOption[] = (() => {
+      const storageOption = product.availableOptions?.find(
+         (opt) => opt.type === "storage",
+      );
+      return (
+         storageOption?.values?.map((val) => ({
+            label: val.label,
+            value: val.value,
+         })) || []
+      );
+   })();
 
-  const colors: ColorOption[] = (() => {
-    // ✅ SỬA: Dùng availableOptions thay vì product.availableOptions
-    const colorOption = availableOptions?.find((opt) => opt.type === "color");
-    if (!colorOption?.values) return [];
+   const colors: ColorOption[] = (() => {
+      // ✅ SỬA: Dùng availableOptions thay vì product.availableOptions
+      const colorOption = availableOptions?.find((opt) => opt.type === "color");
+      if (!colorOption?.values) return [];
 
-    return colorOption.values.map((val: any) => ({
-      value: val.value,
-      label: val.label,
-      enabled: val.enabled, // ✅ THÊM: Lấy enabled từ API
-      image: val.image?.imageUrl,
-    }));
-  })();
+      return colorOption.values.map((val: any) => ({
+         value: val.value,
+         label: val.label,
+         enabled: val.enabled, // ✅ THÊM: Lấy enabled từ API
+         image: val.image?.imageUrl,
+      }));
+   })();
 
-  /* ============================================================================
-   * STATE
-   * ========================================================================== */
-  const selectedColor = propSelectedColor || colors[0]?.value || "";
-  const selectedStorage = propSelectedStorage || storages[0]?.value || "";
+   /* ============================================================================
+    * STATE
+    * ========================================================================== */
+   const selectedColor = propSelectedColor || colors[0]?.value || "";
+   const selectedStorage = propSelectedStorage || storages[0]?.value || "";
 
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 23,
-    minutes: 9,
-    seconds: 51,
-  });
+   const [timeLeft, setTimeLeft] = useState({
+      hours: 23,
+      minutes: 9,
+      seconds: 51,
+   });
 
-  /* ============================================================================
-   * EFFECTS
-   * ========================================================================== */
-  useEffect(() => {
-    const endTime = new Date();
-    endTime.setHours(23, 59, 59, 999);
+   /* ============================================================================
+    * EFFECTS
+    * ========================================================================== */
+   useEffect(() => {
+      const endTime = new Date();
+      endTime.setHours(23, 59, 59, 999);
 
-    const updateTimer = () => {
-      const diff = endTime.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      setTimeLeft({
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    };
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, []);
+      const updateTimer = () => {
+         const diff = endTime.getTime() - Date.now();
+         if (diff <= 0) {
+            setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+            return;
+         }
+         setTimeLeft({
+            hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+            minutes: Math.floor((diff / (1000 * 60)) % 60),
+            seconds: Math.floor((diff / 1000) % 60),
+         });
+      };
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+   }, []);
 
-  return (
-    <div className="w-full">
-      {/* Badges */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
-        <span className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
-          <FaTruck className="mr-2 text-white text-sm sm:text-base" />
-          <p className="text-xs sm:text-sm font-semibold text-white">
-            Free ship toàn quốc
-          </p>
-        </span>
-        <span className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
-          <FaStar className="mr-2 text-yellow-300 text-sm sm:text-base" />
-          <p className="text-xs sm:text-sm font-semibold text-white">
-            Độc quyền tại ChoCongNghe
-          </p>
-        </span>
-      </div>
+   return (
+      <div className="w-full">
+         {/* Badges */}
+         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
+            <span className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
+               <FaTruck className="mr-2 text-white text-sm sm:text-base" />
+               <p className="text-xs sm:text-sm font-semibold text-white">
+                  Free ship toàn quốc
+               </p>
+            </span>
+            <span className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
+               <FaStar className="mr-2 text-yellow-300 text-sm sm:text-base" />
+               <p className="text-xs sm:text-sm font-semibold text-white">
+                  Độc quyền tại ChoCongNghe
+               </p>
+            </span>
+         </div>
 
       {/* Product Title */}
       <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary transition-colors duration-300">
@@ -253,14 +253,14 @@ export default function ProductDetailRight({
 
    </div>
 
-      {/* Banner Image */}
-      <div className="py-4 sm:py-6 rounded-lg">
-        <img
-          src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
-          alt="Banner"
-          className="w-full h-auto rounded-lg"
-        />
-      </div>
+         {/* Banner Image */}
+         <div className="py-4 sm:py-6 rounded-lg">
+            <img
+               src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
+               alt="Banner"
+               className="w-full h-auto rounded-lg"
+            />
+         </div>
 
       {/* Price Section */}
       <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent transition-colors duration-300">

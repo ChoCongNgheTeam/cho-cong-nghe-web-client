@@ -1,144 +1,392 @@
 @import "tailwindcss";
 
-/* ===================== POPPINS LOCAL ===================== */
+/* ===================== INTER 24PT LOCAL ===================== */
+/* Thin - 100 */
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Light.ttf") format("truetype");
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Thin.ttf") format("truetype");
+   font-weight: 100;
+   font-style: normal;
+   font-display: swap;
+}
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-ThinItalic.ttf") format("truetype");
+   font-weight: 100;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Extra Light - 200 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-ExtraLight.ttf") format("truetype");
+   font-weight: 200;
+   font-style: normal;
+   font-display: swap;
+}
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-ExtraLightItalic.ttf") format("truetype");
+   font-weight: 200;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Light - 300 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Light.ttf") format("truetype");
    font-weight: 300;
    font-style: normal;
    font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-LightItalic.ttf") format("truetype");
+   font-weight: 300;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Regular - 400 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Regular.ttf") format("truetype");
    font-weight: 400;
    font-style: normal;
    font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Medium.ttf") format("truetype");
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Italic.ttf") format("truetype");
+   font-weight: 400;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Medium - 500 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Medium.ttf") format("truetype");
    font-weight: 500;
    font-style: normal;
    font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-MediumItalic.ttf") format("truetype");
+   font-weight: 500;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Semi Bold - 600 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-SemiBold.ttf") format("truetype");
    font-weight: 600;
    font-style: normal;
    font-display: swap;
 }
 @font-face {
-   font-family: "Poppins";
-   src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-SemiBoldItalic.ttf") format("truetype");
+   font-weight: 600;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Bold - 700 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Bold.ttf") format("truetype");
    font-weight: 700;
    font-style: normal;
+   font-display: swap;
+}
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-BoldItalic.ttf") format("truetype");
+   font-weight: 700;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Extra Bold - 800 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-ExtraBold.ttf") format("truetype");
+   font-weight: 800;
+   font-style: normal;
+   font-display: swap;
+}
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-ExtraBoldItalic.ttf") format("truetype");
+   font-weight: 800;
+   font-style: italic;
+   font-display: swap;
+}
+
+/* Black - 900 */
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-Black.ttf") format("truetype");
+   font-weight: 900;
+   font-style: normal;
+   font-display: swap;
+}
+@font-face {
+   font-family: "Inter";
+   src: url("/fonts/inters/Inter_24pt-BlackItalic.ttf") format("truetype");
+   font-weight: 900;
+   font-style: italic;
    font-display: swap;
 }
 
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
-   /* ACCENT / Yellow */
-   /* ACCENT / Yellow */
-   --yellow-light: 255 251 230;
-   --yellow: 255 215 0;
-   --yellow-hover: 229 194 0;
-   --yellow-active: 203 172 0;
-   --yellow-dark: 191 161 0;
+   /* ========== ACCENT / INDIGO ========== */
+   /* Light */
+   --accent-light: 233 245 248; /* #e9f8f8 */
+   --accent-light-hover: 224 233 251; /* #e0e9fb */
+   --accent-light-active: 199 215 247; /* #c7d7f7 */
+   /* Normal */
+   --accent: 73 121 228; /* #4970e4 */
+   --accent-hover: 63 106 208; /* #3f6ad0 */
+   --accent-active: 54 92 189; /* #365cbd */
+   /* Dark */
+   --accent-dark: 47 79 163; /* #2f4fa3 */
+   --accent-dark-hover: 38 63 130; /* #263f82 */
+   --accent-dark-active: 29 48 97; /* #1d3061 */
+   /* Darker */
+   --accent-darker: 22 35 73; /* #162349 */
 
-   /* NEUTRAL */
-   --neutral-light: 253 253 253;
-   --neutral: 230 230 230;
-   --neutral-dark: 173 173 173;
-   --neutral-darker: 81 81 81;
+   /* ========== NEUTRAL / WHITE ========== */
+   /* Light */
+   --neutral-light: 253 253 253; /* #fdfdfd */
+   --neutral-light-hover: 251 251 251; /* #fbfbfb */
+   --neutral-light-active: 247 247 247; /* #f7f7f7 */
+   /* Normal */
+   --neutral: 230 230 230; /* #e6e6e6 */
+   --neutral-hover: 220 220 220; /* #dcdcdc */
+   --neutral-active: 216 216 216; /* #d8d8d8 */
+   /* Dark */
+   --neutral-dark: 169 169 169; /* #a9a9a9 */
+   --neutral-dark-hover: 138 138 138; /* #8a8a8a */
+   --neutral-dark-active: 103 103 103; /* #676767 */
+   /* Darker */
+   --neutral-darker: 81 81 81; /* #515151 */
 
-   /* PRIMARY / Blue */
-   /* PRIMARY / Blue */
-   --blue-light: 235 236 237;
-   --blue: 51 62 72;
-   --blue-hover: 38 41 56;
-   --blue-dark: 38 47 54;
-   --blue-darker: 18 22 25;
+   /* ========== PRIMARY / BLACK ========== */
+   /* Light */
+   --primary-light: 122 127 133; /* #7a7f85 */
+   --primary-light-hover: 82 82 94; /* #52525e */
+   --primary-light-active: 74 79 85; /* #4a4f55 */
+   /* Normal */
+   --primary: 37 39 42; /* #25272a */
+   --primary-hover: 30 32 35; /* #1e2023 */
+   --primary-active: 22 24 27; /* #16181b */
+   /* Dark */
+   --primary-dark: 15 17 19; /* #0f1113 */
+   --primary-dark-hover: 5 5 7; /* #050507 */
+   --primary-dark-active: 10 12 14; /* #0a0c0e */
+   /* Darker */
+   --primary-darker: 0 0 0; /* #000000 */
 
-   /* PROMOTION / Red */
-   /* PROMOTION / Red */
-   --red-light: 250 232 233;
-   --red: 203 28 34;
-   --red-hover: 183 25 31;
-   --red-dark: 152 21 26;
+   /* ========== PROMOTION / RED ========== */
+   /* Light */
+   --promotion-light: 250 232 233; /* #fae8e9 */
+   --promotion-light-hover: 247 221 222; /* #f7ddde */
+   --promotion-light-active: 239 185 186; /* #efb9ba */
+   /* Normal */
+   --promotion: 203 28 34; /* #cb1c22 */
+   --promotion-hover: 183 25 31; /* #b7191f */
+   --promotion-active: 162 22 27; /* #a2161b */
+   /* Dark */
+   --promotion-dark: 152 21 26; /* #98151a */
+   --promotion-dark-hover: 125 17 20; /* #7d1114 */
+   --promotion-dark-active: 91 9 15; /* #5b090f */
+   /* Darker */
+   --promotion-darker: 71 10 12; /* #470a0c */
+
+   /* ========== DARK MODE / BLUE ========== */
+   /* Light */
+   --dark-light: 235 236 237; /* #ebecee */
+   --dark-light-hover: 224 226 228; /* #e0e2e4 */
+   --dark-light-active: 192 195 198; /* #c0c3c6 */
+   /* Normal */
+   --dark: 51 62 72; /* #333e48 */
+   --dark-hover: 46 56 65; /* #2e3841 */
+   --dark-active: 41 50 58; /* #29323a */
+   /* Dark */
+   --dark-dark: 38 47 54; /* #262f36 */
+   --dark-dark-hover: 31 37 43; /* #1f252b */
+   --dark-dark-active: 23 28 32; /* #171c20 */
+   /* Darker */
+   --dark-darker: 18 22 25; /* #121619 */
 }
 
 /* ===================== DARK MODE COLORS ===================== */
 :root.dark {
-   /* ACCENT / Yellow - sáng hơn để nổi bật trên nền tối */
-   --yellow-light: 40 35 10;
-   --yellow: 250 204 21;
-   --yellow-hover: 234 179 8;
-   --yellow-active: 250 204 21;
-   --yellow-dark: 202 138 4;
+   /* ========== ACCENT / INDIGO (DARK MODE) ========== */
+   /* Light */
+   --accent-light: 22 35 73; /* #162349 */
+   --accent-light-hover: 29 48 97; /* #1d3061 */
+   --accent-light-active: 38 63 130; /* #263f82 */
+   /* Normal */
+   --accent: 73 121 228; /* #4970e4 */
+   --accent-hover: 63 106 208; /* #3f6ad0 */
+   --accent-active: 54 92 189; /* #365cbd */
+   /* Dark */
+   --accent-dark: 199 215 247; /* #c7d7f7 */
+   --accent-dark-hover: 224 233 251; /* #e0e9fb */
+   --accent-dark-active: 233 245 248; /* #e9f8f8 */
+   /* Darker */
+   --accent-darker: 233 245 248; /* #e9f8f8 */
 
-   /* NEUTRAL - đảo ngược gradient */
-   --neutral-light: 15 23 42; /* slate-900 - background chính */
-   --neutral: 30 41 59; /* slate-800 - các card, section */
-   --neutral-dark: 71 85 105; /* slate-600 - border, divider */
-   --neutral-darker: 203 213 225; /* slate-300 - text phụ */
+   /* ========== NEUTRAL / WHITE (DARK MODE) ========== */
+   /* Light */
+   --neutral-light: 15 23 42; /* #0f172a - dark blue background */
+   --neutral-light-hover: 20 28 47; /* #141c2f */
+   --neutral-light-active: 25 33 52; /* #192134 */
+   /* Normal */
+   --neutral: 30 41 59; /* #1e293b */
+   --neutral-hover: 51 65 85; /* #334155 */
+   --neutral-active: 71 85 105; /* #475569 */
+   /* Dark */
+   --neutral-dark: 100 116 139; /* #64748b */
+   --neutral-dark-hover: 148 163 184; /* #94a3b8 */
+   --neutral-dark-active: 186 199 213; /* #bac7d5 */
+   /* Darker */
+   --neutral-darker: 226 232 240; /* #e2e8f0 */
 
-   /* PRIMARY / Blue - text sáng trên nền tối */
-   --blue-light: 30 41 59; /* slate-800 */
-   --blue: 226 232 240; /* slate-200 - text chính */
-   --blue-hover: 241 245 249; /* slate-100 - text hover */
-   --blue-dark: 248 250 252; /* slate-50 */
-   --blue-darker: 255 255 255; /* white */
+   /* ========== PRIMARY / BLACK (DARK MODE) ========== */
+   /* Light */
+   --primary-light: 30 41 59; /* #1e293b */
+   --primary-light-hover: 51 65 85; /* #334155 */
+   --primary-light-active: 71 85 105; /* #475569 */
+   /* Normal */
+   --primary: 226 232 240; /* #e2e8f0 - light text */
+   --primary-hover: 241 245 249; /* #f1f5f9 */
+   --primary-active: 248 250 252; /* #f8fafc */
+   /* Dark */
+   --primary-dark: 248 250 252; /* #f8fafc */
+   --primary-dark-hover: 251 252 253; /* #fbfcfd */
+   --primary-dark-active: 254 254 255; /* #fefeff */
+   /* Darker */
+   --primary-darker: 255 255 255; /* #ffffff */
 
-   /* PROMOTION / Red - đỏ sáng hơn */
-   --red-light: 69 10 10;
-   --red: 248 113 113; /* red-400 */
-   --red-hover: 239 68 68; /* red-500 */
-   --red-dark: 220 38 38; /* red-600 */
+   /* ========== PROMOTION / RED (DARK MODE) ========== */
+   /* Light */
+   --promotion-light: 69 10 10; /* #450a0a */
+   --promotion-light-hover: 87 13 13; /* #570d0d */
+   --promotion-light-active: 127 29 29; /* #7f1d1d */
+   /* Normal */
+   --promotion: 248 113 113; /* #f87171 */
+   --promotion-hover: 252 165 165; /* #fca5a5 */
+   --promotion-active: 254 202 202; /* #fecaca */
+   /* Dark */
+   --promotion-dark: 220 38 38; /* #dc2626 */
+   --promotion-dark-hover: 185 28 28; /* #b91c1c */
+   --promotion-dark-active: 153 27 27; /* #991b1b */
+   /* Darker */
+   --promotion-darker: 127 29 29; /* #7f1d1d */
+
+   /* ========== DARK MODE / BLUE (DARK MODE) ========== */
+   /* Light */
+   --dark-light: 18 22 25; /* #121619 */
+   --dark-light-hover: 23 28 32; /* #171c20 */
+   --dark-light-active: 31 37 43; /* #1f252b */
+   /* Normal */
+   --dark: 30 41 59; /* #1e293b */
+   --dark-hover: 51 65 85; /* #334155 */
+   --dark-active: 71 85 105; /* #475569 */
+   /* Dark */
+   --dark-dark: 192 195 198; /* #c0c3c6 */
+   --dark-dark-hover: 224 226 228; /* #e0e2e4 */
+   --dark-dark-active: 235 236 237; /* #ebecee */
+   /* Darker */
+   --dark-darker: 235 236 237; /* #ebecee */
 }
 
 /* ===================== THEME TOKENS (SEMANTIC) ===================== */
 @theme {
-   /* ACCENT – CTA phụ, border highlight */
-   --color-accent-light: rgb(var(--yellow-light));
-   --color-accent: rgb(var(--yellow));
-   --color-accent-hover: rgb(var(--yellow-hover));
-   --color-accent-active: rgb(var(--yellow-active));
-   --color-accent-dark: rgb(var(--yellow-dark));
+   /* ========== ACCENT ========== */
+   --color-accent-light: rgb(var(--accent-light));
+   --color-accent-light-hover: rgb(var(--accent-light-hover));
+   --color-accent-light-active: rgb(var(--accent-light-active));
+   --color-accent: rgb(var(--accent));
+   --color-accent-hover: rgb(var(--accent-hover));
+   --color-accent-active: rgb(var(--accent-active));
+   --color-accent-dark: rgb(var(--accent-dark));
+   --color-accent-dark-hover: rgb(var(--accent-dark-hover));
+   --color-accent-dark-active: rgb(var(--accent-dark-active));
+   --color-accent-darker: rgb(var(--accent-darker));
 
-   /* PRIMARY – CTA chính */
-   --color-primary-light: rgb(var(--blue-light));
-   --color-primary: rgb(var(--blue));
-   --color-primary-hover: rgb(var(--blue-hover));
-   --color-primary-dark: rgb(var(--blue-dark));
-   --color-primary-darker: rgb(var(--blue-darker));
+   /* ========== PRIMARY ========== */
+   --color-primary-light: rgb(var(--primary-light));
+   --color-primary-light-hover: rgb(var(--primary-light-hover));
+   --color-primary-light-active: rgb(var(--primary-light-active));
+   --color-primary: rgb(var(--primary));
+   --color-primary-hover: rgb(var(--primary-hover));
+   --color-primary-active: rgb(var(--primary-active));
+   --color-primary-dark: rgb(var(--primary-dark));
+   --color-primary-dark-hover: rgb(var(--primary-dark-hover));
+   --color-primary-dark-active: rgb(var(--primary-dark-active));
+   --color-primary-darker: rgb(var(--primary-darker));
 
-   /* PROMOTION – sale, discount, rating */
-   --color-promotion-light: rgb(var(--red-light));
-   --color-promotion: rgb(var(--red));
-   --color-promotion-hover: rgb(var(--red-hover));
-   --color-promotion-dark: rgb(var(--red-dark));
+   /* ========== PROMOTION ========== */
+   --color-promotion-light: rgb(var(--promotion-light));
+   --color-promotion-light-hover: rgb(var(--promotion-light-hover));
+   --color-promotion-light-active: rgb(var(--promotion-light-active));
+   --color-promotion: rgb(var(--promotion));
+   --color-promotion-hover: rgb(var(--promotion-hover));
+   --color-promotion-active: rgb(var(--promotion-active));
+   --color-promotion-dark: rgb(var(--promotion-dark));
+   --color-promotion-dark-hover: rgb(var(--promotion-dark-hover));
+   --color-promotion-dark-active: rgb(var(--promotion-dark-active));
+   --color-promotion-darker: rgb(var(--promotion-darker));
 
-   /* NEUTRAL – text, border, background */
+   /* ========== NEUTRAL ========== */
    --color-neutral-light: rgb(var(--neutral-light));
+   --color-neutral-light-hover: rgb(var(--neutral-light-hover));
+   --color-neutral-light-active: rgb(var(--neutral-light-active));
    --color-neutral: rgb(var(--neutral));
+   --color-neutral-hover: rgb(var(--neutral-hover));
+   --color-neutral-active: rgb(var(--neutral-active));
    --color-neutral-dark: rgb(var(--neutral-dark));
+   --color-neutral-dark-hover: rgb(var(--neutral-dark-hover));
+   --color-neutral-dark-active: rgb(var(--neutral-dark-active));
    --color-neutral-darker: rgb(var(--neutral-darker));
 
-   --font-poppins: "Poppins", sans-serif;
+   /* ========== DARK MODE ========== */
+   --color-dark-light: rgb(var(--dark-light));
+   --color-dark-light-hover: rgb(var(--dark-light-hover));
+   --color-dark-light-active: rgb(var(--dark-light-active));
+   --color-dark: rgb(var(--dark));
+   --color-dark-hover: rgb(var(--dark-hover));
+   --color-dark-active: rgb(var(--dark-active));
+   --color-dark-dark: rgb(var(--dark-dark));
+   --color-dark-dark-hover: rgb(var(--dark-dark-hover));
+   --color-dark-dark-active: rgb(var(--dark-dark-active));
+   --color-dark-darker: rgb(var(--dark-darker));
+
+   /* ========== FONT ========== */
+   --font-inters: "Inter", sans-serif;
 }
+
 /* ===================== UTILITIES ===================== */
 @layer utilities {
    .container {
       width: 100%;
       margin-left: auto;
       margin-right: auto;
-      padding-left: 0.75rem; /* Giảm từ 1rem xuống 0.75rem cho màn hình nhỏ */
+      padding-left: 0.75rem;
       padding-right: 0.75rem;
    }
 
-   /* Extra small devices - dưới 375px */
    @media (min-width: 375px) {
       .container {
          padding-left: 1rem;
@@ -176,16 +424,9 @@
 /* ===================== GLOBAL ===================== */
 body {
    background-color: rgb(var(--neutral-light));
-   color: rgb(var(--blue));
-   font-family: "Poppins", sans-serif;
+   color: rgb(var(--primary));
+   font-family: "Inter", sans-serif;
    transition:
-      background-color 0.5s ease,
-      color 0.5s ease;
+      background-color 0.3s ease,
+      color 0.3s ease;
 }
-
-/* Mobile (mặc định): < 640px        → Không có prefix
-sm: ≥ 640px (tablet nhỏ)          → sm:
-md: ≥ 768px (tablet)              → md:
-lg: ≥ 1024px (laptop)             → lg:
-xl: ≥ 1280px (desktop)            → xl:
-2xl: ≥ 1536px (large desktop)    → 2xl: */
