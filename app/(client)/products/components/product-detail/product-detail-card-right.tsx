@@ -19,23 +19,23 @@ interface ProductDetailRightProps {
 }
 
 interface ProductVariant {
-   id: string;
-   price: number;
-   images?: { imageUrl: string }[];
-   sku?: string;
+  id: string;
+  price: number;
+  images?: { imageUrl: string }[];
+  sku?: string;
 }
 
 type ColorOption = {
-   value: string;
-   image?: string;
-   label?: string;
-   enabled?: boolean;
+  value: string;
+  image?: string;
+  label?: string;
+  enabled?: boolean;
 };
 
 type StorageOption = {
-   value: string;
-   label?: string;
-   type?: string;
+  value: string;
+  label?: string;
+  type?: string;
 };
 
 export default function ProductDetailRight({
@@ -56,87 +56,87 @@ export default function ProductDetailRight({
     return <div className="text-primary">Loading...</div>;
   }
 
-   /* ============================================================================
-    * PRODUCT DATA
-    * ========================================================================== */
-   const storages: StorageOption[] = (() => {
-      const storageOption = product.availableOptions?.find(
-         (opt) => opt.type === "storage",
-      );
-      return (
-         storageOption?.values?.map((val) => ({
-            label: val.label,
-            value: val.value,
-         })) || []
-      );
-   })();
+  /* ============================================================================
+   * PRODUCT DATA
+   * ========================================================================== */
+  const storages: StorageOption[] = (() => {
+    const storageOption = product.availableOptions?.find(
+      (opt) => opt.type === "storage",
+    );
+    return (
+      storageOption?.values?.map((val) => ({
+        label: val.label,
+        value: val.value,
+      })) || []
+    );
+  })();
 
-   const colors: ColorOption[] = (() => {
-      // ✅ SỬA: Dùng availableOptions thay vì product.availableOptions
-      const colorOption = availableOptions?.find((opt) => opt.type === "color");
-      if (!colorOption?.values) return [];
+  const colors: ColorOption[] = (() => {
+    // ✅ SỬA: Dùng availableOptions thay vì product.availableOptions
+    const colorOption = availableOptions?.find((opt) => opt.type === "color");
+    if (!colorOption?.values) return [];
 
-      return colorOption.values.map((val: any) => ({
-         value: val.value,
-         label: val.label,
-         enabled: val.enabled, // ✅ THÊM: Lấy enabled từ API
-         image: val.image?.imageUrl,
-      }));
-   })();
+    return colorOption.values.map((val: any) => ({
+      value: val.value,
+      label: val.label,
+      enabled: val.enabled, // ✅ THÊM: Lấy enabled từ API
+      image: val.image?.imageUrl,
+    }));
+  })();
 
-   /* ============================================================================
-    * STATE
-    * ========================================================================== */
-   const selectedColor = propSelectedColor || colors[0]?.value || "";
-   const selectedStorage = propSelectedStorage || storages[0]?.value || "";
+  /* ============================================================================
+   * STATE
+   * ========================================================================== */
+  const selectedColor = propSelectedColor || colors[0]?.value || "";
+  const selectedStorage = propSelectedStorage || storages[0]?.value || "";
 
-   const [timeLeft, setTimeLeft] = useState({
-      hours: 23,
-      minutes: 9,
-      seconds: 51,
-   });
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 23,
+    minutes: 9,
+    seconds: 51,
+  });
 
-   /* ============================================================================
-    * EFFECTS
-    * ========================================================================== */
-   useEffect(() => {
-      const endTime = new Date();
-      endTime.setHours(23, 59, 59, 999);
+  /* ============================================================================
+   * EFFECTS
+   * ========================================================================== */
+  useEffect(() => {
+    const endTime = new Date();
+    endTime.setHours(23, 59, 59, 999);
 
-      const updateTimer = () => {
-         const diff = endTime.getTime() - Date.now();
-         if (diff <= 0) {
-            setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-            return;
-         }
-         setTimeLeft({
-            hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((diff / (1000 * 60)) % 60),
-            seconds: Math.floor((diff / 1000) % 60),
-         });
-      };
-      updateTimer();
-      const interval = setInterval(updateTimer, 1000);
-      return () => clearInterval(interval);
-   }, []);
+    const updateTimer = () => {
+      const diff = endTime.getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      setTimeLeft({
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-   return (
-      <div className="w-full">
-         {/* Badges */}
-         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
-            <span className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
-               <FaTruck className="mr-2 text-white text-sm sm:text-base" />
-               <p className="text-xs sm:text-sm font-semibold text-white">
-                  Free ship toàn quốc
-               </p>
-            </span>
-            <span className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
-               <FaStar className="mr-2 text-yellow-300 text-sm sm:text-base" />
-               <p className="text-xs sm:text-sm font-semibold text-white">
-                  Độc quyền tại ChoCongNghe
-               </p>
-            </span>
-         </div>
+  return (
+    <div className="w-full">
+      {/* Badges */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
+        <span className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
+          <FaTruck className="mr-2 text-white text-sm sm:text-base" />
+          <p className="text-xs sm:text-sm font-semibold text-white">
+            Free ship toàn quốc
+          </p>
+        </span>
+        <span className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
+          <FaStar className="mr-2 text-yellow-300 text-sm sm:text-base" />
+          <p className="text-xs sm:text-sm font-semibold text-white">
+            Độc quyền tại ChoCongNghe
+          </p>
+        </span>
+      </div>
 
       {/* Product Title */}
       <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary transition-colors duration-300">
@@ -162,7 +162,7 @@ export default function ProductDetailRight({
         </button>
         <span className="">|</span>
         <button
-        type="button"
+          type="button"
           onClick={onSpecificationClick}
           className="text-accent hover:underline hover:text-accent-hover transition-colors cursor-pointer"
         >
@@ -170,57 +170,57 @@ export default function ProductDetailRight({
         </button>
       </div>
 
-   <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[100px_1fr] gap-y-4 sm:gap-y-5 gap-x-4 mt-6">
-  {/* Storage Selection */}
-  <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
-    Dung lượng:
-  </span>
+      <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[100px_1fr] gap-y-4 sm:gap-y-5 gap-x-4 mt-6">
+        {/* Storage Selection */}
+        <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
+          Dung lượng:
+        </span>
 
-  <div className="flex flex-wrap gap-2">
-    {storages.map((storage) => {
-      const isActive = selectedStorage === storage.value;
+        <div className="flex flex-wrap gap-2">
+          {storages.map((storage) => {
+            const isActive = selectedStorage === storage.value;
 
-      return (
-        <span
-          key={storage.value}
-          onClick={() => onStorageChange?.(storage.value)}
-          className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 rounded-sm text-xs sm:text-sm font-bold  cursor-pointer relative overflow-hidden transition-colors duration-300
+            return (
+              <span
+                key={storage.value}
+                onClick={() => onStorageChange?.(storage.value)}
+                className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 rounded-sm text-xs sm:text-sm font-bold  cursor-pointer relative overflow-hidden transition-colors duration-300
             ${
               isActive
                 ? "border-promotion text-promotion bg-neutral-light"
                 : "text-primary bg-neutral-light"
             }
           `}
-        >
-          {storage.label}
+              >
+                {storage.label}
 
-          {isActive && (
-            <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
-              <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-                ✓
+                {isActive && (
+                  <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
+                    <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
+                      ✓
+                    </span>
+                  </div>
+                )}
               </span>
-            </div>
-          )}
+            );
+          })}
+        </div>
+        {/* Color Selection */}
+        <span className="font-medium text-primary text-xs sm:text-sm flex mt-4">
+          Màu sắc:
         </span>
-      );
-    })}
-  </div>
-  {/* Color Selection */}
-  <span className="font-medium text-primary text-xs sm:text-sm flex mt-4">
-    Màu sắc:
-  </span>
 
-  <div className="flex flex-wrap gap-2">
-    {colors
-      .filter((color) => color.enabled)
-      .map((color) => {
-        const isActive = selectedColor === color.value;
+        <div className="flex flex-wrap gap-2">
+          {colors
+            .filter((color) => color.enabled)
+            .map((color) => {
+              const isActive = selectedColor === color.value;
 
-        return (
-          <span
-            key={color.value}
-            onClick={() => onColorChange?.(color.value)}
-            className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm text-xs sm:text-sm font-bold   cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300
+              return (
+                <span
+                  key={color.value}
+                  onClick={() => onColorChange?.(color.value)}
+                  className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm text-xs sm:text-sm font-bold   cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300
               ${
                 isActive
                   ? "border-promotion text-promotion bg-promotion-light"
@@ -228,39 +228,42 @@ export default function ProductDetailRight({
               }
               hover:bg-promotion-light
             `}
-          >
-            {color.image && (
-              <img
-                src={color.image}
-                alt={color.value}
-                className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
-              />
-            )}
+                >
+                  {color.image && (
+                    <Image
+                      src={color.image}
+                      alt={color.value}
+                      width={28}
+                      height={28}
+                      className="object-contain"
+                    />
+                  )}
 
-            {color.label}
+                  {color.label}
 
-            {isActive && (
-              <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
-                <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-                  ✓
+                  {isActive && (
+                    <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
+                      <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
+                        ✓
+                      </span>
+                    </div>
+                  )}
                 </span>
-              </div>
-            )}
-          </span>
-        );
-      })}
-  </div>
+              );
+            })}
+        </div>
+      </div>
 
-   </div>
-
-         {/* Banner Image */}
-         <div className="py-4 sm:py-6 rounded-lg">
-            <img
-               src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
-               alt="Banner"
-               className="w-full h-auto rounded-lg"
-            />
-         </div>
+      {/* Banner Image */}
+      <div className="py-4 sm:py-6 rounded-lg">
+        <Image
+          src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
+          alt="Banner"
+          width={507}
+          height={85}
+          className="w-full h-auto rounded-lg"
+        />
+      </div>
 
       {/* Price Section */}
       <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent transition-colors duration-300">
@@ -303,16 +306,12 @@ export default function ProductDetailRight({
               Hoặc
             </p>
             <div className="text-xs sm:text-sm">
-              <p className=" transition-colors duration-300">
-                Trả góp
-              </p>
+              <p className=" transition-colors duration-300">Trả góp</p>
               <p className="mt-1">
                 <span className="font-semibold text-base sm:text-lg text-primary transition-colors duration-300">
                   1.448.342đ
                 </span>
-                <span className="text-xs sm:text-sm text-primary">
-                  /tháng
-                </span>
+                <span className="text-xs sm:text-sm text-primary">/tháng</span>
               </p>
             </div>
           </div>
@@ -419,7 +418,7 @@ export default function ProductDetailRight({
           </div>
         </div>
       </div>
-      
+
       {/* Gifts & Benefits */}
       <div className="flex flex-col border  border-neutral rounded-lg mb-4 transition-colors duration-300">
         <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4  bg-neutral rounded-t-lg transition-colors duration-300">

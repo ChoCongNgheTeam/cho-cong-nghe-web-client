@@ -12,6 +12,8 @@ import {
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
+import { AuthContext } from "@/contexts/AuthContext";
+import { useContext } from "react";
 
 const menuItems = [
   {
@@ -38,6 +40,13 @@ export default function ProfileLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const auth = useContext(AuthContext);
+
+  if (!auth) {
+    throw new Error("ProfileLayout must be used within AuthProvider");
+  }
+
+  const { user } = auth;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,8 +72,10 @@ export default function ProfileLayout({
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">Bảo</h3>
-                  <p className="text-sm text-gray-600">0828001501</p>
+                  <h3 className="font-semibold text-gray-800">
+                    {user?.fullName || "Người dùng"}
+                  </h3>
+                  <p className="text-sm text-gray-600">{user?.phone}</p>
                 </div>
                 <Link
                   href="/profile"

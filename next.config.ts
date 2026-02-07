@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       "store.storeimages.cdn-apple.com",
       "images.unsplash.com",
       "cdn2.fptshop.com.vn",
+      "res.cloudinary.com",
     ],
   },
   productionBrowserSourceMaps: false,

@@ -7,10 +7,12 @@ import apiRequest from "@/lib/api";
 interface User {
    id: string;
    email: string;
+   phone: string;
    userName: string;
    fullName: string;
    role: string;
    avatarImage?: string;
+   gender?: string;
 }
 
 interface ApiResponse<T> {
