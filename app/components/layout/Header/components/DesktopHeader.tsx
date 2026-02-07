@@ -16,6 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { DesktopHeaderProps } from "../types";
 import CategoryMegaMenu from "./CategoryMegaMenu";
+import UserAvatar from "@/components/ui/UserAvatar";
 const DesktopHeader = ({
    searchQuery,
    isDarkMode,
@@ -112,15 +113,11 @@ const DesktopHeader = ({
                      onClick={onUserMenuToggle}
                      className="flex items-center hover:bg-neutral/50 rounded-lg transition-colors cursor-pointer p-2"
                   >
-                     <div className="w-8 h-8 rounded-full overflow-hidden bg-neutral border-2 border-accent">
-                        <Image
-                           src={`/imgs/${user.avatarImage}`}
-                           alt={user.fullName}
-                           width={32}
-                           height={32}
-                           className="w-full h-full object-cover"
-                        />
-                     </div>
+                     <UserAvatar
+                        avatarImage={user.avatarImage}
+                        fullName={user.fullName}
+                        size={30}
+                     />
                      <ChevronDown
                         className={`w-4 h-4 text-primary transition-transform ${
                            showUserMenu ? "rotate-180" : ""

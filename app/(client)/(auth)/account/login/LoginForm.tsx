@@ -2,24 +2,10 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import apiRequest, { ApiError } from "@/lib/api";
-import { useRouter } from "next/navigation";
-interface User {
-   id: string;
-   email: string;
-   userName: string;
-   fullName: string;
-   role: string;
-}
-
-interface LoginResponse {
-   user: User;
-   message?: string;
-}
-
+import { handleLoginSubmit } from "./loginHandler";
+import Link from "next/link";
 const LoginForm = () => {
    const { login } = useAuth();
-   const router = useRouter();
    const [showPassword, setShowPassword] = useState(false);
    const [userName, setUsername] = useState("");
    const [password, setPassword] = useState("");
@@ -27,53 +13,33 @@ const LoginForm = () => {
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
 
-   const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = async (
+      e: React.FormEvent<HTMLFormElement>,
+   ): Promise<void> => {
       e.preventDefault();
       setError("");
       setLoading(true);
 
       try {
-         const response = await apiRequest.post<LoginResponse>(
-            "/auth/login",
-            {
-               userName: userName.trim(),
-               password,
-               rememberMe,
+         await handleLoginSubmit({
+            userName,
+            password,
+            rememberMe,
+            onSuccess: async (user) => {
+               await login(user);
             },
-            { noAuth: true },
-         );
-
-         if (response?.user) {
-            // ✅ Gọi login để set user state và merge cart
-            await login(response.user);
-
-            // ⚠️ Login function đã có router.push() rồi
-            // KHÔNG CẦN setTimeout ở đây nữa
-         } else {
-            setError("Phản hồi từ server không hợp lệ");
-         }
-      } catch (err: any) {
-         console.error("[LoginForm] Error:", err);
-
-         if (err instanceof ApiError) {
-            switch (err.status) {
-               case 401:
-                  setError("Tên đăng nhập hoặc mật khẩu không chính xác");
-                  break;
-               case 429:
-                  setError(
-                     "Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau",
-                  );
-                  break;
-               default:
-                  setError(err.message || "Đăng nhập thất bại");
-            }
-         } else {
-            setError(err.message || "Không thể kết nối đến server");
-         }
+            onError: (errorMessage) => {
+               setError(errorMessage);
+            },
+         });
       } finally {
          setLoading(false);
       }
+   };
+
+   const handleSocialLogin = (provider: "google" | "facebook" | "apple") => {
+      // TODO: Implement social login
+      console.log(`Login with ${provider}`);
    };
 
    return (
@@ -131,6 +97,7 @@ const LoginForm = () => {
                      onClick={() => setShowPassword(!showPassword)}
                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
                      disabled={loading}
+                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -148,12 +115,12 @@ const LoginForm = () => {
                   />
                   <span className="text-base text-primary">Nhớ mật khẩu</span>
                </label>
-               <a
+               <Link
                   href="/forgot-password"
                   className="text-base text-primary hover:text-primary-hover hover:underline"
                >
                   Quên mật khẩu?
-               </a>
+               </Link>
             </div>
 
             <button
@@ -178,6 +145,7 @@ const LoginForm = () => {
             <div className="flex justify-center flex-col gap-3">
                <button
                   type="button"
+                  onClick={() => handleSocialLogin("google")}
                   className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light"
                   disabled={loading}
                >
@@ -206,6 +174,7 @@ const LoginForm = () => {
 
                <button
                   type="button"
+                  onClick={() => handleSocialLogin("facebook")}
                   className="w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light"
                   disabled={loading}
                >
@@ -219,6 +188,7 @@ const LoginForm = () => {
 
                <button
                   type="button"
+                  onClick={() => handleSocialLogin("apple")}
                   className="w-full flex items-center justify-center gap-2 border border-neutral py-3 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light"
                   disabled={loading}
                >

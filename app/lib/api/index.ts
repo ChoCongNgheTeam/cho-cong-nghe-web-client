@@ -11,6 +11,7 @@ class ApiError extends Error {
       this.name = "ApiError";
    }
 }
+
 class ApiRequest {
    private async request<T>(
       endpoint: string,
@@ -18,6 +19,7 @@ class ApiRequest {
          noAuth?: boolean;
          params?: Record<string, any>;
          noRedirectOn401?: boolean;
+         silentAuth?: boolean; // ✅ THÊM FLAG MỚI
          timeout?: number;
       } = {},
    ): Promise<T> {
@@ -25,6 +27,7 @@ class ApiRequest {
          noAuth = false,
          params,
          noRedirectOn401 = false,
+         silentAuth = false, // ✅ Mặc định false
          timeout = 15000,
          ...fetchOptions
       } = options;
@@ -60,7 +63,7 @@ class ApiRequest {
          const response = await fetch(url, {
             ...fetchOptions,
             signal: controller.signal,
-            credentials: "include", // ✅ GỬI COOKIE
+            credentials: "include",
             headers: {
                ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
                ...fetchOptions.headers,
@@ -73,7 +76,75 @@ class ApiRequest {
          clearTimeout(timeoutId);
 
          // ✅ XỬ LÝ 401 - Access token expired
-         if (response.status === 401 && !noRedirectOn401) {
+         if (response.status === 401) {
+            // ❌ CASE 1: Silent auth check (lần đầu load trang)
+            // → Thử refresh token nhưng KHÔNG redirect nếu fail
+            if (silentAuth) {
+               console.log("[API] 🔍 Silent auth check - 401 received");
+
+               try {
+                  const refreshResponse = await fetch(
+                     `${BASE_URL}/api/v1/auth/refresh`,
+                     {
+                        method: "POST",
+                        credentials: "include",
+                     },
+                  );
+
+                  if (refreshResponse.ok) {
+                     console.log("[API] 🔄 Token refreshed (silent mode)");
+                     await new Promise((resolve) => setTimeout(resolve, 100));
+
+                     // ✅ Retry request gốc
+                     const retryController = new AbortController();
+                     const retryTimeoutId = setTimeout(
+                        () => retryController.abort(),
+                        timeout,
+                     );
+
+                     const retryResponse = await fetch(url, {
+                        ...fetchOptions,
+                        signal: retryController.signal,
+                        credentials: "include",
+                        headers: {
+                           ...(isJsonBody
+                              ? { "Content-Type": "application/json" }
+                              : {}),
+                           ...fetchOptions.headers,
+                        },
+                        body: isJsonBody
+                           ? JSON.stringify(fetchOptions.body)
+                           : fetchOptions.body,
+                     });
+
+                     clearTimeout(retryTimeoutId);
+
+                     if (retryResponse.ok) {
+                        if (retryResponse.status === 204) {
+                           return null as T;
+                        }
+                        return (await retryResponse.json()) as T;
+                     }
+                  }
+               } catch (refreshError) {
+                  console.log(
+                     "[API] ⚠️ Silent refresh failed - User not logged in",
+                  );
+               }
+
+               // ❌ Không redirect, chỉ throw error
+               throw new ApiError("Not authenticated", 401);
+            }
+
+            // ❌ CASE 2: noRedirectOn401 = true
+            // → Không làm gì cả, chỉ throw error
+            if (noRedirectOn401) {
+               console.log("[API] ⚠️ 401 with noRedirectOn401 flag");
+               throw new ApiError("Unauthorized", 401);
+            }
+
+            // ✅ CASE 3: User action bị 401 (normal flow)
+            // → Thử refresh, nếu fail thì redirect login
             console.log("[API] ⚠️ 401 - Trying to refresh token...");
 
             try {
@@ -81,17 +152,15 @@ class ApiRequest {
                   `${BASE_URL}/api/v1/auth/refresh`,
                   {
                      method: "POST",
-                     credentials: "include", // ✅ Gửi refreshToken cookie
+                     credentials: "include",
                   },
                );
 
                if (refreshResponse.ok) {
                   console.log("[API] 🔄 Token refreshed successfully");
-
-                  // ✅ QUAN TRỌNG: Đợi một chút để browser cập nhật cookie
                   await new Promise((resolve) => setTimeout(resolve, 100));
 
-                  // ✅ Retry request gốc với cookie mới
+                  // ✅ Retry request gốc
                   const retryController = new AbortController();
                   const retryTimeoutId = setTimeout(
                      () => retryController.abort(),
@@ -101,7 +170,7 @@ class ApiRequest {
                   const retryResponse = await fetch(url, {
                      ...fetchOptions,
                      signal: retryController.signal,
-                     credentials: "include", // ✅ Browser sẽ gửi cookie mới
+                     credentials: "include",
                      headers: {
                         ...(isJsonBody
                            ? { "Content-Type": "application/json" }
@@ -122,7 +191,6 @@ class ApiRequest {
                      return (await retryResponse.json()) as T;
                   }
 
-                  // Retry vẫn thất bại
                   console.error("[API] ❌ Retry failed after refresh");
                   throw new ApiError(
                      "Retry failed after refresh",
@@ -130,7 +198,6 @@ class ApiRequest {
                   );
                }
 
-               // Refresh thất bại
                console.error(
                   "[API] ❌ Refresh failed with status:",
                   refreshResponse.status,
@@ -141,7 +208,8 @@ class ApiRequest {
 
             // ❌ Redirect login nếu refresh thất bại
             if (typeof window !== "undefined") {
-               window.location.href = "/login?expired=1";
+               console.log("[API] 🔄 Redirecting to login...");
+               window.location.href = "/account/login?expired=1";
             }
             throw new ApiError("Session expired", 401);
          }
@@ -191,6 +259,7 @@ class ApiRequest {
          params?: any;
          noAuth?: boolean;
          noRedirectOn401?: boolean;
+         silentAuth?: boolean; // ✅ THÊM VÀO TYPE
          timeout?: number;
       },
    ) {
