@@ -42,9 +42,11 @@ const LoginForm = () => {
             },
             { noAuth: true },
          );
-
+         console.log(response);
+         debugger;
          if (response?.user) {
             // ✅ Gọi login để set user state và merge cart
+
             await login(response.user);
 
             // ⚠️ Login function đã có router.push() rồi
