@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ProductDetail } from "@/lib/types/product";
 
 interface ProductDetailSection1Props {
@@ -17,30 +17,31 @@ export default function ProductDetailSection1({
   const descriptionRef = useRef<HTMLDivElement | null>(null);
 
   const handleToggleExpand = () => {
-    if (expanded) {
-      // Khi THU GỌN → scroll về đầu mô tả
-      descriptionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-
-      // Bù nếu có header sticky
-      setTimeout(() => {
-        window.scrollBy({ top: -80, behavior: "smooth" });
-      }, 300);
-    }
-
     setExpanded((prev) => !prev);
   };
+
+  useEffect(() => {
+  if (!expanded && descriptionRef.current) {
+    const y =
+      descriptionRef.current.getBoundingClientRect().top +
+      window.pageYOffset -
+      80;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth",
+    });
+  }
+}, [expanded]);
 
   return (
     <div
       className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-neutral-light rounded-lg"
       ref={descriptionRef}
     >
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-12">
         {/* LEFT - MÔ TẢ */}
-        <div className="flex flex-col gap-4 lg:flex-[2] ">
+        <div className="flex flex-col gap-4 lg:flex-[1.6] ">
           <h2 className="text-xl sm:text-2xl font-semibold text-primary">
             Mô tả sản phẩm
           </h2>
@@ -111,58 +112,62 @@ export default function ProductDetailSection1({
           </button>
         </div>
 
-        {/* RIGHT - THÔNG TIN HAY */}
-        <div className="flex flex-col gap-3 lg:flex-1 mt-6 lg:mt-0 lg:self-start">
-          <h2 className="text-xl sm:text-2xl font-semibold text-primary ">
-            Thông tin hay
-          </h2>
+        {/* RIGHT - THÔNG TIN HAY - ✅ STICKY */}
+        <div className="lg:flex-1 mt-6 lg:mt-0">
+          <div
+            className={`flex flex-col gap-3 ${expanded ? "lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]" : ""} `}
+          >
+            <h2 className="text-xl sm:text-2xl font-semibold text-primary">
+              Thông tin hay
+            </h2>
 
-          {/* Tabs */}
-          <div className="flex gap-2 mb-2 sm:mb-4 ">
-            <button
-              onClick={() => setActiveTab("baiviet")}
-              className={`border px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base transition-colors ${
-                activeTab === "baiviet"
-                  ? "border-promotion text-promotion bg-promotion-light"
-                  : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
-              }`}
-            >
-              Bài viết liên quan
-            </button>
+            {/* Tabs */}
+            <div className="flex gap-2 mb-2 sm:mb-4">
+              <button
+                onClick={() => setActiveTab("baiviet")}
+                className={`border px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base transition-colors ${
+                  activeTab === "baiviet"
+                    ? "border-promotion text-promotion bg-promotion-light"
+                    : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
+                }`}
+              >
+                Bài viết liên quan
+              </button>
 
-            <button
-              onClick={() => setActiveTab("meohay")}
-              className={`border px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base transition-colors ${
-                activeTab === "meohay"
-                  ? "border-promotion text-promotion bg-promotion-light"
-                  : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
-              }`}
-            >
-              Xem nhanh
-            </button>
-          </div>
+              <button
+                onClick={() => setActiveTab("meohay")}
+                className={`border px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base transition-colors ${
+                  activeTab === "meohay"
+                    ? "border-promotion text-promotion bg-promotion-light"
+                    : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
+                }`}
+              >
+                Xem nhanh
+              </button>
+            </div>
 
-          {/* TAB CONTENT */}
-          <div className="text-sm sm:text-base min-h-[380px]">
-            {activeTab === "baiviet" && (
-              <iframe
-                className="w-full aspect-video rounded-lg"
-                src="https://www.youtube.com/embed/NmF82mn0oS8"
-                title="Video sản phẩm"
-                allowFullScreen
-              />
-            )}
+            {/* TAB CONTENT */}
+            <div className="text-sm sm:text-base min-h-[380px] overflow-y-auto">
+              {activeTab === "baiviet" && (
+                <iframe
+                  className="w-full aspect-video rounded-lg"
+                  src="https://www.youtube.com/embed/NmF82mn0oS8"
+                  title="Video sản phẩm"
+                  allowFullScreen
+                />
+              )}
 
-            {activeTab === "meohay" && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-base sm:text-lg text-primary">
-                  Mẹo hay
-                </h3>
-                <p className="text-neutral-darker">
-                  Đây là nội dung các mẹo hay nhanh chóng...
-                </p>
-              </div>
-            )}
+              {activeTab === "meohay" && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-base sm:text-lg text-primary">
+                    Mẹo hay
+                  </h3>
+                  <p className="text-neutral-darker">
+                    Đây là nội dung các mẹo hay nhanh chóng...
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

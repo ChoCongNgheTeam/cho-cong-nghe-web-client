@@ -4,6 +4,7 @@ import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
+import { useLayoutEffect } from "react";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
 import ProductDetailRight from "../components/product-detail/product-detail-card-right";
@@ -13,6 +14,8 @@ import ProductReview from "../components/product-detail/product-detail-review";
 import CompareProducts from "../components/product-detail/product-detail-compare";
 import ProductDetailSuggest from "../components/product-detail/product-detail-suggest";
 import ProductsViewed from "../components/product-detail/products-viewed";
+
+import Breadcrumb from "../components/Breadcrumb";
 
 import { ProductDetail } from "@/lib/types/product";
 
@@ -25,7 +28,19 @@ export function ProductDetailContent({
   product,
   slug,
 }: ProductDetailContentProps) {
+  useLayoutEffect(() => {
+    // Ép browser đứng yên ở đầu trang
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    // Ép thêm lần nữa sau khi ảnh + sticky mount xong
+    const t = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, 0);
+
+    return () => clearTimeout(t);
+  }, []);
   const reviewsRef = useRef<HTMLDivElement>(null);
+  const specifications = useRef<HTMLDivElement>(null);
 
   // Khởi tạo selected color và storage từ availableOptions
   const colors =
@@ -80,6 +95,12 @@ export function ProductDetailContent({
     product.currentVariant?.images || [],
   );
 
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+  }, []);
+
   // Call API lấy hình ảnh variant khi color hoặc storage thay đổi
   useEffect(() => {
     if (!selectedColor || !selectedStorage) return;
@@ -108,6 +129,14 @@ export function ProductDetailContent({
     });
   };
 
+  // Hàm cuộn đến phần thông số kỹ thuật
+  const scrollToSpecifications = () => {
+    specifications.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   useEffect(() => {
     console.log("Color:", selectedColor);
     console.log("Storage:", selectedStorage);
@@ -115,6 +144,15 @@ export function ProductDetailContent({
 
   return (
     <div>
+      <div className="container sm:px-6 mt-4">
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            { label: product.category?.name, href: `/products/category/${product.category?.slug}` },
+            { label: product.name },
+          ]}
+        />
+      </div>
       {/* Hero Section - Product Info */}
       <div className=" sm:px-6  mt-4 sm:mt-6 lg:mt-8 container">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
@@ -138,6 +176,7 @@ export function ProductDetailContent({
                 onColorChange={handleColorChange}
                 onStorageChange={handleStorageChange}
                 onReviewClick={scrollToReviews}
+                onSpecificationClick={scrollToSpecifications}
               />
             </div>
           </div>
@@ -145,7 +184,7 @@ export function ProductDetailContent({
       </div>
 
       {/* Product Detail Section */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
+      <div className="bg-gray-400/10 pt-4 sm:pt-6 " ref={specifications}>
         <div className=" !px-0">
           <ProductDetailSection slug={slug} />
         </div>
