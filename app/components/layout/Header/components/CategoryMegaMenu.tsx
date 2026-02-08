@@ -383,7 +383,7 @@ const CategoryMegaMenu = () => {
                                                 ].includes(child.slug),
                                              )
                                              .map((brand) => (
-                                                <a
+                                                <Link
                                                    key={brand.id}
                                                    href={`/category/${brand.slug}`}
                                                    className="flex items-center gap-2 p-3 bg-neutral-light border border-neutral rounded-lg hover:border-accent transition-all text-sm font-medium text-primary"
@@ -393,7 +393,7 @@ const CategoryMegaMenu = () => {
                                                       " (iPhone)",
                                                       "",
                                                    )}
-                                                </a>
+                                                </Link>
                                              ))}
                                        </div>
                                     </div>
@@ -427,7 +427,7 @@ const CategoryMegaMenu = () => {
                                                    <div className="space-y-2">
                                                       {level2Category.children.map(
                                                          (level3Item) => (
-                                                            <a
+                                                            <Link
                                                                key={
                                                                   level3Item.id
                                                                }
@@ -435,7 +435,7 @@ const CategoryMegaMenu = () => {
                                                                className="block text-sm text-secondary hover:text-accent transition-colors py-1"
                                                             >
                                                                {level3Item.name}
-                                                            </a>
+                                                            </Link>
                                                          ),
                                                       )}
                                                    </div>
@@ -461,13 +461,13 @@ const CategoryMegaMenu = () => {
                                                          "theo-phan-khuc-gia",
                                                    )
                                                    ?.children?.map((price) => (
-                                                      <a
+                                                      <Link
                                                          key={price.id}
                                                          href={`/category/${price.slug}`}
                                                          className="text-sm text-secondary hover:text-accent transition-colors py-1"
                                                       >
                                                          {price.name}
-                                                      </a>
+                                                      </Link>
                                                    ))}
                                              </div>
                                           </div>
@@ -490,13 +490,13 @@ const CategoryMegaMenu = () => {
                                                          "theo-nhu-cau",
                                                    )
                                                    ?.children?.map((need) => (
-                                                      <a
+                                                      <Link
                                                          key={need.id}
                                                          href={`/category/${need.slug}`}
                                                          className="text-sm text-secondary hover:text-accent transition-colors py-1"
                                                       >
                                                          {need.name}
-                                                      </a>
+                                                      </Link>
                                                    ))}
                                              </div>
                                           </div>
@@ -518,13 +518,13 @@ const CategoryMegaMenu = () => {
                                                 <div className="space-y-2">
                                                    {category.children.map(
                                                       (child) => (
-                                                         <a
+                                                         <Link
                                                             key={child.id}
                                                             href={`/category/${child.slug}`}
                                                             className="block text-sm text-secondary hover:text-accent transition-colors py-1"
                                                          >
                                                             {child.name}
-                                                         </a>
+                                                         </Link>
                                                       ),
                                                    )}
                                                 </div>
@@ -612,7 +612,7 @@ const CategoryMegaMenu = () => {
                                           <div className="flex flex-wrap items-center gap-1 text-sm">
                                              {row.categories.map((cat, idx) => (
                                                 <React.Fragment key={cat.id}>
-                                                   <a
+                                                   <Link
                                                       href={`/category/${cat.slug}`}
                                                       onClick={(e) =>
                                                          e.stopPropagation()
@@ -620,7 +620,7 @@ const CategoryMegaMenu = () => {
                                                       className="font-medium hover:text-accent transition-colors"
                                                    >
                                                       {cat.name}
-                                                   </a>
+                                                   </Link>
                                                    {idx <
                                                       row.categories.length -
                                                          1 && (
@@ -718,7 +718,7 @@ const CategoryMegaMenu = () => {
                                                       <div className="space-y-1.5">
                                                          {level2Category.children.map(
                                                             (level3Item) => (
-                                                               <a
+                                                               <Link
                                                                   key={
                                                                      level3Item.id
                                                                   }
@@ -728,7 +728,7 @@ const CategoryMegaMenu = () => {
                                                                   {
                                                                      level3Item.name
                                                                   }
-                                                               </a>
+                                                               </Link>
                                                             ),
                                                          )}
                                                       </div>
@@ -755,13 +755,13 @@ const CategoryMegaMenu = () => {
                                                          "theo-phan-khuc-gia",
                                                    )
                                                    ?.children?.map((price) => (
-                                                      <a
+                                                      <Link
                                                          key={price.id}
                                                          href={`/category/${price.slug}`}
                                                          className="text-sm text-secondary hover:text-accent transition-colors"
                                                       >
                                                          {price.name}
-                                                      </a>
+                                                      </Link>
                                                    ))}
                                              </div>
                                           </div>
@@ -784,13 +784,13 @@ const CategoryMegaMenu = () => {
                                                          "theo-nhu-cau",
                                                    )
                                                    ?.children?.map((need) => (
-                                                      <a
+                                                      <Link
                                                          key={need.id}
                                                          href={`/category/${need.slug}`}
                                                          className="text-sm text-secondary hover:text-accent transition-colors"
                                                       >
                                                          {need.name}
-                                                      </a>
+                                                      </Link>
                                                    ))}
                                              </div>
                                           </div>
@@ -824,13 +824,13 @@ const CategoryMegaMenu = () => {
                                              <div className="space-y-1.5">
                                                 {category.children.map(
                                                    (child) => (
-                                                      <a
+                                                      <Link
                                                          key={child.id}
                                                          href={`/category/${child.slug}`}
                                                          className="block text-sm text-secondary hover:text-accent transition-colors"
                                                       >
                                                          {child.name}
-                                                      </a>
+                                                      </Link>
                                                    ),
                                                 )}
                                              </div>

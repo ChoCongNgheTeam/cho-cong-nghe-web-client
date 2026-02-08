@@ -12,6 +12,17 @@ class ApiError extends Error {
    }
 }
 
+// ✅ Type cho response an toàn
+interface SafeResponse<T> {
+   success: boolean;
+   data?: T;
+   error?: {
+      message: string;
+      status: number;
+      data?: any;
+   };
+}
+
 class ApiRequest {
    private async request<T>(
       endpoint: string,
@@ -19,7 +30,7 @@ class ApiRequest {
          noAuth?: boolean;
          params?: Record<string, any>;
          noRedirectOn401?: boolean;
-         silentAuth?: boolean; // ✅ THÊM FLAG MỚI
+         silentAuth?: boolean;
          timeout?: number;
       } = {},
    ): Promise<T> {
@@ -27,7 +38,7 @@ class ApiRequest {
          noAuth = false,
          params,
          noRedirectOn401 = false,
-         silentAuth = false, // ✅ Mặc định false
+         silentAuth = false,
          timeout = 15000,
          ...fetchOptions
       } = options;
@@ -36,7 +47,6 @@ class ApiRequest {
          throw new Error("NEXT_PUBLIC_API_BASE_URL chưa được cấu hình");
       }
 
-      // Tạo URL với query params
       let url = `${BASE_URL}/api/v1${endpoint}`;
       if (params) {
          const searchParams = new URLSearchParams();
@@ -49,7 +59,6 @@ class ApiRequest {
          if (queryString) url += `?${queryString}`;
       }
 
-      // Timeout controller
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -75,13 +84,12 @@ class ApiRequest {
 
          clearTimeout(timeoutId);
 
-         // ✅ XỬ LÝ 401 - Access token expired
          if (response.status === 401) {
-            // ❌ CASE 1: Silent auth check (lần đầu load trang)
-            // → Thử refresh token nhưng KHÔNG redirect nếu fail
-            if (silentAuth) {
-               console.log("[API] 🔍 Silent auth check - 401 received");
+            if (noAuth) {
+               throw new ApiError("Unauthorized", 401);
+            }
 
+            if (silentAuth) {
                try {
                   const refreshResponse = await fetch(
                      `${BASE_URL}/api/v1/auth/refresh`,
@@ -92,10 +100,8 @@ class ApiRequest {
                   );
 
                   if (refreshResponse.ok) {
-                     console.log("[API] 🔄 Token refreshed (silent mode)");
                      await new Promise((resolve) => setTimeout(resolve, 100));
 
-                     // ✅ Retry request gốc
                      const retryController = new AbortController();
                      const retryTimeoutId = setTimeout(
                         () => retryController.abort(),
@@ -127,25 +133,15 @@ class ApiRequest {
                      }
                   }
                } catch (refreshError) {
-                  console.log(
-                     "[API] ⚠️ Silent refresh failed - User not logged in",
-                  );
+                  // Silent fail
                }
 
-               // ❌ Không redirect, chỉ throw error
                throw new ApiError("Not authenticated", 401);
             }
 
-            // ❌ CASE 2: noRedirectOn401 = true
-            // → Không làm gì cả, chỉ throw error
             if (noRedirectOn401) {
-               console.log("[API] ⚠️ 401 with noRedirectOn401 flag");
                throw new ApiError("Unauthorized", 401);
             }
-
-            // ✅ CASE 3: User action bị 401 (normal flow)
-            // → Thử refresh, nếu fail thì redirect login
-            console.log("[API] ⚠️ 401 - Trying to refresh token...");
 
             try {
                const refreshResponse = await fetch(
@@ -157,10 +153,8 @@ class ApiRequest {
                );
 
                if (refreshResponse.ok) {
-                  console.log("[API] 🔄 Token refreshed successfully");
                   await new Promise((resolve) => setTimeout(resolve, 100));
 
-                  // ✅ Retry request gốc
                   const retryController = new AbortController();
                   const retryTimeoutId = setTimeout(
                      () => retryController.abort(),
@@ -191,30 +185,18 @@ class ApiRequest {
                      return (await retryResponse.json()) as T;
                   }
 
-                  console.error("[API] ❌ Retry failed after refresh");
                   throw new ApiError(
                      "Retry failed after refresh",
                      retryResponse.status,
                   );
                }
-
-               console.error(
-                  "[API] ❌ Refresh failed with status:",
-                  refreshResponse.status,
-               );
             } catch (refreshError) {
-               console.error("[API] ❌ Refresh error:", refreshError);
+               // Refresh failed
             }
 
-            // ❌ Redirect login nếu refresh thất bại
-            if (typeof window !== "undefined") {
-               console.log("[API] 🔄 Redirecting to login...");
-               window.location.href = "/account/login?expired=1";
-            }
             throw new ApiError("Session expired", 401);
          }
 
-         // ✅ XỬ LÝ LỖI KHÁC
          if (!response.ok) {
             let message = "Lỗi máy chủ";
             let errorData = null;
@@ -228,7 +210,6 @@ class ApiRequest {
             throw new ApiError(message, response.status, errorData);
          }
 
-         // ✅ TRẢ DATA
          if (response.status === 204) {
             return null as T;
          }
@@ -253,13 +234,66 @@ class ApiRequest {
       }
    }
 
+   // ✅ METHOD MỚI: Không throw error, trả về object
+   async postSafe<T>(
+      endpoint: string,
+      body?: any,
+      options?: {
+         noAuth?: boolean;
+         timeout?: number;
+         headers?: HeadersInit;
+      },
+   ): Promise<SafeResponse<T>> {
+      try {
+         const data = await this.request<T>(endpoint, {
+            ...options,
+            method: "POST",
+            body,
+         });
+
+         return {
+            success: true,
+            data,
+         };
+      } catch (error) {
+         if (error instanceof ApiError) {
+            return {
+               success: false,
+               error: {
+                  message: error.message,
+                  status: error.status,
+                  data: error.data,
+               },
+            };
+         }
+
+         if (error instanceof Error) {
+            return {
+               success: false,
+               error: {
+                  message: error.message,
+                  status: 500,
+               },
+            };
+         }
+
+         return {
+            success: false,
+            error: {
+               message: "Đã xảy ra lỗi không xác định",
+               status: 500,
+            },
+         };
+      }
+   }
+
    get<T>(
       endpoint: string,
       options?: {
          params?: any;
          noAuth?: boolean;
          noRedirectOn401?: boolean;
-         silentAuth?: boolean; // ✅ THÊM VÀO TYPE
+         silentAuth?: boolean;
          timeout?: number;
       },
    ) {
@@ -335,3 +369,4 @@ class ApiRequest {
 const apiRequest = new ApiRequest();
 export default apiRequest;
 export { ApiError };
+export type { SafeResponse };

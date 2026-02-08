@@ -1,13 +1,14 @@
 "use client";
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
 
+// In your AuthContext file
 interface User {
    id: string;
    email: string;
-   phone: string;
+   phone?: string;
    userName: string;
    fullName: string;
    role: string;
@@ -50,6 +51,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
    const [showWelcome, setShowWelcome] = useState(true);
    const [loading, setLoading] = useState(true);
    const router = useRouter();
+   const toast = useToasty();
 
    useEffect(() => {
       const checkAuth = async () => {
@@ -75,7 +77,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
             } else {
                const errorMessage =
                   error instanceof Error ? error.message : "Unknown error";
-               console.error("[AuthContext] ❌ Error:", errorMessage);
             }
             setUser(null);
          } finally {
@@ -142,7 +143,12 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
       const redirectPath = userData.role === "ADMIN" ? "/admin/dashboard" : "/";
       router.push(redirectPath);
-      toast.success("Đăng nhập thành công");
+
+      toast.success("Đăng nhập thành công", {
+         title: "Chào mừng trở lại!",
+         duration: 3000,
+         showProgress: true,
+      });
    };
 
    const logout = async () => {
@@ -174,10 +180,14 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
          setUser(null);
          localStorage.removeItem("cart");
 
-         toast.success("Đăng xuất thành công");
+         toast.success("Đăng xuất thành công", {
+            title: "Hẹn gặp lại!",
+            duration: 5000,
+            showProgress: true,
+         });
 
          setTimeout(() => {
-            window.location.href = "/account";
+            router.replace("/account?login");
          }, 500);
       }
    };
