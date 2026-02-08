@@ -21,6 +21,7 @@ import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
 import { useUserMenu } from "@/hooks/useUserMenu";
 import { useTheme } from "@/hooks/useTheme";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 const Header = () => {
    const [searchQuery, setSearchQuery] = useState("");
@@ -68,8 +69,8 @@ const Header = () => {
 
                   {/* Desktop Skeleton */}
                   <div className="hidden md:flex items-center justify-between gap-6 lg:gap-8">
-                     <div className="w-[220px] h-16 lg:h-20 bg-neutral/20 animate-pulse rounded" />
-                     <div className="w-[400px] lg:w-[500px] h-10 bg-neutral/20 animate-pulse rounded-full" />
+                     <div className="w-55 h-16 lg:h-20 bg-neutral/20 animate-pulse rounded" />
+                     <div className="w-100 lg:w-[500px] h-10 bg-neutral/20 animate-pulse rounded-full" />
                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
                         <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
@@ -141,15 +142,11 @@ const Header = () => {
                         <>
                            <div className="px-3 py-3 bg-accent/10 rounded-lg">
                               <div className="flex items-center gap-3">
-                                 <div className="w-12 h-12 rounded-full overflow-hidden bg-neutral border-2 border-accent shrink-0">
-                                    <Image
-                                       src={`/imgs/${user.avatarImage}`}
-                                       alt={user.fullName}
-                                       width={36}
-                                       height={36}
-                                       className="w-full h-full object-cover"
-                                    />
-                                 </div>
+                                 <UserAvatar
+                                    avatarImage={user.avatarImage}
+                                    fullName={user.fullName}
+                                    size={48}
+                                 />
                                  <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-primary truncate">
                                        {user.fullName}

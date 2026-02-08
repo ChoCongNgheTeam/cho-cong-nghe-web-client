@@ -32,17 +32,20 @@ interface AuthContextType {
    setShowWelcome: (show: boolean) => void;
 }
 
+interface LocalCart {
+   items: unknown[];
+}
+
 export const AuthContext = createContext<AuthContextType | undefined>(
    undefined,
 );
 
-export function AuthProvider({
-   children,
-   initialUser,
-}: {
+interface AuthProviderProps {
    children: ReactNode;
    initialUser?: User | null;
-}) {
+}
+
+export function AuthProvider({ children, initialUser }: AuthProviderProps) {
    const [user, setUser] = useState<User | null>(initialUser || null);
    const [showWelcome, setShowWelcome] = useState(true);
    const [loading, setLoading] = useState(true);
@@ -51,13 +54,10 @@ export function AuthProvider({
    useEffect(() => {
       const checkAuth = async () => {
          try {
-            // ✅ Case 1 & 2: Browser tự gửi cookie (accessToken + refreshToken)
-            // Nếu accessToken expired -> api.ts tự động gọi /refresh
             const response = await apiRequest.get<ApiResponse<User>>(
                "/users/me",
-               { noRedirectOn401: true },
+               { silentAuth: true },
             );
-
             if (response?.data) {
                setUser(response.data);
                console.log(
@@ -65,11 +65,17 @@ export function AuthProvider({
                   response.data.email,
                );
             }
-         } catch (error: any) {
-            if (error?.status === 401) {
-               console.log("[AuthContext] ⚠️ No valid session");
+         } catch (error) {
+            if (
+               error instanceof Error &&
+               "status" in error &&
+               error.status === 401
+            ) {
+               console.log("[AuthContext] ⚠️ User not logged in");
             } else {
-               console.error("[AuthContext] ❌ Error:", error.message);
+               const errorMessage =
+                  error instanceof Error ? error.message : "Unknown error";
+               console.error("[AuthContext] ❌ Error:", errorMessage);
             }
             setUser(null);
          } finally {
@@ -92,36 +98,44 @@ export function AuthProvider({
       }
    };
 
+   const hasLocalCart = (): boolean => {
+      const localCartStr = localStorage.getItem("cart");
+      if (!localCartStr) return false;
+
+      try {
+         const localCart = JSON.parse(localCartStr) as LocalCart;
+         return Boolean(
+            localCart && localCart.items && localCart.items.length > 0,
+         );
+      } catch {
+         return false;
+      }
+   };
+
+   const waitForCartMerge = (): Promise<boolean> => {
+      return new Promise((resolve) => {
+         const handleMerge = () => {
+            window.removeEventListener("cart-merged", handleMerge);
+            resolve(true);
+         };
+
+         window.addEventListener("cart-merged", handleMerge);
+
+         setTimeout(() => {
+            window.removeEventListener("cart-merged", handleMerge);
+            resolve(false);
+         }, 5000);
+      });
+   };
+
    const login = async (userData: User) => {
-      // ✅ Chỉ set user state, accessToken đã được BE set vào cookie
       setUser(userData);
       setShowWelcome(true);
+      console.log("[AuthContext] User logged in:", userData.userName);
 
       // Cart merge logic
-      const localCartStr = localStorage.getItem("cart");
-      let hasLocalCart = false;
-      if (localCartStr) {
-         try {
-            const localCart = JSON.parse(localCartStr);
-            hasLocalCart = localCart && localCart.length > 0;
-         } catch (e) {
-            hasLocalCart = false;
-         }
-      }
-
-      if (hasLocalCart) {
-         await new Promise((resolve) => {
-            const handleMerge = () => {
-               window.removeEventListener("cart-merged", handleMerge);
-               resolve(true);
-            };
-            window.addEventListener("cart-merged", handleMerge);
-
-            setTimeout(() => {
-               window.removeEventListener("cart-merged", handleMerge);
-               resolve(false);
-            }, 5000);
-         });
+      if (hasLocalCart()) {
+         await waitForCartMerge();
       } else {
          await new Promise((resolve) => setTimeout(resolve, 300));
       }
@@ -142,12 +156,13 @@ export function AuthProvider({
             },
          );
          console.log("[Logout] ✅ Backend logout successful");
-      } catch (error: any) {
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : "";
          console.error("[Logout] ❌ Error:", error);
 
          if (
-            error.message?.includes("kết nối") ||
-            error.message?.includes("timeout")
+            errorMessage.includes("kết nối") ||
+            errorMessage.includes("timeout")
          ) {
             console.warn(
                "[Logout] Network error, proceeding with local logout",
@@ -159,11 +174,8 @@ export function AuthProvider({
          setUser(null);
          localStorage.removeItem("cart");
 
-         // ✅ Hiển thị toast trước
          toast.success("Đăng xuất thành công");
 
-         // ✅ PHẢI DÙNG window.location.href để force reload
-         // Delay ngắn để toast hiển thị
          setTimeout(() => {
             window.location.href = "/account";
          }, 500);
@@ -187,3 +199,50 @@ export function AuthProvider({
       </AuthContext.Provider>
    );
 }
+
+/**
+ * ### **🔍 Case 1: Chưa đăng nhập (lần đầu vào trang)**
+```
+1. AuthContext mount → gọi GET /users/me với silentAuth: true
+2. Backend trả 401 (không có token)
+3. api.ts thấy silentAuth = true → thử refresh token
+4. Refresh fail (không có refreshToken cookie)
+5. ❌ KHÔNG redirect → chỉ throw error
+6. AuthContext catch error → setUser(null) → setLoading(false)
+7. ✅ User thấy trang bình thường, không bị redirect
+```
+
+### **✅ Case 2: Đã đăng nhập, accessToken còn hạn**
+```
+1. AuthContext mount → gọi GET /users/me với silentAuth: true
+2. Backend trả 200 + user data
+3. setUser(userData) → User vào trang bình thường
+```
+
+### **🔄 Case 3: Đã đăng nhập, accessToken hết hạn**
+```
+1. AuthContext mount → gọi GET /users/me với silentAuth: true
+2. Backend trả 401 (accessToken expired)
+3. api.ts thấy silentAuth = true → thử refresh token
+4. Refresh success → accessToken mới được set vào cookie
+5. Retry GET /users/me → trả 200 + user data
+6. ✅ setUser(userData) → User vào trang bình thường
+```
+
+### **❌ Case 4: Đã đăng nhập, CẢ 2 token đều hết hạn**
+```
+1. AuthContext mount → gọi GET /users/me với silentAuth: true
+2. Backend trả 401 (accessToken expired)
+3. api.ts thử refresh token → Refresh fail (refreshToken expired)
+4. ❌ KHÔNG redirect (vì silentAuth = true)
+5. setUser(null) → User bị logout nhưng vẫn ở trang hiện tại
+```
+
+### **🔒 Case 5: User đang browse trang, token hết hạn giữa chừng**
+```
+1. User click nút "Thêm vào giỏ" → gọi POST /cart
+2. Backend trả 401 (token expired)
+3. api.ts KHÔNG có silentAuth → Chạy normal flow
+4. Thử refresh token → Nếu success: retry request
+5. Nếu fail: redirect /login?expired=1
+ */
