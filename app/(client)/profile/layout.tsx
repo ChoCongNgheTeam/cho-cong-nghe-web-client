@@ -65,7 +65,7 @@ export default function ProfileLayout({
                   {/* Avatar */}
                   <div className="relative w-12 h-12 rounded-full bg-white p-1 shadow-lg">
                     <img
-                      src={user?.avatarImage || "https://img.freepik.com/vector-mien-phi/vong-tron-mau-xanh-voi-nguoi-dung-mau-trang_78370-4707.jpg?semt=ais_hybrid&w=740&q=80"}
+                      src={user?.avatarImage || "/images/avatar.png"}
                       alt="Avatar"
                       className="w-full h-full rounded-full object-cover"
                     />
