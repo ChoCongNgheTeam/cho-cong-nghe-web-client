@@ -37,7 +37,7 @@ export default function ProfilePage() {
                 <div className="absolute inset-0 rounded-full bg-orange-200/40 blur-xl" />
                 <div className="relative w-28 h-28 rounded-full bg-white p-1 shadow-lg">
                   <img
-                    src={user.avatarImage || "https://i.pravatar.cc/300"}
+                    src={user.avatarImage || "https://img.freepik.com/vector-mien-phi/vong-tron-mau-xanh-voi-nguoi-dung-mau-trang_78370-4707.jpg?semt=ais_hybrid&w=740&q=80"}
                     alt="Avatar"
                     className="w-full h-full rounded-full object-cover"
                   />
