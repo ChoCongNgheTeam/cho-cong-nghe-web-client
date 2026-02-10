@@ -1,62 +1,72 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
   productId: number;
   defaultLiked?: boolean;
+  product?: {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+  };
 };
 
-const API = "http://localhost:5000";
+const STORAGE_KEY = "wishlist_products";
 
 export default function WishlistHeart({
   productId,
   defaultLiked = false,
+  product,
 }: Props) {
-  const router = useRouter();
-  const [liked, setLiked] = useState(defaultLiked);
+  const [liked, setLiked] = useState(() => {
+    if (typeof window === "undefined") return defaultLiked;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const data = raw ? (JSON.parse(raw) as Array<{ id: number }>) : [];
+      const isInStorage = data.some((p) => p.id === productId);
+      return isInStorage || defaultLiked;
+    } catch {
+      return defaultLiked;
+    }
+  });
   const [loading, setLoading] = useState(false);
-
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken")
-      : null;
 
   const handleToggle = async (
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
-    e.preventDefault();
-    e.stopPropagation(); // 🔒 không cho click lan ra card / link
-
-    if (!token) {
-      router.push("/account");
-      return;
-    }
+    // 🔒 chỉ chặn click của HEART
+    e.stopPropagation();
 
     if (loading) return;
     setLoading(true);
 
     try {
-      if (!liked) {
-        // ➕ thêm wishlist
-        await fetch(`${API}/wishlist/${productId}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setLiked(true); // tim sáng tại chỗ
-      } else {
-        // ➖ bỏ wishlist
-        await fetch(`${API}/wishlist/${productId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setLiked(false);
+      const nextLiked = !liked;
+      setLiked(nextLiked);
+
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const data = raw ? (JSON.parse(raw) as Props["product"][]) : [];
+
+        if (nextLiked) {
+          if (product) {
+            const exists = data.some((p) => p.id === productId);
+            if (!exists) {
+              data.unshift(product);
+            }
+          }
+        } else {
+          const next = data.filter((p) => p.id !== productId);
+          data.splice(0, data.length, ...next);
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       }
+
+      // 👉 optional: sync wishlist page
+      window.dispatchEvent(new Event("wishlist:update"));
     } catch (err) {
       console.error("Wishlist error", err);
     } finally {
@@ -80,3 +90,4 @@ export default function WishlistHeart({
     </button>
   );
 }
+

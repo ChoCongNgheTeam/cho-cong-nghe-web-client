@@ -1,5 +1,5 @@
 import { WishlistProduct } from "../types/wishlist";
-import WishlistCard from "../WishlistCard";
+import WishlistCard from "./WishlistCard";
 
 type Props = {
   products: WishlistProduct[];

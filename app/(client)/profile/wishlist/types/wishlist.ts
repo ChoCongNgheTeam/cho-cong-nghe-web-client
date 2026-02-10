@@ -3,5 +3,4 @@ export type WishlistProduct = {
   name: string;
   price: number;
   image: string;
-  discount?: string;
 };

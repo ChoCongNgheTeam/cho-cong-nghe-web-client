@@ -28,7 +28,7 @@ const menuItems = [
     label: "Dịch vụ thu hộ đã thanh toán",
     href: "/profile/payment",
   },
-  { icon: Heart, label: "Sản phẩm yêu thích", href: "/profile/loyalty" },
+  { icon: Heart, label: "Sản phẩm yêu thích", href: "/profile/wishlist" },
   { icon: MapPin, label: "Sổ địa chỉ nhận hàng", href: "/profile/addresses" },
   { icon: Shield, label: "Thông tin bảo hành", href: "/profile/warranty" },
   { icon: LogOut, label: "Đăng xuất", href: "/logout" },

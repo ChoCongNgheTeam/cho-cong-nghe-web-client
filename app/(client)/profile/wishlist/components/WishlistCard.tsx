@@ -1,5 +1,5 @@
-import WishlistHeart from "../../components/shared/WishlistHeart";
-import { WishlistProduct } from "./types/wishlist";
+import WishlistHeart from "../../../../components/shared/WishlistHeart";
+import { WishlistProduct } from "../types/wishlist";
 
 type Props = {
   product: WishlistProduct;
@@ -8,7 +8,7 @@ type Props = {
 export default function WishlistCard({ product }: Props) {
   return (
     <div className="relative border rounded-xl p-3 bg-white dark:bg-[rgb(var(--neutral-light))]">
-      <WishlistHeart productId={product.id} />
+      <WishlistHeart productId={product.id} product={product} />
 
       <img
         src={product.image}

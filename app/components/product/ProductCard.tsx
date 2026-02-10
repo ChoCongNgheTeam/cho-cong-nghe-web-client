@@ -1,36 +1,58 @@
 "use client";
 
-import WishlistHeart from "@/components/wishlist/WishlistHeart";
+import WishlistHeart from "@/components/shared/WishlistHeart";
 
-export type Product = {
+type Props = {
   id: number;
   name: string;
   price: number;
   image: string;
 };
 
-type Props = {
-  product: Product;
-};
-
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({
+  id,
+  name,
+  price,
+  image,
+}: Props) {
   return (
-    <div className="relative border rounded-xl p-3 hover:shadow-md transition">
-      <WishlistHeart productId={product.id} />
-
-      <img
-        src={product.image}
-        alt={product.name}
-        className="w-full h-44 object-contain"
+    <div
+      className="
+        relative
+        rounded-2xl
+        border border-neutral-light
+        bg-white
+        dark:bg-[rgb(var(--neutral-light))]
+        p-3
+        transition
+        hover:shadow-lg
+      "
+    >
+      {/* ❤️ Wishlist */}
+      <WishlistHeart
+        productId={id}
+        product={{ id, name, price, image }}
       />
 
-      <h3 className="mt-2 text-sm line-clamp-2">
-        {product.name}
-      </h3>
+      {/* Image */}
+      <div className="aspect-square w-full overflow-hidden rounded-xl bg-neutral-light">
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-contain"
+        />
+      </div>
 
-      <p className="mt-1 text-red-600 font-semibold">
-        {product.price.toLocaleString()}đ
-      </p>
+      {/* Info */}
+      <div className="mt-3 space-y-1">
+        <h3 className="text-sm line-clamp-2 text-neutral-dark">
+          {name}
+        </h3>
+
+        <p className="font-semibold text-promotion">
+          {price.toLocaleString()}₫
+        </p>
+      </div>
     </div>
   );
 }
