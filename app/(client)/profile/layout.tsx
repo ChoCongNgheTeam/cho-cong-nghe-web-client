@@ -65,7 +65,7 @@ export default function ProfileLayout({
                   {/* Avatar */}
                   <div className="relative w-12 h-12 rounded-full bg-white p-1 shadow-lg">
                     <img
-                      src="https://i.pravatar.cc/300"
+                      src={user?.avatarImage || "/images/avatar.png"}
                       alt="Avatar"
                       className="w-full h-full rounded-full object-cover"
                     />

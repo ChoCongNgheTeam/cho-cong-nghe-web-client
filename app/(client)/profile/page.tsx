@@ -37,7 +37,7 @@ export default function ProfilePage() {
                 <div className="absolute inset-0 rounded-full bg-orange-200/40 blur-xl" />
                 <div className="relative w-28 h-28 rounded-full bg-white p-1 shadow-lg">
                   <img
-                    src={user.avatarImage || "https://i.pravatar.cc/300"}
+                    src={user.avatarImage || "/images/avatar.png"}
                     alt="Avatar"
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -49,21 +49,33 @@ export default function ProfilePage() {
             <div className="px-6 py-8 space-y-6">
               <InfoRow label="Họ và tên" value={user.fullName || "Chưa có"} />
               <InfoRow label="Email" value={user.email} />
-              <InfoRow label="Giới tính" value={user.gender || ""} />
+              <InfoRow
+                label="Giới tính"
+                value={
+                  user.gender === "MALE"
+                    ? "Nam"
+                    : user.gender === "FEMALE"
+                      ? "Nữ"
+                      : user.gender === "OTHER"
+                        ? "Khác"
+                        : "Chưa cập nhật"
+                }
+              />
 
               <div className="pt-4">
-                <Link  href="/profile/editProfile">
-                <button className="w-full flex items-center justify-center gap-2
+                <Link href="/profile/editProfile">
+                  <button
+                    className="w-full flex items-center justify-center gap-2
                   bg-red-600 hover:bg-red-700 text-white font-semibold
                   py-3 rounded-xl shadow-md hover:shadow-lg
-                  transition-all active:scale-95 cursor-pointer">
-                  <Pencil size={18} />
-                  Chỉnh sửa thông tin
-                </button>
+                  transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Pencil size={18} />
+                    Chỉnh sửa thông tin
+                  </button>
                 </Link>
               </div>
             </div>
-
           </div>
         </div>
       </div>

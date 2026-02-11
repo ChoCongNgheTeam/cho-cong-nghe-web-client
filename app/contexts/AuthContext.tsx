@@ -14,6 +14,7 @@ interface User {
    role: string;
    avatarImage?: string;
    gender?: string;
+   dateOfBirth?: string;
 }
 
 interface ApiResponse<T> {
