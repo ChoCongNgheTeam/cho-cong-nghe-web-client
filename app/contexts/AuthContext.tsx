@@ -3,6 +3,7 @@ import { createContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
+import { flushSync } from "react-dom";
 
 // In your AuthContext file
 interface User {
@@ -133,23 +134,27 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
    const login = async (userData: User) => {
       setUser(userData);
       setShowWelcome(true);
-      console.log("[AuthContext] User logged in:", userData.userName);
-
-      // Cart merge logic
+      await new Promise((resolve) => {
+         // Use requestAnimationFrame để đảm bảo DOM đã update
+         requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+               resolve(true);
+            });
+         });
+      });
+      await refreshUser();
       if (hasLocalCart()) {
          await waitForCartMerge();
-      } else {
-         await new Promise((resolve) => setTimeout(resolve, 300));
       }
-
       const redirectPath = userData.role === "ADMIN" ? "/admin/dashboard" : "/";
-      router.push(redirectPath);
-
       toast.success("Đăng nhập thành công", {
          title: "Chào mừng trở lại!",
          duration: 3000,
          showProgress: true,
       });
+      router.refresh();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      router.push(redirectPath);
    };
 
    const logout = async () => {
@@ -210,50 +215,3 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       </AuthContext.Provider>
    );
 }
-
-/**
- * ### **🔍 Case 1: Chưa đăng nhập (lần đầu vào trang)**
-```
-1. AuthContext mount → gọi GET /users/me với silentAuth: true
-2. Backend trả 401 (không có token)
-3. api.ts thấy silentAuth = true → thử refresh token
-4. Refresh fail (không có refreshToken cookie)
-5. ❌ KHÔNG redirect → chỉ throw error
-6. AuthContext catch error → setUser(null) → setLoading(false)
-7. ✅ User thấy trang bình thường, không bị redirect
-```
-
-### **✅ Case 2: Đã đăng nhập, accessToken còn hạn**
-```
-1. AuthContext mount → gọi GET /users/me với silentAuth: true
-2. Backend trả 200 + user data
-3. setUser(userData) → User vào trang bình thường
-```
-
-### **🔄 Case 3: Đã đăng nhập, accessToken hết hạn**
-```
-1. AuthContext mount → gọi GET /users/me với silentAuth: true
-2. Backend trả 401 (accessToken expired)
-3. api.ts thấy silentAuth = true → thử refresh token
-4. Refresh success → accessToken mới được set vào cookie
-5. Retry GET /users/me → trả 200 + user data
-6. ✅ setUser(userData) → User vào trang bình thường
-```
-
-### **❌ Case 4: Đã đăng nhập, CẢ 2 token đều hết hạn**
-```
-1. AuthContext mount → gọi GET /users/me với silentAuth: true
-2. Backend trả 401 (accessToken expired)
-3. api.ts thử refresh token → Refresh fail (refreshToken expired)
-4. ❌ KHÔNG redirect (vì silentAuth = true)
-5. setUser(null) → User bị logout nhưng vẫn ở trang hiện tại
-```
-
-### **🔒 Case 5: User đang browse trang, token hết hạn giữa chừng**
-```
-1. User click nút "Thêm vào giỏ" → gọi POST /cart
-2. Backend trả 401 (token expired)
-3. api.ts KHÔNG có silentAuth → Chạy normal flow
-4. Thử refresh token → Nếu success: retry request
-5. Nếu fail: redirect /login?expired=1
- */
