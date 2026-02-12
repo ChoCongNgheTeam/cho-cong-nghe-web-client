@@ -43,7 +43,7 @@ export default function ChangePasswordPage() {
 
    const getStrengthColor = () => {
       if (strengthScore <= 2) return "bg-promotion";
-      if (strengthScore <= 3) return "bg-amber-500";
+      if (strengthScore <= 3) return "bg-accent";
       if (strengthScore <= 4) return "bg-accent";
       return "bg-green-500";
    };
@@ -289,7 +289,7 @@ export default function ChangePasswordPage() {
                                     strengthScore <= 2
                                        ? "text-promotion"
                                        : strengthScore <= 3
-                                         ? "text-amber-500"
+                                         ? "text-accent"
                                          : strengthScore <= 4
                                            ? "text-accent"
                                            : "text-green-500"

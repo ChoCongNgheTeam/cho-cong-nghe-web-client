@@ -98,7 +98,7 @@ export default function BlogDetailClient({ slug, title }: Props) {
               <button className="grid h-9 w-9 place-items-center rounded-full bg-[#0068FF] text-[11px] font-bold text-white">
                 Zalo
               </button>
-              <button className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-xs font-bold text-white">
+              <button className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#22c1ff] via-[#1d7df2] to-[#0b4dd8] text-xs font-bold text-white">
                 IG
               </button>
               <button className="grid h-9 w-9 place-items-center rounded-full border border-neutral text-[18px] text-primary">
