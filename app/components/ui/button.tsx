@@ -37,7 +37,7 @@ export default function Button({
     "active:scale-95 ";
 
   if (variant === "yellow-outline") {
-    buttonClass += "bg-[#f5d142] hover:bg-[#ebc530] text-gray-900 ";
+    buttonClass += "bg-[#3b82f6] hover:bg-[#2563eb] text-white ";
   } else if (variant === "primary") {
     buttonClass += "bg-blue-600 hover:bg-blue-700 text-white ";
   }

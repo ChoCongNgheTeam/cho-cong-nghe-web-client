@@ -13,10 +13,28 @@ export default function WishlistPage() {
   const [limit, setLimit] = useState<4 | 8 | 12>(4);
   const [page, setPage] = useState(1);
 
+  const safeParse = (raw: string | null): WishlistProduct[] => {
+    if (!raw) return [];
+    try {
+      const data = JSON.parse(raw);
+      if (!Array.isArray(data)) return [];
+      return data
+        .map((item) => ({
+          id: Number(item?.id),
+          name: String(item?.name ?? ""),
+          price: item?.price ?? 0,
+          image: String(item?.image ?? ""),
+        }))
+        .filter((item) => Number.isFinite(item.id) && item.name && item.image);
+    } catch {
+      return [];
+    }
+  };
+
   // ✅ ổn định reference, không tạo lại mỗi render
   const load = useCallback(() => {
     const raw = localStorage.getItem(KEY);
-    const data: WishlistProduct[] = raw ? JSON.parse(raw) : [];
+    const data = safeParse(raw);
     setProducts(data);
   }, []);
 
@@ -32,6 +50,12 @@ export default function WishlistPage() {
 
   const totalPage = Math.ceil(products.length / limit);
 
+  useEffect(() => {
+    if (page > totalPage && totalPage > 0) {
+      setPage(1);
+    }
+  }, [page, totalPage]);
+
   const data = useMemo(() => {
     const start = (page - 1) * limit;
     return products.slice(start, start + limit);
@@ -39,7 +63,13 @@ export default function WishlistPage() {
 
   return (
     <section className="flex-1">
-      <h1 className="text-xl font-semibold mb-4">Sản phẩm yêu thích</h1>
+      <div className="mb-3 text-sm text-primary-light">
+        Trang chủ / Đơn hàng của tôi
+      </div>
+
+      <h1 className="mb-4 text-xl font-semibold text-primary">
+        Sản phẩm yêu thích
+      </h1>
 
       <WishlistToolbar
         value={limit}

@@ -8,7 +8,7 @@ type Props = {
   product?: {
     id: number;
     name: string;
-    price: number;
+    price: number | string;
     image: string;
   };
 };
@@ -90,4 +90,3 @@ export default function WishlistHeart({
     </button>
   );
 }
-

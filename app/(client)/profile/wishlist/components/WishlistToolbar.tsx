@@ -7,27 +7,24 @@ const OPTIONS: (4 | 8 | 12)[] = [4, 8, 12];
 
 export default function WishlistToolbar({ value, onChange }: Props) {
   return (
-    <div className="flex items-center gap-2 mb-6">
-      <span className="text-sm text-primary-light">Hiện</span>
+    <div className="mb-6 flex items-center gap-2 text-sm">
+      <span className="text-primary-light">Hiện</span>
 
       {OPTIONS.map((n) => (
         <button
           key={n}
           onClick={() => onChange(n)}
-          className={`px-3 py-1 rounded border text-sm transition
-            ${
-              value === n
-                ? "bg-primary text-white"
-                : "hover:bg-neutral-light"
-            }`}
+          className={`rounded border px-3 py-1 text-sm transition ${
+            value === n
+              ? "border-primary bg-primary text-white"
+              : "border-neutral bg-neutral-light text-primary hover:bg-neutral"
+          }`}
         >
           {n}
         </button>
       ))}
 
-      <span className="text-sm text-primary-light">
-        sản phẩm
-      </span>
+      <span className="text-primary-light">Sản phẩm</span>
     </div>
   );
 }

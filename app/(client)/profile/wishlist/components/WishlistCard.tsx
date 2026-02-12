@@ -6,22 +6,29 @@ type Props = {
 };
 
 export default function WishlistCard({ product }: Props) {
+  const priceNumber =
+    typeof product.price === "number"
+      ? product.price
+      : Number(String(product.price).replace(/[^\d]/g, "")) || 0;
+
   return (
-    <div className="relative border rounded-xl p-3 bg-white dark:bg-[rgb(var(--neutral-light))]">
+    <div className="relative rounded-xl border border-neutral bg-neutral-light p-3 shadow-sm transition hover:shadow-md">
       <WishlistHeart productId={product.id} product={product} />
 
-      <img
-        src={product.image}
-        alt={product.name}
-        className="w-full h-40 object-contain"
-      />
+      <div className="aspect-square w-full overflow-hidden rounded-lg bg-neutral">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="h-full w-full object-contain"
+        />
+      </div>
 
-      <h3 className="mt-2 text-sm line-clamp-2">
+      <h3 className="mt-3 text-sm font-medium text-primary">
         {product.name}
       </h3>
 
-      <p className="mt-1 font-semibold text-promotion">
-        {product.price.toLocaleString()}₫
+      <p className="mt-1 text-sm font-semibold text-promotion">
+        {priceNumber.toLocaleString()}đ
       </p>
     </div>
   );

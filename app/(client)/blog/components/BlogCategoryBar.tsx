@@ -6,11 +6,13 @@ import { BLOG_CATEGORIES } from "../_lib/blog-category";
 
 type Props = {
   active?: string;
+  className?: string;
+  itemClassName?: string;
 };
 
-export default function BlogCategoryBar({ active }: Props) {
+export default function BlogCategoryBar({ active, className, itemClassName }: Props) {
   return (
-    <div className="flex flex-wrap gap-4 border-b border-gray-200 pb-3 text-sm">
+    <div className={clsx("flex flex-wrap gap-4 border-b border-gray-200 pb-3 text-sm", className)}>
       {BLOG_CATEGORIES.map((cat) => {
         const isActive = cat.key === active;
 
@@ -22,7 +24,8 @@ export default function BlogCategoryBar({ active }: Props) {
               "pb-2 font-medium transition-colors",
               isActive
                 ? "border-b-2 border-black text-black"
-                : "text-gray-700 hover:text-black"
+                : "text-gray-700 hover:text-black",
+              itemClassName
             )}
           >
             {cat.title}
