@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react"; 
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
@@ -28,38 +28,53 @@ export function ProductDetailContent({
   product,
   slug,
 }: ProductDetailContentProps) {
+  /* ============================================================================
+   * SCROLL TO TOP ON MOUNT
+   * ========================================================================== */
   useLayoutEffect(() => {
-    // Ép browser đứng yên ở đầu trang
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
-    // Ép thêm lần nữa sau khi ảnh + sticky mount xong
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }, 0);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, []);
+
+  /* ============================================================================
+   * REFS
+   * ========================================================================== */
   const reviewsRef = useRef<HTMLDivElement>(null);
   const specifications = useRef<HTMLDivElement>(null);
 
-  // Khởi tạo selected color và storage từ availableOptions
-  const colors =
-    product.availableOptions?.find((opt) => opt.type === "color")?.values || [];
-  const storages =
-    product.availableOptions?.find((opt) => opt.type === "storage")?.values ||
-    [];
+  /* ============================================================================
+   * INITIAL OPTIONS - MEMOIZED
+   * ========================================================================== */
+  const colors = useMemo(
+    () =>
+      product.availableOptions?.find((opt) => opt.type === "color")?.values || [],
+    [product.availableOptions]
+  );
 
+  const storages = useMemo(
+    () =>
+      product.availableOptions?.find((opt) => opt.type === "storage")?.values || [],
+    [product.availableOptions]
+  );
+
+  /* ============================================================================
+   * STATE
+   * ========================================================================== */
   const [selectedColor, setSelectedColor] = useState(colors[0]?.value || "");
-  const [selectedStorage, setSelectedStorage] = useState(
-    storages[0]?.value || "",
-  );
-  const [isUserSelectStorage, setIsUserSelectStorage] = useState(false); // Track user đã click dung lượng hay chưa
+  const [selectedStorage, setSelectedStorage] = useState(storages[0]?.value || "");
+  const [isUserSelectStorage, setIsUserSelectStorage] = useState(false);
+  const [availableOptions, setAvailableOptions] = useState(product.availableOptions || []);
+  const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
+  const [variantImages, setVariantImages] = useState(product.currentVariant?.images || []);
 
-  const [availableOptions, setAvailableOptions] = useState(
-    product.availableOptions || [],
-  );
-
-  // Khi thay đổi màu → nếu chưa click dung lượng thì reset, nếu đã click thì giữ nguyên
+  /* ============================================================================
+   * HANDLERS
+   * ========================================================================== */
   const handleColorChange = (color: string) => {
     setSelectedColor(color);
 
@@ -74,54 +89,6 @@ export function ProductDetailContent({
     setSelectedStorage(storage);
   };
 
-  useEffect(() => {
-    if (!selectedColor || selectedStorage) return;
-
-    // Khi màu được chọn nhưng chưa có storage → set storage mặc định
-    const storages =
-      product.availableOptions?.find((opt) => opt.type === "storage")?.values ||
-      [];
-
-    if (storages.length > 0) {
-      setSelectedStorage(storages[0].value);
-      setIsUserSelectStorage(false); // Reset flag vì đang set storage mặc định
-    }
-  }, [selectedColor]);
-
-  // Tìm variant khớp với color và storage được chọn
-  const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
-
-  const [variantImages, setVariantImages] = useState(
-    product.currentVariant?.images || [],
-  );
-
-  const isMounted = useRef(false);
-
-  useEffect(() => {
-    isMounted.current = true;
-  }, []);
-
-  // Call API lấy hình ảnh variant khi color hoặc storage thay đổi
-  useEffect(() => {
-    if (!selectedColor || !selectedStorage) return;
-
-    const fetchVariant = async () => {
-      const res = await fetch(
-        `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
-      );
-      const json = await res.json();
-
-      if (json.success) {
-        setAvailableOptions(json.data.availableOptions);
-        setCurrentVariant(json.data.currentVariant);
-        setVariantImages(json.data.currentVariant.images);
-      }
-    };
-
-    fetchVariant();
-  }, [selectedColor, selectedStorage, product.slug]);
-
-  // Hàm cuộn đến phần đánh giá
   const scrollToReviews = () => {
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -129,7 +96,6 @@ export function ProductDetailContent({
     });
   };
 
-  // Hàm cuộn đến phần thông số kỹ thuật
   const scrollToSpecifications = () => {
     specifications.current?.scrollIntoView({
       behavior: "smooth",
@@ -137,24 +103,61 @@ export function ProductDetailContent({
     });
   };
 
+  /* ============================================================================
+   * FETCH VARIANT ON COLOR/STORAGE CHANGE
+   * ========================================================================== */
   useEffect(() => {
-    console.log("Color:", selectedColor);
-    console.log("Storage:", selectedStorage);
+    if (!selectedColor || !selectedStorage) return;
+
+    const fetchVariant = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
+        );
+
+        const json = await res.json();
+
+        if (json.success) {
+          setAvailableOptions(json.data.availableOptions);
+          setCurrentVariant(json.data.currentVariant);
+          setVariantImages(json.data.currentVariant.images);
+        }
+      } catch (error) {
+        console.error("Error fetching variant:", error);
+      }
+    };
+
+    fetchVariant();
+  }, [selectedColor, selectedStorage, product.slug]);
+
+  /* ============================================================================
+   * DEBUG LOGS (Optional - Remove in production)
+   * ========================================================================== */
+  useEffect(() => {
+    console.log("Selected:", { color: selectedColor, storage: selectedStorage });
   }, [selectedColor, selectedStorage]);
 
+  /* ============================================================================
+   * RENDER
+   * ========================================================================== */
   return (
     <div>
+      {/* Breadcrumb */}
       <div className="container sm:px-6 mt-4">
         <Breadcrumb
           items={[
             { label: "Trang chủ", href: "/" },
-            { label: product.category?.name, href: `/products/category/${product.category?.slug}` },
+            {
+              label: product.category?.name,
+              href: `/products/category/${product.category?.slug}`,
+            },
             { label: product.name },
           ]}
         />
       </div>
+
       {/* Hero Section - Product Info */}
-      <div className=" sm:px-6  mt-4 sm:mt-6 lg:mt-8 container">
+      <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           {/* Left - Product Banner */}
           <div className="w-full lg:w-[60%] lg:sticky lg:top-4 lg:h-fit">
@@ -164,6 +167,7 @@ export function ProductDetailContent({
               images={variantImages}
             />
           </div>
+
           {/* Right - Product Card */}
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-4 lg:h-fit">
@@ -184,8 +188,8 @@ export function ProductDetailContent({
       </div>
 
       {/* Product Detail Section */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6 " ref={specifications}>
-        <div className=" !px-0">
+      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={specifications}>
+        <div className="!px-0">
           <ProductDetailSection slug={slug} />
         </div>
       </div>
@@ -196,38 +200,41 @@ export function ProductDetailContent({
       </div>
 
       {/* Product Review Section */}
-      <div className="bg-gray-400/10  pt-4 sm:pt-6 " ref={reviewsRef}>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={reviewsRef}>
         <div>
-          <ProductReview />
+          <ProductReview productId={product.id} />
         </div>
       </div>
 
       {/* Compare Products Section */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
+      <div className="bg-gray-400/10 pt-4 sm:pt-6">
         <div>
           <CompareProducts />
         </div>
       </div>
+
       {/* Suggest Products Section */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
-        <div className=" mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+      {/* <div className="bg-gray-400/10 pt-4 sm:pt-6">
+        <div className="mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
           <ProductDetailSuggest />
         </div>
-      </div>
-      <div className="bg-gray-400/10 p-4 sm:pt-6 ">
-        <div className=" mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
+      </div> */}
+
+      {/* Products Viewed */}
+      {/* <div className="bg-gray-400/10 p-4 sm:pt-6">
+        <div className="mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
           <ProductsViewed />
         </div>
-      </div>
+      </div> */}
+
+      {/* Trust Badges */}
       <div className="p-2 sm:pt-6 bg-gray-400/10">
-        <div className=" sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12  rounded-lg">
+        <div className="sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 rounded-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             <div className="flex flex-col gap-2 justify-center items-center">
               <BsPatchCheckFill size={48} className="text-red-500" />
               <div className="text-center">
-                <b className="block text-base sm:text-lg">
-                  Thương hiệu đảm bảo
-                </b>
+                <b className="block text-base sm:text-lg">Thương hiệu đảm bảo</b>
                 <p className="text-sm text-gray-500 mt-1">
                   Nhập khẩu, bảo hành chính hãng
                 </p>
@@ -255,9 +262,7 @@ export function ProductDetailContent({
             <div className="flex flex-col gap-2 justify-center items-center">
               <MdVerified size={48} className="text-red-500" />
               <div className="text-center">
-                <b className="block text-base sm:text-lg">
-                  Sản phẩm chất lượng
-                </b>
+                <b className="block text-base sm:text-lg">Sản phẩm chất lượng</b>
                 <p className="text-sm text-gray-500 mt-1">
                   Đảm bảo tương thích và độ bền cao
                 </p>

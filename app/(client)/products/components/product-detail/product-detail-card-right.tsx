@@ -59,31 +59,34 @@ export default function ProductDetailRight({
   /* ============================================================================
    * PRODUCT DATA
    * ========================================================================== */
-  const storages: StorageOption[] = (() => {
-    const storageOption = product.availableOptions?.find(
-      (opt) => opt.type === "storage",
-    );
-    return (
-      storageOption?.values?.map((val) => ({
+ const storages: StorageOption[] = (() => {
+  //  Dùng availableOptions từ props
+  const storageOption = availableOptions?.find(
+    (opt) => opt.type === "storage",
+  );
+  return (
+    storageOption?.values
+      ?.filter((val: any) => val.enabled) // 
+      ?.map((val: any) => ({
         label: val.label,
         value: val.value,
+        enabled: val.enabled, 
       })) || []
-    );
-  })();
+  );
+})();
 
-  const colors: ColorOption[] = (() => {
-    // ✅ SỬA: Dùng availableOptions thay vì product.availableOptions
-    const colorOption = availableOptions?.find((opt) => opt.type === "color");
-    if (!colorOption?.values) return [];
+const colors: ColorOption[] = (() => {
+  // Dùng availableOptions từ props thay vì product.availableOptions
+  const colorOption = availableOptions?.find((opt) => opt.type === "color");
+  if (!colorOption?.values) return [];
 
-    return colorOption.values.map((val: any) => ({
-      value: val.value,
-      label: val.label,
-      enabled: val.enabled, // ✅ THÊM: Lấy enabled từ API
-      image: val.image?.imageUrl,
-    }));
-  })();
-
+  return colorOption.values.map((val: any) => ({
+    value: val.value,
+    label: val.label,
+    enabled: val.enabled, 
+    image: val.image?.imageUrl,
+  }));
+})();
   /* ============================================================================
    * STATE
    * ========================================================================== */
