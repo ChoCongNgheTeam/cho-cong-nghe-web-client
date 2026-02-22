@@ -1,4 +1,4 @@
-import apiRequest from "@/lib/api";
+import apiRequest, { setAccessToken } from "@/lib/api";
 import { LoginHandlerParams, LoginResponse } from "./types";
 
 export const handleLoginSubmit = async ({
@@ -10,18 +10,23 @@ export const handleLoginSubmit = async ({
 }: LoginHandlerParams): Promise<void> => {
    const response = await apiRequest.postSafe<LoginResponse>(
       "/auth/login",
-      {
-         userName: userName.trim(),
-         password,
-         rememberMe,
-      },
+      { userName: userName.trim(), password, rememberMe },
       { noAuth: true },
    );
 
-   if (response.success && response.data?.user) {
-      await onSuccess(response.data.user);
+   if (response.success && response.data) {
+      const { user, accessToken } = response.data;
+
+      if (!user || !accessToken) {
+         onError("Phản hồi từ server không hợp lệ");
+         return;
+      }
+
+      // Lưu access token vào memory ngay khi login thành công
+      setAccessToken(accessToken);
+
+      await onSuccess(user, accessToken);
    } else if (response.error) {
-      // ✅ Xử lý error theo status
       switch (response.error.status) {
          case 401:
             onError("Tên đăng nhập hoặc mật khẩu không chính xác");

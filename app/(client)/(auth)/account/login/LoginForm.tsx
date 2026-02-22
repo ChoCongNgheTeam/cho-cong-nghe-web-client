@@ -25,8 +25,8 @@ const LoginForm = () => {
             userName,
             password,
             rememberMe,
-            onSuccess: async (user) => {
-               await login(user);
+            onSuccess: async (user, accessToken) => {
+               await login(user, accessToken);
             },
             onError: (errorMessage) => {
                setError(errorMessage);

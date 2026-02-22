@@ -1,11 +1,11 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
+import { AuthContext } from "@/contexts/AuthContext";
 
-// Define error types
 type ErrorType =
    | "token_expired"
    | "token_used"
@@ -25,26 +25,28 @@ export default function ResetPasswordPage() {
    const searchParams = useSearchParams();
    const router = useRouter();
    const toast = useToasty();
+   const auth = useContext(AuthContext);
 
    const token = searchParams.get("token");
-   const verified = searchParams.get("verified");
    const error = searchParams.get("error");
 
    const [newPassword, setNewPassword] = useState("");
    const [confirmPassword, setConfirmPassword] = useState("");
    const [loading, setLoading] = useState(false);
 
-   // Handle errors from redirect
+   useEffect(() => {
+      if (!auth?.loading && auth?.isAuthenticated) {
+         router.replace("/");
+      }
+   }, [auth?.loading, auth?.isAuthenticated, router]);
+
    useEffect(() => {
       if (error) {
-         const errorMessage =
-            ERROR_MESSAGES[error as ErrorType] || "Có lỗi xảy ra";
-
-         toast.error(errorMessage, {
+         toast.error(ERROR_MESSAGES[error as ErrorType] || "Có lỗi xảy ra", {
             title: "Link không hợp lệ",
          });
       }
-   }, [error, toast]);
+   }, [error]);
 
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -67,37 +69,40 @@ export default function ResetPasswordPage() {
       setLoading(true);
 
       try {
-         await apiRequest.post("/auth/reset-password", {
-            token,
-            password: newPassword,
-            confirmPassword: confirmPassword,
-         });
+         await apiRequest.post(
+            "/auth/reset-password",
+            { token, password: newPassword, confirmPassword },
+            { noAuth: true },
+         );
 
          toast.success("Mật khẩu đã được đặt lại thành công!", {
             title: "Thành công",
          });
 
          setTimeout(() => {
-            router.push("/account");
+            router.push("/account?login");
          }, 2000);
       } catch (error) {
-         console.error("❌ Lỗi:", error);
-
          const errorMessage =
-            (error as { data?: { message?: string }; message?: string })?.data
-               ?.message ||
-            (error as { message?: string })?.message ||
+            (error as any)?.data?.message ||
+            (error as any)?.message ||
             "Không thể đặt lại mật khẩu. Vui lòng thử lại.";
 
-         toast.error(errorMessage, {
-            title: "Lỗi",
-         });
+         toast.error(errorMessage, { title: "Lỗi" });
       } finally {
          setLoading(false);
       }
    };
 
-   // Show error state if token is missing or error exists
+   // Đang check auth → tránh flash nội dung trước khi redirect
+   if (auth?.loading) {
+      return (
+         <div className="min-h-screen flex items-center justify-center bg-neutral-light">
+            <div className="animate-spin h-8 w-8 rounded-full border-4 border-primary border-t-transparent" />
+         </div>
+      );
+   }
+
    if (!token || error) {
       return (
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
@@ -109,7 +114,7 @@ export default function ResetPasswordPage() {
                   Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
                </p>
                <button
-                  onClick={() => router.push("/account/forgot-password")}
+                  onClick={() => router.push("/forgot-password")}
                   className="w-full bg-primary text-neutral-light py-3 rounded-lg hover:bg-primary-hover transition-colors duration-200"
                >
                   Yêu cầu link mới
@@ -190,7 +195,6 @@ export default function ResetPasswordPage() {
                </button>
             </form>
 
-            {/* Password requirements hint */}
             <div className="mt-4 p-3 bg-accent-light border border-accent-light-active rounded-lg">
                <p className="text-xs text-primary-light">
                   <span className="font-semibold text-primary">
@@ -200,6 +204,7 @@ export default function ResetPasswordPage() {
                   <span className="text-primary"> • Tối thiểu 6 ký tự</span>
                   <br />
                   <span className="text-primary">
+                     {" "}
                      • Nên bao gồm chữ hoa, chữ thường và số
                   </span>
                </p>

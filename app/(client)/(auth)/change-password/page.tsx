@@ -28,7 +28,7 @@ export default function ChangePasswordPage() {
    // Password validation
    const validatePassword = (password: string) => {
       const validations = {
-         length: password.length >= 8,
+         length: password.length >= 6,
          uppercase: /[A-Z]/.test(password),
          lowercase: /[a-z]/.test(password),
          number: /[0-9]/.test(password),

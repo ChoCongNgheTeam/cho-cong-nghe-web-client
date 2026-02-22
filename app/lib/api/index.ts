@@ -1,5 +1,16 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
 
+// ==========================================
+// ACCESS TOKEN - lưu trong memory (không dùng localStorage/cookie)
+// ==========================================
+let _accessToken: string | null = null;
+
+export const setAccessToken = (token: string | null) => {
+   _accessToken = token;
+};
+
+export const getAccessToken = () => _accessToken;
+
 class ApiError extends Error {
    status: number;
    data?: any;
@@ -12,7 +23,6 @@ class ApiError extends Error {
    }
 }
 
-// ✅ Type cho response an toàn
 interface SafeResponse<T> {
    success: boolean;
    data?: T;
@@ -22,6 +32,30 @@ interface SafeResponse<T> {
       data?: any;
    };
 }
+
+// Hàm gọi refresh và cập nhật access token trong memory
+export const performRefresh = async (): Promise<boolean> => {
+   try {
+      const refreshResponse = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
+         method: "POST",
+         credentials: "include", // gửi httpOnly cookie refreshToken
+      });
+
+      if (refreshResponse.ok) {
+         const data = await refreshResponse.json();
+         // BE trả accessToken trong body
+         if (data?.data?.accessToken) {
+            setAccessToken(data.data.accessToken);
+         } else if (data?.accessToken) {
+            setAccessToken(data.accessToken);
+         }
+         return true;
+      }
+      return false;
+   } catch {
+      return false;
+   }
+};
 
 class ApiRequest {
    private async request<T>(
@@ -68,15 +102,21 @@ class ApiRequest {
          typeof fetchOptions.body === "object" &&
          !isFormData;
 
+      // Build headers - luôn gắn Authorization nếu có access token
+      const buildHeaders = () => ({
+         ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
+         ...(_accessToken && !noAuth
+            ? { Authorization: `Bearer ${_accessToken}` }
+            : {}),
+         ...fetchOptions.headers,
+      });
+
       try {
          const response = await fetch(url, {
             ...fetchOptions,
             signal: controller.signal,
             credentials: "include",
-            headers: {
-               ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
-               ...fetchOptions.headers,
-            },
+            headers: buildHeaders(),
             body: isJsonBody
                ? JSON.stringify(fetchOptions.body)
                : fetchOptions.body,
@@ -89,109 +129,48 @@ class ApiRequest {
                throw new ApiError("Unauthorized", 401);
             }
 
-            if (silentAuth) {
-               try {
-                  const refreshResponse = await fetch(
-                     `${BASE_URL}/api/v1/auth/refresh`,
-                     {
-                        method: "POST",
-                        credentials: "include",
-                     },
-                  );
-
-                  if (refreshResponse.ok) {
-                     await new Promise((resolve) => setTimeout(resolve, 100));
-
-                     const retryController = new AbortController();
-                     const retryTimeoutId = setTimeout(
-                        () => retryController.abort(),
-                        timeout,
-                     );
-
-                     const retryResponse = await fetch(url, {
-                        ...fetchOptions,
-                        signal: retryController.signal,
-                        credentials: "include",
-                        headers: {
-                           ...(isJsonBody
-                              ? { "Content-Type": "application/json" }
-                              : {}),
-                           ...fetchOptions.headers,
-                        },
-                        body: isJsonBody
-                           ? JSON.stringify(fetchOptions.body)
-                           : fetchOptions.body,
-                     });
-
-                     clearTimeout(retryTimeoutId);
-
-                     if (retryResponse.ok) {
-                        if (retryResponse.status === 204) {
-                           return null as T;
-                        }
-                        return (await retryResponse.json()) as T;
-                     }
-                  }
-               } catch (refreshError) {
-                  // Silent fail
-               }
-
-               throw new ApiError("Not authenticated", 401);
-            }
-
             if (noRedirectOn401) {
                throw new ApiError("Unauthorized", 401);
             }
 
-            try {
-               const refreshResponse = await fetch(
-                  `${BASE_URL}/api/v1/auth/refresh`,
-                  {
-                     method: "POST",
-                     credentials: "include",
-                  },
+            // Thử refresh token
+            const refreshed = await performRefresh();
+
+            if (refreshed) {
+               // Retry request gốc với access token mới
+               const retryController = new AbortController();
+               const retryTimeoutId = setTimeout(
+                  () => retryController.abort(),
+                  timeout,
                );
 
-               if (refreshResponse.ok) {
-                  await new Promise((resolve) => setTimeout(resolve, 100));
+               const retryResponse = await fetch(url, {
+                  ...fetchOptions,
+                  signal: retryController.signal,
+                  credentials: "include",
+                  headers: buildHeaders(), // buildHeaders() lấy _accessToken mới
+                  body: isJsonBody
+                     ? JSON.stringify(fetchOptions.body)
+                     : fetchOptions.body,
+               });
 
-                  const retryController = new AbortController();
-                  const retryTimeoutId = setTimeout(
-                     () => retryController.abort(),
-                     timeout,
-                  );
+               clearTimeout(retryTimeoutId);
 
-                  const retryResponse = await fetch(url, {
-                     ...fetchOptions,
-                     signal: retryController.signal,
-                     credentials: "include",
-                     headers: {
-                        ...(isJsonBody
-                           ? { "Content-Type": "application/json" }
-                           : {}),
-                        ...fetchOptions.headers,
-                     },
-                     body: isJsonBody
-                        ? JSON.stringify(fetchOptions.body)
-                        : fetchOptions.body,
-                  });
+               if (retryResponse.ok) {
+                  if (retryResponse.status === 204) return null as T;
+                  return (await retryResponse.json()) as T;
+               }
 
-                  clearTimeout(retryTimeoutId);
-
-                  if (retryResponse.ok) {
-                     if (retryResponse.status === 204) {
-                        return null as T;
-                     }
-                     return (await retryResponse.json()) as T;
-                  }
-
+               if (!silentAuth) {
                   throw new ApiError(
                      "Retry failed after refresh",
                      retryResponse.status,
                   );
                }
-            } catch (refreshError) {
-               // Refresh failed
+            }
+
+            if (silentAuth) {
+               throw new ApiError("Not authenticated", 401);
             }
 
             throw new ApiError("Session expired", 401);
@@ -210,9 +189,7 @@ class ApiRequest {
             throw new ApiError(message, response.status, errorData);
          }
 
-         if (response.status === 204) {
-            return null as T;
-         }
+         if (response.status === 204) return null as T;
 
          return (await response.json()) as T;
       } catch (error: any) {
@@ -221,20 +198,14 @@ class ApiRequest {
          if (error.name === "AbortError") {
             throw new Error("Request quá thời gian, vui lòng thử lại");
          }
-
-         if (error instanceof ApiError) {
-            throw error;
-         }
-
+         if (error instanceof ApiError) throw error;
          if (error instanceof TypeError) {
             throw new Error("Không thể kết nối đến server");
          }
-
          throw error;
       }
    }
 
-   // ✅ METHOD MỚI: Không throw error, trả về object
    async postSafe<T>(
       endpoint: string,
       body?: any,
@@ -250,11 +221,7 @@ class ApiRequest {
             method: "POST",
             body,
          });
-
-         return {
-            success: true,
-            data,
-         };
+         return { success: true, data };
       } catch (error) {
          if (error instanceof ApiError) {
             return {
@@ -266,23 +233,15 @@ class ApiRequest {
                },
             };
          }
-
          if (error instanceof Error) {
             return {
                success: false,
-               error: {
-                  message: error.message,
-                  status: 500,
-               },
+               error: { message: error.message, status: 500 },
             };
          }
-
          return {
             success: false,
-            error: {
-               message: "Đã xảy ra lỗi không xác định",
-               status: 500,
-            },
+            error: { message: "Đã xảy ra lỗi không xác định", status: 500 },
          };
       }
    }
@@ -297,72 +256,38 @@ class ApiRequest {
          timeout?: number;
       },
    ) {
-      return this.request<T>(endpoint, {
-         ...options,
-         method: "GET",
-      });
+      return this.request<T>(endpoint, { ...options, method: "GET" });
    }
 
    post<T>(
       endpoint: string,
       body?: any,
-      options?: {
-         noAuth?: boolean;
-         timeout?: number;
-         headers?: HeadersInit;
-      },
+      options?: { noAuth?: boolean; timeout?: number; headers?: HeadersInit },
    ) {
-      return this.request<T>(endpoint, {
-         ...options,
-         method: "POST",
-         body,
-      });
+      return this.request<T>(endpoint, { ...options, method: "POST", body });
    }
 
    put<T>(
       endpoint: string,
       body?: any,
-      options?: {
-         noAuth?: boolean;
-         timeout?: number;
-         headers?: HeadersInit;
-      },
+      options?: { noAuth?: boolean; timeout?: number; headers?: HeadersInit },
    ) {
-      return this.request<T>(endpoint, {
-         ...options,
-         method: "PUT",
-         body,
-      });
+      return this.request<T>(endpoint, { ...options, method: "PUT", body });
    }
 
    patch<T>(
       endpoint: string,
       body?: any,
-      options?: {
-         noAuth?: boolean;
-         timeout?: number;
-         headers?: HeadersInit;
-      },
+      options?: { noAuth?: boolean; timeout?: number; headers?: HeadersInit },
    ) {
-      return this.request<T>(endpoint, {
-         ...options,
-         method: "PATCH",
-         body,
-      });
+      return this.request<T>(endpoint, { ...options, method: "PATCH", body });
    }
 
    delete<T>(
       endpoint: string,
-      options?: {
-         noAuth?: boolean;
-         timeout?: number;
-         headers?: HeadersInit;
-      },
+      options?: { noAuth?: boolean; timeout?: number; headers?: HeadersInit },
    ) {
-      return this.request<T>(endpoint, {
-         ...options,
-         method: "DELETE",
-      });
+      return this.request<T>(endpoint, { ...options, method: "DELETE" });
    }
 }
 
