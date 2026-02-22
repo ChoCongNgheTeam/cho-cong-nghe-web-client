@@ -99,7 +99,7 @@ export default function ProductDetailSection1({
             />
 
             {!expanded && (
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-light to-transparent" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-neutral-light to-transparent" />
             )}
           </div>
 
@@ -147,7 +147,7 @@ export default function ProductDetailSection1({
             </div>
 
             {/* TAB CONTENT */}
-            <div className="text-sm sm:text-base min-h-[380px] overflow-y-auto">
+            <div className="text-sm sm:text-base min-h-95 overflow-y-auto">
               {activeTab === "baiviet" && (
                 <iframe
                   className="w-full aspect-video rounded-lg"

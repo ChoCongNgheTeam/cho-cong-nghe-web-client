@@ -143,7 +143,9 @@ const Header = () => {
                            <div className="px-3 py-3 bg-accent/10 rounded-lg">
                               <div className="flex items-center gap-3">
                                  <UserAvatar
-                                    avatarImage={user.avatarImage}
+                                    avatarImage={
+                                       user.avatarImage || "/images/avatar.png"
+                                    }
                                     fullName={user.fullName}
                                     size={48}
                                  />

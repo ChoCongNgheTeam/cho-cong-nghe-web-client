@@ -11,7 +11,7 @@ export default function StarIcon({
     <svg
       className={`
         ${className}
-        ${filled ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"}
+        ${filled ? "text-blue-500" : "text-gray-300 dark:text-gray-600"}
         transition-colors
       `}
       viewBox="0 0 24 24"

@@ -146,14 +146,6 @@ const RegisterForm: React.FC = () => {
             phone: "",
          });
          setAgreeTerms(false);
-         await login({
-            id: response.data.id,
-            email: response.data.email,
-            userName: response.data.userName,
-            fullName: response.data.fullName,
-            role: response.data.role,
-            avatarImage: response.data.avatarImage,
-         });
       } catch (error) {
          if (error instanceof ApiError) {
             const errorData = error.data as BackendErrorResponse | undefined;

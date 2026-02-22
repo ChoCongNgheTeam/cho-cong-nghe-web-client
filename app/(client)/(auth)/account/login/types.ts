@@ -7,6 +7,9 @@ export interface User {
 }
 
 export interface LoginResponse {
+   accessToken: string;
+   accessTokenTTL: number;
+   refreshToken?: string; // BE có trả nhưng FE không dùng
    user: User;
    message?: string;
 }
@@ -15,6 +18,6 @@ export interface LoginHandlerParams {
    userName: string;
    password: string;
    rememberMe: boolean;
-   onSuccess: (user: User) => Promise<void>;
+   onSuccess: (user: User, accessToken: string) => Promise<void>; // thêm accessToken
    onError: (errorMessage: string) => void;
 }

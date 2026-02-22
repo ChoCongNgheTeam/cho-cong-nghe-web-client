@@ -114,7 +114,7 @@ const DesktopHeader = ({
                      className="flex items-center hover:bg-neutral/50 rounded-lg transition-colors cursor-pointer p-2"
                   >
                      <UserAvatar
-                        avatarImage={user.avatarImage}
+                        avatarImage={user.avatarImage || "/images/avatar.png"}
                         fullName={user.fullName}
                         size={30}
                      />
