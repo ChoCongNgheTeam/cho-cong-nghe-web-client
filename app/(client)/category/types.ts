@@ -1,39 +1,11 @@
-export interface Product {
-   id: string;
-   name: string;
-   priceOrigin: number;
-   slug: string;
-   thumbnail: string;
-   rating: {
-      average: number;
-      count: number;
-   };
-   isFeatured: boolean;
-   isNew: boolean;
-   highlights: Highlight[];
-   inStock: boolean;
-   variantOptions: VariantOption[];
-   price: Price;
-}
-
-export interface Highlight {
+export interface ProductHighlight {
    key?: string;
    name: string;
    icon: string;
    value: string;
 }
 
-export interface VariantOption {
-   type: "color" | "storage";
-   options: Option[];
-}
-
-export interface Option {
-   value: string;
-   label: string;
-}
-
-export interface Price {
+export interface ProductPrice {
    base: number;
    final: number;
    discountAmount: number;
@@ -41,14 +13,60 @@ export interface Price {
    hasPromotion: boolean;
 }
 
-export interface ProductResponse {
-   success: boolean;
+export interface ProductRating {
+   average: number;
+   count: number;
+}
+
+export interface ProductVariantOption {
+   value: string;
+   label: string;
+}
+
+export interface ProductVariant {
+   type: string;
+   options: ProductVariantOption[];
+}
+
+export interface Product {
+   id: string;
+   name: string;
+   slug: string;
+   thumbnail: string;
+   inStock: boolean;
+   rating: ProductRating;
+   isFeatured?: boolean;
+   isNew: boolean;
+   highlights: ProductHighlight[];
+   variantOptions?: ProductVariant[];
+   price: ProductPrice;
+}
+
+export interface Pagination {
+   page: number;
+   limit: number;
+   total: number;
+   totalPages: number;
+}
+
+export interface ProductListResponse {
    data: Product[];
-   pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-   };
+   pagination: Pagination;
    message: string;
+}
+
+export interface PageProps {
+   params: Promise<{ slug: string }>;
+   searchParams: Promise<{ page?: string }>;
+}
+
+export interface SubCategoryLink {
+   href: string;
+   label: string;
+}
+
+export interface BrandItem {
+   href: string;
+   label: string;
+   color: string;
 }

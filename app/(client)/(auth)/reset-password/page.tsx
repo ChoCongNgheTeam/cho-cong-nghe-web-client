@@ -5,6 +5,7 @@ import { useState, useEffect, useContext } from "react";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
 import { AuthContext } from "@/contexts/AuthContext";
+import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
 type ErrorType =
    | "token_expired"
@@ -94,7 +95,6 @@ export default function ResetPasswordPage() {
       }
    };
 
-   // Đang check auth → tránh flash nội dung trước khi redirect
    if (auth?.loading) {
       return (
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
@@ -107,6 +107,13 @@ export default function ResetPasswordPage() {
       return (
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
             <div className="max-w-md w-full p-8 bg-neutral-light border border-neutral rounded-lg shadow-lg">
+               <Breadcrumb
+                  items={[
+                     { label: "Trang chủ", href: "/" },
+                     { label: "Quên mật khẩu", href: "/forgot-password" },
+                     { label: "Đặt lại mật khẩu" },
+                  ]}
+               />
                <h1 className="text-2xl font-bold text-promotion mb-4">
                   Link không hợp lệ
                </h1>
@@ -127,6 +134,13 @@ export default function ResetPasswordPage() {
    return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-light">
          <div className="max-w-md w-full p-8 bg-neutral-light border border-neutral rounded-lg shadow-lg">
+            <Breadcrumb
+               items={[
+                  { label: "Trang chủ", href: "/" },
+                  { label: "Quên mật khẩu", href: "/forgot-password" },
+                  { label: "Đặt lại mật khẩu" },
+               ]}
+            />
             <h1 className="text-2xl font-bold text-primary mb-6">
                Đặt lại mật khẩu
             </h1>

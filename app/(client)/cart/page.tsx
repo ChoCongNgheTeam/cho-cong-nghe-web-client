@@ -18,6 +18,7 @@ import VariantDropdown from "./components/CartVariantSelector";
 import OrderSummary from "@/components/odersummary/OrderSummary";
 import toast from "react-hot-toast";
 import CartSidebar from "./components/cartsidebar";
+import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
 export default function CartPage() {
    const router = useRouter();
@@ -154,22 +155,16 @@ export default function CartPage() {
 
    return (
       <div className="min-h-screen bg-neutral-light">
-         {/* Breadcrumb */}
          <div className="w-full bg-neutral-light">
             <div className="container py-3 md:py-4">
-               <div className="flex items-center gap-2 text-xs sm:text-sm">
-                  <Link
-                     href="/"
-                     className="text-primary hover:text-primary-hover transition-colors"
-                  >
-                     Trang chủ
-                  </Link>
-                  <span className="text-neutral-dark">/</span>
-                  <span className="text-primary font-medium">Giỏ hàng</span>
-               </div>
+               <Breadcrumb
+                  items={[
+                     { label: "Trang chủ", href: "/" },
+                     { label: "Giỏ hàng" },
+                  ]}
+               />
             </div>
          </div>
-
          {/* Main Content */}
          <div className="container pb-28 lg:pb-8 space-y-4 !px-3">
             {items.length === 0 ? (
@@ -426,7 +421,6 @@ export default function CartPage() {
                </div>
             )}
          </div>
-
          {/* Floating Button - Show on mobile/tablet only - FIXED POSITION */}
          <div className="fixed bottom-0 left-0 right-0 bg-accent border-t-2 border-accent-dark p-3 z-30 lg:hidden shadow-2xl">
             <button
@@ -444,7 +438,6 @@ export default function CartPage() {
                </span>
             </button>
          </div>
-
          {/* Cart Sidebar - Show on mobile/tablet only */}
          <CartSidebar
             isOpen={showSidebar}
@@ -461,7 +454,6 @@ export default function CartPage() {
             usePoints={usePoints}
             onTogglePoints={setUsePoints}
          />
-
          {/* Voucher Modal */}
          <VoucherPromotionModal
             isOpen={showVoucherModal}

@@ -1,30 +1,23 @@
-interface Highlight {
-   key?: string;
-   name: string;
-   icon: string;
-   value: string;
-}
+import { ProductHighlight } from "../types";
 
 interface ProductHighlightsProps {
-   highlights: Highlight[];
+   highlights: ProductHighlight[];
 }
 
-const getIconComponent = (iconName: string) => {
-   const icons: { [key: string]: string } = {
-      cpu: "🔲",
-      "cpu-fill": "🔲",
-      gpu: "🎮",
-      storage: "💾",
-      glass: "🛡️",
-      sun: "☀️",
-      camera: "📷",
-      "camera-user": "🤳",
-      battery: "🔋",
-      screen: "📱",
-   };
-
-   return icons[iconName] || "•";
+const ICON_MAP: Record<string, string> = {
+   cpu: "🔲",
+   "cpu-fill": "🔲",
+   gpu: "🎮",
+   storage: "💾",
+   glass: "🛡️",
+   sun: "☀️",
+   camera: "📷",
+   "camera-user": "🤳",
+   battery: "🔋",
+   screen: "📱",
 };
+
+const getIcon = (iconName: string): string => ICON_MAP[iconName] ?? "•";
 
 export default function ProductHighlights({
    highlights,
@@ -33,11 +26,11 @@ export default function ProductHighlights({
       <div className="space-y-1.5">
          {highlights.map((highlight, index) => (
             <div
-               key={index}
+               key={highlight.key ?? index}
                className="flex items-center gap-2 text-xs text-gray-600"
             >
                <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
-                  {getIconComponent(highlight.icon)}
+                  {getIcon(highlight.icon)}
                </span>
                <span className="flex-1 line-clamp-1">
                   <span className="font-medium">{highlight.name}:</span>{" "}

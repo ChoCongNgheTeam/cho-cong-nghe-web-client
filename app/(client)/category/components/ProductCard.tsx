@@ -1,54 +1,40 @@
 import Link from "next/link";
+import { Product } from "../types";
 import ProductHighlights from "./ProductHighlights";
 import RatingStars from "./RatingStars";
 import PriceDisplay from "./PriceDisplay";
 
-interface Product {
-   id: string;
-   name: string;
-   slug: string;
-   thumbnail: string;
-   inStock: boolean;
-   rating: {
-      average: number;
-      count: number;
-   };
-   isFeatured: boolean;
-   isNew: boolean;
-   highlights: Array<{
-      key?: string;
-      name: string;
-      icon: string;
-      value: string;
-   }>;
-   variantOptions: Array<{
-      type: string;
-      options: Array<{
-         value: string;
-         label: string;
-      }>;
-   }>;
-   price: {
-      base: number;
-      final: number;
-      discountAmount: number;
-      discountPercentage: number;
-      hasPromotion: boolean;
-   };
-}
-
 interface ProductCardProps {
    product: Product;
+   categorySlug: string;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+const COLOR_HEX_MAP: Record<string, string> = {
+   white: "#ffffff",
+   black: "#000000",
+   red: "#ff0000",
+   pink: "#ffc0cb",
+   blue: "#0000ff",
+   green: "#00a36c",
+   "alpine-green": "#4a6741",
+   gold: "#ffd700",
+   silver: "#c0c0c0",
+   purple: "#800080",
+};
+
+export default function ProductCard({
+   product,
+   categorySlug,
+}: ProductCardProps) {
+   const productHref = `/products/${product.slug}`;
+
    const storageOptions =
-      product.variantOptions.find((v) => v.type === "storage")?.options || [];
+      product.variantOptions?.find((v) => v.type === "storage")?.options ?? [];
    const colorOptions =
-      product.variantOptions.find((v) => v.type === "color")?.options || [];
+      product.variantOptions?.find((v) => v.type === "color")?.options ?? [];
 
    return (
-      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 relative group">
+      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 relative group">
          {/* Badges */}
          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
             {product.isNew && (
@@ -65,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
          </div>
 
          {/* Product Image */}
-         <Link href={`/dien-thoai/${product.slug}`} className="block mb-3">
+         <Link href={productHref} className="block mb-3">
             <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
                {product.thumbnail ? (
                   <img
@@ -74,7 +60,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                   />
                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-6xl">
+                  <div className="w-full h-full flex items-center justify-center text-6xl select-none">
                      📱
                   </div>
                )}
@@ -82,8 +68,8 @@ export default function ProductCard({ product }: ProductCardProps) {
          </Link>
 
          {/* Product Name */}
-         <Link href={`/dien-thoai/${product.slug}`}>
-            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors min-h-[3rem]">
+         <Link href={productHref}>
+            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors min-h-[3rem] text-sm">
                {product.name}
             </h3>
          </Link>
@@ -107,55 +93,43 @@ export default function ProductCard({ product }: ProductCardProps) {
 
          {/* Color Options */}
          {colorOptions.length > 0 && (
-            <div className="mb-3">
-               <div className="flex items-center gap-2">
-                  {colorOptions.slice(0, 4).map((color) => (
-                     <button
-                        key={color.value}
-                        className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-blue-500 transition-colors"
-                        style={{
-                           backgroundColor:
-                              color.value === "white"
-                                 ? "#ffffff"
-                                 : color.value === "black"
-                                   ? "#000000"
-                                   : color.value === "red"
-                                     ? "#ff0000"
-                                     : color.value === "pink"
-                                       ? "#ffc0cb"
-                                       : color.value === "alpine-green"
-                                         ? "#4a6741"
-                                         : "#cccccc",
-                        }}
-                        title={color.label}
-                     />
-                  ))}
-                  {colorOptions.length > 4 && (
-                     <span className="text-xs text-gray-500">
-                        +{colorOptions.length - 4}
-                     </span>
-                  )}
-               </div>
+            <div className="mb-3 flex items-center gap-2">
+               {colorOptions.slice(0, 4).map((color) => (
+                  <button
+                     key={color.value}
+                     className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-blue-500 transition-colors"
+                     style={{
+                        backgroundColor:
+                           COLOR_HEX_MAP[color.value] ?? "#cccccc",
+                     }}
+                     title={color.label}
+                     type="button"
+                  />
+               ))}
+               {colorOptions.length > 4 && (
+                  <span className="text-xs text-gray-500">
+                     +{colorOptions.length - 4}
+                  </span>
+               )}
             </div>
          )}
 
          {/* Storage Options */}
          {storageOptions.length > 0 && (
-            <div className="mb-3">
-               <div className="flex flex-wrap gap-2">
-                  {storageOptions.map((storage, index) => (
-                     <button
-                        key={storage.value}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                           index === 0
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-300 text-gray-700 hover:border-blue-500 hover:bg-blue-50"
-                        }`}
-                     >
-                        {storage.label}
-                     </button>
-                  ))}
-               </div>
+            <div className="mb-3 flex flex-wrap gap-2">
+               {storageOptions.map((storage, index) => (
+                  <button
+                     key={storage.value}
+                     type="button"
+                     className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
+                        index === 0
+                           ? "border-blue-500 bg-blue-50 text-blue-700"
+                           : "border-gray-300 text-gray-700 hover:border-blue-500 hover:bg-blue-50"
+                     }`}
+                  >
+                     {storage.label}
+                  </button>
+               ))}
             </div>
          )}
 
@@ -175,7 +149,7 @@ export default function ProductCard({ product }: ProductCardProps) {
          {product.price.hasPromotion && (
             <div className="mb-3 border-t pt-3">
                <div className="flex items-start gap-2 text-xs text-gray-600">
-                  <span className="text-blue-600">🎁</span>
+                  <span className="text-blue-600 flex-shrink-0">🎁</span>
                   <div>
                      <p>Giảm 5% tối đa 200.000đ Hoặc</p>
                      <p>Giảm 50% tối đa 100.000đ qua Kredivo</p>
@@ -185,17 +159,23 @@ export default function ProductCard({ product }: ProductCardProps) {
          )}
 
          {/* Compare Button */}
-         <button className="w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-1">
+         <button
+            type="button"
+            className="w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-1"
+         >
             <span>⊕</span>
             <span>Thêm vào so sánh</span>
          </button>
 
          {/* Out of Stock Overlay */}
          {!product.inStock && (
-            <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+            <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg">
                <div className="text-center">
                   <p className="text-red-600 font-semibold">Hết hàng</p>
-                  <button className="mt-2 text-sm text-blue-600 hover:underline">
+                  <button
+                     type="button"
+                     className="mt-2 text-sm text-blue-600 hover:underline"
+                  >
                      Thông báo khi có hàng
                   </button>
                </div>

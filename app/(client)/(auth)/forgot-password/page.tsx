@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/config/site.config";
 import Link from "next/link";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
 export const metadata: Metadata = {
    title: "Quên mật khẩu",
@@ -19,6 +20,14 @@ export default function ForgotPasswordPage() {
    return (
       <section className="mx-auto max-w-6xl px-4 py-16">
          <div className="mx-auto max-w-md">
+            <Breadcrumb
+               items={[
+                  { label: "Trang chủ", href: "/" },
+                  { label: "Tài khoản", href: "/account" },
+                  { label: "Quên mật khẩu" },
+               ]}
+            />
+
             <h1 className="mb-2 text-2xl font-semibold text-primary">
                Quên mật khẩu
             </h1>
