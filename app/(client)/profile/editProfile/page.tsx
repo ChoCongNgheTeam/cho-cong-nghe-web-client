@@ -64,14 +64,14 @@ export default function ProfileForm() {
         email: formData.email,
       };
 
-      console.log("📤 Gửi lên:", updateData);
+      console.log("Gửi lên:", updateData);
 
       const data = await apiRequest.patch("/users/me", updateData);
 
-      console.log("✅ Update thành công:", data);
+      console.log(" Update thành công:", data);
       alert("Cập nhật thành công");
     } catch (error: any) {
-      console.error("❌ Full error:", error);
+      console.error("Full error:", error);
       alert(error?.message || "Cập nhật thất bại");
     }
   };
@@ -135,7 +135,12 @@ export default function ProfileForm() {
                 <div>
                   <label className="text-sm text-gray-500">Giới tính</label>
                   <div className="relative">
-                    <select className="w-full mt-1 px-3 py-2 pr-10 border-gray-300 border rounded text-sm appearance-none">
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className="w-full mt-1 px-3 py-2 pr-10 border-gray-300 border rounded text-sm appearance-none cursor-pointer"
+                    >
                       <option value="">Chọn giới tính</option>
                       <option value="MALE">Nam</option>
                       <option value="FEMALE">Nữ</option>

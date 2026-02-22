@@ -114,76 +114,83 @@ export default function Popzy({
 
    if (!mounted || !isOpen) return null;
 
-   return createPortal(
+  return createPortal(
+  <>
+    <div
+      ref={backdropRef}
+      onClick={handleBackdropClick}
+      className={`
+        fixed inset-0 z-9999 flex items-center justify-center
+        bg-black/70 transition-opacity duration-300
+        ${isVisible ? "opacity-100 visible" : "opacity-0 invisible"}
+      `}
+    >
       <div
-         ref={backdropRef}
-         onClick={handleBackdropClick}
-         className={`
-                fixed inset-0 z-9999 flex items-center justify-center
-                bg-black/70 transition-opacity duration-300
-                ${isVisible ? "opacity-100 visible" : "opacity-0 invisible"}
-            `}
+        className={`
+          relative w-[min(600px,90%)] p-5 rounded-md bg-white
+          transition-transform duration-300
+          ${isVisible ? "scale-100" : "scale-50"}
+          ${cssClass}
+        `}
       >
-         <div
-            className={`
-                    relative w-[min(600px,90%)] p-5 rounded-md bg-white
-                    transition-transform duration-300
-                    ${isVisible ? "scale-100" : "scale-50"}
-                    ${cssClass}
-                `}
-         >
-            {/* Close Button */}
-            {allowButtonClose && (
-               <button
-                  onClick={onClose}
-                  className="
-                            absolute top-2.5 right-2.5 w-7.5 h-7.5
-                            rounded-full bg-gray-200 text-gray-600
-                            text-3xl leading-none border-none outline-none
-                            hover:text-gray-800 hover:cursor-pointer
-                            flex items-center justify-center
-                        "
-                  aria-label="Close"
-               >
-                  &times;
-               </button>
-            )}
+        {allowButtonClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-2.5 right-2.5 w-7.5 h-7.5 rounded-full bg-gray-200 text-gray-600 text-3xl flex items-center justify-center"
+          >
+            &times;
+          </button>
+        )}
 
-            {/* Content */}
-            <div className="max-h-[80vh] overflow-y-auto">
-               {typeof content === "string" ? (
-                  <div dangerouslySetInnerHTML={{ __html: content }} />
-               ) : (
-                  content
-               )}
-            </div>
+        <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-2">
+          {typeof content === "string" ? (
+            <div dangerouslySetInnerHTML={{ __html: content }}/>
+          ) : (
+            content
+          )}
+        </div>
 
-            {/* Footer */}
-            {footer && (
-               <div className="flex justify-end gap-2 pt-5">
-                  {footerContent &&
-                     (typeof footerContent === "string" ? (
-                        <div
-                           dangerouslySetInnerHTML={{
-                              __html: footerContent,
-                           }}
-                        />
-                     ) : (
-                        footerContent
-                     ))}
-                  {footerButtons.map((button, index) => (
-                     <button
-                        key={index}
-                        onClick={button.onClick}
-                        className={button.className}
-                     >
-                        {button.title}
-                     </button>
-                  ))}
-               </div>
-            )}
-         </div>
-      </div>,
-      document.body,
-   );
+        {footer && (
+          <div className="flex justify-end gap-2 pt-5">
+            {footerButtons.map((button, index) => (
+              <button
+                key={index}
+                onClick={button.onClick}
+                className={button.className}
+              >
+                {button.title}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+    {/* STYLE PHẢI NẰM TRONG FRAGMENT */}
+    <style jsx>{`
+      .custom-scroll::-webkit-scrollbar {
+        width: 4px !important;
+      }
+
+      .custom-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .custom-scroll::-webkit-scrollbar-thumb {
+        background-color: #d1d5db;
+        border-radius: 9999px;
+      }
+
+      .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: #9ca3af;
+      }
+
+      .custom-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #d1d5db transparent;
+      }
+    `}</style>
+  </>,
+  document.body
+);
+
 }
