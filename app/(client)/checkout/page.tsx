@@ -13,6 +13,7 @@ import CartSidebar from "@/(client)/cart/components/cartsidebar";
 import CartItems from "./components/CartItems";
 import OrderSummary from "@/components/odersummary/OrderSummary";
 import PaymentMethods from "./components/PaymentMethods";
+import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
 interface UserInfo {
    id: number;
@@ -324,13 +325,15 @@ export default function CheckoutPage() {
          {/* Desktop/Tablet Layout */}
          <div className="hidden md:block">
             <div className="container py-4 sm:py-6">
-               <Link
-                  href="/cart"
-                  className="inline-flex items-center gap-1 mb-4 sm:mb-6 text-sm hover:underline cursor-pointer transition-colors text-primary"
-               >
-                  <span>←</span> Quay lại giỏ hàng
-               </Link>
-
+               <div className="mb-4 sm:mb-6">
+                  <Breadcrumb
+                     items={[
+                        { label: "Trang chủ", href: "/" },
+                        { label: "Giỏ hàng", href: "/cart" },
+                        { label: "Thanh toán" },
+                     ]}
+                  />
+               </div>
                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
                   <div className="lg:col-span-2 space-y-4">
                      <CartItems items={cartItems} />

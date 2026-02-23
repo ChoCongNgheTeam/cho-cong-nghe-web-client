@@ -1,114 +1,124 @@
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ListFilter } from "lucide-react";
+import type { Metadata } from "next";
 import ProductFilter from "../components/ProductFilter";
 import ProductGrid from "../components/ProductGrid";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
-import { ListFilter } from "lucide-react";
-import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
-
-interface SearchParams {
-   category?: string;
-}
-
-async function getProducts() {
-   const res = await fetch(
-      "http://localhost:5000/api/v1/products?category=dien-thoai",
-      {
-         cache: "no-store",
-      },
-   );
-
-   if (!res.ok) {
-      throw new Error("Failed to fetch products");
-   }
-
-   return res.json();
-}
-
-export default async function PhoneListingPage({
+import { Product, Pagination, PageProps } from "../types";
+import { fetchProducts } from "../_libs/fetchProductByCategory";
+import { slugToTitle } from "../components/SlugToTitle";
+import { BANNERS, BRANDS, SUB_CATEGORIES } from "../MockData";
+import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+export async function generateMetadata({
+   params,
    searchParams,
-}: {
-   searchParams: SearchParams;
-}) {
-   const data = await getProducts();
-   const products = data.data || [];
+}: PageProps): Promise<Metadata> {
+   const { slug } = await params;
+   const { page: pageParam } = await searchParams;
+   const page = Math.max(1, Number(pageParam ?? 1) || 1);
 
-   const banners = [
-      "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/H1_1440x242_6_e7dfc7282e.png",
-      "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/H1_1440x242_2c3d95c752.png",
-      "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/H1_1440x242_648d92f2e7.png",
-      "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/H1_1440x242_81e57801fa.png",
-      "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/H1_1440x242_89ee9818db.png",
-      "https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/H1_1440x242_a662c6cd0c.png",
-   ];
+   const categoryTitle = slugToTitle(slug);
+   const siteName = "Shop của bạn";
+   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://example.com";
+   const title =
+      page > 1
+         ? `${categoryTitle} - Trang ${page} | ${siteName}`
+         : `${categoryTitle} | ${siteName}`;
+   const description = `Khám phá bộ sưu tập ${categoryTitle} đa dạng, chính hãng, giá tốt tại ${siteName}. Giao hàng nhanh, bảo hành uy tín.`;
+   const canonicalUrl =
+      page > 1
+         ? `${baseUrl}/category/${slug}?page=${page}`
+         : `${baseUrl}/category/${slug}`;
+   return {
+      title,
+      description,
+      alternates: {
+         canonical: canonicalUrl,
+      },
+      openGraph: {
+         title,
+         description,
+         url: canonicalUrl,
+         siteName,
+         locale: "vi_VN",
+         type: "website",
+      },
+      twitter: {
+         card: "summary_large_image",
+         title,
+         description,
+      },
+      robots:
+         page > 1
+            ? { index: false, follow: true }
+            : { index: true, follow: true },
+   };
+}
 
+export default async function CategoryPage({
+   params,
+   searchParams,
+}: PageProps) {
+   const { slug } = await params;
+   const { page: pageParam } = await searchParams;
+   const page = Math.max(1, Number(pageParam ?? 1) || 1);
+   let products: Product[] = [];
+   let pagination: Pagination | undefined;
+   let fetchError: string | null = null;
+
+   try {
+      const result = await fetchProducts(slug, page);
+      products = result.products;
+      pagination = result.pagination;
+
+      if (page === 1 && products.length === 0) {
+         notFound();
+      }
+   } catch (err) {
+      console.error(`[CategoryPage] fetch failed for "${slug}":`, err);
+      fetchError = "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.";
+   }
+   const categoryTitle = slugToTitle(slug);
    return (
       <div className="min-h-screen bg-gray-50">
-         {/* Header Section */}
          <div className="bg-white border-b">
             <div className="container mx-auto px-4 py-4">
-               {/* Breadcrumb */}
-               <nav className="text-sm mb-3">
-                  <ol className="flex items-center space-x-2 text-gray-600">
-                     <li>
-                        <a href="/" className="hover:text-blue-600">
-                           Trang chủ
-                        </a>
-                     </li>
-                     <li>/</li>
-                     <li className="text-gray-900 font-medium">Điện thoại</li>
-                  </ol>
-               </nav>
-
-               {/* Title */}
-               <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                  Điện thoại
+               <Breadcrumb
+                  items={[
+                     { label: "Trang chủ", href: "/" },
+                     { label: categoryTitle },
+                  ]}
+               />
+               <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                  {categoryTitle}
                </h1>
-
-               {/* Quick Filters */}
-               <div className="flex items-center gap-3">
+               <div className="flex items-center gap-3 mb-5">
                   <span className="text-base text-primary">
                      Tìm sản phẩm theo nhu cầu
                   </span>
-                  <span className="text-sm text-primary font-medium flex border rounded-full py-1.5 px-2 cursor-pointer gap-2">
+                  <span className="text-sm text-primary font-medium flex items-center border rounded-full py-1.5 px-2 cursor-pointer gap-2 hover:bg-gray-50 transition-colors">
                      <ListFilter width={17} height={17} />
                      Dùng bộ lọc ngay
                   </span>
                </div>
-               <div className="w-fit border-b border-secondary-light mt-5">
-                  <div className="flex items-center gap-6 overflow-x-auto py-3 text-sm font-medium">
-                     <Link
-                        href="/dien-thoai/dien-thoai-5g"
-                        className="whitespace-nowrap text-gray-600 hover:text-red-500 hover:border-red-500 border-b-2 border-transparent pb-1 transition"
-                     >
-                        Điện thoại 5G
-                     </Link>
-                     <Link
-                        href="/dien-thoai/dien-thoai-ai"
-                        className="whitespace-nowrap text-gray-600 hover:text-red-500 hover:border-red-500 border-b-2 border-transparent pb-1 transition"
-                     >
-                        Điện thoại AI
-                     </Link>
-                     <Link
-                        href="/dien-thoai/dien-thoai-gap"
-                        className="whitespace-nowrap text-gray-600 hover:text-red-500 hover:border-red-500 border-b-2 border-transparent pb-1 transition"
-                     >
-                        Điện thoại gập
-                     </Link>
-                     <Link
-                        href="/dien-thoai/gaming-phone"
-                        className="whitespace-nowrap text-gray-600 hover:text-red-500 hover:border-red-500 border-b-2 border-transparent pb-1 transition"
-                     >
-                        Gaming phone
-                     </Link>
-                     <Link
-                        href="/dien-thoai/pho-thong-4g"
-                        className="whitespace-nowrap text-gray-600 hover:text-red-500 hover:border-red-500 border-b-2 border-transparent pb-1 transition"
-                     >
-                        Phổ thông 4G
-                     </Link>
-                  </div>
+
+               <div className="border-b border-secondary-light mb-4">
+                  <nav className="flex items-center gap-6 overflow-x-auto py-3 text-sm font-medium">
+                     {SUB_CATEGORIES.map(({ href, label }) => (
+                        <Link
+                           key={href}
+                           href={href}
+                           className="whitespace-nowrap text-gray-600 hover:text-red-500 border-b-2 border-transparent hover:border-red-500 pb-1 transition-colors"
+                        >
+                           {label}
+                        </Link>
+                     ))}
+                  </nav>
                </div>
+
                <Slidezy
                   items={1}
                   speed={500}
@@ -117,157 +127,72 @@ export default async function PhoneListingPage({
                   loop
                   nav
                   controls
-                  className="rounded-lg overflow-hidden"
+                  className="rounded-lg overflow-hidden mb-6"
                >
-                  {banners.map((img, idx) => (
-                     <div
-                        key={idx}
-                        className="h-[140px] sm:h-[180px] md:h-[220px]"
-                     >
+                  {BANNERS.map((img, idx) => (
+                     <div key={idx} className="h-35 sm:h-45 md:h-55">
                         <img
                            src={img}
-                           alt={`Banner ${idx + 1}`}
+                           alt={`Banner ${categoryTitle} ${idx + 1}`}
                            className="w-full h-full object-cover"
                         />
                      </div>
                   ))}
                </Slidezy>
-               <div className="mb-6 pb-6 border-b border-neutral">
-                  <h4 className="text-sm font-semibold text-secondary mb-4">
-                     Thương hiệu ưa chuộng
-                  </h4>
-                  <div className="grid grid-cols-6 gap-3">
-                     {/* Row 1 */}
-                     <a
-                        href="/category/samsung"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-lg font-bold text-[#1428A0]">
-                           SAMSUNG
-                        </span>
-                     </a>
-                     <a
-                        href="/category/honor"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-lg font-bold text-black">
-                           HONOR
-                        </span>
-                     </a>
-                     <a
-                        href="/category/apple-iphone"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-lg font-semibold text-black">
-                           iPhone
-                        </span>
-                     </a>
-                     <a
-                        href="/category/tecno"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-xl font-bold text-[#00A9E0]">
-                           TECNO
-                        </span>
-                     </a>
-                     <a
-                        href="/category/nokia"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-xl font-bold text-[#124191]">
-                           NOKIA
-                        </span>
-                     </a>
-                     <a
-                        href="/category/viettel"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-xl font-bold text-[#E30613]">
-                           viettel
-                        </span>
-                     </a>
 
-                     {/* Row 2 */}
-                     <a
-                        href="/category/oppo"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-lg font-semibold text-[#00A368]">
-                           oppo
-                        </span>
-                     </a>
-                     <a
-                        href="/category/redmagic"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <svg className="h-6" viewBox="0 0 120 30" fill="none">
-                           <path
-                              d="M5 15L15 5L25 15L15 25L5 15Z"
-                              fill="#FF0000"
-                           />
-                           <text
-                              x="30"
-                              y="20"
-                              className="text-sm font-bold"
-                              fill="#FF0000"
+               <div className="mb-6 pb-6 border-b border-neutral">
+                  <h2 className="text-sm font-semibold text-secondary mb-4">
+                     Thương hiệu ưa chuộng
+                  </h2>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-3">
+                     {BRANDS.map(({ href, label, color }) => (
+                        <Link
+                           key={href}
+                           href={href}
+                           className="flex items-center justify-center px-3 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all text-center"
+                        >
+                           <span
+                              className="text-sm font-bold leading-tight"
+                              style={{ color }}
                            >
-                              REDMAGIC
-                           </text>
-                        </svg>
-                     </a>
-                     <a
-                        href="/category/zte-nubia"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all gap-2"
-                     >
-                        <span className="text-lg font-bold text-[#0066CC]">
-                           ZTE
-                        </span>
-                        <span className="text-lg font-bold text-[#E60012]">
-                           nubia
-                        </span>
-                     </a>
-                     <a
-                        href="/category/masstel"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-lg font-semibold text-[#FF6B00]">
-                           Masstel
-                        </span>
-                     </a>
-                     <a
-                        href="/category/tcl"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-2xl font-bold text-[#E30613]">
-                           TCL
-                        </span>
-                     </a>
-                     <a
-                        href="/category/benco"
-                        className="flex items-center justify-center px-4 py-3 bg-white border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all"
-                     >
-                        <span className="text-lg font-semibold text-[#FF6B35]">
-                           benco
-                        </span>
-                     </a>
+                              {label}
+                           </span>
+                        </Link>
+                     ))}
                   </div>
                </div>
             </div>
          </div>
 
-         {/* Main Content */}
          <div className="container mx-auto px-4 py-6">
             <div className="flex gap-6">
-               {/* Sidebar Filter */}
                <aside className="w-72 shrink-0 hidden lg:block">
                   <ProductFilter />
                </aside>
 
-               {/* Product Grid */}
-               <main className="flex-1">
-                  <Suspense fallback={<ProductGridSkeleton />}>
-                     <ProductGrid products={products} />
-                  </Suspense>
+               <main className="flex-1 min-w-0">
+                  {fetchError ? (
+                     <div className="flex flex-col items-center justify-center py-20 text-gray-500 bg-white rounded-lg shadow-sm">
+                        <span className="text-5xl mb-4">⚠️</span>
+                        <p className="text-lg font-medium text-red-600">
+                           {fetchError}
+                        </p>
+                        <Link
+                           href={`/category/${slug}`}
+                           className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                           Thử lại
+                        </Link>
+                     </div>
+                  ) : (
+                     <Suspense fallback={<ProductGridSkeleton />}>
+                        <ProductGrid
+                           products={products}
+                           pagination={pagination}
+                           categorySlug={slug}
+                        />
+                     </Suspense>
+                  )}
                </main>
             </div>
          </div>

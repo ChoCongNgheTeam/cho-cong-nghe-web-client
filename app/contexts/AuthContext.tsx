@@ -132,6 +132,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       setUser(userData);
       setShowWelcome(true);
 
+      await refreshUser();
       if (hasLocalCart()) {
          await waitForCartMerge();
       }

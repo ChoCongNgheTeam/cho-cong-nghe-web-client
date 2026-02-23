@@ -1,94 +1,125 @@
+import Link from "next/link";
+import { Pagination, Product } from "../types";
 import ProductCard from "./ProductCard";
-
-interface Product {
-   id: string;
-   name: string;
-   slug: string;
-   thumbnail: string;
-   inStock: boolean;
-   rating: {
-      average: number;
-      count: number;
-   };
-   isFeatured: boolean;
-   isNew: boolean;
-   highlights: Array<{
-      key?: string;
-      name: string;
-      icon: string;
-      value: string;
-   }>;
-   variantOptions: Array<{
-      type: string;
-      options: Array<{
-         value: string;
-         label: string;
-      }>;
-   }>;
-   price: {
-      base: number;
-      final: number;
-      discountAmount: number;
-      discountPercentage: number;
-      hasPromotion: boolean;
-   };
-}
 
 interface ProductGridProps {
    products: Product[];
+   pagination?: Pagination;
+   categorySlug: string;
 }
 
-export default function ProductGrid({ products }: ProductGridProps) {
+type SortOption = {
+   label: string;
+   value: string;
+};
+
+const SORT_OPTIONS: SortOption[] = [
+   { label: "Nổi bật", value: "featured" },
+   { label: "Giá tăng dần", value: "price_asc" },
+   { label: "Giá giảm dần", value: "price_desc" },
+];
+
+export default function ProductGrid({
+   products,
+   pagination,
+   categorySlug,
+}: ProductGridProps) {
+   const totalPages = pagination?.totalPages ?? 1;
+   const currentPage = pagination?.page ?? 1;
+   const total = pagination?.total ?? products.length;
+
+   const buildPageHref = (page: number) =>
+      `/category/${categorySlug}?page=${page}`;
    return (
       <div>
-         {/* Sort and View Options */}
-         <div className="flex items-center justify-between mb-4 bg-white p-4 rounded-lg shadow-sm">
-            <div className="flex items-center gap-4">
-               <span className="text-sm text-gray-600">
-                  Tìm thấy <strong>{products.length}</strong> kết quả
-               </span>
-               <div className="flex items-center gap-2">
-                  <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg">
-                     Nổi bật
+         {/* Sort Options */}
+         <div className="flex items-center gap-4 flex-wrap mb-4 bg-white p-4 rounded-lg shadow-sm">
+            <span className="text-sm text-gray-600">
+               Tìm thấy <strong>{total}</strong> kết quả
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+               {SORT_OPTIONS.map((option, index) => (
+                  <button
+                     key={option.value}
+                     type="button"
+                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        index === 0
+                           ? "text-blue-600 bg-blue-50"
+                           : "text-gray-700 hover:bg-gray-50"
+                     }`}
+                  >
+                     {option.label}
                   </button>
-                  <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                     Giá tăng dần
-                  </button>
-                  <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                     Giá giảm dần
-                  </button>
-                  <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                     Trả góp 0%
-                  </button>
-               </div>
+               ))}
             </div>
          </div>
 
          {/* Product Grid */}
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {products.map((product) => (
-               <ProductCard key={product.id} product={product} />
-            ))}
-         </div>
+         {products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+               {products.map((product) => (
+                  <ProductCard
+                     key={product.id}
+                     product={product}
+                     categorySlug={categorySlug}
+                  />
+               ))}
+            </div>
+         ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+               <span className="text-5xl mb-4">🔍</span>
+               <p className="text-lg font-medium">Không tìm thấy sản phẩm</p>
+               <p className="text-sm mt-1">Vui lòng thử lại với bộ lọc khác</p>
+            </div>
+         )}
 
-         {/* Pagination */}
-         {products.length > 0 && (
+         {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-8">
-               <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-                  Trước
-               </button>
-               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                  1
-               </button>
-               <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  2
-               </button>
-               <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  3
-               </button>
-               <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  Sau
-               </button>
+               {currentPage > 1 ? (
+                  <Link
+                     href={buildPageHref(currentPage - 1)}
+                     className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                  >
+                     Trước
+                  </Link>
+               ) : (
+                  <span className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-300 cursor-not-allowed select-none">
+                     Trước
+                  </span>
+               )}
+
+               {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) =>
+                     page === currentPage ? (
+                        <span
+                           key={page}
+                           className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium"
+                        >
+                           {page}
+                        </span>
+                     ) : (
+                        <Link
+                           key={page}
+                           href={buildPageHref(page)}
+                           className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                        >
+                           {page}
+                        </Link>
+                     ),
+               )}
+
+               {currentPage < totalPages ? (
+                  <Link
+                     href={buildPageHref(currentPage + 1)}
+                     className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                  >
+                     Sau
+                  </Link>
+               ) : (
+                  <span className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-300 cursor-not-allowed select-none">
+                     Sau
+                  </span>
+               )}
             </div>
          )}
       </div>

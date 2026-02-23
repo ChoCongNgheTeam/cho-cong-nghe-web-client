@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -41,7 +42,6 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-
   return (
     <div className="w-64 bg-gray-800 text-white h-full">
       <div className="p-6">

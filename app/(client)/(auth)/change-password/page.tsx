@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
-
+import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import { PasswordRequirement } from "./PasswordRequirement";
 export default function ChangePasswordPage() {
    const router = useRouter();
    const toast = useToasty();
@@ -154,27 +155,14 @@ export default function ChangePasswordPage() {
    return (
       <div className="min-h-screen bg-neutral-light py-12">
          <div className="container max-w-2xl mx-auto px-4">
-            {/* Header */}
             <div className="mb-8">
-               <button
-                  onClick={() => router.back()}
-                  className="flex items-center gap-2 text-primary hover:text-primary transition-colors mb-4 cursor-pointer"
-               >
-                  <svg
-                     className="w-5 h-5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                     />
-                  </svg>
-                  Quay lại
-               </button>
+               <Breadcrumb
+                  items={[
+                     { label: "Trang chủ", href: "/" },
+                     { label: "Tài khoản", href: "/account" },
+                     { label: "Đổi mật khẩu" },
+                  ]}
+               />
                <div className="flex items-center gap-3">
                   <div className="p-3 bg-accent-light rounded-lg">
                      <Lock className="w-6 h-6 text-accent" />
@@ -446,41 +434,6 @@ export default function ChangePasswordPage() {
                </form>
             </div>
          </div>
-      </div>
-   );
-}
-
-function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
-   return (
-      <div className="flex items-center gap-2">
-         <div
-            className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-               met ? "bg-green-500" : "bg-neutral"
-            }`}
-         >
-            {met && (
-               <svg
-                  className="w-3 h-3 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={3}
-                     d="M5 13l4 4L19 7"
-                  />
-               </svg>
-            )}
-         </div>
-         <span
-            className={`text-xs transition-colors ${
-               met ? "text-primary" : "text-primary-light"
-            }`}
-         >
-            {text}
-         </span>
       </div>
    );
 }
