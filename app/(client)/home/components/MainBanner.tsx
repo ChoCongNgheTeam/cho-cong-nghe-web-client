@@ -1,132 +1,58 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { getMainBanners, BannerDTO } from '@/lib/api-demo';
-import Slidezy from '@/components/Slider/Slidezy';
+import Image from "next/image";
+import Link from "next/link";
+import { BannerDTO } from "@/lib/api-demo";
+import { Slidezy } from "@/components/Slider";
 
-export default function MainBanner() {
-  const [banners, setBanners] = useState<BannerDTO[]>([]);
-  const [loading, setLoading] = useState(true);
+interface MainBannerProps {
+   banners: BannerDTO[];
+}
 
-  useEffect(() => {
-    async function loadBanners() {
-      try {
-        const data = await getMainBanners();
-        setBanners(data);
-      } catch (error) {
-        console.error('Error loading banners:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadBanners();
-  }, []);
+export default function MainBanner({ banners }: MainBannerProps) {
+   if (banners.length === 0) return null;
 
-  if (loading) {
-    return (
-      <div className="w-full bg-neutral-light">
-        <div className="w-full h-[300px] md:h-[400px] lg:h-[500px] bg-neutral animate-pulse" />
-      </div>
-    );
-  }
-
-  if (!banners || banners.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="w-full bg-gradient-to-b from-neutral-light to-white group/banner">
-      <style jsx global>{`
-        /* Ẩn controls mặc định */
-        .group\/banner .slidezy-container button[aria-label="Previous slide"],
-        .group\/banner .slidezy-container button[aria-label="Next slide"] {
-          opacity: 0;
-          transition: opacity 0.3s ease, background-color 0.2s ease;
-        }
-
-        /* Hiện controls khi hover vào banner */
-        .group\/banner:hover .slidezy-container button[aria-label="Previous slide"],
-        .group\/banner:hover .slidezy-container button[aria-label="Next slide"] {
-          opacity: 1;
-        }
-
-        /* Style lại controls cho đẹp hơn */
-        .group\/banner .slidezy-container button[aria-label="Previous slide"],
-        .group\/banner .slidezy-container button[aria-label="Next slide"] {
-          background: rgba(0, 0, 0, 0.5) !important;
-          color: white !important;
-          width: 50px !important;
-          height: 50px !important;
-          backdrop-filter: blur(4px);
-        }
-
-        .group\/banner .slidezy-container button[aria-label="Previous slide"]:hover,
-        .group\/banner .slidezy-container button[aria-label="Next slide"]:hover {
-          background: rgba(0, 0, 0, 0.8) !important;
-          transform: translateY(-50%) scale(1.1);
-        }
-
-        .group\/banner .slidezy-container button[aria-label="Previous slide"] {
-          left: 20px !important;
-        }
-
-        .group\/banner .slidezy-container button[aria-label="Next slide"] {
-          right: 20px !important;
-        }
-
-        /* Mobile: thu nhỏ controls */
-        @media (max-width: 768px) {
-          .group\/banner .slidezy-container button[aria-label="Previous slide"],
-          .group\/banner .slidezy-container button[aria-label="Next slide"] {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 20px !important;
-          }
-          
-          .group\/banner .slidezy-container button[aria-label="Previous slide"] {
-            left: 10px !important;
-          }
-          
-          .group\/banner .slidezy-container button[aria-label="Next slide"] {
-            right: 10px !important;
-          }
-        }
-      `}</style>
-
+   return (
       <Slidezy
-        items={1}
-        speed={500}
-        gap={0}
-        loop={true}
-        nav={true}
-        controls={true}
-        controlsText={['‹', '›']}
-        slideBy={1}
-        autoplay={true}
-        autoplayTimeout={5000}
-        autoplayHoverPause={true}
-        draggable={true}
+         items={1}
+         speed={700}
+         loop={true}
+         nav={true}
+         controls={true}
+         controlsText={["←", "→"]}
+         autoplay={true}
+         autoplayTimeout={5000}
+         autoplayHoverPause={true}
+         draggable={true}
       >
-        {banners.map((banner) => (
-          <Link
-            key={banner.id}
-            href={banner.link_url}
-            className="block relative w-full h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden group"
-          >
-            <Image
-              src={banner.image_path}
-              alt={banner.title}
-              fill
-              priority
-              className="object-cover group-hover:scale-105 transition-transform duration-700"
-              sizes="100vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          </Link>
-        ))}
+         {banners.map((banner) => (
+            <Link key={banner.id} href={banner.link_url}>
+               <div className="relative aspect-21/9 mdd:aspect-21/7 lg:aspect-21/6 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+                  <Image
+                     src={banner.image_path}
+                     alt={banner.title}
+                     fill
+                     sizes="(max-width: 768px) 100vw, 50vw"
+                     className="object-cover"
+                     quality={75}
+                  />
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-black/20" />
+
+                  {/* Title */}
+                  <div className="absolute inset-0 flex items-end p-8 md:p-12 lg:p-16">
+                     <div className="max-w-2xl">
+                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-neutral-light mb-4 drop-shadow-2xl tracking-tight leading-tight">
+                           {banner.title}
+                        </h2>
+                        <span className="inline-block px-6 py-2 bg-promotion text-neutral-light font-bold rounded-full text-sm md:text-base hover:bg-promotion-hover transition-colors">
+                           Khám phá ngay
+                        </span>
+                     </div>
+                  </div>
+               </div>
+            </Link>
+         ))}
       </Slidezy>
-    </section>
-  );
+   );
 }

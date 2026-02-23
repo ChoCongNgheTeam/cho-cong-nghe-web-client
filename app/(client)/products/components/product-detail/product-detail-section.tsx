@@ -125,7 +125,7 @@ export default function ProductDetailSection({
 
   return (
     <>
-      <div className="container mx-auto px-4 py-2 !px-0">
+      <div className="container py-2">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 ">
           {/* Right: Thông số kỹ thuật */}
           <div className="lg:col-span-7 bg-neutral-light rounded-2xl p-6 lg:p-8 shadow-sm ">

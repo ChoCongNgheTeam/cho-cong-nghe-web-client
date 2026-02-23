@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
    Menu,
    ChevronRight,
@@ -157,7 +157,7 @@ const CategoryList = ({
    };
 
    return (
-      <div className="w-64 bg-neutral-light-active border-r border-neutral">
+      <div className="w-64 bg-neutral-light-active border-r border-neutral flex flex-col h-full overflow-y-auto">
          {categories.slice(0, 4).map((category) => {
             const Icon = getIcon(category.slug);
             const isActive = activeCategory?.id === category.id;
@@ -183,7 +183,6 @@ const CategoryList = ({
             );
          })}
 
-         {/* Additional Sections */}
          <div className="px-5 py-4 border-t border-neutral">
             {categories.slice(4).map((category) => {
                const Icon = getIcon(category.slug);
@@ -242,10 +241,7 @@ const MegaPanel = ({ category }: { category: Category | null }) => {
    );
 
    return (
-      <div
-         className="w-[1000px] bg-neutral-light p-8 overflow-y-auto custom-scrollbar"
-         style={{ maxHeight: "70vh" }}
-      >
+      <div className="flex-1 bg-neutral-light p-8 overflow-y-auto custom-scrollbar h-full">
          {/* Header */}
          <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 bg-linear-to-br from-accent to-accent-active rounded-xl flex items-center justify-center">
@@ -261,13 +257,9 @@ const MegaPanel = ({ category }: { category: Category | null }) => {
             </div>
          </div>
 
-         {/* Brands */}
          {brands && brands.length > 0 && <BrandGrid brands={brands} />}
-
-         {/* Hot Items */}
          {hotItems.length > 0 && <HotItemList items={hotItems} />}
 
-         {/* Main Categories Grid */}
          {mainCategories && mainCategories.length > 0 && (
             <div className="grid grid-cols-4 gap-6 mb-6">
                {mainCategories.map((cat) => (
@@ -294,7 +286,6 @@ const MegaPanel = ({ category }: { category: Category | null }) => {
             </div>
          )}
 
-         {/* Price Range */}
          {priceCategory && priceCategory.children && (
             <PriceRangeList priceCategories={priceCategory.children} />
          )}
@@ -308,6 +299,8 @@ const CategoryMegaMenu = () => {
    const [isOpen, setIsOpen] = useState(false);
    const [activeCategory, setActiveCategory] = useState<Category | null>(null);
    const [loading, setLoading] = useState(true);
+   const containerRef = useRef<HTMLDivElement>(null);
+   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
    useEffect(() => {
       fetchCategories();
@@ -320,18 +313,22 @@ const CategoryMegaMenu = () => {
          );
          const result: ApiResponse = await response.json();
          setCategories(result.data);
-         setLoading(false);
-         if (result.data[0]) {
-            setActiveCategory(result.data[0]);
-         }
+         if (result.data[0]) setActiveCategory(result.data[0]);
       } catch (error) {
          console.error("Error fetching categories:", error);
+      } finally {
          setLoading(false);
       }
    };
 
-   const handleCategoryHover = (category: Category) => {
-      setActiveCategory(category);
+   const handleMouseEnter = () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      setIsOpen(true);
+   };
+
+   const handleMouseLeave = () => {
+      // Delay nhỏ để tránh đóng khi di chuột giữa button và menu
+      closeTimer.current = setTimeout(() => setIsOpen(false), 120);
    };
 
    if (loading) {
@@ -344,52 +341,55 @@ const CategoryMegaMenu = () => {
    }
 
    return (
-      <>
+      <div
+         ref={containerRef}
+         onMouseEnter={handleMouseEnter}
+         onMouseLeave={handleMouseLeave}
+      >
+         {/* Trigger Button */}
          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 hover:bg-neutral rounded-lg flex items-center gap-2 transition-colors"
+            className={[
+               "p-2 rounded-lg flex items-center gap-2 transition-colors duration-150",
+               isOpen ? "bg-neutral" : "hover:bg-neutral",
+            ].join(" ")}
          >
-            <Menu className="w-5 h-5" />
+            <Menu
+               className={[
+                  "w-5 h-5 transition-transform duration-200",
+                  isOpen ? "rotate-90" : "rotate-0",
+               ].join(" ")}
+            />
             <span className="text-sm font-medium">Danh mục</span>
          </button>
 
-         {isOpen && (
-            <>
-               {/* Overlay */}
-               <div
-                  className="fixed inset-0 bg-primary-darker/20 z-40"
-                  onClick={() => setIsOpen(false)}
-               />
+         {/* Mega Menu — fixed height, animated */}
+         <div
+            className={[
+               "absolute left-0 top-full mt-2 flex rounded-2xl shadow-2xl z-50 overflow-hidden",
+               "origin-top-left",
+               "transition-[opacity,transform] duration-200 ease-out",
+               isOpen
+                  ? "opacity-100 scale-100 pointer-events-auto"
+                  : "opacity-0 scale-95 pointer-events-none",
+            ].join(" ")}
+            style={{ height: "520px", width: "1264px" }}
+         >
+            <CategoryList
+               categories={categories}
+               activeCategory={activeCategory}
+               onHover={setActiveCategory}
+            />
+            <MegaPanel category={activeCategory} />
+         </div>
 
-               {/* Mega Menu */}
-               <div className="absolute left-0 top-full mt-2 flex rounded-2xl shadow-2xl z-50 overflow-hidden">
-                  <CategoryList
-                     categories={categories}
-                     activeCategory={activeCategory}
-                     onHover={handleCategoryHover}
-                  />
-                  <MegaPanel category={activeCategory} />
-               </div>
-
-               {/* Custom Scrollbar */}
-               <style>{`
-                  .custom-scrollbar::-webkit-scrollbar {
-                     width: 6px;
-                  }
-                  .custom-scrollbar::-webkit-scrollbar-track {
-                     background: transparent;
-                  }
-                  .custom-scrollbar::-webkit-scrollbar-thumb {
-                     background: rgb(var(--neutral-dark));
-                     border-radius: 3px;
-                  }
-                  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                     background: rgb(var(--neutral-dark-hover));
-                  }
-               `}</style>
-            </>
-         )}
-      </>
+         {/* Custom Scrollbar */}
+         <style>{`
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: rgb(var(--neutral-dark)); border-radius: 3px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgb(var(--neutral-dark-hover)); }
+         `}</style>
+      </div>
    );
 };
 

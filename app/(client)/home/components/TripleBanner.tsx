@@ -1,96 +1,77 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { BannerDTO } from '@/lib/api-demo';
+import Image from "next/image";
+import Link from "next/link";
+import { BannerDTO } from "@/lib/api-demo";
 
-// Mock triple banners vì API hiện tại chưa có getTripleBanners
-// Bạn có thể thêm function này vào API hoặc dùng mock data
-const MOCK_TRIPLE_BANNERS: BannerDTO[] = [
-  {
-    id: 'triple-1',
-    title: 'Banner 1',
-    image_path: 'https://images.unsplash.com/photo-1607082349566-187342175e2f?w=400&h=200&fit=crop',
-    link_url: '/promo-1',
-    type: 'triple',
-    position: 1,
-  },
-  {
-    id: 'triple-2',
-    title: 'Banner 2',
-    image_path: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=200&fit=crop',
-    link_url: '/promo-2',
-    type: 'triple',
-    position: 2,
-  },
-  {
-    id: 'triple-3',
-    title: 'Banner 3',
-    image_path: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&h=200&fit=crop',
-    link_url: '/promo-3',
-    type: 'triple',
-    position: 3,
-  },
-];
+interface TripleBannerProps {
+   banners: BannerDTO[];
+}
 
-export default function TripleBanner() {
-  const [banners, setBanners] = useState<BannerDTO[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function TripleBanner({ banners }: TripleBannerProps) {
+   if (banners.length === 0) return null;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        // TODO: Khi có getTripleBanners() trong API thì thay bằng:
-        // const data = await getTripleBanners();
-        
-        // Tạm thời dùng mock data
-        await new Promise(resolve => setTimeout(resolve, 200));
-        setBanners(MOCK_TRIPLE_BANNERS);
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+   return (
+      <section className="py-6 md:py-8">
+         <div className="container">
+            <div className="grid md:grid-cols-3 gap-6">
+               {banners.map((banner) => (
+                  <Link
+                     key={banner.id}
+                     href={banner.link_url}
+                     className="group relative overflow-hidden rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500"
+                  >
+                     {/* Image Container */}
+                     <div className="relative aspect-video md:aspect-16/8 overflow-hidden bg-linear-to-br from-slate-900 to-slate-800">
+                        <Image
+                           src={banner.image_path}
+                           alt={banner.title}
+                           fill
+                           sizes="(max-width: 768px) 100vw, 50vw"
+                           className="object-cover transition-transform duration-700 group-hover:scale-110"
+                           quality={75}
+                        />
 
-  if (loading) {
-    return (
-      <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-[200px] bg-neutral animate-pulse rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+                        {/* Gradient Overlay */}
+                        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
 
-  if (!banners || banners.length === 0) {
-    return null;
-  }
+                        {/* Hover Glow Effect */}
+                        <div className="absolute inset-0 bg-promotion/0 group-hover:bg-promotion/10 transition-colors duration-500" />
+                     </div>
 
-  return (
-    <section className="container py-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {banners.map((banner) => (
-          <Link
-            key={banner.id}
-            href={banner.link_url}
-            className="relative h-[200px] rounded-lg overflow-hidden group"
-          >
-            <Image
-              src={banner.image_path}
-              alt={banner.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
+                     {/* Content Overlay */}
+                     <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-neutral-light mb-3 drop-shadow-lg transform transition-transform duration-500 group-hover:translate-x-2">
+                           {banner.title}
+                        </h3>
+
+                        {/* CTA Button */}
+                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+                           <span className="text-sm md:text-base font-bold text-neutral-light bg-promotion px-6 py-2.5 rounded-full hover:bg-promotion-hover transition-colors shadow-lg">
+                              Xem ngay
+                           </span>
+                           <svg
+                              className="w-6 h-6 text-neutral-light transform transition-transform duration-300 group-hover:translate-x-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                           >
+                              <path
+                                 strokeLinecap="round"
+                                 strokeLinejoin="round"
+                                 strokeWidth={2.5}
+                                 d="M17 8l4 4m0 0l-4 4m4-4H3"
+                              />
+                           </svg>
+                        </div>
+                     </div>
+
+                     {/* Corner Accent */}
+                     <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-neutral-light/30 rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </Link>
+               ))}
+            </div>
+         </div>
+      </section>
+   );
 }

@@ -85,7 +85,7 @@ export default async function CategoryPage({
    return (
       <div className="min-h-screen bg-gray-50">
          <div className="bg-white border-b">
-            <div className="container mx-auto px-4 py-4">
+            <div className="container py-4">
                <Breadcrumb
                   items={[
                      { label: "Trang chủ", href: "/" },
@@ -164,7 +164,7 @@ export default async function CategoryPage({
             </div>
          </div>
 
-         <div className="container mx-auto px-4 py-6">
+         <div className="container py-6">
             <div className="flex gap-6">
                <aside className="w-72 shrink-0 hidden lg:block">
                   <ProductFilter />

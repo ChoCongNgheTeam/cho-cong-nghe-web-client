@@ -166,7 +166,7 @@ export default function CartPage() {
             </div>
          </div>
          {/* Main Content */}
-         <div className="container pb-28 lg:pb-8 space-y-4 !px-3">
+         <div className="container pb-28 lg:pb-8 space-y-4 px-3">
             {items.length === 0 ? (
                <div className="rounded-lg bg-neutral-light p-6 sm:p-8 lg:p-12 text-center shadow-sm">
                   <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary">
@@ -237,6 +237,7 @@ export default function CartPage() {
                                           src={item.image_url}
                                           alt={item.product_name}
                                           fill
+                                          sizes="(max-width: 768px) 100vw, 50vw"
                                           className="object-cover"
                                        />
                                     ) : (
@@ -335,7 +336,7 @@ export default function CartPage() {
                                     {/* Desktop: Price + Quantity + Total + Delete */}
                                     <div className="hidden sm:flex items-center gap-4 lg:gap-6">
                                        {/* Price */}
-                                       <div className="flex flex-col items-end min-w-[80px]">
+                                       <div className="flex flex-col items-end min-w-20">
                                           <span className="text-sm lg:text-base font-semibold text-promotion">
                                              {formatPrice(item.price)}
                                           </span>
@@ -375,7 +376,7 @@ export default function CartPage() {
                                        </div>
 
                                        {/* Total Price */}
-                                       <div className="min-w-[100px] text-right">
+                                       <div className="min-w-25 text-right">
                                           <span className="text-sm lg:text-base font-semibold text-promotion">
                                              {formatPrice(
                                                 item.price * item.quantity,

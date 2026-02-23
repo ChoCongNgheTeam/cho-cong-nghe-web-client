@@ -1,68 +1,70 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { getCategories, CategoryDTO } from '@/lib/api-demo';
+import Image from "next/image";
+import Link from "next/link";
+import { CategoryDTO } from "@/lib/api-demo";
+import { Slidezy } from "@/components/Slider";
 
-export default function CategoryGrid() {
-  const [categories, setCategories] = useState<CategoryDTO[]>([]);
-  const [loading, setLoading] = useState(true);
+interface CategoryGridProps {
+   categories: CategoryDTO[];
+}
 
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const data = await getCategories();
-        setCategories(data);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadCategories();
-  }, []);
+export default function CategoryGrid({ categories }: CategoryGridProps) {
+   return (
+      <section className="py-4 md:py-6 bg-linear-to-b">
+         <div className="container">
+            {/* Outer Container with Border */}
+            <div className="bg-white rounded-3xl border-2 border-neutral-hover p-6 md:p-8">
+               {/* Header */}
+               <div className="mb-6">
+                  <h2 className="text-xl md:text-3xl font-bold text-primary tracking-tight">
+                     Danh mục nổi bật
+                  </h2>
+               </div>
 
-  if (loading) {
-    return (
-      <div className="container py-8">
-        <div className="h-64 bg-neutral animate-pulse rounded-lg" />
-      </div>
-    );
-  }
+               {/* Slidezy Carousel */}
+               <Slidezy
+                  items={{ mobile: 4, tablet: 6, desktop: 8 }}
+                  gap={12}
+                  speed={300}
+                  loop={false}
+                  nav={false}
+                  controls={true}
+                  slideBy={2}
+                  draggable={true}
+                  className=""
+               >
+                  {categories.map((category) => (
+                     <Link
+                        key={category.id}
+                        href={`/category/${category.slug}`}
+                        className="group/item block"
+                     >
+                        <div className="flex flex-col items-center">
+                           {/* Category Card */}
+                           <div className="relative w-full bg-white rounded-2xl p-3 md:p-4 transition-all duration-300 group-hover/item:scale-105">
+                              {/* Category Image */}
+                              <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-neutral-light">
+                                 <Image
+                                    src={category.image_path}
+                                    alt={category.name}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-110"
+                                 />
+                              </div>
+                           </div>
 
-  if (!categories || categories.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="container py-8">
-      <h2 className="text-2xl font-bold text-primary mb-6">Danh mục nổi bật</h2>
-      
-      <div className="bg-white rounded-2xl border border-neutral p-8 shadow-sm">
-        <div className="grid grid-cols-4 lg:grid-cols-8 gap-x-8 gap-y-12">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/category/${category.slug}`}
-              className="group flex flex-col items-center gap-3"
-            >
-              <div className="relative w-24 h-24 flex items-center justify-center">
-                <Image
-                  src={category.image_path}
-                  alt={category.name}
-                  fill
-                  className="object-contain group-hover:scale-105 transition-transform duration-300"
-                  sizes="96px"
-                />
-              </div>
-              <span className="text-sm text-center font-medium text-primary group-hover:text-promotion transition-colors line-clamp-2 w-full">
-                {category.name}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+                           {/* Category Name */}
+                           <p className="mt-3 text-center text-xs md:text-sm font-semibold text-primary transition-colors duration-300 line-clamp-2 px-1">
+                              {category.name}
+                           </p>
+                        </div>
+                     </Link>
+                  ))}
+               </Slidezy>
+            </div>
+         </div>
+      </section>
+   );
 }
