@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useMemo } from "react"; 
+import { useEffect, useRef, useState, useMemo } from "react";
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
@@ -52,25 +52,33 @@ export function ProductDetailContent({
    * ========================================================================== */
   const colors = useMemo(
     () =>
-      product.availableOptions?.find((opt) => opt.type === "color")?.values || [],
-    [product.availableOptions]
+      product.availableOptions?.find((opt) => opt.type === "color")?.values ||
+      [],
+    [product.availableOptions],
   );
 
   const storages = useMemo(
     () =>
-      product.availableOptions?.find((opt) => opt.type === "storage")?.values || [],
-    [product.availableOptions]
+      product.availableOptions?.find((opt) => opt.type === "storage")?.values ||
+      [],
+    [product.availableOptions],
   );
 
   /* ============================================================================
    * STATE
    * ========================================================================== */
   const [selectedColor, setSelectedColor] = useState(colors[0]?.value || "");
-  const [selectedStorage, setSelectedStorage] = useState(storages[0]?.value || "");
+  const [selectedStorage, setSelectedStorage] = useState(
+    storages[0]?.value || "",
+  );
   const [isUserSelectStorage, setIsUserSelectStorage] = useState(false);
-  const [availableOptions, setAvailableOptions] = useState(product.availableOptions || []);
+  const [availableOptions, setAvailableOptions] = useState(
+    product.availableOptions || [],
+  );
   const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
-  const [variantImages, setVariantImages] = useState(product.currentVariant?.images || []);
+  const [variantImages, setVariantImages] = useState(
+    product.currentVariant?.images || [],
+  );
 
   /* ============================================================================
    * HANDLERS
@@ -116,8 +124,14 @@ export function ProductDetailContent({
         );
 
         const json = await res.json();
+        console.log("Variant fetch response:", json);
 
-        if (json.success) {
+        if (json) {
+          console.log(" Chuẩn bị set:", {
+            availableOptions: json.data.availableOptions,
+            currentVariant: json.data.currentVariant?.code,
+            images: json.data.currentVariant?.images?.length,
+          });
           setAvailableOptions(json.data.availableOptions);
           setCurrentVariant(json.data.currentVariant);
           setVariantImages(json.data.currentVariant.images);
@@ -134,7 +148,10 @@ export function ProductDetailContent({
    * DEBUG LOGS (Optional - Remove in production)
    * ========================================================================== */
   useEffect(() => {
-    console.log("Selected:", { color: selectedColor, storage: selectedStorage });
+    console.log("Selected:", {
+      color: selectedColor,
+      storage: selectedStorage,
+    });
   }, [selectedColor, selectedStorage]);
 
   /* ============================================================================
@@ -190,12 +207,12 @@ export function ProductDetailContent({
       {/* Product Detail Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={specifications}>
         <div className="!px-0">
-          <ProductDetailSection slug={slug} />
+          <ProductDetailSection slug={slug}  product={product}/>
         </div>
       </div>
 
       {/* Product Detail Section 1 */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6">
+      <div className="bg-gray-400/10 pt-4 sm:pt-6 ">
         <ProductDetailSection1 product={product} />
       </div>
 
@@ -234,7 +251,9 @@ export function ProductDetailContent({
             <div className="flex flex-col gap-2 justify-center items-center">
               <BsPatchCheckFill size={48} className="text-red-500" />
               <div className="text-center">
-                <b className="block text-base sm:text-lg">Thương hiệu đảm bảo</b>
+                <b className="block text-base sm:text-lg">
+                  Thương hiệu đảm bảo
+                </b>
                 <p className="text-sm text-gray-500 mt-1">
                   Nhập khẩu, bảo hành chính hãng
                 </p>
@@ -262,7 +281,9 @@ export function ProductDetailContent({
             <div className="flex flex-col gap-2 justify-center items-center">
               <MdVerified size={48} className="text-red-500" />
               <div className="text-center">
-                <b className="block text-base sm:text-lg">Sản phẩm chất lượng</b>
+                <b className="block text-base sm:text-lg">
+                  Sản phẩm chất lượng
+                </b>
                 <p className="text-sm text-gray-500 mt-1">
                   Đảm bảo tương thích và độ bền cao
                 </p>

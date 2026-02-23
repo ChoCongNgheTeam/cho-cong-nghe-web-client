@@ -106,6 +106,7 @@ export type ProductDetail = {
   highlights: Highlight[];
   canReview: boolean;
   orderItemId: string | null;
+  highlightGroups?: SpecificationGroup[];
 };
 
 /** ===== API Response ===== */
