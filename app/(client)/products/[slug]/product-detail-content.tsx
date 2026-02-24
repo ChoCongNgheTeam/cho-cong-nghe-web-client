@@ -15,7 +15,7 @@ import CompareProducts from "../components/product-detail/product-detail-compare
 import ProductDetailSuggest from "../components/product-detail/product-detail-suggest";
 import ProductsViewed from "../components/product-detail/products-viewed";
 
-import Breadcrumb from "../components/Breadcrumb";
+import Breadcrumb from "../../../components/layout/Breadcrumb/Breadcrumb";
 
 import { ProductDetail } from "@/lib/types/product";
 
@@ -119,8 +119,11 @@ export function ProductDetailContent({
 
     const fetchVariant = async () => {
       try {
+        // const res = await fetch(
+        //   `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
+        // );
         const res = await fetch(
-          `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
         );
 
         const json = await res.json();
@@ -207,7 +210,7 @@ export function ProductDetailContent({
       {/* Product Detail Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={specifications}>
         <div className="!px-0">
-          <ProductDetailSection slug={slug}  product={product}/>
+          <ProductDetailSection slug={slug} product={product} />
         </div>
       </div>
 
@@ -224,18 +227,18 @@ export function ProductDetailContent({
       </div>
 
       {/* Compare Products Section */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6">
+      {/* <div className="bg-gray-400/10 pt-4 sm:pt-6">
         <div>
           <CompareProducts />
         </div>
-      </div>
+      </div> */}
 
       {/* Suggest Products Section */}
-      {/* <div className="bg-gray-400/10 pt-4 sm:pt-6">
-        <div className="mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-white rounded-lg">
-          <ProductDetailSuggest />
+      <div className="bg-gray-400/10 pt-4 sm:pt-6">
+        <div>
+          <ProductDetailSuggest slug={slug}/>
         </div>
-      </div> */}
+      </div>
 
       {/* Products Viewed */}
       {/* <div className="bg-gray-400/10 p-4 sm:pt-6">

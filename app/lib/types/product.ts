@@ -116,7 +116,6 @@ export type ProductDetailResponse = {
   message: string;
 };
 
-
 // Thông số kỹ thuật - từng item
 export interface SpecificationItem {
   id: string;
