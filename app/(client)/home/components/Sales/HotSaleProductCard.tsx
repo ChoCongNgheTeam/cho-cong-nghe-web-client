@@ -110,7 +110,7 @@ export default function HotSaleProductCard({
                {features.map(({ label, value }, i) => (
                   <div key={i} className="flex flex-col items-center gap-0.75">
                      <Aperture
-                        className="w-7 h-7 text-[#c5c5c5]"
+                        className="w-5 h-5 text-[#c5c5c5]"
                         strokeWidth={1}
                      />
                      <span className="text-[10px] leading-3.25 text-[#1a3a5c] font-medium text-center">

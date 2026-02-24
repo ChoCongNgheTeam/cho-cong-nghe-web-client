@@ -1,4 +1,4 @@
-import { ProductPrice } from "../types";
+import { ProductPrice } from "@/components/product/types";
 
 interface PriceDisplayProps {
    price: ProductPrice;

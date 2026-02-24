@@ -1,21 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 
 export default function ProductFilter() {
    const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
+   const [selectedOS, setSelectedOS] = useState<string>("all");
+   const [selectedStorage, setSelectedStorage] = useState<string[]>([]);
+   const [selectedNetwork, setSelectedNetwork] = useState<string[]>([]);
+   const [selectedRam, setSelectedRam] = useState<string[]>([]);
+   const [selectedBattery, setSelectedBattery] = useState<string[]>([]);
+   const [selectedConnections, setSelectedConnections] = useState<string[]>([]);
    const [priceRange, setPriceRange] = useState<[number, number]>([
       0, 50000000,
    ]);
-   const [selectedOS, setSelectedOS] = useState<string>("all");
 
    const brands = [
-      { id: "apple", name: "Apple", logo: "🍎" },
-      { id: "samsung", name: "Samsung", logo: "📱" },
-      { id: "xiaomi", name: "Xiaomi", logo: "📱" },
-      { id: "oppo", name: "OPPO", logo: "📱" },
-      { id: "vivo", name: "Vivo", logo: "📱" },
-      { id: "realme", name: "realme", logo: "📱" },
+      { id: "apple", name: "Apple" },
+      { id: "samsung", name: "Samsung" },
+      { id: "xiaomi", name: "Xiaomi" },
+      { id: "oppo", name: "OPPO" },
+      { id: "vivo", name: "Vivo" },
+      { id: "realme", name: "realme" },
    ];
 
    const priceOptions = [
@@ -28,330 +34,287 @@ export default function ProductFilter() {
       { label: "Trên 20 triệu", value: "20000000-50000000" },
    ];
 
-   const toggleBrand = (brandId: string) => {
-      setSelectedBrand((prev) =>
-         prev.includes(brandId)
-            ? prev.filter((id) => id !== brandId)
-            : [...prev, brandId],
+   const toggle = (
+      list: string[],
+      setList: (v: string[]) => void,
+      val: string,
+   ) =>
+      setList(
+         list.includes(val) ? list.filter((x) => x !== val) : [...list, val],
       );
+
+   const hasFilters =
+      selectedBrand.length > 0 ||
+      selectedOS !== "all" ||
+      selectedStorage.length > 0 ||
+      selectedNetwork.length > 0 ||
+      selectedRam.length > 0 ||
+      selectedBattery.length > 0 ||
+      selectedConnections.length > 0 ||
+      priceRange[1] < 50000000;
+
+   const resetAll = () => {
+      setSelectedBrand([]);
+      setSelectedOS("all");
+      setSelectedStorage([]);
+      setSelectedNetwork([]);
+      setSelectedRam([]);
+      setSelectedBattery([]);
+      setSelectedConnections([]);
+      setPriceRange([0, 50000000]);
    };
 
+   // Reusable section header
+   const SectionHeader = ({ label }: { label: string }) => (
+      <div className="flex items-center justify-between py-2.5 border-b border-neutral mb-3">
+         <span className="text-sm font-semibold text-primary">{label}</span>
+         <ChevronDown className="w-4 h-4 text-primary-light" />
+      </div>
+   );
+
+   // Reusable toggle chip
+   const Chip = ({
+      label,
+      active,
+      onClick,
+   }: {
+      label: string;
+      active: boolean;
+      onClick: () => void;
+   }) => (
+      <button
+         type="button"
+         onClick={onClick}
+         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer duration-150 ${
+            active
+               ? "border-accent bg-accent-light text-accent"
+               : "border-neutral bg-neutral-light text-primary hover:border-accent-light hover:bg-accent-light/50"
+         }`}
+      >
+         {label}
+      </button>
+   );
+
    return (
-      <div className="bg-white rounded-lg shadow-sm p-4 sticky top-4">
-         <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">☰ Bộ lọc tìm kiếm</h3>
-         </div>
-
-         {/* Hãng sản xuất */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Hãng sản xuất</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-               {brands.map((brand) => (
-                  <button
-                     key={brand.id}
-                     onClick={() => toggleBrand(brand.id)}
-                     className={`p-3 border rounded-lg text-sm font-medium transition-all ${
-                        selectedBrand.includes(brand.id)
-                           ? "border-blue-500 bg-blue-50 text-blue-700"
-                           : "border-gray-200 hover:border-gray-300"
-                     }`}
-                  >
-                     <span className="mr-1">{brand.logo}</span>
-                     {brand.name}
-                  </button>
-               ))}
+      <div className="bg-neutral-light border border-neutral rounded-2xl overflow-hidden">
+         {/* Header */}
+         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral bg-neutral-light-active">
+            <div className="flex items-center gap-2">
+               <SlidersHorizontal className="w-4 h-4 text-accent" />
+               <span className="text-sm font-bold text-primary">Bộ lọc</span>
             </div>
-            <button className="text-blue-600 text-sm mt-2 hover:underline">
-               Xem thêm
-            </button>
-         </div>
-
-         {/* Mức giá */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Mức giá</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="space-y-2 mt-2">
-               {priceOptions.map((option) => (
-                  <label
-                     key={option.value}
-                     className="flex items-center space-x-2 cursor-pointer"
-                  >
-                     <input
-                        type="radio"
-                        name="price"
-                        value={option.value}
-                        className="w-4 h-4 text-blue-600 accent-blue-600"
-                     />
-                     <span className="text-sm">{option.label}</span>
-                  </label>
-               ))}
-            </div>
-         </div>
-
-         {/* Khoảng giá slider */}
-         <div className="mb-6">
-            <p className="font-medium mb-3">
-               Hoặc nhập khoảng giá phù hợp với bạn:
-            </p>
-            <div className="flex items-center gap-2 mb-3">
-               <input
-                  type="text"
-                  value={priceRange[0].toLocaleString("vi-VN")}
-                  className="w-24 px-2 py-1 text-sm border rounded"
-                  readOnly
-               />
-               <span>~</span>
-               <input
-                  type="text"
-                  value={priceRange[1].toLocaleString("vi-VN")}
-                  className="w-24 px-2 py-1 text-sm border rounded"
-                  readOnly
-               />
-            </div>
-            <input
-               type="range"
-               min="0"
-               max="50000000"
-               step="100000"
-               value={priceRange[1]}
-               onChange={(e) =>
-                  setPriceRange([priceRange[0], parseInt(e.target.value)])
-               }
-               className="w-full accent-blue-600"
-            />
-         </div>
-
-         {/* Hệ điều hành */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Hệ điều hành</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="flex gap-2 mt-2">
+            {hasFilters && (
                <button
-                  onClick={() => setSelectedOS("ios")}
-                  className={`flex-1 py-2 px-3 border rounded-lg text-sm font-medium transition-all ${
-                     selectedOS === "ios"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 hover:border-gray-300"
-                  }`}
+                  type="button"
+                  onClick={resetAll}
+                  className="flex items-center gap-1 text-xs text-promotion hover:text-promotion-hover transition-colors cursor-pointer"
                >
-                  iOS
+                  <X className="w-3.5 h-3.5" />
+                  Xoá tất cả
                </button>
-               <button
-                  onClick={() => setSelectedOS("android")}
-                  className={`flex-1 py-2 px-3 border rounded-lg text-sm font-medium transition-all ${
-                     selectedOS === "android"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 hover:border-gray-300"
-                  }`}
-               >
-                  Android
-               </button>
-            </div>
+            )}
          </div>
 
-         {/* Dung lượng ROM */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Dung lượng ROM</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-               {["≤128 GB", "256 GB", "512 GB", "1 TB"].map((storage) => (
-                  <button
-                     key={storage}
-                     className="py-2 px-3 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors"
-                  >
-                     {storage}
-                  </button>
-               ))}
-            </div>
-         </div>
-
-         {/* Kết nối */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Kết nối</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="flex flex-wrap gap-2 mt-2">
-               {["NFC", "Bluetooth", "Hồng ngoại"].map((connection) => (
-                  <button
-                     key={connection}
-                     className="py-2 px-3 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors"
-                  >
-                     {connection}
-                  </button>
-               ))}
-            </div>
-         </div>
-
-         {/* Hiệu năng và Pin */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Hiệu năng và Pin</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="space-y-2 mt-2">
-               {[
-                  "Tất cả",
-                  "Dưới 3000 mAh",
-                  "Pin từ 3000 - 4000 mAh",
-                  "Pin từ 4000 - 5500 mAh",
-                  "Pin trâu: trên 5500 mAh",
-               ].map((option) => (
-                  <label
-                     key={option}
-                     className="flex items-center space-x-2 cursor-pointer"
-                  >
-                     <input
-                        type="checkbox"
-                        className="w-4 h-4 text-blue-600 accent-blue-600 rounded"
+         <div className="px-4 py-4 space-y-5">
+            {/* Hãng sản xuất */}
+            <div>
+               <SectionHeader label="Hãng sản xuất" />
+               <div className="grid grid-cols-2 gap-2">
+                  {brands.map((brand) => (
+                     <Chip
+                        key={brand.id}
+                        label={brand.name}
+                        active={selectedBrand.includes(brand.id)}
+                        onClick={() =>
+                           toggle(selectedBrand, setSelectedBrand, brand.id)
+                        }
                      />
-                     <span className="text-sm">{option}</span>
-                  </label>
-               ))}
+                  ))}
+               </div>
             </div>
-         </div>
 
-         {/* Hỗ trợ mạng */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>Hỗ trợ mạng</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="flex gap-2 mt-2">
-               {["5G", "4G"].map((network) => (
-                  <button
-                     key={network}
-                     className="py-2 px-4 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors"
-                  >
-                     {network}
-                  </button>
-               ))}
-            </div>
-         </div>
-
-         {/* RAM */}
-         <div className="mb-6">
-            <button className="flex items-center justify-between w-full py-3 font-medium text-gray-900">
-               <span>RAM</span>
-               <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M19 9l-7 7-7-7"
-                  />
-               </svg>
-            </button>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-               {["16 GB", "12 GB", "8 GB", "6 GB", "4 GB", "3 GB"].map(
-                  (ram) => (
-                     <button
-                        key={ram}
-                        className="py-2 px-3 border border-gray-200 rounded-lg text-sm hover:border-gray-300 transition-colors"
+            {/* Mức giá */}
+            <div>
+               <SectionHeader label="Mức giá" />
+               <div className="space-y-1.5">
+                  {priceOptions.map((option) => (
+                     <label
+                        key={option.value}
+                        className="flex items-center gap-2.5 cursor-pointer group"
                      >
-                        {ram}
-                     </button>
-                  ),
-               )}
+                        <input
+                           type="radio"
+                           name="price"
+                           value={option.value}
+                           className="w-3.5 h-3.5 accent-[rgb(var(--accent))]"
+                        />
+                        <span className="text-xs text-primary group-hover:text-accent transition-colors">
+                           {option.label}
+                        </span>
+                     </label>
+                  ))}
+               </div>
+
+               {/* Slider */}
+               <div className="mt-4">
+                  <p className="text-xs text-primary-light mb-2">
+                     Hoặc nhập khoảng giá:
+                  </p>
+                  <div className="flex items-center gap-2 mb-3">
+                     <div className="flex-1 px-2 py-1.5 text-xs border border-neutral rounded-lg bg-neutral-light-active text-primary text-center">
+                        {priceRange[0].toLocaleString("vi-VN")}đ
+                     </div>
+                     <span className="text-neutral-dark text-xs">–</span>
+                     <div className="flex-1 px-2 py-1.5 text-xs border border-neutral rounded-lg bg-neutral-light-active text-primary text-center">
+                        {priceRange[1].toLocaleString("vi-VN")}đ
+                     </div>
+                  </div>
+                  <input
+                     type="range"
+                     min="0"
+                     max="50000000"
+                     step="500000"
+                     value={priceRange[1]}
+                     onChange={(e) =>
+                        setPriceRange([priceRange[0], parseInt(e.target.value)])
+                     }
+                     className="w-full accent-[rgb(var(--accent))] h-1.5 rounded-full cursor-pointer"
+                  />
+               </div>
             </div>
+
+            {/* Hệ điều hành */}
+            <div>
+               <SectionHeader label="Hệ điều hành" />
+               <div className="flex gap-2">
+                  {["all", "ios", "android"].map((os) => (
+                     <Chip
+                        key={os}
+                        label={
+                           os === "all"
+                              ? "Tất cả"
+                              : os === "ios"
+                                ? "iOS"
+                                : "Android"
+                        }
+                        active={selectedOS === os}
+                        onClick={() => setSelectedOS(os)}
+                     />
+                  ))}
+               </div>
+            </div>
+
+            {/* Dung lượng ROM */}
+            <div>
+               <SectionHeader label="Dung lượng ROM" />
+               <div className="flex flex-wrap gap-2">
+                  {["≤128 GB", "256 GB", "512 GB", "1 TB"].map((s) => (
+                     <Chip
+                        key={s}
+                        label={s}
+                        active={selectedStorage.includes(s)}
+                        onClick={() =>
+                           toggle(selectedStorage, setSelectedStorage, s)
+                        }
+                     />
+                  ))}
+               </div>
+            </div>
+
+            {/* RAM */}
+            <div>
+               <SectionHeader label="RAM" />
+               <div className="flex flex-wrap gap-2">
+                  {["3 GB", "4 GB", "6 GB", "8 GB", "12 GB", "16 GB"].map(
+                     (r) => (
+                        <Chip
+                           key={r}
+                           label={r}
+                           active={selectedRam.includes(r)}
+                           onClick={() =>
+                              toggle(selectedRam, setSelectedRam, r)
+                           }
+                        />
+                     ),
+                  )}
+               </div>
+            </div>
+
+            {/* Kết nối */}
+            <div>
+               <SectionHeader label="Kết nối" />
+               <div className="flex flex-wrap gap-2">
+                  {["NFC", "Bluetooth", "Hồng ngoại"].map((c) => (
+                     <Chip
+                        key={c}
+                        label={c}
+                        active={selectedConnections.includes(c)}
+                        onClick={() =>
+                           toggle(
+                              selectedConnections,
+                              setSelectedConnections,
+                              c,
+                           )
+                        }
+                     />
+                  ))}
+               </div>
+            </div>
+
+            {/* Hỗ trợ mạng */}
+            <div>
+               <SectionHeader label="Hỗ trợ mạng" />
+               <div className="flex gap-2">
+                  {["5G", "4G"].map((n) => (
+                     <Chip
+                        key={n}
+                        label={n}
+                        active={selectedNetwork.includes(n)}
+                        onClick={() =>
+                           toggle(selectedNetwork, setSelectedNetwork, n)
+                        }
+                     />
+                  ))}
+               </div>
+            </div>
+
+            {/* Pin */}
+            <div>
+               <SectionHeader label="Dung lượng pin" />
+               <div className="space-y-1.5">
+                  {[
+                     "Dưới 3000 mAh",
+                     "3000 – 4000 mAh",
+                     "4000 – 5500 mAh",
+                     "Trên 5500 mAh",
+                  ].map((b) => (
+                     <label
+                        key={b}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                     >
+                        <input
+                           type="checkbox"
+                           checked={selectedBattery.includes(b)}
+                           onChange={() =>
+                              toggle(selectedBattery, setSelectedBattery, b)
+                           }
+                           className="w-3.5 h-3.5 rounded accent-[rgb(var(--accent))]"
+                        />
+                        <span className="text-xs text-primary group-hover:text-accent transition-colors">
+                           {b}
+                        </span>
+                     </label>
+                  ))}
+               </div>
+            </div>
+
+            {/* Apply button */}
+            <button
+               type="button"
+               className="w-full py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-xl transition-colors duration-200 cursor-pointer"
+            >
+               Áp dụng bộ lọc
+            </button>
          </div>
       </div>
    );

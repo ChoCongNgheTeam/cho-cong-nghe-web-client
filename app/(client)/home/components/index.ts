@@ -1,0 +1,8 @@
+export { BannersTop } from "./banners/BannersTop";
+export { HomeSlider } from "./homeSlider/HomeSlider";
+export { FeaturedCategories } from "./Categories/FeaturedCategories";
+export { FeaturedProducts } from "./products/FeaturedProducts";
+export { BannersSection1 } from "./banners/BannersSection1";
+export { BestSellers } from "./products/BestSellers";
+export { BlogSection } from "./blogs/BlogSection";
+export { TrustBadges } from "./TrustBadges";

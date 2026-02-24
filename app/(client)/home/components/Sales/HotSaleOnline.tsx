@@ -1,10 +1,10 @@
 "use client";
 
 import { ProductDTO } from "@/lib/api-demo";
-import HotSaleProductCard from "./HotSaleProductCard";
 import { useState, useEffect } from "react";
 import { Slidezy } from "@/components/Slider";
 import { Flame } from "lucide-react";
+import HotSaleProductCard from "./HotSaleProductCard";
 
 interface HotSaleOnlineProps {
    products: ProductDTO[];

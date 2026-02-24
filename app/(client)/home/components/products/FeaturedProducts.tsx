@@ -1,23 +1,21 @@
 "use client";
 
-import { ProductDTO } from "@/lib/api-demo";
-import FeaturedProductCard from "./FeaturedProductCard";
+import ProductCard from "@/components/product/ProductCard";
+import { FeaturedProduct } from "../../_libs";
 import { Slidezy } from "@/components/Slider";
 
-interface BestSellersProps {
-   products: ProductDTO[];
+interface FeaturedProductsProps {
+   products: FeaturedProduct[];
 }
 
-export default function BestSellers({ products }: BestSellersProps) {
+export function FeaturedProducts({ products }: FeaturedProductsProps) {
    return (
-      <section className="py-6 md:py-6 bg-neutral-light">
+      <section className="py-8 md:py-12 bg-neutral-light">
          <div className="container">
-            {/* Outer Frame */}
             <div className="rounded-2xl border-2 border-neutral-hover p-5 md:p-6">
-               {/* Section Header */}
                <div className="mb-3">
                   <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">
-                     Sản phẩm bán chạy
+                     Sản phẩm nổi bật
                   </h2>
                </div>
                <Slidezy
@@ -31,8 +29,8 @@ export default function BestSellers({ products }: BestSellersProps) {
                   draggable={true}
                >
                   {products.map((product, index) => (
-                     <FeaturedProductCard
-                        key={product.product.id}
+                     <ProductCard
+                        key={product.id}
                         product={product}
                         index={index}
                      />

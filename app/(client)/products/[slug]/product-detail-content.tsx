@@ -117,7 +117,7 @@ export function ProductDetailContent({
 
         const json = await res.json();
 
-        if (json.success) {
+        if (json) {
           setAvailableOptions(json.data.availableOptions);
           setCurrentVariant(json.data.currentVariant);
           setVariantImages(json.data.currentVariant.images);

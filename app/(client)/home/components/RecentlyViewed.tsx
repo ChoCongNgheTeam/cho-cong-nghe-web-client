@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductDTO } from "@/lib/api-demo";
-import FeaturedProductCard from "./FeaturedProductCard";
+import FeaturedProductCard from "./products/FeaturedProductCard";
 import { Slidezy } from "@/components/Slider";
 
 interface RecentlyViewedProps {
