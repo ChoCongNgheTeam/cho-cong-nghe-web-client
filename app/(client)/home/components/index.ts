@@ -6,3 +6,5 @@ export { BannersSection1 } from "./banners/BannersSection1";
 export { BestSellers } from "./products/BestSellers";
 export { BlogSection } from "./blogs/BlogSection";
 export { TrustBadges } from "./TrustBadges";
+export { SeasonalSale } from "./Sales/SeasonalSale";
+export { HotSaleOnline } from "./Sales/HotSaleOnline";

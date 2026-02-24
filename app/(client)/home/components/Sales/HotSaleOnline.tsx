@@ -1,54 +1,66 @@
 "use client";
 
-import { ProductDTO } from "@/lib/api-demo";
+import { FlashSaleData } from "../../_libs";
 import { useState, useEffect } from "react";
 import { Slidezy } from "@/components/Slider";
 import { Flame } from "lucide-react";
 import HotSaleProductCard from "./HotSaleProductCard";
 
 interface HotSaleOnlineProps {
-   products: ProductDTO[];
+   flashSale: FlashSaleData;
 }
 
-export default function HotSaleOnline({ products }: HotSaleOnlineProps) {
+export function HotSaleOnline({ flashSale }: HotSaleOnlineProps) {
+   const { products, startDate, endDate } = flashSale;
+
+   const getTimeLeft = () => {
+      if (!endDate) return { hours: 0, minutes: 0, seconds: 0 };
+      const end = new Date(endDate).getTime();
+      const now = Date.now();
+      const diff = Math.max(0, end - now);
+      return {
+         hours: Math.floor(diff / 1000 / 3600),
+         minutes: Math.floor((diff / 1000 / 60) % 60),
+         seconds: Math.floor((diff / 1000) % 60),
+      };
+   };
+
+   const [mounted, setMounted] = useState(false);
    const [timeLeft, setTimeLeft] = useState({
-      hours: 10,
-      minutes: 37,
-      seconds: 54,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
    });
 
    useEffect(() => {
-      const timer = setInterval(() => {
-         setTimeLeft((prev) => {
-            let { hours, minutes, seconds } = prev;
-
-            if (seconds > 0) {
-               seconds--;
-            } else {
-               seconds = 59;
-               if (minutes > 0) {
-                  minutes--;
-               } else {
-                  minutes = 59;
-                  if (hours > 0) {
-                     hours--;
-                  } else {
-                     hours = 23;
-                  }
-               }
-            }
-
-            return { hours, minutes, seconds };
-         });
-      }, 1000);
-
+      setMounted(true);
+      setTimeLeft(getTimeLeft());
+      const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
       return () => clearInterval(timer);
-   }, []);
+   }, [endDate]);
+
+   const pad = (n: number) => n.toString().padStart(2, "0");
+
+   const formatSessionTime = (date: string | null) => {
+      if (!date) return "--:--";
+      return new Date(date)
+         .toLocaleString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+         })
+         .replace(/-/g, "/");
+   };
+
+   const countdown = mounted
+      ? `${timeLeft.hours}:${pad(timeLeft.minutes)}:${pad(timeLeft.seconds)}`
+      : "00:00:00";
 
    const sessions = [
       {
-         time: "10:00, 30/01",
-         countdown: `${timeLeft.hours}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`,
+         time: formatSessionTime(startDate),
+         countdown,
          active: true,
       },
       { time: "10:00, 30/01", status: "Sắp diễn ra", active: false },
@@ -59,41 +71,38 @@ export default function HotSaleOnline({ products }: HotSaleOnlineProps) {
       <section className="py-6 md:py-8">
          <div className="container">
             <div className="relative">
-               {/* Header Tab */}
                <div className="flex justify-center relative z-10">
                   <div className="bg-promotion px-16 py-3 flex items-center gap-2 rounded-t-2xl">
                      <Flame className="w-10 h-10 text-yellow-400 fill-yellow-400" />
                      <h2 className="text-xl md:text-2xl font-black text-yellow-300 tracking-wider">
-                        SALE ONLINE
+                        FLASH SALE
                      </h2>
                   </div>
                </div>
 
-               {/* Main Container */}
-               <div className="relative rounded-3xl border-4 border-promotion overflow-hidden bg-white -mt-1">
-                  {/* Session Tabs */}
+               <div className="relative rounded-3xl border-4 border-promotion overflow-hidden bg-neutral-light -mt-1">
                   <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                      {sessions.map((session, i) => (
                         <button
                            key={i}
                            className={`shrink-0 w-45 px-4 py-4 text-center transition-all cursor-pointer ${
                               session.active
-                                 ? "bg-promotion-light-hover border-b-2 border-promotion-hover"
-                                 : ""
+                                 ? "bg-promotion-light border-b-2 border-promotion-hover"
+                                 : "hover:bg-neutral-light-active"
                            }`}
                         >
-                           <div className="font-semibold text-gray-800 text-sm leading-tight">
+                           <div className="font-semibold text-primary text-sm leading-tight">
                               {session.time}
                            </div>
                            {session.active ? (
-                              <div className="text-xs mt-0.5 text-gray-700 leading-tight">
-                                 Bắt đầu sau:{" "}
-                                 <span className="font-bold text-red-500">
+                              <div className="text-xs mt-0.5 text-primary leading-tight">
+                                 Kết thúc sau:{" "}
+                                 <span className="font-bold text-promotion">
                                     {session.countdown}
                                  </span>
                               </div>
                            ) : (
-                              <div className="text-xs mt-0.5 text-gray-500 leading-tight">
+                              <div className="text-xs mt-0.5 text-neutral-dark leading-tight">
                                  {session.status}
                               </div>
                            )}
@@ -101,7 +110,6 @@ export default function HotSaleOnline({ products }: HotSaleOnlineProps) {
                      ))}
                   </div>
 
-                  {/* Products Slider */}
                   <div className="px-4 py-2 border-t border-neutral">
                      <Slidezy
                         items={{ mobile: 2, tablet: 3, desktop: 4 }}
@@ -115,7 +123,7 @@ export default function HotSaleOnline({ products }: HotSaleOnlineProps) {
                      >
                         {products.map((product, index) => (
                            <HotSaleProductCard
-                              key={product.product.id}
+                              key={product.id}
                               product={product}
                               index={index}
                            />

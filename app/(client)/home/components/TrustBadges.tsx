@@ -21,7 +21,7 @@ export const TrustBadges = () => {
                   <h3 className="font-bold text-primary mb-2">
                      Thương hiệu đảm bảo
                   </h3>
-                  <p className="text-sm text-primary-light-hover">
+                  <p className="text-sm text-primary">
                      Nhập khẩu, bảo hành chính hãng
                   </p>
                </div>
@@ -44,7 +44,7 @@ export const TrustBadges = () => {
                   <h3 className="font-bold text-primary mb-2">
                      Đổi trả dễ dàng
                   </h3>
-                  <p className="text-sm text-primary-light-hover">
+                  <p className="text-sm text-primary">
                      Theo chính sách đổi trả tại ChoCongNghe
                   </p>
                </div>
@@ -64,9 +64,7 @@ export const TrustBadges = () => {
                   <h3 className="font-bold text-primary mb-2">
                      Giao hàng tận nơi
                   </h3>
-                  <p className="text-sm text-primary-light-hover">
-                     Trên toàn quốc
-                  </p>
+                  <p className="text-sm text-primary">Trên toàn quốc</p>
                </div>
 
                {/* Quality Products */}
@@ -83,7 +81,7 @@ export const TrustBadges = () => {
                   <h3 className="font-bold text-primary mb-2">
                      Sản phẩm chất lượng
                   </h3>
-                  <p className="text-sm text-primary-light-hover">
+                  <p className="text-sm text-primary">
                      Đảm bảo tương thích và độ bền cao
                   </p>
                </div>

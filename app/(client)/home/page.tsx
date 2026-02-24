@@ -7,39 +7,42 @@ import {
    BestSellers,
    BlogSection,
    TrustBadges,
+   HotSaleOnline,
+   SeasonalSale,
 } from "./components";
-import SeasonalSale from "./components/Sales/SeasonalSale";
 // import RecentlyViewed from "./components/RecentlyViewed";
 import {
+   getActiveCampaigns,
    getBannersSection1,
    getBannersTop,
    getBestSellingProducts,
    getBlogs,
    getFeaturedCategories,
    getFeaturedProducts,
+   getFlashSaleProducts,
    getHomeSliders,
 } from "./_libs";
-import { getSaleProducts } from "@/lib/api-demo";
-import HotSaleOnline from "./components/Sales/HotSaleOnline";
 export default async function HomePage() {
    const [
       sliders,
       featuredCategories,
       bannersTop,
+      flashSaleProducts,
       featuredProducts,
       hotProducts,
+      activeCampaigns,
       bannersSection1,
       blogsData,
-      saleProducts,
    ] = await Promise.all([
       getHomeSliders(),
       getFeaturedCategories(),
       getBannersTop(),
+      getFlashSaleProducts(),
       getFeaturedProducts(),
       getBestSellingProducts(),
+      getActiveCampaigns(),
       getBannersSection1(),
       getBlogs(),
-      getSaleProducts(),
    ]);
    console.log(bannersTop);
    return (
@@ -54,7 +57,7 @@ export default async function HomePage() {
          <FeaturedCategories featuredCategories={featuredCategories} />
 
          {/* Hot Sale Online */}
-         <HotSaleOnline products={saleProducts} />
+         <HotSaleOnline flashSale={flashSaleProducts} />
 
          {/* Featured Products */}
          <FeaturedProducts products={featuredProducts} />
@@ -63,7 +66,7 @@ export default async function HomePage() {
          <BestSellers products={hotProducts} />
 
          {/* Seasonal Sale */}
-         <SeasonalSale />
+         <SeasonalSale campaigns={activeCampaigns} />
 
          {/* Triple Banners */}
          <BannersSection1 banners={bannersSection1} />
