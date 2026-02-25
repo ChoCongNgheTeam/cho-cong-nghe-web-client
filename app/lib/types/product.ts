@@ -107,7 +107,14 @@ export type ProductDetail = {
   canReview: boolean;
   orderItemId: string | null;
   highlightGroups?: SpecificationGroup[];
+  price: Price;
 };
+
+export type Price = {
+  base: number;
+  final: number;
+  discountPercentage: number;
+}
 
 /** ===== API Response ===== */
 export type ProductDetailResponse = {

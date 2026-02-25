@@ -15,6 +15,7 @@ interface ProductDetailRightProps {
   onReviewClick?: () => void;
   onSpecificationClick?: () => void;
   selectedVariant?: ProductVariant;
+  selectedPrice?: Price;
   availableOptions?: any[];
 }
 
@@ -24,6 +25,12 @@ interface ProductVariant {
   images?: { imageUrl: string }[];
   sku?: string;
 }
+
+type Price = {
+  base: number;
+  final: number;
+  discountPercentage: number;
+};
 
 type ColorOption = {
   value: string;
@@ -42,6 +49,7 @@ export default function ProductDetailRight({
   product,
   selectedColor: propSelectedColor,
   selectedVariant,
+  selectedPrice,
   selectedStorage: propSelectedStorage,
   onColorChange,
   onStorageChange,
@@ -276,8 +284,8 @@ export default function ProductDetailRight({
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-primary transition-colors duration-300">
                 {(
-                  selectedVariant?.price ||
-                  product.currentVariant?.price ||
+                  selectedPrice?.final ||
+                  product.price?.final ||
                   0
                 ).toLocaleString("vi-VN")}
                 ₫
@@ -285,14 +293,14 @@ export default function ProductDetailRight({
               <div className="flex gap-2 items-center">
                 <span className="text-xs sm:text-sm  line-through transition-colors duration-300">
                   {(
-                    selectedVariant?.price ||
-                    product.currentVariant?.price ||
+                    selectedPrice?.base ||
+                    product.price?.base ||
                     0
                   ).toLocaleString("vi-VN")}
                   ₫ ₫
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-promotion">
-                  3%
+                  {product.price?.discountPercentage}%
                 </span>
               </div>
             </div>

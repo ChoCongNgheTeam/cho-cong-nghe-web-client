@@ -88,10 +88,10 @@ export default function ProductDetailSection({
 
   return (
     <>
-      <div className="container mx-auto px-4 py-2 !px-0">
+      <div className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 ">
           {/* RIGHT: SPEC */}
-          <div className="lg:col-span-7 bg-neutral-light rounded-2xl p-6 lg:p-8 shadow-sm">
+          <div className="lg:col-span-7 bg-neutral-light rounded-2xlshadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-semibold text-primary">
                 Thông số kỹ thuật
@@ -130,7 +130,7 @@ export default function ProductDetailSection({
             </div>
           </div>
           {/* Left: Combo khuyến mãi */}
-          <div className="lg:col-span-5 bg-neutral-light rounded-2xl p-6 lg:p-8 shadow-sm  ">
+          <div className="lg:col-span-5 bg-neutral-light  lg:pl-8 border-l border-l-neutral-dark/50  pl-2">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
               <FaFire className="w-7 h-7 text-promotion" />

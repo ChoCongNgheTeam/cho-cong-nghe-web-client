@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
    Search,
    Heart,
@@ -14,7 +14,6 @@ import {
    Shield,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import HeaderTop from "./components/HeaderTop";
 import MobileHeader from "./components/MobileHeader";
@@ -27,10 +26,61 @@ const Header = () => {
    const [searchQuery, setSearchQuery] = useState("");
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-   const { user, logout, isAuthenticated, loading } = useAuth();
+   const [isVisible, setIsVisible] = useState(true);
+   const [isPastTop, setIsPastTop] = useState(false);
+   const [headerHeight, setHeaderHeight] = useState(0);
+   const headerRef = useRef<HTMLDivElement>(null);
+   const lastScrollY = useRef(0);
+   const ticking = useRef(false);
+
+   const { user, logout, isAuthenticated } = useAuth();
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
 
+   // Đo chiều cao header thực tế
+   useEffect(() => {
+      if (!headerRef.current) return;
+      const observer = new ResizeObserver(() => {
+         if (headerRef.current) {
+            setHeaderHeight(headerRef.current.offsetHeight);
+         }
+      });
+      observer.observe(headerRef.current);
+      // Set ngay lần đầu
+      setHeaderHeight(headerRef.current.offsetHeight);
+      return () => observer.disconnect();
+   }, []);
+
+   // Scroll logic
+   useEffect(() => {
+      const handleScroll = () => {
+         if (ticking.current) return;
+         ticking.current = true;
+
+         requestAnimationFrame(() => {
+            const currentScrollY = window.scrollY;
+            const diff = currentScrollY - lastScrollY.current;
+
+            setIsPastTop(currentScrollY > headerHeight);
+
+            if (Math.abs(diff) > 4) {
+               if (diff > 0 && currentScrollY > headerHeight) {
+                  setIsVisible(false);
+               } else {
+                  setIsVisible(true);
+               }
+               lastScrollY.current = currentScrollY;
+            }
+
+            ticking.current = false;
+         });
+      };
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      return () => window.removeEventListener("scroll", handleScroll);
+   }, [headerHeight]);
+
+   // Click outside user menu
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
          if (
@@ -50,216 +100,207 @@ const Header = () => {
       };
    }, [showUserMenu, userMenuRef, setShowUserMenu]);
 
-   // ✅ HYDRATION SAFE: Show skeleton only when loading (only when no initialUser)
-   if (loading) {
-      return (
-         <div className="w-full bg-neutral-light border-b border-neutral">
-            <HeaderTop isAuthenticated={false} />
+   return (
+      <>
+         {/* Placeholder đúng chiều cao thực tế của header */}
+         <div style={{ height: headerHeight }} />
+
+         <div
+            ref={headerRef}
+            className={[
+               "fixed top-0 left-0 right-0 z-50",
+               "w-full bg-neutral-light border-b border-neutral",
+               "transition-transform duration-300 ease-in-out",
+               isPastTop ? "shadow-md" : "",
+               isVisible ? "translate-y-0" : "-translate-y-full",
+            ].join(" ")}
+         >
+            {/* HeaderTop - ẩn khi đã scroll qua */}
+            <div
+               className={[
+                  "overflow-hidden transition-all duration-300",
+                  isPastTop ? "max-h-0 opacity-0" : "max-h-20 opacity-100",
+               ].join(" ")}
+            >
+               <HeaderTop isAuthenticated={isAuthenticated} />
+            </div>
+
+            {/* Main Header */}
             <div className="bg-accent md:bg-transparent">
                <div className="container py-1 md:py-2">
-                  {/* Mobile Skeleton */}
-                  <div className="flex md:hidden items-center justify-between">
-                     <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded" />
-                     <div className="w-32 h-10 bg-neutral/20 animate-pulse rounded" />
-                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded" />
-                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded" />
-                     </div>
-                  </div>
+                  <MobileHeader
+                     mobileMenuOpen={mobileMenuOpen}
+                     mobileSearchOpen={mobileSearchOpen}
+                     searchQuery={searchQuery}
+                     isDarkMode={isDark}
+                     onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
+                     onSearchToggle={() =>
+                        setMobileSearchOpen(!mobileSearchOpen)
+                     }
+                     onSearchChange={setSearchQuery}
+                  />
+                  <DesktopHeader
+                     searchQuery={searchQuery}
+                     isDarkMode={isDark}
+                     isAuthenticated={isAuthenticated}
+                     user={user}
+                     showUserMenu={showUserMenu}
+                     userMenuRef={userMenuRef}
+                     onSearchChange={setSearchQuery}
+                     onUserMenuToggle={() => setShowUserMenu(!showUserMenu)}
+                     onUserMenuClose={() => setShowUserMenu(false)}
+                     onLogout={logout}
+                  />
 
-                  {/* Desktop Skeleton */}
-                  <div className="hidden md:flex items-center justify-between gap-6 lg:gap-8">
-                     <div className="w-55 h-16 lg:h-20 bg-neutral/20 animate-pulse rounded" />
-                     <div className="w-100 lg:w-[500px] h-10 bg-neutral/20 animate-pulse rounded-full" />
-                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
-                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
-                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
-                        <div className="w-8 h-8 bg-neutral/20 animate-pulse rounded-full" />
+                  {/* Mobile Search Bar */}
+                  {mobileSearchOpen && (
+                     <div className="md:hidden mt-3 pb-2">
+                        <div className="relative">
+                           <input
+                              type="text"
+                              placeholder="Tìm kiếm sản phẩm..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="w-full pl-4 pr-12 py-2.5 border border-primary md:border-2 md:border-accent-hover rounded-full focus:outline-none bg-neutral-light text-primary placeholder:text-neutral-dark"
+                           />
+                           <button className="absolute right-0 top-0 bottom-0 px-4 bg-primary-dark hover:bg-accent-hover transition-colors rounded-r-full">
+                              <Search className="w-5 h-5 text-white dark:text-neutral-dark" />
+                           </button>
+                        </div>
                      </div>
-                  </div>
+                  )}
                </div>
             </div>
-         </div>
-      );
-   }
 
-   return (
-      <div className="w-full bg-neutral-light border-b border-neutral">
-         <HeaderTop isAuthenticated={isAuthenticated} />
-
-         {/* Main Header */}
-         <div className="bg-accent md:bg-transparent">
-            <div className="container py-1 md:py-2">
-               <MobileHeader
-                  mobileMenuOpen={mobileMenuOpen}
-                  mobileSearchOpen={mobileSearchOpen}
-                  searchQuery={searchQuery}
-                  isDarkMode={isDark}
-                  onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  onSearchToggle={() => setMobileSearchOpen(!mobileSearchOpen)}
-                  onSearchChange={setSearchQuery}
-               />
-               <DesktopHeader
-                  searchQuery={searchQuery}
-                  isDarkMode={isDark}
-                  isAuthenticated={isAuthenticated}
-                  user={user}
-                  showUserMenu={showUserMenu}
-                  userMenuRef={userMenuRef}
-                  onSearchChange={setSearchQuery}
-                  onUserMenuToggle={() => setShowUserMenu(!showUserMenu)}
-                  onUserMenuClose={() => setShowUserMenu(false)}
-                  onLogout={logout}
-               />
-
-               {/* Mobile Search Bar */}
-               {mobileSearchOpen && (
-                  <div className="md:hidden mt-3 pb-2">
-                     <div className="relative">
-                        <input
-                           type="text"
-                           placeholder="Tìm kiếm sản phẩm..."
-                           value={searchQuery}
-                           onChange={(e) => setSearchQuery(e.target.value)}
-                           className="w-full pl-4 pr-12 py-2.5 border border-primary md:border-2 md:border-accent-hover rounded-full focus:outline-none bg-neutral-light text-primary placeholder:text-neutral-dark"
-                        />
-                        <button className="absolute right-0 top-0 bottom-0 px-4 bg-primary-dark hover:bg-accent-hover transition-colors rounded-r-full">
-                           <Search className="w-5 h-5 text-white dark:text-neutral-dark" />
-                        </button>
-                     </div>
-                  </div>
-               )}
-            </div>
-         </div>
-
-         {/* Mobile Menu Dropdown */}
-         {mobileMenuOpen && (
-            <div className="md:hidden bg-neutral-light border-b border-neutral-dark shadow-lg">
-               <div className="container py-4">
-                  <nav className="flex flex-col gap-3">
-                     {isAuthenticated && user ? (
-                        <>
-                           <div className="px-3 py-3 bg-accent/10 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                 <UserAvatar
-                                    avatarImage={
-                                       user.avatarImage || "/images/avatar.png"
-                                    }
-                                    fullName={user.fullName}
-                                    size={48}
-                                 />
-                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-primary truncate">
-                                       {user.fullName}
-                                    </p>
-                                    <p className="text-xs text-neutral-darker truncate">
-                                       {user.email}
-                                    </p>
+            {/* Mobile Menu Dropdown */}
+            {mobileMenuOpen && (
+               <div className="md:hidden bg-neutral-light border-b border-neutral-dark shadow-lg">
+                  <div className="container py-4">
+                     <nav className="flex flex-col gap-3">
+                        {isAuthenticated && user ? (
+                           <>
+                              <div className="px-3 py-3 bg-accent/10 rounded-lg">
+                                 <div className="flex items-center gap-3">
+                                    <UserAvatar
+                                       avatarImage={
+                                          user.avatarImage ||
+                                          "/images/avatar.png"
+                                       }
+                                       fullName={user.fullName}
+                                       size={48}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                       <p className="text-sm font-semibold text-primary truncate">
+                                          {user.fullName}
+                                       </p>
+                                       <p className="text-xs text-neutral-darker truncate">
+                                          {user.email}
+                                       </p>
+                                    </div>
                                  </div>
                               </div>
-                           </div>
-                           <Link
-                              href="/profile"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <User className="h-5 w-5" />
-                              <span>Thông tin cá nhân</span>
-                           </Link>
-                           <Link
-                              href="/orders"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <Package className="h-5 w-5" />
-                              <span>Đơn hàng của tôi</span>
-                           </Link>
-                           <Link
-                              href="/wishlist"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <Heart className="h-5 w-5" />
-                              <span>Khách hàng thân thiết</span>
-                           </Link>
-                           <Link
-                              href="/addresses"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <MapPin className="h-5 w-5" />
-                              <span>Sổ địa chỉ nhận hàng</span>
-                           </Link>
-                           <Link
-                              href="/warranty"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <Shield className="h-5 w-5" />
-                              <span>Thông tin bảo hành</span>
-                           </Link>
-                           <button
-                              onClick={() => {
-                                 logout();
-                                 setMobileMenuOpen(false);
-                              }}
-                              className="flex items-center gap-2 py-2 text-promotion hover:text-promotion-hover hover:bg-promotion-light rounded-lg px-3 border-t border-neutral-dark transition-colors cursor-pointer"
-                           >
-                              <LogOut className="h-5 w-5" />
-                              <span>Đăng xuất</span>
-                           </button>
-                        </>
-                     ) : (
-                        <>
-                           <Link
-                              href="/account?tab=login"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <User className="h-5 w-5" />
-                              <span>Đăng nhập</span>
-                           </Link>
-                           <Link
-                              href="/account?tab=register"
-                              className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                              onClick={() => setMobileMenuOpen(false)}
-                           >
-                              <UserPlus className="h-5 w-5" />
-                              <span>Đăng ký</span>
-                           </Link>
-                           <div className="border-t border-neutral-dark my-2"></div>
-                        </>
-                     )}
-                     <Link
-                        href="#"
-                        className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                        onClick={() => setMobileMenuOpen(false)}
-                     >
-                        <Truck className="h-5 w-5" />
-                        <span>Theo dõi đơn hàng</span>
-                     </Link>
-                     <Link
-                        href="/cart"
-                        className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                        onClick={() => setMobileMenuOpen(false)}
-                     >
-                        <ShoppingBag className="h-5 w-5" />
-                        <span>Cửa hàng</span>
-                     </Link>
-                     <Link
-                        href="#"
-                        className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                        onClick={() => setMobileMenuOpen(false)}
-                     >
-                        <GitCompareArrows className="h-5 w-5" />
-                        <span>So sánh sản phẩm</span>
-                     </Link>
-                  </nav>
+                              <Link
+                                 href="/profile"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <User className="h-5 w-5" />
+                                 <span>Thông tin cá nhân</span>
+                              </Link>
+                              <Link
+                                 href="/orders"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <Package className="h-5 w-5" />
+                                 <span>Đơn hàng của tôi</span>
+                              </Link>
+                              <Link
+                                 href="/wishlist"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <Heart className="h-5 w-5" />
+                                 <span>Khách hàng thân thiết</span>
+                              </Link>
+                              <Link
+                                 href="/addresses"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <MapPin className="h-5 w-5" />
+                                 <span>Sổ địa chỉ nhận hàng</span>
+                              </Link>
+                              <Link
+                                 href="/warranty"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <Shield className="h-5 w-5" />
+                                 <span>Thông tin bảo hành</span>
+                              </Link>
+                              <button
+                                 onClick={() => {
+                                    logout();
+                                    setMobileMenuOpen(false);
+                                 }}
+                                 className="flex items-center gap-2 py-2 text-promotion hover:text-promotion-hover hover:bg-promotion-light rounded-lg px-3 border-t border-neutral-dark transition-colors cursor-pointer"
+                              >
+                                 <LogOut className="h-5 w-5" />
+                                 <span>Đăng xuất</span>
+                              </button>
+                           </>
+                        ) : (
+                           <>
+                              <Link
+                                 href="/account?tab=login"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <User className="h-5 w-5" />
+                                 <span>Đăng nhập</span>
+                              </Link>
+                              <Link
+                                 href="/account?tab=register"
+                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 <UserPlus className="h-5 w-5" />
+                                 <span>Đăng ký</span>
+                              </Link>
+                              <div className="border-t border-neutral-dark my-2"></div>
+                           </>
+                        )}
+                        <Link
+                           href="#"
+                           className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                           onClick={() => setMobileMenuOpen(false)}
+                        >
+                           <Truck className="h-5 w-5" />
+                           <span>Theo dõi đơn hàng</span>
+                        </Link>
+                        <Link
+                           href="/cart"
+                           className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                           onClick={() => setMobileMenuOpen(false)}
+                        >
+                           <ShoppingBag className="h-5 w-5" />
+                           <span>Cửa hàng</span>
+                        </Link>
+                        <Link
+                           href="#"
+                           className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                           onClick={() => setMobileMenuOpen(false)}
+                        >
+                           <GitCompareArrows className="h-5 w-5" />
+                           <span>So sánh sản phẩm</span>
+                        </Link>
+                     </nav>
+                  </div>
                </div>
-            </div>
-         )}
-      </div>
+            )}
+         </div>
+      </>
    );
 };
 

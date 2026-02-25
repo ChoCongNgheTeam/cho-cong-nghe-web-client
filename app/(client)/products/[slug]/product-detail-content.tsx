@@ -79,6 +79,7 @@ export function ProductDetailContent({
   const [variantImages, setVariantImages] = useState(
     product.currentVariant?.images || [],
   );
+  const [price, setPrice] = useState(product.price);
 
   /* ============================================================================
    * HANDLERS
@@ -138,6 +139,7 @@ export function ProductDetailContent({
           setAvailableOptions(json.data.availableOptions);
           setCurrentVariant(json.data.currentVariant);
           setVariantImages(json.data.currentVariant.images);
+          setPrice(json.data.price)
         }
       } catch (error) {
         console.error("Error fetching variant:", error);
@@ -194,6 +196,7 @@ export function ProductDetailContent({
               <ProductDetailRight
                 product={product}
                 selectedVariant={currentVariant}
+                selectedPrice={price}
                 selectedColor={selectedColor}
                 selectedStorage={selectedStorage}
                 availableOptions={availableOptions}

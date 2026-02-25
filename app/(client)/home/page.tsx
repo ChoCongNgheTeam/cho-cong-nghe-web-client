@@ -1,45 +1,81 @@
-// app/(client)/home/page.tsx
-import MainBanner from './components/MainBanner';
-// import HotProductsSection from './components/HotProductsSection';
-import CategoryGrid from './components/CategoryGrid';
-import HotSaleOnline from './components/HotSaleOnline';
-// import LaptopSaleEvent from './components/LaptopSaleEvent';
-// import FeaturedProducts from './components/FeaturedProducts';
-import SeasonalSale from './components/SeasonalSale';
-// import SaleProducts from './components/SaleProducts';
-import TripleBanner from './components/TripleBanner';
-import DoubleBanner from './components/DoubleBanner';
-// import BlogSection from './components/BlogSection';
-// import ViewedProducts from './components/ViewedProducts';
+import {
+   BannersTop,
+   HomeSlider,
+   FeaturedCategories,
+   FeaturedProducts,
+   BannersSection1,
+   BestSellers,
+   BlogSection,
+   TrustBadges,
+} from "./components";
+import SeasonalSale from "./components/Sales/SeasonalSale";
+// import RecentlyViewed from "./components/RecentlyViewed";
+import {
+   getBannersSection1,
+   getBannersTop,
+   getBestSellingProducts,
+   getBlogs,
+   getFeaturedCategories,
+   getFeaturedProducts,
+   getHomeSliders,
+} from "./_libs";
+import { getSaleProducts } from "@/lib/api-demo";
+import HotSaleOnline from "./components/Sales/HotSaleOnline";
+export default async function HomePage() {
+   const [
+      sliders,
+      featuredCategories,
+      bannersTop,
+      featuredProducts,
+      hotProducts,
+      bannersSection1,
+      blogsData,
+      saleProducts,
+   ] = await Promise.all([
+      getHomeSliders(),
+      getFeaturedCategories(),
+      getBannersTop(),
+      getFeaturedProducts(),
+      getBestSellingProducts(),
+      getBannersSection1(),
+      getBlogs(),
+      getSaleProducts(),
+   ]);
+   console.log(bannersTop);
+   return (
+      <main className="min-h-screen bg-neutral-light">
+         {/* Main Hero Banner */}
+         <HomeSlider sliders={sliders} />
 
-/**
- * Home Page - Trang chủ thương mại điện tử
- * CHỈ GHÉP CÁC COMPONENT - KHÔNG VIẾT LOGIC NẶNG
- */
-export default function HomePage() {
-  return (
-    <main className="min-h-screen bg-neutral-light">
-      {/* Hero Banners */}
-      <MainBanner />
-      <DoubleBanner />
+         {/* Double Banner (ngay sau MainBanner) */}
+         <BannersTop bannersTop={bannersTop} />
 
-      {/* Browse by Category */}
-      <CategoryGrid />
+         {/* Category Grid */}
+         <FeaturedCategories featuredCategories={featuredCategories} />
 
-      {/* Flash Sale */}
-      <HotSaleOnline />
+         {/* Hot Sale Online */}
+         <HotSaleOnline products={saleProducts} />
 
-      {/* More Promotions */}
-      <TripleBanner />
+         {/* Featured Products */}
+         <FeaturedProducts products={featuredProducts} />
 
-      {/* Seasonal Deals */}
-      <SeasonalSale />
+         {/* Best Sellers */}
+         <BestSellers products={hotProducts} />
 
-      {/* Uncomment khi cần */}
-      {/* <HotProductsSection /> */}
-      {/* <FeaturedProducts /> */}
-      {/* <BlogSection /> */}
-      {/* <ViewedProducts /> */}
-    </main>
-  );
+         {/* Seasonal Sale */}
+         <SeasonalSale />
+
+         {/* Triple Banners */}
+         <BannersSection1 banners={bannersSection1} />
+
+         {/* Blog Section */}
+         <BlogSection blogs={blogsData.data} />
+
+         {/* Recently Viewed */}
+         {/* <RecentlyViewed products={featuredProducts.slice(0, 6)} /> */}
+
+         {/* Trust Badges Section */}
+         <TrustBadges />
+      </main>
+   );
 }

@@ -322,7 +322,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
   };
 
   return (
-  <div className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-neutral-light rounded-lg">
+  <div className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
   <div>
     {/* Rating Summary Section */}
     <div className="mb-6 sm:mb-8">

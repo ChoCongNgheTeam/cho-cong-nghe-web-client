@@ -39,6 +39,7 @@ export default function ProfileLayout({
 }) {
    const pathname = usePathname();
    const { user, loading } = useAuth();
+   console.log("ProfileLayout - user:", user, "loading:", loading);
 
    if (loading) {
       return (
@@ -50,10 +51,10 @@ export default function ProfileLayout({
 
    return (
       <div className="min-h-screen bg-gray-50">
-         <div className="container mx-auto px-4 py-6">
+         <div className="container py-6">
             <div className="flex flex-col lg:flex-row gap-6">
                {/* Sidebar */}
-               <aside className="w-full lg:w-80 flex-shrink-0 space-y-4">
+               <aside className="w-full lg:w-80 shrink-0 space-y-4">
                   {/* User Profile Card */}
                   <div className="bg-white rounded-lg shadow-sm p-4">
                      <div className="flex items-center gap-3 mb-4">

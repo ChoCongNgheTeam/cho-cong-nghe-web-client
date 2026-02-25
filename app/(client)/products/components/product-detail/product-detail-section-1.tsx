@@ -36,7 +36,7 @@ export default function ProductDetailSection1({
 
   return (
     <div
-      className="container sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-neutral-light rounded-lg"
+      className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg"
       ref={descriptionRef}
     >
       <div className="flex flex-col lg:flex-row gap-12">
@@ -113,7 +113,7 @@ export default function ProductDetailSection1({
         </div>
 
         {/* RIGHT - THÔNG TIN HAY - ✅ STICKY */}
-        <div className="lg:flex-1 mt-6 lg:mt-0 p-6">
+        <div className="lg:flex-1  lg:mt-0 px-6">
           <div
             className={`flex flex-col gap-3 ${expanded ? "lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]" : ""} `}
           >

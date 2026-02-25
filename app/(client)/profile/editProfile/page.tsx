@@ -6,7 +6,7 @@ import { Pencil, ChevronDown } from "lucide-react";
 import apiRequest from "@/lib/api";
 
 export default function ProfileForm() {
-   const { user, loading } = useAuth();
+   const { user, loading, refreshUser } = useAuth();
    const [formData, setFormData] = useState({
       fullName: "",
       phone: "",
@@ -26,7 +26,7 @@ export default function ProfileForm() {
             dateOfBirth: user.dateOfBirth
                ? new Date(user.dateOfBirth).toISOString().split("T")[0]
                : "",
-            avatarImage: user.avatarImage || "",
+            avatarImage: user.avatarImage || "/images/avatar.png",
          });
       }
    }, [user]);
@@ -65,6 +65,7 @@ export default function ProfileForm() {
          console.log("Sending data:", JSON.stringify(updateData));
 
          const data = await apiRequest.patch("/users/me", updateData);
+         await refreshUser(); 
          console.log("Update thành công:", data);
          alert("Cập nhật thành công");
       } catch (error: any) {
@@ -95,7 +96,7 @@ export default function ProfileForm() {
                      <div className="relative flex justify-center pt-8">
                         <div className="relative w-28 h-28 rounded-full bg-white p-1 shadow-lg flex">
                            <img
-                              src={formData.avatarImage || "/images/avatar.png"}
+                              src={formData.avatarImage || "././images/avatar.png"}
                               alt="Avatar"
                               className="w-full h-full rounded-full object-cover"
                            />

@@ -1,4 +1,4 @@
-import { ProductHighlight } from "../types";
+import { ProductHighlight } from "@/components/product/types";
 
 interface ProductHighlightsProps {
    highlights: ProductHighlight[];

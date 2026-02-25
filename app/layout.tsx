@@ -19,28 +19,11 @@ export const metadata: Metadata = {
    description: "Đang phát triển",
 };
 
-// function LayoutContent({ children }: { children: React.ReactNode }) {
-//    const { user, showWelcome, setShowWelcome } = useAuth();
-
-//    return (
-//       <>
-//          {showWelcome && user && (
-//             <WelcomeAnimation
-//                userName={user.fullName}
-//                onComplete={() => setShowWelcome(false)}
-//             />
-//          )}
-//          {children}
-//       </>
-//    );
-// }
-
 export default function RootLayout({
    children,
 }: Readonly<{
    children: React.ReactNode;
 }>) {
-   
    return (
       <html lang="vi" suppressHydrationWarning>
          <head>
@@ -51,11 +34,7 @@ export default function RootLayout({
          >
             <ToastyProvider>
                <AuthProvider>
-                  <ThemeProvider>
-                     {/* <LayoutContent> */}
-                     {children}
-                  </ThemeProvider>
-                  {/* </LayoutContent> */}
+                  <ThemeProvider>{children}</ThemeProvider>
                </AuthProvider>
             </ToastyProvider>
          </body>

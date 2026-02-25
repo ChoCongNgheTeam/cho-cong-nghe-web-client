@@ -497,7 +497,7 @@ export default function Slidezy({
                   <button
                      onClick={() => moveSlide(-slideByValue)}
                      disabled={isAnimating || (!loop && currentIndex === 0)}
-                     className="absolute top-1/2 -translate-y-1/2 left-2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                     className="absolute top-1/2 -translate-y-1/2 w-10 left-0 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
                      aria-label="Previous slide"
                   >
                      {controlsText[0]}
@@ -507,7 +507,7 @@ export default function Slidezy({
                      disabled={
                         isAnimating || (!loop && currentIndex >= maxIndex)
                      }
-                     className="absolute top-1/2 -translate-y-1/2 right-2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                     className="absolute top-1/2 -translate-y-1/2 right-0 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
                      aria-label="Next slide"
                   >
                      {controlsText[1]}
