@@ -11,7 +11,7 @@ import {
    ChevronUp,
    ShoppingCart,
 } from "lucide-react";
-import { useCart } from "../../hooks/useCart";
+import { useCart } from "./context/CartContext"; // ← ĐỔI DÒNG NÀY (từ ../../hooks/useCart)
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import VariantDropdown from "./components/CartVariantSelector";
@@ -70,8 +70,8 @@ export default function CartPage() {
    // Handle variant change
    const handleVariantChange = useCallback(
       (
-         cartItemId: number,
-         variantId: number,
+         cartItemId: string,
+         variantId: string,
          variantName: string,
          price: number,
       ) => {
@@ -93,6 +93,7 @@ export default function CartPage() {
    );
 
    // Handle checkout - Save selected items to localStorage and navigate
+   // Checkout page đọc localStorage["checkoutData"] → KHÔNG cần sửa gì ở checkout
    const handleCheckout = useCallback(() => {
       if (selectedItems.length === 0) {
          toast.error("Vui lòng chọn ít nhất một sản phẩm");
@@ -266,14 +267,14 @@ export default function CartPage() {
                                        </div>
 
                                        {/* Variant Dropdown - INLINE */}
-                                       <VariantDropdown
-                                          cartItemId={item.id}
-                                          productId={item.product_id || item.id}
-                                          currentVariantId={
-                                             item.product_variant_id
-                                          }
+                                      <VariantDropdown
+                                          cartItemId={Number(item.id)}
+                                          productId={Number(item.product_id ?? item.id)}
+                                          currentVariantId={Number(item.product_variant_id)}
                                           currentVariantName={item.variant_name}
-                                          onVariantChange={handleVariantChange}
+                                          onVariantChange={(cartItemId, variantId, variantName, price) =>
+                                             handleVariantChange(String(cartItemId), String(variantId), variantName, price)
+                                          }
                                        />
 
                                        {/* Mobile: Price Section */}
