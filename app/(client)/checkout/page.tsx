@@ -9,18 +9,14 @@ import UserInfoSidebar from "./components/UserInfoSidebar";
 import AddressSidebar from "./components/AddressSidebar";
 import TimeSlotSidebar from "./components/TimeSlotSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
-import CartSidebar from "@/(client)/cart/components/cartsidebar";
+import CartSidebar from "@/(client)/cart/components/cartSidebar";
 import CartItems from "./components/CartItems";
-import OrderSummary from "@/components/odersummary/OrderSummary";
+import OrderSummary from "@/components/oderSummary/OrderSummary";
 import PaymentMethods from "./components/PaymentMethods";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import { useAuth } from "@/hooks/useAuth";
 
-interface UserInfo {
-   id: number;
-   full_name: string;
-   phone: string;
-   email: string;
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Address {
    id: number;
@@ -67,65 +63,41 @@ interface CheckoutData {
    usePoints: boolean;
 }
 
-const mockAPI = {
-   getUserInfo: async (userId: number): Promise<UserInfo> => {
-      return {
-         id: userId,
-         full_name: "a Thắng",
-         phone: "0966399967",
-         email: "thang@example.com",
-      };
+// ─── Mock addresses (thay bằng API thật sau) ─────────────────────────────────
+
+const mockAddresses: Address[] = [
+   {
+      id: 1,
+      contact_name: "a Thắng",
+      phone: "0966399967",
+      detail_address: "cà phê liinh, Phường Bến Thành, Quận 1, Hồ Chí Minh",
+      province_id: 79,
+      district_id: 760,
+      ward_id: 26734,
+      type: "office",
+      is_default: true,
    },
-   getUserAddresses: async (userId: number): Promise<Address[]> => {
-      return [
-         {
-            id: 1,
-            contact_name: "a Thắng",
-            phone: "0966399967",
-            detail_address:
-               "cà phê liinh, Phường Bến Thành, Quận 1, Hồ Chí Minh",
-            province_id: 79,
-            district_id: 760,
-            ward_id: 26734,
-            type: "office",
-            is_default: true,
-         },
-         {
-            id: 2,
-            contact_name: "Nhất Thắng",
-            phone: "0966399967",
-            detail_address: "182 pasteur, Phường Bến Nghé, Quận 1, Hồ Chí Minh",
-            province_id: 79,
-            district_id: 760,
-            ward_id: 26735,
-            type: "office",
-            is_default: false,
-         },
-         {
-            id: 3,
-            contact_name: "a Thắng",
-            phone: "0966399967",
-            detail_address:
-               "331/38/2D Phan Huy Ích, Phường An Hội Tây, Quận Gò Vấp, Hồ Chí Minh",
-            province_id: 79,
-            district_id: 764,
-            ward_id: 26812,
-            type: "office",
-            is_default: false,
-         },
-      ];
+   {
+      id: 2,
+      contact_name: "Nhất Thắng",
+      phone: "0966399967",
+      detail_address: "182 pasteur, Phường Bến Nghé, Quận 1, Hồ Chí Minh",
+      province_id: 79,
+      district_id: 760,
+      ward_id: 26735,
+      type: "office",
+      is_default: false,
    },
-};
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
    const router = useRouter();
-   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-   const [addresses, setAddresses] = useState<Address[]>([]);
-   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-   const [deliveryDate, setDeliveryDate] = useState("Thứ Hai (12/01)");
-   const [deliveryTime, setDeliveryTime] = useState("16:00 -> 17:00");
+   const { user, loading: authLoading } = useAuth();
 
+   // ── Cart data từ localStorage ─────────────────────────────────────────────
+   const [cartItems, setCartItems] = useState<CartItem[]>([]);
    const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
    const [promotionValue, setPromotionValue] = useState(0);
    const [appliedVoucherCode, setAppliedVoucherCode] = useState("");
@@ -134,108 +106,111 @@ export default function CheckoutPage() {
    const [totalDiscount, setTotalDiscount] = useState(0);
    const [finalTotal, setFinalTotal] = useState(0);
    const [rewardPoints, setRewardPoints] = useState(0);
+   const [usePoints, setUsePoints] = useState(false);
 
+   // ── Thông tin người đặt - lấy từ AuthContext ──────────────────────────────
+   const [contactName, setContactName] = useState("");
+   const [contactPhone, setContactPhone] = useState("");
+   const [contactEmail, setContactEmail] = useState("");
+
+   // ── Địa chỉ ───────────────────────────────────────────────────────────────
+   const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
+   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+
+   // ── Giao hàng ─────────────────────────────────────────────────────────────
+   const [deliveryDate, setDeliveryDate] = useState("Thứ Hai (12/01)");
+   const [deliveryTime, setDeliveryTime] = useState("16:00 -> 17:00");
+   const [notes, setNotes] = useState("");
+   const [sendInvoice, setSendInvoice] = useState(false);
+   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+   // ── UI state ──────────────────────────────────────────────────────────────
    const [showUserSidebar, setShowUserSidebar] = useState(false);
    const [showAddressSidebar, setShowAddressSidebar] = useState(false);
    const [showTimeSidebar, setShowTimeSidebar] = useState(false);
    const [showVoucherModal, setShowVoucherModal] = useState(false);
-   const [showSidebar, setShowSidebar] = useState(false); // For mobile cart sidebar
-   const [agreedToTerms, setAgreedToTerms] = useState(false);
-   const [sendInvoice, setSendInvoice] = useState(false);
-   const [notes, setNotes] = useState("");
-   const [usePoints, setUsePoints] = useState(false);
+   const [showSidebar, setShowSidebar] = useState(false);
+   const [isPageLoading, setIsPageLoading] = useState(true);
 
    const formatPrice = (price: number) =>
       new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
    const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
+   // ── Sync thông tin người dùng từ AuthContext ──────────────────────────────
    useEffect(() => {
-      const loadData = async () => {
-         const loadingToast = toast.loading("Đang tải thông tin...");
+      if (!authLoading && user) {
+         setContactName(user.fullName);
+         setContactPhone(user.phone ?? "");
+         setContactEmail(user.email);
+      }
+   }, [authLoading, user]);
 
-         try {
-            const savedCheckoutData = localStorage.getItem("checkoutData");
+   // ── Load checkout data từ localStorage ───────────────────────────────────
+   useEffect(() => {
+      const savedCheckoutData = localStorage.getItem("checkoutData");
 
-            if (!savedCheckoutData) {
-               toast.error("Không có thông tin đơn hàng", { id: loadingToast });
-               router.push("/cart");
-               return;
-            }
+      if (!savedCheckoutData) {
+         toast.error("Không có thông tin đơn hàng");
+         router.push("/cart");
+         return;
+      }
 
-            const checkoutData: CheckoutData = JSON.parse(savedCheckoutData);
+      try {
+         const checkoutData: CheckoutData = JSON.parse(savedCheckoutData);
 
-            if (
-               !checkoutData.selectedItems ||
-               checkoutData.selectedItems.length === 0
-            ) {
-               toast.error("Vui lòng chọn sản phẩm từ giỏ hàng", {
-                  id: loadingToast,
-               });
-               router.push("/cart");
-               return;
-            }
-
-            const formattedItems: CartItem[] = checkoutData.selectedItems.map(
-               (item: SelectedItem) => ({
-                  id: item.id,
-                  name: item.product_name,
-                  variant: item.variant_name,
-                  quantity: item.quantity,
-                  unit_price: item.price,
-                  discount_value: item.original_price - item.price,
-                  image: item.image_url,
-               }),
-            );
-
-            const [user, addressList] = await Promise.all([
-               mockAPI.getUserInfo(1),
-               mockAPI.getUserAddresses(1),
-            ]);
-
-            setCartItems(formattedItems);
-            setSelectedPromotions(checkoutData.selectedPromotions);
-            setPromotionValue(checkoutData.promotionValue);
-            setAppliedVoucherCode(checkoutData.appliedVoucherCode);
-            setAppliedVoucherValue(checkoutData.appliedVoucherValue);
-            setSubtotal(checkoutData.subtotal);
-            setTotalDiscount(checkoutData.totalDiscount);
-            setFinalTotal(checkoutData.finalTotal);
-            setRewardPoints(checkoutData.rewardPoints);
-            setUsePoints(checkoutData.usePoints || false);
-
-            setUserInfo(user);
-            setAddresses(addressList);
-            setSelectedAddress(
-               addressList.find((a) => a.is_default) || addressList[0],
-            );
-
-            toast.success("Tải thông tin thành công", { id: loadingToast });
-         } catch (error) {
-            console.error("Error loading data:", error);
-            toast.error("Không thể tải thông tin. Vui lòng thử lại!", {
-               id: loadingToast,
-            });
+         if (!checkoutData.selectedItems?.length) {
+            toast.error("Vui lòng chọn sản phẩm từ giỏ hàng");
+            router.push("/cart");
+            return;
          }
-      };
 
-      loadData();
+         const formattedItems: CartItem[] = checkoutData.selectedItems.map(
+            (item) => ({
+               id: item.id,
+               name: item.product_name,
+               variant: item.variant_name,
+               quantity: item.quantity,
+               unit_price: item.price,
+               discount_value: item.original_price - item.price,
+               image: item.image_url,
+            }),
+         );
+
+         setCartItems(formattedItems);
+         setSelectedPromotions(checkoutData.selectedPromotions);
+         setPromotionValue(checkoutData.promotionValue);
+         setAppliedVoucherCode(checkoutData.appliedVoucherCode);
+         setAppliedVoucherValue(checkoutData.appliedVoucherValue);
+         setSubtotal(checkoutData.subtotal);
+         setTotalDiscount(checkoutData.totalDiscount);
+         setFinalTotal(checkoutData.finalTotal);
+         setRewardPoints(checkoutData.rewardPoints);
+         setUsePoints(checkoutData.usePoints ?? false);
+
+         // Set địa chỉ mặc định
+         const defaultAddress =
+            mockAddresses.find((a) => a.is_default) ?? mockAddresses[0];
+         setSelectedAddress(defaultAddress ?? null);
+      } catch {
+         toast.error("Dữ liệu đơn hàng không hợp lệ");
+         router.push("/cart");
+      } finally {
+         setIsPageLoading(false);
+      }
    }, [router]);
+
+   // ── Handlers ──────────────────────────────────────────────────────────────
 
    const handleUserUpdate = (data: {
       name: string;
       phone: string;
       email: string;
    }) => {
-      if (userInfo) {
-         setUserInfo({
-            ...userInfo,
-            full_name: data.name,
-            phone: data.phone,
-            email: data.email,
-         });
-         toast.success("Cập nhật thông tin người đặt thành công");
-      }
+      setContactName(data.name);
+      setContactPhone(data.phone);
+      setContactEmail(data.email);
+      toast.success("Cập nhật thông tin người đặt thành công");
    };
 
    const handleTimeSelect = (date: string, time: string) => {
@@ -257,10 +232,16 @@ export default function CheckoutPage() {
    };
 
    const handlePlaceOrder = async () => {
-      if (!userInfo || !selectedAddress) {
-         toast.error(
-            "Vui lòng kiểm tra thông tin người đặt và địa chỉ giao hàng",
-         );
+      if (!contactName || !contactPhone) {
+         toast.error("Vui lòng kiểm tra thông tin người đặt");
+         return;
+      }
+      if (!selectedAddress) {
+         toast.error("Vui lòng chọn địa chỉ giao hàng");
+         return;
+      }
+      if (!agreedToTerms) {
+         toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
          return;
       }
 
@@ -268,16 +249,15 @@ export default function CheckoutPage() {
 
       try {
          const orderData = {
-            user_id: userInfo.id,
+            contact_name: contactName,
+            phone: contactPhone,
+            email: contactEmail,
             address_id: selectedAddress.id,
-            contact_name: userInfo.full_name,
-            phone: userInfo.phone,
-            payment_method_id: 1,
             delivery_date: deliveryDate,
             delivery_time: deliveryTime,
-            notes: notes,
+            notes,
             request_invoice: sendInvoice,
-            use_points: false,
+            use_points: usePoints,
             voucher_code: appliedVoucherCode,
             items: cartItems.map((item) => ({
                product_variant_id: item.id,
@@ -287,31 +267,30 @@ export default function CheckoutPage() {
 
          console.log("Order data:", orderData);
 
-         setTimeout(() => {
-            localStorage.removeItem("checkoutData");
+         // TODO: gọi API đặt hàng thật
+         await new Promise((resolve) => setTimeout(resolve, 1500));
 
-            toast.success("Đặt hàng thành công! Mã đơn: ORD20260112001", {
-               id: loadingToast,
-               duration: 4000,
-            });
+         localStorage.removeItem("checkoutData");
+         toast.success("Đặt hàng thành công! Mã đơn: ORD20260112001", {
+            id: loadingToast,
+            duration: 4000,
+         });
 
-            setTimeout(() => {
-               router.push("/");
-            }, 1500);
-         }, 1500);
-      } catch (error) {
-         console.error("Checkout error:", error);
+         setTimeout(() => router.push("/"), 1500);
+      } catch {
          toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!", {
             id: loadingToast,
          });
       }
    };
 
-   if (cartItems.length === 0) {
+   // ── Loading state ─────────────────────────────────────────────────────────
+
+   if (isPageLoading || authLoading) {
       return (
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
             <div className="text-center">
-               <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-neutral border-t-accent mb-4"></div>
+               <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-neutral border-t-accent mb-4" />
                <p className="text-neutral-darker">
                   Đang tải thông tin đơn hàng...
                </p>
@@ -319,6 +298,16 @@ export default function CheckoutPage() {
          </div>
       );
    }
+
+   // ── UserInfo object để truyền vào sidebar ─────────────────────────────────
+   const userInfoForSidebar = {
+      id: user?.id ? Number(user.id) : 0,
+      full_name: contactName,
+      phone: contactPhone,
+      email: contactEmail,
+   };
+
+   // ─── Render ───────────────────────────────────────────────────────────────
 
    return (
       <div className="min-h-screen bg-neutral-light">
@@ -334,10 +323,13 @@ export default function CheckoutPage() {
                      ]}
                   />
                </div>
+
                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+                  {/* LEFT COLUMN */}
                   <div className="lg:col-span-2 space-y-4">
                      <CartItems items={cartItems} />
 
+                     {/* Người đặt hàng */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <div className="flex items-center justify-between mb-3">
                            <h2 className="text-sm sm:text-base font-semibold text-primary">
@@ -350,18 +342,22 @@ export default function CheckoutPage() {
                               Thay đổi
                            </button>
                         </div>
-                        {userInfo && (
-                           <div className="space-y-1">
-                              <p className="font-medium text-sm text-primary">
-                                 {userInfo.full_name}
-                              </p>
+                        <div className="space-y-1">
+                           <p className="font-medium text-sm text-primary">
+                              {contactName || "Chưa có tên"}
+                           </p>
+                           <p className="text-neutral-darker text-sm">
+                              {contactPhone || "Chưa có số điện thoại"}
+                           </p>
+                           {contactEmail && (
                               <p className="text-neutral-darker text-sm">
-                                 {userInfo.phone}
+                                 {contactEmail}
                               </p>
-                           </div>
-                        )}
+                           )}
+                        </div>
                      </div>
 
+                     {/* Địa chỉ nhận hàng */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <div className="flex items-center justify-between mb-3">
                            <h2 className="text-sm sm:text-base font-semibold text-primary">
@@ -396,7 +392,8 @@ export default function CheckoutPage() {
                         )}
                      </div>
 
-                     <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
+                     {/* Thời gian nhận hàng */}
+                     {/* <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <div className="flex items-center justify-between mb-3">
                            <h2 className="text-sm sm:text-base font-semibold text-primary">
                               Thời gian nhận hàng
@@ -414,8 +411,9 @@ export default function CheckoutPage() {
                            , ngày{" "}
                            <span className="font-semibold">{deliveryDate}</span>
                         </p>
-                     </div>
+                     </div> */}
 
+                     {/* Ghi chú */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <label className="block text-sm font-medium mb-2 text-primary">
                            Ghi chú
@@ -435,6 +433,7 @@ export default function CheckoutPage() {
                         </div>
                      </div>
 
+                     {/* Hóa đơn */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <label className="flex items-center gap-2 cursor-pointer">
                            <input
@@ -452,6 +451,7 @@ export default function CheckoutPage() {
                      <PaymentMethods />
                   </div>
 
+                  {/* RIGHT COLUMN - Order Summary */}
                   <div className="lg:col-span-1 border border-neutral rounded">
                      <OrderSummary
                         subtotal={subtotal}
@@ -491,6 +491,7 @@ export default function CheckoutPage() {
                <CartItems items={cartItems} />
             </div>
 
+            {/* Người đặt hàng - Mobile */}
             <div className="px-3 mt-3">
                <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
@@ -498,35 +499,36 @@ export default function CheckoutPage() {
                         Người đặt hàng
                      </h2>
                   </div>
-                  {userInfo && (
-                     <div className="space-y-2">
-                        <input
-                           type="text"
-                           value={userInfo.full_name}
-                           readOnly
-                           onClick={() => setShowUserSidebar(true)}
-                           className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
-                        />
-                        <input
-                           type="tel"
-                           value={userInfo.phone}
-                           readOnly
-                           onClick={() => setShowUserSidebar(true)}
-                           className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
-                        />
-                        <input
-                           type="email"
-                           value={userInfo.email}
-                           readOnly
-                           onClick={() => setShowUserSidebar(true)}
-                           placeholder="Email (Không bắt buộc)"
-                           className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark"
-                        />
-                     </div>
-                  )}
+                  <div className="space-y-2">
+                     <input
+                        type="text"
+                        value={contactName}
+                        readOnly
+                        onClick={() => setShowUserSidebar(true)}
+                        className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
+                        placeholder="Họ và tên"
+                     />
+                     <input
+                        type="tel"
+                        value={contactPhone}
+                        readOnly
+                        onClick={() => setShowUserSidebar(true)}
+                        className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
+                        placeholder="Số điện thoại"
+                     />
+                     <input
+                        type="email"
+                        value={contactEmail}
+                        readOnly
+                        onClick={() => setShowUserSidebar(true)}
+                        className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark"
+                        placeholder="Email (Không bắt buộc)"
+                     />
+                  </div>
                </div>
             </div>
 
+            {/* Địa chỉ - Mobile */}
             <div className="px-3 mt-3">
                <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
@@ -556,7 +558,7 @@ export default function CheckoutPage() {
                </div>
             </div>
 
-            {/* Floating Button - GIỐNG CART */}
+            {/* Floating Button - Mobile */}
             <div className="fixed bottom-0 left-0 right-0 bg-accent border-t-2 border-accent-dark p-3 z-30 md:hidden shadow-2xl">
                <button
                   onClick={() => setShowSidebar(true)}
@@ -574,18 +576,16 @@ export default function CheckoutPage() {
                </button>
             </div>
 
-            <div className="h-24"></div>
+            <div className="h-24" />
          </div>
 
-         {/* Sidebars */}
-         {userInfo && (
-            <UserInfoSidebar
-               isOpen={showUserSidebar}
-               onClose={() => setShowUserSidebar(false)}
-               userInfo={userInfo}
-               onUpdate={handleUserUpdate}
-            />
-         )}
+         {/* ── Sidebars & Modals ── */}
+         <UserInfoSidebar
+            isOpen={showUserSidebar}
+            onClose={() => setShowUserSidebar(false)}
+            userInfo={userInfoForSidebar}
+            onUpdate={handleUserUpdate}
+         />
 
          <AddressSidebar
             isOpen={showAddressSidebar}
@@ -602,7 +602,6 @@ export default function CheckoutPage() {
             selectedSlot={deliveryTime}
          />
 
-         {/* Dùng chung CartSidebar - GIỐNG CART */}
          <CartSidebar
             isOpen={showSidebar}
             onClose={() => setShowSidebar(false)}
@@ -626,8 +625,6 @@ export default function CheckoutPage() {
          <VoucherPromotionModal
             isOpen={showVoucherModal}
             onClose={() => setShowVoucherModal(false)}
-            selectedPromotions={selectedPromotions}
-            onSelectPromotions={handleSelectPromotions}
             appliedVoucherCode={appliedVoucherCode}
             appliedVoucherValue={appliedVoucherValue}
             onApplyVoucher={handleApplyVoucher}

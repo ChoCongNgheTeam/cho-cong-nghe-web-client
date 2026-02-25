@@ -1,115 +1,121 @@
 // cart/actions/cart.action.ts
-// Tên file khớp với file hiện có của bạn: cart.action.ts (không có 's')
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "";
-
-interface ApiResult {
-  success: boolean;
-  data?: unknown;
-  error?: string;
-  warnings?: string[];
-}
-
-async function apiFetch(
-  path: string,
-  options?: RequestInit
-): Promise<ApiResult> {
-  try {
-    const res = await fetch(`${API}${path}`, {
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
-
-    const json = await res.json().catch(() => ({})) as Record<string, unknown>;
-  // console.log(`[API] ${options?.method ?? "GET"} ${path}`, {
-  //     status: res.status,
-  //     ok: res.ok,
-  //     response: json,
-  //   });
-    if (!res.ok) {
-      return {
-        success: false,
-        error:
-          (json?.message as string) ??
-          (json?.error as string) ??
-          `Lỗi ${res.status}`,
-      };
-    }
-
-    return {
-      success: true,
-      data: json.data,
-      warnings: json.warnings as string[] | undefined,
-    };
-  } catch {
-    return { success: false, error: "Không thể kết nối server" };
-  }
-}
+import apiRequest from "@/lib/api";
+import { ApiCartData, ApiResponse, ApiResult } from "../types/cart.types";
 
 // GET /cart
 export async function getCartItems(): Promise<ApiResult> {
-  return apiFetch("/cart");
+   try {
+      const response = await apiRequest.get<ApiResponse<ApiCartData>>("/cart", {
+         noRedirectOn401: true,
+      });
+      return { success: true, data: response.data };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }
 
-// POST /cart  – body: { productVariantId, quantity }
+// POST /cart
 export async function addToCart(
-  productVariantId: string,
-  quantity: number
+   productVariantId: string,
+   quantity: number,
 ): Promise<ApiResult> {
-  return apiFetch("/cart", {
-    method: "POST",
-    body: JSON.stringify({ productVariantId, quantity }),
-  });
+   try {
+      await apiRequest.post<ApiResponse<unknown>>("/cart", {
+         productVariantId,
+         quantity,
+      });
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }
 
-// PUT /cart/:cartItemId  – body: { quantity }
+// PUT /cart/:cartItemId
 export async function updateCartItemQuantity(
-  cartItemId: string,
-  quantity: number
+   cartItemId: string,
+   quantity: number,
 ): Promise<ApiResult> {
-  return apiFetch(`/cart/${cartItemId}`, {
-    method: "PUT",
-    body: JSON.stringify({ quantity }),
-  });
+   try {
+      await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}`, {
+         quantity,
+      });
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }
 
 // DELETE /cart/:cartItemId
 export async function removeCartItem(cartItemId: string): Promise<ApiResult> {
-  return apiFetch(`/cart/${cartItemId}`, { method: "DELETE" });
+   try {
+      await apiRequest.delete<ApiResponse<unknown>>(`/cart/${cartItemId}`);
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }
 
-// Batch delete – gọi tuần tự vì BE không có batch endpoint
+// Batch delete
 export async function removeCartItems(
-  cartItemIds: string[]
+   cartItemIds: string[],
 ): Promise<ApiResult> {
-  const results = await Promise.all(cartItemIds.map(removeCartItem));
-  const failed = results.find((r) => !r.success);
-  return failed ?? { success: true };
+   const results = await Promise.all(cartItemIds.map(removeCartItem));
+   const failed = results.find((r) => !r.success);
+   return failed ?? { success: true };
 }
 
-// DELETE /cart  – xóa toàn bộ
+// DELETE /cart
 export async function clearCart(): Promise<ApiResult> {
-  return apiFetch("/cart", { method: "DELETE" });
+   try {
+      await apiRequest.delete<ApiResponse<unknown>>("/cart");
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }
 
-// POST /cart/sync  – đồng bộ localStorage → DB sau khi login
+// POST /cart/sync
 export async function syncGuestCart(
-  items: Array<{ productVariantId: string; quantity: number; addedAt?: number }>
+   items: Array<{
+      productVariantId: string;
+      quantity: number;
+      addedAt?: number;
+   }>,
 ): Promise<ApiResult> {
-  return apiFetch("/cart/sync", {
-    method: "POST",
-    body: JSON.stringify({ items }),
-  });
+   try {
+      await apiRequest.post<ApiResponse<unknown>>("/cart/sync", { items });
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }
 
-// POST /cart/validate-item  – check tồn kho cho guest
+// POST /cart/validate-item
 export async function validateCartItem(
-  productVariantId: string,
-  quantity: number
+   productVariantId: string,
+   quantity: number,
 ): Promise<ApiResult> {
-  return apiFetch("/cart/validate-item", {
-    method: "POST",
-    body: JSON.stringify({ productVariantId, quantity }),
-  });
+   try {
+      await apiRequest.post<ApiResponse<unknown>>("/cart/validate-item", {
+         productVariantId,
+         quantity,
+      });
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
 }

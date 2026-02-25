@@ -3,23 +3,15 @@
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-   Trash2,
-   Plus,
-   Minus,
-   ChevronRight,
-   ChevronUp,
-   ShoppingCart,
-} from "lucide-react";
-import { useCart } from "./context/CartContext"; // ← ĐỔI DÒNG NÀY (từ ../../hooks/useCart)
+import { Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import VariantDropdown from "./components/CartVariantSelector";
-import OrderSummary from "@/components/odersummary/OrderSummary";
+import OrderSummary from "@/components/oderSummary/OrderSummary";
 import toast from "react-hot-toast";
-import CartSidebar from "./components/cartsidebar";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
-
+import { useCart } from "@/hooks/useCart";
+import CartSidebar from "./components/cartSidebar";
 export default function CartPage() {
    const router = useRouter();
    const {
@@ -100,13 +92,6 @@ export default function CartPage() {
          return;
       }
 
-      // Calculate final total with voucher
-      const finalTotalWithVoucher = Math.max(
-         0,
-         finalTotal - appliedVoucherValue,
-      );
-      const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
-
       // Lưu TẤT CẢ thông tin vào localStorage
       const checkoutData = {
          selectedItems: selectedItems,
@@ -115,8 +100,8 @@ export default function CartPage() {
          appliedVoucherCode: appliedVoucherCode,
          appliedVoucherValue: appliedVoucherValue,
          subtotal: subtotal,
-         totalDiscount: totalDiscountWithVoucher,
-         finalTotal: finalTotalWithVoucher,
+         totalDiscount: totalDiscount,
+         finalTotal: finalTotal,
          rewardPoints: rewardPoints,
          usePoints: usePoints,
       };
@@ -267,13 +252,27 @@ export default function CartPage() {
                                        </div>
 
                                        {/* Variant Dropdown - INLINE */}
-                                      <VariantDropdown
+                                       <VariantDropdown
                                           cartItemId={Number(item.id)}
-                                          productId={Number(item.product_id ?? item.id)}
-                                          currentVariantId={Number(item.product_variant_id)}
+                                          productId={Number(
+                                             item.product_id ?? item.id,
+                                          )}
+                                          currentVariantId={Number(
+                                             item.product_variant_id,
+                                          )}
                                           currentVariantName={item.variant_name}
-                                          onVariantChange={(cartItemId, variantId, variantName, price) =>
-                                             handleVariantChange(String(cartItemId), String(variantId), variantName, price)
+                                          onVariantChange={(
+                                             cartItemId,
+                                             variantId,
+                                             variantName,
+                                             price,
+                                          ) =>
+                                             handleVariantChange(
+                                                String(cartItemId),
+                                                String(variantId),
+                                                variantName,
+                                                price,
+                                             )
                                           }
                                        />
 
@@ -405,8 +404,8 @@ export default function CartPage() {
                   <div className="hidden lg:block lg:col-span-1 border border-neutral">
                      <OrderSummary
                         subtotal={subtotal}
-                        totalDiscount={totalDiscountWithVoucher}
-                        finalTotal={finalTotalWithVoucher}
+                        totalDiscount={totalDiscount}
+                        finalTotal={finalTotal}
                         rewardPoints={rewardPoints}
                         selectedItemsCount={selectedItems.length}
                         appliedVoucherCode={appliedVoucherCode}
@@ -445,8 +444,8 @@ export default function CartPage() {
             isOpen={showSidebar}
             onClose={() => setShowSidebar(false)}
             subtotal={subtotal}
-            totalDiscount={totalDiscountWithVoucher}
-            finalTotal={finalTotalWithVoucher}
+            totalDiscount={totalDiscount}
+            finalTotal={finalTotal}
             rewardPoints={rewardPoints}
             selectedItemsCount={selectedItems.length}
             appliedVoucherCode={appliedVoucherCode}
@@ -460,8 +459,6 @@ export default function CartPage() {
          <VoucherPromotionModal
             isOpen={showVoucherModal}
             onClose={() => setShowVoucherModal(false)}
-            selectedPromotions={selectedPromotions}
-            onSelectPromotions={handleSelectPromotions}
             appliedVoucherCode={appliedVoucherCode}
             appliedVoucherValue={appliedVoucherValue}
             onApplyVoucher={handleApplyVoucher}

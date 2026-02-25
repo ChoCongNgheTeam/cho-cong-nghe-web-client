@@ -47,7 +47,6 @@ export default function CartSidebar({
    const formatPrice = (price: number) =>
       new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-   const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
    const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
    const handleCheckout = () => {
@@ -185,13 +184,14 @@ export default function CartSidebar({
                               {formatPrice(subtotal)}
                            </span>
                         </div>
-
                         <div className="flex justify-between">
                            <span className="text-neutral-darker">
                               Tổng khuyến mãi
                            </span>
                            <span className="font-medium text-primary">
-                              -{formatPrice(totalDiscountWithVoucher)}
+                              -
+                              {formatPrice(totalDiscount + appliedVoucherValue)}{" "}
+                              {/* chỉ dùng để tính tổng hiển thị */}
                            </span>
                         </div>
 

@@ -1,83 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+   ChevronDown,
+   ChevronUp,
+   Banknote,
+   Landmark,
+   CreditCard,
+   Wallet,
+   type LucideIcon,
+} from "lucide-react";
+import apiRequest from "@/lib/api";
 
 interface PaymentMethod {
    id: string;
    name: string;
-   icon: string;
-   description?: string;
-   badge?: string;
+   description: string;
+   isActive: boolean;
+   createdAt: string;
+   updatedAt: string;
 }
 
-const paymentMethods: PaymentMethod[] = [
-   {
-      id: "cod",
-      name: "Thanh toán khi nhận hàng",
-      icon: "💵",
-   },
-   {
-      id: "bank_transfer",
-      name: "Chuyển khoản ngân hàng (QR Code)",
-      icon: "🏦",
-   },
-   {
-      id: "atm",
-      name: "Thẻ ATM nội địa (qua VNPAY)",
-      icon: "💳",
-   },
-   {
-      id: "credit_card",
-      name: "Thẻ Quốc tế Visa, Master, JCB, AMEX, Apple Pay, Google pay, Samsung Pay",
-      icon: "💳",
-      badge: "1 ưu đãi",
-   },
-   {
-      id: "installment_mb",
-      name: "Ngân hàng thương mại cổ phần Quân đội",
-      icon: "🏦",
-      badge: "1 ưu đãi",
-   },
-   // Hidden by default
-   {
-      id: "other_banks",
-      name: "Các ngân hàng khác",
-      icon: "🏦",
-   },
-   {
-      id: "zalopay",
-      name: "Ví ZaloPay",
-      icon: "💰",
-   },
-   {
-      id: "momo",
-      name: "Ví điện tử MoMo",
-      icon: "🎀",
-   },
-   {
-      id: "kredivo",
-      name: "Trả góp/trả tháng qua Kredivo",
-      icon: "💳",
-   },
-   {
-      id: "home_pay",
-      name: "Home PayLater",
-      icon: "🏠",
-      badge: "3 ưu đãi",
-   },
-   {
-      id: "credit_installment",
-      name: "Trả góp qua thẻ tín dụng",
-      icon: "💳",
-      badge: "1 ưu đãi",
-   },
-   {
-      id: "finance_company",
-      name: "Trả góp qua công ty tài chính",
-      icon: "🏢",
-   },
-];
+interface PaymentMethodsResponse {
+   data: PaymentMethod[];
+   message: string;
+}
+
+// Map method name -> Lucide icon component
+const METHOD_META: Record<string, { icon: LucideIcon }> = {
+   COD: { icon: Banknote },
+   Bank_Transfer: { icon: Landmark },
+   Credit_Card: { icon: CreditCard },
+   Momo: { icon: Wallet },
+   ZaloPay: { icon: Wallet },
+};
+
+function getMethodMeta(name: string) {
+   const key = name.replace(/\s+/g, "_");
+   return METHOD_META[key] ?? { icon: CreditCard };
+}
 
 interface PaymentMethodsProps {
    selectedMethod?: string;
@@ -88,11 +49,37 @@ export default function PaymentMethods({
    selectedMethod: controlledMethod,
    onSelect,
 }: PaymentMethodsProps) {
-   const [internalSelected, setInternalSelected] = useState("cod");
+   const [methods, setMethods] = useState<PaymentMethod[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
+   const [internalSelected, setInternalSelected] = useState<string>("");
    const [showAll, setShowAll] = useState(false);
 
    const selectedMethod = controlledMethod || internalSelected;
-   const visibleMethods = showAll ? paymentMethods : paymentMethods.slice(0, 5);
+   const VISIBLE_COUNT = 5;
+   const visibleMethods = showAll ? methods : methods.slice(0, VISIBLE_COUNT);
+
+   useEffect(() => {
+      const fetchMethods = async () => {
+         try {
+            setLoading(true);
+            const res = await apiRequest.get<PaymentMethodsResponse>(
+               "/payments/active",
+               { noAuth: true },
+            );
+            setMethods(res.data);
+            if (!controlledMethod && res.data.length > 0) {
+               setInternalSelected(res.data[0].id);
+            }
+         } catch {
+            setError("Không thể tải phương thức thanh toán.");
+         } finally {
+            setLoading(false);
+         }
+      };
+
+      fetchMethods();
+   }, []);
 
    const handleSelect = (methodId: string) => {
       if (onSelect) {
@@ -111,67 +98,76 @@ export default function PaymentMethods({
          </div>
 
          <div className="p-4 sm:p-5">
-            <div className="space-y-0">
-               {visibleMethods.map((method) => (
-                  <label
-                     key={method.id}
-                     className="flex items-center gap-3 py-3 cursor-pointer transition-colors -mx-2 px-2 rounded hover:bg-neutral"
-                  >
-                     {/* Custom Radio Button - Yellow/Black FPT Style */}
-                     <div className="relative flex items-center justify-center shrink-0 mt-0.5">
-                        <input
-                           type="radio"
-                           name="payment"
-                           checked={selectedMethod === method.id}
-                           onChange={() => handleSelect(method.id)}
-                           className="sr-only peer"
-                        />
-                        <div
-                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                              selectedMethod === method.id
-                                 ? "border-accent bg-accent"
-                                 : "border-neutral-dark bg-transparent"
-                           }`}
-                        >
-                           {selectedMethod === method.id && (
-                              <div className="w-2 h-2 rounded-full bg-primary-darker"></div>
-                           )}
-                        </div>
-                     </div>
+            {loading && (
+               <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                     <div
+                        key={i}
+                        className="h-10 rounded bg-neutral animate-pulse"
+                     />
+                  ))}
+               </div>
+            )}
 
-                     <span className="text-lg shrink-0 mt-0.5">
-                        {method.icon}
-                     </span>
+            {error && <p className="text-sm text-red-500">{error}</p>}
 
-                     <div className="flex-1 min-w-0 pt-0.5">
-                        <div className="flex items-start gap-2">
-                           <span className="text-sm leading-tight text-primary">
-                              {method.name}
-                           </span>
-                           {method.badge && (
-                              <span className="text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0 font-medium bg-accent text-primary">
-                                 {method.badge}
-                              </span>
-                           )}
-                        </div>
-                     </div>
-                  </label>
-               ))}
-            </div>
+            {!loading && !error && (
+               <>
+                  <div className="space-y-0">
+                     {visibleMethods.map((method) => {
+                        const { icon: Icon } = getMethodMeta(method.name);
+                        return (
+                           <label
+                              key={method.id}
+                              className="flex items-center gap-3 py-3 cursor-pointer transition-colors -mx-2 px-2 rounded hover:bg-neutral"
+                           >
+                              <div className="relative flex items-center justify-center shrink-0 mt-0.5">
+                                 <input
+                                    type="radio"
+                                    name="payment"
+                                    checked={selectedMethod === method.id}
+                                    onChange={() => handleSelect(method.id)}
+                                    className="sr-only peer"
+                                 />
+                                 <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                       selectedMethod === method.id
+                                          ? "border-accent bg-accent"
+                                          : "border-neutral-dark bg-transparent"
+                                    }`}
+                                 >
+                                    {selectedMethod === method.id && (
+                                       <div className="w-2 h-2 rounded-full bg-primary-darker" />
+                                    )}
+                                 </div>
+                              </div>
 
-            {/* Show More/Less Button */}
-            {paymentMethods.length > 5 && (
-               <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="w-full mt-2 py-2 flex items-center justify-center gap-1 text-sm font-medium transition-colors rounded hover:bg-neutral text-primary cursor-pointer"
-               >
-                  <span>{showAll ? "Rút gọn" : "Xem thêm"}</span>
-                  {showAll ? (
-                     <ChevronUp className="w-4 h-4" />
-                  ) : (
-                     <ChevronDown className="w-4 h-4" />
+                              <Icon className="w-5 h-5 shrink-0 text-primary" />
+
+                              <div className="flex-1 min-w-0 pt-0.5">
+                                 <span className="text-sm leading-tight text-primary">
+                                    {method.description}
+                                 </span>
+                              </div>
+                           </label>
+                        );
+                     })}
+                  </div>
+
+                  {methods.length > VISIBLE_COUNT && (
+                     <button
+                        onClick={() => setShowAll(!showAll)}
+                        className="w-full mt-2 py-2 flex items-center justify-center gap-1 text-sm font-medium transition-colors rounded hover:bg-neutral text-primary cursor-pointer"
+                     >
+                        <span>{showAll ? "Rút gọn" : "Xem thêm"}</span>
+                        {showAll ? (
+                           <ChevronUp className="w-4 h-4" />
+                        ) : (
+                           <ChevronDown className="w-4 h-4" />
+                        )}
+                     </button>
                   )}
-               </button>
+               </>
             )}
          </div>
       </div>
