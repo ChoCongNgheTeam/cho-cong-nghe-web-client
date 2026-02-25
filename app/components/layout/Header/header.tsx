@@ -33,7 +33,8 @@ const Header = () => {
    const lastScrollY = useRef(0);
    const ticking = useRef(false);
 
-   const { user, logout, isAuthenticated } = useAuth();
+   // loading = true trong khi checkAuth đang chạy (lúc F5)
+   const { user, logout, isAuthenticated, loading } = useAuth();
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
 
@@ -46,7 +47,6 @@ const Header = () => {
          }
       });
       observer.observe(headerRef.current);
-      // Set ngay lần đầu
       setHeaderHeight(headerRef.current.offsetHeight);
       return () => observer.disconnect();
    }, []);
@@ -142,7 +142,10 @@ const Header = () => {
                   <DesktopHeader
                      searchQuery={searchQuery}
                      isDarkMode={isDark}
+                     // Khi đang loading: truyền false/null để render skeleton
+                     // thay vì nhảy về trạng thái "chưa đăng nhập"
                      isAuthenticated={isAuthenticated}
+                     isLoading={loading}
                      user={user}
                      showUserMenu={showUserMenu}
                      userMenuRef={userMenuRef}
@@ -177,7 +180,18 @@ const Header = () => {
                <div className="md:hidden bg-neutral-light border-b border-neutral-dark shadow-lg">
                   <div className="container py-4">
                      <nav className="flex flex-col gap-3">
-                        {isAuthenticated && user ? (
+                        {/* Khi đang loading: hiển thị skeleton thay vì nhảy về "chưa đăng nhập" */}
+                        {loading ? (
+                           <div className="px-3 py-3 bg-neutral/50 rounded-lg animate-pulse">
+                              <div className="flex items-center gap-3">
+                                 <div className="w-12 h-12 rounded-full bg-neutral-dark/20" />
+                                 <div className="flex-1 space-y-2">
+                                    <div className="h-3 bg-neutral-dark/20 rounded w-3/4" />
+                                    <div className="h-3 bg-neutral-dark/20 rounded w-1/2" />
+                                 </div>
+                              </div>
+                           </div>
+                        ) : isAuthenticated && user ? (
                            <>
                               <div className="px-3 py-3 bg-accent/10 rounded-lg">
                                  <div className="flex items-center gap-3">

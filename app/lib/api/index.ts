@@ -33,30 +33,90 @@ interface SafeResponse<T> {
    };
 }
 
-// Hàm gọi refresh và cập nhật access token trong memory
-export const performRefresh = async (): Promise<boolean> => {
-   try {
-      const refreshResponse = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
-         method: "POST",
-         credentials: "include", // gửi httpOnly cookie refreshToken
-      });
+// ==========================================
+// SINGLETON REFRESH - chỉ 1 request refresh tại một thời điểm
+// ==========================================
+let _refreshPromise: Promise<boolean> | null = null;
 
-      if (refreshResponse.ok) {
-         const data = await refreshResponse.json();
-         // BE trả accessToken trong body
-         if (data?.data?.accessToken) {
-            setAccessToken(data.data.accessToken);
-         } else if (data?.accessToken) {
-            setAccessToken(data.accessToken);
+export const performRefresh = async (retryCount = 0): Promise<boolean> => {
+   if (_refreshPromise) return _refreshPromise;
+
+   _refreshPromise = (async () => {
+      try {
+         const refreshResponse = await fetch(
+            `${BASE_URL}/api/v1/auth/refresh`,
+            {
+               method: "POST",
+               credentials: "include",
+            },
+         );
+
+         if (refreshResponse.ok) {
+            const data = await refreshResponse.json();
+            if (data?.data?.accessToken) setAccessToken(data.data.accessToken);
+            else if (data?.accessToken) setAccessToken(data.accessToken);
+            return true;
          }
-         return true;
+
+         // Xử lý 429: chờ rồi retry (tối đa 3 lần)
+         if (refreshResponse.status === 429 && retryCount < 3) {
+            const retryAfter = refreshResponse.headers.get("Retry-After");
+            const delay = retryAfter
+               ? parseInt(retryAfter) * 1000
+               : (retryCount + 1) * 2000; // 2s, 4s, 6s
+            await new Promise((r) => setTimeout(r, delay));
+            _refreshPromise = null; // reset để cho phép retry
+            return performRefresh(retryCount + 1);
+         }
+
+         return false;
+      } catch {
+         return false;
+      } finally {
+         _refreshPromise = null;
       }
-      return false;
-   } catch {
-      return false;
-   }
+   })();
+
+   return _refreshPromise;
 };
 
+// ==========================================
+// AUTH INIT GATE - block request cho đến khi AuthContext init xong
+// ==========================================
+let _authInitialized = false;
+let _authInitPromise: Promise<void> | null = null;
+let _authInitResolve: (() => void) | null = null;
+
+export const waitForAuthInit = (): Promise<void> => {
+   if (_authInitialized) return Promise.resolve();
+
+   if (_authInitPromise) return _authInitPromise;
+
+   _authInitPromise = new Promise((resolve) => {
+      _authInitResolve = resolve;
+   });
+   return _authInitPromise;
+};
+
+export const resolveAuthInit = () => {
+   _authInitialized = true;
+   _authInitResolve?.();
+};
+
+/**
+ * Reset auth init gate.
+ * Cần gọi khi AuthProvider mount lại (HMR, StrictMode) để tránh
+ * trạng thái _authInitialized=true cũ khiến requests gửi đi không có token.
+ */
+export const resetAuthInit = () => {
+   _authInitialized = false;
+   _authInitPromise = null;
+   _authInitResolve = null;
+};
+
+// ==========================================
+// API REQUEST CLASS
+// ==========================================
 class ApiRequest {
    private async request<T>(
       endpoint: string,
@@ -81,6 +141,12 @@ class ApiRequest {
          throw new Error("NEXT_PUBLIC_API_BASE_URL chưa được cấu hình");
       }
 
+      // Chờ AuthContext init xong trước khi gửi request cần auth
+      // Tránh race condition khi F5: các component mount trước khi có access token
+      if (!noAuth && !_accessToken) {
+         await waitForAuthInit();
+      }
+
       let url = `${BASE_URL}/api/v1${endpoint}`;
       if (params) {
          const searchParams = new URLSearchParams();
@@ -102,7 +168,6 @@ class ApiRequest {
          typeof fetchOptions.body === "object" &&
          !isFormData;
 
-      // Build headers - luôn gắn Authorization nếu có access token
       const buildHeaders = () => ({
          ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
          ...(_accessToken && !noAuth
@@ -133,11 +198,10 @@ class ApiRequest {
                throw new ApiError("Unauthorized", 401);
             }
 
-            // Thử refresh token
+            // Thử refresh token (singleton - chỉ 1 lần dù nhiều request cùng 401)
             const refreshed = await performRefresh();
 
             if (refreshed) {
-               // Retry request gốc với access token mới
                const retryController = new AbortController();
                const retryTimeoutId = setTimeout(
                   () => retryController.abort(),
@@ -148,7 +212,7 @@ class ApiRequest {
                   ...fetchOptions,
                   signal: retryController.signal,
                   credentials: "include",
-                  headers: buildHeaders(), // buildHeaders() lấy _accessToken mới
+                  headers: buildHeaders(),
                   body: isJsonBody
                      ? JSON.stringify(fetchOptions.body)
                      : fetchOptions.body,

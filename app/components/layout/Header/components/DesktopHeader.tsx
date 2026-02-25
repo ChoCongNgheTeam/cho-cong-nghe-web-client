@@ -17,10 +17,12 @@ import Image from "next/image";
 import { DesktopHeaderProps } from "../types";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import UserAvatar from "@/components/ui/UserAvatar";
+
 const DesktopHeader = ({
    searchQuery,
    isDarkMode,
    isAuthenticated,
+   isLoading, // ← prop mới: đang chờ checkAuth
    user,
    showUserMenu,
    onSearchChange,
@@ -90,12 +92,13 @@ const DesktopHeader = ({
             >
                <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
             </button>
-            <button
+            <Link
+               href={"/profile/wishlist"}
                className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors"
                title="Yêu thích"
             >
                <Heart className="lg:w-6 lg:h-6 text-primary" />
-            </button>
+            </Link>
             <Link
                href={"/cart"}
                className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors"
@@ -107,7 +110,17 @@ const DesktopHeader = ({
                </span>
             </Link>
 
-            {isAuthenticated && user ? (
+            {/* Auth area:
+                - loading=true  → skeleton (tránh flash "chưa đăng nhập")
+                - authenticated → avatar + dropdown
+                - guest         → icon User link đăng nhập
+            */}
+            {isLoading ? (
+               // Skeleton avatar — giữ đúng kích thước để layout không giật
+               <div className="w-[46px] h-[38px] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-neutral-dark/20 animate-pulse" />
+               </div>
+            ) : isAuthenticated && user ? (
                <div className="relative">
                   <button
                      onClick={onUserMenuToggle}

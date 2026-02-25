@@ -18,6 +18,7 @@ import {
    Monitor,
    Apple,
 } from "lucide-react";
+import apiRequest from "@/lib/api";
 
 interface Category {
    id: string;
@@ -308,12 +309,15 @@ const CategoryMegaMenu = () => {
 
    const fetchCategories = async () => {
       try {
-         const response = await fetch(
-            "http://localhost:5000/api/v1/categories/tree",
-         );
-         const result: ApiResponse = await response.json();
+         // Sử dụng apiRequest với noAuth=true vì endpoint công khai
+         const result = await apiRequest.get<ApiResponse>("/categories/tree", {
+            noAuth: true,
+         });
+
          setCategories(result.data);
-         if (result.data[0]) setActiveCategory(result.data[0]);
+         if (result.data[0]) {
+            setActiveCategory(result.data[0]);
+         }
       } catch (error) {
          console.error("Error fetching categories:", error);
       } finally {

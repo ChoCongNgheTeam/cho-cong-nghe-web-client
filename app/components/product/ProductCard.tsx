@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import { HighlightIcon } from "@/(client)/home/common/HighlightIcon";
 import { Product } from "./types";
+import Badge from "../ui/Badge";
 
 interface ProductCardProps {
    product: Product;
@@ -28,24 +29,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             defaultLiked={product.isWishlist ?? false}
          />
          {hasDiscount && (
-            <div className="absolute -top-3 -left-3 z-20">
-               <div className="relative w-14 h-14">
-                  <svg
-                     viewBox="0 0 100 100"
-                     className="w-full h-full drop-shadow-lg"
-                  >
-                     <path
-                        d="M50,10 L55,35 L75,25 L65,45 L90,50 L65,55 L75,75 L55,65 L50,90 L45,65 L25,75 L35,55 L10,50 L35,45 L25,25 L45,35 Z"
-                        fill="rgb(var(--promotion))"
-                     />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                     <span className="text-white text-[10px] font-black leading-none">
-                        {discountPercentage}%
-                     </span>
-                  </div>
-               </div>
-            </div>
+            <Badge
+               discountPercent={discountPercentage}
+               className="-top-3 -left-3"
+            />
          )}
 
          <div className="grid grid-cols-[1.5fr_1fr] items-center pb-3">

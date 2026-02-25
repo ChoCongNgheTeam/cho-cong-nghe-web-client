@@ -1,8 +1,13 @@
 "use client";
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect, useRef, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
-import apiRequest, { performRefresh, setAccessToken } from "@/lib/api";
+import apiRequest, {
+   performRefresh,
+   resolveAuthInit,
+   resetAuthInit,
+   setAccessToken,
+} from "@/lib/api";
 
 interface User {
    id: string;
@@ -53,7 +58,20 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
    const router = useRouter();
    const toast = useToasty();
 
+   // Guard chống React StrictMode double-invoke useEffect trong development
+   // Đảm bảo checkAuth chỉ chạy đúng 1 lần dù useEffect bị gọi 2 lần
+   const authChecked = useRef(false);
+
    useEffect(() => {
+      // StrictMode fix: bỏ qua lần chạy thứ 2
+      if (authChecked.current) return;
+      authChecked.current = true;
+
+      // Reset auth init gate để tránh trạng thái cũ từ HMR/StrictMode
+      // Nếu không reset: _authInitialized=true từ lần trước khiến các request
+      // gửi đi ngay mà không chờ, dẫn đến 401 dù cookie vẫn còn hạn
+      resetAuthInit();
+
       const checkAuth = async () => {
          try {
             // Reload page → thử refresh để lấy access token mới từ httpOnly cookie
@@ -82,6 +100,9 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
             setUser(null);
          } finally {
             setLoading(false);
+            // Báo cho tất cả request đang chờ biết auth đã init xong
+            // Dù success hay fail, các request cần tiếp tục (với hoặc không có token)
+            resolveAuthInit();
          }
       };
 
@@ -126,7 +147,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       });
    };
 
-   // login nhận thêm accessToken từ response
    const login = async (userData: User, accessToken: string) => {
       setAccessToken(accessToken); // lưu vào memory
       setUser(userData);

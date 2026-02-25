@@ -6,10 +6,21 @@ export interface DesktopHeaderProps {
    searchQuery: string;
    isDarkMode: boolean;
    isAuthenticated: boolean;
-   user: any;
+   isLoading: boolean;
+   user: {
+      id: string;
+      email: string;
+      phone?: string;
+      userName: string;
+      fullName: string;
+      role: string;
+      avatarImage?: string;
+      gender?: string;
+      dateOfBirth?: string;
+   } | null;
    showUserMenu: boolean;
    userMenuRef: React.RefObject<HTMLDivElement | null>;
-   onSearchChange: (query: string) => void;
+   onSearchChange: (value: string) => void;
    onUserMenuToggle: () => void;
    onUserMenuClose: () => void;
    onLogout: () => void;
