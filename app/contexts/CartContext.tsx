@@ -21,7 +21,30 @@ import {
 import toast from "react-hot-toast";
 import { AuthContext } from "@/contexts/AuthContext";
 
-// ─── Context Value Interface ──────────────────────────────────────────────────
+// ─── Meta khi guest addToCart ─────────────────────────────────────────────────
+
+export interface CartItemMeta {
+   productName?: string;
+   variantName?: string;
+   price?: number;
+   originalPrice?: number;
+   imageUrl?: string;
+   productId?: string;
+   productSlug?: string;
+   brandName?: string;
+   availableQuantity?: number;
+   color?: string; // thêm
+   colorValue?: string; // thêm
+}
+// ─── LocalStorage format (chỉ lưu minimal để sync) ───────────────────────────
+
+export interface GuestCartItem {
+   productVariantId: string;
+   quantity: number;
+   addedAt: number;
+}
+
+// ─── Context Value ────────────────────────────────────────────────────────────
 
 export interface CartContextValue {
    items: CartItemWithDetails[];
@@ -31,7 +54,11 @@ export interface CartContextValue {
    selectedItems: CartItemWithDetails[];
    toggleSelectAll: () => void;
    toggleSelectItem: (id: string) => void;
-   addToCart: (productVariantId: string, quantity?: number) => Promise<void>;
+   addToCart: (
+      productVariantId: string,
+      quantity?: number,
+      meta?: CartItemMeta,
+   ) => Promise<void>;
    updateQuantity: (cartItemId: string, delta: number) => Promise<void>;
    removeItem: (cartItemId: string) => Promise<void>;
    removeSelectedItems: () => Promise<void>;
@@ -54,18 +81,17 @@ interface ApiCartItem {
    brandName?: string;
    variantCode?: string;
    image?: string;
-   color?: string;
+   color?: string; // thêm
+   colorValue?: string; // thêm
    quantity: number;
    unitPrice: number;
    totalPrice?: number;
    availableQuantity?: number;
+   createdAt?: string;
+   updatedAt?: string;
 }
-
 interface ApiCartData {
    items?: ApiCartItem[];
-   totalItems?: number;
-   totalQuantity?: number;
-   subtotal?: number;
 }
 
 interface ApiResult {
@@ -75,17 +101,13 @@ interface ApiResult {
    warnings?: string[];
 }
 
-// ─── LocalStorage ────────────────────────────────────────────────────────────
+// ─── LocalStorage helpers ─────────────────────────────────────────────────────
 
 const LOCAL_KEY = "guest_cart";
 
-interface GuestCartItem {
-   productVariantId: string;
-   quantity: number;
-   addedAt: number;
-}
-
+// Lưu dạng đầy đủ để hiển thị trên cart page khi chưa login
 function readLocalCart(): CartItemWithDetails[] {
+   if (typeof window === "undefined") return [];
    try {
       return JSON.parse(
          localStorage.getItem(LOCAL_KEY) ?? "[]",
@@ -95,13 +117,13 @@ function readLocalCart(): CartItemWithDetails[] {
    }
 }
 
-function readLocalCartRaw(): GuestCartItem[] {
+// Đọc dạng minimal để sync lên DB sau khi login
+function readLocalCartForSync(): GuestCartItem[] {
+   if (typeof window === "undefined") return [];
    try {
-      const items = JSON.parse(
-         localStorage.getItem(LOCAL_KEY) ?? "[]",
-      ) as CartItemWithDetails[];
+      const items = readLocalCart();
       return items.map((i) => ({
-         productVariantId: i.product_variant_id,
+         productVariantId: i.productVariantId, // fix
          quantity: i.quantity,
          addedAt: Date.now(),
       }));
@@ -111,87 +133,116 @@ function readLocalCartRaw(): GuestCartItem[] {
 }
 
 function writeLocalCart(items: CartItemWithDetails[]): void {
+   if (typeof window === "undefined") return;
    localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+}
+
+function clearLocalCart(): void {
+   if (typeof window === "undefined") return;
+   localStorage.removeItem(LOCAL_KEY);
 }
 
 function transformCartItem(raw: ApiCartItem): CartItemWithDetails {
    return {
       id: raw.id,
-      product_variant_id: raw.productVariantId,
-      product_id: raw.productId,
-      product_name: raw.productName ?? "Sản phẩm",
-      product_slug: raw.productSlug,
-      brand_name: raw.brandName,
-      variant_name: raw.variantCode ?? "Mặc định",
-      price: raw.unitPrice ?? 0,
-      original_price: raw.unitPrice ?? 0,
+      productVariantId: raw.productVariantId,
+      productId: raw.productId ?? "",
+      productName: raw.productName ?? "Sản phẩm",
+      productSlug: raw.productSlug ?? "",
+      brandName: raw.brandName ?? "",
+      variantCode: raw.variantCode ?? "Mặc định",
+      image: raw.image ?? "",
+      color: raw.color ?? "",
+      colorValue: raw.colorValue ?? "",
       quantity: raw.quantity,
-      available_quantity: raw.availableQuantity,
-      image_url: raw.image ?? "",
-      unit_price: raw.unitPrice ?? 0,
-      discount_value: 0,
+      unitPrice: raw.unitPrice ?? 0,
+      totalPrice: raw.totalPrice ?? 0,
+      availableQuantity: raw.availableQuantity ?? 0,
+      createdAt: raw.createdAt ?? "",
+      updatedAt: raw.updatedAt ?? "",
       selected: true,
+      originalPrice: raw.unitPrice ?? 0,
    };
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-export const CartContext = createContext<CartContextValue | undefined>(undefined);
+export const CartContext = createContext<CartContextValue | undefined>(
+   undefined,
+);
 
 export function CartProvider({ children }: { children: ReactNode }) {
    const [items, setItems] = useState<CartItemWithDetails[]>([]);
    const [isLoading, setIsLoading] = useState(true);
 
-   // Lấy auth từ AuthContext - dùng isAuthenticated và loading từ đây
-   // thay vì tự quản lý riêng
    const auth = useContext(AuthContext);
    const isAuthenticated = auth?.isAuthenticated ?? false;
 
    // ── Fetch ─────────────────────────────────────────────────────────────────
+
    const refetchCart = useCallback(async (): Promise<void> => {
       setIsLoading(true);
       try {
-         const res = (await getCartItems()) as ApiResult;
-         if (res.success && res.data?.items && Array.isArray(res.data.items)) {
-            setItems(res.data.items.map(transformCartItem));
+         if (isAuthenticated) {
+            // Đã login → lấy từ DB
+            const res = (await getCartItems()) as ApiResult;
+            if (
+               res.success &&
+               res.data?.items &&
+               Array.isArray(res.data.items)
+            ) {
+               setItems(res.data.items.map(transformCartItem));
+            } else {
+               setItems([]);
+            }
          } else {
+            // Chưa login → đọc từ localStorage (đã có đầy đủ thông tin)
             setItems(readLocalCart());
          }
       } catch {
-         setItems(readLocalCart());
+         setItems(isAuthenticated ? [] : readLocalCart());
       } finally {
          setIsLoading(false);
       }
-   }, []);
+   }, [isAuthenticated]);
 
-   // Chỉ fetch sau khi AuthContext đã resolve xong (loading = false)
-   // Tránh gọi API khi chưa có access token trong memory
+   // Fetch khi AuthContext resolve xong
    useEffect(() => {
       if (auth?.loading === false) {
          refetchCart();
       }
-   }, [auth?.loading]); // eslint-disable-line react-hooks/exhaustive-deps
+   }, [auth?.loading, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-   // ── Sync guest → DB ───────────────────────────────────────────────────────
+   // ── Sync guest → DB (gọi sau khi login thành công) ────────────────────────
+
    const syncLocalToDB = useCallback(async (): Promise<void> => {
-      const guestItems = readLocalCartRaw();
+      const guestItems = readLocalCartForSync();
       if (guestItems.length === 0) return;
+
       try {
          const res = (await syncGuestCart(guestItems)) as ApiResult;
          if (res.success) {
-            localStorage.removeItem(LOCAL_KEY);
+            clearLocalCart();
             res.warnings?.forEach((w) => toast(w, { icon: "⚠️" }));
+            // Fetch lại cart từ DB sau khi merge
             await refetchCart();
+            toast.success("Đã đồng bộ giỏ hàng");
          }
       } catch {
-         // silent
+         // silent - không block login flow
       }
    }, [refetchCart]);
 
-   // ── Add ───────────────────────────────────────────────────────────────────
+   // ── Add to cart ───────────────────────────────────────────────────────────
+
    const addToCart = useCallback(
-      async (productVariantId: string, quantity = 1): Promise<void> => {
+      async (
+         productVariantId: string,
+         quantity = 1,
+         meta?: CartItemMeta,
+      ): Promise<void> => {
          if (isAuthenticated) {
+            // Đã login → gọi API
             try {
                const res = (await apiAddToCart(
                   productVariantId,
@@ -207,27 +258,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
                toast.error("Không thể thêm vào giỏ hàng");
             }
          } else {
+            // Chưa login → lưu vào localStorage với đầy đủ thông tin để hiển thị
             const local = readLocalCart();
             const existing = local.find(
-               (i) => i.product_variant_id === productVariantId,
+               (i) => i.productVariantId === productVariantId,
             );
+
             if (existing) {
                existing.quantity += quantity;
             } else {
                local.push({
                   id: `local_${Date.now()}`,
-                  product_variant_id: productVariantId,
-                  product_name: "Sản phẩm",
-                  variant_name: "Mặc định",
-                  price: 0,
-                  original_price: 0,
+                  productVariantId: productVariantId,
+                  productId: meta?.productId ?? "",
+                  productName: meta?.productName ?? "Sản phẩm",
+                  productSlug: meta?.productSlug ?? "",
+                  brandName: meta?.brandName ?? "",
+                  variantCode: meta?.variantName ?? "Mặc định",
+                  image: meta?.imageUrl ?? "",
+                  color: meta?.color ?? "",
+                  colorValue: meta?.colorValue ?? "",
                   quantity,
-                  image_url: "",
-                  unit_price: 0,
-                  discount_value: 0,
+                  unitPrice: meta?.price ?? 0,
+                  totalPrice: (meta?.price ?? 0) * quantity,
+                  availableQuantity: meta?.availableQuantity ?? 0,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
                   selected: true,
+                  originalPrice: meta?.originalPrice ?? meta?.price ?? 0,
                });
             }
+
             writeLocalCart(local);
             setItems([...local]);
             toast.success("Đã thêm vào giỏ hàng");
@@ -236,7 +297,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       [isAuthenticated, refetchCart],
    );
 
+   useEffect(() => {
+      const handleLoginSuccess = async () => {
+         await syncLocalToDB();
+      };
+
+      window.addEventListener("auth-login-success", handleLoginSuccess);
+      return () =>
+         window.removeEventListener("auth-login-success", handleLoginSuccess);
+   }, [syncLocalToDB]);
+
    // ── Update quantity ───────────────────────────────────────────────────────
+
    const updateQuantity = useCallback(
       async (cartItemId: string, delta: number): Promise<void> => {
          const item = items.find((i) => i.id === cartItemId);
@@ -269,7 +341,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
                   toast.error(res.error ?? "Cập nhật thất bại");
                }
             } catch {
-               // Rollback
                setItems((prev) =>
                   prev.map((i) =>
                      i.id === cartItemId
@@ -280,33 +351,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
                toast.error("Cập nhật thất bại");
             }
          } else {
-            writeLocalCart(
-               readLocalCart().map((i) =>
-                  i.id === cartItemId ? { ...i, quantity: newQty } : i,
-               ),
+            // Cập nhật localStorage
+            const local = readLocalCart().map((i) =>
+               i.id === cartItemId ? { ...i, quantity: newQty } : i,
             );
+            writeLocalCart(local);
          }
       },
       [isAuthenticated, items],
    );
 
    // ── Remove single ─────────────────────────────────────────────────────────
+
    const removeItem = useCallback(
       async (cartItemId: string): Promise<void> => {
-         const prev = items;
+         const prevItems = items;
          setItems((curr) => curr.filter((i) => i.id !== cartItemId));
 
          if (isAuthenticated) {
             try {
                const res = (await removeCartItem(cartItemId)) as ApiResult;
                if (!res.success) {
-                  setItems(prev);
+                  setItems(prevItems);
                   toast.error("Xóa thất bại");
                } else {
                   toast.success("Đã xóa sản phẩm");
                }
             } catch {
-               setItems(prev);
+               setItems(prevItems);
                toast.error("Xóa thất bại");
             }
          } else {
@@ -318,24 +390,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
    );
 
    // ── Remove selected ───────────────────────────────────────────────────────
+
    const removeSelectedItems = useCallback(async (): Promise<void> => {
       const selectedIds = items.filter((i) => i.selected).map((i) => i.id);
       if (selectedIds.length === 0) return;
 
-      const prev = items;
+      const prevItems = items;
       setItems((curr) => curr.filter((i) => !i.selected));
 
       if (isAuthenticated) {
          try {
             const res = (await removeCartItems(selectedIds)) as ApiResult;
             if (!res.success) {
-               setItems(prev);
+               setItems(prevItems);
                toast.error("Xóa thất bại");
             } else {
                toast.success(`Đã xóa ${selectedIds.length} sản phẩm`);
             }
          } catch {
-            setItems(prev);
+            setItems(prevItems);
             toast.error("Xóa thất bại");
          }
       } else {
@@ -347,6 +420,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
    }, [isAuthenticated, items]);
 
    // ── Selection ─────────────────────────────────────────────────────────────
+
    const selectAll = items.length > 0 && items.every((i) => i.selected);
    const selectedItems = items.filter((i) => i.selected);
 
@@ -362,12 +436,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
    }, []);
 
    // ── Totals ────────────────────────────────────────────────────────────────
+
    const subtotal = selectedItems.reduce(
-      (sum, i) => sum + i.original_price * i.quantity,
+      (sum, i) => sum + (i.originalPrice ?? i.unitPrice) * i.quantity,
       0,
    );
    const totalDiscount = selectedItems.reduce(
-      (sum, i) => sum + Math.max(0, i.original_price - i.price) * i.quantity,
+      (sum, i) =>
+         sum + Math.max(0, (i.originalPrice ?? 0) - i.unitPrice) * i.quantity,
       0,
    );
    const finalTotal = Math.max(0, subtotal - totalDiscount);

@@ -17,6 +17,7 @@ import Image from "next/image";
 import { DesktopHeaderProps } from "../types";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import UserAvatar from "@/components/ui/UserAvatar";
+import CartIcon from "@/(client)/cart/components/CartIcon";
 
 const DesktopHeader = ({
    searchQuery,
@@ -99,24 +100,8 @@ const DesktopHeader = ({
             >
                <Heart className="lg:w-6 lg:h-6 text-primary" />
             </Link>
-            <Link
-               href={"/cart"}
-               className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors"
-               title="Giỏ hàng"
-            >
-               <ShoppingCart className="lg:w-6 lg:h-6 text-primary" />
-               <span className="absolute bottom-0 -right-1 bg-accent text-neutral-light font-semibold text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  2
-               </span>
-            </Link>
-
-            {/* Auth area:
-                - loading=true  → skeleton (tránh flash "chưa đăng nhập")
-                - authenticated → avatar + dropdown
-                - guest         → icon User link đăng nhập
-            */}
+            <CartIcon />
             {isLoading ? (
-               // Skeleton avatar — giữ đúng kích thước để layout không giật
                <div className="w-[46px] h-[38px] flex items-center justify-center">
                   <div className="w-8 h-8 rounded-full bg-neutral-dark/20 animate-pulse" />
                </div>

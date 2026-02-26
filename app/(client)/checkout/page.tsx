@@ -41,12 +41,17 @@ interface CartItem {
 }
 
 interface SelectedItem {
-   id: number;
-   product_name: string;
-   variant_name: string;
+   id: string; // đổi từ number → string (UUID)
+   productName?: string;
+   product_name?: string;
+   variantCode?: string;
+   variant_name?: string;
    quantity: number;
-   price: number;
-   original_price: number;
+   unitPrice?: number;
+   unit_price?: number;
+   originalPrice?: number;
+   original_price?: number;
+   image?: string;
    image_url?: string;
 }
 
@@ -166,14 +171,18 @@ export default function CheckoutPage() {
          }
 
          const formattedItems: CartItem[] = checkoutData.selectedItems.map(
-            (item) => ({
+            (item: any) => ({
                id: item.id,
-               name: item.product_name,
-               variant: item.variant_name,
+               name: item.productName ?? item.product_name ?? "",
+               variant: item.variantCode ?? item.variant_name ?? "",
+               color: item.color ?? "", // thêm
+               colorValue: item.colorValue ?? "", // thêm
                quantity: item.quantity,
-               unit_price: item.price,
-               discount_value: item.original_price - item.price,
-               image: item.image_url,
+               unit_price: item.unitPrice ?? item.unit_price ?? 0,
+               discount_value:
+                  (item.originalPrice ?? item.unitPrice ?? 0) -
+                  (item.unitPrice ?? 0),
+               image: item.image ?? item.image_url ?? "",
             }),
          );
 
