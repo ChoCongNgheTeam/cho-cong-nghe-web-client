@@ -30,6 +30,7 @@ type Price = {
   base: number;
   final: number;
   discountPercentage: number;
+  hasPromotion: boolean;
 };
 
 type ColorOption = {
@@ -67,6 +68,9 @@ export default function ProductDetailRight({
   /* ============================================================================
    * PRODUCT DATA
    * ========================================================================== */
+  const price = selectedPrice || product.price;
+  const displayPrice = price?.hasPromotion ? price?.final : price?.base;
+
   const storages: StorageOption[] = (() => {
     //  Dùng availableOptions từ props
     const storageOption = availableOptions?.find(
@@ -110,26 +114,6 @@ export default function ProductDetailRight({
   /* ============================================================================
    * EFFECTS
    * ========================================================================== */
-  useEffect(() => {
-    const endTime = new Date();
-    endTime.setHours(23, 59, 59, 999);
-
-    const updateTimer = () => {
-      const diff = endTime.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      setTimeLeft({
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    };
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="w-full">
@@ -283,65 +267,19 @@ export default function ProductDetailRight({
           <div className="flex flex-col gap-2 flex-1">
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-primary transition-colors duration-300">
-                {(
-                  selectedPrice?.final ||
-                  product.price?.final ||
-                  0
-                ).toLocaleString("vi-VN")}
-                ₫
+                {(displayPrice || 0).toLocaleString("vi-VN")}₫
               </h3>
-              <div className="flex gap-2 items-center">
-                <span className="text-xs sm:text-sm  line-through transition-colors duration-300">
-                  {(
-                    selectedPrice?.base ||
-                    product.price?.base ||
-                    0
-                  ).toLocaleString("vi-VN")}
-                  ₫ ₫
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-promotion">
-                  {product.price?.discountPercentage}%
-                </span>
-              </div>
+              {price?.hasPromotion && (
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs sm:text-sm line-through">
+                    {(price.base || 0).toLocaleString("vi-VN")}₫
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-promotion">
+                    {price.discountPercentage}%
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-accent-dark text-xs sm:text-sm border border-accent-dark rounded-full px-2 py-1 transition-colors duration-300">
-                💰 +8.697 Điểm thưởng
-              </span>
-            </div>
-          </div>
-
-          {/* Installment Option */}
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <p className="border  px-2 py-1 rounded-full bg-neutral-light  text-xs whitespace-nowrap transition-colors duration-300">
-              Hoặc
-            </p>
-            <div className="text-xs sm:text-sm">
-              <p className=" transition-colors duration-300">Trả góp</p>
-              <p className="mt-1">
-                <span className="font-semibold text-base sm:text-lg text-primary transition-colors duration-300">
-                  1.448.342đ
-                </span>
-                <span className="text-xs sm:text-sm text-primary">/tháng</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Voucher Banner */}
-        <div className="bg-gradient-to-r from-promotion-dark to-orange-600 to-orange-500 p-3 sm:p-4 rounded-lg text-white mt-3 sm:mt-4 transition-all duration-300">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-            <div className="flex-1">
-              <p className="font-bold mb-1 sm:mb-2 text-sm sm:text-base">
-                Trợ giá mua kèm
-              </p>
-              <p className="text-xs sm:text-sm">
-                Tăng voucher giảm ngày đến 2.5 triệu
-              </p>
-            </div>
-            <button className="bg-white/30 hover:bg-white/40 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors">
-              Chọn mua &gt;&gt;
-            </button>
           </div>
         </div>
 
@@ -350,46 +288,6 @@ export default function ProductDetailRight({
           <p className="font-semibold mb-2 text-xs sm:text-sm text-primary transition-colors duration-300">
             Chọn 1 trong các khuyến mãi sau:
           </p>
-
-          {/* Flash Sale */}
-          <div className="bg-accent-light border-accent border rounded-lg p-2 sm:p-3 mb-3 transition-colors duration-300">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-2 bg-promotion-light p-2 rounded transition-colors duration-300">
-              <span className="text-promotion font-bold text-xs sm:text-sm">
-                🔔 GIÁ SỐC ONLINE
-              </span>
-              <span className="text-accent-dark text-xs font-semibold">
-                🔥 Đã bán 5/10 suất
-              </span>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div>
-                <p className="text-xs  transition-colors duration-300">
-                  Giảm ngay
-                </p>
-                <p className="text-base sm:text-lg font-bold text-promotion">
-                  1.000.000đ
-                </p>
-              </div>
-              <div className="w-full sm:w-auto sm:text-right">
-                <p className="text-xs  mb-1 transition-colors duration-300">
-                  Kết thúc sau
-                </p>
-                <div className="flex gap-1 text-xs sm:text-sm font-bold">
-                  <span className="bg-primary-dark text-neutral-light px-2 py-1 rounded transition-colors duration-300">
-                    {String(timeLeft.hours).padStart(2, "0")}
-                  </span>
-                  <span className="text-primary">:</span>
-                  <span className="bg-primary-dark text-neutral-light px-2 py-1 rounded transition-colors duration-300">
-                    {String(timeLeft.minutes).padStart(2, "0")}
-                  </span>
-                  <span className="text-primary">:</span>
-                  <span className="bg-primary-dark text-neutral-light px-2 py-1 rounded transition-colors duration-300">
-                    {String(timeLeft.seconds).padStart(2, "0")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Promotion Details */}
           <div className="border rounded-lg p-3 bg-neutral-light  transition-colors duration-300">
@@ -404,28 +302,6 @@ export default function ProductDetailRight({
               </li>
               <li>✓ Trả góp 0%</li>
             </ul>
-          </div>
-        </div>
-
-        {/* Student Promotion */}
-        <div className="bg-pink-100 border border-pink-300 rounded-lg p-3 sm:p-4 mt-3 sm:mt-4 transition-colors duration-300">
-          <div className="flex gap-3 sm:gap-4">
-            <div className="bg-gradient-to-b from-purple-400 to-purple-600 p-2 sm:p-3 rounded text-white text-center min-w-[60px] sm:min-w-[80px] flex-shrink-0">
-              <p className="text-xs font-bold">Đặc quyền</p>
-              <p className="text-base sm:text-lg font-bold">HSSV</p>
-              <p className="text-xs">Giáo viên</p>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm mb-1 text-primary-darker transition-colors duration-300">
-                Đặc quyền HSSV - Giáo viên
-              </p>
-              <p className="text-xs sm:text-sm text-primary-darker mb-2 transition-colors duration-300">
-                Giảm ngay 200.000đ
-              </p>
-              <button className="bg-promotion hover:bg-promotion-hover text-white px-3 py-1.5 rounded text-xs sm:text-sm font-semibold transition-colors">
-                Xác thực ngay
-              </button>
-            </div>
           </div>
         </div>
       </div>

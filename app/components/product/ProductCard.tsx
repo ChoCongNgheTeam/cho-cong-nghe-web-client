@@ -16,19 +16,22 @@ interface ProductCardProps {
 const STAR_COUNT = 5;
 
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
-   const discountPercentage = product.price.discountPercentage ?? 0;
-   const hasDiscount = discountPercentage > 0;
+   const hasPromotion = product.price?.hasPromotion ?? false;
+   const discountPercentage = product.price?.discountPercentage ?? 0;
 
    return (
       <Link
          href={`/products/${product.slug}`}
          className="group relative flex flex-col bg-neutral-light border border-neutral rounded-xl py-6 px-3"
       >
+         {/* Wishlist */}
          <WishlistHeart
             productId={product.id}
             defaultLiked={product.isWishlist ?? false}
          />
-         {hasDiscount && (
+
+         {/* Badge giảm giá */}
+         {hasPromotion && (
             <Badge
                discountPercent={discountPercentage}
                className="-top-3 -left-3"
@@ -76,11 +79,17 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
             {/* Prices */}
             <div className="flex items-baseline gap-3 mb-2">
-               <span className="text-xl font-bold text-promotion">
-                  {product.price.final.toLocaleString("vi-VN")}₫
-               </span>
-               {hasDiscount && (
-                  <span className="text-sm text-neutral-dark line-through">
+               {hasPromotion ? (
+                  <>
+                     <span className="text-xl font-bold text-promotion">
+                        {product.price.final.toLocaleString("vi-VN")}₫
+                     </span>
+                     <span className="text-sm text-neutral-dark line-through">
+                        {product.price.base.toLocaleString("vi-VN")}₫
+                     </span>
+                  </>
+               ) : (
+                  <span className="text-xl font-bold text-primary">
                      {product.price.base.toLocaleString("vi-VN")}₫
                   </span>
                )}

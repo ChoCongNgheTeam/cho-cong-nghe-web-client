@@ -114,7 +114,8 @@ export type Price = {
   base: number;
   final: number;
   discountPercentage: number;
-}
+  hasPromotion: boolean;
+};
 
 /** ===== API Response ===== */
 export type ProductDetailResponse = {
