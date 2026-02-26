@@ -29,6 +29,7 @@ export default function CartPage() {
       finalTotal,
       rewardPoints,
    } = useCart();
+   console.log(items);
 
    const [showSummary, setShowSummary] = useState(true);
    const [usePoints, setUsePoints] = useState(false);
@@ -67,18 +68,6 @@ export default function CartPage() {
          variantName: string,
          price: number,
       ) => {
-         console.log("Variant changed:", {
-            cartItemId,
-            variantId,
-            variantName,
-            price,
-         });
-
-         // TODO: Call API to update cart item variant
-         // await updateCartItemVariant(cartItemId, variantId);
-
-         // For now, this is handled by the useCart hook's internal state
-         // You would typically call an API here and then refetch the cart
          toast.success("Đã cập nhật phiên bản sản phẩm");
       },
       [],
@@ -124,8 +113,6 @@ export default function CartPage() {
       usePoints,
    ]);
 
-   // Calculate final totals with voucher
-   const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
    const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
    if (isLoading) {
@@ -204,7 +191,7 @@ export default function CartPage() {
                               className="rounded-lg bg-neutral-light p-4 border border-neutral"
                            >
                               <div className="flex gap-4">
-                                 {/* Checkbox - Centered */}
+                                 {/* Checkbox */}
                                  <div className="flex items-center">
                                     <input
                                        type="checkbox"
@@ -218,10 +205,10 @@ export default function CartPage() {
 
                                  {/* Product Image */}
                                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
-                                    {item.image_url ? (
+                                    {item.image ? (
                                        <Image
-                                          src={item.image_url}
-                                          alt={item.product_name}
+                                          src={item.image}
+                                          alt={item.productName}
                                           fill
                                           sizes="(max-width: 768px) 100vw, 50vw"
                                           className="object-cover"
@@ -235,13 +222,18 @@ export default function CartPage() {
 
                                  {/* Product Details */}
                                  <div className="flex flex-1 flex-col sm:flex-row sm:justify-between gap-3">
-                                    {/* Info + Mobile Actions */}
                                     <div className="flex-1 min-w-0">
                                        <div className="flex items-start justify-between gap-2 mb-1">
-                                          <h3 className="flex-1 text-sm font-medium text-primary line-clamp-2">
-                                             {item.product_name}
-                                          </h3>
-                                          {/* Trash button - Top right on mobile */}
+                                          <div className="flex-1 min-w-0">
+                                             {/* Product Name */}
+                                             <h3 className="text-sm font-medium text-primary line-clamp-2">
+                                                {item.productName}
+                                             </h3>
+                                             {/* Brand */}
+                                             <span className="text-xs font-medium text-neutral-dark uppercase tracking-wide">
+                                                {item.brandName}
+                                             </span>
+                                          </div>
                                           <button
                                              onClick={() => removeItem(item.id)}
                                              className="sm:hidden text-neutral-dark transition hover:text-primary shrink-0 cursor-pointer"
@@ -251,16 +243,32 @@ export default function CartPage() {
                                           </button>
                                        </div>
 
-                                       {/* Variant Dropdown - INLINE */}
+                                       {/* Color */}
+                                       {item.color && (
+                                          <div className="flex items-center gap-1.5 mb-1">
+                                             <span
+                                                className="h-3.5 w-3.5 rounded-full border border-neutral shrink-0"
+                                                style={{
+                                                   backgroundColor:
+                                                      item.colorValue,
+                                                }}
+                                             />
+                                             <span className="text-xs text-neutral-dark">
+                                                Màu: {item.color}
+                                             </span>
+                                          </div>
+                                       )}
+
+                                       {/* Variant Dropdown */}
                                        <VariantDropdown
                                           cartItemId={Number(item.id)}
                                           productId={Number(
-                                             item.product_id ?? item.id,
+                                             item.productId ?? item.id,
                                           )}
                                           currentVariantId={Number(
-                                             item.product_variant_id,
+                                             item.productVariantId,
                                           )}
-                                          currentVariantName={item.variant_name}
+                                          currentVariantName={item.variantCode}
                                           onVariantChange={(
                                              cartItemId,
                                              variantId,
@@ -281,20 +289,19 @@ export default function CartPage() {
                                           <div className="flex items-center justify-between mb-3">
                                              <div className="flex flex-col">
                                                 <span className="text-sm font-semibold text-promotion">
-                                                   {formatPrice(item.price)}
+                                                   {formatPrice(item.unitPrice)}
                                                 </span>
-                                                {item.original_price >
-                                                   item.price && (
-                                                   <span className="text-xs text-neutral-dark line-through">
-                                                      {formatPrice(
-                                                         item.original_price,
-                                                      )}
-                                                   </span>
-                                                )}
+                                                {item.originalPrice &&
+                                                   item.originalPrice >
+                                                      item.unitPrice && (
+                                                      <span className="text-xs text-neutral-dark line-through">
+                                                         {formatPrice(
+                                                            item.originalPrice,
+                                                         )}
+                                                      </span>
+                                                   )}
                                              </div>
                                           </div>
-
-                                          {/* Quantity + Total */}
                                           <div className="flex items-center justify-between">
                                              <div className="flex items-center gap-2">
                                                 <button
@@ -323,10 +330,10 @@ export default function CartPage() {
                                                    <Plus className="h-4 w-4" />
                                                 </button>
                                              </div>
-
                                              <span className="text-base font-bold text-promotion">
                                                 {formatPrice(
-                                                   item.price * item.quantity,
+                                                   item.unitPrice *
+                                                      item.quantity,
                                                 )}
                                              </span>
                                           </div>
@@ -335,21 +342,21 @@ export default function CartPage() {
 
                                     {/* Desktop: Price + Quantity + Total + Delete */}
                                     <div className="hidden sm:flex items-center gap-4 lg:gap-6">
-                                       {/* Price */}
                                        <div className="flex flex-col items-end min-w-20">
                                           <span className="text-sm lg:text-base font-semibold text-promotion">
-                                             {formatPrice(item.price)}
+                                             {formatPrice(item.unitPrice)}
                                           </span>
-                                          {item.original_price > item.price && (
-                                             <span className="text-xs text-neutral-dark line-through">
-                                                {formatPrice(
-                                                   item.original_price,
-                                                )}
-                                             </span>
-                                          )}
+                                          {item.originalPrice &&
+                                             item.originalPrice >
+                                                item.unitPrice && (
+                                                <span className="text-xs text-neutral-dark line-through">
+                                                   {formatPrice(
+                                                      item.originalPrice,
+                                                   )}
+                                                </span>
+                                             )}
                                        </div>
 
-                                       {/* Quantity Controls */}
                                        <div className="flex items-center gap-2">
                                           <button
                                              onClick={() =>
@@ -375,16 +382,14 @@ export default function CartPage() {
                                           </button>
                                        </div>
 
-                                       {/* Total Price */}
                                        <div className="min-w-25 text-right">
                                           <span className="text-sm lg:text-base font-semibold text-promotion">
                                              {formatPrice(
-                                                item.price * item.quantity,
+                                                item.unitPrice * item.quantity,
                                              )}
                                           </span>
                                        </div>
 
-                                       {/* Delete Button */}
                                        <button
                                           onClick={() => removeItem(item.id)}
                                           className="text-neutral-dark transition hover:text-primary cursor-pointer"

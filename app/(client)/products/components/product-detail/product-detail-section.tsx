@@ -1,71 +1,64 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { FaFire, FaShoppingCart } from "react-icons/fa";
 import Image from "next/image";
 import { getProductBySpecifications } from "../../_lib/get-product-by-specifications";
-import { SpecificationGroup, SpecificationItem } from "@/lib/types/product";
+import {
+  SpecificationGroup,
+  SpecificationItem,
+  ProductDetail,
+} from "@/lib/types/product";
 import ProductSpecsModal, {
   type ProductSpecsModalRef,
 } from "./ProductSpecsModal";
 
 interface ProductDetailSectionProps {
   slug?: string;
+  product?: ProductDetail;
 }
 
 export default function ProductDetailSection({
   slug,
+  product,
 }: ProductDetailSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [specifications, setSpecifications] = useState<SpecificationGroup[]>(
-    [],
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // modal state riêng
+  const [modalSpecs, setModalSpecs] = useState<SpecificationGroup[]>([]);
+  const [loadingModal, setLoadingModal] = useState(false);
 
   const modalRef = useRef<ProductSpecsModalRef>(null);
 
-  // Gọi API khi component mount
-  useEffect(() => {
-    const fetchSpecifications = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // UI lấy từ product cha (KHÔNG gọi API)
+  const specifications: SpecificationGroup[] = product?.highlightGroups ?? [];
 
-        // Kiểm tra có slug không
-        if (!slug) {
-          throw new Error("Slug is required");
-        }
+  //  click mới gọi API
+  const openDialog = async () => {
+    if (!slug) return;
 
-        const data = await getProductBySpecifications(slug);
+    modalRef.current?.open();
 
-        // getProductBySpecifications đã return response.data rồi
-        // Kiểm tra data.specifications
-        if (data?.specifications) {
-          setSpecifications(data.specifications);
-        } else {
-          // Nếu không có specifications, set array rỗng
-          setSpecifications([]);
-        }
-      } catch (err: any) {
-        console.error("Error fetching specifications:", err);
-        setError(err.message || "Không thể tải thông số kỹ thuật");
-      } finally {
-        setLoading(false);
+    //  nếu đã load rồi thì không gọi lại
+    if (modalSpecs.length > 0) return;
+
+    try {
+      setLoadingModal(true);
+
+      const data = await getProductBySpecifications(slug);
+
+      if (data?.specifications) {
+        setModalSpecs(data.specifications);
+      } else {
+        setModalSpecs([]);
       }
-    };
-
-    if (slug) {
-      fetchSpecifications();
-    } else {
-      setLoading(false);
-      setError("Thiếu thông tin sản phẩm");
+    } catch (err) {
+      console.error("Error fetching specifications:", err);
+    } finally {
+      setLoadingModal(false);
     }
-  }, [slug]); // Chạy lại khi slug thay đổi
+  };
 
-  
-
-  // Dữ liệu combo - sau này sẽ fetch từ API
   const combos = [
     {
       id: 1,
@@ -83,104 +76,58 @@ export default function ProductDetailSection({
       totalSavings: 150000,
       discount: 43,
     },
-    {
-      id: 2,
-      title: "Combo eSim TD149 kèm bảo hành",
-      product: {
-        name: "Dịch vụ bảo hành 1 đổi 1",
-        image:
-          "https://cdn2.fptshop.com.vn/unsafe/128x0/filters:format(webp):quality(75)/Loai_Bao_hanh_vip_Mau_do_No_38871ff60b.png",
-        currentPrice: 0,
-        originalPrice: 100000,
-        savings: 100000,
-      },
-      totalPrice: 199000,
-      totalOriginalPrice: 349000,
-      totalSavings: 150000,
-      discount: 43,
-    },
   ];
-
-  const openDialog = () => {
-    if (!specifications.length) return;
-    modalRef.current?.open();
-  };
-
-  // Dữ liệu thông số kỹ thuật - sẽ được fetch từ API
-  // const specifications = [...]; // Đã chuyển sang state và fetch từ API
 
   const activeCombo = combos[activeIndex];
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN").format(price) + "đ";
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN").format(price) + "đ";
 
-  const formatSpecValue = (item: SpecificationItem) => {
-    // Nếu có unit, ghép value + unit
-    if (item.unit) {
-      return `${item.value} ${item.unit}`;
-    }
-    return item.value;
-  };
+  const formatSpecValue = (item: SpecificationItem) =>
+    item.unit ? `${item.value} ${item.unit}` : item.value;
 
   return (
     <>
       <div className="container py-2">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 ">
-          {/* Right: Thông số kỹ thuật */}
-          <div className="lg:col-span-7 bg-neutral-light rounded-2xl p-6 lg:p-8 shadow-sm ">
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-promotion mx-auto"></div>
-                <p className="text-neutral-darker mt-4">Đang tải thông số...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-500">Không thể tải thông số kỹ thuật</p>
-                <p className="text-sm text-neutral-darker mt-2">{error}</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-2xl font-semibold text-primary">
-                    Thông số kỹ thuật
-                  </h3>
-                  <button
-                    className="text-sm text-promotion hover:text-promotion-hover  cursor-pointer"
-                    onClick={openDialog}
-                  >
-                    Xem tất cả
-                  </button>
-                </div>
+          {/* RIGHT: SPEC */}
+          <div className="lg:col-span-7 bg-neutral-light rounded-2xl p-6 lg:p-8 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-semibold text-primary">
+                Thông số kỹ thuật
+              </h3>
+              <button
+                onClick={openDialog}
+                className="text-sm text-promotion cursor-pointer"
+              >
+                Xem tất cả
+              </button>
+            </div>
 
-                <div className="space-y-6">
-                  {specifications.slice(0, 3).map((group) => (
-                    <div key={group.groupName}>
-                      <h3 className="block text-primary mb-2">
-                        {group.groupName}
-                      </h3>
-                      <table className="w-full text-sm">
-                        <tbody>
-                          {group.items.map((item) => (
-                            <tr
-                              key={item.id}
-                              className="border-b border-neutral-dark/20"
-                            >
-                              <td className="py-2 text-neutral-darker align-top">
-                                {item.name}
-                              </td>
-                              <td className="py-2 text-primary align-top w-2/5">
-                                {formatSpecValue(item)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ))}
+            <div className="space-y-6">
+              {specifications.slice(0, 3).map((group) => (
+                <div key={group.groupName}>
+                  <h3 className="block text-primary mb-2">{group.groupName}</h3>
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {group.items.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="border-b border-neutral-dark/20"
+                        >
+                          <td className="py-2 text-neutral-darker align-top">
+                            {item.name}
+                          </td>
+                          <td className="py-2 text-primary align-top w-2/5">
+                            {formatSpecValue(item)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </>
-            )}
+              ))}
+            </div>
           </div>
           {/* Left: Combo khuyến mãi */}
           <div className="lg:col-span-5 bg-neutral-light rounded-2xl p-6 lg:p-8 shadow-sm  ">
@@ -246,7 +193,7 @@ export default function ProductDetailSection({
                   <span className="text-xl font-bold text-promotion">
                     {formatPrice(activeCombo.totalPrice)}
                   </span>
-                  
+
                   <s className="text-lg text-neutral-darker opacity-50">
                     {formatPrice(activeCombo.totalOriginalPrice)}
                   </s>
@@ -260,7 +207,7 @@ export default function ProductDetailSection({
               </div>
 
               {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-20 justify-end">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-10 justify-end">
                 <button
                   className="p-4 rounded-full border-2 border-promotion hover:bg-promotion-light transition-all duration-200 flex items-center justify-center sm:w-auto"
                   aria-label="Thêm vào giỏ hàng"
@@ -276,7 +223,9 @@ export default function ProductDetailSection({
           </div>
         </div>
       </div>
-      <ProductSpecsModal ref={modalRef} specifications={specifications}/>
+
+      {/* modal dùng data API */}
+      <ProductSpecsModal ref={modalRef} specifications={modalSpecs} />
     </>
   );
 }

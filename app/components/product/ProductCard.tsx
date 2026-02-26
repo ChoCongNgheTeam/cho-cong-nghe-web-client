@@ -77,11 +77,11 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             {/* Prices */}
             <div className="flex items-baseline gap-3 mb-2">
                <span className="text-xl font-bold text-promotion">
-                  {product.price.final.toLocaleString("vi-VN")}₫
+                  {product.price?.final?.toLocaleString("vi-VN")}₫
                </span>
                {hasDiscount && (
                   <span className="text-sm text-neutral-dark line-through">
-                     {product.price.base.toLocaleString("vi-VN")}₫
+                     {product.price?.base?.toLocaleString("vi-VN")}₫
                   </span>
                )}
             </div>

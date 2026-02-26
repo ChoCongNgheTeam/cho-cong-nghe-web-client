@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { ChevronRight, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 interface OrderSummaryProps {
    subtotal: number;
@@ -42,6 +44,8 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
    const [usePoints, setUsePoints] = useState(false);
    const [showDetails, setShowDetails] = useState(true);
+   const router = useRouter();
+   const { user } = useAuth();
 
    const formatPrice = (price: number) =>
       new Intl.NumberFormat("vi-VN").format(price) + "₫";
@@ -50,8 +54,13 @@ export default function OrderSummary({
    const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
    const handleCheckoutClick = () => {
+      // If on checkout page and user is not logged in, redirect to account/login
+      if (isCheckoutPage && !user) {
+         router.push("/account");
+         return;
+      }
+
       if (showTerms && !agreedToTerms) {
-         // Show toast message
          const toastDiv = document.createElement("div");
          toastDiv.className =
             "fixed top-5 right-5 bg-promotion text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium ";

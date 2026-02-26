@@ -147,15 +147,17 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       });
    };
 
+   // Trong hàm login, sau setUser:
+   // Trong hàm login, sau setUser:
    const login = async (userData: User, accessToken: string) => {
-      setAccessToken(accessToken); // lưu vào memory
+      setAccessToken(accessToken);
       setUser(userData);
       setShowWelcome(true);
 
       await refreshUser();
-      if (hasLocalCart()) {
-         await waitForCartMerge();
-      }
+
+      // Dispatch event để CartContext biết cần sync
+      window.dispatchEvent(new Event("auth-login-success"));
 
       const redirectPath = userData.role === "ADMIN" ? "/admin/dashboard" : "/";
 

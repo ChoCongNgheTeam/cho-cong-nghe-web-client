@@ -106,6 +106,7 @@ export type ProductDetail = {
   highlights: Highlight[];
   canReview: boolean;
   orderItemId: string | null;
+  highlightGroups?: SpecificationGroup[];
 };
 
 /** ===== API Response ===== */
@@ -114,7 +115,6 @@ export type ProductDetailResponse = {
   data: ProductDetail;
   message: string;
 };
-
 
 // Thông số kỹ thuật - từng item
 export interface SpecificationItem {

@@ -4,6 +4,8 @@ interface CartItem {
    id: number;
    name: string;
    variant: string;
+   color?: string; // thêm
+   colorValue?: string; // thêm
    quantity: number;
    unit_price: number;
    discount_value: number;
@@ -60,6 +62,17 @@ export default function CartItems({ items }: CartItemsProps) {
                            <p className="text-xs mb-2 text-neutral-darker">
                               {item.variant}
                            </p>
+                           {item.color && (
+                              <div className="flex items-center gap-1.5 mb-2">
+                                 <span
+                                    className="h-3 w-3 rounded-full border border-neutral shrink-0"
+                                    style={{ backgroundColor: item.colorValue }}
+                                 />
+                                 <span className="text-xs text-neutral-darker">
+                                    {item.color}
+                                 </span>
+                              </div>
+                           )}
 
                            {/* Price Section */}
                            <div className="flex items-center gap-2 flex-wrap">
