@@ -12,9 +12,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-800 mb-4 mt-2">
-        Thông tin cá nhân
-      </h1>
+      <h1 className="text-2xl font-semibold text-gray-800 mb-4 mt-2">Thông tin cá nhân</h1>
 
       <div className="px-4 py-10 bg-white">
         <div className="w-full max-w-md mx-auto">
@@ -24,11 +22,7 @@ export default function ProfilePage() {
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-orange-200/40 blur-xl" />
                 <div className="relative w-28 h-28 rounded-full bg-white p-1 shadow-lg">
-                  <img
-                    src={user.avatarImage || "/images/avatar.png"}
-                    alt="Avatar"
-                    className="w-full h-full rounded-full object-cover"
-                  />
+                  <img src={user.avatarImage || "/images/avatar.png"} alt="Avatar" className="w-full h-full rounded-full object-cover" />
                 </div>
               </div>
             </div>
@@ -38,26 +32,8 @@ export default function ProfilePage() {
               <InfoRow label="Họ và tên" value={user.fullName || "Chưa có"} />
               <InfoRow label="Email" value={user.email} />
               <InfoRow label="Số điện thoại" value={user.phone || "Chưa có"} />
-              <InfoRow
-                label="Ngày sinh"
-                value={
-                  user.dateOfBirth
-                    ? new Date(user.dateOfBirth).toLocaleDateString("vi-VN")
-                    : "Chưa có"
-                }
-              />
-              <InfoRow
-                label="Giới tính"
-                value={
-                  user.gender === "MALE"
-                    ? "Nam"
-                    : user.gender === "FEMALE"
-                      ? "Nữ"
-                      : user.gender === "OTHER"
-                        ? "Khác"
-                        : "Chưa cập nhật"
-                }
-              />
+              <InfoRow label="Ngày sinh" value={user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("vi-VN") : "Chưa có"} />
+              <InfoRow label="Giới tính" value={user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : user.gender === "OTHER" ? "Khác" : "Chưa cập nhật"} />
 
               <div className="pt-4">
                 <Link href="/profile/editProfile">
