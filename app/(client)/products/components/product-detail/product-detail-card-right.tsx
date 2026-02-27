@@ -521,63 +521,63 @@ export default function ProductDetailRight({
         </>
       ) : (
         <div className="mt-4 rounded-2xl overflow-hidden border border-neutral shadow-sm">
+          {/* Header banner */}
+          <div className="bg-neutral px-5 py-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-neutral-dark/20 flex items-center justify-center flex-shrink-0 text-xl">
+              📦
+            </div>
+            <div>
+              <p className="text-primary font-bold text-sm sm:text-base leading-tight">
+                Sản phẩm tạm thời hết hàng
+              </p>
+              <p className="text-neutral-dark text-xs mt-0.5">
+                Đăng ký để nhận thông báo ngay khi có hàng trở lại
+              </p>
+            </div>
+          </div>
 
-  {/* Header banner */}
-  <div className="bg-neutral px-5 py-4 flex items-center gap-3">
-    <div className="w-10 h-10 rounded-full bg-neutral-dark/20 flex items-center justify-center flex-shrink-0 text-xl">
-      📦
-    </div>
-    <div>
-      <p className="text-primary font-bold text-sm sm:text-base leading-tight">
-        Sản phẩm tạm thời hết hàng
-      </p>
-      <p className="text-neutral-dark text-xs mt-0.5">
-        Đăng ký để nhận thông báo ngay khi có hàng trở lại
-      </p>
-    </div>
-  </div>
+          {/* Notify form */}
+          <div className="bg-neutral-light px-5 py-4 space-y-3">
+            <p className="text-xs text-neutral-dark font-medium flex items-center gap-1.5">
+              <span className="text-primary-light text-sm">🔔</span>
+              Nhận thông báo khi có hàng
+            </p>
+            <form className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nhập email hoặc số điện thoại"
+                className="flex-1 border border-neutral rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent bg-neutral-light-active placeholder:text-neutral-dark text-primary transition"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-primary-dark hover:bg-primary-dark-hover active:bg-primary-dark-active active:scale-95 text-neutral-light px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap shadow-sm cursor-pointer"
+              >
+                Đăng ký
+              </button>
+            </form>
+          </div>
 
-  {/* Notify form */}
-  <div className="bg-neutral-light px-5 py-4 space-y-3">
-    <p className="text-xs text-neutral-dark font-medium flex items-center gap-1.5">
-      <span className="text-primary-light text-sm">🔔</span>
-      Nhận thông báo khi có hàng
-    </p>
-    <form className="flex gap-2">
-      <input
-        type="text"
-        placeholder="Nhập email hoặc số điện thoại"
-        className="flex-1 border border-neutral rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent bg-neutral-light-active placeholder:text-neutral-dark text-primary transition"
-        required
-      />
-      <button
-        type="submit"
-        className="bg-primary-dark hover:bg-primary-dark-hover active:bg-primary-dark-active active:scale-95 text-neutral-light px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap shadow-sm cursor-pointer"
-      >
-        Đăng ký
-      </button>
-    </form>
-  </div>
-
-  {/* Footer */}
-  <div className="border-t border-neutral bg-neutral-light-active px-5 py-3 flex flex-col items-center gap-3 w-full">
-    <button className="w-full bg-primary hover:bg-primary-hover active:bg-primary-active active:scale-95 text-neutral-light font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-150 shadow-sm cursor-pointer">
-      🔍 Khám phá sản phẩm khác
-    </button>
-    <a
-      href="tel:18006601"
-      className="flex items-center gap-1.5 text-xs text-neutral-dark hover:text-promotion transition-colors whitespace-nowrap"
-    >
-      <span className="text-promotion">📞</span>
-      Gọi{" "}
-      <span className="font-bold text-promotion tracking-wide">
-        1800-6601
-      </span>{" "}
-      tư vấn miễn phí
-    </a>
-  </div>
-
-</div>
+          {/* Footer */}
+          <div className="border-t border-neutral bg-neutral-light-active px-5 py-3 flex flex-col items-center gap-3 w-full">
+            <a href="/category/dien-thoai">
+              <button className="w-full bg-primary hover:bg-primary-hover active:bg-primary-active active:scale-95 text-neutral-light font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-150 shadow-sm cursor-pointer">
+                🔍 Khám phá sản phẩm khác
+              </button>
+            </a>
+            <a
+              href="tel:18006601"
+              className="flex items-center gap-1.5 text-xs text-neutral-dark hover:text-promotion transition-colors whitespace-nowrap"
+            >
+              <span className="text-promotion">📞</span>
+              Gọi{" "}
+              <span className="font-bold text-promotion tracking-wide">
+                1800-6601
+              </span>{" "}
+              tư vấn miễn phí
+            </a>
+          </div>
+        </div>
       )}
     </div>
   );
