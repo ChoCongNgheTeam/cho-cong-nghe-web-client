@@ -56,9 +56,10 @@ export type CurrentVariant = {
   isDefault: boolean;
   isActive: boolean;
   available: boolean;
-  stockStatus: "in_stock" | "out_of_stock" | string;
+  stockStatus: "in_stock" | "out_of_stock";
   inventory: Inventory;
   images: ProductImage[];
+  quantity: number;
 };
 
 /** ===== Rating ===== */

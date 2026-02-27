@@ -11,7 +11,7 @@ import OrderSummary from "@/components/odersummary/OrderSummary";
 import toast from "react-hot-toast";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
-import CartSidebar from "./components/cartsidebar";
+import CartSidebar from "./components/cartSidebar";
 
 export default function CartPage() {
    const router = useRouter();
