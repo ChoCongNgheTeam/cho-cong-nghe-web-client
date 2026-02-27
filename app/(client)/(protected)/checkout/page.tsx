@@ -15,9 +15,8 @@ import OrderSummary from "@/components/oderSummary/OrderSummary";
 import PaymentMethods from "./components/PaymentMethods";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CartItem {
   id: string;
@@ -118,6 +117,8 @@ export default function CheckoutPage() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { refetchCart } = useCart();
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
@@ -271,7 +272,8 @@ export default function CheckoutPage() {
 
       if (res?.success) {
         localStorage.removeItem("checkoutData");
-        toast.success(`Đặt hàng thành công! Mã đơn: ${res.data.orderId.slice(0, 8).toUpperCase()}`, { duration: 4000 });
+        await refetchCart();
+        toast.success(`Đặt hàng thành công`);
         // setTimeout(() => router.push(`/orders/${res.data.orderId}`), 1200);
         setTimeout(() => router.push("/thanks"), 1200);
       } else {

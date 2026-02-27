@@ -1,157 +1,100 @@
-import React from "react";
 import Link from "next/link";
-import { Check, Home, ShoppingBag, Package, Clock, Mail } from "lucide-react";
+import { Home, ShoppingBag, Package } from "lucide-react";
 
 export default function ThanksPage() {
-   return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-neutral-light transition-colors">
-         <div className="w-full max-w-2xl">
-            {/* Main Card */}
-            <div className="rounded-3xl overflow-hidden shadow-2xl bg-neutral transition-colors">
-               {/* ===== HEADER ===== */}
-               <div className="relative px-8 py-12 text-center overflow-hidden bg-linear-to-br from-accent via-accent-hover to-accent-dark">
-                  {/* Decorative */}
-                  <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-16 -translate-y-16" />
-                  <div className="absolute bottom-0 right-0 w-40 h-40 bg-white/10 rounded-full translate-x-20 translate-y-20" />
+  return (
+    <div className="flex flex-col items-center justify-center p-8 bg-neutral-light">
+      <div className="w-full max-w-xl flex flex-col items-center text-center gap-6">
+        {/* Icon */}
+        <div className="relative">
+          <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-white shadow-md">
+            <Package className="w-16 h-16 text-neutral-700" strokeWidth={1.5} />
+          </div>
+          {/* Yellow check badge */}
+          <div className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full bg-yellow-400 shadow">
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
 
-                  {/* Icon */}
-                  <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-neutral shadow-lg">
-                     <Check className="w-12 h-12 text-accent" strokeWidth={3} />
-                  </div>
+        {/* Title */}
+        <h1 className="text-2xl font-extrabold tracking-widest text-neutral-800 uppercase">Đặt hàng thành công!</h1>
 
-                  <h1 className="mb-3 text-4xl font-bold text-primary">
-                     Đặt hàng thành công!
-                  </h1>
-                  <p className="text-base text-neutral-darker">
-                     Cảm ơn bạn đã tin tưởng ChoCongNghe
-                  </p>
-               </div>
+        {/* Info Box */}
+        <div className="w-full rounded-lg border-2 border-yellow-400 bg-yellow-50 px-6 py-5 text-sm text-neutral-700 leading-relaxed">
+          Cảm ơn bạn đã mua hàng! Đơn hàng của bạn đã được ghi nhận và đang được xử lý. Chúc bạn có trải nghiệm mua sắm thật vui vẻ.
+        </div>
 
-               {/* ===== CONTENT ===== */}
-               <div className="px-8 py-10">
-                  {/* Order Info */}
-                  <div className="mb-8 rounded-2xl p-6 border bg-accent-light border-accent/40">
-                     <div className="flex items-start gap-4">
-                        <div className="shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-                           <Package className="w-6 h-6 text-primary" />
-                        </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <Link
+            href="/"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full border-2 border-neutral-700 py-3 px-6 font-semibold text-sm text-neutral-800 bg-white hover:bg-neutral-100 transition"
+          >
+            <Home className="w-4 h-4" />
+            Quay lại trang chủ
+          </Link>
 
-                        <div>
-                           <h2 className="mb-2 text-xl font-semibold text-primary">
-                              Đơn hàng đã được ghi nhận
-                           </h2>
-                           <p className="text-sm leading-relaxed text-neutral-darker">
-                              Chúng tôi đã nhận được đơn hàng của bạn và đang
-                              tiến hành xử lý. Bạn sẽ nhận được email xác nhận
-                              trong giây lát.
-                           </p>
-                        </div>
-                     </div>
-                  </div>
+          <Link
+            href="/category/dien-thoai"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full border-2 border-neutral-700 py-3 px-6 font-semibold text-sm text-neutral-800 bg-white hover:bg-neutral-100 transition"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Xem sản phẩm khác
+          </Link>
+        </div>
 
-                  {/* ===== TIMELINE ===== */}
-                  <div className="mb-8">
-                     <h3 className="mb-6 flex items-center gap-2 text-lg font-semibold text-primary">
-                        <Clock className="w-5 h-5 text-accent" />
-                        Bước tiếp theo
-                     </h3>
-
-                     <div className="relative">
-                        <div className="absolute left-0 right-0 top-6 hidden h-0.5 sm:block bg-accent/30" />
-
-                        <div className="flex flex-col gap-6 sm:flex-row sm:gap-4">
-                           {[
-                              {
-                                 step: 1,
-                                 title: "Xác nhận đơn hàng",
-                                 desc: "Liên hệ trong 15–30 phút",
-                              },
-                              {
-                                 step: 2,
-                                 title: "Chuẩn bị hàng",
-                                 desc: "Đóng gói cẩn thận",
-                              },
-                              {
-                                 step: 3,
-                                 title: "Giao hàng",
-                                 desc: "Thông báo qua email & SMS",
-                              },
-                           ].map((item) => (
-                              <div
-                                 key={item.step}
-                                 className="flex flex-1 flex-col items-center text-center"
-                              >
-                                 <div className="z-10 mb-3 flex h-12 w-12 items-center justify-center rounded-full shadow-md bg-accent text-primary font-bold">
-                                    {item.step}
-                                 </div>
-                                 <p className="mb-1 font-semibold text-primary">
-                                    {item.title}
-                                 </p>
-                                 <p className="text-sm text-neutral-darker">
-                                    {item.desc}
-                                 </p>
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* ===== CONTACT ===== */}
-                  <div className="mb-8 rounded-2xl p-6 bg-linear-to-r from-neutral-light to-neutral">
-                     <div className="mb-3 flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-accent" />
-                        <h3 className="font-semibold text-primary">
-                           Cần hỗ trợ?
-                        </h3>
-                     </div>
-
-                     <p className="mb-3 text-sm text-neutral-darker">
-                        Đội ngũ chăm sóc khách hàng luôn sẵn sàng hỗ trợ bạn
-                     </p>
-
-                     <div className="flex flex-wrap gap-3 text-sm">
-                        <a
-                           href="tel:18006777"
-                           className="font-medium text-accent hover:underline"
-                        >
-                           📞 1800 6777
-                        </a>
-                        <span className="opacity-40">•</span>
-                        <a
-                           href="mailto:ceo@electro.com"
-                           className="font-medium text-accent hover:underline"
-                        >
-                           ✉️ ceo@electro.com
-                        </a>
-                     </div>
-                  </div>
-
-                  {/* ===== ACTIONS ===== */}
-                  <div className="flex flex-col gap-4 sm:flex-row">
-                     <Link
-                        href="/"
-                        className="flex-1 flex items-center justify-center gap-2 rounded-xl py-4 px-6 font-semibold bg-primary text-white transition hover:bg-primary-hover"
-                     >
-                        <Home className="w-5 h-5" />
-                        Về trang chủ
-                     </Link>
-
-                     <Link
-                        href="/products"
-                        className="flex-1 flex items-center justify-center gap-2 rounded-xl py-4 px-6 font-semibold border border-accent text-accent transition hover:bg-accent-light"
-                     >
-                        <ShoppingBag className="w-5 h-5" />
-                        Tiếp tục mua sắm
-                     </Link>
-                  </div>
-               </div>
-            </div>
-
-            {/* Footer */}
-            <p className="mt-6 text-center text-sm text-neutral-darker">
-               Mã đơn hàng và thông tin chi tiết đã được gửi về email của bạn
-            </p>
-         </div>
+        {/* Social Media */}
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm text-neutral-500">Theo dõi chúng tôi trên:</p>
+          <div className="flex items-center gap-4">
+            {/* Facebook */}
+            <a href="#" aria-label="Facebook">
+              <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="20" fill="#1877F2" />
+                <path d="M22.5 21h3l.5-3.5H22.5V15.5c0-1 .5-2 2-2H26V10.5s-1.5-.25-3-.25c-3.1 0-5 1.9-5 5.25V17.5H15V21h3v9h4.5V21z" fill="white" />
+              </svg>
+            </a>
+            {/* Zalo */}
+            <a href="#" aria-label="Zalo">
+              <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none">
+                <rect width="40" height="40" rx="10" fill="white" stroke="#d1d5db" strokeWidth="1.5" />
+                <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontSize="13" fontWeight="700" fill="#0068FF" fontFamily="sans-serif">
+                  Zalo
+                </text>
+              </svg>
+            </a>
+            {/* Instagram */}
+            <a href="#" aria-label="Instagram">
+              <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none">
+                <defs>
+                  <radialGradient id="ig" cx="30%" cy="107%" r="130%">
+                    <stop offset="0%" stopColor="#fdf497" />
+                    <stop offset="25%" stopColor="#fd5949" />
+                    <stop offset="50%" stopColor="#d6249f" />
+                    <stop offset="100%" stopColor="#285AEB" />
+                  </radialGradient>
+                </defs>
+                <rect width="40" height="40" rx="10" fill="url(#ig)" />
+                <rect x="11" y="11" width="18" height="18" rx="5" stroke="white" strokeWidth="2" />
+                <circle cx="20" cy="20" r="4.5" stroke="white" strokeWidth="2" />
+                <circle cx="26" cy="14" r="1.2" fill="white" />
+              </svg>
+            </a>
+            {/* TikTok */}
+            <a href="#" aria-label="TikTok">
+              <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none">
+                <rect width="40" height="40" rx="10" fill="#010101" />
+                <path
+                  d="M25 11c.5 2.5 2.5 4 5 4v4c-1.8 0-3.5-.6-5-1.5V26c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8c.3 0 .7 0 1 .05V22c-.3-.05-.7-.08-1-.08-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4V11h4z"
+                  fill="white"
+                />
+              </svg>
+            </a>
+          </div>
+        </div>
       </div>
-   );
+    </div>
+  );
 }

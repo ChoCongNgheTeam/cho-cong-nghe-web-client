@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { ShoppingCart, Loader2, Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { CartItemMeta } from "@/contexts/CartContext";
 import { useToasty } from "@/components/Toast";
@@ -53,12 +53,21 @@ export default function AddToCartButton({ productVariantId, quantity = 1, disabl
       onClick={handleClick}
       disabled={disabled || loading || !productVariantId}
       className={`flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-primary transition
-            cursor-pointer
-        hover:bg-accent-hover
+        cursor-pointer hover:bg-accent-hover
         disabled:cursor-not-allowed disabled:opacity-50
         ${className}`}
     >
-      {loading ? <Loader2 className="h-5 w-5 animate-spin" style={{ width: iconSize, height: iconSize }} /> : <ShoppingCart className="h-5 w-5" style={{ width: iconSize, height: iconSize }} />}
+      {loading ? (
+        <Loader2 className="animate-spin" style={{ width: iconSize, height: iconSize }} />
+      ) : (
+        <div className="relative flex items-center justify-center">
+          {/* Icon Giỏ hàng chính */}
+          <ShoppingCart style={{ width: iconSize, height: iconSize }} />
+
+          {/* Dấu cộng nhỏ ở góc trên bên phải */}
+          <Plus className="absolute -right-1 -top-1 bg-white rounded-full stroke-[3px]" style={{ width: iconSize / 2, height: iconSize / 2 }} />
+        </div>
+      )}
       {!isIconOnly && <span>{label}</span>}
     </button>
   );

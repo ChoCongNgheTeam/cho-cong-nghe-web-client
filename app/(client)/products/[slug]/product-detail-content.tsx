@@ -139,7 +139,7 @@ export function ProductDetailContent({
           setAvailableOptions(json.data.availableOptions);
           setCurrentVariant(json.data.currentVariant);
           setVariantImages(json.data.currentVariant.images);
-          setPrice(json.data.price)
+          setPrice(json.data.price);
         }
       } catch (error) {
         console.error("Error fetching variant:", error);
@@ -239,7 +239,7 @@ export function ProductDetailContent({
       {/* Suggest Products Section */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6">
         <div>
-          <ProductDetailSuggest slug={slug}/>
+          <ProductDetailSuggest slug={slug} />
         </div>
       </div>
 

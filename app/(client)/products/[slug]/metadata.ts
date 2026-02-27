@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: ProductDetailProps) {
       images: [
         {
           url:
-            product.variants?.[0]?.images?.[0]?.imageUrl ||
+            product.currentVariant?.images?.[0]?.imageUrl ||
             `${SITE_URL}/og/product.jpg`,
         },
       ],
