@@ -1,4 +1,4 @@
-import WishlistHeart from "../../../../components/shared/WishlistHeart";
+import WishlistHeart from "@/components/shared/WishlistHeart";
 import { WishlistProduct } from "../types/wishlist";
 
 type Props = {

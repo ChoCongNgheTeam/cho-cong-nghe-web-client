@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Blog } from "../../_libs";
-import { formatDate } from "@/components/common/formatDate";
-import { formatViews } from "@/components/common/formatViews";
+import { formatDate } from "@/helpers/formatDate";
+import { formatViews } from "@/helpers/formatViews";
 
 export const BlogCard = ({
    blog,

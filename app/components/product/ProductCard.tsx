@@ -25,10 +25,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
          className="group relative flex flex-col bg-neutral-light border border-neutral rounded-xl py-6 px-3"
       >
          {/* Wishlist */}
-         <WishlistHeart
+         {/* <WishlistHeart
             productId={product.id}
             defaultLiked={product.isWishlist ?? false}
-         />
+         /> */}
 
          {/* Badge giảm giá */}
          {hasPromotion && (
@@ -52,7 +52,6 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                   sizes="250px"
                />
             </div>
-
             {/* Highlights */}
             <div className="flex flex-col justify-between h-full">
                {product.highlights.map((highlight) => (

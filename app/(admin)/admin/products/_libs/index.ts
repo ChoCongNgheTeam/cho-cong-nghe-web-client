@@ -1,0 +1,1 @@
+export { getAllProduct } from "./getAllProducts";
