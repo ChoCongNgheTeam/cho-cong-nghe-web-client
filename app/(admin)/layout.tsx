@@ -1,10 +1,10 @@
-import AdminSidebar from "@/components/admin/sidebar";
+﻿import type { ReactNode } from "react";
 
-export default function AdminLayout({ children }) {
-  return (
-    <div className="admin-layout">
-      <AdminSidebar />
-      <main>{children}</main>
-    </div>
-  );
+
+type AdminLayoutProps = {
+  children: ReactNode;
+};
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  return <main className="p-4 md:p-6">{children}</main>;
 }
