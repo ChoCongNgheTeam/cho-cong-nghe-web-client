@@ -89,7 +89,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-light">
+    <div className="bg-neutral-light">
       <div className="w-full bg-neutral-light">
         <div className="container py-3 md:py-4">
           <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Giỏ hàng" }]} />
@@ -101,7 +101,7 @@ export default function CartPage() {
           <div className="rounded-lg bg-neutral-light p-6 sm:p-8 lg:p-12 text-center shadow-sm">
             <h2 className="mb-2 text-lg sm:text-xl font-semibold text-primary">Giỏ hàng trống</h2>
             <p className="mb-6 text-sm sm:text-base text-neutral-darker">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
-            <Link href="/category/dien-thoai" className="inline-block rounded-lg bg-accent px-6 sm:px-8 py-2.5 sm:py-3 font-semibold text-primary transition hover:bg-accent-hover">
+            <Link href="/category/dien-thoai" className="inline-block rounded-lg bg-primary-dark text-neutral-light px-6 sm:px-8 py-2.5 sm:py-3 font-semibold transition hover:bg-accent-hover">
               Mua sắm ngay
             </Link>
           </div>
