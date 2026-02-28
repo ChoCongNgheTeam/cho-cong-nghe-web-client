@@ -41,16 +41,34 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
          <div className="grid grid-cols-[1.5fr_1fr] items-center pb-3">
             {/* Image */}
             <div className="relative w-full aspect-square bg-neutral-light">
-               <Image
-                  src={
-                     product.thumbnail ||
-                     "https://cdn2.fptshop.com.vn/unsafe/360x0/filters:format(webp):quality(75)/2024_5_13_638512191465947037_chuot-gaming-co-day-rapoo-v16s-dd.jpg"
-                  }
-                  alt={product.name}
-                  fill
-                  className="object-contain transition-transform duration-500 group-hover:scale-105"
-                  sizes="250px"
-               />
+               {product.thumbnail ? (
+                  <Image
+                     src={product.thumbnail}
+                     alt={product.name}
+                     fill
+                     className="object-contain transition-transform duration-500 group-hover:scale-105"
+                     sizes="250px"
+                  />
+               ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-neutral-dark bg-neutral rounded-lg">
+                     <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-10 h-10 opacity-40"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                     >
+                        <path
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           strokeWidth={1.5}
+                           d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z"
+                        />
+                        <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
+                     </svg>
+                     <span className="text-[10px] opacity-50">No image</span>
+                  </div>
+               )}
             </div>
             {/* Highlights */}
             <div className="flex flex-col justify-between h-full">

@@ -136,7 +136,7 @@ const DesktopHeader = ({
                               <span className="text-sm">Thông tin cá nhân</span>
                            </Link>
                            <Link
-                              href="/orders"
+                              href="/profile/orders"
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary"
                               onClick={onUserMenuClose}
                            >
