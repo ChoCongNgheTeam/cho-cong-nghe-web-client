@@ -21,7 +21,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
    return (
       <div className="bg-neutral-light border-b border-neutral px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
          {/* Page title — nhận từ prop */}
-         <h1 className="font-inters text-[15px] font-bold text-primary tracking-tight">
+         <h1 className="font-inters text-2xl font-bold text-primary tracking-tight">
             {title}
          </h1>
 

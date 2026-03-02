@@ -40,7 +40,7 @@ function BrandImage({ brand }: { brand: Brand }) {
    }
 
    return (
-      <div className="w-full h-full flex items-center justify-center text-neutral-dark/40">
+      <div className="w-full h-full flex items-center justify-center text-primary/40">
          <ImageOff size={36} strokeWidth={1} />
       </div>
    );
@@ -80,20 +80,18 @@ function StatCard({
    return (
       <div className="bg-neutral-light border border-neutral rounded-2xl p-4 flex items-start gap-3 hover:border-neutral-dark/20 hover:shadow-sm transition-all">
          <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${accent ?? "bg-neutral-light-active text-neutral-dark"}`}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${accent ?? "bg-neutral-light-active text-primary"}`}
          >
             {icon}
          </div>
          <div className="min-w-0">
-            <p className="text-[11px] font-medium text-neutral-dark uppercase tracking-wider mb-0.5">
+            <p className="text-[11px] font-medium text-primary uppercase tracking-wider mb-0.5">
                {label}
             </p>
             <div className="text-[14px] font-semibold text-primary leading-tight">
                {value}
             </div>
-            {sub && (
-               <p className="text-[11px] text-neutral-dark mt-0.5">{sub}</p>
-            )}
+            {sub && <p className="text-[11px] text-primary mt-0.5">{sub}</p>}
          </div>
       </div>
    );
@@ -131,7 +129,7 @@ export default function AdminBrand() {
             </p>
             <button
                onClick={() => router.back()}
-               className="text-[13px] text-neutral-dark hover:text-primary transition-colors cursor-pointer"
+               className="text-[13px] text-primary hover:text-primary transition-colors cursor-pointer"
             >
                ← Quay lại
             </button>
@@ -160,7 +158,7 @@ export default function AdminBrand() {
          <div className="sticky top-0 z-10 bg-neutral-light/80 backdrop-blur-sm border-b border-neutral px-6 py-3 flex items-center justify-between">
             <button
                onClick={() => router.back()}
-               className="flex items-center gap-1.5 text-[13px] text-neutral-dark hover:text-primary transition-colors cursor-pointer"
+               className="flex items-center gap-1.5 text-[13px] text-primary hover:text-primary transition-colors cursor-pointer"
             >
                <ArrowLeft size={14} />
                Thương hiệu
@@ -175,7 +173,7 @@ export default function AdminBrand() {
                <div className="relative">
                   <button
                      onClick={() => setMenuOpen((v) => !v)}
-                     className="w-9 h-9 flex items-center justify-center rounded-xl border border-neutral bg-neutral-light hover:bg-neutral-light-active text-neutral-dark transition-colors cursor-pointer"
+                     className="w-9 h-9 flex items-center justify-center rounded-xl border border-neutral bg-neutral-light hover:bg-neutral-light-active text-primary transition-colors cursor-pointer"
                   >
                      <MoreHorizontal size={15} />
                   </button>
@@ -186,7 +184,7 @@ export default function AdminBrand() {
                            onClick={() => setMenuOpen(false)}
                         />
                         <div className="absolute right-0 top-full mt-1.5 z-20 w-48 bg-neutral-light border border-neutral rounded-xl shadow-lg overflow-hidden">
-                           <button className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-primary-light hover:bg-neutral-light-active transition-colors cursor-pointer">
+                           <button className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer">
                               <ExternalLink size={13} />
                               Xem ngoài shop
                            </button>
@@ -213,7 +211,7 @@ export default function AdminBrand() {
                   </div>
                   <div className="px-4 py-3 border-t border-neutral space-y-2.5">
                      <div>
-                        <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mb-1">
+                        <p className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-1">
                            Slug
                         </p>
                         <p className="text-[12px] text-primary font-mono bg-neutral-light-active px-2.5 py-1.5 rounded-lg">
@@ -225,14 +223,12 @@ export default function AdminBrand() {
 
                {/* Status card */}
                <div className="bg-neutral-light border border-neutral rounded-2xl p-4 space-y-3">
-                  <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">
+                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">
                      Trạng thái
                   </p>
 
                   <div className="flex items-center justify-between">
-                     <span className="text-[13px] text-primary-light">
-                        Hiển thị
-                     </span>
+                     <span className="text-[13px] text-primary">Hiển thị</span>
                      <span
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${
                            brand.isActive
@@ -250,14 +246,12 @@ export default function AdminBrand() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                     <span className="text-[13px] text-primary-light">
-                        Nổi bật
-                     </span>
+                     <span className="text-[13px] text-primary">Nổi bật</span>
                      <span
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${
                            brand.isFeatured
                               ? "text-amber-600 bg-amber-50"
-                              : "text-neutral-dark bg-neutral-light-active"
+                              : "text-primary bg-neutral-light-active"
                         }`}
                      >
                         <Star
@@ -277,17 +271,17 @@ export default function AdminBrand() {
                   <h1 className="text-[22px] font-bold text-primary leading-tight">
                      {brand.name}
                   </h1>
-                  <p className="text-[11px] text-neutral-dark font-mono mt-1 mb-4">
+                  <p className="text-[11px] text-primary font-mono mt-1 mb-4">
                      {brand.id}
                   </p>
 
                   <div className="border-t border-neutral pt-4">
-                     <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mb-2">
+                     <p className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-2">
                         Mô tả
                      </p>
                      <p className="text-[14px] text-primary leading-relaxed">
                         {brand.description ?? (
-                           <span className="text-neutral-dark italic text-[13px]">
+                           <span className="text-primary italic text-[13px]">
                               Chưa có mô tả
                            </span>
                         )}
@@ -321,30 +315,28 @@ export default function AdminBrand() {
 
                {/* Image info */}
                <div className="bg-neutral-light border border-neutral rounded-2xl p-5 space-y-3">
-                  <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">
+                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">
                      Thông tin ảnh
                   </p>
 
                   <div className="space-y-2.5">
                      <div>
-                        <p className="text-[11px] text-neutral-dark mb-1">
+                        <p className="text-[11px] text-primary mb-1">
                            Image Path
                         </p>
-                        <p className="text-[12px] font-mono bg-neutral-light-active px-3 py-2 rounded-xl text-primary-light truncate border border-neutral">
+                        <p className="text-[12px] font-mono bg-neutral-light-active px-3 py-2 rounded-xl text-primary truncate border border-neutral">
                            {brand.imagePath ?? (
-                              <span className="not-italic font-sans text-neutral-dark">
+                              <span className="not-italic font-sans text-primary">
                                  —
                               </span>
                            )}
                         </p>
                      </div>
                      <div>
-                        <p className="text-[11px] text-neutral-dark mb-1">
-                           CDN URL
-                        </p>
-                        <p className="text-[12px] font-mono bg-neutral-light-active px-3 py-2 rounded-xl text-primary-light truncate border border-neutral">
+                        <p className="text-[11px] text-primary mb-1">CDN URL</p>
+                        <p className="text-[12px] font-mono bg-neutral-light-active px-3 py-2 rounded-xl text-primary truncate border border-neutral">
                            {brand.imageUrl ?? (
-                              <span className="not-italic font-sans text-neutral-dark/60 text-[11px]">
+                              <span className="not-italic font-sans text-primary/60 text-[11px]">
                                  Chưa upload lên CDN
                               </span>
                            )}

@@ -108,7 +108,7 @@ export default function OrdersPage() {
    );
 
    return (
-      <div className="space-y-5 p-5">
+      <div className="space-y-5 p-5 bg-neutral-light h-full">
          {/* Stats */}
          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
@@ -144,7 +144,7 @@ export default function OrdersPage() {
                            setActiveTab(tab.value);
                            setPage(1);
                         }}
-                        className={`px-3 py-1.5 rounded-lg font-inters text-[13px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg font-inters text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
                            activeTab === tab.value
                               ? "bg-accent text-primary shadow-sm"
                               : "text-primary hover:bg-neutral-light-active hover:text-primary"
@@ -155,7 +155,7 @@ export default function OrdersPage() {
                            className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
                               activeTab === tab.value
                                  ? "bg-white/20 text-white"
-                                 : "bg-neutral-light-active text-neutral-dark"
+                                 : "bg-neutral-light-active text-primary"
                            }`}
                         >
                            {statusCounts[tab.value] ?? 0}
@@ -177,23 +177,23 @@ export default function OrdersPage() {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder="Search..."
-                        className="w-52 pl-9 pr-3 py-2 font-inters text-[13px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                        className="w-52 pl-9 pr-3 py-2 font-inters text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                      />
                      <Search
                         size={14}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-primary"
                      />
                   </form>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
                      <Filter size={14} /> Bộ lọc
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
                      <CalendarDays size={14} /> Lọc theo ngày
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
                      <Download size={14} /> Chia sẻ
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white font-inters text-[13px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white font-inters text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer">
                      <Package size={14} /> Thêm đơn hàng
                   </button>
                </div>
@@ -202,7 +202,7 @@ export default function OrdersPage() {
             {/* Error */}
             {error && (
                <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion-light-active">
-                  <span className="font-inters text-[13px] text-promotion">
+                  <span className="font-inters text-[12px] text-promotion">
                      {error}
                   </span>
                   <button
@@ -229,11 +229,11 @@ export default function OrdersPage() {
                            "Trạng thái đơn",
                            "Thanh toán",
                            "Ngày đặt",
-                           "",
+                           "Hành động",
                         ].map((col, i) => (
                            <th
                               key={i}
-                              className="px-4 py-3 text-left font-inters text-[11px] font-semibold text-primary uppercase tracking-wider whitespace-nowrap"
+                              className="px-4 py-3 text-left font-inters text-[12px] font-semibold text-primary uppercase tracking-wider whitespace-nowrap"
                            >
                               {col}
                            </th>
@@ -264,43 +264,43 @@ export default function OrdersPage() {
                                  className="border-b border-neutral hover:bg-neutral-light-active/60 transition-colors duration-100 group"
                               >
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[13px] text-neutral-dark">
+                                    <span className="font-inters text-[12px] text-primary">
                                        {rowNum}
                                     </span>
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[13px] font-semibold text-accent">
+                                    <span className="font-inters text-[12px] font-semibold text-accent">
                                        {shortId}
                                     </span>
                                  </td>
                                  <td className="px-4 py-3.5">
                                     <div className="flex flex-col gap-0.5">
-                                       <span className="font-inters text-[13px] font-medium text-primary">
+                                       <span className="font-inters text-[12px] font-medium text-primary">
                                           {order.user.fullName}
                                        </span>
-                                       <span className="font-inters text-[11px] text-neutral-dark">
+                                       <span className="font-inters text-[12px] text-primary">
                                           {order.user.phone}
                                        </span>
                                     </div>
                                  </td>
                                  <td className="px-4 py-3.5">
                                     <div className="flex flex-col gap-0.5 max-w-47.5">
-                                       <span className="font-inters text-[13px] text-primary line-clamp-1">
+                                       <span className="font-inters text-[12px] text-primary line-clamp-1">
                                           {order.shippingAddress.contactName}
                                        </span>
-                                       <span className="font-inters text-[11px] text-neutral-dark line-clamp-1">
+                                       <span className="font-inters text-[12px] text-primary line-clamp-1">
                                           {order.shippingAddress.detailAddress}{" "}
                                           · {order.shippingAddress.phone}
                                        </span>
                                     </div>
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[13px] font-semibold text-primary">
+                                    <span className="font-inters text-[12px] font-semibold text-primary">
                                        {formatVND(order.totalAmount)}
                                     </span>
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[13px] text-primary">
+                                    <span className="font-inters text-[12px] text-primary">
                                        {order.paymentMethod.name}
                                     </span>
                                  </td>
@@ -317,7 +317,7 @@ export default function OrdersPage() {
                                     />
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[12px] text-neutral-dark">
+                                    <span className="font-inters text-[12px] text-primary">
                                        {formatDate(order.orderDate)}
                                     </span>
                                  </td>

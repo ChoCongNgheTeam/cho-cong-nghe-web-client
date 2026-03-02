@@ -234,11 +234,11 @@ export default function OrderDetailPage() {
    const total = Number(order.totalAmount);
 
    return (
-      <div className="p-6 space-y-5 mx-auto">
+      <div className="p-6 space-y-5 mx-auto bg-neutral-light">
          <div className="flex items-center gap-3">
             <button
                onClick={() => router.back()}
-               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral font-inters text-[13px] text-primary-light hover:bg-neutral-light-active transition-all cursor-pointer"
+               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral font-inters text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
                <ArrowLeft size={14} /> Quay lại
             </button>
@@ -379,7 +379,7 @@ export default function OrderDetailPage() {
                                        {attrs.map((a, i) => (
                                           <span
                                              key={i}
-                                             className="px-2 py-0.5 rounded-md bg-neutral-light-active border border-neutral font-inters text-[11px] text-primary-light"
+                                             className="px-2 py-0.5 rounded-md bg-neutral-light-active border border-neutral font-inters text-[11px] text-primary"
                                           >
                                              {a.attributeOption.attribute.name}:{" "}
                                              <span className="font-semibold text-primary">
@@ -418,7 +418,7 @@ export default function OrderDetailPage() {
                                        </div>
                                        <StarRating rating={5} />
                                     </div>
-                                    <p className="font-inters text-[12px] text-primary-light leading-relaxed">
+                                    <p className="font-inters text-[12px] text-primary leading-relaxed">
                                        Sản phẩm đúng mô tả, đóng gói cẩn thận,
                                        giao hàng nhanh. Rất hài lòng!
                                     </p>
