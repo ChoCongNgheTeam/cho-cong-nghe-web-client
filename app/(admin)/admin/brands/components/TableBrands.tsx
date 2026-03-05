@@ -4,6 +4,7 @@ import { AdminColumn } from "@/components/admin/AdminTables";
 import { BrandImage } from "./BrandImage";
 import { STATUS_OPTIONS } from "../const";
 import { Brand } from "../brand.types";
+
 interface GetBrandColumnsParams {
    page: number;
    pageSize: number;
@@ -11,7 +12,9 @@ interface GetBrandColumnsParams {
    openStatusId: string | null;
    toggleOne: (id: string) => void;
    setOpenStatusId: (id: string | null) => void;
+   onToggleActive: (brand: Brand) => void; // 👈 thêm
 }
+
 export function getBrandColumns({
    page,
    pageSize,
@@ -19,6 +22,7 @@ export function getBrandColumns({
    openStatusId,
    toggleOne,
    setOpenStatusId,
+   onToggleActive, // 👈 thêm
 }: GetBrandColumnsParams): AdminColumn<Brand>[] {
    return [
       {
@@ -104,6 +108,13 @@ export function getBrandColumns({
                               key={opt.value}
                               onClick={(e) => {
                                  e.stopPropagation();
+                                 // 👇 chỉ gọi nếu khác trạng thái hiện tại
+                                 if (
+                                    opt.value !==
+                                    (brand.isActive ? "active" : "hidden")
+                                 ) {
+                                    onToggleActive(brand);
+                                 }
                                  setOpenStatusId(null);
                               }}
                               className={`w-full text-left px-3 py-2 text-[12px] font-medium hover:bg-neutral-light-active transition-colors cursor-pointer ${opt.color}`}

@@ -13,8 +13,8 @@ export const menuItems: MenuItem[] = [
    { id: "about-shop", label: "Giới thiệu về Shop", href: "/policies/about" },
    {
       id: "apple-authorized",
-      label: "Đại lý ủy quyền và TTBH ủy quyền của Apple",
-      href: "/policies/dai-ly-uy-quyen-apple",
+      label: "Tin tức khuyến mãi",
+      href: "/policies/news",
    },
    {
       id: "mobile-network-policy",
@@ -59,7 +59,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "exchange-intro",
       label: "Giới thiệu máy đổi trả",
-      href: "/policies/may-doi-tra",
+      href: "/policies/exchangeIntro",
    },
    {
       id: "tech-support",

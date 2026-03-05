@@ -31,7 +31,7 @@ export default function PoliciesLayout({
                   <FontSizeToggle />
                   <Sidebar />
                </div>
-               <main className="flex-1 px-8 min-w-0">
+               <main className="flex-1 pl-8 min-w-0">
                   <PolicyContent>{children}</PolicyContent>
                </main>
             </div>

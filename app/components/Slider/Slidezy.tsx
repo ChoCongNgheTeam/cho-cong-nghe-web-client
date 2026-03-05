@@ -41,6 +41,9 @@ export default function Slidezy({
    const autoplayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
    const isInitializedRef = useRef(false);
 
+   // ── THÊM: track xem có drag thật không để cancel click ──
+   const didDragRef = useRef(false);
+
    // Get responsive items count
    const getItemsCount = useCallback(() => {
       if (typeof items === "number") return items;
@@ -337,6 +340,8 @@ export default function Slidezy({
          setIsDragging(true);
          setStartX(clientX);
          setDragOffset(0);
+         // ── THÊM: reset flag khi bắt đầu drag ──
+         didDragRef.current = false;
 
          trackRef.current.style.transition = "none";
       },
@@ -349,6 +354,8 @@ export default function Slidezy({
 
          const diff = clientX - startX;
          setDragOffset(diff);
+         // ── THÊM: đánh dấu đã drag nếu di chuyển > 8px ──
+         if (Math.abs(diff) > 8) didDragRef.current = true;
 
          const currentTranslate = getTranslateX(currentIndex);
          trackRef.current.style.transform = `translateX(${currentTranslate + diff}px)`;
@@ -477,6 +484,14 @@ export default function Slidezy({
                onTouchStart={handleTouchStart}
                onTouchMove={handleTouchMove}
                onTouchEnd={handleTouchEnd}
+               // ── THÊM: cancel click nếu đã drag ──
+               onClickCapture={(e) => {
+                  if (didDragRef.current) {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     didDragRef.current = false;
+                  }
+               }}
             >
                {slides.map((slide, index) => (
                   <div

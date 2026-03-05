@@ -7,19 +7,13 @@ import {
    CalendarDays,
    Share2,
    Plus,
-   ChevronDown,
-   Eye,
-   Pencil,
    Trash2,
 } from "lucide-react";
-import Link from "next/link";
 
 import { Brand, GetBrandsParams } from "./brand.types";
-import { STATUS_OPTIONS } from "./const";
-import { BrandImage } from "./components/BrandImage";
-import { getAllBrands } from "./_libs";
+import { getAllBrands, updateBrand } from "./_libs";
 import AdminPagination from "@/components/admin/PaginationAdmin";
-import AdminTable, { AdminColumn } from "@/components/admin/AdminTables";
+import AdminTable from "@/components/admin/AdminTables";
 import { getBrandColumns } from "./components/TableBrands";
 
 type SortBy = "name" | "createdAt" | "productCount";
@@ -90,6 +84,17 @@ export default function AdminBrandsPage() {
       setSelected(next);
    };
 
+   const handleToggleActive = async (brand: Brand) => {
+      try {
+         const res = await updateBrand(brand.id, { isActive: !brand.isActive });
+         setBrands((prev) =>
+            prev.map((b) => (b.id === brand.id ? res.data : b)),
+         );
+      } catch (err: any) {
+         setError(err?.message || "Không thể cập nhật trạng thái");
+      }
+   };
+
    const columns = getBrandColumns({
       page,
       pageSize,
@@ -97,6 +102,7 @@ export default function AdminBrandsPage() {
       openStatusId,
       toggleOne,
       setOpenStatusId,
+      onToggleActive: handleToggleActive,
    });
 
    return (
