@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api/v1/";
+const API_URL = "http://localhost:5001/api/v1/";
 
 export async function getProvinces() {
   try {

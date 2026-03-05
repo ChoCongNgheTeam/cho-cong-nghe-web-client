@@ -1,5 +1,5 @@
 import { SpecificationsData } from "@/lib/types/product";
-const gAPI_URL = "http://localhost:5000/api/v1/";
+const gAPI_URL = "http://localhost:5001/api/v1/";
 
 export async function getProductBySpecifications(
   slug: string,
