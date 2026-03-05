@@ -409,9 +409,12 @@ function OrderCard({
         </div>
 
         <div className="flex justify-end">
-          <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
-            Mua lại
-          </button>
+          <Link href="/products">
+            {" "}
+            <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              Mua lại
+            </button>
+          </Link>
         </div>
       </div>
     </div>
