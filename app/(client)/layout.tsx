@@ -1,7 +1,8 @@
 import Header from "@/components/layout/Header/header";
 import Footer from "@/components/layout/Footer/footer";
 import ToggleSwitch from "@/components/ui/ThemeToggle";
-import { CartProvider } from "@/contexts/CartContext";
+import ChatButton from "@/components/ui/ChatButton";
+import ScrollBarTop from "@/components/ui/ScrollBarTop";
 
 export default function ClientLayout({
    children,
@@ -9,11 +10,13 @@ export default function ClientLayout({
    children: React.ReactNode;
 }) {
    return (
-      <CartProvider>
+      <div className="flex min-h-screen flex-col">
+         <ScrollBarTop />
+         <ChatButton />
          <Header />
          <ToggleSwitch />
-         <main>{children}</main>
+         <main className="flex-1">{children}</main>
          <Footer />
-      </CartProvider>
+      </div>
    );
 }

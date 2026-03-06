@@ -56,9 +56,10 @@ export type CurrentVariant = {
   isDefault: boolean;
   isActive: boolean;
   available: boolean;
-  stockStatus: "in_stock" | "out_of_stock" | string;
+  stockStatus: "in_stock" | "out_of_stock";
   inventory: Inventory;
   images: ProductImage[];
+  quantity: number;
 };
 
 /** ===== Rating ===== */
@@ -107,6 +108,14 @@ export type ProductDetail = {
   canReview: boolean;
   orderItemId: string | null;
   highlightGroups?: SpecificationGroup[];
+  price: Price;
+};
+
+export type Price = {
+  base: number;
+  final: number;
+  discountPercentage: number;
+  hasPromotion: boolean;
 };
 
 /** ===== API Response ===== */

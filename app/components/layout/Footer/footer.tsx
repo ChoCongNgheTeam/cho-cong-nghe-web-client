@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Facebook, Twitter, Instagram, Music, ChevronDown } from "lucide-react";
+import Link from "next/link";
 
 interface OpenSections {
    about: boolean;
@@ -48,30 +49,30 @@ const Footer = () => {
                         KẾT NÔI VỚI ChoCongNghe.
                      </h4>
                      <div className="flex gap-3">
-                        <a
+                        <Link
                            href="#"
                            className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
                         >
                            <Facebook className="w-5 h-5" />
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                            href="#"
                            className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                         >
                            <Twitter className="w-5 h-5" />
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                            href="#"
                            className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors"
                         >
                            <Instagram className="w-5 h-5" />
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                            href="#"
                            className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                         >
                            <Music className="w-5 h-5" />
-                        </a>
+                        </Link>
                      </div>
                   </div>
                   <div>
@@ -123,86 +124,39 @@ const Footer = () => {
                         openSections.about ? "block" : "hidden md:block"
                      }`}
                   >
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Giới thiệu về công ty
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Quy chế hoạt động
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Tư án Doanh nghiệp
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Tin tức khuyến mãi
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Giới thiệu máy đổi trả
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Hướng dẫn mua hàng & thanh toán online
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Đại lý ủy quyền và TTBH ủy quyền của Apple
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Tra cứu hoá đơn điện tử
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Tra cứu bảo hành
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Câu hỏi thường gặp
-                        </a>
-                     </li>
+                     {[
+                        {
+                           label: "Giới thiệu về công ty",
+                           href: "/policies/about",
+                        },
+                        {
+                           label: "Quy chế hoạt động",
+                           href: "/policies/regulations",
+                        },
+                        { label: "Tư án Doanh nghiệp", href: "#" },
+                        { label: "Tin tức khuyến mãi", href: "#" },
+                        { label: "Giới thiệu máy đổi trả", href: "#" },
+                        {
+                           label: "Hướng dẫn mua hàng & thanh toán online",
+                           href: "#",
+                        },
+                        {
+                           label: "Đại lý ủy quyền và TTBH ủy quyền của Apple",
+                           href: "#",
+                        },
+                        { label: "Tra cứu hoá đơn điện tử", href: "#" },
+                        { label: "Tra cứu bảo hành", href: "#" },
+                        { label: "Câu hỏi thường gặp", href: "#" },
+                     ].map((item) => (
+                        <li key={item.label}>
+                           <Link
+                              href={item.href}
+                              className="hover:text-white transition-colors"
+                           >
+                              {item.label}
+                           </Link>
+                        </li>
+                     ))}
                   </ul>
                </div>
 
@@ -223,94 +177,43 @@ const Footer = () => {
                         openSections.policy ? "block" : "hidden md:block"
                      }`}
                   >
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách bảo hành
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách đổi trả
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách bảo mật
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách trả góp
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách khui hộp sản phẩm
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách giao hàng & lắp đặt
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách mạng di động ChoCongNghe
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách thu thập & xử lý dữ liệu cá nhân
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách giao hàng & lắp đặt Điện máy, Gia dụng
-                        </a>
-                     </li>
-                     <li>
-                        <a
-                           href="#"
-                           className="hover:text-white transition-colors"
-                        >
-                           Chính sách chương trình khách hàng thân thiết
-                        </a>
-                     </li>
+                     {[
+                        { label: "Chính sách bảo hành", href: "#" },
+                        { label: "Chính sách đổi trả", href: "#" },
+                        { label: "Chính sách bảo mật", href: "#" },
+                        { label: "Chính sách trả góp", href: "#" },
+                        { label: "Chính sách khui hộp sản phẩm", href: "#" },
+                        { label: "Chính sách giao hàng & lắp đặt", href: "#" },
+                        {
+                           label: "Chính sách mạng di động ChoCongNghe",
+                           href: "#",
+                        },
+                        {
+                           label: "Chính sách thu thập & xử lý dữ liệu cá nhân",
+                           href: "#",
+                        },
+                        {
+                           label: "Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu",
+                           href: "#",
+                        },
+                        {
+                           label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
+                           href: "#",
+                        },
+                        {
+                           label: "Chính sách chương trình khách hàng thân thiết",
+                           href: "#",
+                        },
+                     ].map((item) => (
+                        <li key={item.label}>
+                           <Link
+                              href={item.href}
+                              className="hover:text-white transition-colors"
+                           >
+                              {item.label}
+                           </Link>
+                        </li>
+                     ))}
                   </ul>
                </div>
 

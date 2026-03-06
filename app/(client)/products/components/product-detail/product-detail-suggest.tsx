@@ -1,19 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ProductCard from "../../../../components/product/ProductCard";
-
-interface Product {
-   id: number;
-   name: string;
-
-   thumbnail: string;
-   price: price;
-}
-interface price {
-   final: number;
-   base: number;
-}
+import ProductCard from "@/components/product/ProductCard";
+import { Product } from "@/components/product/types";
 
 export default function ProductDetailSuggest({ slug }: { slug: string }) {
    const [products, setProducts] = useState<Product[]>([]);
@@ -42,23 +31,17 @@ export default function ProductDetailSuggest({ slug }: { slug: string }) {
          }
       };
 
-      fetchRelated();
-   }, [slug]);
-   return (
-      <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 bg-neutral-light rounded-lg">
-         <h1 className="text-lg font-semibold mb-3">Sản phẩm tương tự</h1>
+    fetchRelated();
+  }, [slug]);
+  return (
+    <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
+      <h1 className="text-xl sm:text-2xl font-semibold text-primary mb-6">Sản phẩm tương tự</h1>
 
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* {products.slice(0, 4).map((p) => (
-          <ProductCard
-            key={p.id}
-            id={p.id}
-            name={p.name}
-            price={p.price.final}
-            image={p.thumbnail}
-          />
-        ))} */}
-         </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {products.slice(0, 4).map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
       </div>
-   );
+    </div>
+  );
 }
