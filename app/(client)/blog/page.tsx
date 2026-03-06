@@ -6,10 +6,10 @@ import BlogSection from "./components/BlogSection";
 import { Blog } from "./types/blog.type";
 
 type Props = {
-  searchParams?: {
+  searchParams?: Promise<{
     page?: string;
     category?: string;
-  };
+  }>;
 };
 
 function fillBlogs(items: Blog[], count: number) {
@@ -18,18 +18,30 @@ function fillBlogs(items: Blog[], count: number) {
 }
 
 export default async function BlogPage({ searchParams }: Props) {
-  const pageParam = searchParams?.page ?? "1";
-  const page = Number(pageParam) > 0 ? Number(pageParam) : 1;
-  const category = searchParams?.category;
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const parsedPage = Number(resolvedSearchParams.page ?? "1");
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const category = resolvedSearchParams.category;
 
-  const res = await getBlogs({
-    page,
+  let blogs: Blog[] = [];
+  let pagination = {
+    page: 1,
     limit: 6,
-    category,
-  });
+    total: 0,
+    totalPages: 1,
+  };
 
-  const blogs = res.data;
-  const pagination = res.pagination;
+  try {
+    const res = await getBlogs({
+      page,
+      limit: 6,
+      category,
+    });
+    blogs = res.data;
+    pagination = res.pagination;
+  } catch {
+    blogs = [];
+  }
 
   const featuredBlogs = fillBlogs(blogs, 5);
   const newProductBlogs = fillBlogs(blogs, 4);

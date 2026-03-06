@@ -1,11 +1,18 @@
+"use client";
+
 import { EyeOff, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import apiRequest from "@/lib/api";
 import { AdminBlog, BlogPagination } from "../_lib/blog.api";
 
 type BlogTableProps = {
   blogs: AdminBlog[];
   pagination: BlogPagination;
   currentCategory?: string;
+  currentSearch?: string;
 };
 
 function formatDate(dateStr: string) {
@@ -24,17 +31,48 @@ function resolveAuthor(blog: AdminBlog) {
   return blog.author?.email ?? blog.author?.fullName ?? "-";
 }
 
-function buildPageHref(page: number, category?: string) {
+function buildPageHref(page: number, category?: string, search?: string) {
   const params = new URLSearchParams({ page: String(page) });
   if (category) params.set("category", category);
+  if (search) params.set("search", search);
   return `/admin/blog?${params.toString()}`;
 }
 
-export default function BlogTable({ blogs, pagination, currentCategory }: BlogTableProps) {
+export default function BlogTable({
+  blogs,
+  pagination,
+  currentCategory,
+  currentSearch,
+}: BlogTableProps) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
   const previousPage = Math.max(1, pagination.page - 1);
   const nextPage = Math.min(pagination.totalPages || 1, pagination.page + 1);
   const canGoPrevious = pagination.page > 1;
   const canGoNext = pagination.page < pagination.totalPages;
+
+  const handleDeleteBlog = async (blogId: string) => {
+    const ok = window.confirm("Ban co chac chan muon xoa bai viet nay?");
+    if (!ok) return;
+
+    setDeletingId(blogId);
+    try {
+      await apiRequest.delete<{ success: boolean; message?: string }>(`/blogs/${blogId}`, {
+        timeout: 15000,
+      });
+      toast.success("Da xoa bai viet");
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Khong the xoa bai viet";
+      toast.error(message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="overflow-hidden rounded-xl border border-neutral bg-neutral-light">
@@ -70,7 +108,7 @@ export default function BlogTable({ blogs, pagination, currentCategory }: BlogTa
                   <td className="px-4 py-3 align-top">{resolveAuthor(blog)}</td>
                   <td className="px-4 py-3 align-top">{formatDate(blog.createdAt)}</td>
                   <td className="px-4 py-3 align-top">{blog.viewCount ?? 0}</td>
-                  <td className="max-w-72 break-words px-4 py-3 align-top">{blog.slug}</td>
+                  <td className="max-w-72 wrap-break-word px-4 py-3 align-top">{blog.slug}</td>
                   <td className="px-4 py-3 align-top">
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -80,17 +118,21 @@ export default function BlogTable({ blogs, pagination, currentCategory }: BlogTa
                       >
                         <EyeOff size={16} />
                       </button>
-                      <button
+                      <Link
+                        href={`/admin/blog/${blog.id}`}
                         className="rounded-md p-2 text-primary-light hover:bg-neutral-light-active hover:text-primary"
                         aria-label="Sua bai viet"
-                        type="button"
                       >
                         <Pencil size={16} />
-                      </button>
+                      </Link>
                       <button
                         className="rounded-md p-2 text-promotion hover:bg-promotion-light"
                         aria-label="Xoa bai viet"
                         type="button"
+                        onClick={() => {
+                          void handleDeleteBlog(blog.id);
+                        }}
+                        disabled={deletingId === blog.id || isPending}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -106,7 +148,7 @@ export default function BlogTable({ blogs, pagination, currentCategory }: BlogTa
       <div className="flex items-center justify-between border-t border-neutral p-4">
         {canGoPrevious ? (
           <Link
-            href={buildPageHref(previousPage, currentCategory)}
+            href={buildPageHref(previousPage, currentCategory, currentSearch)}
             className="rounded-lg border border-neutral px-4 py-2 text-sm font-medium text-primary hover:bg-neutral-light-active"
           >
             Previous
@@ -124,7 +166,7 @@ export default function BlogTable({ blogs, pagination, currentCategory }: BlogTa
         </div>
         {canGoNext ? (
           <Link
-            href={buildPageHref(nextPage, currentCategory)}
+            href={buildPageHref(nextPage, currentCategory, currentSearch)}
             className="rounded-lg border border-neutral px-4 py-2 text-sm font-medium text-primary hover:bg-neutral-light-active"
           >
             Next

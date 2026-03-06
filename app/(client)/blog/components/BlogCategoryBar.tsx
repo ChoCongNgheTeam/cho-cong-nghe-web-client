@@ -12,19 +12,20 @@ type Props = {
 
 export default function BlogCategoryBar({ active, className, itemClassName }: Props) {
   return (
-    <div className={clsx("flex flex-wrap gap-4 border-b border-gray-200 pb-3 text-sm", className)}>
+    <div className={clsx("flex flex-wrap gap-4 border-b border-neutral pb-3 text-sm", className)}>
       {BLOG_CATEGORIES.map((cat) => {
         const isActive = cat.key === active;
+        const href = cat.key ? `/blog?category=${cat.key}&page=1` : "/blog";
 
         return (
           <Link
             key={cat.key}
-            href={`/blog?category=${cat.key}`}
+            href={href}
             className={clsx(
               "pb-2 font-medium transition-colors",
               isActive
-                ? "border-b-2 border-black text-black"
-                : "text-gray-700 hover:text-black",
+                ? "border-b-2 border-accent text-primary"
+                : "text-primary-light hover:text-primary",
               itemClassName
             )}
           >
