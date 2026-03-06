@@ -115,7 +115,7 @@ export default function AdminCategories() {
    ];
 
    return (
-      <div className="min-h-screen bg-neutral-light font-inters">
+      <div className="min-h-screen bg-neutral-light">
          {/* ── Header ── */}
          <div className="px-6 pt-5 pb-4 flex items-center justify-between">
             <div>

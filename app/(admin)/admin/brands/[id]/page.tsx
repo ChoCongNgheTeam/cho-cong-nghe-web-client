@@ -281,7 +281,7 @@ export default function AdminBrand() {
    });
 
    return (
-      <div className="min-h-screen bg-neutral-light font-inters">
+      <div className="min-h-screen bg-neutral-light">
          <Popzy
             isOpen={deleteModal.isOpen}
             onClose={deleteModal.close}

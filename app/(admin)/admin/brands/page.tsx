@@ -196,7 +196,7 @@ export default function AdminBrandsPage() {
    });
 
    return (
-      <div className="min-h-screen bg-neutral-light font-inters">
+      <div className="min-h-screen bg-neutral-light">
          <div className="flex items-center justify-end px-6 pt-5 pb-3">
             <button
                onClick={openCreateModal}

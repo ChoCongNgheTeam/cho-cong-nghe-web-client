@@ -71,7 +71,7 @@ export default function AdminTable<T extends object>({
                         key={col.key}
                         className={`
                            px-4 py-3
-                           font-inters text-[12px] font-semibold uppercase tracking-wide
+                           text-[12px] font-semibold uppercase tracking-wide
                            text-primary whitespace-nowrap select-none
                            ${alignClass[col.align ?? "left"]}
                            ${col.width ?? ""}
@@ -93,7 +93,7 @@ export default function AdminTable<T extends object>({
                   <tr>
                      <td
                         colSpan={columns.length}
-                        className="py-20 text-center font-inters text-[13px] text-neutral-dark"
+                        className="py-20 text-center text-[13px] text-neutral-dark"
                      >
                         {emptyText}
                      </td>
@@ -117,7 +117,7 @@ export default function AdminTable<T extends object>({
                               key={col.key}
                               className={`
                                  px-4 py-3
-                                 font-inters text-[13px] text-primary
+                                 text-[13px] text-primary
                                  ${alignClass[col.align ?? "left"]}
                                  ${col.width ?? ""}
                               `}
