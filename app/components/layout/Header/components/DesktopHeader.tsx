@@ -102,7 +102,7 @@ const DesktopHeader = ({
             </Link>
             <CartIcon />
             {isLoading ? (
-               <div className="w-[46px] h-[38px] flex items-center justify-center">
+               <div className="w-11.5 h-9.5 flex items-center justify-center">
                   <div className="w-8 h-8 rounded-full bg-neutral-dark/20 animate-pulse" />
                </div>
             ) : isAuthenticated && user ? (

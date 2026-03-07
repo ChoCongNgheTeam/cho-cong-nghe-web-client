@@ -17,7 +17,6 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
-import PaymentResultModal from "./components/PaymentResultModal";
 
 type PaymentInfo =
    | { type: "COD" }
@@ -296,6 +295,7 @@ export default function CheckoutPage() {
       setAppliedVoucherValue(value);
       setAppliedVoucherId(voucherId);
    };
+
    const handlePlaceOrder = async () => {
       if (!contactName || !contactPhone) {
          toast.error("Vui lòng kiểm tra thông tin người đặt");
@@ -318,34 +318,52 @@ export default function CheckoutPage() {
       try {
          const res = await apiRequest.post<{
             success: boolean;
-            data: { orderId: string; paymentInfo?: PaymentInfo };
+            data: {
+               orderId: string;
+               orderCode: string;
+               paymentInfo?: PaymentInfo;
+            };
             message?: string;
          }>("/checkout", {
             paymentMethodId: selectedPaymentMethodId,
             shippingAddressId: selectedAddress.id,
-            shippingContactName: selectedAddress.contactName, // ← thêm
-            shippingPhone: selectedAddress.phone, // ← thêm (phòng khi BE cần)
+            shippingContactName: selectedAddress.contactName,
+            shippingPhone: selectedAddress.phone,
             ...(appliedVoucherId ? { voucherId: appliedVoucherId } : {}),
          });
 
          if (res?.success) {
             localStorage.removeItem("checkoutData");
             await refetchCart();
-
-            const info = res.data?.paymentInfo;
-
-            if (!info || info.type === "COD") {
-               setPaymentInfo(info ?? { type: "COD" });
-               setShowPaymentModal(true);
-            } else {
-               // Có paymentInfo → mở modal thanh toán
-               setPaymentInfo(info);
-               setShowPaymentModal(true);
-            }
-         } else {
-            toast.error(
-               res?.message ?? "Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!",
+            const info = res.data?.paymentInfo ?? { type: "COD" };
+            sessionStorage.setItem("paymentInfo", JSON.stringify(info));
+            sessionStorage.setItem("pendingOrderId", res.data?.orderId ?? "");
+            sessionStorage.setItem(
+               "pendingOrderCode",
+               res.data?.orderCode ?? "",
             );
+
+            router.push("/payment");
+         }
+
+         if (res?.success) {
+            const rawCheckout = localStorage.getItem("checkoutData");
+            if (rawCheckout) {
+               sessionStorage.setItem("checkoutData", rawCheckout);
+            }
+
+            localStorage.removeItem("checkoutData");
+            await refetchCart();
+
+            const info = res.data?.paymentInfo ?? { type: "COD" };
+            sessionStorage.setItem("paymentInfo", JSON.stringify(info));
+            sessionStorage.setItem("pendingOrderId", res.data?.orderId ?? "");
+            sessionStorage.setItem(
+               "pendingOrderCode",
+               res.data?.orderCode ?? "",
+            );
+
+            router.push("/payment");
          }
       } catch (err: any) {
          toast.error(
@@ -744,13 +762,6 @@ export default function CheckoutPage() {
             appliedVoucherValue={appliedVoucherValue}
             onApplyVoucher={handleApplyVoucher}
             cartTotal={subtotal}
-         />
-
-         <PaymentResultModal
-            isOpen={showPaymentModal}
-            paymentInfo={paymentInfo}
-            onClose={() => setShowPaymentModal(false)}
-            onDone={handlePaymentDone}
          />
       </div>
    );
