@@ -18,6 +18,6 @@ export interface ApiResponse<T> {
 }
 
 export const createUser = async (data: CreateUserPayload): Promise<User> => {
-  const res = await apiRequest.post<ApiResponse<User>>("/users", data);
+  const res = await apiRequest.post<ApiResponse<User>>("/users/admin", data);
   return res.data; // res = { data: User, message: string }
 };
