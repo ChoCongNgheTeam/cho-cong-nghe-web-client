@@ -1,32 +1,7 @@
 import Link from "next/link";
 
-const sidebarItems = [
-   { label: "Danh mục chính sách", href: "#", active: true },
-   { label: "Câu hỏi thường gặp", href: "#" },
-   { label: "Giới thiệu về ChoCongNghe", href: "#" },
-   { label: "Đại lý uỷ quyền và TTBH uỷ quyền của Apple", href: "#" },
-   { label: "Chính sách mạng di động ChoCongNghe", href: "#" },
-   { label: "Chính sách gói cước di động ChoCongNghe", href: "#" },
-   {
-      label: "Danh sách điểm cung cấp dịch vụ viễn thông ChoCongNghe",
-      href: "#",
-   },
-   { label: "Chính sách giao hàng & lắp đặt", href: "#" },
-   {
-      label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
-      href: "#",
-   },
-   {
-      label: "Chính sách giao hàng & lắp đặt Điện máy chỉ bán online",
-      href: "#",
-   },
-   {
-      label: "Chính sách Chương trình Khách hàng thân thiết tại ChoCongNghe",
-      href: "#",
-   },
-   { label: "Chính sách khui hộp sản phẩm", href: "#" },
-   { label: "Hướng dẫn mua hàng và thanh toán online", href: "#" },
-];
+// TODO: Import SidebarMenu component here when ready
+// import SidebarMenu from "@/components/SidebarMenu";
 
 export default function ChinhSachBaoHanhPage() {
    return (
@@ -62,45 +37,9 @@ export default function ChinhSachBaoHanhPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar */}
-               <aside className="hidden md:block w-65 shrink-0">
-                  <div
-                     className="rounded-lg overflow-hidden"
-                     style={{
-                        backgroundColor: "rgb(var(--neutral-light))",
-                        border: "1px solid rgb(var(--neutral))",
-                     }}
-                  >
-                     <ul>
-                        {sidebarItems.map((item, i) => (
-                           <li
-                              key={i}
-                              style={{
-                                 borderBottom:
-                                    i < sidebarItems.length - 1
-                                       ? "1px solid rgb(var(--neutral))"
-                                       : "none",
-                              }}
-                           >
-                              <Link
-                                 href={item.href}
-                                 className="block px-4 py-3 text-sm leading-snug transition-colors"
-                                 style={{
-                                    color: item.active
-                                       ? "rgb(var(--promotion))"
-                                       : "rgb(var(--primary))",
-                                    fontWeight: item.active ? 600 : 400,
-                                    backgroundColor: item.active
-                                       ? "rgb(var(--promotion-light))"
-                                       : "transparent",
-                                 }}
-                              >
-                                 {item.label}
-                              </Link>
-                           </li>
-                        ))}
-                     </ul>
-                  </div>
+               {/* Sidebar Slot — gắn <SidebarMenu /> vào đây khi có */}
+               <aside className="hidden md:block w-[260px] shrink-0">
+                  {/* <SidebarMenu activeItem="Danh mục chính sách" /> */}
                </aside>
 
                {/* Article */}
