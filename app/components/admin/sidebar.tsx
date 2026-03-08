@@ -96,7 +96,7 @@ function UserAvatar({
       );
    }
    return (
-      <span className="text-white font-semibold text-sm font-inters">
+      <span className="text-white font-semibold text-sm ">
          {initials}
       </span>
    );
@@ -116,7 +116,7 @@ export default function AdminSidebar() {
       <div className="w-60 bg-neutral-light border-r border-neutral h-full flex flex-col">
          {/* Logo */}
          <div className="px-4 py-4 flex items-center justify-between">
-            <span className="font-inters font-bold text-base text-primary leading-tight">
+            <span className=" font-bold text-base text-primary leading-tight">
                ChoCongNghe
             </span>
             <button className="text-neutral-dark hover:text-primary transition-colors p-1 rounded-md hover:bg-neutral-light-active">
@@ -150,7 +150,7 @@ export default function AdminSidebar() {
                                  isActive ? "text-white" : "text-neutral-dark"
                               }
                            />
-                           <span className="font-inters text-[13px]">
+                           <span className=" text-[13px]">
                               {item.title}
                            </span>
                         </Link>
@@ -164,14 +164,14 @@ export default function AdminSidebar() {
          {user && (
             <div className="border-t border-neutral px-3 py-3 space-y-0.5">
                <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center overflow-hidden shrink-0">
                      <UserAvatar user={user} />
                   </div>
                   <div className="flex-1 min-w-0">
-                     <div className="font-inters text-[13px] font-semibold text-primary truncate">
+                     <div className=" text-[13px] font-semibold text-primary truncate">
                         {user.fullName}
                      </div>
-                     <div className="font-inters text-[11px] text-neutral-dark truncate">
+                     <div className=" text-[11px] text-neutral-dark truncate">
                         {user.email}
                      </div>
                   </div>
@@ -186,7 +186,7 @@ export default function AdminSidebar() {
 
                <Link
                   href="/"
-                  className="flex items-center gap-2.5 px-2 py-2 text-[13px] font-inters text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150"
+                  className="flex items-center gap-2.5 px-2 py-2 text-[13px]  text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150"
                >
                   <Store size={15} className="text-neutral-dark" />
                   <span>Cửa hàng của tôi</span>

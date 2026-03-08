@@ -19,6 +19,24 @@ const ROUTE_TITLES: Record<string, string> = {
 
 export default function AdminHeaderAuto() {
    const pathname = usePathname();
-   const title = ROUTE_TITLES[pathname] ?? "Admin";
+
+   const sortedRoutes = Object.keys(ROUTE_TITLES).sort(
+      (a, b) => b.length - a.length,
+   );
+
+   const matchedRoute = sortedRoutes.find((route) =>
+      pathname.startsWith(route),
+   );
+
+   if (!matchedRoute) {
+      return <AdminHeader title="Admin" />;
+   }
+
+   let title = ROUTE_TITLES[matchedRoute];
+
+   if (pathname !== matchedRoute) {
+      title += " chi tiết";
+   }
+
    return <AdminHeader title={title} />;
 }

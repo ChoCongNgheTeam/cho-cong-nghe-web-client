@@ -27,7 +27,6 @@ import { OrderStatusCell } from "../components";
 import { PaymentBadge } from "../components";
 import type { Order, OrderStatus } from "../order.types";
 import { formatVND, formatDate } from "@/helpers";
-import { ORDER_STATUS_CONFIG } from "../const";
 
 const STATUS_STEPS: {
    status: OrderStatus;
@@ -56,7 +55,7 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
       return (
          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-promotion-light border border-promotion-light-active">
             <XCircle size={18} className="text-promotion shrink-0" />
-            <span className="font-inters text-[13px] font-semibold text-promotion">
+            <span className=" text-[13px] font-semibold text-promotion">
                Đơn hàng đã bị hủy
             </span>
          </div>
@@ -65,7 +64,6 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 
    return (
       <div className="relative flex items-center justify-between">
-         {/* Connecting line */}
          <div className="absolute top-5 left-0 right-0 h-0.5 bg-neutral z-0" />
          <div
             className="absolute top-5 left-0 h-0.5 bg-accent z-0 transition-all duration-700"
@@ -73,7 +71,6 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
                width: `${(currentIdx / (STATUS_STEPS.length - 1)) * 100}%`,
             }}
          />
-
          {STATUS_STEPS.map((step, idx) => {
             const Icon = step.icon;
             const isDone = currentIdx > idx;
@@ -94,17 +91,11 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
                   >
                      <Icon
                         size={16}
-                        className={`${
-                           isDone || isActive
-                              ? "text-primary"
-                              : "text-neutral-dark"
-                        } ${isActive && step.status === "PROCESSING" ? "animate-spin" : ""}`}
+                        className={`${isDone || isActive ? "text-primary" : "text-neutral-dark"} ${isActive && step.status === "PROCESSING" ? "animate-spin" : ""}`}
                      />
                   </div>
                   <span
-                     className={`font-inters text-[11px] font-medium whitespace-nowrap ${
-                        isDone || isActive ? "text-accent" : "text-neutral-dark"
-                     }`}
+                     className={` text-[11px] font-medium whitespace-nowrap ${isDone || isActive ? "text-accent" : "text-neutral-dark"}`}
                   >
                      {step.label}
                   </span>
@@ -115,7 +106,6 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
    );
 }
 
-// ─── Info card wrapper ────────────────────────────────────────────────────────
 function InfoCard({
    title,
    icon: Icon,
@@ -129,7 +119,7 @@ function InfoCard({
       <div className="bg-neutral-light border border-neutral rounded-xl">
          <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral bg-neutral-light-active">
             <Icon size={14} className="text-accent" />
-            <span className="font-inters text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
+            <span className=" text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
                {title}
             </span>
          </div>
@@ -141,17 +131,16 @@ function InfoCard({
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
    return (
       <div className="flex items-start justify-between gap-4 py-1.5">
-         <span className="font-inters text-[12px] text-neutral-dark shrink-0">
+         <span className=" text-[12px] text-neutral-dark shrink-0">
             {label}
          </span>
-         <span className="font-inters text-[13px] text-primary font-medium text-right">
+         <span className=" text-[13px] text-primary font-medium text-right">
             {value}
          </span>
       </div>
    );
 }
 
-// ─── Static review stars ──────────────────────────────────────────────────────
 function StarRating({ rating = 0 }: { rating?: number }) {
    return (
       <div className="flex items-center gap-0.5">
@@ -170,7 +159,6 @@ function StarRating({ rating = 0 }: { rating?: number }) {
    );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
 export default function OrderDetailPage() {
    const params = useParams();
    const router = useRouter();
@@ -196,12 +184,11 @@ export default function OrderDetailPage() {
    };
 
    const copyId = () => {
-      navigator.clipboard.writeText(order?.id ?? "");
+      navigator.clipboard.writeText(order?.orderCode ?? "");
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
    };
 
-   // ── Loading ──
    if (loading) {
       return (
          <div className="flex items-center justify-center h-64">
@@ -210,17 +197,16 @@ export default function OrderDetailPage() {
       );
    }
 
-   // ── Error ──
    if (error || !order) {
       return (
          <div className="flex flex-col items-center justify-center h-64 gap-3">
             <Package size={40} className="text-neutral-dark opacity-40" />
-            <p className="font-inters text-sm text-neutral-dark">
+            <p className=" text-sm text-neutral-dark">
                {error ?? "Không tìm thấy đơn hàng"}
             </p>
             <button
                onClick={() => router.back()}
-               className="px-4 py-2 rounded-lg bg-accent text-white font-inters text-[13px] cursor-pointer"
+               className="px-4 py-2 rounded-lg bg-accent text-white  text-[13px] cursor-pointer"
             >
                Quay lại
             </button>
@@ -234,28 +220,29 @@ export default function OrderDetailPage() {
    const total = Number(order.totalAmount);
 
    return (
-      <div className="p-6 space-y-5 mx-auto">
+      <div className="p-6 space-y-5 mx-auto bg-neutral-light">
+         {/* Breadcrumb */}
          <div className="flex items-center gap-3">
             <button
                onClick={() => router.back()}
-               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral font-inters text-[13px] text-primary-light hover:bg-neutral-light-active transition-all cursor-pointer"
+               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral  text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
                <ArrowLeft size={14} /> Quay lại
             </button>
-            <span className="text-neutral-dark font-inters text-[13px]">/</span>
+            <span className="text-neutral-dark  text-[13px]">/</span>
             <Link
                href="/admin/orders"
-               className="font-inters text-[13px] text-neutral-dark hover:text-accent transition-colors"
+               className=" text-[13px] text-neutral-dark hover:text-accent transition-colors"
             >
                Đơn hàng
             </Link>
-            <span className="text-neutral-dark font-inters text-[13px]">/</span>
-            <span className="font-inters text-[13px] text-primary font-medium">
-               {order.id}
+            <span className="text-neutral-dark  text-[13px]">/</span>
+            <span className=" text-[13px] text-primary font-medium">
+               {order.orderCode}
             </span>
          </div>
 
-         {/* ── Header ── */}
+         {/* Header */}
          <div className="bg-neutral-light border border-neutral rounded-xl px-5 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
                <div className="w-10 h-10 rounded-xl bg-accent-light flex items-center justify-center">
@@ -263,28 +250,27 @@ export default function OrderDetailPage() {
                </div>
                <div>
                   <div className="flex items-center gap-2">
-                     <h1 className="font-inters text-[17px] font-bold text-primary">
-                        {order.id}
+                     <h1 className=" text-[17px] font-bold text-primary">
+                        {order.orderCode}
                      </h1>
                      <button
                         onClick={copyId}
                         className="text-neutral-dark hover:text-accent transition-colors cursor-pointer"
-                        title="Copy ID"
+                        title="Copy mã đơn"
                      >
                         <Copy size={13} />
                      </button>
                      {copied && (
-                        <span className="font-inters text-[11px] text-accent">
+                        <span className=" text-[11px] text-accent">
                            Đã copy!
                         </span>
                      )}
                   </div>
-                  <p className="font-inters text-[12px] text-neutral-dark">
+                  <p className=" text-[12px] text-neutral-dark">
                      Đặt lúc {formatDate(order.orderDate)}
                   </p>
                </div>
             </div>
-
             <div className="flex items-center gap-3">
                <PaymentBadge status={order.paymentStatus} />
                <OrderStatusCell
@@ -295,38 +281,33 @@ export default function OrderDetailPage() {
             </div>
          </div>
 
-         {/* ── Timeline ── */}
+         {/* Timeline */}
          <div className="bg-neutral-light border border-neutral rounded-xl px-6 py-5">
-            <p className="font-inters text-[12px] font-semibold text-neutral-dark uppercase tracking-wider mb-4">
+            <p className=" text-[12px] font-semibold text-neutral-dark uppercase tracking-wider mb-4">
                Tiến trình đơn hàng
             </p>
             <OrderTimeline status={order.orderStatus} />
          </div>
 
-         {/* ── Main content grid ── */}
+         {/* Main grid */}
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-            {/* Left col — 2/3 */}
-            <div className="lg:col-span-2 space-y-5 lg:sticky lg:top-6">
-               {/* Order items */}
+            {/* Left — order items */}
+            <div className="lg:col-span-2 space-y-5">
                <div className="bg-neutral-light border border-neutral rounded-xl">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral bg-neutral-light-active">
                      <ShoppingBag size={14} className="text-accent" />
-                     <span className="font-inters text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
+                     <span className=" text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
                         Sản phẩm ({order.orderItems.length})
                      </span>
                   </div>
-
                   <div className="divide-y divide-neutral">
                      {order.orderItems.map((item) => {
                         const product = item.productVariant.product;
                         const attrs = item.productVariant.variantAttributes;
                         const img = product.img?.[0]?.imageUrl;
-
                         return (
                            <div key={item.id} className="p-4 space-y-4">
-                              {/* Product row */}
                               <div className="flex items-start gap-3">
-                                 {/* Image */}
                                  <div className="w-16 h-16 rounded-xl border border-neutral bg-neutral-light-active shrink-0">
                                     {img ? (
                                        <Image
@@ -345,14 +326,12 @@ export default function OrderDetailPage() {
                                        </div>
                                     )}
                                  </div>
-
-                                 {/* Info */}
                                  <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2">
                                        <div>
                                           <Link
                                              href={`/admin/products/${product.id}`}
-                                             className="font-inters text-[14px] font-semibold text-primary hover:text-accent transition-colors flex items-center gap-1 group"
+                                             className=" text-[14px] font-semibold text-primary hover:text-accent transition-colors flex items-center gap-1 group"
                                           >
                                              {product.name}
                                              <ExternalLink
@@ -360,29 +339,27 @@ export default function OrderDetailPage() {
                                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
                                              />
                                           </Link>
-                                          <p className="font-inters text-[11px] text-neutral-dark mt-0.5">
+                                          <p className=" text-[11px] text-neutral-dark mt-0.5">
                                              SKU: {item.productVariant.code}
                                           </p>
                                        </div>
                                        <div className="text-right shrink-0">
-                                          <p className="font-inters text-[14px] font-bold text-primary">
+                                          <p className=" text-[14px] font-bold text-primary">
                                              {formatVND(item.unitPrice)}
                                           </p>
-                                          <p className="font-inters text-[11px] text-neutral-dark">
+                                          <p className=" text-[11px] text-neutral-dark">
                                              x{item.quantity}
                                           </p>
                                        </div>
                                     </div>
-
-                                    {/* Variant attributes */}
                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                        {attrs.map((a, i) => (
                                           <span
                                              key={i}
-                                             className="px-2 py-0.5 rounded-md bg-neutral-light-active border border-neutral font-inters text-[11px] text-primary-light"
+                                             className="px-2 py-0.5 rounded-md bg-neutral-light-active border border-neutral  text-[11px] text-primary"
                                           >
                                              {a.attributeOption.attribute.name}:{" "}
-                                             <span className="font-semibold text-primary">
+                                             <span className="font-semibold">
                                                 {a.attributeOption.value}
                                              </span>
                                           </span>
@@ -391,49 +368,41 @@ export default function OrderDetailPage() {
                                  </div>
                               </div>
 
-                              {/* Static review section */}
+                              {/* Review */}
                               <div className="ml-19 pl-3 border-l-2 border-neutral space-y-2">
                                  <div className="flex items-center gap-2">
                                     <MessageSquare
                                        size={12}
                                        className="text-neutral-dark"
                                     />
-                                    <span className="font-inters text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
+                                    <span className=" text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
                                        Đánh giá từ khách hàng
                                     </span>
                                  </div>
-
-                                 {/* Static review placeholder */}
                                  <div className="bg-neutral-light-active rounded-xl p-3 space-y-2">
                                     <div className="flex items-center justify-between">
                                        <div className="flex items-center gap-2">
                                           <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
-                                             <span className="font-inters text-[10px] font-bold text-white">
-                                                N
+                                             <span className=" text-[10px] font-bold text-white">
+                                                {order.user.fullName
+                                                   .charAt(0)
+                                                   .toUpperCase()}
                                              </span>
                                           </div>
-                                          <span className="font-inters text-[12px] font-medium text-primary">
+                                          <span className=" text-[12px] font-medium text-primary">
                                              {order.user.fullName}
                                           </span>
                                        </div>
                                        <StarRating rating={5} />
                                     </div>
-                                    <p className="font-inters text-[12px] text-primary-light leading-relaxed">
+                                    <p className=" text-[12px] text-primary leading-relaxed">
                                        Sản phẩm đúng mô tả, đóng gói cẩn thận,
                                        giao hàng nhanh. Rất hài lòng!
                                     </p>
-                                    <p className="font-inters text-[10px] text-neutral-dark">
+                                    <p className=" text-[10px] text-neutral-dark">
                                        {formatDate(order.orderDate)}
                                     </p>
                                  </div>
-
-                                 {/* No review state (toggle this vs above based on real data) */}
-                                 {/* <div className="flex items-center gap-2 py-2">
-                                    <Star size={12} className="text-neutral-dark" />
-                                    <span className="font-inters text-[12px] text-neutral-dark italic">
-                                       Khách hàng chưa đánh giá sản phẩm này
-                                    </span>
-                                 </div> */}
                               </div>
                            </div>
                         );
@@ -442,21 +411,21 @@ export default function OrderDetailPage() {
                </div>
             </div>
 
-            {/* Right col — 1/3 */}
+            {/* Right — info cards */}
             <div className="space-y-4">
                {/* Customer */}
                <InfoCard title="Khách hàng" icon={User}>
                   <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral">
                      <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center shrink-0">
-                        <span className="font-inters text-sm font-bold text-white">
+                        <span className=" text-sm font-bold text-white">
                            {order.user.fullName.charAt(0).toUpperCase()}
                         </span>
                      </div>
                      <div>
-                        <p className="font-inters text-[13px] font-semibold text-primary">
+                        <p className=" text-[13px] font-semibold text-primary">
                            {order.user.fullName}
                         </p>
-                        <p className="font-inters text-[11px] text-neutral-dark">
+                        <p className=" text-[11px] text-neutral-dark">
                            {order.user.email}
                         </p>
                      </div>
@@ -465,24 +434,23 @@ export default function OrderDetailPage() {
                   <div className="mt-2">
                      <Link
                         href={`/admin/users/${order.user.id}`}
-                        className="inline-flex items-center gap-1 font-inters text-[12px] text-accent hover:underline"
+                        className="inline-flex items-center gap-1  text-[12px] text-accent hover:underline"
                      >
                         Xem hồ sơ <ExternalLink size={11} />
                      </Link>
                   </div>
                </InfoCard>
 
-               {/* Shipping address */}
+               {/* Shipping — dùng flat fields thay vì shippingAddress.xxx */}
                <InfoCard title="Địa chỉ giao hàng" icon={MapPin}>
                   <InfoRow
                      label="Người nhận"
-                     value={order.shippingAddress.contactName}
+                     value={order.shippingContactName}
                   />
-                  <InfoRow label="SĐT" value={order.shippingAddress.phone} />
-                  <InfoRow
-                     label="Địa chỉ"
-                     value={order.shippingAddress.detailAddress}
-                  />
+                  <InfoRow label="SĐT" value={order.shippingPhone} />
+                  <InfoRow label="Tỉnh/TP" value={order.shippingProvince} />
+                  <InfoRow label="Phường/Xã" value={order.shippingWard} />
+                  <InfoRow label="Địa chỉ" value={order.shippingDetail} />
                </InfoCard>
 
                {/* Payment */}
@@ -511,19 +479,19 @@ export default function OrderDetailPage() {
                      <InfoRow
                         label="Mã voucher"
                         value={
-                           <span className="px-2 py-0.5 rounded-md bg-accent-light text-accent border border-accent font-inters text-[12px] font-semibold">
+                           <span className="px-2 py-0.5 rounded-md bg-accent-light text-accent border border-accent  text-[12px] font-semibold">
                               {order.voucher.code}
                            </span>
                         }
                      />
                   ) : (
-                     <p className="font-inters text-[12px] text-neutral-dark italic">
+                     <p className=" text-[12px] text-neutral-dark italic">
                         Không sử dụng voucher
                      </p>
                   )}
                </InfoCard>
 
-               {/* Order summary */}
+               {/* Summary */}
                <InfoCard title="Tổng kết đơn hàng" icon={Receipt}>
                   <div className="space-y-1">
                      <InfoRow label="Tạm tính" value={formatVND(subtotal)} />
@@ -550,10 +518,10 @@ export default function OrderDetailPage() {
                         />
                      )}
                      <div className="pt-2 mt-2 border-t border-neutral flex items-center justify-between">
-                        <span className="font-inters text-[13px] font-bold text-primary">
+                        <span className=" text-[13px] font-bold text-primary">
                            Tổng cộng
                         </span>
-                        <span className="font-inters text-[16px] font-bold text-accent">
+                        <span className=" text-[16px] font-bold text-accent">
                            {formatVND(total)}
                         </span>
                      </div>

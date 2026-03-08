@@ -102,7 +102,7 @@ const DesktopHeader = ({
             </Link>
             <CartIcon />
             {isLoading ? (
-               <div className="w-[46px] h-[38px] flex items-center justify-center">
+               <div className="w-11.5 h-9.5 flex items-center justify-center">
                   <div className="w-8 h-8 rounded-full bg-neutral-dark/20 animate-pulse" />
                </div>
             ) : isAuthenticated && user ? (
@@ -136,7 +136,7 @@ const DesktopHeader = ({
                               <span className="text-sm">Thông tin cá nhân</span>
                            </Link>
                            <Link
-                              href="/orders"
+                              href="/profile/orders"
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary"
                               onClick={onUserMenuClose}
                            >
@@ -144,7 +144,7 @@ const DesktopHeader = ({
                               <span className="text-sm">Đơn hàng của tôi</span>
                            </Link>
                            <Link
-                              href="/wishlist"
+                              href="/profile/wishlist"
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary"
                               onClick={onUserMenuClose}
                            >
@@ -154,7 +154,7 @@ const DesktopHeader = ({
                               </span>
                            </Link>
                            <Link
-                              href="/addresses"
+                              href="/profile/addresses"
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary"
                               onClick={onUserMenuClose}
                            >

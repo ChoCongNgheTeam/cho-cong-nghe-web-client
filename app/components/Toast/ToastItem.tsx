@@ -262,7 +262,7 @@ export default function ToastItem({ toast, dismiss }: ToastItemProps) {
          <div className="flex items-start gap-3 p-4">
             {/* Icon */}
             <div
-               className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getIconContainerStyle()}`}
+               className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getIconContainerStyle()}`}
             >
                {getIcon()}
             </div>
@@ -307,7 +307,7 @@ export default function ToastItem({ toast, dismiss }: ToastItemProps) {
                      e.stopPropagation();
                      handleDismiss();
                   }}
-                  className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
                   aria-label="Close"
                >
                   <svg

@@ -50,7 +50,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
                            </Link>
                         ) : (
                            <span
-                              className="text-gray-700"
+                              className="text-primary"
                               aria-current={isLast ? "page" : undefined}
                            >
                               {item.label}

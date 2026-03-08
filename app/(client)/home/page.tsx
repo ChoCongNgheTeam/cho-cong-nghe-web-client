@@ -10,7 +10,6 @@ import {
    HotSaleOnline,
    SeasonalSale,
 } from "./components";
-// import RecentlyViewed from "./components/RecentlyViewed";
 import {
    getActiveCampaigns,
    getBannersSection1,

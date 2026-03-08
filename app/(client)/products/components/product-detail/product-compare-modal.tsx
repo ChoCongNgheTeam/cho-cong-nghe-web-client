@@ -116,7 +116,7 @@ export default function ProductCompareModal({
                               className="flex items-center gap-3 p-3 border border-neutral-dark rounded-lg hover:bg-neutral transition-colors"
                            >
                               {/* Product Image */}
-                              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral rounded-lg flex-shrink-0 overflow-hidden">
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral rounded-lg shrink-0 overflow-hidden">
                                  <img
                                     src={product.image}
                                     alt={product.name}
@@ -151,7 +151,7 @@ export default function ProductCompareModal({
                                     !canAddMore &&
                                     !isProductSelected(product.id)
                                  }
-                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex-shrink-0 ${
+                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors shrink-0 ${
                                     isProductSelected(product.id)
                                        ? "bg-accent-light text-accent border border-accent"
                                        : canAddMore
@@ -203,7 +203,7 @@ export default function ProductCompareModal({
                               disabled={
                                  !canAddMore && !isProductSelected(product.id)
                               }
-                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex-shrink-0 ${
+                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors shrink-0 ${
                                  isProductSelected(product.id)
                                     ? "bg-accent-light text-accent border border-accent"
                                     : canAddMore

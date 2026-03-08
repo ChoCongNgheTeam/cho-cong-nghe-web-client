@@ -1,11 +1,11 @@
 import React from "react";
 
 interface CartItem {
-   id: number;
+   id: string | number; // ← fix: chấp nhận cả string (từ API mới) lẫn number (cũ)
    name: string;
    variant: string;
-   color?: string; // thêm
-   colorValue?: string; // thêm
+   color?: string;
+   colorValue?: string;
    quantity: number;
    unit_price: number;
    discount_value: number;
@@ -17,9 +17,8 @@ interface CartItemsProps {
 }
 
 export default function CartItems({ items }: CartItemsProps) {
-   const formatPrice = (price: number) => {
-      return new Intl.NumberFormat("vi-VN").format(price) + "đ";
-   };
+   const formatPrice = (price: number) =>
+      new Intl.NumberFormat("vi-VN").format(price) + "đ";
 
    return (
       <div className="bg-neutral-light rounded-lg">
@@ -62,6 +61,7 @@ export default function CartItems({ items }: CartItemsProps) {
                            <p className="text-xs mb-2 text-neutral-darker">
                               {item.variant}
                            </p>
+
                            {item.color && (
                               <div className="flex items-center gap-1.5 mb-2">
                                  <span
@@ -74,20 +74,17 @@ export default function CartItems({ items }: CartItemsProps) {
                               </div>
                            )}
 
-                           {/* Price Section */}
+                           {/* Price */}
                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-sm text-promotion">
                                  {formatPrice(finalPrice)}
                               </span>
-
                               {item.discount_value > 0 && (
-                                 <span className="text-xs line-through text-neutral-darker ">
+                                 <span className="text-xs line-through text-neutral-darker">
                                     {formatPrice(item.unit_price)}
                                  </span>
                               )}
-
-                              {/* Quantity */}
-                              <span className="ml-auto text-sm font-medium text-neutral-darker ">
+                              <span className="ml-auto text-sm font-medium text-neutral-darker">
                                  x{item.quantity}
                               </span>
                            </div>

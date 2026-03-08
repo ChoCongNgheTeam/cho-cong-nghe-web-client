@@ -42,7 +42,7 @@ function CategoryImage({ category }: { category: Category }) {
    }
 
    return (
-      <div className="w-7 h-7 rounded-lg bg-neutral-light-active flex items-center justify-center shrink-0 text-neutral-dark">
+      <div className="w-7 h-7 rounded-lg bg-neutral-light-active flex items-center justify-center shrink-0 text-primary">
          <ImageOff size={13} strokeWidth={1.5} />
       </div>
    );
@@ -115,14 +115,14 @@ export default function AdminCategories() {
    ];
 
    return (
-      <div className="min-h-screen bg-neutral-light font-inters">
+      <div className="min-h-screen bg-neutral-light">
          {/* ── Header ── */}
          <div className="px-6 pt-5 pb-4 flex items-center justify-between">
             <div>
                <h1 className="text-[16px] font-bold text-primary">
                   Danh mục sản phẩm
                </h1>
-               <p className="text-[12px] text-neutral-dark mt-0.5">
+               <p className="text-[12px] text-primary mt-0.5">
                   Quản lý toàn bộ danh mục và danh mục con
                </p>
             </div>
@@ -170,7 +170,7 @@ export default function AdminCategories() {
                      {s.icon}
                   </div>
                   <div>
-                     <p className="text-[11px] text-neutral-dark">{s.label}</p>
+                     <p className="text-[13px] text-primary">{s.label}</p>
                      <p className="text-[15px] font-bold text-primary">
                         {loading ? (
                            <span className="animate-pulse">—</span>
@@ -199,19 +199,19 @@ export default function AdminCategories() {
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium cursor-pointer whitespace-nowrap ${
                            isSelected
                               ? "bg-neutral-light text-primary font-semibold shadow-sm border border-neutral"
-                              : "text-neutral-dark hover:text-primary hover:bg-neutral-light/60"
+                              : "text-primary hover:text-primary hover:bg-neutral-light/60"
                         }`}
                      >
                         {tab.label}
                         <span
-                           className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-md min-w-5 text-center ${
+                           className={`text-[13px] font-semibold px-1.5 py-0.5 rounded-md min-w-5 text-center ${
                               isSelected
                                  ? tab.value === true
                                     ? "bg-emerald-100 text-emerald-600"
                                     : tab.value === false
                                       ? "bg-orange-100 text-orange-500"
                                       : "bg-blue-100 text-blue-500"
-                                 : "bg-neutral text-neutral-dark"
+                                 : "bg-neutral text-primary"
                            }`}
                         >
                            {loading ? "—" : tab.count}
@@ -225,18 +225,18 @@ export default function AdminCategories() {
                <form onSubmit={handleSearchSubmit} className="relative">
                   <Search
                      size={14}
-                     className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none"
+                     className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
                   />
                   <input
                      type="text"
                      value={searchInput}
                      onChange={(e) => setSearchInput(e.target.value)}
                      placeholder="Tìm danh mục..."
-                     className="pl-8 pr-3 py-1.5 text-[13px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/40 w-52 transition-all"
+                     className="pl-8 pr-3 py-1.5 text-[13px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 w-52 transition-all"
                   />
                </form>
 
-               <button className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg bg-neutral-light text-[13px] text-primary-light hover:bg-neutral-light-active transition-colors cursor-pointer">
+               <button className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg bg-neutral-light text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer">
                   <Filter size={13} />
                   Bộ lọc
                </button>
@@ -255,31 +255,31 @@ export default function AdminCategories() {
             <table className="w-full">
                <thead>
                   <tr className="border-b border-neutral bg-neutral-light-hover">
-                     <th className="w-12 px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="w-12 px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         STT
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         Tên danh mục
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         Mô tả
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         Danh mục con
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         Vị trí
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         Nổi bật
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         <div className="flex items-center gap-1">
                            Trạng thái
                            <ChevronDown size={11} />
                         </div>
                      </th>
-                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark tracking-wide uppercase">
+                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
                         Hành động
                      </th>
                   </tr>
@@ -300,7 +300,7 @@ export default function AdminCategories() {
                      <tr>
                         <td
                            colSpan={8}
-                           className="py-20 text-center text-[13px] text-neutral-dark"
+                           className="py-20 text-center text-[13px] text-primary"
                         >
                            Không có dữ liệu
                         </td>
@@ -329,14 +329,14 @@ export default function AdminCategories() {
                                  isChild ? "bg-neutral-light-hover/30" : ""
                               }`}
                            >
-                              <td className="px-4 py-3 text-[13px] text-primary-light tabular-nums">
+                              <td className="px-4 py-3 text-[13px] text-primary tabular-nums">
                                  {stt}
                               </td>
 
                               <td className="px-4 py-3">
                                  <div className="flex items-center gap-2.5">
                                     {isChild && (
-                                       <span className="text-neutral-dark/40 shrink-0">
+                                       <span className="text-primary/40 shrink-0">
                                           <ChevronRight size={12} />
                                        </span>
                                     )}
@@ -345,27 +345,27 @@ export default function AdminCategories() {
                                        <span className="text-[13px] font-medium text-primary">
                                           {cat.name}
                                        </span>
-                                       <p className="text-[11px] text-neutral-dark font-mono">
+                                       <p className="text-[13px] text-primary font-mono">
                                           /{cat.slug}
                                        </p>
                                     </div>
                                  </div>
                               </td>
 
-                              <td className="px-4 py-3 text-[13px] text-primary-light max-w-50">
+                              <td className="px-4 py-3 text-[13px] text-primary max-w-50">
                                  <span className="line-clamp-1">
                                     {cat.description ?? "—"}
                                  </span>
                               </td>
 
                               <td className="px-4 py-3">
-                                 <span className="inline-flex items-center gap-1 text-[12px] text-primary-light bg-neutral-light-active px-2.5 py-1 rounded-lg">
+                                 <span className="inline-flex items-center gap-1 text-[12px] text-primary bg-neutral-light-active px-2.5 py-1 rounded-lg">
                                     <FolderTree size={11} />
                                     {cat._count.children}
                                  </span>
                               </td>
 
-                              <td className="px-4 py-3 text-[13px] text-primary-light tabular-nums">
+                              <td className="px-4 py-3 text-[13px] text-primary tabular-nums">
                                  #{cat.position}
                               </td>
 
@@ -395,7 +395,7 @@ export default function AdminCategories() {
                                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium cursor-pointer disabled:opacity-50 ${
                                        cat.isFeatured
                                           ? "text-amber-600 bg-amber-50 hover:bg-amber-100"
-                                          : "text-neutral-dark bg-neutral-light-active hover:bg-neutral-light-hover"
+                                          : "text-primary bg-neutral-light-active hover:bg-neutral-light-hover"
                                     }`}
                                  >
                                     {isUpdating ? (
@@ -506,19 +506,19 @@ export default function AdminCategories() {
                                     <Link
                                        href={`/admin/categories/${cat.id}`}
                                        title="Xem"
-                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
+                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent transition-colors"
                                     >
                                        <Eye size={14} />
                                     </Link>
                                     <button
                                        title="Chỉnh sửa"
-                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
+                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
                                     >
                                        <Pencil size={14} />
                                     </button>
                                     <button
                                        title="Xoá"
-                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
+                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
                                     >
                                        <Trash2 size={14} />
                                     </button>

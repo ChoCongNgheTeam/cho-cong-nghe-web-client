@@ -29,7 +29,7 @@ export default function ProductHighlights({
                key={highlight.key ?? index}
                className="flex items-center gap-2 text-xs text-gray-600"
             >
-               <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
+               <span className="shrink-0 w-4 h-4 flex items-center justify-center">
                   {getIcon(highlight.icon)}
                </span>
                <span className="flex-1 line-clamp-1">
