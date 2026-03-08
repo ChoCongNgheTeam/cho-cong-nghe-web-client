@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToasty } from "@/components/Toast";
 import { Pencil, ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";
+import Image from "next/image";
 
 type UpdateProfile = {
   fullName: string;
@@ -171,10 +172,11 @@ export default function ProfileForm() {
             {/* Avatar */}
             <div className="relative flex justify-center ">
               <div className="relative w-28 h-28 rounded-full bg-neutral-light p-1 shadow-lg">
-                <img
+                <Image
                   src={formData.avatarImage || "/images/avatar.png"}
                   alt="Avatar"
                   className="w-full h-full rounded-full object-cover"
+                  fill
                 />
                 <button
                   type="button"
