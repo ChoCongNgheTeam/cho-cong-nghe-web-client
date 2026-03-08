@@ -32,7 +32,6 @@ export const updateBrand = async (
          formData.append("removeImage", String(payload.removeImage));
       formData.append("imageUrl", payload.imageUrl);
 
-      // ✅ Không set Content-Type — để axios tự thêm boundary
       return apiRequest.patch<UpdateBrandResponse>(
          `/brands/admin/${id}`,
          formData,

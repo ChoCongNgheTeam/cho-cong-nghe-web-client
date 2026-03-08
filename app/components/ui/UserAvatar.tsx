@@ -21,7 +21,7 @@ export default function UserAvatar({
       >
          {avatarImage ? (
             <Image
-               src={avatarImage && "/images/avatar.png"}
+               src={avatarImage}
                alt={fullName}
                width={size}
                height={size}

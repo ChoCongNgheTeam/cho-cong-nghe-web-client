@@ -66,7 +66,7 @@ export default function ForgotPasswordForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email của bạn"
-            className="w-full rounded-md border px-4 py-3"
+            className="w-full rounded-md border px-3 py-2 text-sm"
             disabled={loading}
          />
 
@@ -85,7 +85,7 @@ export default function ForgotPasswordForm() {
          <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary py-3 text-neutral hover:bg-primary-dark-hover disabled:opacity-50"
+            className="w-full rounded-md bg-primary py-2.5 text-sm text-neutral hover:bg-primary-dark-hover disabled:opacity-50"
          >
             {loading ? "Đang gửi..." : "Gửi liên kết đặt lại mật khẩu"}
          </button>

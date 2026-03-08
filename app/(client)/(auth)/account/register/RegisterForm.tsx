@@ -272,7 +272,7 @@ const RegisterForm: React.FC = () => {
                   htmlFor="fullName"
                   className="block mb-1.5 text-primary text-base"
                >
-                  Họ và tên
+                  Họ và tên *
                </label>
                <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-dark" />

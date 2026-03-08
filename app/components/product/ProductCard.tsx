@@ -25,10 +25,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
          className="group relative flex flex-col bg-neutral-light border border-neutral rounded-xl py-6 px-3"
       >
          {/* Wishlist */}
-         {/* <WishlistHeart
+         <WishlistHeart
             productId={product.id}
             defaultLiked={product.isWishlist ?? false}
-         /> */}
+         />
 
          {/* Badge giảm giá */}
          {hasPromotion && (
@@ -38,7 +38,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             />
          )}
 
-         <div className="grid grid-cols-[1.5fr_1fr] items-center pb-3">
+         <div className="grid grid-cols-[1.5fr_1fr] items-center pb-3 mt-4">
             {/* Image */}
             <div className="relative w-full aspect-square bg-neutral-light">
                {product.thumbnail ? (

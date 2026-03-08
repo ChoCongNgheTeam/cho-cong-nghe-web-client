@@ -33,7 +33,6 @@ const Header = () => {
    const lastScrollY = useRef(0);
    const ticking = useRef(false);
 
-   // loading = true trong khi checkAuth đang chạy (lúc F5)
    const { user, logout, isAuthenticated, loading } = useAuth();
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
@@ -140,16 +139,12 @@ const Header = () => {
                      onSearchChange={setSearchQuery}
                   />
                   <DesktopHeader
-                     searchQuery={searchQuery}
                      isDarkMode={isDark}
-                     // Khi đang loading: truyền false/null để render skeleton
-                     // thay vì nhảy về trạng thái "chưa đăng nhập"
                      isAuthenticated={isAuthenticated}
                      isLoading={loading}
                      user={user}
                      showUserMenu={showUserMenu}
                      userMenuRef={userMenuRef}
-                     onSearchChange={setSearchQuery}
                      onUserMenuToggle={() => setShowUserMenu(!showUserMenu)}
                      onUserMenuClose={() => setShowUserMenu(false)}
                      onLogout={logout}

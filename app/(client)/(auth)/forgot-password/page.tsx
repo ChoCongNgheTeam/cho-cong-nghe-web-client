@@ -18,34 +18,46 @@ export const metadata: Metadata = {
 
 export default function ForgotPasswordPage() {
    return (
-      <section className="mx-auto max-w-6xl px-4 py-16">
-         <div className="mx-auto max-w-md">
-            <Breadcrumb
-               items={[
-                  { label: "Trang chủ", href: "/" },
-                  { label: "Tài khoản", href: "/account" },
-                  { label: "Quên mật khẩu" },
-               ]}
-            />
+      <section className="container px-4 py-8">
+         <Breadcrumb
+            items={[
+               { label: "Trang chủ", href: "/" },
+               { label: "Tài khoản", href: "/account" },
+               { label: "Quên mật khẩu" },
+            ]}
+         />
 
-            <h1 className="mb-2 text-2xl font-semibold text-primary">
-               Quên mật khẩu
-            </h1>
-
-            <p className="mb-6 text-sm text-primary">
-               Nhập email bạn đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật
-               khẩu.
-            </p>
-
-            {/* Client Form */}
+         {/* Form căn giữa */}
+         <div className="mt-7 w-full max-w-sm mx-auto">
+            <div className="my-8">
+               <h1 className="text-xl font-semibold text-primary tracking-tight mb-1">
+                  Quên mật khẩu?
+               </h1>
+               <p className="text-sm text-neutral-dark leading-relaxed">
+                  Nhập email đã đăng ký — chúng tôi sẽ gửi link đặt lại ngay.
+               </p>
+            </div>
             <ForgotPasswordForm />
 
-            <div className="mt-6 text-center text-sm">
+            <div className="mt-5 text-center">
                <Link
                   href="/account?login"
-                  className="hover:underline text-primary"
+                  className="inline-flex items-center gap-1.5 text-xs text-neutral-dark hover:text-primary transition-colors"
                >
-                  ← Quay lại đăng nhập
+                  <svg
+                     className="w-3.5 h-3.5"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor"
+                     strokeWidth={2}
+                  >
+                     <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                     />
+                  </svg>
+                  Quay lại đăng nhập
                </Link>
             </div>
          </div>

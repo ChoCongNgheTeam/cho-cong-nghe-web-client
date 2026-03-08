@@ -126,7 +126,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Content */}
-        <div className="min-h-[500px]">
+        <div className="min-h-125">
           {authLoading || loading ? (
             <LoadingState />
           ) : error ? (
