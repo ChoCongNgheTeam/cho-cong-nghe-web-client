@@ -7,7 +7,7 @@ import { Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import VariantDropdown from "./components/CartVariantSelector";
-import OrderSummary from "@/components/odersummary/OrderSummary";
+import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import toast from "react-hot-toast";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
