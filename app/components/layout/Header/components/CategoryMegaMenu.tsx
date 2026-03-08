@@ -295,7 +295,7 @@ const MegaPanel = ({ category }: { category: Category | null }) => {
 };
 
 // Main Component
-const CategoryMegaMenu = () => {
+export default function CategoryMegaMenu() {
    const [categories, setCategories] = useState<Category[]>([]);
    const [isOpen, setIsOpen] = useState(false);
    const [activeCategory, setActiveCategory] = useState<Category | null>(null);
@@ -395,6 +395,4 @@ const CategoryMegaMenu = () => {
          `}</style>
       </div>
    );
-};
-
-export default CategoryMegaMenu;
+}

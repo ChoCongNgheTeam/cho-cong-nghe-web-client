@@ -7,7 +7,7 @@ export default function ChatButton() {
    const [open, setOpen] = useState(false);
 
    return (
-      <div className="fixed bottom-20 right-6 z-[9998] flex flex-col items-end gap-3">
+      <div className="fixed bottom-20 right-6 z-9998 flex flex-col items-end gap-3">
          {/* Chat panel */}
          {open && (
             <div className="w-72 rounded-2xl border border-neutral bg-neutral-light shadow-xl overflow-hidden">

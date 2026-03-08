@@ -1,29 +1,45 @@
 // ========================= RESPONSE =========================
 export interface OrderResponse {
   data: Order[];
-  message: string;
+  message?: string;
 }
 
 // ========================= ORDER =========================
 export interface Order {
   id: string;
+  orderCode: string;
   userId: string;
 
+  paymentMethodId: string;
+  voucherId: string | null;
+  shippingAddressId: string | null;
+
+  // Shipping info
+  shippingContactName: string;
+  shippingPhone: string;
+  shippingProvince: string;
+  shippingWard: string;
+  shippingDetail: string;
+
+  // Money
   subtotalAmount: string;
   shippingFee: string;
   voucherDiscount: string;
   totalAmount: string;
 
-  orderStatus: "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  // Status
+  orderStatus: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+
   paymentStatus: "UNPAID" | "PAID" | "FAILED";
 
   orderDate: string;
   updatedAt: string;
 
+  // Relations
   user: User;
   paymentMethod: PaymentMethod;
-  shippingAddress: ShippingAddress;
-  voucher: null | Voucher;
+  voucher: Voucher | null;
+
   orderItems: OrderItem[];
 }
 
@@ -48,22 +64,13 @@ export interface Voucher {
   code: string;
 }
 
-// ========================= ADDRESS =========================
-export interface ShippingAddress {
-  id: string;
-  contactName: string;
-  phone: string;
-  detailAddress: string;
-  provinceId: string;
-  wardId: string;
-}
-
 // ========================= ORDER ITEM =========================
 export interface OrderItem {
   id: string;
   quantity: number;
   unitPrice: string;
-  productVariant: ProductVariant;
+
+  productVariant: ProductVariant | null;
 }
 
 // ========================= VARIANT =========================
@@ -71,6 +78,7 @@ export interface ProductVariant {
   id: string;
   code: string;
   price: string;
+
   product: Product;
   variantAttributes: VariantAttribute[];
 }

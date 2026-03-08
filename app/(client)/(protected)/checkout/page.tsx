@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShoppingCart, MapPin, AlertTriangle } from "lucide-react";
 import { useToasty } from "@/components/Toast";
 import UserInfoSidebar from "./components/UserInfoSidebar";
@@ -17,6 +17,8 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 
 interface CartItem {
   id: string;
@@ -53,11 +55,13 @@ interface CheckoutData {
   promotionValue: number;
   appliedVoucherCode: string;
   appliedVoucherValue: number;
+  appliedVoucherId?: string;
   subtotal: number;
   totalDiscount: number;
   finalTotal: number;
   rewardPoints: number;
   usePoints: boolean;
+  newAddressId?: string; // ghi tạm bởi AddressPage khi redirect về checkout
 }
 
 interface PreviewData {
@@ -68,10 +72,11 @@ interface PreviewData {
   totalAmount: number;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToasty();
   const { user, loading: authLoading } = useAuth();
 
@@ -79,16 +84,27 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
   const [promotionValue, setPromotionValue] = useState(0);
-  const [appliedVoucherCode, setAppliedVoucherCode] = useState("");
-  const [appliedVoucherValue, setAppliedVoucherValue] = useState(0);
-  const [appliedVoucherId, setAppliedVoucherId] = useState<string | undefined>();
   const [subtotal, setSubtotal] = useState(0);
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
   const [rewardPoints, setRewardPoints] = useState(0);
   const [usePoints, setUsePoints] = useState(false);
 
-  // ── Preview from API ───────────────────────────────────────────────────────
+  // ── Voucher state ──────────────────────────────────────────────────────────
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherValue, setVoucherValue] = useState(0);
+  const [voucherId, setVoucherId] = useState("");
+
+  const handleApplyVoucher = useCallback(
+    (code: string, value: number, id: string) => {
+      setVoucherCode(code);
+      setVoucherValue(value);
+      setVoucherId(id);
+    },
+    [],
+  );
+
+  // ── Preview ────────────────────────────────────────────────────────────────
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
 
   // ── User info ──────────────────────────────────────────────────────────────
@@ -121,11 +137,33 @@ export default function CheckoutPage() {
   const { refetchCart } = useCart();
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-  const formatDisplayAddress = (addr: ApiAddress) => addr.fullAddress ?? [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
+  const formatDisplayAddress = (addr: ApiAddress) =>
+    addr.fullAddress ??
+    [addr.detailAddress, addr.ward?.name, addr.province?.name]
+      .filter(Boolean)
+      .join(", ");
 
-  // ── Effect 1: Load checkout data from localStorage ─────────────────────────
+  // ── Helper: fetch & apply địa chỉ mới nhất ────────────────────────────────
+  const fetchAndApplyLatestAddress = useCallback(async (addressId: string) => {
+    try {
+      const res = await apiRequest.get<{ success: boolean; data: ApiAddress[] }>("/addresses");
+      const list = res?.data ?? [];
+      if (list.length === 0) return;
+      // Tìm đúng địa chỉ vừa tạo theo id, fallback về default hoặc đầu tiên
+      const target =
+        list.find((a) => a.id === addressId) ??
+        list.find((a) => a.isDefault) ??
+        list[0];
+      setSelectedAddress(target);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  // ── Effect 1: Load checkout data từ localStorage ───────────────────────────
   useEffect(() => {
     const savedCheckoutData = localStorage.getItem("checkoutData");
     if (!savedCheckoutData) {
@@ -149,19 +187,41 @@ export default function CheckoutPage() {
           colorValue: item.colorValue ?? "",
           quantity: item.quantity,
           unit_price: item.unitPrice ?? item.unit_price ?? 0,
-          discount_value: (item.originalPrice ?? item.unitPrice ?? 0) - (item.unitPrice ?? 0),
+          discount_value:
+            (item.originalPrice ?? item.unitPrice ?? 0) - (item.unitPrice ?? 0),
           image: item.image ?? item.image_url ?? "",
         })),
       );
       setSelectedPromotions(data.selectedPromotions);
       setPromotionValue(data.promotionValue);
-      setAppliedVoucherCode(data.appliedVoucherCode);
-      setAppliedVoucherValue(data.appliedVoucherValue);
       setSubtotal(data.subtotal);
       setTotalDiscount(data.totalDiscount);
       setFinalTotal(data.finalTotal);
       setRewardPoints(data.rewardPoints);
       setUsePoints(data.usePoints ?? false);
+      setVoucherCode(data.appliedVoucherCode ?? "");
+      setVoucherValue(data.appliedVoucherValue ?? 0);
+      setVoucherId(data.appliedVoucherId ?? "");
+
+      // Nếu AddressPage ghi newAddressId vào checkoutData
+      // → fetch & chọn đúng địa chỉ đó ngay tại đây (tránh race condition với Effect 3)
+      if (data.newAddressId) {
+        const targetId = data.newAddressId as string;
+        delete data.newAddressId;
+        localStorage.setItem("checkoutData", JSON.stringify(data));
+        router.replace("/checkout", { scroll: false });
+        apiRequest
+          .get<{ success: boolean; data: ApiAddress[] }>("/addresses")
+          .then((res) => {
+            const list = res?.data ?? [];
+            const target =
+              list.find((a) => a.id === targetId) ??
+              list.find((a) => a.isDefault) ??
+              list[0];
+            if (target) setSelectedAddress(target);
+          })
+          .catch(() => {});
+      }
     } catch {
       toast.error("Dữ liệu đơn hàng không hợp lệ");
       router.push("/cart");
@@ -170,7 +230,7 @@ export default function CheckoutPage() {
     }
   }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Effect 2: Sync user info from AuthContext ──────────────────────────────
+  // ── Effect 2: Sync user info ───────────────────────────────────────────────
   useEffect(() => {
     if (!authLoading && user) {
       setContactName(user.fullName);
@@ -179,51 +239,44 @@ export default function CheckoutPage() {
     }
   }, [authLoading, user]);
 
-  // ── Effect 3: Auto-load default address on mount ───────────────────────────
+  // ── Effect 3: Load địa chỉ mặc định (chỉ khi KHÔNG phải từ newAddress flow) ─
   useEffect(() => {
     if (authLoading) return;
+    // Nếu có ?newAddress=1 thì Effect 1 đã xử lý rồi, bỏ qua
+    if (searchParams.get("newAddress") === "1") return;
+
     const loadDefaultAddress = async () => {
       try {
         const res = await apiRequest.get<{ success: boolean; data: ApiAddress | null }>("/addresses/default");
-        if (res?.data) {
-          setSelectedAddress(res.data);
-          return;
-        }
-      } catch {
-        // /addresses/default returned 404 or error → fallback
-      }
+        if (res?.data) { setSelectedAddress(res.data); return; }
+      } catch { /* fallback */ }
       try {
         const listRes = await apiRequest.get<{ success: boolean; data: ApiAddress[] }>("/addresses");
         const list = listRes?.data ?? [];
-        if (list.length > 0) {
+        if (list.length > 0)
           setSelectedAddress(list.find((a) => a.isDefault) ?? list[0]);
-        }
-      } catch {
-        // silent — user can pick manually via sidebar
-      }
+      } catch { /* silent */ }
     };
     loadDefaultAddress();
-  }, [authLoading]);
+  }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Effect 4: Fetch checkout preview ──────────────────────────────────────
+  // ── Effect 4: Fetch preview ────────────────────────────────────────────────
   const fetchPreview = useCallback(async () => {
     if (!selectedAddress?.id || !selectedPaymentMethodId) return;
     try {
       const params = new URLSearchParams({
         paymentMethodId: selectedPaymentMethodId,
         shippingAddressId: selectedAddress.id,
-        ...(appliedVoucherId ? { voucherId: appliedVoucherId } : {}),
+        ...(voucherId ? { voucherId } : {}),
       });
-      const res = await apiRequest.get<{ success: boolean; data: PreviewData }>(`/checkout/preview?${params.toString()}`);
+      const res = await apiRequest.get<{ success: boolean; data: PreviewData }>(
+        `/checkout/preview?${params.toString()}`,
+      );
       if (res?.data) setPreviewData(res.data);
-    } catch {
-      // preview is non-critical
-    }
-  }, [selectedAddress?.id, selectedPaymentMethodId, appliedVoucherId]);
+    } catch { /* non-critical */ }
+  }, [selectedAddress?.id, selectedPaymentMethodId, voucherId]);
 
-  useEffect(() => {
-    fetchPreview();
-  }, [fetchPreview]);
+  useEffect(() => { fetchPreview(); }, [fetchPreview]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -234,64 +287,63 @@ export default function CheckoutPage() {
     toast.success("Cập nhật thông tin người đặt thành công");
   };
 
-  const handleApplyVoucher = (code: string, value: number, voucherId?: string) => {
-    setAppliedVoucherCode(code);
-    setAppliedVoucherValue(value);
-    setAppliedVoucherId(voucherId);
-  };
-
   const handlePlaceOrder = async () => {
     if (!contactName || !contactPhone) {
-      toast.error("Vui lòng kiểm tra thông tin người đặt");
-      return;
+      toast.error("Vui lòng kiểm tra thông tin người đặt"); return;
     }
     if (!selectedAddress) {
-      toast.error("Vui lòng chọn địa chỉ giao hàng");
-      return;
+      toast.error("Vui lòng chọn địa chỉ giao hàng"); return;
     }
     if (!selectedPaymentMethodId) {
-      toast.error("Vui lòng chọn phương thức thanh toán");
-      return;
+      toast.error("Vui lòng chọn phương thức thanh toán"); return;
     }
     if (!agreedToTerms) {
-      toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
-      return;
+      toast.error("Vui lòng đồng ý với điều khoản đặt hàng"); return;
     }
 
     setIsSubmitting(true);
     try {
       const res = await apiRequest.post<{
         success: boolean;
-        data: { orderId: string };
+        data: { orderId: string; orderCode: string; paymentInfo?: any };
         message?: string;
       }>("/checkout", {
         paymentMethodId: selectedPaymentMethodId,
         shippingAddressId: selectedAddress.id,
-        ...(appliedVoucherId ? { voucherId: appliedVoucherId } : {}),
+        shippingContactName: selectedAddress.contactName,
+        shippingPhone: selectedAddress.phone,
+        ...(voucherId ? { voucherId } : {}),
       });
 
       if (res?.success) {
+        const rawCheckout = localStorage.getItem("checkoutData");
+        if (rawCheckout) sessionStorage.setItem("checkoutData", rawCheckout);
         localStorage.removeItem("checkoutData");
         await refetchCart();
-        toast.success(`Đặt hàng thành công`);
-        // setTimeout(() => router.push(`/orders/${res.data.orderId}`), 1200);
-        setTimeout(() => router.push("/thanks"), 1200);
-      } else {
-        toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
+
+        const info = res.data?.paymentInfo ?? { type: "COD" };
+        sessionStorage.setItem("paymentInfo", JSON.stringify(info));
+        sessionStorage.setItem("pendingOrderId", res.data?.orderId ?? "");
+        sessionStorage.setItem("pendingOrderCode", res.data?.orderCode ?? "");
+        router.push("/payment");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng");
+      toast.error(
+        err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // ── Computed values ────────────────────────────────────────────────────────
-  const displaySubtotal = previewData?.subtotalAmount ?? subtotal;
+  const displaySubtotal = subtotal;
   const displayDiscount = totalDiscount;
-  const displayVoucherDiscount = previewData?.voucherDiscount ?? appliedVoucherValue;
-  const displayTotal = previewData?.totalAmount ?? finalTotal;
-  const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
+  const displayVoucherDiscount = voucherValue;
+  const displayFinalTotal = finalTotal;
+  const mobileFinalTotal = Math.max(0, finalTotal - voucherValue);
+  const shippingFee = previewData?.shippingFee ?? 0;
+  const taxAmount = previewData?.taxAmount ?? 0;
 
   // ── Loading guard ──────────────────────────────────────────────────────────
   if (isPageLoading || authLoading) {
@@ -315,11 +367,17 @@ export default function CheckoutPage() {
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Desktop Layout ── */}
+      {/* ── Desktop ── */}
       <div className="hidden md:block">
         <div className="container py-4 sm:py-6">
           <div className="mb-4 sm:mb-6">
-            <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Giỏ hàng", href: "/cart" }, { label: "Thanh toán" }]} />
+            <Breadcrumb
+              items={[
+                { label: "Trang chủ", href: "/" },
+                { label: "Giỏ hàng", href: "/cart" },
+                { label: "Thanh toán" },
+              ]}
+            />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
@@ -331,9 +389,7 @@ export default function CheckoutPage() {
               <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm sm:text-base font-semibold text-primary">Người đặt hàng</h2>
-                  <button onClick={() => setShowUserSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">
-                    Thay đổi
-                  </button>
+                  <button onClick={() => setShowUserSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">Thay đổi</button>
                 </div>
                 <div className="space-y-1">
                   <p className="font-medium text-sm text-primary">{contactName || "Chưa có tên"}</p>
@@ -346,18 +402,21 @@ export default function CheckoutPage() {
               <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm sm:text-base font-semibold text-primary">Địa chỉ nhận hàng</h2>
-                  <button onClick={() => setShowAddressSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">
-                    Thay đổi
-                  </button>
+                  <button onClick={() => setShowAddressSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">Thay đổi</button>
                 </div>
-
                 {selectedAddress ? (
                   <div>
                     <p className="font-semibold text-sm text-primary mb-1">
                       {selectedAddress.contactName} • {selectedAddress.phone}
                     </p>
-                    <p className="text-sm text-neutral-darker leading-relaxed">{formatDisplayAddress(selectedAddress)}</p>
-                    {selectedAddress.isDefault && <span className="mt-2 inline-block text-xs px-2 py-0.5 rounded-full bg-accent text-primary-darker font-medium">Địa chỉ mặc định</span>}
+                    <p className="text-sm text-neutral-darker leading-relaxed">
+                      {formatDisplayAddress(selectedAddress)}
+                    </p>
+                    {selectedAddress.isDefault && (
+                      <span className="mt-2 inline-block text-xs px-2 py-0.5 rounded-full bg-accent text-primary-darker font-medium">
+                        Địa chỉ mặc định
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <>
@@ -372,7 +431,7 @@ export default function CheckoutPage() {
                       <AlertTriangle size={15} className="text-yellow-600 shrink-0 mt-0.5" />
                       <p className="text-xs text-yellow-700">
                         Bạn chưa có địa chỉ nào.{" "}
-                        <Link href="/profile/addresses" className="font-semibold underline">
+                        <Link href="/profile/addresses?redirect=checkout" className="font-semibold underline">
                           Thêm địa chỉ tại đây
                         </Link>
                       </p>
@@ -411,10 +470,10 @@ export default function CheckoutPage() {
               <OrderSummary
                 subtotal={displaySubtotal}
                 totalDiscount={displayDiscount}
-                finalTotal={displayTotal}
+                finalTotal={displayFinalTotal}
                 rewardPoints={rewardPoints}
                 selectedItemsCount={cartItems.length}
-                appliedVoucherCode={appliedVoucherCode}
+                appliedVoucherCode={voucherCode}
                 appliedVoucherValue={displayVoucherDiscount}
                 selectedPromotions={selectedPromotions}
                 promotionValue={promotionValue}
@@ -426,16 +485,17 @@ export default function CheckoutPage() {
                 onTermsChange={setAgreedToTerms}
                 isCheckoutPage={true}
               />
-
               {previewData && (
                 <div className="px-4 pb-4 text-xs text-neutral-darker space-y-1 border-t border-neutral pt-3">
                   <div className="flex justify-between">
                     <span>Phí vận chuyển</span>
-                    <span className={previewData.shippingFee === 0 ? "text-green-600 font-medium" : ""}>{previewData.shippingFee === 0 ? "Miễn phí" : formatPrice(previewData.shippingFee)}</span>
+                    <span className={shippingFee === 0 ? "text-green-600 font-medium" : ""}>
+                      {shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Thuế VAT (10%)</span>
-                    <span>{formatPrice(previewData.taxAmount)}</span>
+                    <span>{formatPrice(taxAmount)}</span>
                   </div>
                 </div>
               )}
@@ -444,87 +504,51 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* ── Mobile Layout ── */}
+      {/* ── Mobile ── */}
       <div className="md:hidden">
         <div className="bg-neutral-light border-b border-neutral px-4 py-3">
           <Link href="/cart" className="inline-flex items-center gap-1 text-sm cursor-pointer text-primary">
             <span>←</span> Quay lại giỏ hàng
           </Link>
         </div>
-
         <div className="px-3 pt-3">
           <CartItems items={cartItems} />
         </div>
-
-        {/* Người đặt - Mobile */}
         <div className="px-3 mt-3">
           <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-primary mb-3">Người đặt hàng</h2>
             <div className="space-y-2">
-              <input
-                type="text"
-                value={contactName}
-                readOnly
-                onClick={() => setShowUserSidebar(true)}
-                className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
-                placeholder="Họ và tên"
-              />
-              <input
-                type="tel"
-                value={contactPhone}
-                readOnly
-                onClick={() => setShowUserSidebar(true)}
-                className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
-                placeholder="Số điện thoại"
-              />
-              <input
-                type="email"
-                value={contactEmail}
-                readOnly
-                onClick={() => setShowUserSidebar(true)}
-                className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark"
-                placeholder="Email (Không bắt buộc)"
-              />
+              <input type="text" value={contactName} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary" placeholder="Họ và tên" />
+              <input type="tel" value={contactPhone} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary" placeholder="Số điện thoại" />
+              <input type="email" value={contactEmail} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark" placeholder="Email (Không bắt buộc)" />
             </div>
           </div>
         </div>
-
-        {/* Địa chỉ - Mobile */}
         <div className="px-3 mt-3">
           <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-primary">Địa chỉ nhận hàng</h2>
-              <button onClick={() => setShowAddressSidebar(true)} className="text-xs text-primary hover:underline">
-                Thay đổi
-              </button>
+              <button onClick={() => setShowAddressSidebar(true)} className="text-xs text-primary hover:underline">Thay đổi</button>
             </div>
             {selectedAddress ? (
               <div onClick={() => setShowAddressSidebar(true)} className="cursor-pointer">
-                <p className="font-semibold text-sm text-primary mb-1">
-                  {selectedAddress.contactName} • {selectedAddress.phone}
-                </p>
+                <p className="font-semibold text-sm text-primary mb-1">{selectedAddress.contactName} • {selectedAddress.phone}</p>
                 <p className="text-sm text-neutral-darker">{formatDisplayAddress(selectedAddress)}</p>
               </div>
             ) : (
               <button onClick={() => setShowAddressSidebar(true)} className="flex items-center gap-2 w-full p-3 border-2 border-dashed border-neutral-dark rounded-lg text-sm text-neutral-darker">
-                <MapPin size={16} />
-                Chọn địa chỉ giao hàng
+                <MapPin size={16} /> Chọn địa chỉ giao hàng
               </button>
             )}
           </div>
         </div>
-
-        {/* Floating CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-accent border-t-2 border-accent-dark p-3 z-30 shadow-2xl">
-          <button
-            onClick={() => setShowSidebar(true)}
-            className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl"
-          >
+          <button onClick={() => setShowSidebar(true)} className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl">
             <div className="flex items-center gap-3">
               <ShoppingCart className="h-5 w-5 shrink-0" />
               <span>Xem đơn hàng ({cartItems.length})</span>
             </div>
-            <span className="font-bold text-lg">{formatPrice(finalTotalWithVoucher)}</span>
+            <span className="font-bold text-lg">{formatPrice(mobileFinalTotal)}</span>
           </button>
         </div>
         <div className="h-24" />
@@ -532,28 +556,17 @@ export default function CheckoutPage() {
 
       {/* ── Sidebars & Modals ── */}
       <UserInfoSidebar isOpen={showUserSidebar} onClose={() => setShowUserSidebar(false)} userInfo={userInfoForSidebar} onUpdate={handleUserUpdate} />
-
       <AddressSidebar isOpen={showAddressSidebar} onClose={() => setShowAddressSidebar(false)} selectedAddressId={selectedAddress?.id} onSelect={setSelectedAddress} />
-
-      <TimeSlotSidebar
-        isOpen={showTimeSidebar}
-        onClose={() => setShowTimeSidebar(false)}
-        onSelect={(date, time) => {
-          setDeliveryDate(date);
-          setDeliveryTime(time);
-        }}
-        selectedSlot={deliveryTime}
-      />
-
+      <TimeSlotSidebar isOpen={showTimeSidebar} onClose={() => setShowTimeSidebar(false)} onSelect={(date, time) => { setDeliveryDate(date); setDeliveryTime(time); }} selectedSlot={deliveryTime} />
       <CartSidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
         subtotal={displaySubtotal}
         totalDiscount={displayDiscount}
-        finalTotal={displayTotal}
+        finalTotal={displayFinalTotal}
         rewardPoints={rewardPoints}
         selectedItemsCount={cartItems.length}
-        appliedVoucherCode={appliedVoucherCode}
+        appliedVoucherCode={voucherCode}
         appliedVoucherValue={displayVoucherDiscount}
         onOpenVoucherModal={() => setShowVoucherModal(true)}
         onCheckout={handlePlaceOrder}
@@ -564,12 +577,12 @@ export default function CheckoutPage() {
         usePoints={usePoints}
         onTogglePoints={setUsePoints}
       />
-
       <VoucherPromotionModal
         isOpen={showVoucherModal}
         onClose={() => setShowVoucherModal(false)}
-        appliedVoucherCode={appliedVoucherCode}
-        appliedVoucherValue={appliedVoucherValue}
+        appliedVoucherCode={voucherCode}
+        appliedVoucherValue={voucherValue}
+        appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
         cartTotal={subtotal}
       />

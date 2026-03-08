@@ -12,7 +12,8 @@ interface GetBrandColumnsParams {
    openStatusId: string | null;
    toggleOne: (id: string) => void;
    setOpenStatusId: (id: string | null) => void;
-   onToggleActive: (brand: Brand) => void; // 👈 thêm
+   onToggleActive: (brand: Brand) => void;
+   onDeleteClick: (brand: Brand) => void;
 }
 
 export function getBrandColumns({
@@ -22,7 +23,8 @@ export function getBrandColumns({
    openStatusId,
    toggleOne,
    setOpenStatusId,
-   onToggleActive, // 👈 thêm
+   onToggleActive,
+   onDeleteClick,
 }: GetBrandColumnsParams): AdminColumn<Brand>[] {
    return [
       {
@@ -141,14 +143,16 @@ export function getBrandColumns({
                >
                   <Eye size={14} />
                </Link>
-               <button
+               <Link
+                  href={`/admin/brands/${brand.id}?edit=true`}
                   title="Chỉnh sửa"
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
                >
                   <Pencil size={14} />
-               </button>
+               </Link>
                <button
                   title="Xoá"
+                  onClick={() => onDeleteClick(brand)}
                   className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
                >
                   <Trash2 size={14} />

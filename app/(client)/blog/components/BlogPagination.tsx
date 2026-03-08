@@ -8,10 +8,7 @@ type Props = {
   totalPages: number;
 };
 
-export default function BlogPagination({
-  currentPage,
-  totalPages,
-}: Props) {
+export default function BlogPagination({ currentPage, totalPages }: Props) {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
 
@@ -21,23 +18,20 @@ export default function BlogPagination({
     const params = new URLSearchParams();
     params.set("page", String(page));
     if (category) params.set("category", category);
-
     return `/blog?${params.toString()}`;
   };
 
   return (
     <div className="flex items-center gap-2">
-      {/* Prev */}
       {currentPage > 1 && (
         <Link
           href={createPageLink(currentPage - 1)}
-          className="rounded-md border px-3 py-1 text-sm hover:bg-gray-100"
+          className="rounded-md border border-neutral px-3 py-1 text-sm text-primary hover:bg-neutral-light-active"
         >
-          ←
+          Prev
         </Link>
       )}
 
-      {/* Pages */}
       {Array.from({ length: totalPages }).map((_, i) => {
         const page = i + 1;
         const isActive = page === currentPage;
@@ -48,8 +42,8 @@ export default function BlogPagination({
             href={createPageLink(page)}
             className={`rounded-md border px-3 py-1 text-sm ${
               isActive
-                ? "border-primary bg-primary text-white"
-                : "hover:bg-gray-100"
+                ? "border-accent bg-accent text-neutral-light"
+                : "border-neutral text-primary hover:bg-neutral-light-active"
             }`}
           >
             {page}
@@ -57,13 +51,12 @@ export default function BlogPagination({
         );
       })}
 
-      {/* Next */}
       {currentPage < totalPages && (
         <Link
           href={createPageLink(currentPage + 1)}
-          className="rounded-md border px-3 py-1 text-sm hover:bg-gray-100"
+          className="rounded-md border border-neutral px-3 py-1 text-sm text-primary hover:bg-neutral-light-active"
         >
-          →
+          Next
         </Link>
       )}
     </div>

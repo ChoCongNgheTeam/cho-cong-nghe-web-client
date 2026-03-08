@@ -122,7 +122,7 @@ export default function NotFound() {
             {/* 404 big number */}
             <div className="relative mb-2 select-none">
                <span
-                  className="block font-inters text-[clamp(7rem,20vw,14rem)] font-black leading-none tracking-tighter text-accent"
+                  className="block text-[clamp(7rem,20vw,14rem)] font-black leading-none tracking-tighter text-accent"
                   style={{
                      WebkitTextStroke: "2px rgb(var(--accent))",
                      textShadow:
@@ -133,7 +133,7 @@ export default function NotFound() {
                </span>
                {/* Ghost duplicate for depth */}
                <span
-                  className="pointer-events-none absolute inset-0 block font-inters text-[clamp(7rem,20vw,14rem)] font-black leading-none tracking-tighter"
+                  className="pointer-events-none absolute inset-0 block text-[clamp(7rem,20vw,14rem)] font-black leading-none tracking-tighter"
                   aria-hidden
                   style={{
                      WebkitTextStroke: "1px rgb(var(--accent))",
@@ -157,7 +157,7 @@ export default function NotFound() {
 
             {/* Headline */}
             <h1
-               className="mb-3 font-inters text-2xl font-semibold text-primary dark:text-primary md:text-3xl"
+               className="mb-3 text-2xl font-semibold text-primary dark:text-primary md:text-3xl"
                style={{
                   animation:
                      "fadeUp 0.6s 0.2s cubic-bezier(0.22,1,0.36,1) both",
@@ -169,7 +169,7 @@ export default function NotFound() {
 
             {/* Subtext */}
             <p
-               className="mb-10 max-w-sm font-inters text-sm font-normal leading-relaxed text-primary-light dark:text-primary-light"
+               className="mb-10 max-w-sm text-sm font-normal leading-relaxed text-primary-light dark:text-primary-light"
                style={{
                   animation:
                      "fadeUp 0.6s 0.35s cubic-bezier(0.22,1,0.36,1) both",
@@ -191,7 +191,7 @@ export default function NotFound() {
             >
                <Link
                   href="/"
-                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-accent px-7 py-3 font-inters text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-accent-hover hover:shadow-[0_8px_30px_rgb(73,121,228,0.35)] active:bg-accent-active"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-accent-hover hover:shadow-[0_8px_30px_rgb(73,121,228,0.35)] active:bg-accent-active"
                >
                   <svg
                      className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5"
@@ -211,7 +211,7 @@ export default function NotFound() {
 
                <button
                   onClick={() => window.history.back()}
-                  className="inline-flex items-center gap-2 rounded-xl border border-neutral-active bg-neutral-light px-7 py-3 font-inters text-sm font-medium text-primary shadow-sm transition-all duration-200 hover:border-accent hover:text-accent dark:border-neutral dark:bg-neutral-light dark:text-primary dark:hover:border-accent dark:hover:text-accent"
+                  className="inline-flex items-center gap-2 rounded-xl border border-neutral-active bg-neutral-light px-7 py-3 text-sm font-medium text-primary shadow-sm transition-all duration-200 hover:border-accent hover:text-accent dark:border-neutral dark:bg-neutral-light dark:text-primary dark:hover:border-accent dark:hover:text-accent"
                >
                   <svg
                      className="h-4 w-4"
@@ -240,7 +240,7 @@ export default function NotFound() {
                }}
             >
                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-promotion" />
-               <span className="font-inters text-xs text-primary-light dark:text-primary-light">
+               <span className="text-xs text-primary-light dark:text-primary-light">
                   Error 404 · Page Not Found
                </span>
             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, X, MapPin, CreditCard, Package } from "lucide-react";
+import { ChevronRight, MapPin, CreditCard, Package } from "lucide-react";
 import { Order, OrderResponse } from "../type/order";
 import { useAuth } from "@/hooks/useAuth";
 import apiRequest from "@/lib/api";
@@ -31,8 +31,8 @@ const statusConfig: Record<
   },
   PROCESSING: {
     label: "Đã xác nhận",
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
+    color: "text-accent",
+    bgColor: "bg-accent-light",
   },
   SHIPPED: {
     label: "Đang giao",
@@ -46,8 +46,8 @@ const statusConfig: Record<
   },
   CANCELLED: {
     label: "Đã hủy",
-    color: "text-red-600",
-    bgColor: "bg-red-50",
+    color: "text-promotion",
+    bgColor: "bg-promotion-light",
   },
 };
 
@@ -59,9 +59,6 @@ export default function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  /* ============================================================================
-   * FETCH ORDERS
-   * ========================================================================== */
   useEffect(() => {
     if (!user) return;
 
@@ -69,12 +66,9 @@ export default function OrdersPage() {
       setLoading(true);
       setError(null);
       try {
-        console.log("Fetching orders for user:", user?.id);
         const data: OrderResponse = await apiRequest.get("/orders/my");
-        console.log("Orders response:", data);
         setOrders(data.data);
       } catch (err: any) {
-        console.error("Error fetching orders:", err?.status, err?.message, err);
         setError("Không thể tải danh sách đơn hàng. Vui lòng thử lại.");
       } finally {
         setLoading(false);
@@ -87,9 +81,6 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ORDERS_PER_PAGE = 2;
 
-  /* ============================================================================
-   * FILTER + PAGINATION
-   * ========================================================================== */
   const filteredOrders = orders.filter((order) => {
     if (activeTab === "all") return true;
     return order.orderStatus === activeTab;
@@ -101,23 +92,19 @@ export default function OrdersPage() {
     currentPage * ORDERS_PER_PAGE,
   );
 
-  // Reset về trang 1 khi đổi tab
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     setCurrentPage(1);
   };
 
-  /* ============================================================================
-   * RENDER
-   * ========================================================================== */
   return (
     <div>
       {/* Header */}
-      <h1 className="text-2xl font-semibold text-gray-800 mb-4 text-left mt-2">
+      <h1 className="text-2xl font-semibold text-primary mb-4 text-left mt-2">
         Đơn hàng của tôi
       </h1>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-neutral-light rounded-lg shadow-sm overflow-hidden">
         {/* Tabs */}
         <div className="py-2">
           <div className="flex overflow-x-auto scrollbar-hide">
@@ -128,8 +115,8 @@ export default function OrdersPage() {
                 className={`flex-1 px-3 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap cursor-pointer
                   ${
                     activeTab === tab.id
-                      ? "border-red-600 text-red-600"
-                      : "border-transparent text-gray-600 hover:text-gray-800"
+                      ? "border-promotion text-promotion"
+                      : "border-transparent text-primary-dark hover:text-primary"
                   }`}
               >
                 {tab.label}
@@ -139,7 +126,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Content */}
-        <div className="min-h-[500px]">
+        <div className="min-h-125">
           {authLoading || loading ? (
             <LoadingState />
           ) : error ? (
@@ -172,7 +159,7 @@ export default function OrdersPage() {
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
         scrollLockTarget={() => document.documentElement}
-        closeMethods={["escape", "overlay"]}
+        closeMethods={["escape", "overlay", "button"]}
         footer={false}
         cssClass="max-w-[680px] w-full"
         content={
@@ -192,17 +179,17 @@ function LoadingState() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="rounded-lg border border-gray-200 overflow-hidden animate-pulse"
+          className="rounded-lg border border-neutral overflow-hidden animate-pulse"
         >
-          <div className="h-10 bg-gray-100" />
+          <div className="h-10 bg-neutral-light-active" />
           <div className="flex gap-4 px-6 py-4">
-            <div className="w-16 h-16 rounded bg-gray-200 shrink-0" />
+            <div className="w-16 h-16 rounded bg-neutral shrink-0" />
             <div className="flex-1 space-y-2 pt-1">
-              <div className="h-4 bg-gray-200 rounded w-2/3" />
-              <div className="h-3 bg-gray-100 rounded w-1/3" />
+              <div className="h-4 bg-neutral rounded w-2/3" />
+              <div className="h-3 bg-neutral-light-active rounded w-1/3" />
             </div>
           </div>
-          <div className="h-10 bg-gray-50" />
+          <div className="h-10 bg-neutral-light-active" />
         </div>
       ))}
     </div>
@@ -216,7 +203,7 @@ function ErrorState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 gap-3">
       <span className="text-4xl">⚠️</span>
-      <p className="text-gray-600 text-sm text-center">{message}</p>
+      <p className="text-primary-dark text-sm text-center">{message}</p>
     </div>
   );
 }
@@ -232,15 +219,15 @@ function EmptyState() {
         alt="Không có đơn hàng"
         className="object-contain w-60 h-60 mx-auto"
       />
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+      <h3 className="text-lg font-semibold text-primary mb-2">
         Bạn chưa có đơn hàng nào
       </h3>
-      <p className="text-gray-600 mb-8 text-center text-sm">
+      <p className="text-primary-dark mb-8 text-center text-sm">
         Cùng khám phá hàng ngàn sản phẩm tại ChoCongNghe Shop nhé!
       </p>
       <Link
         href="/products"
-        className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+        className="bg-promotion hover:bg-promotion-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
       >
         Khám phá ngay
       </Link>
@@ -264,16 +251,14 @@ function Pagination({
 
   return (
     <div className="flex items-center justify-center gap-1 pt-4">
-      {/* Prev */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        className="px-3 py-1.5 rounded-lg text-sm border border-neutral text-primary-dark hover:bg-neutral-light-active disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
       >
         ‹
       </button>
 
-      {/* Pages */}
       {pages.map((page) => (
         <button
           key={page}
@@ -281,25 +266,28 @@ function Pagination({
           className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors cursor-pointer
             ${
               currentPage === page
-                ? "bg-red-600 text-white shadow-sm"
-                : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                ? "bg-promotion text-white shadow-sm"
+                : "border border-neutral text-primary-dark hover:bg-neutral-light-active"
             }`}
         >
           {page}
         </button>
       ))}
 
-      {/* Next */}
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        className="px-3 py-1.5 rounded-lg text-sm border border-neutral text-primary-dark hover:bg-neutral-light-active disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
       >
         ›
       </button>
     </div>
   );
 }
+
+/* ============================================================================
+ * ORDER CARD
+ * ========================================================================== */
 function OrderCard({
   order,
   onViewDetail,
@@ -309,25 +297,16 @@ function OrderCard({
 }) {
   const status = statusConfig[order.orderStatus] ?? {
     label: order.orderStatus,
-    color: "text-gray-600",
-    bgColor: "bg-gray-50",
+    color: "text-primary-dark",
+    bgColor: "bg-neutral-light-active",
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-neutral-light rounded-lg border border-neutral overflow-hidden hover:shadow-md transition-shadow">
       {/* Header */}
-      <div className="flex flex-wrap justify-between items-center gap-3 px-6 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-          <span>
-            Ngày đặt:{" "}
-            <span className="text-gray-800">
-              {new Date(order.orderDate).toLocaleDateString("vi-VN")}
-            </span>
-          </span>
-          <span className="text-gray-400">•</span>
-          <span>{order.paymentMethod.description}</span>
-          <span className="text-gray-400">•</span>
-          <span>{order.orderItems.length} sản phẩm</span>
+      <div className="flex flex-wrap justify-between items-center gap-2 px-6 py-3 bg-neutral-light-active border-b border-neutral">
+        <div className="flex-col font-medium text-primary">
+          <h2>Đơn hàng: #{order.orderCode}</h2>
         </div>
         <span
           className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.color} ${status.bgColor}`}
@@ -335,10 +314,22 @@ function OrderCard({
           <span className="w-1.5 h-1.5 rounded-full bg-current" />
           {status.label}
         </span>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-primary-dark">
+          <span>
+            Ngày đặt:{" "}
+            <span className="text-primary">
+              {new Date(order.orderDate).toLocaleDateString("vi-VN")}
+            </span>
+          </span>
+          <span className="text-primary">•</span>
+          <span>{order.paymentMethod.description}</span>
+          <span className="text-primary">•</span>
+          <span>{order.orderItems.length} sản phẩm</span>
+        </div>
       </div>
 
       {/* Product List */}
-      <div className="divide-y">
+      <div className="divide-y divide-neutral">
         {order.orderItems.map((item) => {
           const imageUrl =
             item.productVariant?.product?.img?.[0]?.imageUrl ?? "";
@@ -348,7 +339,7 @@ function OrderCard({
 
           return (
             <div key={item.id} className="flex gap-4 px-6 py-4">
-              <div className="relative w-16 h-16 shrink-0 bg-gray-100  overflow-hidden">
+              <div className="relative w-16 h-16 shrink-0 bg-neutral-light-active overflow-hidden">
                 {imageUrl && (
                   <Image
                     src={imageUrl}
@@ -361,24 +352,24 @@ function OrderCard({
               </div>
 
               <div className="flex-1">
-                <h3 className="font-medium text-gray-800 mb-1 line-clamp-2">
+                <h3 className="font-medium text-primary mb-1 line-clamp-2">
                   {item.productVariant?.product?.name}
                 </h3>
                 {attrs && (
-                  <p className="text-xs text-gray-500 mb-0.5">{attrs}</p>
+                  <p className="text-sm text-primary-dark mb-0.5">{attrs}</p>
                 )}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-primary-dark">
                   Số lượng: {item.quantity}
                 </p>
               </div>
 
               <div className="text-right shrink-0">
-                <p className="font-semibold text-gray-800">
+                <p className="font-semibold text-primary">
                   {Number(item.unitPrice).toLocaleString("vi-VN")}₫
                 </p>
                 {Number(item.productVariant?.price) >
                   Number(item.unitPrice) && (
-                  <p className="text-sm line-through text-gray-400">
+                  <p className="text-sm line-through text-primary-dark">
                     {Number(item.productVariant?.price).toLocaleString("vi-VN")}
                     ₫
                   </p>
@@ -390,29 +381,31 @@ function OrderCard({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-gray-50 border-t space-y-3 border-gray-200">
+      <div className="px-6 py-4 bg-neutral-light-active border-t border-neutral space-y-3">
         <div className="flex justify-between items-center text-sm">
-          <button
+          <div className="text-right">
+            <span className="text-primary-dark">Tổng tiền:</span>
+            <span className="text-promotion font-semibold ml-2 text-lg">
+              {Number(order.totalAmount).toLocaleString("vi-VN")}₫
+            </span>
+          </div>
+               <button
             onClick={onViewDetail}
-            className="text-gray-600 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors"
+            className="h-9  hover:bg-promotion-hover hover:text-white  flex items-center gap-1 cursor-pointer transition-colors text-sm text-promotion border border-promotion px-4  rounded-lg"
           >
             Xem chi tiết
             <ChevronRight className="w-4 h-4" />
           </button>
-
-          <div className="text-right">
-            <span className="text-gray-600">Tổng tiền:</span>
-            <span className="text-red-600 font-semibold ml-2 text-lg">
-              {Number(order.totalAmount).toLocaleString("vi-VN")}₫
-            </span>
-          </div>
         </div>
 
-        <div className="flex justify-end">
-          <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
-            Mua lại
-          </button>
-        </div>
+        {/* <div className="flex justify-between items-center">
+     
+          <Link href="/products">
+            <button className="h-9 bg-promotion hover:bg-promotion-hover text-white px-6  rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              Mua lại
+            </button>
+          </Link>
+        </div> */}
       </div>
     </div>
   );
@@ -424,14 +417,14 @@ function OrderCard({
 function OrderDetailModal({ order }: { order: Order }) {
   const status = statusConfig[order.orderStatus] ?? {
     label: order.orderStatus,
-    color: "text-gray-600",
-    bgColor: "bg-gray-50",
+    color: "text-primary",
+    bgColor: "bg-neutral-light-active",
   };
 
   return (
-    <div className="max-h-[75vh] overflow-y-auto pr-1 custom-scroll">
+    <div className="max-h-[75vh] overflow-y-auto  custom-scroll  px-6  pl-2 mt-6">
       {/* Title */}
-      <h2 className="text-lg font-semibold mb-1 border-b pb-3 border-gray-200 flex items-center justify-between">
+      <h2 className="text-lg font-semibold text-primary mb-1 border-b pb-3 border-neutral flex items-center justify-between">
         Chi tiết đơn hàng
         <span
           className={`text-xs font-semibold px-3 py-1 rounded-full ${status.color} ${status.bgColor}`}
@@ -440,15 +433,15 @@ function OrderDetailModal({ order }: { order: Order }) {
         </span>
       </h2>
 
-      <div className="divide-y divide-gray-100 space-y-0">
+      <div className="divide-y divide-neutral space-y-0 p-2">
         {/* Thông tin đơn */}
-        <div className="py-4 space-y-1.5 text-sm text-gray-600">
+        <div className="py-4 space-y-1.5 text-sm text-primary">
           <p>
-            <span className="font-medium text-gray-700">Ngày đặt:</span>{" "}
+            <span className="font-medium text-primary">Ngày đặt:</span>{" "}
             {new Date(order.orderDate).toLocaleString("vi-VN")}
           </p>
           <p>
-            <span className="font-medium text-gray-700">Thanh toán:</span>{" "}
+            <span className="font-medium text-primary">Thanh toán:</span>{" "}
             {order.paymentMethod.name} —{" "}
             <span
               className={
@@ -466,26 +459,28 @@ function OrderDetailModal({ order }: { order: Order }) {
 
         {/* Địa chỉ giao hàng */}
         <div className="py-4">
-          <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5 mb-2">
-            <MapPin size={15} className="text-red-500" />
+          <p className="text-sm font-medium text-primary flex items-center gap-1.5 mb-2">
+            <MapPin size={15} className="text-promotion" />
             Địa chỉ giao hàng
           </p>
-          <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-600 space-y-1">
-            <p className="font-medium text-gray-800">
-              {order.shippingAddress.contactName}
+          <div className="bg-neutral-light-active rounded-lg px-4 py-3 text-sm text-primary-dark space-y-1">
+            <p className="font-medium text-primary">
+              {order.shippingContactName}
             </p>
-            <p>{order.shippingAddress.phone}</p>
-            <p>{order.shippingAddress.detailAddress}</p>
+            <p>
+              {order.shippingDetail}, {order.shippingWard},{" "}
+              {order.shippingProvince}
+            </p>
           </div>
         </div>
 
         {/* Danh sách sản phẩm */}
         <div className="py-4">
-          <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5 mb-3">
-            <Package size={15} className="text-red-500" />
+          <p className="text-sm font-medium text-primary flex items-center gap-1.5 mb-3">
+            <Package size={15} className="text-promotion" />
             Sản phẩm ({order.orderItems.length})
           </p>
-          <div className="divide-y border rounded-lg overflow-hidden border-gray-200">
+          <div className="divide-y border rounded-lg overflow-hidden border-neutral">
             {order.orderItems.map((item) => {
               const imageUrl =
                 item.productVariant?.product?.img?.[0]?.imageUrl ?? "";
@@ -493,8 +488,11 @@ function OrderDetailModal({ order }: { order: Order }) {
                 ?.map((a) => a.attributeOption.value)
                 .join(" · ");
               return (
-                <div key={item.id} className="flex gap-3 px-4 py-3 bg-white">
-                  <div className="relative w-14 h-14 shrink-0 bg-gray-100  overflow-hidden">
+                <div
+                  key={item.id}
+                  className="flex gap-3 px-4 py-3 bg-neutral-light"
+                >
+                  <div className="relative w-14 h-14 shrink-0 bg-neutral-light-active overflow-hidden">
                     {imageUrl && (
                       <Image
                         src={imageUrl}
@@ -506,17 +504,19 @@ function OrderDetailModal({ order }: { order: Order }) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 line-clamp-2">
+                    <p className="text-sm font-medium text-primary line-clamp-2">
                       {item.productVariant?.product?.name}
                     </p>
                     {attrs && (
-                      <p className="text-xs text-gray-500 mt-0.5">{attrs}</p>
+                      <p className="text-xs text-primary-dark mt-0.5">
+                        {attrs}
+                      </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-primary-dark mt-0.5">
                       x{item.quantity}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-800 shrink-0">
+                  <p className="text-sm font-semibold text-primary shrink-0">
                     {Number(item.unitPrice).toLocaleString("vi-VN")}₫
                   </p>
                 </div>
@@ -527,18 +527,18 @@ function OrderDetailModal({ order }: { order: Order }) {
 
         {/* Tổng tiền */}
         <div className="py-4">
-          <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5 mb-3">
-            <CreditCard size={15} className="text-red-500" />
+          <p className="text-sm font-medium text-primary flex items-center gap-1.5 mb-3">
+            <CreditCard size={15} className="text-promotion" />
             Thanh toán
           </p>
-          <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2 text-sm">
-            <div className="flex justify-between text-gray-600">
+          <div className="bg-neutral-light-active rounded-lg px-4 py-3 space-y-2 text-sm">
+            <div className="flex justify-between text-primary-dark">
               <span>Tạm tính</span>
               <span>
                 {Number(order.subtotalAmount).toLocaleString("vi-VN")}₫
               </span>
             </div>
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-primary-dark">
               <span>Phí vận chuyển</span>
               <span>
                 {Number(order.shippingFee) === 0 ? (
@@ -556,9 +556,9 @@ function OrderDetailModal({ order }: { order: Order }) {
                 </span>
               </div>
             )}
-            <div className="flex justify-between font-semibold text-gray-800 border-t pt-2 mt-1">
+            <div className="flex justify-between font-semibold text-primary border-t border-neutral pt-2 mt-1">
               <span>Tổng cộng</span>
-              <span className="text-red-600 text-base">
+              <span className="text-promotion text-base">
                 {Number(order.totalAmount).toLocaleString("vi-VN")}₫
               </span>
             </div>

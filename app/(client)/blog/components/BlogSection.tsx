@@ -56,7 +56,7 @@ export default function BlogSection({
               className="block"
             >
               <div className="overflow-hidden rounded-lg border border-neutral bg-neutral-light hover:shadow-sm">
-                <div className="relative aspect-4/3 w-full bg-neutral">
+                <div className="relative aspect-[4/3] w-full bg-neutral">
                   <Image
                     src={blog.thumbnail || "/images/blog-default.jpg"}
                     alt={blog.title}

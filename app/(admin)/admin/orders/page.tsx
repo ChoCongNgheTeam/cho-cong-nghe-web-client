@@ -24,19 +24,16 @@ import { formatDate, formatVND } from "@/helpers";
 import Link from "next/link";
 
 export default function OrdersPage() {
-   // ✅ Source of truth: toàn bộ orders từ API
    const [allOrders, setAllOrders] = useState<Order[]>([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
 
-   // Filter & pagination state
    const [page, setPage] = useState(1);
    const [pageSize, setPageSize] = useState(10);
    const [activeTab, setActiveTab] = useState("ALL");
    const [search, setSearch] = useState("");
    const [searchInput, setSearchInput] = useState("");
 
-   // ✅ Fetch 1 lần duy nhất (hoặc khi refresh)
    const fetchOrders = useCallback(async () => {
       setLoading(true);
       setError(null);
@@ -61,9 +58,10 @@ export default function OrdersPage() {
          const matchSearch =
             !search ||
             o.id.toLowerCase().includes(q) ||
+            o.orderCode.toLowerCase().includes(q) ||
             o.user.fullName.toLowerCase().includes(q) ||
             o.user.phone.includes(q) ||
-            o.shippingAddress.contactName.toLowerCase().includes(q);
+            o.shippingContactName.toLowerCase().includes(q); // ← sửa
          return matchTab && matchSearch;
       });
    }, [allOrders, activeTab, search]);
@@ -90,7 +88,6 @@ export default function OrdersPage() {
       [allOrders],
    );
 
-   // ✅ Stats từ allOrders
    const todayRevenue = allOrders.reduce(
       (s, o) => s + Number(o.totalAmount),
       0,
@@ -144,7 +141,7 @@ export default function OrdersPage() {
                            setActiveTab(tab.value);
                            setPage(1);
                         }}
-                        className={`px-3 py-1.5 rounded-lg font-inters text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg  text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
                            activeTab === tab.value
                               ? "bg-accent text-primary shadow-sm"
                               : "text-primary hover:bg-neutral-light-active hover:text-primary"
@@ -177,23 +174,23 @@ export default function OrdersPage() {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder="Search..."
-                        className="w-52 pl-9 pr-3 py-2 font-inters text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                        className="w-52 pl-9 pr-3 py-2  text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                      />
                      <Search
                         size={14}
                         className="absolute left-3 top-1/2 -translate-y-1/2 text-primary"
                      />
                   </form>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral  text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
                      <Filter size={14} /> Bộ lọc
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral  text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
                      <CalendarDays size={14} /> Lọc theo ngày
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral font-inters text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral  text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer">
                      <Download size={14} /> Chia sẻ
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white font-inters text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer">
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white  text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer">
                      <Package size={14} /> Thêm đơn hàng
                   </button>
                </div>
@@ -202,12 +199,10 @@ export default function OrdersPage() {
             {/* Error */}
             {error && (
                <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion-light-active">
-                  <span className="font-inters text-[12px] text-promotion">
-                     {error}
-                  </span>
+                  <span className=" text-[12px] text-promotion">{error}</span>
                   <button
                      onClick={fetchOrders}
-                     className="flex items-center gap-1 text-[12px] font-inters text-promotion hover:underline cursor-pointer"
+                     className="flex items-center gap-1 text-[12px]  text-promotion hover:underline cursor-pointer"
                   >
                      <RefreshCw size={12} /> Thử lại
                   </button>
@@ -233,7 +228,7 @@ export default function OrdersPage() {
                         ].map((col, i) => (
                            <th
                               key={i}
-                              className="px-4 py-3 text-left font-inters text-[12px] font-semibold text-primary uppercase tracking-wider whitespace-nowrap"
+                              className="px-4 py-3 text-left  text-[12px] font-semibold text-primary uppercase tracking-wider whitespace-nowrap"
                            >
                               {col}
                            </th>
@@ -248,7 +243,7 @@ export default function OrdersPage() {
                            <td colSpan={10} className="px-4 py-16 text-center">
                               <div className="flex flex-col items-center gap-3 text-primary">
                                  <Package size={36} className="opacity-40" />
-                                 <span className="font-inters text-sm">
+                                 <span className=" text-sm">
                                     Không có đơn hàng nào
                                  </span>
                               </div>
@@ -257,50 +252,51 @@ export default function OrdersPage() {
                      ) : (
                         paginatedOrders.map((order, idx) => {
                            const rowNum = (page - 1) * pageSize + idx + 1;
-                           const shortId = `#ORD-${order.id.slice(0, 5).toUpperCase()}`;
+                           const shortId = `#${order.orderCode}`;
                            return (
                               <tr
                                  key={order.id}
                                  className="border-b border-neutral hover:bg-neutral-light-active/60 transition-colors duration-100 group"
                               >
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[12px] text-primary">
+                                    <span className=" text-[12px] text-primary">
                                        {rowNum}
                                     </span>
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[12px] font-semibold text-accent">
+                                    <span className=" text-[12px] font-semibold text-accent">
                                        {shortId}
                                     </span>
                                  </td>
                                  <td className="px-4 py-3.5">
                                     <div className="flex flex-col gap-0.5">
-                                       <span className="font-inters text-[12px] font-medium text-primary">
+                                       <span className=" text-[12px] font-medium text-primary">
                                           {order.user.fullName}
                                        </span>
-                                       <span className="font-inters text-[12px] text-primary">
+                                       <span className=" text-[12px] text-primary">
                                           {order.user.phone}
                                        </span>
                                     </div>
                                  </td>
                                  <td className="px-4 py-3.5">
                                     <div className="flex flex-col gap-0.5 max-w-47.5">
-                                       <span className="font-inters text-[12px] text-primary line-clamp-1">
-                                          {order.shippingAddress.contactName}
+                                       {/* ← dùng field trực tiếp thay vì shippingAddress.xxx */}
+                                       <span className=" text-[12px] text-primary line-clamp-1">
+                                          {order.shippingContactName}
                                        </span>
-                                       <span className="font-inters text-[12px] text-primary line-clamp-1">
-                                          {order.shippingAddress.detailAddress}{" "}
-                                          · {order.shippingAddress.phone}
+                                       <span className=" text-[12px] text-primary line-clamp-1">
+                                          {order.shippingDetail} ·{" "}
+                                          {order.shippingPhone}
                                        </span>
                                     </div>
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[12px] font-semibold text-primary">
+                                    <span className=" text-[12px] font-semibold text-primary">
                                        {formatVND(order.totalAmount)}
                                     </span>
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[12px] text-primary">
+                                    <span className=" text-[12px] text-primary">
                                        {order.paymentMethod.name}
                                     </span>
                                  </td>
@@ -317,7 +313,7 @@ export default function OrdersPage() {
                                     />
                                  </td>
                                  <td className="px-4 py-3.5">
-                                    <span className="font-inters text-[12px] text-primary">
+                                    <span className=" text-[12px] text-primary">
                                        {formatDate(order.orderDate)}
                                     </span>
                                  </td>
@@ -332,7 +328,7 @@ export default function OrdersPage() {
                                        </Link>
                                        <button
                                           title="Xóa"
-                                          className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-promotion-light hover:text-promotion  cursor-pointer transition-all"
+                                          className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-promotion-light hover:text-promotion cursor-pointer transition-all"
                                        >
                                           <Trash2 size={14} />
                                        </button>
