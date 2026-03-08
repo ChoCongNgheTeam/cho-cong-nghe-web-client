@@ -10,6 +10,7 @@ import {
    FaPlus,
    FaMinus,
 } from "react-icons/fa";
+import { Gift } from "lucide-react";
 import { ProductDetail } from "@/lib/types/product";
 import Link from "next/link";
 import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
@@ -379,48 +380,57 @@ export default function ProductDetailRight({
                   />
                </div>
 
-               {/* Price Section */}
-               <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent transition-colors duration-300">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                     <div className="flex flex-col gap-2 flex-1">
-                        <div>
-                           <h3 className="text-2xl sm:text-3xl font-bold text-primary transition-colors duration-300">
-                              {(displayPrice || 0).toLocaleString("vi-VN")}₫
-                           </h3>
-                           {price?.hasPromotion && (
-                              <div className="flex gap-2 items-center">
-                                 <span className="text-xs sm:text-sm line-through">
-                                    {(price.base || 0).toLocaleString("vi-VN")}₫
-                                 </span>
-                                 <span className="text-xs sm:text-sm font-bold text-promotion">
-                                    {price.discountPercentage}%
-                                 </span>
-                              </div>
-                           )}
-                        </div>
-                     </div>
-                  </div>
+          {/* Price Section */}
+          <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent transition-colors duration-300">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex flex-col gap-2 flex-1">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-promotion">
+                    {(displayPrice || 0).toLocaleString("vi-VN")}₫
+                  </h3>
 
-                  {/* Promotions */}
-                  <div className="mt-3 sm:mt-4">
-                     <p className="font-semibold mb-2 text-xs sm:text-sm text-primary transition-colors duration-300">
-                        Chọn 1 trong các khuyến mãi sau:
-                     </p>
-                     <div className="border rounded-lg p-3 bg-neutral-light transition-colors duration-300">
-                        <p className="font-semibold text-xs sm:text-sm mb-2 text-primary transition-colors duration-300">
-                           Khuyến mãi 1
-                        </p>
-                        <ul className="text-xs sm:text-sm space-y-2 transition-colors duration-300">
-                           <li>✓ Giảm ngay 200.000đ áp dụng đến 25/12</li>
-                           <li>
-                              ✓ AirPods/Ốp Lưng phụ kiện nhập khẩu giảm đến
-                              500.000đ khi mua kèm iPhone
-                           </li>
-                           <li>✓ Trả góp 0%</li>
-                        </ul>
-                     </div>
+                  {price?.hasPromotion && (
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs sm:text-sm line-through text-neutral-500">
+                        {(price.base || 0).toLocaleString("vi-VN")}₫
+                      </span>
+
+                      <span className="text-xs font-bold text-white bg-promotion px-2 py-0.5 rounded">
+                        -{price.discountPercentage}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Promotions */}
+            {product.availablePromotions &&
+              product.availablePromotions.length > 0 && (
+                <div className="mt-3 sm:mt-4">
+                  <p className="font-semibold mb-2 text-xs sm:text-sm text-primary">
+                    Chọn 1 trong các khuyến mãi sau:
+                  </p>
+                  <div className="border border-promotion/30 rounded-lg overflow-hidden bg-neutral-light">
+                    {product.availablePromotions.map((promo, index) => (
+                      <div
+                        key={promo.id}
+                        className={`flex items-start gap-2 px-3 py-2 text-xs sm:text-sm ${
+                          index !== product.availablePromotions!.length - 1
+                            ? "border-b border-neutral"
+                            : ""
+                        }`}
+                      >
+                        <Gift className="w-4 h-4 text-promotion mt-0.5 shrink-0" />
+                        <span className="text-primary">
+                          {promo.description}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-               </div>
+                </div>
+              )}
+          </div>
 
                {/* Gifts & Benefits */}
                <div className="flex flex-col border border-neutral rounded-lg mb-4 transition-colors duration-300">

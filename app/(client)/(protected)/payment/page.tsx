@@ -439,7 +439,7 @@ function StripeSection({
          <p className="text-sm text-neutral-darker">
             Nhập thông tin thẻ bên dưới để hoàn tất thanh toán
          </p>
-         <div id="stripe-payment-element" className="min-h-[160px]" />
+         <div id="stripe-payment-element" className="min-h-40" />
          {stripeError && (
             <p className="text-sm text-promotion bg-promotion-light border border-promotion-light-active rounded-xl px-4 py-3">
                {stripeError}
