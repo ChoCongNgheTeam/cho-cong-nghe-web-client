@@ -1,23 +1,23 @@
 "use client";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useLayoutEffect } from "react";
 import { BsPatchCheckFill } from "react-icons/bs";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { FaTruck } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
-import { useLayoutEffect } from "react";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
 import ProductDetailRight from "../components/product-detail/product-detail-card-right";
 import ProductDetailSection from "../components/product-detail/product-detail-section";
 import ProductDetailSection1 from "../components/product-detail/product-detail-section-1";
-import ProductReview from "../components/product-detail/product-detail-review";
-import CompareProducts from "../components/product-detail/product-detail-compare";
+// import ProductReview from "../components/product-detail/product-detail-review";
+
 import ProductDetailSuggest from "../components/product-detail/product-detail-suggest";
-import ProductsViewed from "../components/product-detail/products-viewed";
+import ProductReview from "../product-comment/Productreview";
 
 import Breadcrumb from "../../../components/layout/Breadcrumb/Breadcrumb";
 
 import { ProductDetail } from "@/lib/types/product";
+import apiRequest from "@/lib/api";
 
 interface ProductDetailContentProps {
    product: ProductDetail;
@@ -118,33 +118,26 @@ export function ProductDetailContent({
    useEffect(() => {
       if (!selectedColor || !selectedStorage) return;
 
-      const fetchVariant = async () => {
-         try {
-            // const res = await fetch(
-            //   `http://localhost:5000/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
-            // );
-            const res = await fetch(
-               `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/products/slug/${product.slug}/variant?color=${selectedColor}&storage=${selectedStorage}`,
-            );
+    const fetchVariant = async () => {
+      try {
+        const json = await apiRequest.get<{ data: any }>(
+          `/products/slug/${product.slug}/variant`,
+          {
+            noAuth: true,
+            params: { color: selectedColor, storage: selectedStorage },
+          },
+        );
 
-            const json = await res.json();
-            console.log("Variant fetch response:", json);
-
-            if (json) {
-               console.log(" Chuẩn bị set:", {
-                  availableOptions: json.data.availableOptions,
-                  currentVariant: json.data.currentVariant?.code,
-                  images: json.data.currentVariant?.images?.length,
-               });
-               setAvailableOptions(json.data.availableOptions);
-               setCurrentVariant(json.data.currentVariant);
-               setVariantImages(json.data.currentVariant.images);
-               setPrice(json.data.price);
-            }
-         } catch (error) {
-            console.error("Error fetching variant:", error);
-         }
-      };
+        if (json) {
+          setAvailableOptions(json.data.availableOptions);
+          setCurrentVariant(json.data.currentVariant);
+          setVariantImages(json.data.currentVariant.images);
+          setPrice(json.data.price);
+        }
+      } catch (error) {
+        console.error("Error fetching variant:", error);
+      }
+    };
 
       fetchVariant();
    }, [selectedColor, selectedStorage, product.slug]);
@@ -159,24 +152,24 @@ export function ProductDetailContent({
       });
    }, [selectedColor, selectedStorage]);
 
-   /* ============================================================================
-    * RENDER
-    * ========================================================================== */
-   return (
-      <div>
-         {/* Breadcrumb */}
-         <div className="container sm:px-6 mt-4">
-            <Breadcrumb
-               items={[
-                  { label: "Trang chủ", href: "/" },
-                  {
-                     label: product.category?.name,
-                     href: `/products/category/${product.category?.slug}`,
-                  },
-                  { label: product.name },
-               ]}
-            />
-         </div>
+  /* ============================================================================
+   * RENDER
+   * ========================================================================== */
+  return (
+    <div>
+      {/* Breadcrumb */}
+      <div className="container sm:px-6 mt-4">
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            {
+              label: product.category.parent.slug,
+              href: `/products/category/${product.category?.slug}`,
+            },
+            { label: product.name },
+          ]}
+        />
+      </div>
 
          {/* Hero Section - Product Info */}
          <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container">
