@@ -1,6 +1,6 @@
 import { handleGoogleOAuth } from "@/(client)/(auth)/account/login/googleOAuthHandler";
 import { User } from "@/(client)/(auth)/account/login/types";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 
 declare global {
    interface Window {
@@ -12,8 +12,11 @@ declare global {
                   callback: (response: { credential: string }) => void;
                   auto_select?: boolean;
                   cancel_on_tap_outside?: boolean;
+                  ux_mode?: "popup" | "redirect";
+                  use_fedcm_for_prompt?: boolean;
                }) => void;
                prompt: () => void;
+               renderButton: (element: HTMLElement, options: object) => void;
             };
          };
       };
@@ -33,6 +36,8 @@ export function useGoogleLogin({
    onError,
    onLoadingChange,
 }: UseGoogleLoginOptions) {
+   const buttonRef = useRef<HTMLDivElement | null>(null);
+
    const handleCredential = useCallback(
       async (response: { credential: string }) => {
          onLoadingChange(true);
@@ -64,7 +69,17 @@ export function useGoogleLogin({
             callback: handleCredential,
             auto_select: false,
             cancel_on_tap_outside: true,
+            ux_mode: "popup",
+            use_fedcm_for_prompt: false,
          });
+
+         // Render button ẩn để trigger popup đúng cách
+         if (buttonRef.current) {
+            window.google?.accounts.id.renderButton(buttonRef.current, {
+               type: "icon",
+               size: "large",
+            });
+         }
       };
 
       if (window.google) {
@@ -80,17 +95,27 @@ export function useGoogleLogin({
       document.body.appendChild(script);
 
       return () => {
-         document.body.removeChild(script);
+         if (document.body.contains(script)) {
+            document.body.removeChild(script);
+         }
       };
    }, [handleCredential]);
 
-   const prompt = () => {
+   const prompt = useCallback(() => {
       if (!window.google) {
          onError("Google chưa sẵn sàng, vui lòng thử lại.");
          return;
       }
-      window.google.accounts.id.prompt();
-   };
+      // Click vào rendered button thay vì gọi prompt() trực tiếp
+      const btn = buttonRef.current?.querySelector(
+         "div[role=button]",
+      ) as HTMLElement;
+      if (btn) {
+         btn.click();
+      } else {
+         window.google.accounts.id.prompt();
+      }
+   }, [onError]);
 
-   return { prompt };
+   return { prompt, buttonRef };
 }

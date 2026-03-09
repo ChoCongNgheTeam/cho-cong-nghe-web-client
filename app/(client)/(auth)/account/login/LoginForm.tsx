@@ -36,7 +36,7 @@ const LoginForm = () => {
       [login, router, toast],
    );
 
-   const { prompt: googlePrompt } = useGoogleLogin({
+   const { prompt: googlePrompt, buttonRef } = useGoogleLogin({
       onSuccess: handleLoginSuccess,
       onError: (msg) => setError(msg),
       onLoadingChange: setGoogleLoading,
@@ -162,7 +162,7 @@ const LoginForm = () => {
                   </span>
                </div>
             </div>
-
+            <div ref={buttonRef} className="hidden" aria-hidden="true" />
             <SocialLoginButtons
                onGoogleLogin={googlePrompt}
                onFacebookLogin={() => console.log("TODO: Facebook login")}
