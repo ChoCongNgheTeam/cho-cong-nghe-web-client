@@ -15,6 +15,7 @@ import { useVoucher } from "@/hooks/useVoucher";
 import CartSidebar from "./components/cartSidebar";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
+import { formatVND } from "@/helpers";
 
 export default function CartPage() {
   const router = useRouter();
@@ -68,11 +69,6 @@ export default function CartPage() {
       setVoucherValue(value);
       setVoucherId(id);
     },
-    [],
-  );
-
-  const formatPrice = useCallback(
-    (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫",
     [],
   );
 
@@ -335,12 +331,12 @@ export default function CartPage() {
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex flex-col">
                                 <span className="text-sm font-semibold text-promotion">
-                                  {formatPrice(item.unitPrice)}
+                                  {formatVND(item.unitPrice)}
                                 </span>
                                 {item.originalPrice &&
                                   item.originalPrice > item.unitPrice && (
                                     <span className="text-xs text-neutral-dark line-through">
-                                      {formatPrice(item.originalPrice)}
+                                      {formatVND(item.originalPrice)}
                                     </span>
                                   )}
                               </div>
@@ -365,7 +361,7 @@ export default function CartPage() {
                                 </button>
                               </div>
                               <span className="text-base font-bold text-promotion">
-                                {formatPrice(item.unitPrice * item.quantity)}
+                                {formatVND(item.unitPrice * item.quantity)}
                               </span>
                             </div>
                           </div>
@@ -375,12 +371,12 @@ export default function CartPage() {
                         <div className="hidden sm:flex items-center gap-4 lg:gap-6">
                           <div className="flex flex-col items-end min-w-20">
                             <span className="text-sm lg:text-base font-semibold text-promotion">
-                              {formatPrice(item.unitPrice)}
+                              {formatVND(item.unitPrice)}
                             </span>
                             {item.originalPrice &&
                               item.originalPrice > item.unitPrice && (
                                 <span className="text-xs text-neutral-dark line-through">
-                                  {formatPrice(item.originalPrice)}
+                                  {formatVND(item.originalPrice)}
                                 </span>
                               )}
                           </div>
@@ -404,7 +400,7 @@ export default function CartPage() {
                           </div>
                           <div className="min-w-25 text-right">
                             <span className="text-sm lg:text-base font-semibold text-promotion">
-                              {formatPrice(item.unitPrice * item.quantity)}
+                              {formatVND(item.unitPrice * item.quantity)}
                             </span>
                           </div>
                           {/* Desktop: nút xoá → mở confirm sidebar */}
@@ -459,7 +455,7 @@ export default function CartPage() {
             </span>
           </div>
           <span className="font-bold shrink-0 text-lg">
-            {formatPrice(finalTotalWithVoucher)}
+            {formatVND(finalTotalWithVoucher)}
           </span>
         </button>
       </div>

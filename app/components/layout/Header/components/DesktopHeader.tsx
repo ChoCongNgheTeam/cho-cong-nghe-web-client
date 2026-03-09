@@ -16,6 +16,7 @@ import UserAvatar from "@/components/ui/UserAvatar";
 import CartIcon from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
+import WishlistIcon from "@/components/ui/HeartIcons";
 
 const DesktopHeader = memo(
    ({
@@ -70,13 +71,7 @@ const DesktopHeader = memo(
                >
                   <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                </button>
-               <Link
-                  href="/profile/wishlist"
-                  className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors"
-                  title="Yêu thích"
-               >
-                  <Heart className="lg:w-6 lg:h-6 text-primary" />
-               </Link>
+              <WishlistIcon />
                <CartIcon />
 
                {isLoading ? (
@@ -133,7 +128,7 @@ const DesktopHeader = memo(
                               >
                                  <Heart className="w-5 h-5 text-neutral-darker" />
                                  <span className="text-sm">
-                                    Khách hàng thân thiết
+                                    Sản phẩm yêu thích
                                  </span>
                               </Link>
                               <Link

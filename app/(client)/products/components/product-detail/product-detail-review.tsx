@@ -64,7 +64,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
       try {
          setLoading(true);
          const res = await fetch(
-            `http://localhost:5001/api/v1/comments?targetType=PRODUCT&targetId=${productId}`,
+            `http://localhost:5000/api/v1/comments?targetType=PRODUCT&targetId=${productId}`,
             {
                credentials: "include",
             },
@@ -88,7 +88,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
          setLoadingReplies((prev) => ({ ...prev, [commentId]: true }));
 
          const res = await fetch(
-            `http://localhost:5001/api/v1/comments/${commentId}/replies`,
+            `http://localhost:5000/api/v1/comments/${commentId}/replies`,
             {
                credentials: "include",
             },
@@ -126,7 +126,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
          setLoadingNestedReplies((prev) => ({ ...prev, [replyId]: true }));
 
          const res = await fetch(
-            `http://localhost:5001/api/v1/comments/${replyId}/replies`,
+            `http://localhost:5000/api/v1/comments/${replyId}/replies`,
             {
                credentials: "include",
             },
@@ -237,7 +237,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
 
       try {
          setSubmitting(true);
-         const res = await fetch("http://localhost:5001/api/v1/comments", {
+         const res = await fetch("http://localhost:5000/api/v1/comments", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -271,7 +271,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
 
       try {
          setReplySubmitting(parentId);
-         const res = await fetch("http://localhost:5001/api/v1/comments", {
+         const res = await fetch("http://localhost:5000/api/v1/comments", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },

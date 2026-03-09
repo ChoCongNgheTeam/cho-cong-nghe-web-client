@@ -17,6 +17,7 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
+import { formatVND } from "@/helpers";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -136,9 +137,6 @@ export default function CheckoutPage() {
 
   const { refetchCart } = useCart();
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
   const formatDisplayAddress = (addr: ApiAddress) =>
     addr.fullAddress ??
@@ -490,12 +488,12 @@ export default function CheckoutPage() {
                   <div className="flex justify-between">
                     <span>Phí vận chuyển</span>
                     <span className={shippingFee === 0 ? "text-green-600 font-medium" : ""}>
-                      {shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee)}
+                      {shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Thuế VAT (10%)</span>
-                    <span>{formatPrice(taxAmount)}</span>
+                    <span>{formatVND(taxAmount)}</span>
                   </div>
                 </div>
               )}
@@ -548,7 +546,7 @@ export default function CheckoutPage() {
               <ShoppingCart className="h-5 w-5 shrink-0" />
               <span>Xem đơn hàng ({cartItems.length})</span>
             </div>
-            <span className="font-bold text-lg">{formatPrice(mobileFinalTotal)}</span>
+            <span className="font-bold text-lg">{formatVND(mobileFinalTotal)}</span>
           </button>
         </div>
         <div className="h-24" />

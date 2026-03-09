@@ -1,20 +1,20 @@
-const API_URL = "http://localhost:5001/api/v1/";
+const API_URL = "http://localhost:5000/api/v1/";
 
 export async function getProvinces() {
-  try {
-    const res = await fetch(`${API_URL}addresses/locations/provinces`, {
-      next: { revalidate: 60 },
-    });
+   try {
+      const res = await fetch(`${API_URL}addresses/locations/provinces`, {
+         next: { revalidate: 60 },
+      });
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
+      if (!res.ok) {
+         throw new Error(`HTTP error! status: ${res.status}`);
+      }
 
-    const response = await res.json();
+      const response = await res.json();
 
-    return response?.data || []; // tránh undefined
-  } catch (error) {
-    console.error("Error fetching provinces:", error);
-    return [];
-  }
+      return response?.data || []; // tránh undefined
+   } catch (error) {
+      console.error("Error fetching provinces:", error);
+      return [];
+   }
 }
