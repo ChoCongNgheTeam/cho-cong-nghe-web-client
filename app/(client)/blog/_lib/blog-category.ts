@@ -1,14 +1,79 @@
-export const BLOG_CATEGORIES = [
+import { BlogCategory } from "../types/blog.type";
+
+type CategoryConfig = {
+  key: string;
+  title: string;
+  keywords?: string[];
+};
+
+export const BLOG_CATEGORIES: CategoryConfig[] = [
   { key: "featured", title: "Nổi bật" },
-  { key: "tin-moi", title: "Tin mới" },
-  { key: "dien-may-gia-dung", title: "Điện máy - Gia dụng" },
-  { key: "khuyen-mai", title: "Khuyến mãi" },
-  { key: "danh-gia-tu-van", title: "Đánh giá - Tư vấn" },
-  { key: "thu-thuat", title: "Thủ thuật" },
-  { key: "video-hot", title: "Video hot" },
-  { key: "giai-tri", title: "Giải trí" },
-  { key: "kien-thuc-doi-song", title: "Kiến thức - Đời sống" },
-  { key: "hoi-dap", title: "Hỏi đáp" },
-  { key: "app-game", title: "App - game" },
-  { key: "tin-trao-thuong", title: "Tin trao thưởng" },
+  { key: "tin-moi", title: "Tin mới", keywords: ["mới", "ra mắt", "update", "xu hướng"] },
+  { key: "dien-may-gia-dung", title: "Điện máy - Gia dụng", keywords: ["gia dụng", "máy giặt", "tủ lạnh", "điều hòa"] },
+  { key: "khuyen-mai", title: "Khuyến mãi", keywords: ["khuyến mãi", "giảm giá", "ưu đãi", "flash sale"] },
+  { key: "danh-gia-tu-van", title: "Đánh giá - Tư vấn", keywords: ["đánh giá", "review", "tư vấn", "so sánh"] },
+  { key: "thu-thuat", title: "Thủ thuật", keywords: ["thủ thuật", "mẹo", "hướng dẫn", "tips"] },
+  { key: "video-hot", title: "Video hot", keywords: ["video", "clip"] },
+  { key: "giai-tri", title: "Giải trí", keywords: ["giải trí", "trailer", "event"] },
+  { key: "kien-thuc-doi-song", title: "Kiến thức - Đời sống", keywords: ["kiến thức", "đời sống", "sức khỏe"] },
+  { key: "hoi-dap", title: "Hỏi đáp", keywords: ["hỏi đáp", "faq", "câu hỏi"] },
+  { key: "app-game", title: "App - Game", keywords: ["app", "game", "ứng dụng"] },
+  { key: "tin-trao-thuong", title: "Tin trao thưởng", keywords: ["trao thưởng", "giveaway"] },
 ];
+
+const FALLBACK_CATEGORY = "tin-moi";
+
+const categoryMap = new Map(BLOG_CATEGORIES.map((item) => [item.key, item]));
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function toBlogCategory(key: string): BlogCategory {
+  const category = categoryMap.get(key) ?? categoryMap.get(FALLBACK_CATEGORY)!;
+  return {
+    id: category.key,
+    slug: category.key,
+    name: category.title,
+  };
+}
+
+export function resolveBlogCategory(
+  title: string,
+  excerpt: string,
+  slug: string,
+  explicitSlug?: string | null
+): BlogCategory {
+  if (explicitSlug && categoryMap.has(explicitSlug)) {
+    return toBlogCategory(explicitSlug);
+  }
+
+  const normalizedPool = normalizeText(`${title} ${excerpt} ${slug}`);
+
+  for (const category of BLOG_CATEGORIES) {
+    if (!category.keywords || category.key === "featured") continue;
+    const matched = category.keywords.some((keyword) => normalizedPool.includes(normalizeText(keyword)));
+    if (matched) return toBlogCategory(category.key);
+  }
+
+  const hashSeed = slug || title || excerpt;
+  if (hashSeed) {
+    const hash = Array.from(hashSeed).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    const dynamicList = BLOG_CATEGORIES.filter((item) => item.key !== "featured");
+    const picked = dynamicList[hash % dynamicList.length];
+    return toBlogCategory(picked.key);
+  }
+
+  return toBlogCategory(FALLBACK_CATEGORY);
+}
+
+export function isBlogInCategory(categoryKey: string | undefined, blogCategorySlug: string | undefined): boolean {
+  if (!categoryKey) return true;
+  if (categoryKey === "featured") return true;
+  return categoryKey === blogCategorySlug;
+}

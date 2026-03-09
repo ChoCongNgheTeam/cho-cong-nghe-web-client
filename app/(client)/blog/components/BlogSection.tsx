@@ -33,7 +33,7 @@ export default function BlogSection({
               className={`relative w-full overflow-hidden rounded-lg bg-neutral-light ${heroAspectClassName}`}
             >
               <Image
-                src={hero.thumbnail || "/images/blog-default.jpg"}
+                src={hero.thumbnail || "/images/avatar.png"}
                 alt={hero.title}
                 fill
                 className="object-cover"
@@ -58,7 +58,7 @@ export default function BlogSection({
               <div className="overflow-hidden rounded-lg border border-neutral bg-neutral-light hover:shadow-sm">
                 <div className="relative aspect-[4/3] w-full bg-neutral">
                   <Image
-                    src={blog.thumbnail || "/images/blog-default.jpg"}
+                    src={blog.thumbnail || "/images/avatar.png"}
                     alt={blog.title}
                     fill
                     className="object-cover"

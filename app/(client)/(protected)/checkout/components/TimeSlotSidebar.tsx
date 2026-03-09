@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import toast from "react-hot-toast";
+import { useToasty } from "@/components/Toast";
 
 interface TimeSlot {
   id: number;
@@ -18,6 +18,7 @@ interface TimeSlotSidebarProps {
 }
 
 export default function TimeSlotSidebar({ isOpen, onClose, onSelect, selectedSlot }: TimeSlotSidebarProps) {
+  const toast = useToasty();
   const [selectedDate, setSelectedDate] = useState("12");
   const [selectedTime, setSelectedTime] = useState(selectedSlot || "16:00 -> 17:00");
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
