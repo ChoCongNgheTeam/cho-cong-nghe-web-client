@@ -1,6 +1,8 @@
 export type WishlistProduct = {
-  id: number;
+  id: string;
+  wishlistItemId: string;
   name: string;
-  price: number | string;
+  price: number;
   image: string;
+  slug: string;
 };

@@ -3,9 +3,10 @@ import WishlistCard from "./WishlistCard";
 
 type Props = {
   products: WishlistProduct[];
+  onToggle?: (liked: boolean) => void;
 };
 
-export default function WishlistGrid({ products }: Props) {
+export default function WishlistGrid({ products, onToggle }: Props) {
   if (products.length === 0) {
     return (
       <div className="rounded-lg border border-neutral bg-neutral-light p-6 text-sm text-primary-light">
@@ -15,9 +16,9 @@ export default function WishlistGrid({ products }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {products.map((p) => (
-        <WishlistCard key={p.id} product={p} />
+        <WishlistCard key={p.id} product={p} onToggle={onToggle} />
       ))}
     </div>
   );

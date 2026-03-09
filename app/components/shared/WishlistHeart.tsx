@@ -1,63 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
-
-type WishlistProduct = {
-   id: string;
-   name: string;
-   price: number;
-   thumbnail: string;
-};
+import { addToWishlist, checkWishlist, removeFromWishlist } from "@/(client)/(protected)/profile/wishlist/_lib/wishlist.api";
 
 type Props = {
-   productId: string;
+   productVariantId: string;
    defaultLiked?: boolean;
-   product?: WishlistProduct;
+   onToggle?: (liked: boolean) => void;
 };
-const STORAGE_KEY = "wishlist_products";
+
 export default function WishlistHeart({
-   productId,
+   productVariantId,
    defaultLiked = false,
-   product,
+   onToggle,
 }: Props) {
-   const [liked, setLiked] = useState(() => {
-      if (typeof window === "undefined") return defaultLiked;
-      try {
-         const raw = localStorage.getItem(STORAGE_KEY);
-         const data = raw ? (JSON.parse(raw) as WishlistProduct[]) : [];
-         return data.some((p) => p.id === productId) || defaultLiked;
-      } catch {
-         return defaultLiked;
-      }
-   });
+   const [liked, setLiked] = useState(defaultLiked);
    const [loading, setLoading] = useState(false);
 
-   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+   useEffect(() => {
+      let mounted = true;
+
+      const syncWishlist = async () => {
+         if (!productVariantId) return;
+         try {
+            const isInWishlist = await checkWishlist(productVariantId);
+            if (mounted) setLiked(isInWishlist);
+         } catch {
+            if (mounted) setLiked(defaultLiked);
+         }
+      };
+
+      syncWishlist();
+
+      return () => {
+         mounted = false;
+      };
+   }, [productVariantId, defaultLiked]);
+
+   const handleToggle = async (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
       if (loading) return;
+
+      const nextLiked = !liked;
+      setLiked(nextLiked);
       setLoading(true);
+
       try {
-         const nextLiked = !liked;
-         setLiked(nextLiked);
-
+         if (nextLiked) {
+            await addToWishlist(productVariantId);
+         } else {
+            await removeFromWishlist(productVariantId);
+         }
+         onToggle?.(nextLiked);
          if (typeof window !== "undefined") {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            const data = raw ? (JSON.parse(raw) as WishlistProduct[]) : [];
-            if (nextLiked && product) {
-               if (!data.some((p) => p.id === productId)) {
-                  data.unshift(product);
-               }
-            } else {
-               const next = data.filter((p) => p.id !== productId);
-               data.splice(0, data.length, ...next);
-            }
-
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             window.dispatchEvent(new Event("wishlist:update"));
          }
       } catch (err) {
+         setLiked(!nextLiked);
          console.error("Wishlist error", err);
       } finally {
          setLoading(false);

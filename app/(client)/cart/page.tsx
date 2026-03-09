@@ -8,13 +8,14 @@ import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import VariantDropdown from "./components/CartVariantSelector";
 import OrderSummary from "@/components/odersummary/OrderSummary";
-import toast from "react-hot-toast";
+import { useToasty } from "@/components/Toast";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import CartSidebar from "./components/cartSidebar";
 
 export default function CartPage() {
   const router = useRouter();
+  const toast = useToasty();
   const { items, isLoading, selectAll, selectedItems, toggleSelectAll, toggleSelectItem, updateQuantity, removeItem, removeSelectedItems, subtotal, totalDiscount, finalTotal, rewardPoints } =
     useCart();
   console.log(items);
@@ -43,9 +44,9 @@ export default function CartPage() {
   }, []);
 
   // Handle variant change
-  const handleVariantChange = useCallback((cartItemId: string, variantId: string, variantName: string, price: number) => {
+  const handleVariantChange = useCallback((_cartItemId: string, _variantId: string, _variantName: string, _price: number) => {
     toast.success("Đã cập nhật phiên bản sản phẩm");
-  }, []);
+  }, [toast]);
 
   // Handle checkout - Save selected items to localStorage and navigate
   // Checkout page đọc localStorage["checkoutData"] → KHÔNG cần sửa gì ở checkout
@@ -73,7 +74,7 @@ export default function CartPage() {
 
     // Navigate to checkout page
     router.push("/checkout");
-  }, [selectedItems, selectedPromotions, promotionValue, appliedVoucherCode, appliedVoucherValue, subtotal, totalDiscount, finalTotal, rewardPoints, router, usePoints]);
+  }, [selectedItems, selectedPromotions, promotionValue, appliedVoucherCode, appliedVoucherValue, subtotal, totalDiscount, finalTotal, rewardPoints, router, usePoints, toast]);
 
   const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 

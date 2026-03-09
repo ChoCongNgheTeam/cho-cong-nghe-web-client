@@ -1,15 +1,27 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
+import { ApiError } from "@/lib/api";
+import { getBlogBySlug } from "../_lib/blog.api";
+import { BlogDetail } from "../types/blog.type";
 import BlogDetailClient from "./BlogDetailClient";
 
-export default function BlogDetailPage() {
-  const params = useParams<{ slug?: string }>();
-  const slug = params?.slug;
+type Props = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
 
-  if (!slug) return null;
+export default async function BlogDetailPage({ params }: Props) {
+  const { slug } = await params;
+  let blog: BlogDetail;
 
-  const blogTitle = slug.replace(/-/g, " ");
+  try {
+    blog = await getBlogBySlug(slug);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      notFound();
+    }
+    throw error;
+  }
 
-  return <BlogDetailClient slug={slug} title={blogTitle} />;
+  return <BlogDetailClient blog={blog} />;
 }

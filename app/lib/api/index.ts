@@ -315,8 +315,12 @@ class ApiRequest {
     return this.request<T>(endpoint, { ...options, method: "PATCH", body });
   }
 
-  delete<T>(endpoint: string, options?: { noAuth?: boolean; timeout?: number; headers?: HeadersInit }) {
-    return this.request<T>(endpoint, { ...options, method: "DELETE" });
+  delete<T>(
+    endpoint: string,
+    options?: { body?: any; noAuth?: boolean; timeout?: number; headers?: HeadersInit },
+  ) {
+    const { body, ...rest } = options || {};
+    return this.request<T>(endpoint, { ...rest, method: "DELETE", body });
   }
 }
 
