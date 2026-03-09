@@ -65,6 +65,7 @@ export default function AddressPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [errors, setErrors] = useState<Partial<AddressForm>>({});
@@ -95,19 +96,25 @@ export default function AddressPage() {
     fetchWards();
   }, [form.provinceId]);
 
-  const setField = <K extends keyof AddressForm>(key: K, value: AddressForm[K]) => {
+  const setField = <K extends keyof AddressForm>(
+    key: K,
+    value: AddressForm[K],
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
   const validate = (): boolean => {
     const newErrors: Partial<AddressForm> = {};
-    if (!form.contactName.trim()) newErrors.contactName = "Vui lòng nhập họ tên";
+    if (!form.contactName.trim())
+      newErrors.contactName = "Vui lòng nhập họ tên";
     if (!form.phone.trim()) newErrors.phone = "Vui lòng nhập số điện thoại";
-    else if (!/^(0[3-9])\d{8}$/.test(form.phone)) newErrors.phone = "Số điện thoại không hợp lệ";
+    else if (!/^(0[3-9])\d{8}$/.test(form.phone))
+      newErrors.phone = "Số điện thoại không hợp lệ";
     if (!form.provinceId) newErrors.provinceId = "Vui lòng chọn tỉnh/thành phố";
     if (!form.wardId) newErrors.wardId = "Vui lòng chọn phường/xã";
-    if (!form.detailAddress.trim()) newErrors.detailAddress = "Vui lòng nhập địa chỉ cụ thể";
+    if (!form.detailAddress.trim())
+      newErrors.detailAddress = "Vui lòng nhập địa chỉ cụ thể";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -134,11 +141,32 @@ export default function AddressPage() {
     setIsOpen(true);
   };
 
+  const handleSetDefault = async (id: string) => {
+    setSettingDefaultId(id);
+    try {
+      const res = await apiRequest.put<{ success: boolean; data: Address }>(
+        `/addresses/${id}/set-default`,
+      );
+      if (res?.success) {
+        setAddresses((prev) =>
+          prev.map((a) => ({ ...a, isDefault: a.id === id })),
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi khi đặt địa chỉ mặc định:", error);
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
+
   const handleCreate = async () => {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      const res = await apiRequest.post<{ success: boolean; data: Address }>("/addresses", form);
+      const res = await apiRequest.post<{ success: boolean; data: Address }>(
+        "/addresses",
+        form,
+      );
       if (res?.success) {
         setAddresses((prev) => {
           const updated = res.data.isDefault
@@ -186,11 +214,14 @@ export default function AddressPage() {
     if (!confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
     setDeletingId(id);
     try {
-      const res = await apiRequest.delete<{ success: boolean }>(`/addresses/${id}`);
+      const res = await apiRequest.delete<{ success: boolean }>(
+        `/addresses/${id}`,
+      );
       if (res?.success) {
         setAddresses((prev) => prev.filter((a) => a.id !== id));
       }
     } catch (error) {
+      alert("Không thể xóa địa chỉ này");
       console.error("Lỗi khi xóa địa chỉ:", error);
     } finally {
       setDeletingId(null);
@@ -198,12 +229,13 @@ export default function AddressPage() {
   };
 
   const typeLabel = (type: string) => {
-    if (type === "HOME") return { label: "Nhà riêng", icon: <Home size={14} /> };
-    if (type === "OFFICE") return { label: "Văn phòng", icon: <Building2 size={14} /> };
+    if (type === "HOME")
+      return { label: "Nhà riêng", icon: <Home size={14} /> };
+    if (type === "OFFICE")
+      return { label: "Văn phòng", icon: <Building2 size={14} /> };
     return { label: "Khác", icon: <MapPin size={14} /> };
   };
 
-  // Input & select base classes
   const inputClass =
     "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-promotion focus:ring-2 focus:ring-promotion-light placeholder:text-primary-dark";
 
@@ -228,7 +260,6 @@ export default function AddressPage() {
         </div>
 
         {addresses.length === 0 ? (
-          /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center py-10 px-4">
             <div className="mb-2">
               <img
@@ -245,13 +276,12 @@ export default function AddressPage() {
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className="bg-promotion hover:bg-promotion-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+              className="bg-promotion hover:bg-promotion-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg cursor-pointer"
             >
               Cập nhật ngay
             </button>
           </div>
         ) : (
-          /* ── Address list ── */
           <div className="space-y-3">
             {addresses.map((addr) => {
               const { label, icon } = typeLabel(addr.type);
@@ -272,12 +302,17 @@ export default function AddressPage() {
                         </span>
                         {addr.isDefault && (
                           <span className="flex items-center gap-1 text-sm text-yellow-600 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded-full font-medium">
-                            <Star size={11} className="fill-yellow-500 text-yellow-500" />
+                            <Star
+                              size={11}
+                              className="fill-yellow-500 text-yellow-500"
+                            />
                             Mặc định
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-primary-dark">{addr.fullAddress}</p>
+                      <p className="text-sm text-primary-dark">
+                        {addr.fullAddress}
+                      </p>
                       <span className="inline-flex items-center gap-1 text-sm text-primary-dark bg-neutral-light-active px-2 py-0.5 rounded-full">
                         {icon}
                         {label}
@@ -303,6 +338,29 @@ export default function AddressPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Nút đặt mặc định — chỉ hiện khi chưa là mặc định */}
+                  {!addr.isDefault && (
+                    <div className="mt-3 pt-3 border-t border-neutral">
+                      <button
+                        onClick={() => handleSetDefault(addr.id)}
+                        disabled={settingDefaultId === addr.id}
+                        className="flex items-center gap-1.5 text-sm text-primary-dark hover:text-yellow-600 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <Star
+                          size={14}
+                          className={
+                            settingDefaultId === addr.id
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-primary-dark"
+                          }
+                        />
+                        {settingDefaultId === addr.id
+                          ? "Đang cập nhật..."
+                          : "Đặt làm địa chỉ mặc định"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -318,13 +376,11 @@ export default function AddressPage() {
           footer={true}
           cssClass="max-w-[600px] w-full"
           content={
-            <div className="max-h-[75vh] overflow-y-auto  custom-scroll  px-6  pl-2 mt-6">
+            <div className="max-h-[75vh] overflow-y-auto custom-scroll px-6 pl-2 mt-6">
               <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2 border-neutral">
                 {editingId ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
               </h2>
               <div className="divide-y divide-neutral">
-
-                {/* Họ tên */}
                 <div className="py-4 space-y-2">
                   <label className="block text-sm font-medium text-primary">
                     Thông tin người nhận
@@ -337,11 +393,12 @@ export default function AddressPage() {
                     className={inputClass}
                   />
                   {errors.contactName && (
-                    <p className="text-xs text-promotion">{errors.contactName}</p>
+                    <p className="text-xs text-promotion">
+                      {errors.contactName}
+                    </p>
                   )}
                 </div>
 
-                {/* SĐT */}
                 <div className="py-4 space-y-2">
                   <label className="block text-sm font-medium text-primary">
                     Số điện thoại
@@ -358,7 +415,6 @@ export default function AddressPage() {
                   )}
                 </div>
 
-                {/* Tỉnh/Thành phố */}
                 <div className="py-4 space-y-2">
                   <label className="block text-sm font-medium text-primary">
                     Tỉnh/Thành phố
@@ -374,15 +430,18 @@ export default function AddressPage() {
                   >
                     <option value="">Chọn Tỉnh/Thành phố</option>
                     {provinces.map((p) => (
-                      <option key={p.id} value={p.id}>{p.fullName}</option>
+                      <option key={p.id} value={p.id}>
+                        {p.fullName}
+                      </option>
                     ))}
                   </select>
                   {errors.provinceId && (
-                    <p className="text-xs text-promotion">{errors.provinceId}</p>
+                    <p className="text-xs text-promotion">
+                      {errors.provinceId}
+                    </p>
                   )}
                 </div>
 
-                {/* Phường/Xã */}
                 <div className="py-4 space-y-2">
                   <label className="block text-sm font-medium text-primary">
                     Phường/Xã
@@ -395,7 +454,9 @@ export default function AddressPage() {
                   >
                     <option value="">Chọn Phường/Xã</option>
                     {wards.map((w) => (
-                      <option key={w.id} value={w.id}>{w.fullName}</option>
+                      <option key={w.id} value={w.id}>
+                        {w.fullName}
+                      </option>
                     ))}
                   </select>
                   {errors.wardId && (
@@ -403,7 +464,6 @@ export default function AddressPage() {
                   )}
                 </div>
 
-                {/* Địa chỉ cụ thể */}
                 <div className="py-4 space-y-2">
                   <label className="block text-sm font-medium text-primary">
                     Địa chỉ cụ thể
@@ -416,11 +476,12 @@ export default function AddressPage() {
                     className={inputClass}
                   />
                   {errors.detailAddress && (
-                    <p className="text-xs text-promotion">{errors.detailAddress}</p>
+                    <p className="text-xs text-promotion">
+                      {errors.detailAddress}
+                    </p>
                   )}
                 </div>
 
-                {/* Loại địa chỉ */}
                 <div className="py-4 space-y-2">
                   <label className="block text-sm font-medium text-primary">
                     Loại địa chỉ
@@ -447,7 +508,6 @@ export default function AddressPage() {
                   </div>
                 </div>
 
-                {/* Mặc định */}
                 <div className="py-4">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
@@ -472,7 +532,11 @@ export default function AddressPage() {
                 "px-4 py-2 bg-neutral-light-active hover:bg-neutral text-primary rounded-lg cursor-pointer transition-colors",
             },
             {
-              title: submitting ? "Đang lưu..." : editingId ? "Cập nhật" : "Lưu địa chỉ",
+              title: submitting
+                ? "Đang lưu..."
+                : editingId
+                  ? "Cập nhật"
+                  : "Lưu địa chỉ",
               onClick: handleSubmit,
               className:
                 "px-4 py-2 bg-promotion hover:bg-promotion-hover text-white rounded-lg cursor-pointer transition-colors disabled:opacity-50",
