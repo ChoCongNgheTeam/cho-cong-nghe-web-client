@@ -165,8 +165,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     const savedCheckoutData = localStorage.getItem("checkoutData");
     if (!savedCheckoutData) {
-      toast.error("Không có thông tin đơn hàng");
-      router.push("/cart");
+      toast.error("");
+      router.push("/home");
       return;
     }
     try {
