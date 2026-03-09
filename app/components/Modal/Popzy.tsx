@@ -112,7 +112,7 @@ export default function Popzy({
             ref={backdropRef}
             onClick={handleBackdropClick}
             className={`
-               fixed inset-0 z-[9999] flex items-center justify-center
+               fixed inset-0 z-9999 flex items-center justify-center
                bg-black/70 transition-opacity duration-300
                ${isVisible ? "opacity-100 visible" : "opacity-0 invisible"}
             `}
@@ -130,13 +130,13 @@ export default function Popzy({
                {allowButtonClose && (
                   <button
                      onClick={onClose}
-                     className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-neutral-light-active hover:bg-neutral text-primary text-2xl flex items-center justify-center transition-colors"
+                     className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-neutral-light-active hover:bg-neutral text-primary text-2xl flex items-center justify-center transition-colors cursor-pointer"
                   >
                      &times;
                   </button>
                )}
 
-               <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-6">
+               <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-6 scrollbar-thin">
                   {typeof content === "string" ? (
                      <div dangerouslySetInnerHTML={{ __html: content }} />
                   ) : (
@@ -180,6 +180,6 @@ export default function Popzy({
             }
          `}</style>
       </>,
-      document.body
+      document.body,
    );
 }

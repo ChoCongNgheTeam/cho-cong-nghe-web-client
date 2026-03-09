@@ -40,7 +40,7 @@ export default function CountdownTimer({ hours, minutes, seconds }: CountdownTim
       <div className="flex gap-1">
         {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((val, i) => (
           <React.Fragment key={i}>
-            <span className="bg-white text-promotion font-bold px-2 py-1 rounded text-sm min-w-[32px] text-center">
+            <span className="bg-white text-promotion font-bold px-2 py-1 rounded text-sm min-w-8 text-center">
               {String(val).padStart(2, '0')}
             </span>
             {i < 2 && <span className="text-white font-bold">:</span>}

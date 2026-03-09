@@ -55,7 +55,7 @@ export default function ProfileLayout({
           <Breadcrumb
             items={[
               { label: "Trang chủ", href: "/" },
-              { label: "Profile", href: "/profile" },
+              { label: "Hồ sơ cá nhân", href: "/profile" },
               { label: breadcrumbLabel },
             ]}
           />

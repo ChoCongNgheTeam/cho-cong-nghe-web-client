@@ -2,6 +2,7 @@
 "use client";
 import { Search, Bell, Settings2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import UserAvatar from "../ui/UserAvatar";
 
 interface AdminHeaderProps {
    title: string;
@@ -9,18 +10,10 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ title }: AdminHeaderProps) {
    const { user } = useAuth();
-   const initials = user?.fullName
-      ? user.fullName
-           .split(" ")
-           .map((w) => w[0])
-           .slice(-2)
-           .join("")
-           .toUpperCase()
-      : "A";
 
    return (
       <div className="bg-neutral-light border-b border-neutral px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
-         {/* Page title — nhận từ prop */}
+         {/* Page title */}
          <h1 className="text-2xl font-bold text-primary tracking-tight">
             {title}
          </h1>
@@ -53,11 +46,15 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
             </button>
 
             {/* Avatar */}
-            <button className="w-8 h-8 rounded-full bg-accent flex items-center justify-center overflow-hidden ring-2 ring-neutral hover:ring-accent transition-all duration-150 shrink-0">
-               <span className="text-sm font-semibold text-white">
-                  {initials}
-               </span>
-            </button>
+            {user && (
+               <button className="ring-2 ring-neutral hover:ring-accent transition-all duration-150 rounded-full">
+                  <UserAvatar
+                     avatarImage={user.avatarImage}
+                     fullName={user.fullName}
+                     size={32}
+                  />
+               </button>
+            )}
          </div>
       </div>
    );

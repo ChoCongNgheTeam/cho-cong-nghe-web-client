@@ -8,54 +8,54 @@ import { getProvinces } from "../_lib/get-provice";
 import { getWards } from "../_lib/get-wards";
 
 interface Province {
-  id: string;
-  name: string;
-  fullName: string;
+   id: string;
+   name: string;
+   fullName: string;
 }
 
 interface Ward {
-  id: string;
-  name: string;
-  fullName: string;
+   id: string;
+   name: string;
+   fullName: string;
 }
 
 interface Address {
-  id: string;
-  contactName: string;
-  phone: string;
-  province: Province;
-  ward: Ward;
-  detailAddress: string;
-  fullAddress: string;
-  type: "HOME" | "OFFICE" | "OTHER";
-  isDefault: boolean;
+   id: string;
+   contactName: string;
+   phone: string;
+   province: Province;
+   ward: Ward;
+   detailAddress: string;
+   fullAddress: string;
+   type: "HOME" | "OFFICE" | "OTHER";
+   isDefault: boolean;
 }
 
 interface ApiResponse {
-  success: boolean;
-  data: Address[];
-  total: number;
-  message: string;
+   success: boolean;
+   data: Address[];
+   total: number;
+   message: string;
 }
 
 interface AddressForm {
-  contactName: string;
-  phone: string;
-  provinceId: string;
-  wardId: string;
-  detailAddress: string;
-  type: "HOME" | "OFFICE" | "OTHER";
-  isDefault: boolean;
+   contactName: string;
+   phone: string;
+   provinceId: string;
+   wardId: string;
+   detailAddress: string;
+   type: "HOME" | "OFFICE" | "OTHER";
+   isDefault: boolean;
 }
 
 const defaultForm: AddressForm = {
-  contactName: "",
-  phone: "",
-  provinceId: "",
-  wardId: "",
-  detailAddress: "",
-  type: "HOME",
-  isDefault: false,
+   contactName: "",
+   phone: "",
+   provinceId: "",
+   wardId: "",
+   detailAddress: "",
+   type: "HOME",
+   isDefault: false,
 };
 
 export default function AddressPage() {
@@ -71,30 +71,30 @@ export default function AddressPage() {
   const [errors, setErrors] = useState<Partial<AddressForm>>({});
   const [form, setForm] = useState<AddressForm>(defaultForm);
 
-  useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const res = await apiRequest.get<ApiResponse>("/addresses");
-        setAddresses(res?.data || []);
-        const provinceData = await getProvinces();
-        setProvinces(provinceData);
-      } catch (error) {
-        console.error("Lỗi khi lấy địa chỉ:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAddresses();
-  }, []);
+   useEffect(() => {
+      const fetchAddresses = async () => {
+         try {
+            const res = await apiRequest.get<ApiResponse>("/addresses");
+            setAddresses(res?.data || []);
+            const provinceData = await getProvinces();
+            setProvinces(provinceData);
+         } catch (error) {
+            console.error("Lỗi khi lấy địa chỉ:", error);
+         } finally {
+            setLoading(false);
+         }
+      };
+      fetchAddresses();
+   }, []);
 
-  useEffect(() => {
-    if (!form.provinceId) return;
-    const fetchWards = async () => {
-      const data = await getWards(form.provinceId);
-      setWards(data);
-    };
-    fetchWards();
-  }, [form.provinceId]);
+   useEffect(() => {
+      if (!form.provinceId) return;
+      const fetchWards = async () => {
+         const data = await getWards(form.provinceId);
+         setWards(data);
+      };
+      fetchWards();
+   }, [form.provinceId]);
 
   const setField = <K extends keyof AddressForm>(
     key: K,
@@ -119,13 +119,13 @@ export default function AddressPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-    setEditingId(null);
-    setForm(defaultForm);
-    setWards([]);
-    setErrors({});
-  };
+   const handleClose = () => {
+      setIsOpen(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      setWards([]);
+      setErrors({});
+   };
 
   const handleOpenEdit = (addr: Address) => {
     setEditingId(addr.id);
@@ -183,32 +183,32 @@ export default function AddressPage() {
     }
   };
 
-  const handleUpdate = async () => {
-    if (!validate() || !editingId) return;
-    setSubmitting(true);
-    try {
-      const res = await apiRequest.patch<{ success: boolean; data: Address }>(
-        `/addresses/${editingId}`,
-        form,
-      );
-      if (res?.success) {
-        setAddresses((prev) =>
-          prev.map((a) => {
-            if (a.id === editingId) return res.data;
-            if (res.data.isDefault) return { ...a, isDefault: false };
-            return a;
-          }),
-        );
-        handleClose();
+   const handleUpdate = async () => {
+      if (!validate() || !editingId) return;
+      setSubmitting(true);
+      try {
+         const res = await apiRequest.patch<{
+            success: boolean;
+            data: Address;
+         }>(`/addresses/${editingId}`, form);
+         if (res?.success) {
+            setAddresses((prev) =>
+               prev.map((a) => {
+                  if (a.id === editingId) return res.data;
+                  if (res.data.isDefault) return { ...a, isDefault: false };
+                  return a;
+               }),
+            );
+            handleClose();
+         }
+      } catch (error) {
+         console.error("Lỗi khi cập nhật địa chỉ:", error);
+      } finally {
+         setSubmitting(false);
       }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật địa chỉ:", error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+   };
 
-  const handleSubmit = () => (editingId ? handleUpdate() : handleCreate());
+   const handleSubmit = () => (editingId ? handleUpdate() : handleCreate());
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
@@ -239,25 +239,25 @@ export default function AddressPage() {
   const inputClass =
     "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-promotion focus:ring-2 focus:ring-promotion-light placeholder:text-primary-dark";
 
-  if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
+   if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
 
-  return (
-    <>
-      <div>
-        <div className="flex items-center justify-between mt-2 mb-4">
-          <h1 className="text-2xl font-semibold text-primary">
-            Sổ địa chỉ nhận hàng
-          </h1>
-          {addresses.length > 0 && (
-            <button
-              onClick={() => setIsOpen(true)}
-              className="flex items-center gap-1 bg-promotion hover:bg-promotion-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
-            >
-              <Plus size={24} />
-              Thêm địa chỉ
-            </button>
-          )}
-        </div>
+   return (
+      <>
+         <div>
+            <div className="flex items-center justify-between mt-2 mb-4">
+               <h1 className="text-2xl font-semibold text-primary">
+                  Sổ địa chỉ nhận hàng
+               </h1>
+               {addresses.length > 0 && (
+                  <button
+                     onClick={() => setIsOpen(true)}
+                     className="flex items-center gap-1 bg-promotion hover:bg-promotion-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
+                  >
+                     <Plus size={24} />
+                     Thêm địa chỉ
+                  </button>
+               )}
+            </div>
 
         {addresses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 px-4">
@@ -547,3 +547,4 @@ export default function AddressPage() {
     </>
   );
 }
+
