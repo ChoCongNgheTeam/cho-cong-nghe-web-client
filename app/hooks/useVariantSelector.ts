@@ -1,9 +1,10 @@
 // app/(client)/cart/hooks/useVariantSelector.ts
-import { useState, useCallback } from "react";
+import { useState, useCallback, useContext } from "react";
 import apiRequest from "@/lib/api";
 import toast from "react-hot-toast";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
+import { AuthContext } from "@/contexts/AuthContext";
 
 // ─── API response types ────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ interface AvailableOption {
 interface VariantDetail {
   id: string;
   code: string;
+  color: string;
   price: number;
   isActive: boolean;
   available: boolean;
@@ -42,20 +44,64 @@ interface ApiVariantResponse {
   message: string;
 }
 
+// validate-item response — trả về thông tin variant từ productVariantId
+interface ValidateItemResponse {
+  data: {
+    productVariantId: string;
+    color: string;        // English value: "black", "white", ...
+    variantCode: string;  // SKU: "IPHONE-16-PLUS-128GB-BLACK"
+    price: number;
+    available: boolean;
+    productSlug: string;
+    [key: string]: unknown;
+  };
+  message: string;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parseCodeParts(code: string): { color: string; storage: string } {
-  const upper = code.toUpperCase();
-  const storageMatch = upper.match(/(\d+GB)/);
-  if (!storageMatch) return { color: "", storage: "" };
+const STORAGE_RE = /(\d+\s*(?:GB|TB))/i;
 
-  const storage = storageMatch[1].toLowerCase();
-  const afterStorage = upper
-    .slice(upper.indexOf(storageMatch[1]) + storageMatch[1].length)
-    .replace(/^-+/, "")
-    .toLowerCase();
+function parseStorage(code: string): string {
+  if (!code || code === "Mặc định") return "";
+  if (code.includes("/")) {
+    for (const p of code.split("/").map((s) => s.trim())) {
+      const m = p.match(STORAGE_RE);
+      if (m) return m[1].replace(/\s+/g, "").toLowerCase();
+    }
+    return "";
+  }
+  const storageMatch = code.match(STORAGE_RE);
+  if (!storageMatch) return "";
+  return storageMatch[1].replace(/\s+/g, "").toLowerCase();
+}
 
-  return { color: afterStorage, storage };
+function buildParams(
+  color: string,
+  storage: string,
+): Record<string, string> | undefined {
+  const p: Record<string, string> = {};
+  if (color) p.color = color;
+  if (storage) p.storage = storage;
+  return Object.keys(p).length > 0 ? p : undefined;
+}
+
+// ─── Local storage helpers ────────────────────────────────────────────────────
+
+const LOCAL_KEY = "guest_cart";
+
+function readLocalCart(): CartItemWithDetails[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "[]") as CartItemWithDetails[];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalCart(items: CartItemWithDetails[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -65,9 +111,10 @@ interface UseVariantSelectorProps {
   productSlug: string;
   currentVariantId: string;
   currentVariantCode: string;
+  /** colorValue từ item — optional, hook tự resolve qua validate-item nếu thiếu */
+  currentColorValue?: string;
   currentQuantity: number;
   onSuccess?: () => void;
-  /** Optimistic update: cập nhật item ngay trong state, không cần refetch */
   onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
 }
 
@@ -76,10 +123,14 @@ export function useVariantSelector({
   productSlug,
   currentVariantId,
   currentVariantCode,
+  currentColorValue,
   currentQuantity,
   onSuccess,
   onUpdateItem,
 }: UseVariantSelectorProps) {
+  const auth = useContext(AuthContext);
+  const isAuthenticated = auth?.isAuthenticated ?? false;
+
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<VariantOption[]>([]);
   const [isFetching, setIsFetching] = useState(false);
@@ -94,12 +145,42 @@ export function useVariantSelector({
     setErrorMessage(null);
 
     try {
-      const { color: currentColor, storage: currentStorage } =
-        parseCodeParts(currentVariantCode);
+      let color = currentColorValue ?? "";
+      let storage = parseStorage(currentVariantCode);
+
+      // ── Bước 1: nếu thiếu color/storage, dùng validate-item để resolve ────
+      // validate-item là public endpoint (không cần auth), nhận productVariantId
+      // và trả về color + variantCode đầy đủ
+      if ((!color || !storage) && currentVariantId) {
+        try {
+          const validateRes = await apiRequest.post<ValidateItemResponse>(
+            "/cart/validate-item",
+            { productVariantId: currentVariantId, quantity: 1 },
+            { noAuth: true },
+          );
+          const vd = validateRes?.data;
+          if (vd) {
+            if (!color) color = vd.color ?? "";
+            if (!storage) storage = parseStorage(vd.variantCode ?? "");
+          }
+        } catch (e) {
+          console.warn("[useVariantSelector] validate-item fallback failed:", e);
+          // tiếp tục với những gì có, fetchVariants sẽ xử lý error bên dưới
+        }
+      }
+
+      // ── Bước 2: gọi variant API với color + storage đã resolve ────────────
+      const params = buildParams(color, storage);
+      if (!params) {
+        // Không có đủ params sau khi đã thử resolve → báo lỗi
+        setErrorMessage("Không thể xác định biến thể");
+        setHasFetched(true);
+        return;
+      }
 
       const firstRes = await apiRequest.get<ApiVariantResponse>(
         `/products/slug/${productSlug}/variant`,
-        { params: { color: currentColor, storage: currentStorage } },
+        { params, noAuth: true },
       );
 
       const availableOptions = firstRes?.data?.availableOptions ?? [];
@@ -115,13 +196,14 @@ export function useVariantSelector({
       const enabledColors = colorOptions.filter((c) => c.enabled);
       const enabledStorages = storageOptions.filter((s) => s.enabled);
 
+      // Chỉ 1 variant hoặc không có options
       if (enabledColors.length === 0 || enabledStorages.length === 0) {
         const cv = firstRes?.data?.currentVariant;
         if (cv && cv.isActive) {
           setOptions([{
             id: cv.id,
-            colorLabel: currentColor,
-            storageLabel: currentStorage,
+            colorLabel: color,
+            storageLabel: storage,
             price: cv.price,
             available: cv.available,
           }]);
@@ -130,6 +212,7 @@ export function useVariantSelector({
         return;
       }
 
+      // ── Bước 3: gọi song song tất cả combo color × storage ────────────────
       const combos = enabledColors.flatMap((c) =>
         enabledStorages.map((s) => ({
           color: c.value,
@@ -143,7 +226,8 @@ export function useVariantSelector({
         combos.map((combo) =>
           apiRequest
             .get<ApiVariantResponse>(`/products/slug/${productSlug}/variant`, {
-              params: { color: combo.color, storage: combo.storage },
+              params: buildParams(combo.color, combo.storage),
+              noAuth: true,
             })
             .then((res) => ({ combo, variant: res?.data?.currentVariant })),
         ),
@@ -174,7 +258,7 @@ export function useVariantSelector({
     } finally {
       setIsFetching(false);
     }
-  }, [productSlug, currentVariantCode, hasFetched]);
+  }, [productSlug, currentVariantCode, currentColorValue, currentVariantId, hasFetched]);
 
   // ── Toggle dropdown ─────────────────────────────────────────────────────────
   const handleToggle = useCallback(() => {
@@ -185,12 +269,8 @@ export function useVariantSelector({
     });
   }, [isChanging, fetchVariants]);
 
-  // ── Close dropdown ──────────────────────────────────────────────────────────
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
+  const handleClose = useCallback(() => setIsOpen(false), []);
 
-  // ── Retry fetch ─────────────────────────────────────────────────────────────
   const handleRetry = useCallback(() => {
     setHasFetched(false);
     setErrorMessage(null);
@@ -198,7 +278,7 @@ export function useVariantSelector({
     Promise.resolve().then(() => fetchVariants());
   }, [fetchVariants]);
 
-  // ── Select variant → optimistic update + silent refetch ────────────────────
+  // ── Select variant ──────────────────────────────────────────────────────────
   const handleSelect = useCallback(
     async (variant: VariantOption) => {
       if (!variant.available) return;
@@ -210,7 +290,6 @@ export function useVariantSelector({
       setIsOpen(false);
       setIsChanging(true);
 
-      // ── Optimistic update ngay lập tức, không chờ API ──────────────────────
       onUpdateItem?.({
         productVariantId: variant.id,
         variantCode: `${variant.colorLabel}/${variant.storageLabel}`,
@@ -219,18 +298,48 @@ export function useVariantSelector({
         color: variant.colorLabel,
       });
 
+      // ── Guest: chỉ cập nhật localStorage ──────────────────────────────────
+      if (!isAuthenticated) {
+        try {
+          const updated = readLocalCart().map((item) =>
+            item.id !== cartItemId
+              ? item
+              : {
+                  ...item,
+                  productVariantId: variant.id,
+                  variantCode: `${variant.colorLabel}/${variant.storageLabel}`,
+                  unitPrice: variant.price,
+                  originalPrice: variant.price,
+                  color: variant.colorLabel,
+                },
+          );
+          writeLocalCart(updated);
+          toast.success("Đã cập nhật phiên bản sản phẩm");
+          onSuccess?.();
+        } catch (err) {
+          console.error("[useVariantSelector] guest update error:", err);
+          toast.error("Không thể đổi phiên bản, vui lòng thử lại");
+          onUpdateItem?.({
+            productVariantId: currentVariantId,
+            variantCode: currentVariantCode,
+          });
+        } finally {
+          setIsChanging(false);
+        }
+        return;
+      }
+
+      // ── Authenticated: gọi API change-variant ─────────────────────────────
       try {
         await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
           newVariantId: variant.id,
           quantity: currentQuantity,
         });
         toast.success("Đã cập nhật phiên bản sản phẩm");
-        // silent refetch để sync data thật từ server, không gây flash
         onSuccess?.();
       } catch (err) {
         console.error("[useVariantSelector] change-variant error:", err);
         toast.error("Không thể đổi phiên bản, vui lòng thử lại");
-        // Rollback optimistic update về variant cũ
         onUpdateItem?.({
           productVariantId: currentVariantId,
           variantCode: currentVariantCode,
@@ -239,7 +348,15 @@ export function useVariantSelector({
         setIsChanging(false);
       }
     },
-    [cartItemId, currentVariantId, currentVariantCode, currentQuantity, onSuccess, onUpdateItem],
+    [
+      cartItemId,
+      currentVariantId,
+      currentVariantCode,
+      currentQuantity,
+      isAuthenticated,
+      onSuccess,
+      onUpdateItem,
+    ],
   );
 
   return {

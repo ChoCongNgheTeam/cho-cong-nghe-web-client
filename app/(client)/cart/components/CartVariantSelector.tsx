@@ -10,6 +10,8 @@ interface CartVariantSelectorProps {
   productSlug: string;
   currentVariantId: string;
   currentVariantCode: string;
+  /** colorValue từ item — optional, hook tự resolve qua validate-item nếu thiếu */
+  currentColorValue?: string;
   currentQuantity: number;
   onSuccess?: () => void;
   onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
@@ -20,6 +22,7 @@ export default function CartVariantSelector({
   productSlug,
   currentVariantId,
   currentVariantCode,
+  currentColorValue,
   currentQuantity,
   onSuccess,
   onUpdateItem,
@@ -40,6 +43,7 @@ export default function CartVariantSelector({
     productSlug,
     currentVariantId,
     currentVariantCode,
+    currentColorValue,
     currentQuantity,
     onSuccess,
     onUpdateItem,
