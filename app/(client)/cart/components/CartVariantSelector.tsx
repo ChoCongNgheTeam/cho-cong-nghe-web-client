@@ -1,9 +1,9 @@
-// app/(client)/cart/components/CartVariantSelector.tsx
 "use client";
 
 import React from "react";
 import { useVariantSelector } from "@/hooks/useVariantSelector";
 import VariantDropdown from "./VariantDropdown";
+import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
 
 interface CartVariantSelectorProps {
   cartItemId: string;
@@ -12,12 +12,9 @@ interface CartVariantSelectorProps {
   currentVariantCode: string;
   currentQuantity: number;
   onSuccess?: () => void;
+  onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
 }
 
-/**
- * Thin orchestrator: kết nối useVariantSelector (logic) với VariantDropdown (UI).
- * Không chứa logic API hay render markup trực tiếp.
- */
 export default function CartVariantSelector({
   cartItemId,
   productSlug,
@@ -25,6 +22,7 @@ export default function CartVariantSelector({
   currentVariantCode,
   currentQuantity,
   onSuccess,
+  onUpdateItem,
 }: CartVariantSelectorProps) {
   const {
     isOpen,
@@ -44,9 +42,9 @@ export default function CartVariantSelector({
     currentVariantCode,
     currentQuantity,
     onSuccess,
+    onUpdateItem,
   });
 
-  // Fetch xong mà chỉ có ≤1 variant → hiện plain text, không cần dropdown
   if (hasFetched && options.length <= 1) {
     return (
       <div className="text-xs text-neutral-darker mb-2">

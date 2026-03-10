@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from "react";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
 import { getCartItems, addToCart as apiAddToCart, updateCartItemQuantity, removeCartItem, removeCartItems, syncGuestCart } from "@/(client)/cart/actions/cart.action";
-import { useToasty } from "@/components/Toast"; // ← đổi import
+import { useToasty } from "@/components/Toast";
 import { AuthContext } from "@/contexts/AuthContext";
 
 export interface CartItemMeta {
@@ -36,9 +36,11 @@ export interface CartContextValue {
   toggleSelectItem: (id: string) => void;
   addToCart: (productVariantId: string, quantity?: number, meta?: CartItemMeta) => Promise<void>;
   updateQuantity: (cartItemId: string, delta: number) => Promise<void>;
+  /** Optimistic update: patch 1 item trong state mà không fetch lại */
+  updateItem: (cartItemId: string, patch: Partial<CartItemWithDetails>) => void;
   removeItem: (cartItemId: string) => Promise<void>;
   removeSelectedItems: () => Promise<void>;
-  refetchCart: () => Promise<void>;
+  refetchCart: (silent?: boolean) => Promise<void>;
   syncLocalToDB: () => Promise<number>;
   subtotal: number;
   totalDiscount: number;
@@ -142,17 +144,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const hasSyncedRef = useRef(false);
 
-  const toast = useToasty(); // ← gọi hook ở top-level
+  const toast = useToasty();
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
+  // silent=true → không set isLoading, tránh flash UI khi chỉ cần sync ngầm
 
-  const refetchCart = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
+  const refetchCart = useCallback(async (silent = false): Promise<void> => {
+    if (!silent) setIsLoading(true);
     try {
       if (isAuthenticated) {
         const res = (await getCartItems()) as ApiResult;
         if (res.success && res.data?.items && Array.isArray(res.data.items)) {
-          setItems(res.data.items.map(transformCartItem));
+          setItems((prev) => {
+            const next = res.data!.items!.map(transformCartItem);
+            // Giữ lại trạng thái selected từ state hiện tại
+            return next.map((item) => ({
+              ...item,
+              selected: prev.find((p) => p.id === item.id)?.selected ?? true,
+            }));
+          });
         } else {
           setItems([]);
         }
@@ -162,7 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {
       setItems(isAuthenticated ? [] : readLocalCart());
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [isAuthenticated]);
 
@@ -182,9 +192,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const res = (await syncGuestCart(guestItems)) as ApiResult;
       if (res.success) {
         clearLocalCart();
-        res.warnings?.forEach(
-          (w) => toast.info(w), // hoặc toast.warning nếu useToasty có
-        );
+        res.warnings?.forEach((w) => toast.info(w));
         await refetchCart();
         return guestItems.length;
       }
@@ -297,6 +305,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [isAuthenticated, items, toast],
   );
 
+  // ── Optimistic patch 1 item ───────────────────────────────────────────────
+
+  const updateItem = useCallback(
+    (cartItemId: string, patch: Partial<CartItemWithDetails>): void => {
+      setItems((prev) =>
+        prev.map((i) => (i.id === cartItemId ? { ...i, ...patch } : i))
+      );
+    },
+    [],
+  );
+
   // ── Remove single ─────────────────────────────────────────────────────────
 
   const removeItem = useCallback(
@@ -384,6 +403,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     toggleSelectItem,
     addToCart,
     updateQuantity,
+    updateItem,
     removeItem,
     removeSelectedItems,
     refetchCart,

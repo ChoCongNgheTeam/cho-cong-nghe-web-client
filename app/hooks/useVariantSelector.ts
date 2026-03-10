@@ -3,20 +3,21 @@ import { useState, useCallback } from "react";
 import apiRequest from "@/lib/api";
 import toast from "react-hot-toast";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
+import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
 
 // ─── API response types ────────────────────────────────────────────────────────
 
 interface ColorOption {
   id: string;
-  value: string;  // "black", "red", "alpine-green"
-  label: string;  // "Đen", "Đỏ", "Xanh rêu"
+  value: string;
+  label: string;
   enabled: boolean;
 }
 
 interface StorageOption {
   id: string;
-  value: string;  // "128gb", "256gb"
-  label: string;  // "128GB", "256GB"
+  value: string;
+  label: string;
   enabled: boolean;
 }
 
@@ -43,21 +44,16 @@ interface ApiVariantResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Parse color & storage từ variant code.
- * "IPHONE-16-PLUS-128GB-BLACK"  → { color: "black",       storage: "128gb" }
- * "IPHONE-13-256GB-ALPINE-GREEN"→ { color: "alpine-green", storage: "256gb" }
- */
 function parseCodeParts(code: string): { color: string; storage: string } {
   const upper = code.toUpperCase();
   const storageMatch = upper.match(/(\d+GB)/);
   if (!storageMatch) return { color: "", storage: "" };
 
-  const storage = storageMatch[1].toLowerCase(); // "128gb"
+  const storage = storageMatch[1].toLowerCase();
   const afterStorage = upper
     .slice(upper.indexOf(storageMatch[1]) + storageMatch[1].length)
     .replace(/^-+/, "")
-    .toLowerCase(); // "black" | "alpine-green"
+    .toLowerCase();
 
   return { color: afterStorage, storage };
 }
@@ -71,6 +67,8 @@ interface UseVariantSelectorProps {
   currentVariantCode: string;
   currentQuantity: number;
   onSuccess?: () => void;
+  /** Optimistic update: cập nhật item ngay trong state, không cần refetch */
+  onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
 }
 
 export function useVariantSelector({
@@ -80,6 +78,7 @@ export function useVariantSelector({
   currentVariantCode,
   currentQuantity,
   onSuccess,
+  onUpdateItem,
 }: UseVariantSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<VariantOption[]>([]);
@@ -98,7 +97,6 @@ export function useVariantSelector({
       const { color: currentColor, storage: currentStorage } =
         parseCodeParts(currentVariantCode);
 
-      // Step 1: lấy availableOptions (danh sách color + storage)
       const firstRes = await apiRequest.get<ApiVariantResponse>(
         `/products/slug/${productSlug}/variant`,
         { params: { color: currentColor, storage: currentStorage } },
@@ -117,7 +115,6 @@ export function useVariantSelector({
       const enabledColors = colorOptions.filter((c) => c.enabled);
       const enabledStorages = storageOptions.filter((s) => s.enabled);
 
-      // Không có options matrix → chỉ 1 variant duy nhất
       if (enabledColors.length === 0 || enabledStorages.length === 0) {
         const cv = firstRes?.data?.currentVariant;
         if (cv && cv.isActive) {
@@ -133,7 +130,6 @@ export function useVariantSelector({
         return;
       }
 
-      // Step 2: fetch song song tất cả combo color × storage
       const combos = enabledColors.flatMap((c) =>
         enabledStorages.map((s) => ({
           color: c.value,
@@ -198,15 +194,11 @@ export function useVariantSelector({
   const handleRetry = useCallback(() => {
     setHasFetched(false);
     setErrorMessage(null);
-    // fetchVariants sẽ tự trigger vì hasFetched reset về false
-    // Gọi trực tiếp để không cần mở lại dropdown
     setIsFetching(true);
-    setErrorMessage(null);
-    // Re-set hasFetched = false rồi trigger lại
     Promise.resolve().then(() => fetchVariants());
   }, [fetchVariants]);
 
-  // ── Select variant → call API change-variant ────────────────────────────────
+  // ── Select variant → optimistic update + silent refetch ────────────────────
   const handleSelect = useCallback(
     async (variant: VariantOption) => {
       if (!variant.available) return;
@@ -215,8 +207,17 @@ export function useVariantSelector({
         return;
       }
 
-      setIsOpen(false);   // đóng dropdown ngay, tránh nháy layout
+      setIsOpen(false);
       setIsChanging(true);
+
+      // ── Optimistic update ngay lập tức, không chờ API ──────────────────────
+      onUpdateItem?.({
+        productVariantId: variant.id,
+        variantCode: `${variant.colorLabel}/${variant.storageLabel}`,
+        unitPrice: variant.price,
+        originalPrice: variant.price,
+        color: variant.colorLabel,
+      });
 
       try {
         await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
@@ -224,15 +225,21 @@ export function useVariantSelector({
           quantity: currentQuantity,
         });
         toast.success("Đã cập nhật phiên bản sản phẩm");
+        // silent refetch để sync data thật từ server, không gây flash
         onSuccess?.();
       } catch (err) {
         console.error("[useVariantSelector] change-variant error:", err);
         toast.error("Không thể đổi phiên bản, vui lòng thử lại");
+        // Rollback optimistic update về variant cũ
+        onUpdateItem?.({
+          productVariantId: currentVariantId,
+          variantCode: currentVariantCode,
+        });
       } finally {
         setIsChanging(false);
       }
     },
-    [cartItemId, currentVariantId, currentQuantity, onSuccess],
+    [cartItemId, currentVariantId, currentVariantCode, currentQuantity, onSuccess, onUpdateItem],
   );
 
   return {

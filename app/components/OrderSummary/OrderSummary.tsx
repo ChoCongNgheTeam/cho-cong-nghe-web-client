@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ChevronRight, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { formatVND } from "@/helpers";
 
 interface OrderSummaryProps {
   subtotal: number;
@@ -22,6 +23,8 @@ interface OrderSummaryProps {
   agreedToTerms?: boolean;
   onTermsChange?: (checked: boolean) => void;
   isCheckoutPage?: boolean;
+  shippingFee?: number;
+  taxAmount?: number;
 }
 
 export default function OrderSummary({
@@ -41,6 +44,8 @@ export default function OrderSummary({
   agreedToTerms = false,
   onTermsChange,
   isCheckoutPage = false,
+  shippingFee,
+  taxAmount,
 }: OrderSummaryProps) {
   const [usePoints, setUsePoints] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
@@ -53,7 +58,6 @@ export default function OrderSummary({
   const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
   const handleCheckoutClick = () => {
-    // If on checkout page and user is not logged in, redirect to account/login
     if (isCheckoutPage && !user) {
       router.push("/account");
       return;
@@ -104,28 +108,6 @@ export default function OrderSummary({
           </div>
         )}
 
-        {/* Points */}
-        {/* <div className="rounded-lg bg-neutral-light shadow-sm p-3 border-b border-neutral">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                     <span className="text-lg">🪙</span>
-                     <span className="text-sm text-primary">
-                        Đổi <span className="font-semibold">0</span> điểm (≈
-                        <span className="font-semibold">0₫</span>)
-                     </span>
-                  </div>
-                  <label className="relative inline-flex cursor-pointer items-center">
-                     <input
-                        type="checkbox"
-                        checked={usePoints}
-                        onChange={(e) => setUsePoints(e.target.checked)}
-                        className="peer sr-only"
-                     />
-                     <div className="peer h-6 w-11 rounded-full bg-neutral after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-neutral-dark after:bg-neutral-light after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent"></div>
-                  </label>
-               </div>
-            </div> */}
-
         {/* Order Summary */}
         <div className="rounded-lg bg-neutral-light shadow-sm">
           <div className="p-3 border-b border-neutral">
@@ -153,10 +135,12 @@ export default function OrderSummary({
                   <span className="text-primary text-sm font-medium">{appliedVoucherValue > 0 ? `-${formatPrice(appliedVoucherValue)}` : "0₫"}</span>
                 </div>
 
-                {isCheckoutPage && (
+                {isCheckoutPage && shippingFee !== undefined && (
                   <div className="flex justify-between">
                     <span className="text-neutral-darker">Phí vận chuyển</span>
-                    <span className="font-medium text-accent-dark">Miễn phí</span>
+                    <span className="font-medium text-accent-dark">
+                      {shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}
+                    </span>
                   </div>
                 )}
 
@@ -166,12 +150,6 @@ export default function OrderSummary({
                     <span className="text-xl font-bold text-promotion">{formatPrice(finalTotalWithVoucher)}</span>
                   </div>
                 </div>
-
-                {/* <div className="flex items-center gap-1 pt-2">
-                  <span className="text-xs text-neutral-darker">Điểm thưởng</span>
-                  <span className="text-sm">🪙</span>
-                  <span className="text-sm font-medium text-accent-dark">+{rewardPoints.toLocaleString()}</span>
-                </div> */}
               </div>
             )}
 
@@ -188,7 +166,9 @@ export default function OrderSummary({
           <button
             onClick={handleCheckoutClick}
             disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
-            className={`block w-full rounded-b-lg py-3.5 text-center text-base font-semibold transition ${
+            className={`block w-full py-3.5 text-center text-base font-semibold transition ${
+              showTerms ? "" : "rounded-b-lg"
+            } ${
               selectedItemsCount === 0 || (showTerms && !agreedToTerms)
                 ? "cursor-not-allowed bg-primary text-neutral-light opacity-50"
                 : "bg-primary text-neutral-light hover:bg-primary-hover shadow-lg cursor-pointer"
@@ -197,24 +177,35 @@ export default function OrderSummary({
             {buttonText}
           </button>
 
-          {/* Terms (Checkout only) - Below button */}
+          {/* Terms + VAT/Shipping info (Checkout only) - Below button */}
           {showTerms && (
-            <div className="px-3 pb-3 pt-3 bg-accent-light">
-              <label className="flex gap-2 text-xs cursor-pointer items-start">
-                <input type="checkbox" checked={agreedToTerms} onChange={(e) => onTermsChange?.(e.target.checked)} className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent" />
-                <p className="text-neutral-darker leading-relaxed">
-                  Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
-                  <a className="underline font-medium hover:text-promotion cursor-pointer text-primary" href="#">
-                    Điều khoản dịch vụ
-                  </a>{" "}
-                  và{" "}
-                  <a className="underline font-medium hover:text-promotion cursor-pointer text-primary" href="#">
-                    Chính sách xử lý dữ liệu cá nhân
-                  </a>{" "}
-                  của ChoCongNghe.
-                </p>
-              </label>
-            </div>
+            <>
+              <div className="px-3 pb-3 pt-3 bg-accent-light">
+                <label className="flex gap-2 text-xs cursor-pointer items-start">
+                  <input type="checkbox" checked={agreedToTerms} onChange={(e) => onTermsChange?.(e.target.checked)} className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent" />
+                  <p className="text-neutral-darker leading-relaxed">
+                    Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
+                    <a className="underline font-medium hover:text-promotion cursor-pointer text-primary" href="#">
+                      Điều khoản dịch vụ
+                    </a>{" "}
+                    và{" "}
+                    <a className="underline font-medium hover:text-promotion cursor-pointer text-primary" href="#">
+                      Chính sách xử lý dữ liệu cá nhân
+                    </a>{" "}
+                    của ChoCongNghe.
+                  </p>
+                </label>
+              </div>
+
+              {taxAmount !== undefined && (
+                <div className="px-4 pb-4 pt-3 text-xs text-neutral-darker border-t border-neutral rounded-b-lg bg-neutral-light">
+                  <div className="flex justify-between">
+                    <span>Thuế VAT (10%)</span>
+                    <span>{formatVND(taxAmount)}</span>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
