@@ -1,78 +1,190 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
+import {
+   useCallback,
+   useMemo,
+   useState,
+   useTransition,
+   useRef,
+   useEffect,
+} from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { ChevronDown, ChevronUp, SlidersHorizontal, X } from "lucide-react";
+import { FilterGroup } from "../_libs/fetchFilter";
 
-export default function ProductFilter() {
-   const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
-   const [selectedOS, setSelectedOS] = useState<string>("all");
-   const [selectedStorage, setSelectedStorage] = useState<string[]>([]);
-   const [selectedNetwork, setSelectedNetwork] = useState<string[]>([]);
-   const [selectedRam, setSelectedRam] = useState<string[]>([]);
-   const [selectedBattery, setSelectedBattery] = useState<string[]>([]);
-   const [selectedConnections, setSelectedConnections] = useState<string[]>([]);
-   const [priceRange, setPriceRange] = useState<[number, number]>([
-      0, 50000000,
-   ]);
+interface ProductFilterProps {
+   filters: FilterGroup[];
+}
 
-   const brands = [
-      { id: "apple", name: "Apple" },
-      { id: "samsung", name: "Samsung" },
-      { id: "xiaomi", name: "Xiaomi" },
-      { id: "oppo", name: "OPPO" },
-      { id: "vivo", name: "Vivo" },
-      { id: "realme", name: "realme" },
-   ];
+// ─── Debounce hook ────────────────────────────────────────────────────────────
+function useDebounce<T>(value: T, delay: number): T {
+   const [debounced, setDebounced] = useState<T>(value);
+   useEffect(() => {
+      const t = setTimeout(() => setDebounced(value), delay);
+      return () => clearTimeout(t);
+   }, [value, delay]);
+   return debounced;
+}
 
-   const priceOptions = [
-      { label: "Tất cả", value: "all" },
-      { label: "Dưới 2 triệu", value: "0-2000000" },
-      { label: "Từ 2 - 4 triệu", value: "2000000-4000000" },
-      { label: "Từ 4 - 7 triệu", value: "4000000-7000000" },
-      { label: "Từ 7 - 13 triệu", value: "7000000-13000000" },
-      { label: "Từ 13 - 20 triệu", value: "13000000-20000000" },
-      { label: "Trên 20 triệu", value: "20000000-50000000" },
-   ];
+export default function ProductFilter({ filters }: ProductFilterProps) {
+   const router = useRouter();
+   const pathname = usePathname();
+   const searchParams = useSearchParams();
+   const [isPending, startTransition] = useTransition();
+   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-   const toggle = (
-      list: string[],
-      setList: (v: string[]) => void,
-      val: string,
-   ) =>
-      setList(
-         list.includes(val) ? list.filter((x) => x !== val) : [...list, val],
-      );
+   const [sliderValues, setSliderValues] = useState<
+      Record<string, { min: number; max: number }>
+   >({});
 
-   const hasFilters =
-      selectedBrand.length > 0 ||
-      selectedOS !== "all" ||
-      selectedStorage.length > 0 ||
-      selectedNetwork.length > 0 ||
-      selectedRam.length > 0 ||
-      selectedBattery.length > 0 ||
-      selectedConnections.length > 0 ||
-      priceRange[1] < 50000000;
+   // Khởi tạo sliderValues từ URL params khi mount hoặc filters thay đổi
+   useEffect(() => {
+      const init: Record<string, { min: number; max: number }> = {};
+      filters.forEach((g) => {
+         if (g.type === "RANGE" && g.min != null && g.max != null) {
+            init[g.key] = {
+               min: Number(searchParams.get(`${g.key}_min`) || g.min),
+               max: Number(searchParams.get(`${g.key}_max`) || g.max),
+            };
+         }
+      });
+      setSliderValues(init);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [filters]);
 
-   const resetAll = () => {
-      setSelectedBrand([]);
-      setSelectedOS("all");
-      setSelectedStorage([]);
-      setSelectedNetwork([]);
-      setSelectedRam([]);
-      setSelectedBattery([]);
-      setSelectedConnections([]);
-      setPriceRange([0, 50000000]);
-   };
+   // Debounce slider → chỉ push URL sau 400ms dừng kéo
+   const debouncedSliders = useDebounce(sliderValues, 400);
+   const prevDebouncedRef = useRef<typeof debouncedSliders>({});
 
-   // Reusable section header
-   const SectionHeader = ({ label }: { label: string }) => (
-      <div className="flex items-center justify-between py-2.5 border-b border-neutral mb-3">
-         <span className="text-sm font-semibold text-primary">{label}</span>
-         <ChevronDown className="w-4 h-4 text-primary-light" />
-      </div>
+   useEffect(() => {
+      const prev = prevDebouncedRef.current;
+      const updates: Record<string, string | null> = {};
+      let changed = false;
+
+      for (const [key, val] of Object.entries(debouncedSliders)) {
+         const group = filters.find((g) => g.key === key);
+         if (!group) continue;
+
+         const prevVal = prev[key];
+         if (prevVal?.min === val.min && prevVal?.max === val.max) continue;
+
+         changed = true;
+         updates[`${key}_min`] = val.min === group.min ? null : String(val.min);
+         updates[`${key}_max`] = val.max === group.max ? null : String(val.max);
+      }
+
+      if (!changed) return;
+      prevDebouncedRef.current = debouncedSliders;
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("page");
+      for (const [k, v] of Object.entries(updates)) {
+         params.delete(k);
+         if (v !== null) params.set(k, v);
+      }
+      startTransition(() => {
+         router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      });
+   }, [debouncedSliders]); // eslint-disable-line
+
+   // ─── URL helpers ──────────────────────────────────────────────────
+
+   const getValues = useCallback(
+      (key: string) => searchParams.getAll(key),
+      [searchParams],
    );
 
-   // Reusable toggle chip
+   const getValue = useCallback(
+      (key: string) => searchParams.get(key) ?? "",
+      [searchParams],
+   );
+
+   const pushParams = useCallback(
+      (updates: Record<string, string | string[] | null>) => {
+         const params = new URLSearchParams(searchParams.toString());
+         params.delete("page");
+         for (const [key, value] of Object.entries(updates)) {
+            params.delete(key);
+            if (value === null) continue;
+            if (Array.isArray(value)) {
+               value.forEach((v) => params.append(key, v));
+            } else if (value !== "") {
+               params.set(key, value);
+            }
+         }
+         startTransition(() => {
+            router.push(`${pathname}?${params.toString()}`, { scroll: false });
+         });
+      },
+      [router, pathname, searchParams, startTransition],
+   );
+
+   // ─── Filter actions ───────────────────────────────────────────────
+
+   const toggleEnum = useCallback(
+      (key: string, val: string) => {
+         const current = getValues(key);
+         const next = current.includes(val)
+            ? current.filter((v) => v !== val)
+            : [...current, val];
+         pushParams({ [key]: next });
+      },
+      [getValues, pushParams],
+   );
+
+   const setBoolean = useCallback(
+      (key: string, val: boolean | null) => {
+         pushParams({ [key]: val === null ? null : String(val) });
+      },
+      [pushParams],
+   );
+
+   const hasFilters = useMemo(() => {
+      for (const [key] of searchParams.entries()) {
+         if (key !== "page") return true;
+      }
+      return false;
+   }, [searchParams]);
+
+   const resetAll = useCallback(() => {
+      // Reset local sliders
+      const reset: Record<string, { min: number; max: number }> = {};
+      filters.forEach((g) => {
+         if (g.type === "RANGE" && g.min != null && g.max != null) {
+            reset[g.key] = { min: g.min, max: g.max };
+         }
+      });
+      setSliderValues(reset);
+      prevDebouncedRef.current = reset;
+      startTransition(() => router.push(pathname, { scroll: false }));
+   }, [filters, pathname, router, startTransition]);
+
+   const toggleCollapse = (key: string) =>
+      setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+
+   // ─── Sub-components ───────────────────────────────────────────────
+
+   const SectionHeader = ({
+      label,
+      groupKey,
+   }: {
+      label: string;
+      groupKey: string;
+   }) => (
+      <button
+         type="button"
+         onClick={() => toggleCollapse(groupKey)}
+         className="w-full flex items-center justify-between py-2.5 border-b border-neutral mb-3 cursor-pointer"
+      >
+         <span className="text-sm font-semibold text-primary">{label}</span>
+         {collapsed[groupKey] ? (
+            <ChevronDown className="w-4 h-4 text-primary-light" />
+         ) : (
+            <ChevronUp className="w-4 h-4 text-primary-light" />
+         )}
+      </button>
+   );
+
    const Chip = ({
       label,
       active,
@@ -95,13 +207,174 @@ export default function ProductFilter() {
       </button>
    );
 
+   // ─── Render by type ───────────────────────────────────────────────
+
+   const renderEnum = (group: FilterGroup) => {
+      if (!group.options?.length) return null;
+      const selected = getValues(group.key);
+      return (
+         <div key={group.key}>
+            <SectionHeader label={group.label} groupKey={group.key} />
+            {!collapsed[group.key] && (
+               <div className="flex flex-wrap gap-2">
+                  {group.options.map((opt) => (
+                     <Chip
+                        key={opt.value}
+                        label={opt.label}
+                        active={selected.includes(opt.value)}
+                        onClick={() => toggleEnum(group.key, opt.value)}
+                     />
+                  ))}
+               </div>
+            )}
+         </div>
+      );
+   };
+
+   const renderRange = (group: FilterGroup) => {
+      if (group.min == null || group.max == null) return null;
+
+      // Dùng local state thay vì đọc URL — mượt khi kéo
+      const local = sliderValues[group.key] ?? {
+         min: group.min,
+         max: group.max,
+      };
+
+      const isPrice = group.key === "price";
+      const isSameMinMax = group.min === group.max;
+
+      const fmt = (v: number) =>
+         isPrice
+            ? v.toLocaleString("vi-VN") + "đ"
+            : `${v}${group.unit ? " " + group.unit : ""}`;
+
+      const setLocal = (min: number, max: number) => {
+         setSliderValues((prev) => ({ ...prev, [group.key]: { min, max } }));
+      };
+
+      return (
+         <div key={group.key}>
+            <SectionHeader label={group.label} groupKey={group.key} />
+            {!collapsed[group.key] && (
+               <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                     <div className="flex-1 px-2 py-1.5 text-xs border border-neutral rounded-lg bg-neutral-light-active text-primary text-center">
+                        {fmt(local.min)}
+                     </div>
+                     <span className="text-neutral-dark text-xs">–</span>
+                     <div className="flex-1 px-2 py-1.5 text-xs border border-neutral rounded-lg bg-neutral-light-active text-primary text-center">
+                        {fmt(local.max)}
+                     </div>
+                  </div>
+
+                  {isSameMinMax ? (
+                     // Không có range thực → chỉ hiển thị giá trị cố định
+                     <p className="text-xs text-primary-light text-center">
+                        {fmt(group.min)}
+                     </p>
+                  ) : (
+                     <>
+                        <input
+                           type="range"
+                           min={group.min}
+                           max={group.max}
+                           step={isPrice ? 500000 : 0.1}
+                           value={local.min}
+                           onChange={(e) =>
+                              setLocal(
+                                 Math.min(
+                                    Number(e.target.value),
+                                    local.max - (isPrice ? 500000 : 0.1),
+                                 ),
+                                 local.max,
+                              )
+                           }
+                           className="w-full accent-[rgb(var(--accent))] h-1.5 rounded-full cursor-pointer"
+                        />
+                        <input
+                           type="range"
+                           min={group.min}
+                           max={group.max}
+                           step={isPrice ? 500000 : 0.1}
+                           value={local.max}
+                           onChange={(e) =>
+                              setLocal(
+                                 local.min,
+                                 Math.max(
+                                    Number(e.target.value),
+                                    local.min + (isPrice ? 500000 : 0.1),
+                                 ),
+                              )
+                           }
+                           className="w-full accent-[rgb(var(--accent))] h-1.5 rounded-full cursor-pointer"
+                        />
+                     </>
+                  )}
+               </div>
+            )}
+         </div>
+      );
+   };
+
+   const renderBoolean = (group: FilterGroup) => {
+      const raw = getValue(group.key);
+      const current = raw === "true" ? true : raw === "false" ? false : null;
+      return (
+         <div key={group.key}>
+            <SectionHeader label={group.label} groupKey={group.key} />
+            {!collapsed[group.key] && (
+               <div className="flex gap-2">
+                  <Chip
+                     label="Tất cả"
+                     active={current === null}
+                     onClick={() => setBoolean(group.key, null)}
+                  />
+                  <Chip
+                     label="Có"
+                     active={current === true}
+                     onClick={() => setBoolean(group.key, true)}
+                  />
+                  <Chip
+                     label="Không"
+                     active={current === false}
+                     onClick={() => setBoolean(group.key, false)}
+                  />
+               </div>
+            )}
+         </div>
+      );
+   };
+
+   const renderGroup = (group: FilterGroup) => {
+      switch (group.type) {
+         case "ENUM":
+            return renderEnum(group);
+         case "RANGE":
+            return renderRange(group);
+         case "BOOLEAN":
+            return renderBoolean(group);
+         default:
+            return null;
+      }
+   };
+
+   if (!filters.length) return null;
+
    return (
-      <div className="bg-neutral-light border border-neutral rounded-2xl overflow-hidden">
-         {/* Header */}
+      <div
+         className={`bg-neutral-light border border-neutral rounded-2xl overflow-hidden transition-opacity duration-200 ${
+            isPending ? "opacity-50 pointer-events-none" : "opacity-100"
+         }`}
+      >
          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral bg-neutral-light-active">
             <div className="flex items-center gap-2">
                <SlidersHorizontal className="w-4 h-4 text-accent" />
                <span className="text-sm font-bold text-primary">Bộ lọc</span>
+               {isPending && (
+                  <span className="text-xs text-primary-light animate-pulse">
+                     Đang lọc...
+                  </span>
+               )}
             </div>
             {hasFilters && (
                <button
@@ -114,208 +387,7 @@ export default function ProductFilter() {
                </button>
             )}
          </div>
-
-         <div className="px-4 py-4 space-y-5">
-            {/* Hãng sản xuất */}
-            <div>
-               <SectionHeader label="Hãng sản xuất" />
-               <div className="grid grid-cols-2 gap-2">
-                  {brands.map((brand) => (
-                     <Chip
-                        key={brand.id}
-                        label={brand.name}
-                        active={selectedBrand.includes(brand.id)}
-                        onClick={() =>
-                           toggle(selectedBrand, setSelectedBrand, brand.id)
-                        }
-                     />
-                  ))}
-               </div>
-            </div>
-
-            {/* Mức giá */}
-            <div>
-               <SectionHeader label="Mức giá" />
-               <div className="space-y-1.5">
-                  {priceOptions.map((option) => (
-                     <label
-                        key={option.value}
-                        className="flex items-center gap-2.5 cursor-pointer group"
-                     >
-                        <input
-                           type="radio"
-                           name="price"
-                           value={option.value}
-                           className="w-3.5 h-3.5 accent-[rgb(var(--accent))]"
-                        />
-                        <span className="text-xs text-primary group-hover:text-accent transition-colors">
-                           {option.label}
-                        </span>
-                     </label>
-                  ))}
-               </div>
-
-               {/* Slider */}
-               <div className="mt-4">
-                  <p className="text-xs text-primary-light mb-2">
-                     Hoặc nhập khoảng giá:
-                  </p>
-                  <div className="flex items-center gap-2 mb-3">
-                     <div className="flex-1 px-2 py-1.5 text-xs border border-neutral rounded-lg bg-neutral-light-active text-primary text-center">
-                        {priceRange[0].toLocaleString("vi-VN")}đ
-                     </div>
-                     <span className="text-neutral-dark text-xs">–</span>
-                     <div className="flex-1 px-2 py-1.5 text-xs border border-neutral rounded-lg bg-neutral-light-active text-primary text-center">
-                        {priceRange[1].toLocaleString("vi-VN")}đ
-                     </div>
-                  </div>
-                  <input
-                     type="range"
-                     min="0"
-                     max="50000000"
-                     step="500000"
-                     value={priceRange[1]}
-                     onChange={(e) =>
-                        setPriceRange([priceRange[0], parseInt(e.target.value)])
-                     }
-                     className="w-full accent-[rgb(var(--accent))] h-1.5 rounded-full cursor-pointer"
-                  />
-               </div>
-            </div>
-
-            {/* Hệ điều hành */}
-            <div>
-               <SectionHeader label="Hệ điều hành" />
-               <div className="flex gap-2">
-                  {["all", "ios", "android"].map((os) => (
-                     <Chip
-                        key={os}
-                        label={
-                           os === "all"
-                              ? "Tất cả"
-                              : os === "ios"
-                                ? "iOS"
-                                : "Android"
-                        }
-                        active={selectedOS === os}
-                        onClick={() => setSelectedOS(os)}
-                     />
-                  ))}
-               </div>
-            </div>
-
-            {/* Dung lượng ROM */}
-            <div>
-               <SectionHeader label="Dung lượng ROM" />
-               <div className="flex flex-wrap gap-2">
-                  {["≤128 GB", "256 GB", "512 GB", "1 TB"].map((s) => (
-                     <Chip
-                        key={s}
-                        label={s}
-                        active={selectedStorage.includes(s)}
-                        onClick={() =>
-                           toggle(selectedStorage, setSelectedStorage, s)
-                        }
-                     />
-                  ))}
-               </div>
-            </div>
-
-            {/* RAM */}
-            <div>
-               <SectionHeader label="RAM" />
-               <div className="flex flex-wrap gap-2">
-                  {["3 GB", "4 GB", "6 GB", "8 GB", "12 GB", "16 GB"].map(
-                     (r) => (
-                        <Chip
-                           key={r}
-                           label={r}
-                           active={selectedRam.includes(r)}
-                           onClick={() =>
-                              toggle(selectedRam, setSelectedRam, r)
-                           }
-                        />
-                     ),
-                  )}
-               </div>
-            </div>
-
-            {/* Kết nối */}
-            <div>
-               <SectionHeader label="Kết nối" />
-               <div className="flex flex-wrap gap-2">
-                  {["NFC", "Bluetooth", "Hồng ngoại"].map((c) => (
-                     <Chip
-                        key={c}
-                        label={c}
-                        active={selectedConnections.includes(c)}
-                        onClick={() =>
-                           toggle(
-                              selectedConnections,
-                              setSelectedConnections,
-                              c,
-                           )
-                        }
-                     />
-                  ))}
-               </div>
-            </div>
-
-            {/* Hỗ trợ mạng */}
-            <div>
-               <SectionHeader label="Hỗ trợ mạng" />
-               <div className="flex gap-2">
-                  {["5G", "4G"].map((n) => (
-                     <Chip
-                        key={n}
-                        label={n}
-                        active={selectedNetwork.includes(n)}
-                        onClick={() =>
-                           toggle(selectedNetwork, setSelectedNetwork, n)
-                        }
-                     />
-                  ))}
-               </div>
-            </div>
-
-            {/* Pin */}
-            <div>
-               <SectionHeader label="Dung lượng pin" />
-               <div className="space-y-1.5">
-                  {[
-                     "Dưới 3000 mAh",
-                     "3000 – 4000 mAh",
-                     "4000 – 5500 mAh",
-                     "Trên 5500 mAh",
-                  ].map((b) => (
-                     <label
-                        key={b}
-                        className="flex items-center gap-2.5 cursor-pointer group"
-                     >
-                        <input
-                           type="checkbox"
-                           checked={selectedBattery.includes(b)}
-                           onChange={() =>
-                              toggle(selectedBattery, setSelectedBattery, b)
-                           }
-                           className="w-3.5 h-3.5 rounded accent-[rgb(var(--accent))]"
-                        />
-                        <span className="text-xs text-primary group-hover:text-accent transition-colors">
-                           {b}
-                        </span>
-                     </label>
-                  ))}
-               </div>
-            </div>
-
-            {/* Apply button */}
-            <button
-               type="button"
-               className="w-full py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-xl transition-colors duration-200 cursor-pointer"
-            >
-               Áp dụng bộ lọc
-            </button>
-         </div>
+         <div className="px-4 py-4 space-y-5">{filters.map(renderGroup)}</div>
       </div>
    );
 }
