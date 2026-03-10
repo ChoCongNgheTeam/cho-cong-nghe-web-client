@@ -267,3 +267,23 @@ export async function updateAdminBlog(
   );
   return response.data;
 }
+
+export type BlogStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+export async function toggleBlogStatus(
+  blogId: string,
+  currentStatus?: BlogStatus
+): Promise<{ success: boolean; message: string }> {
+  // If currently ARCHIVED or undefined, set to PUBLISHED
+  // Otherwise, set to ARCHIVED (hide)
+  const newStatus: BlogStatus = currentStatus === "ARCHIVED" ? "PUBLISHED" : "ARCHIVED";
+
+  const response = await apiRequest.patch<{ success: boolean; message: string }>(
+    "/blogs/admin/bulk/status",
+    { blogIds: [blogId], status: newStatus },
+    {
+      timeout: 15000,
+    }
+  );
+  return response;
+}
