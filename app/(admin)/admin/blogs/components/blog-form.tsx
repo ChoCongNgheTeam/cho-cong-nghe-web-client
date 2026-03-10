@@ -1,9 +1,7 @@
 ﻿"use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Eye, Save } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { useToasty } from "@/components/Toast";
 import {
@@ -13,7 +11,13 @@ import {
   getAdminBlogById,
   updateAdminBlog,
 } from "../_lib/blog.api";
-import CkEditorField from "./ckeditor-field";
+import BlogFormActivity from "./blog-form-activity";
+import BlogFormBasicInfo from "./blog-form-basic-info";
+import BlogFormContent from "./blog-form-content";
+import BlogFormMedia from "./blog-form-media";
+import BlogFormPreviewAndSeo from "./blog-form-preview-and-seo";
+import BlogFormStats from "./blog-form-stats";
+import { mapBlogDetailToForm, stripHtml, toSlug } from "./blog-form-utils";
 
 type BlogFormProps = {
   mode: "create" | "edit";
@@ -21,7 +25,7 @@ type BlogFormProps = {
   initialData?: AdminBlogDetail;
 };
 
-type BlogFormState = {
+export type BlogFormState = {
   title: string;
   slug: string;
   excerpt: string;
@@ -35,66 +39,6 @@ type BlogFormState = {
   isFeatured: boolean;
 };
 
-function toSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
-function extractCategoryValue(category: AdminBlogDetail["category"]): string {
-  if (!category) return "";
-  return typeof category === "string" ? category : category.slug ?? category.name ?? "";
-}
-
-function stripHtml(value: string): string {
-  return value
-    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function toDateTimeLocal(value?: string): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
-function resolveTags(value?: AdminBlogDetail["tags"]): string {
-  if (!value || value.length === 0) return "";
-  return value
-    .map((item) => {
-      if (typeof item === "string") return item;
-      return item.slug ?? item.name ?? "";
-    })
-    .filter(Boolean)
-    .join(", ");
-}
-
-function mapBlogDetailToForm(blog: AdminBlogDetail): BlogFormState {
-  return {
-    title: blog.title ?? "",
-    slug: blog.slug ?? "",
-    excerpt: blog.excerpt ?? "",
-    content: blog.content ?? "",
-    thumbnail: blog.thumbnail ?? "",
-    category: extractCategoryValue(blog.category),
-    tags: resolveTags(blog.tags),
-    seoTitle: blog.seoTitle ?? "",
-    seoDescription: blog.seoDescription ?? "",
-    scheduledAt: toDateTimeLocal(blog.scheduledAt),
-    isFeatured: blog.isFeatured ?? true,
-  };
-}
 
 export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
   const router = useRouter();
@@ -206,6 +150,11 @@ export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
       return;
     }
 
+    if (form.content.includes("src=\"blob:")) {
+      toast.error("Vui lòng chờ ảnh upload xong trước khi lưu");
+      return;
+    }
+
     const scheduledAtIso = form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined;
 
     const payload: AdminBlogUpsertPayload = {
@@ -290,233 +239,37 @@ export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
           </span>
 
           <div className="mt-5 space-y-4">
-            <div>
-              <label className="mb-2 block text-base font-semibold text-primary">Tiêu đề bài viết</label>
-              <input
-                value={form.title}
-                onChange={(event) => {
-                  const nextTitle = event.target.value;
-                  setForm((prev) => ({ ...prev, title: nextTitle, slug: toSlug(nextTitle) }));
-                }}
-                className={inputClass}
-                placeholder="VD: Sản phẩm công nghệ mới"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-base font-semibold text-primary">Slug (URL thân thiện)</label>
-              <input
-                value={form.slug}
-                onChange={(event) => setForm((prev) => ({ ...prev, slug: toSlug(event.target.value) }))}
-                className={inputClass}
-                placeholder="Slug (tự sinh, chỉ chữ thường, số và dấu gạch ngang)"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-base font-semibold text-primary">Danh mục</label>
-                <select
-                  value={form.category}
-                  onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-                  className={inputClass}
-                >
-                  <option value="">Công nghệ</option>
-                  <option value="tin-moi">Tin mới</option>
-                  <option value="khuyen-mai">Khuyến mãi</option>
-                  <option value="danh-gia-tu-van">Đánh giá - Tư vấn</option>
-                  <option value="kien-thuc-doi-song">Kiến thức - Đời sống</option>
-                  <option value="thu-thuat">Thủ thuật</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-2 block text-base font-semibold text-primary">Thẻ tag</label>
-                <input
-                  value={form.tags}
-                  onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
-                  className={inputClass}
-                  placeholder="Công nghệ, điện máy + Thêm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-base font-semibold text-primary">Ảnh bài viết</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    setThumbnailFile(file);
-                  }}
-                  className="block h-12 w-full cursor-pointer rounded-xl border border-neutral bg-neutral-light-active px-4 py-2 text-[14px] text-primary file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-neutral-light hover:file:bg-accent-hover"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-base font-semibold text-primary">URL ảnh</label>
-                <input
-                  value={form.thumbnail}
-                  onChange={(event) => setForm((prev) => ({ ...prev, thumbnail: event.target.value }))}
-                  className={inputClass}
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-base font-semibold text-primary">Nội dung bài viết</label>
-              <CkEditorField
-                value={form.content}
-                onChange={(nextValue) => setForm((prev) => ({ ...prev, content: nextValue }))}
-              />
-            </div>
+            <BlogFormBasicInfo form={form} setForm={setForm} inputClass={inputClass} toSlug={toSlug} />
+            <BlogFormMedia form={form} setForm={setForm} setThumbnailFile={setThumbnailFile} inputClass={inputClass} />
+            <BlogFormContent form={form} setForm={setForm} />
           </div>
         </section>
 
         <aside className="space-y-4">
-          <section className="rounded-2xl border border-neutral bg-neutral-light p-4">
-            <h3 className="mb-3 text-xl font-semibold text-primary">Thiết lập Hoạt động</h3>
+          <BlogFormActivity
+            form={form}
+            setForm={setForm}
+            inputClass={inputClass}
+            isSubmitting={isSubmitting}
+            submitLabel={submitLabel}
+            submitModeRef={submitModeRef}
+            showPreviewContent={showPreviewContent}
+            setShowPreviewContent={setShowPreviewContent}
+          />
 
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setShowPreviewContent((prev) => !prev)}
-                className="inline-flex h-10 items-center justify-center gap-1 rounded-lg border border-neutral text-[14px] font-medium text-primary hover:bg-neutral-light-active"
-              >
-                <Eye size={14} />
-                Xem trước
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                onClick={() => {
-                  submitModeRef.current = "draft";
-                }}
-                className="inline-flex h-10 items-center justify-center gap-1 rounded-lg border border-neutral text-[14px] font-medium text-primary hover:bg-neutral-light-active disabled:opacity-60"
-              >
-                <Save size={14} />
-                Lưu Ẩn
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                onClick={() => {
-                  submitModeRef.current = "publish";
-                }}
-                className="h-10 rounded-lg bg-accent text-[14px] font-semibold text-neutral-light hover:bg-accent-hover disabled:opacity-60"
-              >
-                {isSubmitting ? "Đang lưu..." : submitLabel}
-              </button>
-            </div>
-
-            <div className="mt-4">
-              <label className="mb-2 block text-base font-semibold text-primary">Lên lịch đăng</label>
-              <div className="relative">
-                <input
-                  type="datetime-local"
-                  value={form.scheduledAt}
-                  onChange={(event) => setForm((prev) => ({ ...prev, scheduledAt: event.target.value }))}
-                  className={inputClass}
-                />
-                <CalendarDays
-                  size={16}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary-light"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-[15px] text-primary">Nổi bật :</span>
-              <button
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, isFeatured: !prev.isFeatured }))}
-                className={`relative h-8 w-16 rounded-full transition ${form.isFeatured ? "bg-accent" : "bg-neutral"}`}
-                aria-label="Bật tắt nổi bật"
-              >
-                {form.isFeatured ? (
-                  <span className="absolute left-3 top-1.5 text-[11px] font-semibold text-neutral-light">ON</span>
-                ) : null}
-                <span
-                  className={`absolute top-1 h-6 w-6 rounded-full bg-black transition ${form.isFeatured ? "left-9" : "left-1"}`}
-                />
-              </button>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-neutral bg-neutral-light p-4">
-            <h3 className="mb-3 text-xl font-semibold text-primary">Xu hướng công nghệ 2026 mới nhất</h3>
-            <div className="relative mb-3 aspect-video overflow-hidden rounded-lg border border-neutral bg-neutral-light-active">
-              <Image
-                src={thumbnailPreviewUrl || form.thumbnail || "/images/avatar.png"}
-                alt={form.title || "blog-preview"}
-                fill
-                sizes="(min-width: 1280px) 420px, 100vw"
-                className="object-cover"
-              />
-            </div>
-
-            <p className="line-clamp-2 text-lg font-semibold leading-tight text-primary">
-              {form.title || "Xu hướng công nghệ năm 2026"}
-            </p>
-            <p className="mt-1 line-clamp-2 text-[14px] text-primary-light">
-              {form.excerpt || stripHtml(form.content).slice(0, 120) || "Chocongnghe.com/tin-tuc/xu-huong-cong-nghe-nam-2026"}
-            </p>
-
-            {showPreviewContent ? (
-              <div className="mt-3 rounded-lg border border-neutral bg-neutral-light-active p-3">
-                <p className="mb-2 text-[12px] font-medium text-primary-light">Nội dung bài :</p>
-                <div
-                  className="prose prose-sm max-w-none text-primary"
-                  dangerouslySetInnerHTML={{ __html: form.content || "<p>Chưa có nội dung.</p>" }}
-                />
-              </div>
-            ) : null}
-
-            <h3 className="mt-5 mb-3 text-2xl font-semibold leading-none text-primary">Cấu hình SEO</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="mb-2 block text-base font-semibold text-primary">Tiêu đề SEO</label>
-                <input
-                  value={form.seoTitle}
-                  onChange={(event) => setForm((prev) => ({ ...prev, seoTitle: event.target.value }))}
-                  className={inputClass}
-                  placeholder="VD: Xu hướng công nghệ năm 2026"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-base font-semibold text-primary">Mô tả SEO</label>
-                <textarea
-                  value={form.seoDescription}
-                  onChange={(event) => setForm((prev) => ({ ...prev, seoDescription: event.target.value }))}
-                  className="min-h-24 w-full rounded-xl border border-neutral bg-neutral-light-active px-4 py-2 text-[14px] text-primary outline-none transition focus:border-accent"
-                  placeholder="VD: Khám phá những công nghệ mới năm 2026 và là xu hướng trong năm"
-                />
-              </div>
-            </div>
-          </section>
+          <BlogFormPreviewAndSeo
+            form={form}
+            setForm={setForm}
+            thumbnailPreviewUrl={thumbnailPreviewUrl}
+            showPreviewContent={showPreviewContent}
+          />
 
           {mode === "edit" ? (
-            <section className="rounded-2xl border border-neutral bg-neutral-light p-4">
-              <h3 className="mb-3 text-xl font-semibold text-primary">Chi tiết bài viết</h3>
-              <div className="space-y-2 text-[14px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-primary-light">Lượt xem</span>
-                  <span className="font-semibold text-primary">{userStats.views}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-primary-light">Đánh giá người dùng</span>
-                  <span className="font-semibold text-primary">{userStats.rating.toFixed(1)} / 5</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-primary-light">Bình luận</span>
-                  <span className="font-semibold text-primary">{userStats.comments}</span>
-                </div>
-              </div>
-            </section>
+            <BlogFormStats
+              views={userStats.views}
+              rating={userStats.rating}
+              comments={userStats.comments}
+            />
           ) : null}
         </aside>
       </form>
