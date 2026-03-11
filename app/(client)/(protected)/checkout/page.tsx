@@ -10,7 +10,7 @@ import AddressSidebar, { ApiAddress } from "./components/AddressSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
 import CartSidebar from "@/(client)/cart/components/CartSidebar";
 import CartItems from "./components/CartItems";
-import OrderSummary from "@/components/orderSummary/OrderSummary";
+import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import PaymentMethods from "./components/PaymentMethods";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
