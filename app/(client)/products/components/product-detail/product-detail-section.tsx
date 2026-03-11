@@ -218,9 +218,9 @@ export default function ProductDetailSection({
                            <FaShoppingCart className="w-6 h-6 text-promotion" />
                         </button>
 
-                        <button className="px-6 py-4 rounded-full bg-promotion hover:bg-promotion-hover active:bg-promotion-active text-white font-semibold  transition-all duration-200 shadow-lg">
-                           Chọn mua kèm
-                        </button>
+                        <button className="px-6 py-4 rounded-full bg-promotion hover:bg-promotion-hover active:bg-promotion-active text-neutral-light font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
+  Chọn mua kèm
+</button>
                      </div>
                   </div>
                </div>

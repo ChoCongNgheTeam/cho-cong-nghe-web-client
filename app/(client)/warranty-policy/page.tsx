@@ -1,9 +1,12 @@
-import Link from "next/link";
+"use client";
 
-// TODO: Import SidebarMenu component here when ready
-// import SidebarMenu from "@/components/SidebarMenu";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function ChinhSachBaoHanhPage() {
+   const [fontSize, setFontSize] = useState<"small" | "large">("small");
+   const contentStyle = { fontSize: fontSize === "small" ? "14px" : "16px" };
+
    return (
       <div
          className="min-h-screen"
@@ -27,6 +30,14 @@ export default function ChinhSachBaoHanhPage() {
                      Trang chủ
                   </Link>
                   <span style={{ color: "rgb(var(--neutral-dark))" }}>/</span>
+                  <Link
+                     href="/policies"
+                     className="transition-colors"
+                     style={{ color: "rgb(var(--promotion))" }}
+                  >
+                     Chính sách
+                  </Link>
+                  <span style={{ color: "rgb(var(--neutral-dark))" }}>/</span>
                   <span style={{ color: "rgb(var(--primary-light))" }}>
                      Chính sách bảo hành
                   </span>
@@ -37,11 +48,6 @@ export default function ChinhSachBaoHanhPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar Slot — gắn <SidebarMenu /> vào đây khi có */}
-               <aside className="hidden md:block w-[260px] shrink-0">
-                  {/* <SidebarMenu activeItem="Danh mục chính sách" /> */}
-               </aside>
-
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"
@@ -53,21 +59,45 @@ export default function ChinhSachBaoHanhPage() {
                   {/* Font size toggle */}
                   <div className="flex items-center gap-2 mb-5">
                      <button
-                        className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+                        onClick={() => setFontSize("small")}
+                        className="px-4 py-1.5 rounded-full transition-colors"
                         style={{
-                           backgroundColor: "rgb(var(--primary))",
-                           color: "rgb(var(--neutral-light))",
+                           backgroundColor:
+                              fontSize === "small"
+                                 ? "rgb(var(--primary))"
+                                 : "transparent",
+                           color:
+                              fontSize === "small"
+                                 ? "rgb(var(--neutral-light))"
+                                 : "rgb(var(--primary-light))",
+                           border:
+                              fontSize === "small"
+                                 ? "none"
+                                 : "1px solid rgb(var(--neutral))",
                            fontSize: "13px",
+                           fontWeight: fontSize === "small" ? 600 : 400,
                         }}
                      >
                         Cỡ chữ nhỏ
                      </button>
                      <button
-                        className="px-4 py-1.5 rounded-full text-sm transition-colors"
+                        onClick={() => setFontSize("large")}
+                        className="px-4 py-1.5 rounded-full transition-colors"
                         style={{
-                           border: "1px solid rgb(var(--neutral))",
-                           color: "rgb(var(--primary-light))",
+                           backgroundColor:
+                              fontSize === "large"
+                                 ? "rgb(var(--primary))"
+                                 : "transparent",
+                           color:
+                              fontSize === "large"
+                                 ? "rgb(var(--neutral-light))"
+                                 : "rgb(var(--primary-light))",
+                           border:
+                              fontSize === "large"
+                                 ? "none"
+                                 : "1px solid rgb(var(--neutral))",
                            fontSize: "13px",
+                           fontWeight: fontSize === "large" ? 600 : 400,
                         }}
                      >
                         Cỡ chữ lớn
@@ -84,8 +114,8 @@ export default function ChinhSachBaoHanhPage() {
 
                   {/* Intro paragraph */}
                   <p
-                     className="text-sm leading-relaxed mb-4"
-                     style={{ color: "rgb(var(--primary))" }}
+                     className="leading-relaxed mb-4"
+                     style={{ color: "rgb(var(--primary))", ...contentStyle }}
                   >
                      Tất cả sản phẩm tại ChoCongNghe kinh doanh đều là sản phẩm
                      chính hãng và được bảo hành theo đúng chính sách của nhà
@@ -95,8 +125,8 @@ export default function ChinhSachBaoHanhPage() {
                   </p>
 
                   <p
-                     className="text-sm leading-relaxed mb-4"
-                     style={{ color: "rgb(var(--primary))" }}
+                     className="leading-relaxed mb-4"
+                     style={{ color: "rgb(var(--primary))", ...contentStyle }}
                   >
                      Mua hàng tại ChoCongNghe, Quý khách sẽ được hưởng những đặc
                      quyền sau:
@@ -132,8 +162,11 @@ export default function ChinhSachBaoHanhPage() {
                      ].map((item, i) => (
                         <li
                            key={i}
-                           className="flex gap-2 text-sm leading-relaxed"
-                           style={{ color: "rgb(var(--primary))" }}
+                           className="flex gap-2 leading-relaxed"
+                           style={{
+                              color: "rgb(var(--primary))",
+                              ...contentStyle,
+                           }}
                         >
                            <span className="mt-1 shrink-0">•</span>
                            <span>{item}</span>
@@ -143,8 +176,8 @@ export default function ChinhSachBaoHanhPage() {
 
                   {/* Out-of-warranty intro */}
                   <p
-                     className="text-sm leading-relaxed mb-4"
-                     style={{ color: "rgb(var(--primary))" }}
+                     className="leading-relaxed mb-4"
+                     style={{ color: "rgb(var(--primary))", ...contentStyle }}
                   >
                      Bên cạnh đó Quý khách có thể tham khảo một số các trường
                      hợp thường gặp nằm ngoài chính sách bảo hành sau để xác
@@ -178,8 +211,11 @@ export default function ChinhSachBaoHanhPage() {
                      ].map((item, i) => (
                         <li
                            key={i}
-                           className="flex gap-2 text-sm leading-relaxed"
-                           style={{ color: "rgb(var(--primary))" }}
+                           className="flex gap-2 leading-relaxed"
+                           style={{
+                              color: "rgb(var(--primary))",
+                              ...contentStyle,
+                           }}
                         >
                            <span className="mt-1 shrink-0">•</span>
                            <span>{item}</span>
@@ -189,8 +225,8 @@ export default function ChinhSachBaoHanhPage() {
 
                   {/* Notes section */}
                   <p
-                     className="text-sm font-semibold mb-3"
-                     style={{ color: "rgb(var(--primary))" }}
+                     className="font-semibold mb-3"
+                     style={{ color: "rgb(var(--primary))", ...contentStyle }}
                   >
                      Lưu ý:
                   </p>
@@ -220,8 +256,11 @@ export default function ChinhSachBaoHanhPage() {
                      ].map((item, i) => (
                         <li
                            key={i}
-                           className="flex gap-2 text-sm leading-relaxed"
-                           style={{ color: "rgb(var(--primary))" }}
+                           className="flex gap-2 leading-relaxed"
+                           style={{
+                              color: "rgb(var(--primary))",
+                              ...contentStyle,
+                           }}
                         >
                            <span className="mt-1 shrink-0">•</span>
                            <span>{item}</span>
@@ -241,8 +280,11 @@ export default function ChinhSachBaoHanhPage() {
                      ].map((note, i) => (
                         <p
                            key={i}
-                           className="text-xs leading-relaxed"
-                           style={{ color: "rgb(var(--primary-light))" }}
+                           className="leading-relaxed"
+                           style={{
+                              color: "rgb(var(--primary-light))",
+                              fontSize: fontSize === "small" ? "12px" : "14px",
+                           }}
                         >
                            {note}
                         </p>

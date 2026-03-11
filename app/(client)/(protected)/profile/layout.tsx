@@ -27,7 +27,6 @@ const menuItems = [
   { icon: MapPin, label: "Sổ địa chỉ nhận hàng", href: "/profile/addresses" },
   { icon: Shield, label: "Thông tin bảo hành", href: "/profile/warranty" },
   { icon: Key, label: "Đổi mật khẩu", href: "/profile/change-password" },
-  { icon: LogOut, label: "Đăng xuất", href: "/logout" },
 ];
 
 export default function ProfileLayout({
@@ -36,7 +35,7 @@ export default function ProfileLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   if (loading) {
     return (
@@ -45,6 +44,7 @@ export default function ProfileLayout({
       </div>
     );
   }
+
   const breadcrumbLabel =
     menuItems.find((item) => pathname === item.href)?.label || "Tài khoản";
 
@@ -139,6 +139,15 @@ export default function ProfileLayout({
                       </Link>
                     );
                   })}
+
+                  {/* Đăng xuất*/}
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-3 px-4 py-3 transition-all border-l-4 border-transparent hover:bg-neutral-light text-primary hover:text-promotion cursor-pointer"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="text-sm">Đăng xuất</span>
+                  </button>
                 </nav>
               </div>
             </aside>

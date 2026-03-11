@@ -172,7 +172,7 @@ export default function ChangePasswordPage() {
             </div>
 
             {/* Main Form Card */}
-            <div className="bg-neutral-light border border-neutral rounded-lg shadow-lg p-8">
+            <div className="bg-neutral-light border border-neutral rounded-lg  p-8">
                <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Current Password */}
                   <div>

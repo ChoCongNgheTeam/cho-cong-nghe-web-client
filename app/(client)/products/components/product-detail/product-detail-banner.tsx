@@ -4,6 +4,7 @@ import { ProductDetail, CurrentVariant } from "@/lib/types/product";
 import { MdPhoneIphone, MdMemory, MdVerified } from "react-icons/md";
 import { IoRadioButtonOn } from "react-icons/io5";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
+import Image from "next/image";
 
 interface ProductDetailLeftProps {
   product: ProductDetail;
@@ -70,10 +71,11 @@ export default function ProductDetailBanner({
         {/* IMAGE CAROUSEL */}
         <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg shadow-xl transition-colors duration-300 py-6">
           <div className="relative w-full h-full flex items-center justify-center">
-            <img
+            <Image
               src={currentImage}
               className="max-w-full max-h-full object-contain transition-opacity duration-500"
               alt={currentImageObj?.altText || "Product image"}
+              fill
             />
             <div className="absolute inset-0 pointer-events-none"></div>
           </div>
@@ -116,10 +118,12 @@ export default function ProductDetailBanner({
                 aria-label={`Xem ảnh ${index + 1}`}
               >
                 <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
-                  <img
+                  <Image
                     src={image.imageUrl}
                     alt={image.altText || `Product image ${index + 1}`}
-                    className={`w-full h-full object-contain transition-all duration-300 p-2.5 sm:p-3 ${
+                    fill
+                    sizes="120px"
+                    className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
                       index === currentImageIndex
                         ? "opacity-100 scale-100"
                         : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"

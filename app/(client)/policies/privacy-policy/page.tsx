@@ -1,9 +1,12 @@
-import Link from "next/link";
+"use client";
 
-// TODO: Import SidebarMenu component here when ready
-// import SidebarMenu from "@/components/SidebarMenu";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function ChinhSachBaoMatPage() {
+   const [fontSize, setFontSize] = useState<"small" | "large">("small");
+   const contentStyle = { fontSize: fontSize === "small" ? "14px" : "16px" };
+
    return (
       <div
          className="min-h-screen"
@@ -27,6 +30,14 @@ export default function ChinhSachBaoMatPage() {
                      Trang chủ
                   </Link>
                   <span style={{ color: "rgb(var(--neutral-dark))" }}>/</span>
+                  <Link
+                     href="/policies"
+                     className="transition-colors"
+                     style={{ color: "rgb(var(--promotion))" }}
+                  >
+                     Chính sách
+                  </Link>
+                  <span style={{ color: "rgb(var(--neutral-dark))" }}>/</span>
                   <span style={{ color: "rgb(var(--primary-light))" }}>
                      Chính sách bảo mật
                   </span>
@@ -37,11 +48,6 @@ export default function ChinhSachBaoMatPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar Slot — gắn <SidebarMenu /> vào đây khi có */}
-               <aside className="hidden md:block w-[260px] shrink-0">
-                  {/* <SidebarMenu activeItem="Chính sách bảo mật" /> */}
-               </aside>
-
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"
@@ -53,21 +59,45 @@ export default function ChinhSachBaoMatPage() {
                   {/* Font size toggle */}
                   <div className="flex items-center gap-2 mb-5">
                      <button
-                        className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+                        onClick={() => setFontSize("small")}
+                        className="px-4 py-1.5 rounded-full transition-colors"
                         style={{
-                           backgroundColor: "rgb(var(--primary))",
-                           color: "rgb(var(--neutral-light))",
+                           backgroundColor:
+                              fontSize === "small"
+                                 ? "rgb(var(--primary))"
+                                 : "transparent",
+                           color:
+                              fontSize === "small"
+                                 ? "rgb(var(--neutral-light))"
+                                 : "rgb(var(--primary-light))",
+                           border:
+                              fontSize === "small"
+                                 ? "none"
+                                 : "1px solid rgb(var(--neutral))",
                            fontSize: "13px",
+                           fontWeight: fontSize === "small" ? 600 : 400,
                         }}
                      >
                         Cỡ chữ nhỏ
                      </button>
                      <button
-                        className="px-4 py-1.5 rounded-full text-sm transition-colors"
+                        onClick={() => setFontSize("large")}
+                        className="px-4 py-1.5 rounded-full transition-colors"
                         style={{
-                           border: "1px solid rgb(var(--neutral))",
-                           color: "rgb(var(--primary-light))",
+                           backgroundColor:
+                              fontSize === "large"
+                                 ? "rgb(var(--primary))"
+                                 : "transparent",
+                           color:
+                              fontSize === "large"
+                                 ? "rgb(var(--neutral-light))"
+                                 : "rgb(var(--primary-light))",
+                           border:
+                              fontSize === "large"
+                                 ? "none"
+                                 : "1px solid rgb(var(--neutral))",
                            fontSize: "13px",
+                           fontWeight: fontSize === "large" ? 600 : 400,
                         }}
                      >
                         Cỡ chữ lớn
@@ -84,8 +114,8 @@ export default function ChinhSachBaoMatPage() {
 
                   {/* Intro */}
                   <p
-                     className="text-sm leading-relaxed mb-6"
-                     style={{ color: "rgb(var(--primary))" }}
+                     className="leading-relaxed mb-6"
+                     style={{ color: "rgb(var(--primary))", ...contentStyle }}
                   >
                      Shop cam kết sẽ bảo mật những thông tin mang tính riêng tư
                      của bạn. Bạn vui lòng đọc bản "Chính sách bảo mật" dưới
@@ -93,12 +123,8 @@ export default function ChinhSachBaoMatPage() {
                      tôn trọng và bảo vệ quyền lợi của người truy cập.
                   </p>
 
-                  {/* Section 1 */}
                   <Section title="1. Mục đích và phạm vi thu thập">
-                     <p
-                        className="text-sm leading-relaxed mb-3"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed mb-3" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Để truy cập và sử dụng một số dịch vụ tại, bạn có thể
                         sẽ được yêu cầu đăng ký với chúng tôi thông tin cá nhân
                         (Email, Họ tên, Số ĐT liên lạc…). Mọi thông tin khai
@@ -106,19 +132,13 @@ export default function ChinhSachBaoMatPage() {
                         mọi trách nhiệm liên quan đến pháp luật của thông tin
                         khai báo.
                      </p>
-                     <p
-                        className="text-sm leading-relaxed mb-3"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed mb-3" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Chúng tôi cũng có thể thu thập thông tin về số lần viếng
                         thăm, bao gồm số trang bạn xem, số links (liên kết) bạn
                         click và những thông tin khác liên quan đến việc kết nối
                         đến site.
                      </p>
-                     <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Chúng tôi cũng thu thập các thông tin mà trình duyệt Web
                         (Browser) bạn sử dụng mỗi khi truy cập vào, bao gồm:
                         địa chỉ IP, loại Browser, ngôn ngữ sử dụng, thời gian
@@ -128,12 +148,8 @@ export default function ChinhSachBaoMatPage() {
 
                   <Divider />
 
-                  {/* Section 2 */}
                   <Section title="2. Phạm vi sử dụng thông tin">
-                     <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Thu thập và sử dụng thông tin cá nhân bạn với mục đích
                         phù hợp và hoàn toàn tuân thủ nội dung của "Chính sách
                         bảo mật" này. Khi cần thiết, chúng tôi có thể sử dụng
@@ -145,12 +161,8 @@ export default function ChinhSachBaoMatPage() {
 
                   <Divider />
 
-                  {/* Section 3 */}
                   <Section title="3. Thời gian lưu trữ thông tin">
-                     <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Dữ liệu cá nhân của Thành viên sẽ được lưu trữ cho đến
                         khi có yêu cầu hủy bỏ hoặc tự thành viên đăng nhập và
                         thực hiện hủy bỏ. Còn lại trong mọi trường hợp thông
@@ -160,12 +172,8 @@ export default function ChinhSachBaoMatPage() {
 
                   <Divider />
 
-                  {/* Section 4 */}
                   <Section title="4. Quy định bảo mật">
-                     <p
-                        className="text-sm leading-relaxed mb-4"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed mb-4" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Chính sách giao dịch thanh toán bằng thẻ quốc tế và thẻ
                         nội địa (internet banking) đảm bảo tuân thủ các tiêu
                         chuẩn bảo mật của các Đối Tác Cổng Thanh Toán:
@@ -177,18 +185,13 @@ export default function ChinhSachBaoMatPage() {
                            "Mật khẩu sử dụng một lần (OTP) được gửi qua SMS để đảm bảo việc truy cập tài khoản được xác thực.",
                            "Các nguyên tắc và quy định bảo mật thông tin trong ngành tài chính ngân hàng theo quy định của Ngân hàng nhà nước Việt Nam.",
                         ].map((item, i) => (
-                           <li
-                              key={i}
-                              className="flex gap-2 text-sm leading-relaxed"
-                              style={{ color: "rgb(var(--primary))" }}
-                           >
+                           <li key={i} className="flex gap-2 leading-relaxed" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                               <span className="mt-1 shrink-0">•</span>
                               <span>{item}</span>
                            </li>
                         ))}
                      </ul>
 
-                     {/* Highlight box */}
                      <div
                         className="rounded-lg p-4 mb-4"
                         style={{
@@ -196,12 +199,8 @@ export default function ChinhSachBaoMatPage() {
                            border: "1px solid rgb(var(--neutral))",
                         }}
                      >
-                        <p
-                           className="text-sm font-semibold mb-2"
-                           style={{ color: "rgb(var(--primary))" }}
-                        >
-                           Chính sách bảo mật giao dịch thanh toán áp dụng với
-                           Khách hàng:
+                        <p className="font-semibold mb-2" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
+                           Chính sách bảo mật giao dịch thanh toán áp dụng với Khách hàng:
                         </p>
                         <ul className="space-y-2">
                            {[
@@ -209,11 +208,7 @@ export default function ChinhSachBaoMatPage() {
                               "Đối với thẻ nội địa (internet banking), Shop chỉ lưu trữ mã đơn hàng, mã giao dịch và tên ngân hàng.",
                               "Shop cam kết đảm bảo thực hiện nghiêm túc các biện pháp bảo mật cần thiết cho mọi hoạt động thanh toán thực hiện trên trang.",
                            ].map((item, i) => (
-                              <li
-                                 key={i}
-                                 className="flex gap-2 text-sm leading-relaxed"
-                                 style={{ color: "rgb(var(--primary-light))" }}
-                              >
+                              <li key={i} className="flex gap-2 leading-relaxed" style={{ color: "rgb(var(--primary-light))", ...contentStyle }}>
                                  <span className="mt-1 shrink-0">•</span>
                                  <span>{item}</span>
                               </li>
@@ -224,20 +219,13 @@ export default function ChinhSachBaoMatPage() {
 
                   <Divider />
 
-                  {/* Section 5 */}
                   <Section title="5. Làm cách nào để yêu cầu xóa dữ liệu?">
-                     <p
-                        className="text-sm leading-relaxed mb-3"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed mb-3" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Bạn có thể gửi yêu cầu xóa dữ liệu qua email Trung tâm
                         hỗ trợ của chúng tôi. Vui lòng cung cấp càng nhiều
                         thông tin càng tốt về dữ liệu nào bạn muốn xóa.
                      </p>
-                     <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "rgb(var(--primary))" }}
-                     >
+                     <p className="leading-relaxed" style={{ color: "rgb(var(--primary))", ...contentStyle }}>
                         Yêu cầu sẽ được chuyển đến nhóm thích hợp để đánh giá
                         và xử lý. Chúng tôi sẽ liên hệ từng bước để cập nhật
                         cho bạn về tiến trình xóa.
@@ -252,19 +240,10 @@ export default function ChinhSachBaoMatPage() {
 
 /* ── Reusable sub-components ── */
 
-function Section({
-   title,
-   children,
-}: {
-   title: string;
-   children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
    return (
       <section className="mb-6">
-         <h2
-            className="text-base font-bold mb-3"
-            style={{ color: "rgb(var(--primary))" }}
-         >
+         <h2 className="font-bold mb-3" style={{ color: "rgb(var(--primary))", fontSize: "15px" }}>
             {title}
          </h2>
          {children}
@@ -273,7 +252,5 @@ function Section({
 }
 
 function Divider() {
-   return (
-      <hr className="my-6" style={{ borderColor: "rgb(var(--neutral))" }} />
-   );
+   return <hr className="my-6" style={{ borderColor: "rgb(var(--neutral))" }} />;
 }

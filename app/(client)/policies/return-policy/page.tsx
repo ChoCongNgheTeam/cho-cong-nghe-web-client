@@ -1,9 +1,12 @@
-import Link from "next/link";
+"use client";
 
-// TODO: Import SidebarMenu component here when ready
-// import SidebarMenu from "@/components/SidebarMenu";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function ChinhSachDoiTraPage() {
+   const [fontSize, setFontSize] = useState<"small" | "large">("small");
+   const contentStyle = { fontSize: fontSize === "small" ? "14px" : "16px" };
+
    return (
       <div
          className="min-h-screen"
@@ -27,6 +30,14 @@ export default function ChinhSachDoiTraPage() {
                      Trang chủ
                   </Link>
                   <span style={{ color: "rgb(var(--neutral-dark))" }}>/</span>
+                  <Link
+                     href="/policies"
+                     className="transition-colors"
+                     style={{ color: "rgb(var(--promotion))" }}
+                  >
+                     Chính sách
+                  </Link>
+                  <span style={{ color: "rgb(var(--neutral-dark))" }}>/</span>
                   <span style={{ color: "rgb(var(--primary-light))" }}>
                      Chính sách đổi trả
                   </span>
@@ -37,11 +48,6 @@ export default function ChinhSachDoiTraPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar Slot — gắn <SidebarMenu /> vào đây khi có */}
-               <aside className="hidden md:block w-[260px] shrink-0">
-                  {/* <SidebarMenu activeItem="Chính sách đổi trả" /> */}
-               </aside>
-
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"
@@ -53,21 +59,45 @@ export default function ChinhSachDoiTraPage() {
                   {/* Font size toggle */}
                   <div className="flex items-center gap-2 mb-5">
                      <button
-                        className="px-4 py-1.5 rounded-full text-sm font-semibold"
+                        onClick={() => setFontSize("small")}
+                        className="px-4 py-1.5 rounded-full transition-colors"
                         style={{
-                           backgroundColor: "rgb(var(--primary))",
-                           color: "rgb(var(--neutral-light))",
+                           backgroundColor:
+                              fontSize === "small"
+                                 ? "rgb(var(--primary))"
+                                 : "transparent",
+                           color:
+                              fontSize === "small"
+                                 ? "rgb(var(--neutral-light))"
+                                 : "rgb(var(--primary-light))",
+                           border:
+                              fontSize === "small"
+                                 ? "none"
+                                 : "1px solid rgb(var(--neutral))",
                            fontSize: "13px",
+                           fontWeight: fontSize === "small" ? 600 : 400,
                         }}
                      >
                         Cỡ chữ nhỏ
                      </button>
                      <button
-                        className="px-4 py-1.5 rounded-full text-sm"
+                        onClick={() => setFontSize("large")}
+                        className="px-4 py-1.5 rounded-full transition-colors"
                         style={{
-                           border: "1px solid rgb(var(--neutral))",
-                           color: "rgb(var(--primary-light))",
+                           backgroundColor:
+                              fontSize === "large"
+                                 ? "rgb(var(--primary))"
+                                 : "transparent",
+                           color:
+                              fontSize === "large"
+                                 ? "rgb(var(--neutral-light))"
+                                 : "rgb(var(--primary-light))",
+                           border:
+                              fontSize === "large"
+                                 ? "none"
+                                 : "1px solid rgb(var(--neutral))",
                            fontSize: "13px",
+                           fontWeight: fontSize === "large" ? 600 : 400,
                         }}
                      >
                         Cỡ chữ lớn
@@ -83,10 +113,10 @@ export default function ChinhSachDoiTraPage() {
                   </h1>
 
                   {/* Section: Khung chính sách đổi trả */}
-                  <Section title="Khung chính sách đổi trả">
+                  <Section title="Khung chính sách đổi trả" contentStyle={contentStyle}>
                      <p
-                        className="text-sm leading-relaxed mb-3"
-                        style={{ color: "rgb(var(--primary))" }}
+                        className="leading-relaxed mb-3"
+                        style={{ color: "rgb(var(--primary))", ...contentStyle }}
                      >
                         ChoCongNghe cung cấp các hướng dẫn thiết yếu cho việc
                         tạo chính sách hoàn tiền và đổi trả hiệu quả, bao gồm
@@ -96,8 +126,8 @@ export default function ChinhSachDoiTraPage() {
                         thiết lập kỳ vọng của khách hàng về thời gian hoàn tiền.
                      </p>
                      <p
-                        className="text-sm leading-relaxed mb-3"
-                        style={{ color: "rgb(var(--primary))" }}
+                        className="leading-relaxed mb-3"
+                        style={{ color: "rgb(var(--primary))", ...contentStyle }}
                      >
                         Tính năng quản lý RMA (Return Merchandise
                         Authorization): Việc thêm chính sách bảo hành và đổi trả
@@ -107,12 +137,11 @@ export default function ChinhSachDoiTraPage() {
                         họ.
                      </p>
 
-                     {/* Sub-sections */}
                      <div className="mt-4 space-y-4">
-                        <SubSection title="1. Thời gian đổi trả">
+                        <SubSection title="1. Thời gian đổi trả" contentStyle={contentStyle}>
                            <p
-                              className="text-sm leading-relaxed"
-                              style={{ color: "rgb(var(--primary))" }}
+                              className="leading-relaxed"
+                              style={{ color: "rgb(var(--primary))", ...contentStyle }}
                            >
                               Thiết lập số ngày tối đa cho phép đổi trả và chọn
                               trạng thái đơn hàng mà chính sách RMA được áp
@@ -120,10 +149,10 @@ export default function ChinhSachDoiTraPage() {
                            </p>
                         </SubSection>
 
-                        <SubSection title="2. Quy trình đổi trả">
+                        <SubSection title="2. Quy trình đổi trả" contentStyle={contentStyle}>
                            <p
-                              className="text-sm leading-relaxed"
-                              style={{ color: "rgb(var(--primary))" }}
+                              className="leading-relaxed"
+                              style={{ color: "rgb(var(--primary))", ...contentStyle }}
                            >
                               Quản lý quy trình hoàn tiền trong cửa hàng một
                               cách dễ dàng. Kích hoạt biểu mẫu hoàn tiền, cho
@@ -133,10 +162,10 @@ export default function ChinhSachDoiTraPage() {
                            </p>
                         </SubSection>
 
-                        <SubSection title="3. Yêu cầu đổi trả không cần đăng nhập">
+                        <SubSection title="3. Yêu cầu đổi trả không cần đăng nhập" contentStyle={contentStyle}>
                            <p
-                              className="text-sm leading-relaxed"
-                              style={{ color: "rgb(var(--primary))" }}
+                              className="leading-relaxed"
+                              style={{ color: "rgb(var(--primary))", ...contentStyle }}
                            >
                               Tính năng mới cho phép khách hàng yêu cầu hoàn
                               tiền mà không cần đăng nhập tài khoản.
@@ -144,7 +173,6 @@ export default function ChinhSachDoiTraPage() {
                         </SubSection>
                      </div>
 
-                     {/* Warranty highlight box */}
                      <div
                         className="mt-5 rounded-lg p-4"
                         style={{
@@ -153,14 +181,14 @@ export default function ChinhSachDoiTraPage() {
                         }}
                      >
                         <p
-                           className="text-sm font-semibold mb-2"
-                           style={{ color: "rgb(var(--primary))" }}
+                           className="font-semibold mb-2"
+                           style={{ color: "rgb(var(--primary))", ...contentStyle }}
                         >
                            Chính sách bảo hành điển hình — Sản phẩm điện tử
                         </p>
                         <p
-                           className="text-sm leading-relaxed"
-                           style={{ color: "rgb(var(--primary-light))" }}
+                           className="leading-relaxed"
+                           style={{ color: "rgb(var(--primary-light))", ...contentStyle }}
                         >
                            Đa số sản phẩm có bảo hành của nhà sản xuất{" "}
                            <strong style={{ color: "rgb(var(--primary))" }}>
@@ -174,11 +202,10 @@ export default function ChinhSachDoiTraPage() {
 
                   <Divider />
 
-                  {/* Section: Điều kiện bảo hành */}
-                  <Section title="Điều kiện bảo hành">
+                  <Section title="Điều kiện bảo hành" contentStyle={contentStyle}>
                      <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "rgb(var(--primary))" }}
+                        className="leading-relaxed"
+                        style={{ color: "rgb(var(--primary))", ...contentStyle }}
                      >
                         Chúng tôi sẽ chấp nhận đổi trả bất kỳ sản phẩm mới chưa
                         qua sử dụng của đại lý nếu sản phẩm không hoạt động do
@@ -189,35 +216,28 @@ export default function ChinhSachDoiTraPage() {
 
                   <Divider />
 
-                  {/* Section: Thời gian đổi trả */}
-                  <Section title="Thời gian đổi trả phổ biến">
+                  <Section title="Thời gian đổi trả phổ biến" contentStyle={contentStyle}>
                      <div className="space-y-2">
                         {[
-                           {
-                              range: "7 – 14 ngày",
-                              desc: "Đổi trả do không hài lòng",
-                           },
-                           {
-                              range: "30 ngày",
-                              desc: "Đổi trả do lỗi sản phẩm",
-                           },
+                           { range: "7 – 14 ngày", desc: "Đổi trả do không hài lòng" },
+                           { range: "30 ngày", desc: "Đổi trả do lỗi sản phẩm" },
                            { range: "1 năm", desc: "Bảo hành chính hãng" },
                         ].map((item, i) => (
                            <div
                               key={i}
-                              className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm"
+                              className="flex items-center gap-3 rounded-lg px-4 py-3"
                               style={{
-                                 backgroundColor:
-                                    "rgb(var(--neutral-light-active))",
+                                 backgroundColor: "rgb(var(--neutral-light-active))",
                                  border: "1px solid rgb(var(--neutral))",
+                                 ...contentStyle,
                               }}
                            >
                               <span
-                                 className="font-bold text-xs px-2.5 py-1 rounded-full shrink-0"
+                                 className="font-bold px-2.5 py-1 rounded-full shrink-0"
                                  style={{
-                                    backgroundColor:
-                                       "rgb(var(--promotion-light))",
+                                    backgroundColor: "rgb(var(--promotion-light))",
                                     color: "rgb(var(--promotion))",
+                                    fontSize: "12px",
                                  }}
                               >
                                  {item.range}
@@ -232,8 +252,7 @@ export default function ChinhSachDoiTraPage() {
 
                   <Divider />
 
-                  {/* Section: Điều kiện đổi trả */}
-                  <Section title="Điều kiện đổi trả">
+                  <Section title="Điều kiện đổi trả" contentStyle={contentStyle}>
                      <ul className="space-y-2">
                         {[
                            "Sản phẩm còn nguyên vẹn, chưa qua sử dụng",
@@ -243,15 +262,15 @@ export default function ChinhSachDoiTraPage() {
                         ].map((item, i) => (
                            <li
                               key={i}
-                              className="flex gap-2 text-sm leading-relaxed"
-                              style={{ color: "rgb(var(--primary))" }}
+                              className="flex gap-2 leading-relaxed"
+                              style={{ color: "rgb(var(--primary))", ...contentStyle }}
                            >
                               <span
-                                 className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                                 className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold"
                                  style={{
-                                    backgroundColor:
-                                       "rgb(var(--promotion-light))",
+                                    backgroundColor: "rgb(var(--promotion-light))",
                                     color: "rgb(var(--promotion))",
+                                    fontSize: "11px",
                                  }}
                               >
                                  ✓
@@ -264,8 +283,7 @@ export default function ChinhSachDoiTraPage() {
 
                   <Divider />
 
-                  {/* Section: Quy trình đổi trả */}
-                  <Section title="Quy trình đổi trả">
+                  <Section title="Quy trình đổi trả" contentStyle={contentStyle}>
                      <ol className="space-y-3">
                         {[
                            "Khách hàng tạo yêu cầu đổi trả",
@@ -276,14 +294,15 @@ export default function ChinhSachDoiTraPage() {
                         ].map((step, i) => (
                            <li
                               key={i}
-                              className="flex items-center gap-3 text-sm"
-                              style={{ color: "rgb(var(--primary))" }}
+                              className="flex items-center gap-3"
+                              style={{ color: "rgb(var(--primary))", ...contentStyle }}
                            >
                               <span
-                                 className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                                 className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold"
                                  style={{
                                     backgroundColor: "rgb(var(--promotion))",
                                     color: "#fff",
+                                    fontSize: "12px",
                                  }}
                               >
                                  {i + 1}
@@ -292,9 +311,7 @@ export default function ChinhSachDoiTraPage() {
                               {i < 4 && (
                                  <span
                                     className="ml-auto text-xs"
-                                    style={{
-                                       color: "rgb(var(--neutral-dark))",
-                                    }}
+                                    style={{ color: "rgb(var(--neutral-dark))" }}
                                  >
                                     →
                                  </span>
@@ -306,38 +323,23 @@ export default function ChinhSachDoiTraPage() {
 
                   <Divider />
 
-                  {/* Section: Phí đổi trả */}
-                  <Section title="Phí đổi trả">
+                  <Section title="Phí đổi trả" contentStyle={contentStyle}>
                      <div className="space-y-2">
                         {[
-                           {
-                              label: "Lỗi do nhà sản xuất",
-                              fee: "Miễn phí",
-                              highlight: true,
-                           },
-                           {
-                              label: "Khách hàng đổi ý",
-                              fee: "Khách hàng chịu phí vận chuyển",
-                              highlight: false,
-                           },
-                           {
-                              label: "Đổi size / mẫu",
-                              fee: "Tùy chính sách cụ thể",
-                              highlight: false,
-                           },
+                           { label: "Lỗi do nhà sản xuất", fee: "Miễn phí", highlight: true },
+                           { label: "Khách hàng đổi ý", fee: "Khách hàng chịu phí vận chuyển", highlight: false },
+                           { label: "Đổi size / mẫu", fee: "Tùy chính sách cụ thể", highlight: false },
                         ].map((row, i) => (
                            <div
                               key={i}
-                              className="flex items-center justify-between rounded-lg px-4 py-3 text-sm"
+                              className="flex items-center justify-between rounded-lg px-4 py-3"
                               style={{
-                                 backgroundColor:
-                                    "rgb(var(--neutral-light-active))",
+                                 backgroundColor: "rgb(var(--neutral-light-active))",
                                  border: "1px solid rgb(var(--neutral))",
+                                 ...contentStyle,
                               }}
                            >
-                              <span style={{ color: "rgb(var(--primary))" }}>
-                                 {row.label}
-                              </span>
+                              <span style={{ color: "rgb(var(--primary))" }}>{row.label}</span>
                               <span
                                  className="font-semibold"
                                  style={{
@@ -353,8 +355,8 @@ export default function ChinhSachDoiTraPage() {
                      </div>
 
                      <p
-                        className="mt-4 text-sm leading-relaxed"
-                        style={{ color: "rgb(var(--primary-light))" }}
+                        className="mt-4 leading-relaxed"
+                        style={{ color: "rgb(var(--primary-light))", ...contentStyle }}
                      >
                         Quy trình hoàn tiền và đổi trả được thực hiện đơn giản.
                         Cho phép khách hàng yêu cầu hoàn tiền và đổi trả sản
@@ -381,15 +383,17 @@ export default function ChinhSachDoiTraPage() {
 function Section({
    title,
    children,
+   contentStyle,
 }: {
    title: string;
    children: React.ReactNode;
+   contentStyle?: React.CSSProperties;
 }) {
    return (
       <section className="mb-6">
          <h2
-            className="text-base font-bold mb-3"
-            style={{ color: "rgb(var(--primary))" }}
+            className="font-bold mb-3"
+            style={{ color: "rgb(var(--primary))", fontSize: "15px" }}
          >
             {title}
          </h2>
@@ -401,9 +405,11 @@ function Section({
 function SubSection({
    title,
    children,
+   contentStyle,
 }: {
    title: string;
    children: React.ReactNode;
+   contentStyle?: React.CSSProperties;
 }) {
    return (
       <div
@@ -411,8 +417,8 @@ function SubSection({
          style={{ borderLeft: "3px solid rgb(var(--promotion))" }}
       >
          <p
-            className="text-sm font-semibold mb-1"
-            style={{ color: "rgb(var(--primary))" }}
+            className="font-semibold mb-1"
+            style={{ color: "rgb(var(--primary))", ...contentStyle }}
          >
             {title}
          </p>

@@ -217,7 +217,7 @@ const Header = () => {
                                  <span>Thông tin cá nhân</span>
                               </Link>
                               <Link
-                                 href="/orders"
+                                 href="/profile/orders"
                                  className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
                                  onClick={() => setMobileMenuOpen(false)}
                               >

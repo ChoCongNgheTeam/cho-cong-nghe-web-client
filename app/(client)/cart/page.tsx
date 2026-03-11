@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useVoucher } from "@/hooks/useVoucher";
-import CartSidebar from "./components/cartSidebar";
+import CartSidebar from "./components/CartSidebar";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
@@ -27,6 +27,7 @@ export default function CartPage() {
     toggleSelectAll,
     toggleSelectItem,
     updateQuantity,
+    updateItem,
     removeItem,
     removeSelectedItems,
     subtotal,
@@ -316,14 +317,17 @@ export default function CartPage() {
                             </div>
                           )}
 
-                          {/* CartVariantSelector — PUT /cart/{cartItemId}/change-variant */}
+                          {/* CartVariantSelector */}
                           <CartVariantSelector
                             cartItemId={item.id}
                             productSlug={item.productSlug}
                             currentVariantId={item.productVariantId}
                             currentVariantCode={item.variantCode}
                             currentQuantity={item.quantity}
-                            onSuccess={refetchCart}
+                            // silent=true: sync server ngầm, không setIsLoading → không flash
+                            onSuccess={() => refetchCart(true)}
+                            // optimistic: cập nhật state local ngay, không chờ refetch
+                            onUpdateItem={(patch) => updateItem(item.id, patch)}
                           />
 
                           {/* Mobile price */}

@@ -7,9 +7,8 @@ import { ShoppingCart, MapPin, AlertTriangle } from "lucide-react";
 import { useToasty } from "@/components/Toast";
 import UserInfoSidebar from "./components/UserInfoSidebar";
 import AddressSidebar, { ApiAddress } from "./components/AddressSidebar";
-import TimeSlotSidebar from "./components/TimeSlotSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
-import CartSidebar from "@/(client)/cart/components/cartSidebar";
+import CartSidebar from "@/(client)/cart/components/CartSidebar";
 import CartItems from "./components/CartItems";
 import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import PaymentMethods from "./components/PaymentMethods";
@@ -62,7 +61,10 @@ interface CheckoutData {
   finalTotal: number;
   rewardPoints: number;
   usePoints: boolean;
-  newAddressId?: string; // ghi tạm bởi AddressPage khi redirect về checkout
+  newAddressId?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
 }
 
 interface PreviewData {
@@ -150,7 +152,6 @@ export default function CheckoutPage() {
       const res = await apiRequest.get<{ success: boolean; data: ApiAddress[] }>("/addresses");
       const list = res?.data ?? [];
       if (list.length === 0) return;
-      // Tìm đúng địa chỉ vừa tạo theo id, fallback về default hoặc đầu tiên
       const target =
         list.find((a) => a.id === addressId) ??
         list.find((a) => a.isDefault) ??
@@ -163,10 +164,15 @@ export default function CheckoutPage() {
 
   // ── Effect 1: Load checkout data từ localStorage ───────────────────────────
   useEffect(() => {
+    // Khi quay lại checkout từ payment, clear paymentInfo để tránh conflict
+    sessionStorage.removeItem("paymentInfo");
+    sessionStorage.removeItem("pendingOrderId");
+    sessionStorage.removeItem("pendingOrderCode");
+
     const savedCheckoutData = localStorage.getItem("checkoutData");
     if (!savedCheckoutData) {
-      toast.error("Không có thông tin đơn hàng");
-      router.push("/cart");
+      // Không có checkoutData → redirect về trang chủ, không show lỗi
+      router.replace("/");
       return;
     }
     try {
@@ -201,8 +207,10 @@ export default function CheckoutPage() {
       setVoucherValue(data.appliedVoucherValue ?? 0);
       setVoucherId(data.appliedVoucherId ?? "");
 
-      // Nếu AddressPage ghi newAddressId vào checkoutData
-      // → fetch & chọn đúng địa chỉ đó ngay tại đây (tránh race condition với Effect 3)
+      if (data.contactName) setContactName(data.contactName);
+      if (data.contactPhone) setContactPhone(data.contactPhone);
+      if (data.contactEmail) setContactEmail(data.contactEmail);
+
       if (data.newAddressId) {
         const targetId = data.newAddressId as string;
         delete data.newAddressId;
@@ -231,16 +239,15 @@ export default function CheckoutPage() {
   // ── Effect 2: Sync user info ───────────────────────────────────────────────
   useEffect(() => {
     if (!authLoading && user) {
-      setContactName(user.fullName);
-      setContactPhone(user.phone ?? "");
-      setContactEmail(user.email);
+      setContactName((prev) => prev || user.fullName);
+      setContactPhone((prev) => prev || (user.phone ?? ""));
+      setContactEmail((prev) => prev || user.email);
     }
   }, [authLoading, user]);
 
-  // ── Effect 3: Load địa chỉ mặc định (chỉ khi KHÔNG phải từ newAddress flow) ─
+  // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
   useEffect(() => {
     if (authLoading) return;
-    // Nếu có ?newAddress=1 thì Effect 1 đã xử lý rồi, bỏ qua
     if (searchParams.get("newAddress") === "1") return;
 
     const loadDefaultAddress = async () => {
@@ -278,10 +285,31 @@ export default function CheckoutPage() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  const handleUserUpdate = (data: { name: string; phone: string; email: string }) => {
+  const handleUserUpdate = async (data: { name: string; phone: string; email: string }) => {
     setContactName(data.name);
     setContactPhone(data.phone);
     setContactEmail(data.email);
+
+    try {
+      const raw = localStorage.getItem("checkoutData");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        parsed.contactName = data.name;
+        parsed.contactPhone = data.phone;
+        parsed.contactEmail = data.email;
+        localStorage.setItem("checkoutData", JSON.stringify(parsed));
+      }
+    } catch { /* silent */ }
+
+    if (!user?.phone && data.phone) {
+      try {
+        await apiRequest.patch("/users/me", {
+          fullName: user?.fullName ?? data.name,
+          phone: data.phone,
+        });
+      } catch { /* silent */ }
+    }
+
     toast.success("Cập nhật thông tin người đặt thành công");
   };
 
@@ -340,8 +368,8 @@ export default function CheckoutPage() {
   const displayVoucherDiscount = voucherValue;
   const displayFinalTotal = finalTotal;
   const mobileFinalTotal = Math.max(0, finalTotal - voucherValue);
-  const shippingFee = previewData?.shippingFee ?? 0;
-  const taxAmount = previewData?.taxAmount ?? 0;
+  const shippingFee = previewData?.shippingFee;
+  const taxAmount = previewData?.taxAmount;
 
   // ── Loading guard ──────────────────────────────────────────────────────────
   if (isPageLoading || authLoading) {
@@ -464,7 +492,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Right column */}
-            <div className="lg:col-span-1 border border-neutral rounded">
+            <div className="lg:col-span-1">
               <OrderSummary
                 subtotal={displaySubtotal}
                 totalDiscount={displayDiscount}
@@ -482,21 +510,9 @@ export default function CheckoutPage() {
                 agreedToTerms={agreedToTerms}
                 onTermsChange={setAgreedToTerms}
                 isCheckoutPage={true}
+                shippingFee={shippingFee}
+                taxAmount={taxAmount}
               />
-              {previewData && (
-                <div className="px-4 pb-4 text-xs text-neutral-darker space-y-1 border-t border-neutral pt-3">
-                  <div className="flex justify-between">
-                    <span>Phí vận chuyển</span>
-                    <span className={shippingFee === 0 ? "text-green-600 font-medium" : ""}>
-                      {shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Thuế VAT (10%)</span>
-                    <span>{formatVND(taxAmount)}</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -555,7 +571,6 @@ export default function CheckoutPage() {
       {/* ── Sidebars & Modals ── */}
       <UserInfoSidebar isOpen={showUserSidebar} onClose={() => setShowUserSidebar(false)} userInfo={userInfoForSidebar} onUpdate={handleUserUpdate} />
       <AddressSidebar isOpen={showAddressSidebar} onClose={() => setShowAddressSidebar(false)} selectedAddressId={selectedAddress?.id} onSelect={setSelectedAddress} />
-      <TimeSlotSidebar isOpen={showTimeSidebar} onClose={() => setShowTimeSidebar(false)} onSelect={(date, time) => { setDeliveryDate(date); setDeliveryTime(time); }} selectedSlot={deliveryTime} />
       <CartSidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
