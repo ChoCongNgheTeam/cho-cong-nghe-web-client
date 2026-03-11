@@ -67,12 +67,11 @@ interface ProductReviewProps {
       total: number;
       distribution: Record<string, number>;
    };
-   orderItemId?: string;
-   canReview?: boolean;
+   slug: string;
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function ProductReview({ productId, rating, orderItemId, canReview }: ProductReviewProps) {
+export default function ProductReview({ productId, rating, slug }: ProductReviewProps) {
    const [comments, setComments] = useState<Comment[]>([]);
    const [loading, setLoading] = useState(false);
 
@@ -207,7 +206,7 @@ export default function ProductReview({ productId, rating, orderItemId, canRevie
 
    return (
       <div className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
-         <RatingSummary rating={rating} orderItemId={orderItemId} canReview={canReview}/>
+         <RatingSummary rating={rating}  slug={slug}/>
          <CommentSection
             productId={productId}
             comments={comments}

@@ -189,8 +189,7 @@ export function ProductDetailContent({
         <ProductReview
           productId={product.id}
           rating={product.rating}
-          orderItemId={product.orderItemId ?? undefined}
-          canReview={product.canReview}
+          slug = {product.slug}
         />
       </div>
 
