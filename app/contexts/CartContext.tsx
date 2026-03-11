@@ -88,11 +88,12 @@ export interface CartContextValue {
 }
 
 export interface NewVariantData {
-   id: string; // productVariantId mới
+   id: string;
    colorLabel: string;
    storageLabel: string;
    price: number;
    originalPrice?: number;
+   colorValue?: string; // ← thêm
 }
 
 // ── Transform API response → CartItemWithDetails ─────────────────────────
@@ -334,9 +335,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
                        colorLabel: newVariant.colorLabel,
                        storageLabel: newVariant.storageLabel,
                        color: newVariant.colorLabel,
-                       colorValue: newVariant.colorLabel
-                          .toLowerCase()
-                          .replace(/\s+/g, "-"),
+                       colorValue:
+                          newVariant.colorValue ??
+                          newVariant.colorLabel
+                             .toLowerCase()
+                             .replace(/\s+/g, "-"),
                        unitPrice: newVariant.price,
                        originalPrice:
                           newVariant.originalPrice ?? newVariant.price,

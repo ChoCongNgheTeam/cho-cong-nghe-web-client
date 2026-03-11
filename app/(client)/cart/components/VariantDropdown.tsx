@@ -9,6 +9,7 @@ export interface VariantOption {
    storageLabel: string;
    price: number;
    available: boolean;
+   colorValue?: string;
 }
 
 interface VariantDropdownProps {
