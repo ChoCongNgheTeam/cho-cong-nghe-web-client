@@ -11,7 +11,7 @@ import TimeSlotSidebar from "./components/TimeSlotSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
 import CartSidebar from "@/(client)/cart/components/cartSidebar";
 import CartItems from "./components/CartItems";
-import OrderSummary from "@/components/oderSummary/OrderSummary";
+import OrderSummary from "@/components/oderSummary/orderSummary";
 import PaymentMethods from "./components/PaymentMethods";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
