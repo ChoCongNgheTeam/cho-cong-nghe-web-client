@@ -112,6 +112,7 @@ export default function CheckoutPage() {
 
   // ── User info ──────────────────────────────────────────────────────────────
   const [contactName, setContactName] = useState("");
+  // contactPhone được sync tự động từ selectedAddress, không hiện trong form người đặt
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
@@ -139,12 +140,19 @@ export default function CheckoutPage() {
 
   const { refetchCart } = useCart();
 
-
   const formatDisplayAddress = (addr: ApiAddress) =>
     addr.fullAddress ??
     [addr.detailAddress, addr.ward?.name, addr.province?.name]
       .filter(Boolean)
       .join(", ");
+
+  // ── Sync contactPhone từ địa chỉ được chọn ───────────────────────────────
+  // SĐT chỉ hiển thị 1 lần ở phần địa chỉ nhận hàng, không cần hiện lại ở người đặt
+  useEffect(() => {
+    if (selectedAddress?.phone) {
+      setContactPhone(selectedAddress.phone);
+    }
+  }, [selectedAddress]);
 
   // ── Helper: fetch & apply địa chỉ mới nhất ────────────────────────────────
   const fetchAndApplyLatestAddress = useCallback(async (addressId: string) => {
@@ -164,14 +172,12 @@ export default function CheckoutPage() {
 
   // ── Effect 1: Load checkout data từ localStorage ───────────────────────────
   useEffect(() => {
-    // Khi quay lại checkout từ payment, clear paymentInfo để tránh conflict
     sessionStorage.removeItem("paymentInfo");
     sessionStorage.removeItem("pendingOrderId");
     sessionStorage.removeItem("pendingOrderCode");
 
     const savedCheckoutData = localStorage.getItem("checkoutData");
     if (!savedCheckoutData) {
-      // Không có checkoutData → redirect về trang chủ, không show lỗi
       router.replace("/");
       return;
     }
@@ -208,7 +214,7 @@ export default function CheckoutPage() {
       setVoucherId(data.appliedVoucherId ?? "");
 
       if (data.contactName) setContactName(data.contactName);
-      if (data.contactPhone) setContactPhone(data.contactPhone);
+      // contactPhone không load từ checkoutData — sẽ được sync từ selectedAddress
       if (data.contactEmail) setContactEmail(data.contactEmail);
 
       if (data.newAddressId) {
@@ -240,7 +246,6 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!authLoading && user) {
       setContactName((prev) => prev || user.fullName);
-      setContactPhone((prev) => prev || (user.phone ?? ""));
       setContactEmail((prev) => prev || user.email);
     }
   }, [authLoading, user]);
@@ -285,9 +290,8 @@ export default function CheckoutPage() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  const handleUserUpdate = async (data: { name: string; phone: string; email: string }) => {
+  const handleUserUpdate = async (data: { name: string; email: string }) => {
     setContactName(data.name);
-    setContactPhone(data.phone);
     setContactEmail(data.email);
 
     try {
@@ -295,26 +299,16 @@ export default function CheckoutPage() {
       if (raw) {
         const parsed = JSON.parse(raw);
         parsed.contactName = data.name;
-        parsed.contactPhone = data.phone;
         parsed.contactEmail = data.email;
         localStorage.setItem("checkoutData", JSON.stringify(parsed));
       }
     } catch { /* silent */ }
 
-    if (!user?.phone && data.phone) {
-      try {
-        await apiRequest.patch("/users/me", {
-          fullName: user?.fullName ?? data.name,
-          phone: data.phone,
-        });
-      } catch { /* silent */ }
-    }
-
     toast.success("Cập nhật thông tin người đặt thành công");
   };
 
   const handlePlaceOrder = async () => {
-    if (!contactName || !contactPhone) {
+    if (!contactName) {
       toast.error("Vui lòng kiểm tra thông tin người đặt"); return;
     }
     if (!selectedAddress) {
@@ -386,7 +380,6 @@ export default function CheckoutPage() {
   const userInfoForSidebar = {
     id: user?.id ? Number(user.id) : 0,
     full_name: contactName,
-    phone: contactPhone,
     email: contactEmail,
   };
 
@@ -419,7 +412,6 @@ export default function CheckoutPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="font-medium text-sm text-primary">{contactName || "Chưa có tên"}</p>
-                  <p className="text-neutral-darker text-sm">{contactPhone || "Chưa có số điện thoại"}</p>
                   {contactEmail && <p className="text-neutral-darker text-sm">{contactEmail}</p>}
                 </div>
               </div>
@@ -533,7 +525,6 @@ export default function CheckoutPage() {
             <h2 className="text-sm font-semibold text-primary mb-3">Người đặt hàng</h2>
             <div className="space-y-2">
               <input type="text" value={contactName} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary" placeholder="Họ và tên" />
-              <input type="tel" value={contactPhone} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary" placeholder="Số điện thoại" />
               <input type="email" value={contactEmail} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark" placeholder="Email (Không bắt buộc)" />
             </div>
           </div>

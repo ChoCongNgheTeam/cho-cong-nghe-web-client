@@ -48,6 +48,8 @@ export default function ChinhSachBaoHanhPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
+              
+
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"
