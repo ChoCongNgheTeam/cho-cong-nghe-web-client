@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useVoucher } from "@/hooks/useVoucher";
-import CartSidebar from "./components/Cartsidebar";
+import CartSidebar from "./components/CartSidebar";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
