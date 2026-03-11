@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 interface UserInfo {
    id: number;
    full_name: string;
-   phone: string;
    email: string;
 }
 
@@ -12,7 +11,7 @@ interface UserInfoSidebarProps {
    isOpen: boolean;
    onClose: () => void;
    userInfo: UserInfo | null;
-   onUpdate: (data: { name: string; phone: string; email: string }) => void;
+   onUpdate: (data: { name: string; email: string }) => void;
 }
 
 export default function UserInfoSidebar({
@@ -22,34 +21,26 @@ export default function UserInfoSidebar({
    onUpdate,
 }: UserInfoSidebarProps) {
    const [name, setName] = useState("");
-   const [phone, setPhone] = useState("");
    const [email, setEmail] = useState("");
 
    useEffect(() => {
       if (userInfo) {
          setName(userInfo.full_name);
-         setPhone(userInfo.phone);
          setEmail(userInfo.email);
       }
    }, [userInfo]);
 
-   // Disable body scroll when sidebar is open
    useEffect(() => {
       if (isOpen) {
-         // Calculate scrollbar width
          const scrollbarWidth =
             window.innerWidth - document.documentElement.clientWidth;
-
-         // Add padding to prevent layout shift
          document.body.style.paddingRight = `${scrollbarWidth}px`;
          document.body.style.overflow = "hidden";
       } else {
-         // Remove padding and restore scroll
          document.body.style.paddingRight = "0px";
          document.body.style.overflow = "unset";
       }
 
-      // Cleanup when component unmounts
       return () => {
          document.body.style.paddingRight = "0px";
          document.body.style.overflow = "unset";
@@ -58,10 +49,8 @@ export default function UserInfoSidebar({
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      if (!name || !phone) {
-         return;
-      }
-      onUpdate({ name, phone, email });
+      if (!name) return;
+      onUpdate({ name, email });
       onClose();
    };
 
@@ -69,13 +58,11 @@ export default function UserInfoSidebar({
 
    return (
       <>
-         {/* Backdrop - Blur effect */}
          <div
             className="fixed inset-0 z-40 transition-all cursor-pointer backdrop-blur-sm bg-neutral-light/70"
             onClick={onClose}
          />
 
-         {/* Sidebar */}
          <div className="fixed inset-y-0 right-0 w-full sm:w-96 lg:w-[420px] bg-neutral-light shadow-2xl z-50 overflow-hidden">
             <div className="flex flex-col h-full">
                {/* Header */}
@@ -92,7 +79,7 @@ export default function UserInfoSidebar({
                   </button>
                </div>
 
-               {/* Content - Scrollable */}
+               {/* Content */}
                <div className="flex-1 overflow-y-auto p-4 sm:p-5">
                   <div className="space-y-4">
                      <div>
@@ -104,21 +91,6 @@ export default function UserInfoSidebar({
                            value={name}
                            onChange={(e) => setName(e.target.value)}
                            placeholder="Nhập họ và tên"
-                           className="w-full px-3 py-2.5 text-sm border-2 border-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all text-primary"
-                           required
-                        />
-                     </div>
-
-                     <div>
-                        <label className="block text-sm font-medium mb-2 text-primary">
-                           Số điện thoại{" "}
-                           <span className="text-promotion">*</span>
-                        </label>
-                        <input
-                           type="tel"
-                           value={phone}
-                           onChange={(e) => setPhone(e.target.value)}
-                           placeholder="Nhập số điện thoại"
                            className="w-full px-3 py-2.5 text-sm border-2 border-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all text-primary"
                            required
                         />

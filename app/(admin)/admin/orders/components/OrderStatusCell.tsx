@@ -31,7 +31,7 @@ export function OrderStatusCell({
    const triggerRef = useRef<HTMLButtonElement>(null);
    const dropdownRef = useRef<HTMLDivElement>(null);
 
-   const DROPDOWN_HEIGHT = 260;
+   const DROPDOWN_HEIGHT = 230;
 
    const calcCoords = () => {
       if (!triggerRef.current) return;
@@ -117,7 +117,7 @@ export function OrderStatusCell({
             }}
             className={`
                inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-               text-[12px] font-inters font-medium whitespace-nowrap
+               text-[12px] font-medium whitespace-nowrap
                transition-all duration-150
                ${cfg.pill}
                ${open ? "ring-2 ring-accent/40 ring-offset-1" : ""}
@@ -142,9 +142,7 @@ export function OrderStatusCell({
          {/* Error toast */}
          {error && (
             <div className="absolute top-full left-0 mt-1.5 z-50 px-3 py-1.5 rounded-lg bg-promotion-light border border-promotion-light-active shadow-sm whitespace-nowrap">
-               <span className="font-inters text-[11px] text-promotion">
-                  {error}
-               </span>
+               <span className="text-[11px] text-promotion">{error}</span>
             </div>
          )}
 
@@ -164,7 +162,7 @@ export function OrderStatusCell({
                >
                   {/* Header */}
                   <div className="px-4 py-2.5 border-b border-neutral">
-                     <p className="font-inters text-[10px] font-semibold text-neutral-dark uppercase tracking-widest">
+                     <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-widest">
                         Cập nhật trạng thái
                      </p>
                   </div>
@@ -176,7 +174,7 @@ export function OrderStatusCell({
                         disabled
                         className={`
                            w-full flex items-center gap-2.5 px-3 py-2 rounded-xl
-                           font-inters text-[13px] font-medium text-left
+                           text-[13px] font-medium text-left
                            cursor-default opacity-60
                            ${ORDER_STATUS_CONFIG[status].pillSelected}
                         `}
@@ -201,7 +199,7 @@ export function OrderStatusCell({
                               onClick={() => handleSelect(opt)}
                               className={`
                                  w-full flex items-center gap-2.5 px-3 py-2 rounded-xl
-                                 font-inters text-[13px] font-medium text-left
+                                 text-[13px] font-medium text-left
                                  text-primary cursor-pointer transition-colors duration-100
                                  ${optCfg.dropdownHover}
                               `}

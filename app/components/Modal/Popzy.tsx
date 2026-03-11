@@ -33,13 +33,11 @@ export default function Popzy({
    const allowBackdropClose = closeMethods.includes("overlay");
    const allowEscapeClose = closeMethods.includes("escape");
 
-   // Mount/unmount
    useEffect(() => {
       setMounted(true);
       return () => setMounted(false);
    }, []);
 
-   // Handle open/close animation
    useEffect(() => {
       if (isOpen) {
          setIsVisible(true);
@@ -52,7 +50,6 @@ export default function Popzy({
       }
    }, [isOpen, onOpen]);
 
-   // Scroll lock
    useEffect(() => {
       if (!isOpen || !enableScrollLock) return;
 
@@ -65,7 +62,6 @@ export default function Popzy({
             : target.scrollHeight > target.clientHeight;
 
       if (hasScrollbar) {
-         // Calculate scrollbar width
          const div = document.createElement("div");
          div.style.overflow = "scroll";
          div.style.position = "absolute";
@@ -74,7 +70,6 @@ export default function Popzy({
          scrollbarWidthRef.current = div.offsetWidth - div.clientWidth;
          document.body.removeChild(div);
 
-         // Apply scroll lock
          const currentPadding = parseFloat(
             getComputedStyle(target).paddingRight,
          );
@@ -92,14 +87,11 @@ export default function Popzy({
       };
    }, [isOpen, enableScrollLock, scrollLockTarget]);
 
-   // ESC key handler
    useEffect(() => {
       if (!isOpen || !allowEscapeClose) return;
 
       const handleEscape = (e: KeyboardEvent) => {
-         if (e.key === "Escape") {
-            onClose();
-         }
+         if (e.key === "Escape") onClose();
       };
 
       document.addEventListener("keydown", handleEscape);
@@ -114,83 +106,80 @@ export default function Popzy({
 
    if (!mounted || !isOpen) return null;
 
-  return createPortal(
-  <>
-    <div
-      ref={backdropRef}
-      onClick={handleBackdropClick}
-      className={`
-        fixed inset-0 z-9999 flex items-center justify-center
-        bg-black/70 transition-opacity duration-300
-        ${isVisible ? "opacity-100 visible" : "opacity-0 invisible"}
-      `}
-    >
-      <div
-        className={`
-          relative w-[min(600px,90%)] p-5 rounded-md bg-white
-          transition-transform duration-300
-          ${isVisible ? "scale-100" : "scale-50"}
-          ${cssClass}
-        `}
-      >
-        {allowButtonClose && (
-          <button
-            onClick={onClose}
-            className="absolute top-2.5 right-2.5 w-7.5 h-7.5 rounded-full bg-gray-200 text-gray-600 text-3xl flex items-center justify-center"
-          >
-            &times;
-          </button>
-        )}
+   return createPortal(
+      <>
+         <div
+            ref={backdropRef}
+            onClick={handleBackdropClick}
+            className={`
+               fixed inset-0 z-9999 flex items-center justify-center
+               bg-black/70 transition-opacity duration-300
+               ${isVisible ? "opacity-100 visible" : "opacity-0 invisible"}
+            `}
+         >
+            <div
+               className={`
+                  relative w-[min(600px,90%)] p-5 rounded-xl
+                  bg-neutral-light border border-neutral
+                  shadow-2xl
+                  transition-transform duration-300
+                  ${isVisible ? "scale-100" : "scale-50"}
+                  ${cssClass}
+               `}
+            >
+               {allowButtonClose && (
+                  <button
+                     onClick={onClose}
+                     className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-neutral-light-active hover:bg-neutral text-primary text-2xl flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                     &times;
+                  </button>
+               )}
 
-        <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-2">
-          {typeof content === "string" ? (
-            <div dangerouslySetInnerHTML={{ __html: content }}/>
-          ) : (
-            content
-          )}
-        </div>
+               <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-6 scrollbar-thin">
+                  {typeof content === "string" ? (
+                     <div dangerouslySetInnerHTML={{ __html: content }} />
+                  ) : (
+                     content
+                  )}
+               </div>
 
-        {footer && (
-          <div className="flex justify-end gap-2 pt-5">
-            {footerButtons.map((button, index) => (
-              <button
-                key={index}
-                onClick={button.onClick}
-                className={button.className}
-              >
-                {button.title}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-    {/* STYLE PHẢI NẰM TRONG FRAGMENT */}
-    <style jsx>{`
-      .custom-scroll::-webkit-scrollbar {
-        width: 4px !important;
-      }
+               {footer && (
+                  <div className="flex justify-end gap-2 pt-5 border-t border-neutral mt-4">
+                     {footerButtons.map((button, index) => (
+                        <button
+                           key={index}
+                           onClick={button.onClick}
+                           className={button.className}
+                        >
+                           {button.title}
+                        </button>
+                     ))}
+                  </div>
+               )}
+            </div>
+         </div>
 
-      .custom-scroll::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      .custom-scroll::-webkit-scrollbar-thumb {
-        background-color: #d1d5db;
-        border-radius: 9999px;
-      }
-
-      .custom-scroll::-webkit-scrollbar-thumb:hover {
-        background-color: #9ca3af;
-      }
-
-      .custom-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: #d1d5db transparent;
-      }
-    `}</style>
-  </>,
-  document.body
-);
-
+         <style jsx>{`
+            .custom-scroll::-webkit-scrollbar {
+               width: 4px !important;
+            }
+            .custom-scroll::-webkit-scrollbar-track {
+               background: transparent;
+            }
+            .custom-scroll::-webkit-scrollbar-thumb {
+               background-color: rgb(var(--neutral-dark));
+               border-radius: 9999px;
+            }
+            .custom-scroll::-webkit-scrollbar-thumb:hover {
+               background-color: rgb(var(--neutral-dark-hover));
+            }
+            .custom-scroll {
+               scrollbar-width: thin;
+               scrollbar-color: rgb(var(--neutral-dark)) transparent;
+            }
+         `}</style>
+      </>,
+      document.body,
+   );
 }

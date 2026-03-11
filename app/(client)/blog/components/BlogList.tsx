@@ -19,7 +19,7 @@ export default function BlogList({ blogs }: Props) {
         >
           <div className="relative h-12 w-12 overflow-hidden rounded bg-neutral">
             <Image
-              src={blog.thumbnail || "/images/blog-default.jpg"}
+              src={blog.thumbnail || "/images/avatar.png"}
               alt={blog.title}
               fill
               className="object-cover"
@@ -36,3 +36,4 @@ export default function BlogList({ blogs }: Props) {
     </div>
   );
 }
+

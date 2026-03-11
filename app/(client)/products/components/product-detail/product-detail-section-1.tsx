@@ -21,18 +21,18 @@ export default function ProductDetailSection1({
   };
 
   useEffect(() => {
-  if (!expanded && descriptionRef.current) {
-    const y =
-      descriptionRef.current.getBoundingClientRect().top +
-      window.pageYOffset -
-      80;
+    if (!expanded && descriptionRef.current) {
+      const y =
+        descriptionRef.current.getBoundingClientRect().top +
+        window.pageYOffset -
+        80;
 
-    window.scrollTo({
-      top: y,
-      behavior: "smooth",
-    });
-  }
-}, [expanded]);
+      window.scrollTo({
+        top: y,
+        behavior: "smooth",
+      });
+    }
+  }, [expanded]);
 
   return (
     <div
@@ -106,7 +106,7 @@ export default function ProductDetailSection1({
           {/* BUTTON */}
           <button
             onClick={handleToggleExpand}
-            className="text-promotion font-semibold self-center text-primary text-sm sm:text-base hover:underline transition hover:cursor-pointer"
+            className="font-semibold self-center text-primary text-sm sm:text-base hover:underline transition hover:cursor-pointer"
           >
             {expanded ? "Thu gọn ▲" : "Xem thêm ▼"}
           </button>
@@ -125,10 +125,10 @@ export default function ProductDetailSection1({
             <div className="flex gap-2 mb-2 sm:mb-4">
               <button
                 onClick={() => setActiveTab("baiviet")}
-                className={`border px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base transition-colors ${
+                className={`px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base font-medium transition-all duration-200 ${
                   activeTab === "baiviet"
-                    ? "border-promotion text-promotion bg-promotion-light"
-                    : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
+                    ? "bg-promotion text-neutral-light shadow-sm"
+                    : "bg-neutral text-neutral-darker hover:bg-neutral-active"
                 }`}
               >
                 Bài viết liên quan
@@ -136,10 +136,10 @@ export default function ProductDetailSection1({
 
               <button
                 onClick={() => setActiveTab("meohay")}
-                className={`border px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base transition-colors ${
+                className={`px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base font-medium transition-all duration-200 ${
                   activeTab === "meohay"
-                    ? "border-promotion text-promotion bg-promotion-light"
-                    : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
+                    ? "bg-promotion text-neutral-light shadow-sm"
+                    : "bg-neutral text-neutral-darker hover:bg-neutral-active"
                 }`}
               >
                 Xem nhanh

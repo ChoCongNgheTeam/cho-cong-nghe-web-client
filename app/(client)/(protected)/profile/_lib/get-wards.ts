@@ -1,16 +1,11 @@
-const API_URL = "http://localhost:5000/api/v1/";
+import apiRequest from "@/lib/api";
 
 export async function getWards(provinceId: string) {
   try {
-    const res = await fetch(
-      `${API_URL}addresses/locations/${provinceId}/wards`,
+    const response = await apiRequest.get<{ data: any[] }>(
+      `/addresses/locations/${provinceId}/wards`,
+      { noAuth: true }
     );
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch wards");
-    }
-
-    const response = await res.json();
     return response?.data || [];
   } catch (error) {
     console.error("Error fetching wards:", error);

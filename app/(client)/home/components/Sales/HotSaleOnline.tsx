@@ -10,32 +10,24 @@ interface HotSaleOnlineProps {
    flashSale: FlashSaleData;
 }
 
+const getTimeLeft = (end: string | null) => {
+   if (!end) return { hours: 0, minutes: 0, seconds: 0 };
+   const diff = Math.max(0, new Date(end).getTime() - Date.now());
+   return {
+      hours: Math.floor(diff / 1000 / 3600),
+      minutes: Math.floor((diff / 1000 / 60) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+   };
+};
+
 export function HotSaleOnline({ flashSale }: HotSaleOnlineProps) {
    const { products, startDate, endDate } = flashSale;
 
-   const getTimeLeft = () => {
-      if (!endDate) return { hours: 0, minutes: 0, seconds: 0 };
-      const end = new Date(endDate).getTime();
-      const now = Date.now();
-      const diff = Math.max(0, end - now);
-      return {
-         hours: Math.floor(diff / 1000 / 3600),
-         minutes: Math.floor((diff / 1000 / 60) % 60),
-         seconds: Math.floor((diff / 1000) % 60),
-      };
-   };
-
-   const [mounted, setMounted] = useState(false);
-   const [timeLeft, setTimeLeft] = useState({
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-   });
+   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endDate));
 
    useEffect(() => {
-      setMounted(true);
-      setTimeLeft(getTimeLeft());
-      const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
+      setTimeLeft(getTimeLeft(endDate));
+      const timer = setInterval(() => setTimeLeft(getTimeLeft(endDate)), 1000);
       return () => clearInterval(timer);
    }, [endDate]);
 
@@ -53,9 +45,7 @@ export function HotSaleOnline({ flashSale }: HotSaleOnlineProps) {
          .replace(/-/g, "/");
    };
 
-   const countdown = mounted
-      ? `${timeLeft.hours}:${pad(timeLeft.minutes)}:${pad(timeLeft.seconds)}`
-      : "00:00:00";
+   const countdown = `${timeLeft.hours}:${pad(timeLeft.minutes)}:${pad(timeLeft.seconds)}`;
 
    const sessions = [
       {

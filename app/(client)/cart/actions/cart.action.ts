@@ -34,13 +34,32 @@ export async function addToCart(
    }
 }
 
-// PUT /cart/:cartItemId
+// PUT /cart/:cartItemId/change-quantity
 export async function updateCartItemQuantity(
    cartItemId: string,
    quantity: number,
 ): Promise<ApiResult> {
    try {
-      await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}`, {
+      await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}/change-quantity`, {
+         quantity,
+      });
+      return { success: true };
+   } catch (error: unknown) {
+      const message =
+         error instanceof Error ? error.message : "Lỗi không xác định";
+      return { success: false, error: message };
+   }
+}
+
+// PUT /cart/:cartItemId/change-variant
+export async function changeCartItemVariant(
+   cartItemId: string,
+   newVariantId: string,
+   quantity: number,
+): Promise<ApiResult> {
+   try {
+      await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}/change-variant`, {
+         newVariantId,
          quantity,
       });
       return { success: true };
@@ -94,24 +113,6 @@ export async function syncGuestCart(
 ): Promise<ApiResult> {
    try {
       await apiRequest.post<ApiResponse<unknown>>("/cart/sync", { items });
-      return { success: true };
-   } catch (error: unknown) {
-      const message =
-         error instanceof Error ? error.message : "Lỗi không xác định";
-      return { success: false, error: message };
-   }
-}
-
-// POST /cart/validate-item
-export async function validateCartItem(
-   productVariantId: string,
-   quantity: number,
-): Promise<ApiResult> {
-   try {
-      await apiRequest.post<ApiResponse<unknown>>("/cart/validate-item", {
-         productVariantId,
-         quantity,
-      });
       return { success: true };
    } catch (error: unknown) {
       const message =

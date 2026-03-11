@@ -2,6 +2,7 @@
 
 import React from "react";
 import { X, ChevronRight } from "lucide-react";
+import { formatVND } from "@/helpers";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -44,8 +45,6 @@ export default function CartSidebar({
   usePoints = false,
   onTogglePoints,
 }: CartSidebarProps) {
-  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
-
   const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
 
   const handleCheckout = () => {
@@ -108,7 +107,7 @@ export default function CartSidebar({
                       <span className="text-sm font-medium text-primary">Chọn hoặc nhập ưu đãi</span>
                       {appliedVoucherCode ? (
                         <span className="text-xs text-accent-dark font-semibold truncate w-full">
-                          {appliedVoucherCode} • -{formatPrice(appliedVoucherValue)}
+                          {appliedVoucherCode} • -{formatVND(appliedVoucherValue)}
                         </span>
                       ) : (
                         <span className="text-xs text-neutral-dark">Chưa áp dụng</span>
@@ -146,23 +145,23 @@ export default function CartSidebar({
               <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-neutral-darker">Tổng tiền</span>
-                  <span className="font-medium text-primary">{formatPrice(subtotal)}</span>
+                  <span className="font-medium text-primary">{formatVND(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-darker">Tổng khuyến mãi</span>
                   <span className="font-medium text-primary">
-                    -{formatPrice(totalDiscount + appliedVoucherValue)} {/* chỉ dùng để tính tổng hiển thị */}
+                    -{formatVND(totalDiscount + appliedVoucherValue)} {/* chỉ dùng để tính tổng hiển thị */}
                   </span>
                 </div>
 
                 <div className="flex justify-between pl-4">
                   <span className="text-neutral-dark text-xs">Giảm giá sản phẩm</span>
-                  <span className="text-primary text-sm">-{formatPrice(totalDiscount)}</span>
+                  <span className="text-primary text-sm">-{formatVND(totalDiscount)}</span>
                 </div>
 
                 <div className="flex justify-between pl-4">
                   <span className="text-neutral-dark text-xs">Voucher</span>
-                  <span className="text-primary text-sm font-medium">{appliedVoucherValue > 0 ? `-${formatPrice(appliedVoucherValue)}` : "0₫"}</span>
+                  <span className="text-primary text-sm font-medium">{appliedVoucherValue > 0 ? `-${formatVND(appliedVoucherValue)}` : "0₫"}</span>
                 </div>
 
                 {isCheckoutPage && (
@@ -175,7 +174,7 @@ export default function CartSidebar({
                 <div className="border-t border-neutral pt-2.5 mt-2.5">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-primary text-sm">Cần thanh toán</span>
-                    <span className="text-xl font-bold text-promotion">{formatPrice(finalTotalWithVoucher)}</span>
+                    <span className="text-xl font-bold text-promotion">{formatVND(finalTotalWithVoucher)}</span>
                   </div>
                 </div>
 

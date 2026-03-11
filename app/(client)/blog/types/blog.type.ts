@@ -5,6 +5,14 @@ export type Author = {
   avatarImage?: string | null;
 };
 
+export type BlogStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+export type BlogCategory = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 export type Blog = {
   id: string;
   title: string;
@@ -14,8 +22,16 @@ export type Blog = {
   viewCount: number;
   createdAt: string;
   publishedAt: string;
-  commentsCount: number; // 👈 THÊM
+  commentsCount: number;
+  status?: BlogStatus;
+  category?: BlogCategory | null;
   author: Author;
+};
+
+export type BlogDetail = Blog & {
+  content: string;
+  updatedAt: string;
+  status: BlogStatus;
 };
 
 export type Pagination = {

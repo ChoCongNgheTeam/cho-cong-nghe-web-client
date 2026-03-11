@@ -1,4 +1,4 @@
-// ─── Enums (phải khớp chính xác với database) ────────────────────────────────
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 export type OrderStatus =
    | "PENDING"
@@ -22,15 +22,6 @@ export interface PaymentMethod {
    id: string;
    name: string;
    description: string;
-}
-
-export interface ShippingAddress {
-   id: string;
-   contactName: string;
-   phone: string;
-   detailAddress: string;
-   provinceId: string;
-   wardId: string;
 }
 
 export interface AttributeOption {
@@ -71,22 +62,31 @@ export interface OrderItem {
 
 export interface Order {
    id: string;
+   orderCode: string;
    userId: string;
    paymentMethodId: string;
    voucherId: string | null;
-   shippingAddressId: string;
+   shippingAddressId: string | null;
+   // ── Shipping snapshot (lưu trực tiếp trên order) ──
+   shippingContactName: string;
+   shippingPhone: string;
+   shippingProvince: string;
+   shippingWard: string;
+   shippingDetail: string;
+   // ── Money ──
    subtotalAmount: string;
    shippingFee: string;
    voucherDiscount: string;
    totalAmount: string;
+   // ── Status ──
    orderStatus: OrderStatus;
    paymentStatus: PaymentStatus;
    orderDate: string;
    updatedAt: string;
+   // ── Relations ──
    user: OrderUser;
    paymentMethod: PaymentMethod;
    voucher: null | { id: string; code: string };
-   shippingAddress: ShippingAddress;
    orderItems: OrderItem[];
 }
 

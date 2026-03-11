@@ -1,84 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition, useCallback } from "react";
 import { Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-type WishlistProduct = {
-   id: string;
-   name: string;
-   price: number;
-   thumbnail: string;
-};
+import { useAuth } from "@/hooks/useAuth";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { addToWishlist, removeFromWishlist } from "@/(client)/(protected)/profile/wishlist/_libs";
 
-type Props = {
+interface WishlistHeartProps {
    productId: string;
-   defaultLiked?: boolean;
-   product?: WishlistProduct;
-};
-const STORAGE_KEY = "wishlist_products";
+   className?: string;
+}
+
 export default function WishlistHeart({
    productId,
-   defaultLiked = false,
-   product,
-}: Props) {
-   const [liked, setLiked] = useState(() => {
-      if (typeof window === "undefined") return defaultLiked;
-      try {
-         const raw = localStorage.getItem(STORAGE_KEY);
-         const data = raw ? (JSON.parse(raw) as WishlistProduct[]) : [];
-         return data.some((p) => p.id === productId) || defaultLiked;
-      } catch {
-         return defaultLiked;
-      }
-   });
-   const [loading, setLoading] = useState(false);
+   className = "",
+}: WishlistHeartProps) {
+   const { isAuthenticated } = useAuth();
+   const { likedIds, toggleLiked } = useWishlist();
+   const router = useRouter();
+   const [isPending, startTransition] = useTransition();
 
-   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (loading) return;
-      setLoading(true);
-      try {
-         const nextLiked = !liked;
-         setLiked(nextLiked);
+   // Đọc từ context — luôn đúng, sync toàn app
+   const liked = likedIds.has(productId);
 
-         if (typeof window !== "undefined") {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            const data = raw ? (JSON.parse(raw) as WishlistProduct[]) : [];
-            if (nextLiked && product) {
-               if (!data.some((p) => p.id === productId)) {
-                  data.unshift(product);
-               }
-            } else {
-               const next = data.filter((p) => p.id !== productId);
-               data.splice(0, data.length, ...next);
-            }
+   const handleToggle = useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+         e.preventDefault();
+         e.stopPropagation();
+         if (isPending) return;
 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            window.dispatchEvent(new Event("wishlist:update"));
+         if (!isAuthenticated) {
+            router.push("/account?tab=login");
+            return;
          }
-      } catch (err) {
-         console.error("Wishlist error", err);
-      } finally {
-         setLoading(false);
-      }
-   };
+
+         const nextLiked = !liked;
+         toggleLiked(productId, nextLiked); // optimistic update context
+
+         startTransition(async () => {
+            try {
+               if (nextLiked) {
+                  await addToWishlist(productId);
+               } else {
+                  await removeFromWishlist(productId);
+               }
+            } catch {
+               toggleLiked(productId, liked); // rollback
+            }
+         });
+      },
+      [liked, isPending, isAuthenticated, productId, router, toggleLiked],
+   );
 
    return (
       <button
          type="button"
-         aria-label="wishlist"
+         aria-label={liked ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
          onClick={handleToggle}
+         disabled={isPending}
          className={`
             absolute top-2 right-2 z-10
-            transition-all duration-200
-            cursor-pointer
-            hover:scale-110
-            ${loading ? "opacity-50" : ""}
+            transition-all duration-200 cursor-pointer
+            hover:scale-110 active:scale-95
+            disabled:opacity-60 disabled:cursor-wait
+            ${className}
          `}
       >
          <Heart
-            className="w-7 h-7"
+            className={`w-7 h-7 transition-all duration-200 ${liked ? "drop-shadow-sm" : ""}`}
             fill={liked ? "#DC2626" : "none"}
             stroke={liked ? "#DC2626" : "#6b7280"}
             strokeWidth={2}

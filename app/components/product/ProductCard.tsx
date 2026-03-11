@@ -18,19 +18,15 @@ const STAR_COUNT = 5;
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
    const hasPromotion = product.price?.hasPromotion ?? false;
    const discountPercentage = product.price?.discountPercentage ?? 0;
+   const hasHighlights = (product.highlights ?? []).length > 0;
 
    return (
       <Link
          href={`/products/${product.slug}`}
          className="group relative flex flex-col bg-neutral-light border border-neutral rounded-xl py-6 px-3"
       >
-         {/* Wishlist */}
-         {/* <WishlistHeart
-            productId={product.id}
-            defaultLiked={product.isWishlist ?? false}
-         /> */}
+         <WishlistHeart productId={product.id} />
 
-         {/* Badge giảm giá */}
          {hasPromotion && (
             <Badge
                discountPercent={discountPercentage}
@@ -38,16 +34,15 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             />
          )}
 
-         <div className="grid grid-cols-[1.5fr_1fr] items-center pb-3">
-            {/* Image */}
-            <div className="relative w-full aspect-square bg-neutral-light">
+         <div className="flex flex-row items-center pb-3 mt-4 h-40">
+            <div className="relative shrink-0 w-40 h-40">
                {product.thumbnail ? (
                   <Image
                      src={product.thumbnail}
                      alt={product.name}
                      fill
                      className="object-contain transition-transform duration-500 group-hover:scale-105"
-                     sizes="250px"
+                     sizes="160px"
                   />
                ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-neutral-dark bg-neutral rounded-lg">
@@ -70,22 +65,25 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                   </div>
                )}
             </div>
-            {/* Highlights */}
-            <div className="flex flex-col justify-between h-full">
-               {product.highlights.map((highlight) => (
-                  <div
-                     key={highlight.key}
-                     className="flex flex-col items-center gap-1"
-                  >
-                     <HighlightIcon icon={highlight.icon} />
-                     <span className="text-[10px] text-primary text-center leading-tight">
-                        {highlight.name}
-                        <br />
-                        {highlight.value}
-                     </span>
-                  </div>
-               ))}
-            </div>
+
+            {/* Highlights — chỉ render khi có data */}
+            {hasHighlights && (
+               <div className="flex flex-col justify-around h-full flex-1 pl-1">
+                  {(product.highlights ?? []).map((highlight) => (
+                     <div
+                        key={highlight.key}
+                        className="flex flex-col items-center gap-1"
+                     >
+                        <HighlightIcon icon={highlight.icon} />
+                        <span className="text-[10px] text-primary text-center leading-tight">
+                           {highlight.name}
+                           <br />
+                           {highlight.value}
+                        </span>
+                     </div>
+                  ))}
+               </div>
+            )}
          </div>
 
          {/* Product Info */}
