@@ -647,6 +647,10 @@ export default function PaymentPage() {
           </Link>
         </div>
       </div>
+<<<<<<< HEAD
     </div>
   );
+=======
+   );
+>>>>>>> 621d4a99fe5f5b3533536d2688eb456b7aa32785
 }

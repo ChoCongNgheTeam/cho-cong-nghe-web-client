@@ -78,7 +78,7 @@ export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
     [initialData]
   );
 
-  const submitLabel = mode === "create" ? "Hoạt động" : "Cập nhật";
+  const submitLabel = mode === "create" ? "Lưu" : "Cập nhật";
 
   useEffect(() => {
     if (!thumbnailFile) {
@@ -221,16 +221,26 @@ export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
 
   return (
     <section className="space-y-6 bg-neutral-light-active p-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold leading-tight text-primary">
-          {mode === "create" ? "Tạo bài viết" : "Chỉnh sửa bài viết"}
-        </h1>
-        <p className="text-base text-primary-light">
-          {mode === "create" ? "Thêm bài viết mới" : "Cập nhật nội dung bài viết"}
-        </p>
+      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold leading-tight text-primary">
+            {mode === "create" ? "Tạo bài viết" : "Chỉnh sửa bài viết"}
+          </h1>
+          <p className="text-sm text-primary-light">
+            {mode === "create" ? "Thêm bài viết mới" : "Cập nhật nội dung bài viết"}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/admin/blogs")}
+          className="inline-flex items-center justify-center rounded-lg border border-neutral bg-white px-4 py-2 text-sm font-medium text-primary transition hover:bg-neutral-light-active"
+        >
+          Quay lại danh sách
+        </button>
       </header>
 
-      <h2 className="text-xl font-semibold leading-tight text-primary">Điền đầy đủ thông tin sản phẩm</h2>
+      <h2 className="text-lg font-semibold text-primary">Điền đầy đủ thông tin sản phẩm</h2>
 
       <form onSubmit={onSubmit} className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="rounded-2xl border border-neutral bg-neutral-light p-5">

@@ -170,7 +170,7 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
       justifyFull: safeQueryCommandState("justifyFull"),
       orderedList: safeQueryCommandState("insertOrderedList"),
       unorderedList: safeQueryCommandState("insertUnorderedList"),
-      fontSize: safeQueryCommandValue("fontSize"),
+      fontSize: mapExecCommandFontSizeValue(safeQueryCommandValue("fontSize")),
       hasImage: Boolean(resolvedImage),
     });
   }, []);
