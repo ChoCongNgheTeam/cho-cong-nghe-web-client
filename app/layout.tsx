@@ -6,10 +6,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ToastyProvider } from "./components/Toast";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
-
-import Header from "@/components/layout/Header/header";
-import Footer from "@/components/layout/Footer/footer";
-import ToggleSwitch from "@/components/ui/ThemeToggle";
+import { WishlistProvider } from "./contexts/WishlistContext";
 
 const geistSans = Geist({
    variable: "--font-geist-sans",
@@ -38,9 +35,11 @@ export default function RootLayout({
          >
             <ToastyProvider>
                <AuthProvider>
-                  <ThemeProvider>
-                     <CartProvider>{children}</CartProvider>
-                  </ThemeProvider>
+                  <WishlistProvider>
+                     <ThemeProvider>
+                        <CartProvider>{children}</CartProvider>
+                     </ThemeProvider>
+                  </WishlistProvider>
                </AuthProvider>
             </ToastyProvider>
          </body>

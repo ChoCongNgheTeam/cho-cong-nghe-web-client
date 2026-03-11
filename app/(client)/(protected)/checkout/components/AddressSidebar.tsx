@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, MapPin, Plus, ExternalLink, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import { X, MapPin, Plus, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";
 import { useToasty } from "@/components/Toast";
 
@@ -10,14 +10,14 @@ import { useToasty } from "@/components/Toast";
 
 export interface ApiAddress {
   id: string;
-  contactName: string; // API field
-  phone: string; // API field
-  detailAddress: string; // API field
-  fullAddress?: string; // API field (pre-formatted)
+  contactName: string;
+  phone: string;
+  detailAddress: string;
+  fullAddress?: string;
   ward?: { id: string; name: string; fullName?: string };
   province?: { id: string; name: string; fullName?: string };
   isDefault: boolean;
-  type?: string; // "HOME" | "OFFICE" etc.
+  type?: string;
   createdAt?: string;
 }
 
@@ -36,18 +36,22 @@ interface AddressSidebarProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onSelect }: AddressSidebarProps) {
+export default function AddressSidebar({
+  isOpen,
+  onClose,
+  selectedAddressId,
+  onSelect,
+}: AddressSidebarProps) {
   const toast = useToasty();
+  const router = useRouter();
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | undefined>(selectedAddressId);
 
-  // Sync prop → local state
   useEffect(() => {
     setSelected(selectedAddressId);
   }, [selectedAddressId]);
 
-  // Disable body scroll
   useEffect(() => {
     if (!isOpen) {
       document.body.style.overflow = "unset";
@@ -63,7 +67,6 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
     };
   }, [isOpen]);
 
-  // Fetch addresses when sidebar opens
   useEffect(() => {
     if (!isOpen) return;
     const fetchAddresses = async () => {
@@ -72,15 +75,10 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
         const res = await apiRequest.get<ApiResponse<ApiAddress[]>>("/addresses");
         const list = res?.data ?? [];
         setAddresses(list);
-
         if (list.length > 0) {
           const def = list.find((a) => a.isDefault) ?? list[0];
-          // Always highlight the default in sidebar
           setSelected((prev) => prev ?? def.id);
-          // If page has no address yet, push the default up immediately
-          if (!selectedAddressId) {
-            onSelect(def);
-          }
+          if (!selectedAddressId) onSelect(def);
         }
       } catch {
         toast.error("Không thể tải danh sách địa chỉ");
@@ -93,19 +91,23 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
 
   const handleConfirm = () => {
     const addr = addresses.find((a) => a.id === selected);
-    if (!addr) {
-      toast.error("Vui lòng chọn địa chỉ giao hàng");
-      return;
-    }
+    if (!addr) { toast.error("Vui lòng chọn địa chỉ giao hàng"); return; }
     onSelect(addr);
     onClose();
   };
 
-  const formatAddress = (addr: ApiAddress) => addr.fullAddress ?? [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
+  const handleGoToAddAddress = () => {
+    onClose();
+    router.push("/profile/addresses?redirect=checkout");
+  };
+
+  const formatAddress = (addr: ApiAddress) =>
+    addr.fullAddress ??
+    [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
 
   const formatType = (type?: string) => {
     if (!type) return null;
-    const map: Record<string, string> = { HOME: "Nhà riêng", OFFICE: "Văn phòng" };
+    const map: Record<string, string> = { HOME: "Nhà riêng", OFFICE: "Văn phòng", OTHER: "Khác" };
     return map[type.toUpperCase()] ?? type;
   };
 
@@ -113,15 +115,19 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40 transition-all cursor-pointer backdrop-blur-sm bg-neutral-light/70" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-40 transition-all cursor-pointer backdrop-blur-sm bg-neutral-light/70"
+        onClick={onClose}
+      />
 
-      {/* Sidebar */}
       <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] lg:w-[520px] bg-neutral-light shadow-2xl z-50 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral shrink-0">
           <h2 className="text-base sm:text-lg font-semibold text-primary">Chọn địa chỉ nhận hàng</h2>
-          <button onClick={onClose} className="text-neutral-dark hover:text-neutral-darker w-8 h-8 flex items-center justify-center cursor-pointer transition-colors hover:bg-neutral rounded-full">
+          <button
+            onClick={onClose}
+            className="text-neutral-dark hover:text-neutral-darker w-8 h-8 flex items-center justify-center cursor-pointer transition-colors hover:bg-neutral rounded-full"
+          >
             <X size={20} />
           </button>
         </div>
@@ -144,31 +150,31 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
               </div>
               <div>
                 <p className="font-semibold text-primary mb-1">Chưa có địa chỉ nào</p>
-                <p className="text-sm text-neutral-darker mb-4">Bạn cần thêm địa chỉ để tiến hành đặt hàng</p>
+                <p className="text-sm text-neutral-darker mb-4">Thêm địa chỉ để tiến hành đặt hàng</p>
               </div>
-              <Link
-                href="/profile/addresses"
-                onClick={onClose}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-neutral-light text-sm font-medium hover:bg-primary-hover transition-colors"
+              <button
+                onClick={handleGoToAddAddress}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-neutral-light text-sm font-medium hover:bg-primary-hover transition-colors cursor-pointer"
               >
                 <Plus size={16} />
                 Thêm địa chỉ mới
-                <ExternalLink size={14} />
-              </Link>
+              </button>
             </div>
           )}
 
           {/* Address list */}
           {!loading && addresses.length > 0 && (
             <>
-              {/* Hint banner */}
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-accent-light border border-accent/30 mb-1">
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-accent-light border border-accent/30">
                 <AlertCircle size={15} className="text-accent-dark shrink-0 mt-0.5" />
                 <p className="text-xs text-accent-dark leading-relaxed">
-                  Để thêm hoặc chỉnh sửa địa chỉ, vui lòng vào{" "}
-                  <Link href="/profile/addresses" onClick={onClose} className="font-semibold underline underline-offset-2 hover:opacity-80">
-                    Trang hồ sơ → Địa chỉ
-                  </Link>
+                  Chọn địa chỉ giao hàng hoặc{" "}
+                  <button
+                    onClick={handleGoToAddAddress}
+                    className="font-semibold underline underline-offset-2 hover:opacity-80 cursor-pointer"
+                  >
+                    thêm địa chỉ mới
+                  </button>
                 </p>
               </div>
 
@@ -177,20 +183,21 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
                   key={addr.id}
                   onClick={() => setSelected(addr.id)}
                   className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                    selected === addr.id ? "border-accent bg-accent-light shadow-sm" : "border-neutral hover:border-neutral-darker hover:shadow-sm"
+                    selected === addr.id
+                      ? "border-accent bg-accent-light shadow-sm"
+                      : "border-neutral hover:border-neutral-darker hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    {/* Radio */}
                     <div
                       className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                         selected === addr.id ? "border-accent bg-accent" : "border-neutral-dark"
                       }`}
                     >
-                      {selected === addr.id && <div className="w-2 h-2 rounded-full bg-primary-darker" />}
+                      {selected === addr.id && (
+                        <div className="w-2 h-2 rounded-full bg-primary-darker" />
+                      )}
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <span className="font-semibold text-sm text-primary">{addr.contactName}</span>
@@ -202,9 +209,9 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
                           </span>
                         )}
                       </div>
-
-                      {addr.type && <p className="text-xs text-neutral-darker mb-1">{formatType(addr.type)}</p>}
-
+                      {addr.type && (
+                        <p className="text-xs text-neutral-darker mb-1">{formatType(addr.type)}</p>
+                      )}
                       <p className="text-sm text-primary leading-relaxed">{formatAddress(addr)}</p>
                     </div>
                   </div>
@@ -225,15 +232,13 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
               Xác nhận địa chỉ
             </button>
           )}
-          <Link
-            href="/profile/addresses"
-            onClick={onClose}
+          <button
+            onClick={handleGoToAddAddress}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm border-2 border-neutral-dark hover:border-primary hover:bg-neutral transition-colors text-primary cursor-pointer"
           >
             <Plus size={15} />
             Thêm địa chỉ mới
-            <ExternalLink size={13} />
-          </Link>
+          </button>
         </div>
       </div>
     </>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { useState } from "react";
 import {
    LayoutDashboard,
    ShoppingCart,
@@ -22,7 +22,9 @@ import {
    LogOut,
    Store,
    PanelLeftClose,
+   PanelLeftOpen,
 } from "lucide-react";
+import UserAvatar from "../ui/UserAvatar";
 
 const navGroups = [
    {
@@ -39,6 +41,7 @@ const navGroups = [
          { title: "Danh mục", href: "/admin/categories", icon: FolderOpen },
          { title: "Cổng thanh toán", href: "/admin/payment", icon: CreditCard },
          { title: "Thương hiệu", href: "/admin/brands", icon: Award },
+         { title: "Bài viết", href: "/admin/blogs", icon: Award },
       ],
    },
    {
@@ -72,40 +75,11 @@ const navGroups = [
    },
 ];
 
-function UserAvatar({
-   user,
-}: {
-   user: { fullName: string; avatarImage?: string };
-}) {
-   const initials = user.fullName
-      .split(" ")
-      .map((w) => w[0])
-      .slice(-2)
-      .join("")
-      .toUpperCase();
-
-   if (user.avatarImage && !user.avatarImage.includes("avatar.png")) {
-      return (
-         <Image
-            src={user.avatarImage}
-            alt={user.fullName}
-            width={32}
-            height={32}
-            className="w-full h-full object-cover"
-         />
-      );
-   }
-   return (
-      <span className="text-white font-semibold text-sm font-inters">
-         {initials}
-      </span>
-   );
-}
-
 export default function AdminSidebar() {
    const pathname = usePathname();
    const { user, logout } = useAuth();
    const router = useRouter();
+   const [collapsed, setCollapsed] = useState(false);
 
    const handleLogout = async () => {
       await logout?.();
@@ -113,14 +87,27 @@ export default function AdminSidebar() {
    };
 
    return (
-      <div className="w-60 bg-neutral-light border-r border-neutral h-full flex flex-col">
+      <div
+         className={`${
+            collapsed ? "w-14" : "w-60"
+         } bg-neutral-light border-r border-neutral h-full flex flex-col transition-all duration-300`}
+      >
          {/* Logo */}
          <div className="px-4 py-4 flex items-center justify-between">
-            <span className="font-inters font-bold text-base text-primary leading-tight">
-               ChoCongNghe
-            </span>
-            <button className="text-neutral-dark hover:text-primary transition-colors p-1 rounded-md hover:bg-neutral-light-active">
-               <PanelLeftClose size={16} />
+            {!collapsed && (
+               <span className="font-bold text-base text-primary leading-tight">
+                  ChoCongNghe
+               </span>
+            )}
+            <button
+               onClick={() => setCollapsed((prev) => !prev)}
+               className="text-neutral-dark hover:text-primary transition-colors p-1 rounded-md hover:bg-neutral-light-active cursor-pointer ml-auto"
+            >
+               {collapsed ? (
+                  <PanelLeftOpen size={16} />
+               ) : (
+                  <PanelLeftClose size={16} />
+               )}
             </button>
          </div>
 
@@ -128,9 +115,11 @@ export default function AdminSidebar() {
          <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-1">
             {navGroups.map((group) => (
                <div key={group.label} className="mb-3">
-                  <div className="px-2 py-1 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mb-1">
-                     {group.label}
-                  </div>
+                  {!collapsed && (
+                     <div className="px-2 py-1 text-[12px] font-semibold text-neutral-dark uppercase tracking-wider mb-1">
+                        {group.label}
+                     </div>
+                  )}
                   {group.items.map((item) => {
                      const Icon = item.icon;
                      const isActive = pathname === item.href;
@@ -138,21 +127,26 @@ export default function AdminSidebar() {
                         <Link
                            key={item.href}
                            href={item.href}
-                           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg mb-0.5 transition-all duration-150 ${
+                           title={collapsed ? item.title : undefined}
+                           className={`flex items-center gap-2.5 rounded-lg mb-0.5 transition-all duration-150 ${
+                              collapsed
+                                 ? "justify-center px-1.5 py-2.5"
+                                 : "px-2.5 py-2"
+                           } ${
                               isActive
                                  ? "bg-accent text-white font-medium shadow-sm"
                                  : "text-primary hover:bg-neutral-light-active hover:text-primary"
                            }`}
                         >
                            <Icon
-                              size={15}
+                              size={collapsed ? 22 : 18}
                               className={
                                  isActive ? "text-white" : "text-neutral-dark"
                               }
                            />
-                           <span className="font-inters text-[13px]">
-                              {item.title}
-                           </span>
+                           {!collapsed && (
+                              <span className="text-[13px]">{item.title}</span>
+                           )}
                         </Link>
                      );
                   })}
@@ -163,34 +157,47 @@ export default function AdminSidebar() {
          {/* User profile */}
          {user && (
             <div className="border-t border-neutral px-3 py-3 space-y-0.5">
-               <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
-                     <UserAvatar user={user} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                     <div className="font-inters text-[13px] font-semibold text-primary truncate">
-                        {user.fullName}
-                     </div>
-                     <div className="font-inters text-[11px] text-neutral-dark truncate">
-                        {user.email}
-                     </div>
-                  </div>
-                  <button
-                     onClick={handleLogout}
-                     title="Đăng xuất"
-                     className="text-neutral-dark hover:text-promotion transition-colors shrink-0"
-                  >
-                     <LogOut size={15} />
-                  </button>
+               <div
+                  className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${
+                     collapsed ? "justify-center" : ""
+                  }`}
+               >
+                  <UserAvatar
+                     avatarImage={user.avatarImage}
+                     fullName={user.fullName}
+                     size={32}
+                     className="shrink-0"
+                  />
+                  {!collapsed && (
+                     <>
+                        <div className="flex-1 min-w-0">
+                           <div className="text-[13px] font-semibold text-primary truncate">
+                              {user.fullName}
+                           </div>
+                           <div className="text-[11px] text-neutral-dark truncate">
+                              {user.email}
+                           </div>
+                        </div>
+                        <button
+                           onClick={handleLogout}
+                           title="Đăng xuất"
+                           className="text-neutral-dark hover:text-promotion transition-colors shrink-0 cursor-pointer"
+                        >
+                           <LogOut size={15} />
+                        </button>
+                     </>
+                  )}
                </div>
 
-               <Link
-                  href="/"
-                  className="flex items-center gap-2.5 px-2 py-2 text-[13px] font-inters text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150"
-               >
-                  <Store size={15} className="text-neutral-dark" />
-                  <span>Cửa hàng của tôi</span>
-               </Link>
+               {!collapsed && (
+                  <Link
+                     href="/"
+                     className="flex items-center gap-2.5 px-2 py-2 text-[13px] text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150"
+                  >
+                     <Store size={15} className="text-neutral-dark" />
+                     <span>Cửa hàng của tôi</span>
+                  </Link>
+               )}
             </div>
          )}
       </div>

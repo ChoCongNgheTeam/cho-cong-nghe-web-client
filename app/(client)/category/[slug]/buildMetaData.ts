@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { slugToTitle } from "../components/SlugToTitle";
 
 const SITE_NAME = "Cho Cong Nghe";
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://example.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 export function buildCategoryMetadata(slug: string, page: number): Metadata {
    const categoryTitle = slugToTitle(slug);
 

@@ -12,7 +12,7 @@ const HeaderTop: React.FC<HeaderTopProps> = ({ isAuthenticated }) => {
                </span>
                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                   <LinkWithIcon
-                     href="#"
+                     href="/profile/orders"
                      icon={<Truck strokeWidth={1} className="h-4 w-4" />}
                      text="Theo dõi đơn hàng của bạn"
                      mobileText="Đơn hàng"

@@ -385,7 +385,7 @@ export default function AdminDashboardPage() {
                                  </td>
                                  <td className="px-3 py-2.5">
                                     <div className="flex items-center gap-2">
-                                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0" />
+                                       <div className="w-8 h-8 bg-gray-100 rounded-lg shrink-0" />
                                        <div>
                                           <div className="font-medium text-gray-800 text-xs">
                                              {p.name}

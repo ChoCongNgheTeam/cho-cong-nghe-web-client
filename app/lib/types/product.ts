@@ -10,6 +10,7 @@ export type Category = {
   id: string;
   name: string;
   slug: string;
+  parent: Category;
 };
 
 /** ===== Inventory ===== */
@@ -109,6 +110,7 @@ export type ProductDetail = {
   orderItemId: string | null;
   highlightGroups?: SpecificationGroup[];
   price: Price;
+  availablePromotions?: Promotion[];
 };
 
 export type Price = {
@@ -134,6 +136,17 @@ export interface SpecificationItem {
   unit: string | null;
   value: string;
 }
+
+/** ===== Promotion ===== */
+export type Promotion = {
+  id: string;
+  name: string;
+  description: string;
+  actionType: string;
+  buyQuantity: number | null;
+  getQuantity: number | null;
+  discountValue: number;
+};
 
 // Nhóm thông số kỹ thuật
 export interface SpecificationGroup {
