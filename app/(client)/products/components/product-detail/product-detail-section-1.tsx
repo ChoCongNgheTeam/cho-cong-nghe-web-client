@@ -106,7 +106,7 @@ export default function ProductDetailSection1({
           {/* BUTTON */}
           <button
             onClick={handleToggleExpand}
-            className="text-promotion font-semibold self-center text-primary text-sm sm:text-base hover:underline transition hover:cursor-pointer"
+            className="font-semibold self-center text-primary text-sm sm:text-base hover:underline transition hover:cursor-pointer"
           >
             {expanded ? "Thu gọn ▲" : "Xem thêm ▼"}
           </button>

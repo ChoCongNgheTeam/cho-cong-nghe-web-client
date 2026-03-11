@@ -1,5 +1,11 @@
 import apiRequest from "@/lib/api";
-import { Blog, BlogListResponse } from "../types/blog.type";
+import { resolveBlogCategory } from "./blog-category";
+import { Blog, BlogDetail, BlogListResponse, BlogStatus } from "../types/blog.type";
+
+type ApiResponseBase = {
+  success?: boolean;
+  message?: string;
+};
 
 type BlogApiAuthor = {
   id?: string;
@@ -14,73 +20,149 @@ type BlogApiCategory = {
   slug?: string;
 };
 
-type BlogApiItem = {
-  id: string;
-  title: string;
-  slug: string;
+type BlogApiListItem = {
+  id?: string;
+  title?: string;
+  slug?: string;
   thumbnail?: string | null;
+  imageUrl?: string | null;
   excerpt?: string | null;
+  content?: string | null;
   viewCount?: number | null;
-  createdAt: string;
+  createdAt?: string;
   publishedAt?: string | null;
   commentsCount?: number | null;
+  status?: BlogStatus;
   author?: BlogApiAuthor;
   category?: BlogApiCategory | string | null;
 };
 
-type BlogApiListResponse = {
-  success: boolean;
-  data: BlogApiItem[];
-  pagination: BlogListResponse["pagination"];
+type BlogApiDetailItem = BlogApiListItem & {
+  updatedAt?: string;
+};
+
+type BlogApiListResponse = ApiResponseBase & {
+  data?: BlogApiListItem[];
+  pagination?: BlogListResponse["pagination"];
+};
+
+type BlogApiDetailResponse = ApiResponseBase & {
+  data?: BlogApiDetailItem;
 };
 
 type GetBlogsParams = {
   page?: number;
   limit?: number;
-  category?: string;
 };
 
-function mapBlog(item: BlogApiItem): Blog {
+function stripHtml(value: string): string {
+  return value
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractExcerpt(content: string, maxLength = 180): string {
+  const plain = stripHtml(content);
+  if (!plain) return "";
+  if (plain.length <= maxLength) return plain;
+  return `${plain.slice(0, maxLength).trim()}...`;
+}
+
+function resolveThumbnail(item: BlogApiListItem): string {
+  return item.thumbnail ?? item.imageUrl ?? "/images/avatar.png";
+}
+
+function resolveCategory(item: BlogApiListItem, excerpt: string): Blog["category"] {
+  const explicitSlug =
+    typeof item.category === "string"
+      ? item.category
+      : item.category?.slug;
+
+  return resolveBlogCategory(
+    item.title ?? "",
+    excerpt,
+    item.slug ?? "",
+    explicitSlug
+  );
+}
+
+function mapBlog(item: BlogApiListItem): Blog {
+  const createdAt = item.createdAt ?? new Date().toISOString();
+  const publishedAt = item.publishedAt ?? createdAt;
+  const title = item.title ?? "Bài viết";
+  const excerpt = item.excerpt ?? extractExcerpt(item.content ?? "");
+
   return {
-    id: item.id,
-    title: item.title,
-    slug: item.slug,
-    thumbnail: item.thumbnail ?? "/images/blog-default.jpg",
-    excerpt: item.excerpt ?? "",
+    id: item.id ?? "",
+    title,
+    slug: item.slug ?? "",
+    thumbnail: resolveThumbnail(item),
+    excerpt,
     viewCount: item.viewCount ?? 0,
-    createdAt: item.createdAt,
-    publishedAt: item.publishedAt ?? item.createdAt,
+    createdAt,
+    publishedAt,
     commentsCount: item.commentsCount ?? 0,
+    status: item.status,
+    category: resolveCategory(item, excerpt),
     author: {
       id: item.author?.id ?? "",
-      fullName: item.author?.fullName ?? "Tac gia",
+      fullName: item.author?.fullName ?? "Tác giả",
       email: item.author?.email ?? "",
       avatarImage: item.author?.avatarImage ?? null,
     },
   };
 }
 
+function mapBlogDetail(item: BlogApiDetailItem): BlogDetail {
+  const base = mapBlog(item);
+  const createdAt = item.createdAt ?? base.createdAt;
+
+  return {
+    ...base,
+    content: item.content ?? "",
+    updatedAt: item.updatedAt ?? createdAt,
+    status: item.status ?? "PUBLISHED",
+    publishedAt: item.publishedAt ?? base.publishedAt,
+  };
+}
+
 export async function getBlogs({
   page = 1,
   limit = 10,
-  category,
 }: GetBlogsParams): Promise<BlogListResponse> {
-  const params: Record<string, string | number> = {
-    page,
-    limit,
-  };
-
-  if (category) params.category = category;
-
   const response = await apiRequest.get<BlogApiListResponse>("/blogs", {
-    params,
+    params: { page, limit },
     noAuth: true,
     timeout: 15000,
   });
 
   return {
-    success: response.success,
-    data: response.data.map(mapBlog),
-    pagination: response.pagination,
+    success: response.success ?? true,
+    data: (response.data ?? []).map(mapBlog),
+    pagination: response.pagination ?? {
+      page,
+      limit,
+      total: 0,
+      totalPages: 1,
+    },
   };
+}
+
+export async function getBlogBySlug(slug: string): Promise<BlogDetail> {
+  const response = await apiRequest.get<BlogApiDetailResponse>(
+    `/blogs/slug/${encodeURIComponent(slug)}`,
+    {
+      noAuth: true,
+      timeout: 15000,
+    }
+  );
+
+  if (!response.data) {
+    throw new Error("Khong co du lieu bai viet");
+  }
+
+  return mapBlogDetail(response.data);
 }

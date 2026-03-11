@@ -8,7 +8,7 @@ export default function BlogCard({ blog }: { blog: Blog }) {
       <div className="overflow-hidden rounded-lg border border-neutral bg-neutral-light hover:shadow">
         <div className="relative h-48">
           <Image
-            src={blog.thumbnail || "/images/blog-default.jpg"}
+            src={blog.thumbnail || "/images/avatar.png"}
             alt={blog.title}
             fill
             className="object-cover"
@@ -25,3 +25,4 @@ export default function BlogCard({ blog }: { blog: Blog }) {
     </Link>
   );
 }
+

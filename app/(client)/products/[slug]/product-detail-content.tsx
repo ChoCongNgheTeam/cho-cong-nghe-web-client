@@ -186,7 +186,12 @@ export function ProductDetailContent({
 
       {/* Reviews */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={reviewsRef}>
-        <ProductReview productId={product.id} />
+        <ProductReview
+          productId={product.id}
+          rating={product.rating}
+          orderItemId={product.orderItemId ?? undefined}
+          canReview={product.canReview}
+        />
       </div>
 
       {/* Suggest */}

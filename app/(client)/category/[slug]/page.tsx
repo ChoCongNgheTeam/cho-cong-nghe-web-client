@@ -1,16 +1,18 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ListFilter, PackageSearch } from "lucide-react";
 import type { Metadata } from "next";
 import ProductFilter from "../components/ProductFilter";
 import ProductGrid from "../components/ProductGrid";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
 import { Slidezy } from "@/components/Slider";
-import { Pagination, Product, PageProps } from "@/components/product/types";
+import { PageProps } from "@/components/product/types";
 import { fetchProducts } from "../_libs/fetchProductByCategory";
 import { slugToTitle } from "../components/SlugToTitle";
 import { BANNERS, BRANDS, SUB_CATEGORIES } from "../MockData";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import { fetchFilters } from "../_libs/fetchFilter";
+import ScrollToFilterButton from "../components/ScrollToFilterButton";
+import { buildCategoryMetadata } from "./buildMetaData";
 
 export async function generateMetadata({
    params,
@@ -19,37 +21,7 @@ export async function generateMetadata({
    const { slug } = await params;
    const { page: pageParam } = await searchParams;
    const page = Math.max(1, Number(pageParam ?? 1) || 1);
-
-   const categoryTitle = slugToTitle(slug);
-   const siteName = "Shop của bạn";
-   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://example.com";
-   const title =
-      page > 1
-         ? `${categoryTitle} - Trang ${page} | ${siteName}`
-         : `${categoryTitle} | ${siteName}`;
-   const description = `Khám phá bộ sưu tập ${categoryTitle} đa dạng, chính hãng, giá tốt tại ${siteName}. Giao hàng nhanh, bảo hành uy tín.`;
-   const canonicalUrl =
-      page > 1
-         ? `${baseUrl}/category/${slug}?page=${page}`
-         : `${baseUrl}/category/${slug}`;
-   return {
-      title,
-      description,
-      alternates: { canonical: canonicalUrl },
-      openGraph: {
-         title,
-         description,
-         url: canonicalUrl,
-         siteName,
-         locale: "vi_VN",
-         type: "website",
-      },
-      twitter: { card: "summary_large_image", title, description },
-      robots:
-         page > 1
-            ? { index: false, follow: true }
-            : { index: true, follow: true },
-   };
+   return buildCategoryMetadata(slug, page);
 }
 
 export default async function CategoryPage({
@@ -57,28 +29,39 @@ export default async function CategoryPage({
    searchParams,
 }: PageProps) {
    const { slug } = await params;
-   const { page: pageParam } = await searchParams;
-   const page = Math.max(1, Number(pageParam ?? 1) || 1);
+   const rawSearch = await searchParams;
+   const page = Math.max(1, Number(rawSearch.page ?? 1) || 1);
 
-   let products: Product[] = [];
-   let pagination: Pagination | undefined;
-   let fetchError: string | null = null;
-
-   try {
-      const result = await fetchProducts(slug, page);
-      products = result.products;
-      pagination = result.pagination;
-   } catch (err) {
-      console.error(`[CategoryPage] fetch failed for "${slug}":`, err);
-      fetchError = "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.";
+   const filterParams: Record<string, string | string[]> = {};
+   for (const [key, value] of Object.entries(rawSearch)) {
+      if (value !== undefined) filterParams[key] = value as string | string[];
    }
 
+   const [filtersResult, productsResult] = await Promise.allSettled([
+      fetchFilters(slug),
+      fetchProducts({ categorySlug: slug, page, searchParams: filterParams }),
+   ]);
+
+   const resolvedFilters =
+      filtersResult.status === "fulfilled" ? filtersResult.value : [];
+   const initialProducts =
+      productsResult.status === "fulfilled"
+         ? productsResult.value.products
+         : [];
+   const initialPagination =
+      productsResult.status === "fulfilled"
+         ? productsResult.value.pagination
+         : undefined;
+   const fetchError =
+      productsResult.status === "rejected"
+         ? "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau."
+         : null;
+
    const categoryTitle = slugToTitle(slug);
-   const isEmpty = !fetchError && products.length === 0;
 
    return (
       <div className="min-h-screen bg-neutral-light-active">
-         {/* Header bar */}
+         {/* Header */}
          <div className="bg-neutral-light border-b border-neutral">
             <div className="container py-4">
                <Breadcrumb
@@ -95,13 +78,9 @@ export default async function CategoryPage({
                   <span className="text-base text-primary">
                      Tìm sản phẩm theo nhu cầu
                   </span>
-                  <span className="text-sm text-primary font-medium flex items-center border border-neutral rounded-full py-1.5 px-3 cursor-pointer gap-2 hover:bg-neutral-light-active transition-colors">
-                     <ListFilter width={17} height={17} />
-                     Dùng bộ lọc ngay
-                  </span>
+                  <ScrollToFilterButton />
                </div>
 
-               {/* Sub-categories nav */}
                <div className="border-b border-neutral mb-4">
                   <nav className="flex items-center gap-6 overflow-x-auto py-3 text-sm font-medium">
                      {SUB_CATEGORIES.map(({ href, label }) => (
@@ -116,7 +95,6 @@ export default async function CategoryPage({
                   </nav>
                </div>
 
-               {/* Banner */}
                <Slidezy
                   items={1}
                   speed={500}
@@ -131,14 +109,13 @@ export default async function CategoryPage({
                      <div key={idx} className="h-35 sm:h-45 md:h-55">
                         <img
                            src={img}
-                           alt={`Banner ${categoryTitle} ${idx + 1}`}
+                           alt={`Banner ${idx + 1}`}
                            className="w-full h-full object-cover"
                         />
                      </div>
                   ))}
                </Slidezy>
 
-               {/* Brands */}
                <div className="mb-6 pb-6 border-b border-neutral">
                   <h2 className="text-sm font-semibold text-primary-light mb-4">
                      Thương hiệu ưa chuộng
@@ -166,12 +143,16 @@ export default async function CategoryPage({
          {/* Main content */}
          <div className="container py-6">
             <div className="flex gap-6 items-start">
-               <aside className="w-72 shrink-0 hidden lg:block sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin">
-                  <ProductFilter />
+               <aside
+                  id="product-filter"
+                  className="w-72 shrink-0 hidden lg:block sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin"
+               >
+                  <Suspense fallback={null}>
+                     <ProductFilter filters={resolvedFilters} />
+                  </Suspense>
                </aside>
 
                <main className="flex-1 min-w-0">
-                  {/* Error state */}
                   {fetchError && (
                      <div className="flex flex-col items-center justify-center py-20 bg-neutral-light rounded-2xl border border-neutral shadow-sm">
                         <span className="text-5xl mb-4">⚠️</span>
@@ -190,38 +171,12 @@ export default async function CategoryPage({
                      </div>
                   )}
 
-                  {/* Empty state */}
-                  {isEmpty && (
-                     <div className="flex flex-col items-center justify-center py-24 bg-neutral-light rounded-2xl border border-neutral shadow-sm">
-                        <div className="w-20 h-20 rounded-full bg-accent-light flex items-center justify-center mb-5">
-                           <PackageSearch className="w-10 h-10 text-accent" />
-                        </div>
-                        <h3 className="text-lg font-bold text-primary mb-2">
-                           Chưa có sản phẩm nào
-                        </h3>
-                        <p className="text-sm text-primary-light text-center max-w-xs mb-6">
-                           Danh mục{" "}
-                           <span className="font-semibold text-primary">
-                              {categoryTitle}
-                           </span>{" "}
-                           đang được cập nhật. Vui lòng quay lại sau!
-                        </p>
-                        <Link
-                           href="/"
-                           className="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-full text-sm font-semibold transition-colors"
-                        >
-                           Về trang chủ
-                        </Link>
-                     </div>
-                  )}
-
-                  {/* Product grid */}
-                  {!fetchError && !isEmpty && (
+                  {!fetchError && (
                      <Suspense fallback={<ProductGridSkeleton />}>
                         <ProductGrid
-                           products={products}
-                           pagination={pagination}
                            categorySlug={slug}
+                           initialProducts={initialProducts}
+                           initialPagination={initialPagination}
                         />
                      </Suspense>
                   )}
