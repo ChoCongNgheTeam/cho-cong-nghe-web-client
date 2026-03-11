@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import Sidebar from "../components/Sidebar";
 export default function ChinhSachTraGopPage() {
    const [fontSize, setFontSize] = useState<"small" | "large">("small");
    const contentStyle = { fontSize: fontSize === "small" ? "14px" : "16px" };
@@ -48,11 +47,7 @@ export default function ChinhSachTraGopPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar */}
-               <aside className="hidden md:block w-[260px] shrink-0">
-                  <SidebarMenu activeItem="Chính sách trả góp" />
-               </aside>
-
+              
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"

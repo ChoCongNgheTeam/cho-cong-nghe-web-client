@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useVariantSelector } from "@/hooks/useVariantSelector";
 import VariantDropdown from "./VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
@@ -10,7 +10,6 @@ interface CartVariantSelectorProps {
   productSlug: string;
   currentVariantId: string;
   currentVariantCode: string;
-  /** colorValue từ item — optional, hook tự resolve qua validate-item nếu thiếu */
   currentColorValue?: string;
   currentQuantity: number;
   onSuccess?: () => void;
@@ -49,6 +48,7 @@ export default function CartVariantSelector({
     onUpdateItem,
   });
 
+  // ── Plain text khi đã fetch xong mà chỉ có ≤1 option ──
   if (hasFetched && options.length <= 1) {
     return (
       <div className="text-xs text-neutral-darker mb-2">

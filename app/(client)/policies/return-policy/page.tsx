@@ -49,11 +49,7 @@ export default function ChinhSachDoiTraPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar */}
-               <aside className="hidden md:block w-[260px] shrink-0">
-                  <SidebarMenu activeItem="Chính sách đổi trả" />
-               </aside>
-
+              
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"
