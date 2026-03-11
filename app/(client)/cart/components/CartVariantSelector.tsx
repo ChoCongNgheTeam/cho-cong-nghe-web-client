@@ -6,66 +6,71 @@ import VariantDropdown from "./VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
 
 interface CartVariantSelectorProps {
-  cartItemId: string;
-  productSlug: string;
-  currentVariantId: string;
-  currentVariantCode: string;
-  currentQuantity: number;
-  onSuccess?: () => void;
-  onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
+   cartItemId: string;
+   productSlug: string;
+   currentVariantId: string;
+   colorLabel: string;
+   storageLabel: string;
+   colorValue?: string;
+   currentQuantity: number;
+   onSuccess?: () => void;
+   onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
 }
 
 export default function CartVariantSelector({
-  cartItemId,
-  productSlug,
-  currentVariantId,
-  currentVariantCode,
-  currentQuantity,
-  onSuccess,
-  onUpdateItem,
+   cartItemId,
+   productSlug,
+   currentVariantId,
+   colorLabel,
+   storageLabel,
+   colorValue,
+   currentQuantity,
+   onSuccess,
+   onUpdateItem,
 }: CartVariantSelectorProps) {
-  const {
-    isOpen,
-    options,
-    isFetching,
-    isChanging,
-    errorMessage,
-    hasFetched,
-    handleToggle,
-    handleClose,
-    handleRetry,
-    handleSelect,
-  } = useVariantSelector({
-    cartItemId,
-    productSlug,
-    currentVariantId,
-    currentVariantCode,
-    currentQuantity,
-    onSuccess,
-    onUpdateItem,
-  });
+   const {
+      isOpen,
+      options,
+      isFetching,
+      isChanging,
+      errorMessage,
+      hasFetched,
+      handleToggle,
+      handleRetry,
+      handleSelect,
+   } = useVariantSelector({
+      cartItemId,
+      productSlug,
+      currentVariantId,
+      colorLabel,
+      storageLabel,
+      colorValue,
+      currentQuantity,
+      onSuccess,
+      onUpdateItem,
+   });
 
-  if (hasFetched && options.length <= 1) {
-    return (
-      <div className="text-xs text-neutral-darker mb-2">
-        {currentVariantCode}
-      </div>
-    );
-  }
+   const displayLabel =
+      [storageLabel, colorLabel].filter(Boolean).join(" / ") || "Mặc định";
 
-  return (
-    <VariantDropdown
-      triggerLabel={currentVariantCode}
-      options={options}
-      selectedId={currentVariantId}
-      isOpen={isOpen}
-      isFetching={isFetching}
-      isChanging={isChanging}
-      errorMessage={errorMessage}
-      onToggle={handleToggle}
-      onSelect={handleSelect}
-      onRetry={handleRetry}
-      onClose={handleClose}
-    />
-  );
+   if (hasFetched && !isFetching && options.length <= 1) {
+      return (
+         <div className="text-xs text-neutral-darker mb-2">{displayLabel}</div>
+      );
+   }
+
+   return (
+      <VariantDropdown
+         triggerLabel={displayLabel}
+         options={options}
+         selectedId={currentVariantId}
+         isOpen={isOpen}
+         isFetching={isFetching}
+         isChanging={isChanging}
+         errorMessage={errorMessage}
+         onToggle={handleToggle}
+         onSelect={handleSelect}
+         onRetry={handleRetry}
+      />
+   );
 }

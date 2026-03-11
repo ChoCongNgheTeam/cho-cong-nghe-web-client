@@ -16,6 +16,7 @@ import CartSidebar from "./components/cartSidebar";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
+import CartVariantSelector from "./components/CartVariantSelector";
 
 export default function CartPage() {
   const router = useRouter();
@@ -45,12 +46,16 @@ export default function CartPage() {
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
   const [promotionValue, setPromotionValue] = useState(0);
 
-  // ── Delete confirm sidebar state ──────────────────────────────────────────
+  // ── Delete single item confirm sidebar ────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // ── Delete ALL selected items confirm sidebar ─────────────────────────────
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // ── Voucher state ─────────────────────────────────────────────────────────
   const { applied: appliedVoucher, applyByInput: _applyByInput, applyFromList: _applyFromList, clearVoucher: _clearVoucher } = useVoucher({ cartTotal: subtotal });
@@ -65,12 +70,9 @@ export default function CartPage() {
     setVoucherId(id);
   }, []);
 
-  // ── Mở sidebar xác nhận xoá thay vì xoá trực tiếp ───────────────────────
+  // ── Single item delete ────────────────────────────────────────────────────
   const handleRemoveClick = useCallback((item: CartItemWithDetails) => {
-    setDeleteTarget({
-      id: item.id,
-      name: item.productName,
-    });
+    setDeleteTarget({ id: item.id, name: item.productName });
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -85,6 +87,24 @@ export default function CartPage() {
     if (!isDeleting) setDeleteTarget(null);
   }, [isDeleting]);
 
+  // ── Delete ALL selected ───────────────────────────────────────────────────
+  const handleRemoveAllClick = useCallback(() => {
+    if (selectedItems.length === 0) return;
+    setShowDeleteAllConfirm(true);
+  }, [selectedItems.length]);
+
+  const handleConfirmDeleteAll = useCallback(async () => {
+    setIsDeletingAll(true);
+    await removeSelectedItems();
+    setIsDeletingAll(false);
+    setShowDeleteAllConfirm(false);
+  }, [removeSelectedItems]);
+
+  const handleCloseDeleteAllSidebar = useCallback(() => {
+    if (!isDeletingAll) setShowDeleteAllConfirm(false);
+  }, [isDeletingAll]);
+
+  // ── Checkout ──────────────────────────────────────────────────────────────
   const handleCheckout = useCallback(() => {
     if (selectedItems.length === 0) {
       toast.error("Vui lòng chọn ít nhất một sản phẩm");
@@ -136,26 +156,18 @@ export default function CartPage() {
             {/* Animated Cart Illustration */}
             <div className="flex justify-center mb-6">
               <div className="relative">
-                {/* Outer glow ring */}
                 <div className="absolute inset-0 rounded-full bg-accent opacity-10 animate-ping" style={{ animationDuration: "2.5s" }} />
-                {/* Circle background */}
                 <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-accent flex items-center justify-center shadow-lg">
                   <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24 sm:w-32 sm:h-32">
-                    {/* Cart handle */}
                     <path d="M10 12h4l2 8" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-darker" />
-                    {/* Cart body */}
                     <path d="M14 18h6l6 24h26l4-16H24" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-darker" />
-                    {/* Wheels */}
                     <circle cx="30" cy="49" r="3.5" fill="currentColor" className="text-primary-darker" />
                     <circle cx="46" cy="49" r="3.5" fill="currentColor" className="text-primary-darker" />
-                    {/* Sad face eyes */}
                     <circle cx="35" cy="31" r="1.5" fill="currentColor" className="text-primary-darker" />
                     <circle cx="45" cy="31" r="1.5" fill="currentColor" className="text-primary-darker" />
-                    {/* Sad mouth */}
                     <path d="M33 37.5 Q40 34 47 37.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-primary-darker" />
                   </svg>
                 </div>
-                {/* Floating dots decoration */}
                 <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary-dark opacity-60" />
                 <span className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full bg-accent-dark opacity-40" />
               </div>
@@ -180,8 +192,9 @@ export default function CartPage() {
                   <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} className="h-5 w-5 cursor-pointer rounded border-neutral-dark text-accent focus:ring-2 focus:ring-accent" />
                   <span className="text-sm font-medium text-primary">Chọn tất cả ({items.length})</span>
                 </label>
+                {/* ── Nút xoá đã chọn → mở confirm sidebar ── */}
                 <button
-                  onClick={removeSelectedItems}
+                  onClick={handleRemoveAllClick}
                   className="text-neutral-darker transition hover:text-primary disabled:cursor-not-allowed disabled:text-neutral-dark cursor-pointer"
                   disabled={selectedItems.length === 0}
                   aria-label="Xóa các sản phẩm đã chọn"
@@ -220,7 +233,7 @@ export default function CartPage() {
                               <h3 className="text-sm font-medium text-primary line-clamp-2">{item.productName}</h3>
                               <span className="text-xs font-medium text-neutral-dark uppercase tracking-wide">{item.brandName}</span>
                             </div>
-                            {/* Mobile: nút xoá → mở confirm sidebar */}
+                            {/* Mobile: nút xoá đơn lẻ */}
                             <button onClick={() => handleRemoveClick(item)} className="sm:hidden text-neutral-dark transition hover:text-primary shrink-0 cursor-pointer" aria-label="Xóa sản phẩm">
                               <Trash2 className="h-5 w-5" />
                             </button>
@@ -228,21 +241,24 @@ export default function CartPage() {
 
                           {item.color && (
                             <div className="flex items-center gap-1.5 mb-1">
-                              <span className="h-3.5 w-3.5 rounded-full border border-neutral shrink-0" style={{ backgroundColor: item.colorValue }} />
+                              <span
+                                className="h-3.5 w-3.5 rounded-full border border-neutral shrink-0"
+                                style={{
+                                  backgroundColor: item.colorValue,
+                                }}
+                              />
                               <span className="text-xs text-neutral-dark">Màu: {item.color}</span>
                             </div>
                           )}
 
-                          {/* CartVariantSelector */}
                           <CartVariantSelector
                             cartItemId={item.id}
                             productSlug={item.productSlug}
                             currentVariantId={item.productVariantId}
-                            currentVariantCode={item.variantCode}
+                            colorLabel={item.colorLabel}
+                            storageLabel={item.storageLabel}
                             currentQuantity={item.quantity}
-                            // silent=true: sync server ngầm, không setIsLoading → không flash
                             onSuccess={() => refetchCart(true)}
-                            // optimistic: cập nhật state local ngay, không chờ refetch
                             onUpdateItem={(patch) => updateItem(item.id, patch)}
                           />
 
@@ -301,7 +317,7 @@ export default function CartPage() {
                           <div className="min-w-25 text-right">
                             <span className="text-sm lg:text-base font-semibold text-promotion">{formatVND(item.unitPrice * item.quantity)}</span>
                           </div>
-                          {/* Desktop: nút xoá → mở confirm sidebar */}
+                          {/* Desktop: nút xoá đơn lẻ */}
                           <button onClick={() => handleRemoveClick(item)} className="text-neutral-dark transition hover:text-primary cursor-pointer" aria-label="Xóa sản phẩm">
                             <Trash2 className="h-5 w-5" />
                           </button>
@@ -376,8 +392,17 @@ export default function CartPage() {
         cartTotal={subtotal}
       />
 
-      {/* Delete confirm sidebar */}
+      {/* Delete single item confirm sidebar */}
       <DeleteConfirmSidebar isOpen={!!deleteTarget} onClose={handleCloseDeleteSidebar} onConfirm={handleConfirmDelete} productName={deleteTarget?.name ?? ""} isLoading={isDeleting} />
+
+      {/* Delete ALL selected items confirm sidebar */}
+      <DeleteConfirmSidebar
+        isOpen={showDeleteAllConfirm}
+        onClose={handleCloseDeleteAllSidebar}
+        onConfirm={handleConfirmDeleteAll}
+        productName={`${selectedItems.length} sản phẩm đã chọn`}
+        isLoading={isDeletingAll}
+      />
     </div>
   );
 }

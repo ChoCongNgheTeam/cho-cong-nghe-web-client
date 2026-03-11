@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import Sidebar from "../components/Sidebar";
 
 export default function ChinhSachBaoHanhPage() {
    const [fontSize, setFontSize] = useState<"small" | "large">("small");
@@ -49,10 +48,7 @@ export default function ChinhSachBaoHanhPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
-               {/* Sidebar */}
-               <aside className="hidden md:block w-[260px] shrink-0">
-                  <SidebarMenu activeItem="Chính sách bảo hành" />
-               </aside>
+              
 
                {/* Article */}
                <main
@@ -169,7 +165,10 @@ export default function ChinhSachBaoHanhPage() {
                         <li
                            key={i}
                            className="flex gap-2 leading-relaxed"
-                           style={{ color: "rgb(var(--primary))", ...contentStyle }}
+                           style={{
+                              color: "rgb(var(--primary))",
+                              ...contentStyle,
+                           }}
                         >
                            <span className="mt-1 shrink-0">•</span>
                            <span>{item}</span>
@@ -215,7 +214,10 @@ export default function ChinhSachBaoHanhPage() {
                         <li
                            key={i}
                            className="flex gap-2 leading-relaxed"
-                           style={{ color: "rgb(var(--primary))", ...contentStyle }}
+                           style={{
+                              color: "rgb(var(--primary))",
+                              ...contentStyle,
+                           }}
                         >
                            <span className="mt-1 shrink-0">•</span>
                            <span>{item}</span>
@@ -257,7 +259,10 @@ export default function ChinhSachBaoHanhPage() {
                         <li
                            key={i}
                            className="flex gap-2 leading-relaxed"
-                           style={{ color: "rgb(var(--primary))", ...contentStyle }}
+                           style={{
+                              color: "rgb(var(--primary))",
+                              ...contentStyle,
+                           }}
                         >
                            <span className="mt-1 shrink-0">•</span>
                            <span>{item}</span>

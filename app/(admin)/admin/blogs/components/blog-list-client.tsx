@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeOff, Pencil, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -9,7 +9,7 @@ import AdminPagination from "@/components/admin/PaginationAdmin";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
 import { resolveAdminBlogCategory } from "../_lib/blog-category";
-import { AdminBlog, BlogPagination } from "../_lib/blog.api";
+import { AdminBlog, BlogPagination, toggleBlogStatus } from "../_lib/blog.api";
 
 type BlogListClientProps = {
   blogs: AdminBlog[];
@@ -48,6 +48,7 @@ export default function BlogListClient({
   const router = useRouter();
   const toast = useToasty();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleDeleteBlog = async (blogId: string) => {
@@ -68,6 +69,32 @@ export default function BlogListClient({
       toast.error(message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleToggleBlogStatus = async (blog: AdminBlog) => {
+    const currentStatus = blog.status;
+    const isCurrentlyHidden = currentStatus === "ARCHIVED";
+    
+    const confirmMessage = isCurrentlyHidden
+      ? "Bạn có muốn hiển thị bài viết này?"
+      : "Bạn có muốn ẩn bài viết này?";
+    
+    const ok = window.confirm(confirmMessage);
+    if (!ok) return;
+
+    setTogglingId(blog.id);
+    try {
+      await toggleBlogStatus(blog.id, currentStatus);
+      toast.success(isCurrentlyHidden ? "Đã hiển thị bài viết" : "Đã ẩn bài viết");
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể thay đổi trạng thái bài viết";
+      toast.error(message);
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -112,35 +139,46 @@ export default function BlogListClient({
       key: "_actions",
       label: "Hành động",
       align: "right",
-      render: (blog) => (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            className="rounded-md p-2 text-primary-light hover:bg-neutral-light-active hover:text-primary"
-            aria-label="Ẩn bài viết"
-            type="button"
-          >
-            <EyeOff size={16} />
-          </button>
-          <Link
-            href={`/admin/blogs/${blog.id}`}
-            className="rounded-md p-2 text-primary-light hover:bg-neutral-light-active hover:text-primary"
-            aria-label="Sửa bài viết"
-          >
-            <Pencil size={16} />
-          </Link>
-          <button
-            className="rounded-md p-2 text-promotion hover:bg-promotion-light"
-            aria-label="Xóa bài viết"
-            type="button"
-            onClick={() => {
-              void handleDeleteBlog(blog.id);
-            }}
-            disabled={deletingId === blog.id || isPending}
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
+      render: (blog) => {
+        const isArchived = blog.status === "ARCHIVED";
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              className={`rounded-md p-2 hover:bg-neutral-light-active ${
+                isArchived
+                  ? "text-green-600 hover:text-green-700"
+                  : "text-primary-light hover:text-primary"
+              }`}
+              aria-label={isArchived ? "Hiển thị bài viết" : "Ẩn bài viết"}
+              type="button"
+              onClick={() => {
+                void handleToggleBlogStatus(blog);
+              }}
+              disabled={togglingId === blog.id || isPending}
+            >
+              {isArchived ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+            <Link
+              href={`/admin/blogs/${blog.id}`}
+              className="rounded-md p-2 text-primary-light hover:bg-neutral-light-active hover:text-primary"
+              aria-label="Sửa bài viết"
+            >
+              <Pencil size={16} />
+            </Link>
+            <button
+              className="rounded-md p-2 text-promotion hover:bg-promotion-light"
+              aria-label="Xóa bài viết"
+              type="button"
+              onClick={() => {
+                void handleDeleteBlog(blog.id);
+              }}
+              disabled={deletingId === blog.id || isPending}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
