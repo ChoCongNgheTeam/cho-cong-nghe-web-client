@@ -40,7 +40,7 @@ export async function updateCartItemQuantity(
    quantity: number,
 ): Promise<ApiResult> {
    try {
-      await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}`, {
+      await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}/change-quantity`, {
          quantity,
       });
       return { success: true };
@@ -108,7 +108,7 @@ export async function validateCartItem(
    quantity: number,
 ): Promise<ApiResult> {
    try {
-      await apiRequest.post<ApiResponse<unknown>>("/cart/validate-item", {
+      await apiRequest.post<ApiResponse<unknown>>("/cart/${cartItemId}/change-variant", {
          productVariantId,
          quantity,
       });

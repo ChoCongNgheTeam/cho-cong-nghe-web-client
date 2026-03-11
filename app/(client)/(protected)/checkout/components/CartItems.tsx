@@ -1,3 +1,4 @@
+import { formatVND } from "@/helpers";
 import React from "react";
 
 interface CartItem {
@@ -17,9 +18,6 @@ interface CartItemsProps {
 }
 
 export default function CartItems({ items }: CartItemsProps) {
-   const formatPrice = (price: number) =>
-      new Intl.NumberFormat("vi-VN").format(price) + "đ";
-
    return (
       <div className="bg-neutral-light rounded-lg">
          {/* Header */}
@@ -77,11 +75,11 @@ export default function CartItems({ items }: CartItemsProps) {
                            {/* Price */}
                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-sm text-promotion">
-                                 {formatPrice(finalPrice)}
+                                 {formatVND(finalPrice)}
                               </span>
                               {item.discount_value > 0 && (
                                  <span className="text-xs line-through text-neutral-darker">
-                                    {formatPrice(item.unit_price)}
+                                    {formatVND(item.unit_price)}
                                  </span>
                               )}
                               <span className="ml-auto text-sm font-medium text-neutral-darker">

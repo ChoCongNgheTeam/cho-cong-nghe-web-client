@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { SearchProduct } from "@/hooks/useProductSearch";
+import { formatVND } from "@/helpers";
 
 interface SearchDropdownProps {
    results: SearchProduct[];
@@ -9,8 +10,6 @@ interface SearchDropdownProps {
    query: string;
    onClose: () => void;
 }
-
-const formatPrice = (price: number) => price.toLocaleString("vi-VN") + "đ";
 
 export default function SearchDropdown({
    results,
@@ -59,7 +58,7 @@ export default function SearchDropdown({
                            </p>
                            <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-sm font-semibold text-primary">
-                                 {formatPrice(product.price)}
+                                 {formatVND(product.price)}
                               </span>
                               {product.discountPercent &&
                                  product.discountPercent > 0 && (
@@ -69,9 +68,7 @@ export default function SearchDropdown({
                                        </span>
                                        {product.originalPrice && (
                                           <span className="text-xs text-neutral-darker line-through">
-                                             {formatPrice(
-                                                product.originalPrice,
-                                             )}
+                                             {formatVND(product.originalPrice)}
                                           </span>
                                        )}
                                     </>

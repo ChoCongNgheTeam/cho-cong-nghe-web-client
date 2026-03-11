@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Popzy } from "@/components/Modal";
 import { MapPin, Home, Building2, Plus, Star } from "lucide-react";
 import apiRequest from "@/lib/api";
@@ -71,6 +72,11 @@ export default function AddressPage() {
   const [errors, setErrors] = useState<Partial<AddressForm>>({});
   const [form, setForm] = useState<AddressForm>(defaultForm);
 
+
+  const router = useRouter();
+const searchParams = useSearchParams();
+const redirectTo = searchParams.get("redirect");
+
    useEffect(() => {
       const fetchAddresses = async () => {
          try {
@@ -86,6 +92,13 @@ export default function AddressPage() {
       };
       fetchAddresses();
    }, []);
+
+   // Tự động mở modal nếu đến từ checkout và chưa có địa chỉ
+   useEffect(() => {
+      if (!loading && redirectTo === "checkout" && addresses.length === 0) {
+         setIsOpen(true);
+      }
+   }, [loading, redirectTo, addresses.length]);
 
    useEffect(() => {
       if (!form.provinceId) return;
@@ -187,10 +200,10 @@ export default function AddressPage() {
       if (!validate() || !editingId) return;
       setSubmitting(true);
       try {
-         const res = await apiRequest.patch<{
-            success: boolean;
-            data: Address;
-         }>(`/addresses/${editingId}`, form);
+         const res = await apiRequest.patch<{ success: boolean; data: Address }>(
+            `/addresses/${editingId}`,
+            form,
+         );
          if (res?.success) {
             setAddresses((prev) =>
                prev.map((a) => {
@@ -245,9 +258,17 @@ export default function AddressPage() {
       <>
          <div>
             <div className="flex items-center justify-between mt-2 mb-4">
-               <h1 className="text-2xl font-semibold text-primary">
-                  Sổ địa chỉ nhận hàng
-               </h1>
+               <div className="flex items-center gap-3">
+                  {redirectTo === "checkout" && (
+                     <button
+                        onClick={() => router.push("/checkout")}
+                        className="flex items-center gap-1 text-sm text-primary-dark hover:text-primary transition-colors cursor-pointer"
+                     >
+                        ← Quay lại thanh toán
+                     </button>
+                  )}
+                  <h1 className="text-2xl font-semibold text-primary">Sổ địa chỉ nhận hàng</h1>
+               </div>
                {addresses.length > 0 && (
                   <button
                      onClick={() => setIsOpen(true)}

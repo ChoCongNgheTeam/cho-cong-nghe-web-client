@@ -124,7 +124,7 @@ const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProp
             </div>
 
             {/* Content */}
-            <div className="md:col-span-3 p-6 overflow-y-auto max-h-[70vh] bg-neutral-light">
+            <div className="md:col-span-3 p-6 overflow-y-auto max-h-[70vh] bg-neutral-light scrollbar-thin">
               {tabs.length === 0 ? (
                 <EmptyState />
               ) : (

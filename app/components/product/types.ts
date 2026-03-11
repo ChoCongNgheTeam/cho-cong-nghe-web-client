@@ -25,11 +25,12 @@ export interface Product {
    slug: string;
    thumbnail: string;
    rating: ProductRating;
-   isNew: boolean;
-   highlights: ProductHighlight[];
+   isNew?: boolean;
+   highlights?: ProductHighlight[]; // optional — wishlist không trả về
    inStock: boolean;
    price: ProductPrice;
    isWishlist?: boolean;
+   isFeatured?: boolean;
 }
 
 export interface Pagination {
