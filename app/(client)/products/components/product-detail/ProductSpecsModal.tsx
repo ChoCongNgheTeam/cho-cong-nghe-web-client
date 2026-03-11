@@ -11,10 +11,11 @@ export interface ProductSpecsModalRef {
 
 interface ProductSpecsModalProps {
   specifications?: SpecificationGroup[];
+  isLoading?: boolean; // ✅ thêm prop
 }
 
 const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProps>(
-  function ProductSpecsModal({ specifications }, ref) {
+  function ProductSpecsModal({ specifications, isLoading = false }, ref) {
     const [open, setOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<number | null>(0);
 
@@ -69,92 +70,112 @@ const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProp
             </button>
           </div>
 
-          {/* ===== MOBILE: ACCORDION ===== */}
-          <div className="block md:hidden max-h-[70vh] overflow-y-auto">
-            {tabs.length === 0 ? (
-              <EmptyState />
-            ) : (
-              tabs.map((tab, index) => {
-                const isOpen = activeTab === index;
-                return (
-                  <div key={tab.id} className="border-b border-neutral">
-                    <button
-                      onClick={() => setActiveTab(isOpen ? null : index)}
-                      className="w-full cursor-pointer flex items-center justify-between px-4 py-4 font-semibold text-accent hover:bg-neutral/40 transition-colors"
-                    >
-                      {tab.label}
-                      <ChevronDown
-                        className={`w-5 h-5 text-neutral-darker transition-transform ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
+          {/*Loading state */}
+          {isLoading ? (
+            <div className="h-[70vh] flex flex-col gap-4 p-6">
+              {/* Skeleton mobile */}
+              <div className="block md:hidden space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-neutral rounded-xl animate-pulse" />
+                ))}
+              </div>
 
-                    {isOpen && (
-                      <div className="px-4 pb-4 space-y-3">
-                        {tab.data.map((row, idx) => (
-                          <SpecRow key={idx} {...row} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* ===== DESKTOP: SIDEBAR TABS ===== */}
-          <div className="hidden md:grid md:grid-cols-4 h-[70vh]">
-            {/* Sidebar Tabs */}
-            <div className="bg-neutral-light-active border-r border-neutral overflow-y-auto scrollbar-thin">
-              {tabs.map((tab, index) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(index)}
-                  className={`w-full text-left px-4 py-3 cursor-pointer text-sm font-medium border-b border-neutral transition-colors
-                    ${
-                      activeTab === index
-                        ? "bg-neutral-light text-promotion border-l-2 border-l-promotion"
-                        : "text-primary hover:bg-neutral"
-                    }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Content */}
-            <div className="md:col-span-3 p-6 overflow-y-auto max-h-[70vh] bg-neutral-light scrollbar-thin">
-              {tabs.length === 0 ? (
-                <EmptyState />
-              ) : (
-                <div className="space-y-3">
-                  {tabs[activeTab ?? 0]?.data.map((row, idx) => (
-                    <SpecRow key={idx} {...row} />
+              {/* Skeleton desktop */}
+              <div className="hidden md:grid md:grid-cols-4 gap-4 h-full">
+                {/* Sidebar skeleton */}
+                <div className="space-y-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-10 bg-neutral rounded-lg animate-pulse" />
                   ))}
                 </div>
-              )}
+                {/* Content skeleton */}
+                <div className="md:col-span-3 space-y-3">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="h-14 bg-neutral rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* ===== MOBILE: ACCORDION ===== */}
+              <div className="block md:hidden max-h-[70vh] overflow-y-auto">
+                {tabs.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  tabs.map((tab, index) => {
+                    const isOpen = activeTab === index;
+                    return (
+                      <div key={tab.id} className="border-b border-neutral">
+                        <button
+                          onClick={() => setActiveTab(isOpen ? null : index)}
+                          className="w-full cursor-pointer flex items-center justify-between px-4 py-4 font-semibold text-accent hover:bg-neutral/40 transition-colors"
+                        >
+                          {tab.label}
+                          <ChevronDown
+                            className={`w-5 h-5 text-neutral-darker transition-transform ${
+                              isOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        {isOpen && (
+                          <div className="px-4 pb-4 space-y-3">
+                            {tab.data.map((row, idx) => (
+                              <SpecRow key={idx} {...row} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* ===== DESKTOP: SIDEBAR TABS ===== */}
+              <div className="hidden md:grid md:grid-cols-4 h-[70vh]">
+                <div className="bg-neutral-light-active border-r border-neutral overflow-y-auto scrollbar-thin">
+                  {tabs.map((tab, index) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(index)}
+                      className={`w-full text-left px-4 py-3 cursor-pointer text-sm font-medium border-b border-neutral transition-colors
+                        ${
+                          activeTab === index
+                            ? "bg-neutral-light text-promotion border-l-2 border-l-promotion"
+                            : "text-primary hover:bg-neutral"
+                        }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="md:col-span-3 p-6 overflow-y-auto max-h-[70vh] bg-neutral-light scrollbar-thin">
+                  {tabs.length === 0 ? (
+                    <EmptyState />
+                  ) : (
+                    <div className="space-y-3">
+                      {tabs[activeTab ?? 0]?.data.map((row, idx) => (
+                        <SpecRow key={idx} {...row} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
   }
 );
 
-/* ===== COMPONENT CON ===== */
-
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="group relative bg-neutral/30 hover:bg-neutral/60 rounded-xl p-4 transition-all duration-200 hover:shadow-sm border border-neutral">
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-accent to-promotion rounded-l-xl opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="flex justify-between gap-4">
-        <span className="text-sm text-neutral-darker font-medium w-2/5">
-          {label}
-        </span>
-        <span className="text-sm text-primary font-semibold text-right flex-1">
-          {value}
-        </span>
+        <span className="text-sm text-neutral-darker font-medium w-2/5">{label}</span>
+        <span className="text-sm text-primary font-semibold text-right flex-1">{value}</span>
       </div>
     </div>
   );

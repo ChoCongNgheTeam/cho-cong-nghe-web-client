@@ -1,15 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react"; // ✅ thêm Fragment
 import Image from "next/image";
-import {
-  FaStar,
-  FaGift,
-  FaCog,
-  FaTruck,
-  FaPlus,
-  FaMinus,
-} from "react-icons/fa";
+import { FaStar, FaGift, FaCog, FaTruck, FaPlus, FaMinus } from "react-icons/fa";
 import { Gift } from "lucide-react";
 import { ProductDetail } from "@/lib/types/product";
 import Link from "next/link";
@@ -18,18 +11,12 @@ import { useToasty } from "@/components/Toast";
 import { useCart } from "@/hooks/useCart";
 import { useRouter } from "next/navigation";
 
-interface ProductDetailRightProps {
-  product?: ProductDetail;
-  selectedColor?: string;
-  selectedStorage?: string;
-  onColorChange?: (color: string) => void;
-  onStorageChange?: (storage: string) => void;
-  onReviewClick?: () => void;
-  onSpecificationClick?: () => void;
-  selectedVariant?: ProductVariant;
-  selectedPrice?: Price;
-  availableOptions?: any[];
-}
+const TYPE_LABELS: Record<string, string> = {
+  color: "Màu sắc",
+  storage: "Dung lượng",
+  bundle: "Phiên bản",
+  ram: "RAM",
+};
 
 interface ProductVariant {
   id: string;
@@ -54,107 +41,48 @@ type Price = {
   hasPromotion: boolean;
 };
 
-type ColorOption = {
-  value: string;
-  image?: string;
-  label?: string;
-  enabled?: boolean;
-};
-
-type StorageOption = {
-  value: string;
-  label?: string;
-  type?: string;
-};
+interface ProductDetailRightProps {
+  product?: ProductDetail;
+  selectedOptions?: Record<string, string>;
+  onOptionChange?: (type: string, value: string) => void;
+  onReviewClick?: () => void;
+  onSpecificationClick?: () => void;
+  selectedVariant?: ProductVariant;
+  selectedPrice?: Price;
+  availableOptions?: any[];
+}
 
 export default function ProductDetailRight({
   product,
-  selectedColor: propSelectedColor,
+  selectedOptions = {},
+  onOptionChange,
   selectedVariant,
   selectedPrice,
-  selectedStorage: propSelectedStorage,
-  onColorChange,
-  onStorageChange,
   onReviewClick,
   onSpecificationClick,
-  availableOptions,
+  availableOptions = [],
 }: ProductDetailRightProps = {}) {
-  /* ============================================================================
-   * GUARD
-   * ========================================================================== */
-  if (!product) {
-    return <div className="text-primary">Loading...</div>;
-  }
+  if (!product) return <div className="text-primary">Loading...</div>;
 
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
 
-  /* ============================================================================
-   * PRODUCT DATA
-   * ========================================================================== */
   const price = selectedPrice || product.price;
   const displayPrice = price?.hasPromotion ? price?.final : price?.base;
 
-  const storages: StorageOption[] = (() => {
-    const storageOption = availableOptions?.find(
-      (opt) => opt.type === "storage",
-    );
-    return (
-      storageOption?.values
-        ?.filter((val: any) => val.enabled)
-        ?.map((val: any) => ({
-          label: val.label,
-          value: val.value,
-          enabled: val.enabled,
-        })) || []
-    );
-  })();
-
-  const colors: ColorOption[] = (() => {
-    const colorOption = availableOptions?.find((opt) => opt.type === "color");
-    if (!colorOption?.values) return [];
-
-    return colorOption.values.map((val: any) => ({
-      value: val.value,
-      label: val.label,
-      enabled: val.enabled,
-      image: val.image?.imageUrl,
-    }));
-  })();
-
-  /* ============================================================================
-   * STATE
-   * ========================================================================== */
-  const selectedColor = propSelectedColor || colors[0]?.value || "";
-  const selectedStorage = propSelectedStorage || storages[0]?.value || "";
+  const maxStock = selectedVariant?.quantity ?? 0;
+  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isInStock = !isOutOfStock && maxStock > 0;
 
   const [quantity, setQuantity] = useState(1);
 
-  /* ============================================================================
-   * STOCK & AVAILABILITY
-   * ========================================================================== */
-  const maxStock = selectedVariant?.quantity ?? 0;
+  useEffect(() => {
+    setQuantity(1);
+  }, [selectedVariant?.id]);
 
-  const isOutOfStock =
-    selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
-
-  const isInStock = !isOutOfStock && maxStock > 0;
-
-  /* ============================================================================
-   * HANDLERS
-   * ========================================================================== */
   const handleQuantityChange = (newQuantity: number) => {
-    const validQuantity = Math.min(Math.max(1, newQuantity), maxStock);
-    setQuantity(validQuantity);
-  };
-
-  const handleIncrement = () => {
-    if (quantity < maxStock) setQuantity(quantity + 1);
-  };
-
-  const handleDecrement = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
+    setQuantity(Math.min(Math.max(1, newQuantity), maxStock));
   };
 
   const handleBuyNow = async () => {
@@ -170,12 +98,9 @@ export default function ProductDetailRight({
         brandName: product.brand.name,
         variantName: selectedVariant.sku ?? "",
         price: selectedVariant.price ?? 0,
-        originalPrice:
-          selectedVariant.originalPrice ?? selectedVariant.price ?? 0,
-        imageUrl:
-          selectedVariant.image ?? selectedVariant.images?.[0]?.imageUrl ?? "",
-        availableQuantity:
-          selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
+        originalPrice: selectedVariant.originalPrice ?? selectedVariant.price ?? 0,
+        imageUrl: selectedVariant.image ?? selectedVariant.images?.[0]?.imageUrl ?? "",
+        availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
       });
@@ -190,16 +115,8 @@ export default function ProductDetailRight({
       toasty.warning("Vui lòng chọn phiên bản sản phẩm");
       return;
     }
-    // TODO: navigate to installment checkout
     toasty.info("Đang chuyển đến trang đăng ký trả góp...");
   };
-
-  /* ============================================================================
-   * EFFECTS
-   * ========================================================================== */
-  useEffect(() => {
-    setQuantity(1);
-  }, [selectedVariant?.id]);
 
   return (
     <div className="w-full">
@@ -207,132 +124,91 @@ export default function ProductDetailRight({
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full">
         <span className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
           <FaTruck className="mr-2 text-white text-sm sm:text-base" />
-          <p className="text-xs sm:text-sm font-semibold text-white">
-            Free ship toàn quốc
-          </p>
+          <p className="text-xs sm:text-sm font-semibold text-white">Free ship toàn quốc</p>
         </span>
         <span className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 shadow-md flex items-center justify-center sm:justify-start">
           <FaStar className="mr-2 text-yellow-300 text-sm sm:text-base" />
-          <p className="text-xs sm:text-sm font-semibold text-white">
-            Độc quyền tại ChoCongNghe
-          </p>
+          <p className="text-xs sm:text-sm font-semibold text-white">Độc quyền tại ChoCongNghe</p>
         </span>
       </div>
 
       {/* Product Title */}
-      <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary transition-colors duration-300">
+      <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary">
         {selectedVariant?.name || product.name}
       </h2>
 
       {/* Rating & Links */}
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-        <span className="transition-colors duration-300">
-          {product.currentVariant?.code}
-        </span>
+        <span>{product.currentVariant?.code}</span>
         <div className="flex items-center gap-1">
           <FaStar className="text-accent text-xs sm:text-sm" />
-          <span className="text-primary">
-            {product.rating.average.toFixed(1)}
-          </span>
+          <span className="text-primary">{product.rating.average.toFixed(1)}</span>
         </div>
-        <button
-          onClick={onReviewClick}
-          className="text-accent hover:underline hover:text-accent-hover transition-colors cursor-pointer"
-        >
+        <button onClick={onReviewClick} className="text-accent hover:underline cursor-pointer">
           {product.rating.total} đánh giá
         </button>
         <span>|</span>
-        <button
-          type="button"
-          onClick={onSpecificationClick}
-          className="text-accent hover:underline hover:text-accent-hover transition-colors cursor-pointer"
-        >
+        <button onClick={onSpecificationClick} className="text-accent hover:underline cursor-pointer">
           Thông số kỹ thuật
         </button>
       </div>
 
+      {/* Dynamic Options */}
       <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[100px_1fr] gap-y-4 sm:gap-y-5 gap-x-4 mt-6">
-        {/* Storage Selection */}
-        <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
-          Dung lượng:
-        </span>
+        {availableOptions.map((option) => (
+          <Fragment key={option.type}> {/* ✅ Fragment với key thay vì <> */}
+            <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
+              {TYPE_LABELS[option.type] ?? option.type}:
+            </span>
 
-        <div className="flex flex-wrap gap-2">
-          {storages.map((storage) => {
-            const isActive = selectedStorage === storage.value;
-            return (
-              <span
-                key={storage.value}
-                onClick={() => onStorageChange?.(storage.value)}
-                className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-bold cursor-pointer relative overflow-hidden transition-colors duration-300
-                  ${isActive ? "border-promotion text-promotion bg-neutral-light" : "text-primary bg-neutral-light"}
-                `}
-              >
-                {storage.label}
-                {isActive && (
-                  <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
-                    <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-                      ✓
+            <div className="flex flex-wrap gap-2">
+              {option.values
+                ?.filter((val: any) => val.enabled)
+                .map((val: any) => {
+                  const active = selectedOptions[option.type] === val.value;
+                  return (
+                    <span
+                      key={val.value}
+                      onClick={() => onOptionChange?.(option.type, val.value)}
+                      className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-bold cursor-pointer relative overflow-hidden transition-colors duration-300 flex items-center gap-2
+                        ${active
+                          ? "border-promotion text-promotion bg-neutral-light"
+                          : "text-primary bg-neutral-light hover:bg-promotion-light"
+                        }
+                      `}
+                    >
+                      {val.image?.imageUrl && (
+                        <Image
+                          src={val.image.imageUrl}
+                          alt={val.label}
+                          width={28}
+                          height={28}
+                          className="object-contain"
+                        />
+                      )}
+                      {val.label}
+                      {active && (
+                        <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
+                          <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">✓</span>
+                        </div>
+                      )}
                     </span>
-                  </div>
-                )}
-              </span>
-            );
-          })}
-        </div>
+                  );
+                })}
+            </div>
+          </Fragment>
+        ))}
 
-        {/* Color Selection */}
-        <span className="font-medium text-primary text-xs sm:text-sm flex mt-4">
-          Màu sắc:
-        </span>
-
-        <div className="flex flex-wrap gap-2">
-          {colors
-            .filter((color) => color.enabled)
-            .map((color) => {
-              const isActive = selectedColor === color.value;
-              return (
-                <span
-                  key={color.value}
-                  onClick={() => onColorChange?.(color.value)}
-                  className={`px-3 py-2 sm:px-4 sm:py-3 rounded-sm text-xs sm:text-sm font-bold cursor-pointer border relative overflow-hidden flex items-center gap-2 transition-colors duration-300
-                    ${isActive ? "border-promotion text-promotion bg-promotion-light" : "bg-neutral-light"}
-                    hover:bg-promotion-light
-                  `}
-                >
-                  {color.image && (
-                    <Image
-                      src={color.image}
-                      alt={color.value}
-                      width={28}
-                      height={28}
-                      className="object-contain"
-                    />
-                  )}
-                  {color.label}
-                  {isActive && (
-                    <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
-                      <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-                        ✓
-                      </span>
-                    </div>
-                  )}
-                </span>
-              );
-            })}
-        </div>
-
-        {/* Quantity Selector — chỉ hiển thị khi còn hàng */}
+        {/* Quantity */}
         {isInStock && (
           <>
             <span className="font-medium text-primary text-xs sm:text-sm flex items-center mt-4">
               Số lượng:
             </span>
-
             <div className="flex items-center gap-3">
               <div className="flex items-center border border-neutral rounded-lg overflow-hidden">
                 <button
-                  onClick={handleDecrement}
+                  onClick={() => handleQuantityChange(quantity - 1)}
                   disabled={quantity <= 1}
                   className="w-10 h-10 flex items-center justify-center bg-neutral-light hover:bg-neutral transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
@@ -343,23 +219,18 @@ export default function ProductDetailRight({
                   min="1"
                   max={maxStock}
                   value={quantity}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    handleQuantityChange(val);
-                  }}
+                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
                   className="w-16 h-10 text-center border-x border-neutral focus:outline-none bg-neutral-light text-primary font-medium"
                 />
                 <button
-                  onClick={handleIncrement}
+                  onClick={() => handleQuantityChange(quantity + 1)}
                   disabled={quantity >= maxStock}
                   className="w-10 h-10 flex items-center justify-center bg-neutral-light hover:bg-neutral transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <FaPlus className="text-primary text-sm" />
                 </button>
               </div>
-              <span className="text-xs sm:text-sm text-neutral-dark">
-                Còn {maxStock} sản phẩm
-              </span>
+              <span className="text-xs sm:text-sm text-neutral-dark">Còn {maxStock} sản phẩm</span>
             </div>
           </>
         )}
@@ -367,7 +238,7 @@ export default function ProductDetailRight({
 
       {isInStock ? (
         <>
-          {/* Banner Image */}
+          {/* Banner */}
           <div className="py-4 sm:py-6 rounded-lg">
             <Image
               src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
@@ -378,21 +249,19 @@ export default function ProductDetailRight({
             />
           </div>
 
-          {/* Price Section */}
-          <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent transition-colors duration-300">
+          {/* Price */}
+          <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex flex-col gap-2 flex-1">
                 <div>
                   <h3 className="text-2xl sm:text-3xl font-bold text-promotion">
                     {(displayPrice || 0).toLocaleString("vi-VN")}₫
                   </h3>
-
                   {price?.hasPromotion && (
                     <div className="flex gap-2 items-center">
                       <span className="text-xs sm:text-sm line-through text-neutral-500">
                         {(price.base || 0).toLocaleString("vi-VN")}₫
                       </span>
-
                       <span className="text-xs font-bold text-white bg-promotion px-2 py-0.5 rounded">
                         -{price.discountPercentage}%
                       </span>
@@ -403,83 +272,52 @@ export default function ProductDetailRight({
             </div>
 
             {/* Promotions */}
-            {product.availablePromotions &&
-              product.availablePromotions.length > 0 && (
-                <div className="mt-3 sm:mt-4">
-                  <p className="font-semibold mb-2 text-xs sm:text-sm text-primary">
-                    Chọn 1 trong các khuyến mãi sau:
-                  </p>
-                  <div className="border border-promotion/30 rounded-lg overflow-hidden bg-neutral-light">
-                    {product.availablePromotions.map((promo, index) => (
-                      <div
-                        key={promo.id}
-                        className={`flex items-start gap-2 px-3 py-2 text-xs sm:text-sm ${
-                          index !== product.availablePromotions!.length - 1
-                            ? "border-b border-neutral"
-                            : ""
-                        }`}
-                      >
-                        <Gift className="w-4 h-4 text-promotion mt-0.5 shrink-0" />
-                        <span className="text-primary">
-                          {promo.description}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+            {product.availablePromotions && product.availablePromotions.length > 0 && (
+              <div className="mt-3 sm:mt-4">
+                <p className="font-semibold mb-2 text-xs sm:text-sm text-primary">
+                  Chọn 1 trong các khuyến mãi sau:
+                </p>
+                <div className="border border-promotion/30 rounded-lg overflow-hidden bg-neutral-light">
+                  {product.availablePromotions.map((promo, index) => (
+                    <div
+                      key={promo.id}
+                      className={`flex items-start gap-2 px-3 py-2 text-xs sm:text-sm ${
+                        index !== product.availablePromotions!.length - 1 ? "border-b border-neutral" : ""
+                      }`}
+                    >
+                      <Gift className="w-4 h-4 text-promotion mt-0.5 shrink-0" />
+                      <span className="text-primary">{promo.description}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
           </div>
 
-          {/* Gifts & Benefits */}
-          <div className="flex flex-col border border-neutral rounded-lg mb-4 transition-colors duration-300">
-            <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 bg-neutral rounded-t-lg transition-colors duration-300">
-              <p className="text-sm sm:text-base font-semibold text-primary transition-colors duration-300">
-                Quà tặng và ưu đãi khác
-              </p>
+          {/* Gifts */}
+          <div className="flex flex-col border border-neutral rounded-lg mb-4">
+            <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 bg-neutral rounded-t-lg">
+              <p className="text-sm sm:text-base font-semibold text-primary">Quà tặng và ưu đãi khác</p>
             </div>
-            <div className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm transition-colors duration-300">
+            <div className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm">
               <div className="flex items-start gap-3 my-3">
                 <FaGift className="text-promotion text-base sm:text-lg shrink-0 mt-0.5" />
                 <div className="flex flex-col min-w-0">
-                  <span className="break-words text-primary transition-colors duration-300">
+                  <span className="break-words text-primary">
                     Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy
                   </span>
-                  <Link
-                    href="#"
-                    className="text-promotion hover:text-promotion-hover hover:underline transition-colors"
-                  >
-                    Xem chi tiết
-                  </Link>
+                  <Link href="#" className="text-promotion hover:underline">Xem chi tiết</Link>
                 </div>
               </div>
               <div className="flex items-center gap-3 mb-3">
-                <p className="whitespace-nowrap text-xs sm:text-sm transition-colors duration-300">
-                  Ưu đãi
-                </p>
+                <p className="whitespace-nowrap text-xs sm:text-sm">Ưu đãi</p>
                 <span className="border border-neutral w-full"></span>
               </div>
               <div className="flex items-start gap-3 mb-3">
-                <FaCog className="text-base sm:text-lg shrink-0 mt-0.5 transition-colors duration-300" />
-                <span className="break-words text-primary transition-colors duration-300">
+                <FaCog className="text-base sm:text-lg shrink-0 mt-0.5" />
+                <span className="break-words text-primary">
                   Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
-                  <Link
-                    href="#"
-                    className="text-promotion hover:text-promotion-hover hover:underline transition-colors"
-                  >
-                    Xem chi tiết
-                  </Link>
-                </span>
-              </div>
-              <div className="flex items-start gap-3 mb-3">
-                <FaCog className="text-base sm:text-lg shrink-0 mt-0.5 transition-colors duration-300" />
-                <span className="break-words text-primary transition-colors duration-300">
-                  Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
-                  <Link
-                    href="#"
-                    className="text-promotion hover:text-promotion-hover hover:underline transition-colors"
-                  >
-                    Xem chi tiết
-                  </Link>
+                  <Link href="#" className="text-promotion hover:underline">Xem chi tiết</Link>
                 </span>
               </div>
             </div>
@@ -498,22 +336,15 @@ export default function ProductDetailRight({
                 brandName: product.brand.name,
                 variantName: selectedVariant?.sku ?? "",
                 price: selectedVariant?.price ?? 0,
-                originalPrice:
-                  selectedVariant?.originalPrice ?? selectedVariant?.price ?? 0,
-                imageUrl:
-                  selectedVariant?.image ??
-                  selectedVariant?.images?.[0]?.imageUrl ??
-                  "",
-                availableQuantity:
-                  selectedVariant?.availableQuantity ??
-                  selectedVariant?.stock ??
-                  0,
+                originalPrice: selectedVariant?.originalPrice ?? selectedVariant?.price ?? 0,
+                imageUrl: selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? "",
+                availableQuantity: selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? 0,
                 color: selectedVariant?.color ?? "",
                 colorValue: selectedVariant?.colorValue ?? "",
               }}
               label=""
               iconSize={28}
-              className="!w-full sm:!w-auto sm:flex-1 !text-promotion !py-3 !rounded-lg !transition-colors hover:!bg-promotion-light !border !border-promotion !bg-neutral-light !px-0"
+              className="!w-full sm:!w-auto sm:flex-1 !text-promotion !py-3 !rounded-lg !border !border-promotion !bg-neutral-light !px-0"
             />
             <button
               onClick={handleBuyNow}
@@ -531,22 +362,13 @@ export default function ProductDetailRight({
         </>
       ) : (
         <div className="mt-4 rounded-2xl overflow-hidden border border-neutral shadow-sm">
-          {/* Header banner */}
           <div className="bg-neutral px-5 py-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-neutral-dark/20 flex items-center justify-center shrink-0 text-xl">
-              📦
-            </div>
+            <div className="w-10 h-10 rounded-full bg-neutral-dark/20 flex items-center justify-center shrink-0 text-xl">📦</div>
             <div>
-              <p className="text-primary font-bold text-sm sm:text-base leading-tight">
-                Sản phẩm tạm thời hết hàng
-              </p>
-              <p className="text-neutral-dark text-xs mt-0.5">
-                Đăng ký để nhận thông báo ngay khi có hàng trở lại
-              </p>
+              <p className="text-primary font-bold text-sm sm:text-base">Sản phẩm tạm thời hết hàng</p>
+              <p className="text-neutral-dark text-xs mt-0.5">Đăng ký để nhận thông báo ngay khi có hàng trở lại</p>
             </div>
           </div>
-
-          {/* Notify form */}
           <div className="bg-neutral-light px-5 py-4 space-y-3">
             <p className="text-xs text-neutral-dark font-medium flex items-center gap-1.5">
               <span className="text-primary-light text-sm">🔔</span>
@@ -556,35 +378,25 @@ export default function ProductDetailRight({
               <input
                 type="text"
                 placeholder="Nhập email hoặc số điện thoại"
-                className="flex-1 border border-neutral rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent bg-neutral-light-active placeholder:text-neutral-dark text-primary transition"
-                required
+                className="flex-1 border border-neutral rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-neutral-light placeholder:text-neutral-dark text-primary"
               />
               <button
                 type="submit"
-                className="bg-primary-dark hover:bg-primary-dark-hover active:bg-primary-dark-active active:scale-95 text-neutral-light px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap shadow-sm cursor-pointer"
+                className="bg-primary-dark hover:bg-primary-dark-hover text-neutral-light px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
               >
                 Đăng ký
               </button>
             </form>
           </div>
-
-          {/* Footer */}
           <div className="border-t border-neutral bg-neutral-light-active px-5 py-3 flex flex-col items-center gap-3 w-full">
             <a href="/category/dien-thoai">
-              <button className="w-full bg-primary hover:bg-primary-hover active:bg-primary-active active:scale-95 text-neutral-light font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-150 shadow-sm cursor-pointer">
+              <button className="w-full bg-primary hover:bg-primary-hover text-neutral-light font-semibold py-2.5 px-4 rounded-xl text-sm cursor-pointer">
                 🔍 Khám phá sản phẩm khác
               </button>
             </a>
-            <a
-              href="tel:18006601"
-              className="flex items-center gap-1.5 text-xs text-neutral-dark hover:text-promotion transition-colors whitespace-nowrap"
-            >
+            <a href="tel:18006601" className="flex items-center gap-1.5 text-xs text-neutral-dark hover:text-promotion">
               <span className="text-promotion">📞</span>
-              Gọi{" "}
-              <span className="font-bold text-promotion tracking-wide">
-                1800-6601
-              </span>{" "}
-              tư vấn miễn phí
+              Gọi <span className="font-bold text-promotion tracking-wide">1800-6601</span> tư vấn miễn phí
             </a>
           </div>
         </div>
