@@ -174,10 +174,10 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
 
   return (
     <section className="min-h-screen bg-neutral-light p-6 text-primary">
-      <div className="mx-auto flex w-full max-w-350 flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="space-y-3">
           <h1 className="text-2xl font-semibold">Quản lý bài viết</h1>
-          <p className="text-xl font-semibold">Blogs</p>
+          <p className="text-xl font-semibold">Bài viết</p>
           {hasError && (
             <p className="text-sm text-promotion">
               Không thể tải dữ liệu từ API. Vui lòng kiểm tra backend.
@@ -185,14 +185,14 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
           )}
           {hasStatsError && (
             <p className="text-sm text-promotion">
-              Không thể tải thống kê blogs. Đang hiển thị thống kê tạm theo dữ liệu bảng.
+              Không thể tải thống kê bài viết. Đang hiển thị thống kê tạm theo dữ liệu bảng.
             </p>
           )}
         </header>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <article className="rounded-xl border border-neutral bg-neutral-light p-4">
-            <p className="text-sm text-primary-light">Tổng blogs</p>
+            <p className="text-sm text-primary-light">Tổng bài viết</p>
             <p className="mt-2 text-2xl font-semibold text-primary">
               {formatNumber(stats.totalBlogs)}
             </p>
@@ -225,7 +225,7 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
 
         <div className="rounded-xl border border-neutral bg-neutral-light p-3">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-primary">Filter Blogs</h2>
+            <h2 className="text-base font-semibold text-primary">Danh mục tin tức</h2>
             <Link
               href="/admin/blogs"
               className="text-sm font-medium text-accent hover:text-accent-hover"
@@ -314,7 +314,7 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-primary">
-              {category ? `Danh mục: ${currentCategoryLabel}` : "Tất cả blogs"}
+              {category ? `Danh mục: ${currentCategoryLabel}` : "Tất cả bài viết"}
             </h2>
             <p className="text-sm text-primary-light">
               Hiển thị {pageBlogs.length} / {pagination.total} bài viết

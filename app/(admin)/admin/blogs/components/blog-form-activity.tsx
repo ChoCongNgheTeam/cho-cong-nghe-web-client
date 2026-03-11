@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Eye, Save } from "lucide-react";
+import { CalendarDays, Eye } from "lucide-react";
 import type { BlogFormState } from "./blog-form";
 
 type BlogFormActivityProps = {
@@ -40,18 +40,6 @@ export default function BlogFormActivity({
         >
           <Eye size={14} />
           Xem trước
-        </button>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          onClick={() => {
-            submitModeRef.current = "draft";
-          }}
-          className="inline-flex h-10 items-center justify-center gap-1 rounded-lg border border-neutral text-[14px] font-medium text-primary hover:bg-neutral-light-active disabled:opacity-60"
-        >
-          <Save size={14} />
-          Lưu Ẩn
         </button>
 
         <button

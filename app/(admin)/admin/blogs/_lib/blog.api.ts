@@ -111,7 +111,9 @@ export async function getAdminBlogs({
   if (category) params.category = category;
   if (search) params.search = search;
 
-  return apiRequest.get<AdminBlogListResponse>("/blogs", {
+  // Admin list should include all statuses (PUBLISHED/DRAFT/ARCHIVED),
+  // so use the admin-specific endpoint that returns all blogs.
+  return apiRequest.get<AdminBlogListResponse>("/blogs/admin/all", {
     params,
     noAuth: true,
     timeout: 15000,
