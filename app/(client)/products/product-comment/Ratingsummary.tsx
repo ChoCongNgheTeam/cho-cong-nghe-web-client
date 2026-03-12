@@ -8,7 +8,7 @@ import { Popzy } from "@/components/Modal";
 import { ProductDetail } from "@/lib/types/product";
 
 interface RatingSummaryProps {
-  slug: string; // ✅ đổi từ productId → slug cho đúng với cách dùng
+  slug: string;
   rating: {
     average: number;
     total: number;
@@ -199,81 +199,94 @@ function ReviewForm({
 
   return (
     <div className="py-2 px-1">
-  {/* Header */}
-  <h3 className="text-base font-semibold text-primary mb-1">Đánh giá sản phẩm</h3>
-  <p className="text-sm text-neutral-darker mb-5">Chia sẻ trải nghiệm của bạn về sản phẩm</p>
-
-  {/* Stars */}
-  <div className="flex justify-center gap-3 mb-2">
-    {[1, 2, 3, 4, 5].map((s) => (
-      <button
-        key={s}
-        onClick={() => setRating(s)}
-        onMouseEnter={() => setHover(s)}
-        onMouseLeave={() => setHover(0)}
-        className="transition-transform hover:scale-110 active:scale-95"
-      >
-        <Star
-          className={`w-10 h-10 transition-colors duration-150 ${
-            s <= (hover || rating)
-              ? "fill-accent text-accent drop-shadow-[0_0_6px_rgba(var(--color-accent),0.5)]"
-              : "text-neutral-dark"
-          }`}
-        />
-      </button>
-    ))}
-  </div>
-
-  {/* Rating label */}
-  {(() => {
-    const labels = ["", "Rất tệ", "Không tốt", "Bình thường", "Tốt", "Xuất sắc"];
-    const active = hover || rating;
-    return (
-      <p className={`text-center text-sm font-medium mb-5 h-5 transition-opacity duration-150 ${active ? "text-accent opacity-100" : "opacity-0"}`}>
-        {labels[active]}
+      {/* Header */}
+      <h3 className="text-base font-semibold text-primary mb-1">
+        Đánh giá sản phẩm
+      </h3>
+      <p className="text-sm text-neutral-darker mb-5">
+        Chia sẻ trải nghiệm của bạn về sản phẩm
       </p>
-    );
-  })()}
 
-  {/* Textarea */}
-  <div className="relative mb-2">
-    <textarea
-      rows={4}
-      value={comment}
-      onChange={(e) => setComment(e.target.value)}
-      placeholder="Nhập nội dung đánh giá..."
-      maxLength={1000}
-      className="w-full px-4 py-3 border border-neutral rounded-xl text-sm text-primary placeholder:text-neutral-dark bg-neutral-light focus:outline-none focus:border-neutral-darker resize-none transition-colors duration-150 leading-relaxed"
-    />
-    <span className="absolute bottom-3 right-3 text-[11px] text-neutral-darker tabular-nums">
-      {comment.length}/1000
-    </span>
-  </div>
+      {/* Stars */}
+      <div className="flex justify-center gap-3 mb-2">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <button
+            key={s}
+            onClick={() => setRating(s)}
+            onMouseEnter={() => setHover(s)}
+            onMouseLeave={() => setHover(0)}
+            className="transition-transform hover:scale-110 active:scale-95"
+          >
+            <Star
+              className={`w-10 h-10 transition-colors duration-150 ${
+                s <= (hover || rating)
+                  ? "fill-accent text-accent drop-shadow-[0_0_6px_rgba(var(--color-accent),0.5)]"
+                  : "text-neutral-dark"
+              }`}
+            />
+          </button>
+        ))}
+      </div>
 
-  {/* Actions */}
-  <div className="flex gap-2.5 mt-5">
-    <button
-      onClick={onClose}
-      className="flex-1 py-2.5 rounded-xl border border-neutral text-primary text-sm font-medium hover:bg-neutral transition-colors duration-150 cursor-pointer"
-    >
-      Hủy
-    </button>
+      {/* Rating label */}
+      {(() => {
+        const labels = [
+          "",
+          "Rất tệ",
+          "Không tốt",
+          "Bình thường",
+          "Tốt",
+          "Xuất sắc",
+        ];
+        const active = hover || rating;
+        return (
+          <p
+            className={`text-center text-sm font-medium mb-5 h-5 transition-opacity duration-150 ${active ? "text-accent opacity-100" : "opacity-0"}`}
+          >
+            {labels[active]}
+          </p>
+        );
+      })()}
 
-    <button
-      disabled={loading}
-      onClick={submit}
-      className="flex-1 py-2.5 rounded-xl bg-promotion hover:bg-promotion-hover text-white text-sm font-semibold transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
-    >
-      {loading ? (
-        <>
-          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          Đang gửi...
-        </>
-      ) : (
-        "Gửi đánh giá"
-      )}
-    </button>
-  </div>
-</div>
+      {/* Textarea */}
+      <div className="relative mb-2">
+        <textarea
+          rows={4}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Nhập nội dung đánh giá..."
+          maxLength={1000}
+          className="w-full px-4 py-3 border border-neutral rounded-xl text-sm text-primary placeholder:text-neutral-dark bg-neutral-light focus:outline-none focus:border-neutral-darker resize-none transition-colors duration-150 leading-relaxed"
+        />
+        <span className="absolute bottom-3 right-3 text-[11px] text-neutral-darker tabular-nums">
+          {comment.length}/1000
+        </span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2.5 mt-5">
+        <button
+          onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl border border-neutral text-primary text-sm font-medium hover:bg-neutral transition-colors duration-150 cursor-pointer"
+        >
+          Hủy
+        </button>
+
+        <button
+          disabled={loading}
+          onClick={submit}
+          className="flex-1 py-2.5 rounded-xl bg-promotion hover:bg-promotion-hover text-white text-sm font-semibold transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Đang gửi...
+            </>
+          ) : (
+            "Gửi đánh giá"
+          )}
+        </button>
+      </div>
+    </div>
   );
 }
