@@ -86,8 +86,8 @@ export const ALL_STATUSES: OrderStatus[] = [
 ];
 
 export const STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
-   PENDING: ["PROCESSING", "CANCELLED"],
-   PROCESSING: ["SHIPPED", "CANCELLED"],
+   PENDING: ["PROCESSING"],
+   PROCESSING: ["SHIPPED"],
    SHIPPED: ["DELIVERED"],
    DELIVERED: [],
    CANCELLED: [],
