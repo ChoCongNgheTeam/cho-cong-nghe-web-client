@@ -111,6 +111,8 @@ export type ProductDetail = {
   highlightGroups?: SpecificationGroup[];
   price: Price;
   availablePromotions?: Promotion[];
+
+  
 };
 
 export type Price = {

@@ -18,11 +18,6 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 const menuItems = [
   { icon: Package, label: "Đơn hàng của tôi", href: "/profile/orders" },
   { icon: Bell, label: "Thông báo của tôi", href: "/profile/notifications" },
-  {
-    icon: FileText,
-    label: "Dịch vụ thu hộ đã thanh toán",
-    href: "/profile/payment",
-  },
   { icon: Heart, label: "Sản phẩm yêu thích", href: "/profile/wishlist" },
   { icon: MapPin, label: "Sổ địa chỉ nhận hàng", href: "/profile/addresses" },
   { icon: Shield, label: "Thông tin bảo hành", href: "/profile/warranty" },
@@ -92,7 +87,7 @@ export default function ProfileLayout({
                 </div>
 
                 {/* Membership Card */}
-                <div className="bg-promotion rounded-lg p-4 text-white relative overflow-hidden">
+                <div className="bg-accent  rounded-lg p-4 text-white relative overflow-hidden">
                   <div className="absolute right-0 bottom-0 opacity-20">
                     <div className="w-24 h-24 bg-white/30 rounded-full" />
                   </div>
