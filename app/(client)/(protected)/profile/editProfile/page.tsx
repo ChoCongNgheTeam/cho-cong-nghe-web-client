@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToasty } from "@/components/Toast";
 import { Pencil, ChevronDown, Loader2 } from "lucide-react";

@@ -83,7 +83,7 @@ export default function BlogListClient({
   };
 
   const handleToggleBlogStatus = async (blog: AdminBlog) => {
-    const currentStatus = blog.status;
+    const currentStatus = statusOverrides[blog.id] ?? blog.status;
     const newStatus = currentStatus === "ARCHIVED" ? "PUBLISHED" : "ARCHIVED";
 
     // Optimistic UI update

@@ -34,11 +34,14 @@ export default function ChinhSachKhuiHopPage() {
          {/* Main Content */}
          <div className="container py-5">
             <div className="flex gap-5">
+<<<<<<< HEAD
                {/* Sidebar */}
                <aside className="hidden md:block w-65 shrink-0">
                   {/* <SidebarMenu activeItem="Chính sách khui hộp sản phẩm" /> */}
                </aside>
 
+=======
+>>>>>>> origin/test
                {/* Article */}
                <main
                   className="flex-1 rounded-lg p-6 md:p-8"

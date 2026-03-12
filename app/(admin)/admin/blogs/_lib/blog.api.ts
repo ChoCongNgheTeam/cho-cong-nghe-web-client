@@ -115,7 +115,6 @@ export async function getAdminBlogs({
   // so use the admin-specific endpoint that returns all blogs.
   return apiRequest.get<AdminBlogListResponse>("/blogs/admin/all", {
     params,
-    noAuth: true,
     timeout: 15000,
   });
 }
@@ -125,7 +124,6 @@ export async function getAdminBlogStats(): Promise<AdminBlogStats> {
     const statsResponse = await apiRequest.get<{ success: boolean; data: AdminBlogStats }>(
       "/blogs/stats",
       {
-        noAuth: true,
         timeout: 15000,
       }
     );

@@ -88,23 +88,25 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
          {/* Product Info */}
          <div className="px-4">
-            <h3 className="text-sm font-medium text-primary mb-3 line-clamp-2 min-h-10 transition-colors">
+            <h3 className="text-sm font-medium text-primary mb-1 line-clamp-2 min-h-10 transition-colors">
                {product.name}
             </h3>
 
             {/* Prices */}
-            <div className="flex items-baseline gap-3 mb-2">
+            <div className="flex flex-col gap-0.5 mb-2">
                {hasPromotion ? (
                   <>
-                     <span className="text-xl font-bold text-promotion">
+                     <span className="text-lg font-bold text-promotion leading-tight truncate">
                         {product.price.final.toLocaleString("vi-VN")}₫
                      </span>
-                     <span className="text-sm text-neutral-dark line-through">
-                        {product.price.base.toLocaleString("vi-VN")}₫
-                     </span>
+                     <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[13px] text-neutral-dark line-through">
+                           {product.price.base.toLocaleString("vi-VN")}₫
+                        </span>
+                     </div>
                   </>
                ) : (
-                  <span className="text-xl font-bold text-primary">
+                  <span className="text-lg font-bold text-primary leading-tight truncate">
                      {product.price.base.toLocaleString("vi-VN")}₫
                   </span>
                )}

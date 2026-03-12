@@ -236,6 +236,7 @@ export default function CheckoutPage() {
   }, [authLoading, user]);
 
   // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
+  // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
   useEffect(() => {
     if (authLoading) return;
     if (searchParams.get("newAddress") === "1") return;
