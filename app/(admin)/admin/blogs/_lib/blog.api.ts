@@ -207,24 +207,16 @@ function toBlogFormData(payload: AdminBlogUpsertPayload): FormData {
 
   if (payload.status) formData.append("status", payload.status);
   if (payload.publishedAt) formData.append("publishedAt", payload.publishedAt);
-  if (payload.slug) formData.append("slug", payload.slug);
-  if (payload.excerpt) formData.append("excerpt", payload.excerpt);
-  if (payload.thumbnail) formData.append("thumbnail", payload.thumbnail);
-  if (payload.category) formData.append("category", payload.category);
-  if (payload.seoTitle) formData.append("seoTitle", payload.seoTitle);
-  if (payload.seoDescription) formData.append("seoDescription", payload.seoDescription);
-  if (typeof payload.isFeatured === "boolean") {
-    formData.append("isFeatured", String(payload.isFeatured));
-  }
-  if (payload.scheduledAt) formData.append("scheduledAt", payload.scheduledAt);
-  if (payload.tags && payload.tags.length > 0) {
-    formData.append("tags", JSON.stringify(payload.tags));
-  }
 
   if (payload.imageFile) {
     formData.append("imageUrl", payload.imageFile);
   } else if (payload.imageUrl) {
-    formData.append("imageUrl", payload.imageUrl);
+    try {
+      new URL(payload.imageUrl);
+      formData.append("imageUrl", payload.imageUrl);
+    } catch {
+      // Skip if not a valid URL
+    }
   }
 
   return formData;

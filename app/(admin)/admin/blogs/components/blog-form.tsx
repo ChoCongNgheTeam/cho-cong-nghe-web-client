@@ -46,7 +46,7 @@ export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null);
-  const [showPreviewContent, setShowPreviewContent] = useState(false);
+  const [showPreviewContent] = useState(false);
   const submitModeRef = useRef<"draft" | "publish">("publish");
 
   const [form, setForm] = useState<BlogFormState>(
@@ -263,8 +263,6 @@ export default function BlogForm({ mode, blogId, initialData }: BlogFormProps) {
             isSubmitting={isSubmitting}
             submitLabel={submitLabel}
             submitModeRef={submitModeRef}
-            showPreviewContent={showPreviewContent}
-            setShowPreviewContent={setShowPreviewContent}
           />
 
           <BlogFormPreviewAndSeo

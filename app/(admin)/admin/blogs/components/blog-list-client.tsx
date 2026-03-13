@@ -24,6 +24,7 @@ type BlogListClientProps = {
   pagination: BlogPagination;
   currentCategory?: string;
   currentSearch?: string;
+  onBlogDeleted?: () => void;
 };
 
 function formatDate(dateStr: string) {
@@ -52,6 +53,7 @@ export default function BlogListClient({
   pagination,
   currentCategory,
   currentSearch,
+  onBlogDeleted,
 }: BlogListClientProps) {
   const router = useRouter();
   const toast = useToasty();
@@ -62,6 +64,7 @@ export default function BlogListClient({
   const [viewError, setViewError] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [deletedBlogIds, setDeletedBlogIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
 
   const handleDeleteBlog = async (blogId: string) => {
@@ -71,9 +74,8 @@ export default function BlogListClient({
         timeout: 15000,
       });
       toast.success("Đã xóa bài viết");
-      startTransition(() => {
-        router.refresh();
-      });
+      setDeletedBlogIds((prev) => new Set(prev).add(blogId));
+      onBlogDeleted?.();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Không thể xóa bài viết";
       toast.error(message);
@@ -124,6 +126,8 @@ export default function BlogListClient({
       setViewLoading(false);
     }
   };
+
+  const filteredBlogs = blogs.filter((blog) => !deletedBlogIds.has(blog.id));
 
   const viewContent = viewLoading ? (
     <p className="text-sm text-primary-light">Đang tải chi tiết...</p>
@@ -312,7 +316,7 @@ export default function BlogListClient({
 
   return (
     <div className="space-y-4">
-      <AdminTable columns={columns} data={blogs} rowKey="id" emptyText="Không có bài viết nào." />
+      <AdminTable columns={columns} data={filteredBlogs} rowKey="id" emptyText="Không có bài viết nào." />
       <div className="px-1">
         <AdminPagination
           currentPage={pagination.page}

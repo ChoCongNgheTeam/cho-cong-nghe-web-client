@@ -190,6 +190,17 @@ export default function AdminBlogPage() {
     totalPages,
   };
 
+  const refreshStats = async () => {
+    try {
+      const newStats = await getAdminBlogStats();
+      setStats(newStats);
+    } catch (error) {
+      console.error("Failed to refresh stats:", error);
+      // Fallback to recalculate from current blogs
+      setStats(buildFallbackStats(allBlogs));
+    }
+  };
+
   const categoryCounts = useMemo(
     () =>
       ADMIN_BLOG_CATEGORIES.map((item) => ({
@@ -358,6 +369,7 @@ export default function AdminBlogPage() {
             pagination={pagination}
             currentCategory={category}
             currentSearch={search}
+            onBlogDeleted={refreshStats}
           />
         </section>
       </div>

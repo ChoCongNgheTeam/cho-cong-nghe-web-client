@@ -2,6 +2,7 @@
 
 import { CalendarDays, Eye } from "lucide-react";
 import type { BlogFormState } from "./blog-form";
+import { toSlug } from "./blog-form-utils";
 
 type BlogFormActivityProps = {
   form: BlogFormState;
@@ -10,8 +11,6 @@ type BlogFormActivityProps = {
   isSubmitting: boolean;
   submitLabel: string;
   submitModeRef: React.MutableRefObject<"draft" | "publish">;
-  showPreviewContent: boolean;
-  setShowPreviewContent: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function BlogFormActivity({
@@ -21,8 +20,6 @@ export default function BlogFormActivity({
   isSubmitting,
   submitLabel,
   submitModeRef,
-  showPreviewContent,
-  setShowPreviewContent,
 }: BlogFormActivityProps) {
   return (
     <section className="rounded-2xl border border-neutral bg-neutral-light p-4">
@@ -31,12 +28,14 @@ export default function BlogFormActivity({
       <div className="grid grid-cols-3 gap-2">
         <button
           type="button"
-          onClick={() => setShowPreviewContent((prev) => !prev)}
-          className={`inline-flex h-10 items-center justify-center gap-1 rounded-lg border text-[14px] font-medium transition ${
-            showPreviewContent
-              ? "border-accent bg-accent/10 text-accent"
-              : "border-neutral text-primary hover:bg-neutral-light-active"
-          }`}
+          onClick={() => {
+            const slug = form.slug || toSlug(form.title || "");
+            if (!slug) {
+              return;
+            }
+            window.open(`/blog/${slug}`, "_blank");
+          }}
+          className="inline-flex h-10 items-center justify-center gap-1 rounded-lg border border-neutral text-primary hover:bg-neutral-light-active text-[14px] font-medium transition"
         >
           <Eye size={14} />
           Xem trước
