@@ -206,7 +206,7 @@ export default function ProductDetailRight({
                   max={maxStock}
                   value={quantity}
                   onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                  className="w-16 h-10 text-center border-x border-neutral focus:outline-none bg-neutral-light text-primary font-medium"
+                  className="w-16 h-10 text-center border-x border-neutral focus:outline-none bg-neutral-light text-primary font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
                   onClick={() => handleQuantityChange(quantity + 1)}
@@ -321,12 +321,12 @@ export default function ProductDetailRight({
             >
               Mua ngay
             </button>
-            <button
+            {/* <button
               onClick={handleInstallment}
               className="flex-1 sm:flex-[2] bg-primary-dark hover:bg-primary-hover text-neutral-light py-3 rounded-lg transition-colors text-sm sm:text-base cursor-pointer"
             >
               Trả góp 0%
-            </button>
+            </button> */}
           </div>
         </>
       ) : (

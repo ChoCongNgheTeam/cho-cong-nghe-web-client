@@ -72,7 +72,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant }
         {/* IMAGE CAROUSEL */}
         <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
           <div className="relative w-full h-full flex items-center justify-center">
-            <Image src={currentImage} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={currentImageObj?.altText || "Product image"} fill />
+            {currentImage && <Image src={currentImage} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={currentImageObj?.altText || "Product image"} fill />}
             <div className="absolute inset-0 pointer-events-none"></div>
             <WishlistHeart productId={product.id} />
           </div>
@@ -103,39 +103,41 @@ export default function ProductDetailBanner({ product, images, selectedVariant }
         {/* THUMBNAILS */}
         <div className="mt-4">
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
-            {gallery.map((image, index) => (
-              <button
-                key={image.id}
-                onClick={() => goToImage(index)}
-                className={`relative group rounded-xl overflow-hidden transition-all duration-300 ease-out ${
-                  index === currentImageIndex
-                    ? "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20 scale-105"
-                    : "ring-1 ring-black/10 hover:ring-2 hover:ring-blue-500 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-105"
-                }`}
-                aria-label={`Xem ảnh ${index + 1}`}
-              >
-                <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
-                  <Image
-                    src={image.imageUrl}
-                    alt={image.altText || `Product image ${index + 1}`}
-                    fill
-                    sizes="120px"
-                    className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
-                      index === currentImageIndex ? "opacity-100 scale-100" : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
-                    }`}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                </div>
-
-                <div
-                  className={`absolute top-1.5 sm:top-2 left-1.5 sm:left-2 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium backdrop-blur-md transition-all duration-300 ${
-                    index === currentImageIndex ? "bg-blue-500 text-white shadow-md" : "bg-black/40 text-white/90 group-hover:bg-blue-500 group-hover:text-white"
+            {gallery
+              .filter((image) => image.imageUrl)
+              .map((image, index) => (
+                <button
+                  key={image.id}
+                  onClick={() => goToImage(index)}
+                  className={`relative group rounded-xl overflow-hidden transition-all duration-300 ease-out ${
+                    index === currentImageIndex
+                      ? "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20 scale-105"
+                      : "ring-1 ring-black/10 hover:ring-2 hover:ring-blue-500 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-105"
                   }`}
+                  aria-label={`Xem ảnh ${index + 1}`}
                 >
-                  {index + 1}
-                </div>
-              </button>
-            ))}
+                  <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
+                    <Image
+                      src={image.imageUrl}
+                      alt={image.altText || `Product image ${index + 1}`}
+                      fill
+                      sizes="120px"
+                      className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
+                        index === currentImageIndex ? "opacity-100 scale-100" : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                      }`}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  </div>
+
+                  <div
+                    className={`absolute top-1.5 sm:top-2 left-1.5 sm:left-2 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium backdrop-blur-md transition-all duration-300 ${
+                      index === currentImageIndex ? "bg-blue-500 text-white shadow-md" : "bg-black/40 text-white/90 group-hover:bg-blue-500 group-hover:text-white"
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                </button>
+              ))}
           </div>
 
           {/* PRODUCT HIGHLIGHTS — chỉ hiển thị khi còn hàng */}

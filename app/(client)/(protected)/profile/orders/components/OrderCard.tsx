@@ -7,6 +7,7 @@ import { Order } from "../../type/order";
 import { orderStatusConfig, paymentStatusConfig, REDIRECT_PAYMENT_METHODS, BANK_TRANSFER_METHODS } from "./Constants";
 import CancelOrderButton from "./CancelOrderButton";
 import ReorderButton from "./ReorderButton";
+import Link from "next/link";
 
 interface OrderCardProps {
   order: Order;
@@ -105,8 +106,10 @@ export default function OrderCard({ order, onViewDetail, onCancelSuccess, onReor
           const imageUrl = item.image ?? getFirstValidImage(item.productVariant?.product?.img);
           const attrs = item.productVariant?.variantAttributes?.map((a) => a.attributeOption.value).join(" · ");
 
+          const productSlug = item.productVariant?.product?.slug;
+
           return (
-            <div key={item.id} className="flex gap-3 px-5 py-3.5">
+            <Link key={item.id} href={productSlug ? `/products/${productSlug}` : "#"} className="flex gap-3 px-5 py-3.5 hover:bg-neutral-light transition-colors">
               <div className="relative w-14 h-14 shrink-0 rounded-lg bg-neutral overflow-hidden">
                 {imageUrl ? (
                   <Image src={imageUrl} alt={item.productVariant?.product?.name ?? ""} fill sizes="56px" className="object-cover" />
@@ -117,6 +120,7 @@ export default function OrderCard({ order, onViewDetail, onCancelSuccess, onReor
 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-primary line-clamp-1">{item.productVariant?.product?.name}</p>
+
                 {attrs && <p className="text-xs text-neutral-darker mt-0.5">{attrs}</p>}
                 <p className="text-xs text-neutral-darker mt-0.5">x{item.quantity}</p>
               </div>
@@ -127,7 +131,7 @@ export default function OrderCard({ order, onViewDetail, onCancelSuccess, onReor
                   <p className="text-xs line-through text-neutral-darker">{Number(item.productVariant?.price).toLocaleString("vi-VN")}₫</p>
                 )}
               </div>
-            </div>
+            </Link>
           );
         })}
 
