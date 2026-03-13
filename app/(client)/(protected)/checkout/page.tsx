@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
+import PaymentResultModal from "./components/PaymentResultModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -133,6 +134,34 @@ export default function CheckoutPage() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [paymentResultModal, setPaymentResultModal] = useState<{
+    isOpen: boolean;
+    paymentInfo: any;
+    orderId: string;
+  }>({ isOpen: false, paymentInfo: null, orderId: "" });
+
+  // Tách thành 2 hàm: 1 mở confirm, 1 thực sự đặt hàng
+  const handleCheckoutClick = () => {
+    if (!contactName) {
+      toast.error("Vui lòng kiểm tra thông tin người đặt");
+      return;
+    }
+    if (!selectedAddress) {
+      toast.error("Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+    if (!selectedPaymentMethodId) {
+      toast.error("Vui lòng chọn phương thức thanh toán");
+      return;
+    }
+    if (!agreedToTerms) {
+      toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
+      return;
+    }
+    setShowConfirmModal(true);
+  };
 
   const { refetchCart } = useCart();
 
@@ -304,48 +333,44 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!contactName) {
-      toast.error("Vui lòng kiểm tra thông tin người đặt");
-      return;
-    }
-    if (!selectedAddress) {
-      toast.error("Vui lòng chọn địa chỉ giao hàng");
-      return;
-    }
-    if (!selectedPaymentMethodId) {
-      toast.error("Vui lòng chọn phương thức thanh toán");
-      return;
-    }
-    if (!agreedToTerms) {
-      toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
-      return;
-    }
-
+    setShowConfirmModal(false);
     setIsSubmitting(true);
     try {
       const res = await apiRequest.post<{
         success: boolean;
-        data: { orderId: string; orderCode: string; paymentInfo?: any };
-        message?: string;
+        data: {
+          orderId: string;
+          orderCode: string;
+          paymentMethodCode: string;
+          paymentInfo: any;
+        };
       }>("/checkout", {
         paymentMethodId: selectedPaymentMethodId,
-        shippingAddressId: selectedAddress.id,
-        shippingContactName: selectedAddress.contactName,
-        shippingPhone: selectedAddress.phone,
+        shippingAddressId: selectedAddress!.id,
+        shippingContactName: selectedAddress!.contactName,
+        shippingPhone: selectedAddress!.phone,
         ...(voucherId ? { voucherId } : {}),
       });
 
       if (res?.success) {
-        const rawCheckout = localStorage.getItem("checkoutData");
-        if (rawCheckout) sessionStorage.setItem("checkoutData", rawCheckout);
         localStorage.removeItem("checkoutData");
         await refetchCart();
 
-        const info = res.data?.paymentInfo ?? { type: "COD" };
-        sessionStorage.setItem("paymentInfo", JSON.stringify(info));
-        sessionStorage.setItem("pendingOrderId", res.data?.orderId ?? "");
-        sessionStorage.setItem("pendingOrderCode", res.data?.orderCode ?? "");
-        router.push("/payment");
+        const { paymentMethodCode, paymentInfo, orderId } = res.data;
+        const methodUpper = paymentMethodCode.toUpperCase();
+
+        // Momo/VNPay/ZaloPay → redirect thẳng sang cổng thanh toán
+        if (methodUpper.includes("MOMO") || methodUpper.includes("VNPAY") || methodUpper.includes("ZALOPAY")) {
+          if (paymentInfo?.paymentUrl) {
+            window.location.href = paymentInfo.paymentUrl;
+          } else {
+            toast.error("Không lấy được đường dẫn thanh toán. Vui lòng thử lại.");
+          }
+          return;
+        }
+
+        // COD / Bank Transfer / Stripe → hiển thị modal tại trang checkout
+        setPaymentResultModal({ isOpen: true, paymentInfo, orderId });
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng");
@@ -486,7 +511,7 @@ export default function CheckoutPage() {
                 selectedPromotions={selectedPromotions}
                 promotionValue={promotionValue}
                 onOpenVoucherModal={() => setShowVoucherModal(true)}
-                onCheckout={handlePlaceOrder}
+                onCheckout={handleCheckoutClick}
                 buttonText={isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
                 showTerms={true}
                 agreedToTerms={agreedToTerms}
@@ -584,7 +609,7 @@ export default function CheckoutPage() {
         appliedVoucherCode={voucherCode}
         appliedVoucherValue={displayVoucherDiscount}
         onOpenVoucherModal={() => setShowVoucherModal(true)}
-        onCheckout={handlePlaceOrder}
+        onCheckout={handleCheckoutClick}
         isCheckoutPage={true}
         showTerms={true}
         agreedToTerms={agreedToTerms}
@@ -600,6 +625,41 @@ export default function CheckoutPage() {
         appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
         cartTotal={subtotal}
+      />
+
+      {/* ── Confirm Modal ── */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowConfirmModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <h3 className="text-base font-semibold text-primary mb-2">Xác nhận đặt hàng</h3>
+            <p className="text-sm text-neutral-darker mb-1">
+              Tổng thanh toán: <span className="font-bold text-primary">{formatVND(displayFinalTotal)}</span>
+            </p>
+            <p className="text-xs text-neutral-darker mb-5">Bạn có chắc chắn muốn đặt đơn hàng này không?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-2.5 border border-neutral rounded-lg text-sm text-neutral-darker hover:bg-neutral transition-colors">
+                Hủy
+              </button>
+              <button
+                onClick={handlePlaceOrder}
+                disabled={isSubmitting}
+                className="flex-1 py-2.5 bg-accent text-primary-darker font-semibold rounded-lg text-sm hover:bg-accent-dark transition-colors disabled:opacity-60"
+              >
+                {isSubmitting ? "Đang xử lý..." : "Xác nhận"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Payment Result Modal (COD / Bank Transfer / Stripe) ── */}
+      <PaymentResultModal
+        isOpen={paymentResultModal.isOpen}
+        paymentInfo={paymentResultModal.paymentInfo}
+        onClose={() => setPaymentResultModal((p) => ({ ...p, isOpen: false }))}
+        // onDone={() => router.push(`/profile/orders/${paymentResultModal.orderId}`)}
+        onDone={() => router.push(`/profile/orders`)}
       />
     </div>
   );

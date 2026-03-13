@@ -3,14 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  Copy,
-  ArrowLeft,
-  ExternalLink,
-  Package,
-  ShoppingBag,
-} from "lucide-react";
+import { CheckCircle2, Copy, ArrowLeft, ExternalLink, Package, ShoppingBag } from "lucide-react";
 import apiRequest from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -102,10 +95,7 @@ interface StripeElements {
 
 interface StripeInstance {
   elements(options: { clientSecret: string }): StripeElements;
-  confirmPayment(options: {
-    elements: StripeElements;
-    confirmParams: { return_url: string };
-  }): Promise<{ error?: { message?: string } }>;
+  confirmPayment(options: { elements: StripeElements; confirmParams: { return_url: string } }): Promise<{ error?: { message?: string } }>;
 }
 
 interface WindowWithStripe extends Window {
@@ -114,8 +104,7 @@ interface WindowWithStripe extends Window {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmtVND = (v: string | number) =>
-  new Intl.NumberFormat("vi-VN").format(Number(v)) + "₫";
+const fmtVND = (v: string | number) => new Intl.NumberFormat("vi-VN").format(Number(v)) + "₫";
 
 // ─── Copy Button ──────────────────────────────────────────────────────────────
 
@@ -131,24 +120,14 @@ function CopyBtn({ text }: { text: string }) {
       className="ml-2 p-1.5 rounded-md hover:bg-neutral-light-active transition-colors shrink-0"
       title="Sao chép"
     >
-      {copied ? (
-        <CheckCircle2 className="w-4 h-4 text-green-500" />
-      ) : (
-        <Copy className="w-4 h-4 text-neutral-dark" />
-      )}
+      {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-neutral-dark" />}
     </button>
   );
 }
 
 // ─── Order Info Card ──────────────────────────────────────────────────────────
 
-function OrderInfoCard({
-  order,
-  billData,
-}: {
-  order: OrderDetail;
-  billData: BillData | null;
-}) {
+function OrderInfoCard({ order, billData }: { order: OrderDetail; billData: BillData | null }) {
   // ✅ Ưu tiên billData từ checkout, fallback về API
   const subtotal = billData?.subtotal ?? Number(order.subtotalAmount);
   const shipping = billData?.shippingFee ?? Number(order.shippingFee);
@@ -190,11 +169,7 @@ function OrderInfoCard({
             <div key={item.id} className="flex items-center gap-3 px-4 py-3">
               <div className="w-14 h-14 rounded-lg border border-neutral bg-neutral-light-active shrink-0 overflow-hidden">
                 {img ? (
-                  <img
-                    src={img}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={img} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package size={18} className="text-neutral-dark" />
@@ -203,22 +178,12 @@ function OrderInfoCard({
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-primary truncate">
-                  {product.name}
-                </p>
-                {attrs.length > 0 && (
-                  <p className="text-xs text-neutral-darker mt-0.5">
-                    {attrs.map((a) => a.attributeOption.value).join(" · ")}
-                  </p>
-                )}
-                <p className="text-xs text-neutral-dark mt-0.5">
-                  SL: {item.quantity}
-                </p>
+                <p className="text-sm font-medium text-primary truncate">{product.name}</p>
+                {attrs.length > 0 && <p className="text-xs text-neutral-darker mt-0.5">{attrs.map((a) => a.attributeOption.value).join(" · ")}</p>}
+                <p className="text-xs text-neutral-dark mt-0.5">SL: {item.quantity}</p>
               </div>
 
-              <p className="text-sm font-semibold text-primary shrink-0">
-                {fmtVND(Number(item.unitPrice) * item.quantity)}
-              </p>
+              <p className="text-sm font-semibold text-primary shrink-0">{fmtVND(Number(item.unitPrice) * item.quantity)}</p>
             </div>
           );
         })}
@@ -233,9 +198,7 @@ function OrderInfoCard({
 
         <div className="flex justify-between text-sm text-neutral-darker">
           <span>Phí vận chuyển</span>
-          <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
-            {shipping === 0 ? "Miễn phí" : fmtVND(shipping)}
-          </span>
+          <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>{shipping === 0 ? "Miễn phí" : fmtVND(shipping)}</span>
         </div>
 
         {voucher > 0 && (
@@ -278,10 +241,7 @@ function OrderSkeleton() {
   return (
     <div className="space-y-3 p-4">
       {[1, 2].map((i) => (
-        <div
-          key={i}
-          className="h-16 rounded-lg bg-neutral-light-active animate-pulse"
-        />
+        <div key={i} className="h-16 rounded-lg bg-neutral-light-active animate-pulse" />
       ))}
     </div>
   );
@@ -289,11 +249,7 @@ function OrderSkeleton() {
 
 // ─── Bank Transfer ────────────────────────────────────────────────────────────
 
-function BankTransferSection({
-  info,
-}: {
-  info: Extract<PaymentInfo, { type: "BANK_TRANSFER" }>;
-}) {
+function BankTransferSection({ info }: { info: Extract<PaymentInfo, { type: "BANK_TRANSFER" }> }) {
   const rows = [
     { label: "Ngân hàng", value: info.bankName },
     { label: "Số tài khoản", value: info.accountNumber },
@@ -307,22 +263,14 @@ function BankTransferSection({
 
   return (
     <div className="space-y-5">
-      <h2 className="text-base font-bold text-primary text-center">
-        --- Thông tin chuyển khoản ---
-      </h2>
+      <h2 className="text-base font-bold text-primary text-center">--- Thông tin chuyển khoản ---</h2>
 
       {info.qrCode && (
         <div className="flex flex-col items-center gap-2">
           <div className="border border-neutral rounded-2xl overflow-hidden shadow-sm p-2 bg-white">
-            <img
-              src={info.qrCode}
-              alt="QR Code thanh toán"
-              className="w-56 h-56 object-contain"
-            />
+            <img src={info.qrCode} alt="QR Code thanh toán" className="w-56 h-56 object-contain" />
           </div>
-          <p className="text-xs text-neutral-darker">
-            Quét mã QR để chuyển khoản nhanh
-          </p>
+          <p className="text-xs text-neutral-darker">Quét mã QR để chuyển khoản nhanh</p>
         </div>
       )}
 
@@ -330,17 +278,11 @@ function BankTransferSection({
         {rows.map((row, i) => (
           <div
             key={row.label}
-            className={`flex items-center justify-between px-4 py-3 ${
-              i < rows.length - 1 ? "border-b border-neutral" : ""
-            } ${i % 2 === 0 ? "bg-neutral-light" : "bg-neutral-light-active"}`}
+            className={`flex items-center justify-between px-4 py-3 ${i < rows.length - 1 ? "border-b border-neutral" : ""} ${i % 2 === 0 ? "bg-neutral-light" : "bg-neutral-light-active"}`}
           >
-            <span className="text-sm text-neutral-darker shrink-0 w-36">
-              {row.label}
-            </span>
+            <span className="text-sm text-neutral-darker shrink-0 w-36">{row.label}</span>
             <div className="flex items-center justify-end flex-1">
-              <span className="text-sm font-semibold text-primary text-right break-all">
-                {row.value}
-              </span>
+              <span className="text-sm font-semibold text-primary text-right break-all">{row.value}</span>
               <CopyBtn text={row.value} />
             </div>
           </div>
@@ -349,9 +291,7 @@ function BankTransferSection({
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
         <p className="text-xs text-yellow-700">
-          ⚠️ Vui lòng ghi{" "}
-          <span className="font-bold">đúng nội dung chuyển khoản</span> để đơn
-          hàng được xử lý tự động.
+          ⚠️ Vui lòng ghi <span className="font-bold">đúng nội dung chuyển khoản</span> để đơn hàng được xử lý tự động.
         </p>
       </div>
     </div>
@@ -366,19 +306,11 @@ const REDIRECT_CONFIGS = {
   ZALOPAY: { label: "Thanh toán với ZaloPay", color: "#0068ff" },
 } as const;
 
-function RedirectSection({
-  type,
-  paymentUrl,
-}: {
-  type: keyof typeof REDIRECT_CONFIGS;
-  paymentUrl: string;
-}) {
+function RedirectSection({ type, paymentUrl }: { type: keyof typeof REDIRECT_CONFIGS; paymentUrl: string }) {
   const cfg = REDIRECT_CONFIGS[type];
   return (
     <div className="text-center space-y-4">
-      <p className="text-sm text-neutral-darker">
-        Nhấn nút bên dưới để chuyển sang cổng thanh toán
-      </p>
+      <p className="text-sm text-neutral-darker">Nhấn nút bên dưới để chuyển sang cổng thanh toán</p>
       <a
         href={paymentUrl}
         target="_blank"
@@ -388,20 +320,14 @@ function RedirectSection({
       >
         {cfg.label} <ExternalLink size={15} />
       </a>
-      <p className="text-xs text-neutral-dark">
-        Sau khi thanh toán xong, quay lại để xem đơn hàng
-      </p>
+      <p className="text-xs text-neutral-dark">Sau khi thanh toán xong, quay lại để xem đơn hàng</p>
     </div>
   );
 }
 
 // ─── Stripe ───────────────────────────────────────────────────────────────────
 
-function StripeSection({
-  info,
-}: {
-  info: Extract<PaymentInfo, { type: "STRIPE" }>;
-}) {
+function StripeSection({ info }: { info: Extract<PaymentInfo, { type: "STRIPE" }> }) {
   const mountedRef = useRef(false);
   const stripeRef = useRef<StripeInstance | null>(null);
   const elementsRef = useRef<StripeElements | null>(null);
@@ -449,15 +375,9 @@ function StripeSection({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-neutral-darker">
-        Nhập thông tin thẻ bên dưới để hoàn tất thanh toán
-      </p>
+      <p className="text-sm text-neutral-darker">Nhập thông tin thẻ bên dưới để hoàn tất thanh toán</p>
       <div id="stripe-payment-element" className="min-h-40" />
-      {stripeError && (
-        <p className="text-sm text-promotion bg-promotion-light border border-promotion-light-active rounded-xl px-4 py-3">
-          {stripeError}
-        </p>
-      )}
+      {stripeError && <p className="text-sm text-promotion bg-promotion-light border border-promotion-light-active rounded-xl px-4 py-3">{stripeError}</p>}
       <button
         onClick={handleConfirm}
         disabled={isConfirming}
@@ -474,9 +394,7 @@ function StripeSection({
 function CodSection() {
   return (
     <div className="text-center space-y-2 py-2">
-      <p className="text-sm text-neutral-darker">
-        Bạn sẽ thanh toán khi nhận hàng. Cảm ơn bạn đã đặt hàng!
-      </p>
+      <p className="text-sm text-neutral-darker">Bạn sẽ thanh toán khi nhận hàng. Cảm ơn bạn đã đặt hàng!</p>
     </div>
   );
 }
@@ -509,9 +427,7 @@ export default function PaymentPage() {
       const parsed = JSON.parse(rawPayment);
 
       // Tách PaymentInfo type ra khỏi bill fields
-      const { subtotal, totalDiscount, voucherCode, voucherValue,
-              finalAfterVoucher, shippingFee, taxAmount, grandTotal,
-              ...paymentOnly } = parsed;
+      const { subtotal, totalDiscount, voucherCode, voucherValue, finalAfterVoucher, shippingFee, taxAmount, grandTotal, ...paymentOnly } = parsed;
 
       setPaymentInfo(paymentOnly as PaymentInfo);
       setOrderId(id);
@@ -580,36 +496,23 @@ export default function PaymentPage() {
             <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-primary">
-              Đặt hàng thành công!
-            </h1>
+            <h1 className="text-xl font-bold text-primary">Đặt hàng thành công!</h1>
             {orderCode && (
               <p className="text-sm text-neutral-darker mt-1">
-                Mã đơn hàng:{" "}
-                <span className="font-semibold text-accent">{orderCode}</span>
+                Mã đơn hàng: <span className="font-semibold text-accent">{orderCode}</span>
               </p>
             )}
           </div>
-          {!isCOD && (
-            <p className="text-xs text-neutral-darker">
-              Vui lòng hoàn tất thanh toán để đơn hàng được xử lý
-            </p>
-          )}
+          {!isCOD && <p className="text-xs text-neutral-darker">Vui lòng hoàn tất thanh toán để đơn hàng được xử lý</p>}
         </div>
 
         {/* ── Payment section (ẩn với COD) ── */}
-        {!isCOD && (
-          <div className="bg-neutral-light border border-neutral rounded-2xl p-5">
-            {renderPaymentSection()}
-          </div>
-        )}
+        {!isCOD && <div className="bg-neutral-light border border-neutral rounded-2xl p-5">{renderPaymentSection()}</div>}
 
         {/* ── Order detail ── */}
         <div className="bg-neutral-light border border-neutral rounded-2xl overflow-hidden">
           <div className="px-4 py-3 border-b border-neutral bg-neutral-light-active">
-            <h2 className="text-sm font-semibold text-primary">
-              Chi tiết đơn hàng
-            </h2>
+            <h2 className="text-sm font-semibold text-primary">Chi tiết đơn hàng</h2>
           </div>
 
           {loadingOrder ? (
@@ -622,10 +525,7 @@ export default function PaymentPage() {
           ) : orderError ? (
             <p className="text-sm text-neutral-darker text-center py-6">
               Không thể tải thông tin đơn hàng.{" "}
-              <Link
-                href={orderId ? `/orders/${orderId}` : "/orders"}
-                className="text-accent hover:underline"
-              >
+              <Link href={orderId ? `/orders/${orderId}` : "/orders"} className="text-accent hover:underline">
                 Xem tại đây
               </Link>
             </p>
@@ -633,24 +533,14 @@ export default function PaymentPage() {
         </div>
 
         <div className="flex items-center justify-between pb-4">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-sm text-neutral-darker hover:text-primary transition-colors"
-          >
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-neutral-darker hover:text-primary transition-colors">
             <ArrowLeft size={14} /> Tiếp tục mua sắm
           </Link>
-          <Link
-            href={orderId ? `/orders/${orderId}` : "/orders"}
-            className="flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
-          >
+          <Link href={orderId ? `/orders/${orderId}` : "/orders"} className="flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline">
             Xem đơn hàng của tôi <ExternalLink size={13} />
           </Link>
         </div>
       </div>
-<<<<<<< HEAD
     </div>
   );
-=======
-   );
->>>>>>> 621d4a99fe5f5b3533536d2688eb456b7aa32785
 }
