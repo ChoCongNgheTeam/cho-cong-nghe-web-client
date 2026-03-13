@@ -356,10 +356,16 @@ export default function CheckoutPage() {
         localStorage.removeItem("checkoutData");
         await refetchCart();
 
-        const { paymentMethodCode, paymentInfo, orderId } = res.data;
+        const { paymentMethodCode, paymentInfo, orderCode, orderId } = res.data;
         const methodUpper = paymentMethodCode.toUpperCase();
 
-        // Momo/VNPay/ZaloPay → redirect thẳng sang cổng thanh toán
+        // COD / Bank Transfer → trang thanh toán dedicated
+        if (methodUpper.includes("COD") || methodUpper.includes("BANK_TRANSFER")) {
+          router.push(`/order/${orderCode}/payment`);
+          return;
+        }
+
+        // Momo / VNPay / ZaloPay → redirect thẳng cổng thanh toán
         if (methodUpper.includes("MOMO") || methodUpper.includes("VNPAY") || methodUpper.includes("ZALOPAY")) {
           if (paymentInfo?.paymentUrl) {
             window.location.href = paymentInfo.paymentUrl;
@@ -369,8 +375,14 @@ export default function CheckoutPage() {
           return;
         }
 
-        // COD / Bank Transfer / Stripe → hiển thị modal tại trang checkout
-        setPaymentResultModal({ isOpen: true, paymentInfo, orderId });
+        // Stripe / Credit Card → modal tại trang checkout
+        if (methodUpper.includes("STRIPE") || methodUpper.includes("CREDIT_CARD")) {
+          setPaymentResultModal({ isOpen: true, paymentInfo, orderId });
+          return;
+        }
+
+        // Fallback
+        router.push(`/order/${orderCode}/payment`);
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng");
@@ -653,13 +665,12 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      {/* ── Payment Result Modal (COD / Bank Transfer / Stripe) ── */}
+      {/* ── Payment Result Modal (Stripe / Credit Card only) ── */}
       <PaymentResultModal
         isOpen={paymentResultModal.isOpen}
         paymentInfo={paymentResultModal.paymentInfo}
         onClose={() => setPaymentResultModal((p) => ({ ...p, isOpen: false }))}
-        // onDone={() => router.push(`/profile/orders/${paymentResultModal.orderId}`)}
-        onDone={() => router.push(`/profile/orders`)}
+        onDone={() => router.push("/profile/orders")}
       />
     </div>
   );
