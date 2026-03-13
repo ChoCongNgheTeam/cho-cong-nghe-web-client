@@ -138,6 +138,7 @@ export default function WishlistPage() {
                      key={product.id}
                      product={product}
                      index={index}
+                     showWishlist={true}
                   />
                ))}
             </div>

@@ -19,6 +19,7 @@ import {
    Apple,
 } from "lucide-react";
 import apiRequest from "@/lib/api";
+import Link from "next/link";
 
 interface Category {
    id: string;
@@ -54,8 +55,9 @@ const BrandGrid = ({ brands }: { brands: Category[] }) => {
             {brands.map((brand) => {
                const Icon = brandIcons[brand.slug] || Smartphone;
                return (
-                  <div
+                  <Link
                      key={brand.id}
+                     href={`/category/${brand.slug}`}
                      className="flex flex-col items-center gap-2 p-4 bg-neutral-light border border-neutral rounded-xl hover:border-accent hover:shadow-lg transition-all cursor-pointer group"
                   >
                      <div className="w-12 h-12 bg-neutral-light-active rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -64,7 +66,7 @@ const BrandGrid = ({ brands }: { brands: Category[] }) => {
                      <span className="text-xs font-medium text-primary text-center">
                         {brand.name.replace(" (iPhone)", "")}
                      </span>
-                  </div>
+                  </Link>
                );
             })}
          </div>
@@ -159,13 +161,14 @@ const CategoryList = ({
 
    return (
       <div className="w-64 bg-neutral-light-active border-r border-neutral flex flex-col h-full overflow-y-auto">
-         {categories.slice(0, 4).map((category) => {
+         {categories.map((category) => {
             const Icon = getIcon(category.slug);
             const isActive = activeCategory?.id === category.id;
 
             return (
-               <div
+               <Link
                   key={category.id}
+                  href={`/category/${category.slug}`}
                   onMouseEnter={() => onHover(category)}
                   className={`flex items-center justify-between px-5 py-4 cursor-pointer transition-all border-l-4 ${
                      isActive
@@ -180,10 +183,9 @@ const CategoryList = ({
                      </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-neutral-dark" />
-               </div>
+               </Link>
             );
          })}
-
          <div className="px-5 py-4 border-t border-neutral">
             {categories.slice(4).map((category) => {
                const Icon = getIcon(category.slug);
@@ -265,20 +267,23 @@ const MegaPanel = ({ category }: { category: Category | null }) => {
             <div className="grid grid-cols-4 gap-6 mb-6">
                {mainCategories.map((cat) => (
                   <div key={cat.id} className="space-y-2">
-                     <h4 className="font-semibold text-primary text-sm flex items-center gap-1 group cursor-pointer hover:text-accent transition-colors">
+                     <Link
+                        href={`/category/${cat.slug}`}
+                        className="font-semibold text-primary text-sm flex items-center gap-1 group cursor-pointer hover:text-accent transition-colors"
+                     >
                         {cat.name}
                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                     </h4>
+                     </Link>
                      {cat.children && cat.children.length > 0 && (
                         <div className="space-y-1.5">
                            {cat.children.slice(0, 5).map((subCat) => (
-                              <a
+                              <Link
                                  key={subCat.id}
                                  href={`/category/${subCat.slug}`}
                                  className="block text-sm text-primary hover:text-accent transition-colors"
                               >
                                  {subCat.name}
-                              </a>
+                              </Link>
                            ))}
                         </div>
                      )}
@@ -366,7 +371,6 @@ export default function CategoryMegaMenu() {
             <span className="text-sm font-medium">Danh mục</span>
          </button>
 
-         {/* Mega Menu — fixed height, animated */}
          <div
             className={[
                "absolute left-0 top-full mt-2 flex rounded-2xl shadow-2xl z-50 overflow-hidden",
@@ -377,6 +381,7 @@ export default function CategoryMegaMenu() {
                   : "opacity-0 scale-95 pointer-events-none",
             ].join(" ")}
             style={{ height: "520px", width: "1264px" }}
+            onClick={() => setIsOpen(false)}
          >
             <CategoryList
                categories={categories}

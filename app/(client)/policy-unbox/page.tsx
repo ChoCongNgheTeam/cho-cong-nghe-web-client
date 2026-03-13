@@ -80,8 +80,8 @@ export default function ChinhSachKhuiHopPage() {
                      className="text-sm leading-relaxed mb-6"
                      style={{ color: "rgb(var(--primary))" }}
                   >
-                     Áp dụng cho các sản phẩm bán ra tại Shop bao gồm:
-                     Điện thoại, Máy tính bảng, Laptop và Đồng hồ thông minh.
+                     Áp dụng cho các sản phẩm bán ra tại Shop bao gồm: Điện
+                     thoại, Máy tính bảng, Laptop và Đồng hồ thông minh.
                   </p>
 
                   {/* Section 1 */}
@@ -181,9 +181,9 @@ export default function ChinhSachKhuiHopPage() {
                         style={{ color: "rgb(var(--primary))" }}
                      >
                         Nếu khách hàng báo lỗi ngoại quan sau khi đã kích hoạt
-                        bảo hành điện tử hoặc sau khi nhân viên giao hàng đã
-                        rời đi, Shop sẽ hỗ trợ chuyển sản phẩm đến trung tâm
-                        bảo hành chính hãng để kiểm tra và xử lý.
+                        bảo hành điện tử hoặc sau khi nhân viên giao hàng đã rời
+                        đi, Shop sẽ hỗ trợ chuyển sản phẩm đến trung tâm bảo
+                        hành chính hãng để kiểm tra và xử lý.
                      </p>
                   </Section>
                </main>
