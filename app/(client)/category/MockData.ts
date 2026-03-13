@@ -1,11 +1,11 @@
 import { BrandItem, SubCategoryLink } from "./types";
 
 export const SUB_CATEGORIES: SubCategoryLink[] = [
-   { href: "/dien-thoai/dien-thoai-5g", label: "Điện thoại 5G" },
-   { href: "/dien-thoai/dien-thoai-ai", label: "Điện thoại AI" },
-   { href: "/dien-thoai/dien-thoai-gap", label: "Điện thoại gập" },
-   { href: "/dien-thoai/gaming-phone", label: "Gaming phone" },
-   { href: "/dien-thoai/pho-thong-4g", label: "Phổ thông 4G" },
+   { href: "/category/dien-thoai-5g", label: "Điện thoại 5G" },
+   { href: "/category/dien-thoai-ai", label: "Điện thoại AI" },
+   { href: "/category/dien-thoai-gap", label: "Điện thoại gập" },
+   { href: "/category/gaming-phone", label: "Gaming phone" },
+   { href: "/category/pho-thong-4g", label: "Phổ thông 4G" },
 ];
 export const BRANDS: BrandItem[] = [
    { href: "/category/samsung", label: "SAMSUNG", color: "#1428A0" },

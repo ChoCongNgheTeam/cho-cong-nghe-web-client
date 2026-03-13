@@ -11,11 +11,16 @@ import Badge from "../ui/Badge";
 interface ProductCardProps {
    product: Product;
    index?: number;
+   showWishlist?: boolean;
 }
 
 const STAR_COUNT = 5;
 
-export default function ProductCard({ product, index = 0 }: ProductCardProps) {
+export default function ProductCard({
+   product,
+   index = 0,
+   showWishlist = false,
+}: ProductCardProps) {
    const hasPromotion = product.price?.hasPromotion ?? false;
    const discountPercentage = product.price?.discountPercentage ?? 0;
    const hasHighlights = (product.highlights ?? []).length > 0;
@@ -25,8 +30,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
          href={`/products/${product.slug}`}
          className="group relative flex flex-col bg-neutral-light border border-neutral rounded-xl py-6 px-3"
       >
-         <WishlistHeart productId={product.id} />
-
+         {showWishlist && <WishlistHeart productId={product.id} />}
          {hasPromotion && (
             <Badge
                discountPercent={discountPercentage}
