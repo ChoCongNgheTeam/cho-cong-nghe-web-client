@@ -181,6 +181,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   const [description, setDescription] = useState(product?.description ?? "");
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(product?.isFeatured ?? false);
+  const colorOptions = template?.attributes.find((a) => a.code === "color")?.options ?? [];
 
   // ── Variants ────────────────────────────────────────────────────────────────
   const [variants, setVariants] = useState<VariantForm[]>(() => {
@@ -627,17 +628,34 @@ export default function ProductForm({ product }: ProductFormProps) {
             <div key={ci._key} className="border border-neutral rounded-xl p-4 space-y-3">
               <div className="flex items-end gap-3">
                 <div className="flex-1">
-                  <Label required>Tên màu (value)</Label>
-                  <input
-                    value={ci.color}
-                    onChange={(e) => updateColorGroup(ci._key, "color", e.target.value.toLowerCase().replace(/\s+/g, "-"))}
-                    placeholder="white, black, alpine-green"
-                    className={inputCls()}
-                  />
+                  <Label required>Màu sắc</Label>
+                  {/* Nếu template có color attribute → dùng select, không thì nhập tay */}
+                  {colorOptions.length > 0 ? (
+                    <select value={ci.color} onChange={(e) => updateColorGroup(ci._key, "color", e.target.value)} className={inputCls() + " cursor-pointer"}>
+                      <option value="">— Chọn màu —</option>
+                      {colorOptions.map((opt) => (
+                        <option key={opt.id} value={opt.value}>
+                          {opt.label} ({opt.value})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={ci.color}
+                      onChange={(e) => updateColorGroup(ci._key, "color", e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                      placeholder="white, black, alpine-green"
+                      className={inputCls()}
+                    />
+                  )}
                 </div>
                 <div className="flex-1">
                   <Label>Alt text</Label>
-                  <input value={ci.altText} onChange={(e) => updateColorGroup(ci._key, "altText", e.target.value)} placeholder="iPhone 15 màu trắng" className={inputCls()} />
+                  <input
+                    value={ci.altText}
+                    onChange={(e) => updateColorGroup(ci._key, "altText", e.target.value)}
+                    placeholder={ci.color ? `Sản phẩm màu ${ci.color}` : "iPhone 15 màu trắng"}
+                    className={inputCls()}
+                  />
                 </div>
                 {colorImages.length > 1 && (
                   <button
@@ -702,7 +720,6 @@ export default function ProductForm({ product }: ProductFormProps) {
           <Plus size={14} /> Thêm màu
         </button>
       </SectionCard>
-
       {/* ── 3. Biến thể ── */}
       <SectionCard title="Biến thể" badge={String(variants.length)}>
         {/* Hint khi chưa chọn category */}
