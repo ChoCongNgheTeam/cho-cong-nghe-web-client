@@ -14,7 +14,6 @@ import Link from "next/link";
 import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
 
-// ── Khớp đúng với API response ──
 interface ApiProduct {
    id: string;
    name: string;
@@ -43,7 +42,6 @@ interface ApiResponse {
    message: string;
 }
 
-// Tính discount % từ priceOrigin vs price.base
 function calcDiscount(origin: number, base: number): number {
    if (!origin || origin <= base) return 0;
    return Math.round(((origin - base) / origin) * 100);
@@ -62,6 +60,17 @@ function SkeletonItem() {
 }
 
 const SKELETON_COUNT = 4;
+
+// ✅ export để dùng ở DesktopHeader
+export const TOP_KEYWORDS = [
+   { label: "iphone 17", href: "/products/iphone-17" },
+   { label: "laptop", href: "/products/laptop" },
+   { label: "iphone 13", href: "/products/iphone-13" },
+   { label: "oppo find x9", href: "/products/oppo-find-x9-pro-5g" },
+   { label: "xiaomi poco", href: "/products/xiaomi-poco-m6-pro" },
+   { label: "samsung", href: "/products/samsung-galaxy-a56-5g" },
+   { label: "oppo reno", href: "/products/oppo-reno14-5g" },
+];
 
 export default function SearchBar() {
    const [query, setQuery] = useState("");
@@ -151,7 +160,7 @@ export default function SearchBar() {
    const showSkeleton = isSearching && staleResultsRef.current.length === 0;
 
    return (
-      <div ref={wrapperRef} className="flex-1 max-w-2xl">
+      <div ref={wrapperRef} className="w-full">
          <div className="relative [&:has(input:focus)_.search-addon]:border-accent-hover">
             <input
                type="text"
@@ -228,7 +237,6 @@ export default function SearchBar() {
                                     onClick={handleClose}
                                     className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group"
                                  >
-                                    {/* Thumbnail */}
                                     <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
                                        {product.thumbnail ? (
                                           <Image
@@ -264,7 +272,6 @@ export default function SearchBar() {
                                        )}
                                     </div>
 
-                                    {/* Info */}
                                     <div className="flex-1 min-w-0">
                                        <p className="text-sm text-primary font-medium truncate group-hover:text-accent-hover transition-colors duration-150">
                                           {product.name}

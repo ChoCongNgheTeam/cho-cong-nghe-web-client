@@ -7,11 +7,9 @@ export default function ChatButton() {
    const [open, setOpen] = useState(false);
 
    return (
-      <div className="fixed bottom-20 right-6 z-9998 flex flex-col items-end gap-3">
-         {/* Chat panel */}
+      <div className="fixed bottom-20 right-4 sm:right-6 z-50 flex flex-col items-end gap-3">
          {open && (
-            <div className="w-72 rounded-2xl border border-neutral bg-neutral-light shadow-xl overflow-hidden">
-               {/* Header */}
+            <div className="rounded-2xl border border-neutral bg-neutral-light shadow-xl overflow-hidden w-[calc(100vw-2rem)] max-w-[20rem] sm:w-72">
                <div className="bg-accent px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -35,7 +33,7 @@ export default function ChatButton() {
                </div>
 
                {/* Body */}
-               <div className="h-56 flex flex-col items-center justify-center gap-2 bg-neutral-light-hover px-6 text-center">
+               <div className="h-48 sm:h-56 flex flex-col items-center justify-center gap-2 bg-neutral-light-hover px-6 text-center">
                   <MessageCircle size={28} className="text-neutral-dark" />
                   <p className="text-[13px] text-neutral-dark">
                      Tính năng chat sẽ sớm ra mắt
@@ -51,7 +49,7 @@ export default function ChatButton() {
                   />
                   <button
                      disabled
-                     className="w-8 h-8 rounded-lg bg-accent/40 flex items-center justify-center cursor-not-allowed"
+                     className="w-8 h-8 rounded-lg bg-accent/40 flex items-center justify-center cursor-not-allowed shrink-0"
                   >
                      <svg
                         width="14"

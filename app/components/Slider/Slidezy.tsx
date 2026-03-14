@@ -41,7 +41,8 @@ export default function Slidezy({
    const autoplayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
    const isInitializedRef = useRef(false);
 
-   // ── THÊM: track xem có drag thật không để cancel click ──
+   const [showControls, setShowControls] = useState(true);
+
    const didDragRef = useRef(false);
 
    // Get responsive items count
@@ -50,9 +51,10 @@ export default function Slidezy({
 
       if (typeof window !== "undefined") {
          const width = window.innerWidth;
-         if (width < 768) return items.mobile || 1;
-         if (width < 1024) return items.tablet || 2;
-         return items.desktop || 3;
+         if (width < 480) return items.mobile ?? 1;
+         if (width < 768) return items.tablet ?? 2;
+         if (width < 1024) return items.lg ?? 3; // ✅ thêm
+         return items.desktop ?? 4;
       }
       return 1;
    }, [items]);
@@ -198,6 +200,23 @@ export default function Slidezy({
          onSlideChange,
       ],
    );
+
+   useEffect(() => {
+      const update = () => {
+         if (typeof controls === "boolean") {
+            setShowControls(controls);
+            return;
+         }
+         const width = window.innerWidth;
+         if (width < 480) setShowControls(controls.mobile ?? false);
+         else if (width < 768) setShowControls(controls.tablet ?? false);
+         else if (width < 1024) setShowControls(controls.lg ?? true);
+         else setShowControls(controls.desktop ?? true);
+      };
+      update();
+      window.addEventListener("resize", update);
+      return () => window.removeEventListener("resize", update);
+   }, [controls]);
 
    // Go to specific slide
    const goToSlide = useCallback(
@@ -457,10 +476,7 @@ export default function Slidezy({
            : 1;
 
    return (
-      <div
-         ref={containerRef}
-         className={`slidezy-container w-full overflow-hidden ${className}`}
-      >
+      <div ref={containerRef} className={`w-full overflow-hidden ${className}`}>
          <div className="relative">
             {/* Track */}
             <div
@@ -507,7 +523,7 @@ export default function Slidezy({
             </div>
 
             {/* Controls */}
-            {controls && showNav && (
+            {showControls && showNav && (
                <>
                   <button
                      onClick={() => moveSlide(-slideByValue)}

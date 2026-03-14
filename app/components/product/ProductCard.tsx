@@ -2,19 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, StarHalf } from "lucide-react";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import { HighlightIcon } from "@/(client)/home/common/HighlightIcon";
 import { Product } from "./types";
 import Badge from "../ui/Badge";
+import { formatVND } from "@/helpers";
+import { StarRating } from "./StarRating";
 
 interface ProductCardProps {
    product: Product;
    index?: number;
    showWishlist?: boolean;
 }
-
-const STAR_COUNT = 5;
 
 export default function ProductCard({
    product,
@@ -28,7 +28,7 @@ export default function ProductCard({
    return (
       <Link
          href={`/products/${product.slug}`}
-         className="group relative flex flex-col bg-neutral-light border border-neutral rounded-xl py-6 px-3"
+         className="group relative flex flex-col h-full bg-neutral-light border border-neutral rounded-xl py-6 px-3"
       >
          {showWishlist && <WishlistHeart productId={product.id} />}
          {hasPromotion && (
@@ -38,7 +38,8 @@ export default function ProductCard({
             />
          )}
 
-         <div className="flex flex-row items-center pb-3 mt-4 h-40">
+         {/* Image + Highlights — fixed height */}
+         <div className="flex flex-row items-center pb-3 mt-4 h-40 shrink-0">
             <div className="relative shrink-0 w-40 h-40">
                {product.thumbnail ? (
                   <Image
@@ -70,7 +71,6 @@ export default function ProductCard({
                )}
             </div>
 
-            {/* Highlights — chỉ render khi có data */}
             {hasHighlights && (
                <div className="flex flex-col justify-around h-full flex-1 pl-1">
                   {(product.highlights ?? []).map((highlight) => (
@@ -90,52 +90,29 @@ export default function ProductCard({
             )}
          </div>
 
-         {/* Product Info */}
-         <div className="px-4">
+         <div className="px-4 flex flex-col flex-1">
             <h3 className="text-sm font-medium text-primary mb-1 line-clamp-2 min-h-10 transition-colors">
                {product.name}
             </h3>
-
-            {/* Prices */}
             <div className="flex flex-col gap-0.5 mb-2">
-               {hasPromotion ? (
-                  <>
-                     <span className="text-lg font-bold text-promotion leading-tight truncate">
-                        {product.price.final.toLocaleString("vi-VN")}₫
-                     </span>
-                     <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[13px] text-neutral-dark line-through">
-                           {product.price.base.toLocaleString("vi-VN")}₫
-                        </span>
-                     </div>
-                  </>
-               ) : (
-                  <span className="text-lg font-bold text-primary leading-tight truncate">
-                     {product.price.base.toLocaleString("vi-VN")}₫
-                  </span>
-               )}
-            </div>
-
-            {/* Rating */}
-            <div className="flex items-center gap-1">
-               <div className="flex items-center gap-0.5">
-                  {Array.from({ length: STAR_COUNT }).map((_, i) => (
-                     <Star
-                        key={i}
-                        className="w-4 h-4"
-                        fill={
-                           i < Math.round(product.rating.average)
-                              ? "rgb(var(--accent))"
-                              : "rgb(var(--neutral))"
-                        }
-                        stroke="none"
-                     />
-                  ))}
-               </div>
-               <span className="text-xs text-neutral-dark">
-                  ({product.rating.count})
+               <span className="text-lg font-bold text-promotion leading-tight truncate">
+                  {formatVND(
+                     hasPromotion ? product.price.final : product.price.base,
+                  )}
+               </span>
+               <span className="text-[13px] text-neutral-dark line-through min-h-5">
+                  {hasPromotion ? formatVND(product.price.base) : ""}
                </span>
             </div>
+
+            {product.rating.count > 0 && (
+               <div className="flex items-center gap-1">
+                  <StarRating average={product.rating.average} />
+                  <span className="text-xs text-neutral-dark">
+                     ({product.rating.count})
+                  </span>
+               </div>
+            )}
          </div>
       </Link>
    );
