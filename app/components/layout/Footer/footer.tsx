@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Facebook, Twitter, Instagram, Music, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface OpenSections {
    about: boolean;
@@ -133,7 +134,7 @@ const Footer = () => {
                            label: "Quy chế hoạt động",
                            href: "/policies/regulations",
                         },
-                        { label: "Tư án Doanh nghiệp", href: "#" },
+                        { label: "Dự án Doanh nghiệp", href: "/policies/" },
                         { label: "Tin tức khuyến mãi", href: "#" },
                         { label: "Giới thiệu máy đổi trả", href: "#" },
                         {
@@ -352,10 +353,13 @@ const Footer = () => {
                      </p>
                   </div>
                   <div className="flex items-center gap-3">
-                     <img
+                     <Image
                         src="https://webmedia.com.vn/images/2021/09/logo-da-thong-bao-bo-cong-thuong-mau-xanh.png"
                         alt="Đã thông báo Bộ Công Thương"
-                        className="h-12"
+                        width={180}
+                        height={48}
+                        className="h-12 w-auto"
+                        unoptimized
                      />
                   </div>
                </div>

@@ -1,4 +1,4 @@
-export default function About() {
+﻿export default function About() {
    return (
       <div className="text-primary leading-relaxed mb-10 w-full">
          <h1 className="text-[24px] font-bold text-primary text-center mb-7">

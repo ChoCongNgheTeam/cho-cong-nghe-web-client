@@ -1,4 +1,4 @@
-type Props = {
+﻿type Props = {
   activeTab: string;
   setActiveTab: (tab: string) => void;
 };

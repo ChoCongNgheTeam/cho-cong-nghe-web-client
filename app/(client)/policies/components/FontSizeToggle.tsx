@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useFontSize } from "./FontSizeContext";
 
 export default function FontSizeToggle() {
@@ -15,7 +15,7 @@ export default function FontSizeToggle() {
                   : "bg-neutral-light text-primary border-neutral hover:bg-neutral-light-active",
             ].join(" ")}
          >
-            Cỡ chữ nhỏ
+            Small text
          </button>
          <button
             onClick={() => setFontSize("large")}
@@ -26,7 +26,7 @@ export default function FontSizeToggle() {
                   : "bg-neutral-light text-primary border-neutral hover:bg-neutral-light-active",
             ].join(" ")}
          >
-            Cỡ chữ lớn
+            Large text
          </button>
       </div>
    );

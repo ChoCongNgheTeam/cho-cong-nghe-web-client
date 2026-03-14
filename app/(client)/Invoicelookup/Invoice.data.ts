@@ -1,34 +1,34 @@
-import { Invoice, StatusConfig } from "./Invoice.types";
+﻿import { Invoice, StatusConfig } from "./Invoice.types";
 
 export const MOCK_INVOICES: Record<string, Invoice> = {
-  "HD-2024-001234": {
-    id: "HD-2024-001234",
+  "INV-2024-001234": {
+    id: "INV-2024-001234",
     status: "paid",
     date: "15/03/2024",
     dueDate: "15/04/2024",
     paidDate: "12/03/2024",
-    customer: "Nguyễn Văn Minh",
-    email: "nguyenvanminh@email.com",
+    customer: "Nguyễn Minh Anh",
+    email: "minhanh@email.com",
     phone: "0912 345 678",
     address: "123 Nguyễn Huệ, Quận 1, TP.HCM",
     taxCode: "0123456789",
     items: [
       {
-        name: "Laptop Dell XPS 13 9310",
+        name: "Dell XPS 13 9310",
         qty: 1,
-        unit: "Chiếc",
+        unit: "cái",
         price: 28500000,
       },
       {
         name: "Chuột không dây Logitech MX3",
         qty: 2,
-        unit: "Chiếc",
+        unit: "cái",
         price: 1250000,
       },
       {
         name: "Bàn phím cơ Keychron K2",
         qty: 1,
-        unit: "Chiếc",
+        unit: "cái",
         price: 2200000,
       },
     ],
@@ -37,14 +37,14 @@ export const MOCK_INVOICES: Record<string, Invoice> = {
     serial: "VN-20240001",
     template: "01GTKT0/001",
   },
-  "HD-2024-005678": {
-    id: "HD-2024-005678",
+  "INV-2024-005678": {
+    id: "INV-2024-005678",
     status: "pending",
     date: "28/03/2024",
     dueDate: "28/04/2024",
     paidDate: null,
-    customer: "Công ty TNHH ABC Tech",
-    email: "accounting@abctech.vn",
+    customer: "Công ty ABC Tech",
+    email: "ketoan@abctech.vn",
     phone: "028 3822 9999",
     address: "45 Lê Lợi, Quận 1, TP.HCM",
     taxCode: "0312345678",
@@ -52,13 +52,13 @@ export const MOCK_INVOICES: Record<string, Invoice> = {
       {
         name: "Màn hình LG 27UK850 4K",
         qty: 3,
-        unit: "Chiếc",
+        unit: "cái",
         price: 12800000,
       },
       {
-        name: "Dịch vụ cài đặt & cấu hình",
+        name: "Dịch vụ lắp đặt và cấu hình",
         qty: 1,
-        unit: "Lần",
+        unit: "dịch vụ",
         price: 1500000,
       },
     ],
@@ -67,14 +67,14 @@ export const MOCK_INVOICES: Record<string, Invoice> = {
     serial: "VN-20240078",
     template: "01GTKT0/001",
   },
-  "HD-2024-009999": {
-    id: "HD-2024-009999",
+  "INV-2024-009999": {
+    id: "INV-2024-009999",
     status: "cancelled",
     date: "05/01/2024",
     dueDate: "05/02/2024",
     paidDate: null,
-    customer: "Trần Thị Lan",
-    email: "trantilan@gmail.com",
+    customer: "Trần Thu Trang",
+    email: "trang.tran@gmail.com",
     phone: "0987 654 321",
     address: "67 Trần Hưng Đạo, Quận 5, TP.HCM",
     taxCode: "",
@@ -82,7 +82,7 @@ export const MOCK_INVOICES: Record<string, Invoice> = {
       {
         name: "iPad Pro 12.9 M2 WiFi 256GB",
         qty: 1,
-        unit: "Chiếc",
+        unit: "cái",
         price: 32900000,
       },
     ],
@@ -104,14 +104,14 @@ export const STATUS_CONFIG: Record<string, StatusConfig> = {
   },
   pending: {
     label: "Chờ thanh toán",
-    icon: "◐",
+    icon: "●",
     bg: "bg-amber-50",
     border: "border-amber-200",
     text: "text-amber-700",
     badge: "bg-amber-100 text-amber-700",
   },
   cancelled: {
-    label: "Đã huỷ",
+    label: "Đã hủy",
     icon: "✕",
     bg: "bg-red-50",
     border: "border-red-200",
@@ -120,6 +120,6 @@ export const STATUS_CONFIG: Record<string, StatusConfig> = {
   },
 };
 
-export const fmt = (n: number) => n.toLocaleString("vi-VN") + "đ";
+export const fmt = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 export const subtotalOf = (items: Invoice["items"]) =>
   items.reduce((s, i) => s + i.price * i.qty, 0);

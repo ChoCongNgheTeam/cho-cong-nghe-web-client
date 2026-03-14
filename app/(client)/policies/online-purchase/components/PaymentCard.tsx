@@ -1,4 +1,4 @@
-type Props = {
+﻿type Props = {
   method: any;
 };
 

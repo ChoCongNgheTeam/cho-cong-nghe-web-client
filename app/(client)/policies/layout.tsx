@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+﻿import { headers } from "next/headers";
 import Sidebar from "./components/Sidebar";
 import { menuItems } from "./components/menuItems";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
@@ -43,7 +43,7 @@ export default function PoliciesLayout({
 async function BreadcrumbServer() {
    const headersList = await headers();
    const pathname = headersList.get("x-invoke-path") ?? "";
-   console.log("pathname:", pathname); // kiểm tra trong terminal
+   console.log("pathname:", pathname); // kiá»ƒm tra trong terminal
    const items = getBreadcrumbItems(pathname);
    return <Breadcrumb items={items} />;
 }

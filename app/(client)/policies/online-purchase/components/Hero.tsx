@@ -1,4 +1,4 @@
-export default function Hero() {
+﻿export default function Hero() {
   return (
     <div className="bg-stone-900 text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-transparent to-stone-900/80" />
@@ -10,20 +10,19 @@ export default function Hero() {
         </div>
 
         <h1 className="font-serif text-4xl md:text-5xl font-black leading-tight mb-4">
-          Hướng dẫn{" "}
-          <span className="italic text-amber-400">Mua hàng</span>
-          <br />& Thanh toán Online
+          Hướng dẫn mua hàng
+          <br />& Thanh toán online
         </h1>
 
         <p className="text-stone-400 text-sm max-w-md mx-auto leading-relaxed">
-          Mua sắm dễ dàng, an toàn và tiện lợi. Chúng tôi hỗ trợ bạn từng bước từ khi chọn sản phẩm đến khi nhận hàng.
+          Mua sắm dễ dàng, an toàn và tiện lợi. Chúng tôi hỗ trợ bạn từng bước
+          từ khi chọn sản phẩm đến khi nhận hàng.
         </p>
 
-        {/* Stats */}
         <div className="flex flex-wrap justify-center gap-8 mt-10 pt-10 border-t border-stone-700">
           {[
             { val: "4 bước", label: "Đặt hàng đơn giản" },
-            { val: "4 hình thức", label: "Thanh toán linh hoạt" },
+            { val: "3 hình thức", label: "Thanh toán linh hoạt" },
             { val: "24/7", label: "Hỗ trợ khách hàng" },
           ].map((s, i) => (
             <div key={i} className="text-center">

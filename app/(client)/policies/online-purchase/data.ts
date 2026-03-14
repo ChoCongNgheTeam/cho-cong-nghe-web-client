@@ -1,18 +1,18 @@
-export const steps = [
+﻿export const steps = [
   {
     num: "01",
     icon: "🛒",
     title: "Chọn sản phẩm",
-    desc: "Duyệt danh mục và chọn sản phẩm phù hợp với nhu cầu của bạn.",
+    desc: "Duyệt danh mục và chọn sản phẩm phù hợp nhu cầu của bạn.",
     tips: [
       "Xem kỹ mô tả sản phẩm",
       "Kiểm tra đánh giá từ khách hàng",
-      "Chọn đúng màu sắc / size",
+      "Chọn đúng màu sắc / phiên bản",
     ],
   },
   {
     num: "02",
-    icon: "🧾",
+    icon: "🧺",
     title: "Thêm vào giỏ hàng",
     desc: "Thêm sản phẩm vào giỏ và kiểm tra lại thông tin trước khi thanh toán.",
     tips: [
@@ -73,7 +73,7 @@ export const paymentMethods = [
   {
     icon: "📱",
     name: "Ví điện tử",
-    desc: "Thanh toán qua Momo, ZaloPay, VNPay...",
+    desc: "Thanh toán qua MoMo, ZaloPay, VNPay...",
     badge: "Tiện lợi",
     badgeColor: "bg-purple-100 text-purple-700",
     pros: [

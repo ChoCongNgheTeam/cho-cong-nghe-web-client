@@ -1,4 +1,4 @@
-export default function OperatingRegulations() {
+﻿export default function OperatingRegulations() {
    return (
       <div className="text-primary leading-relaxed mb-10 w-full">
          <h1 className="text-[1.385em] font-bold text-primary text-center mb-7">

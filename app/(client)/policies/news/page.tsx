@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 
 interface NewsItem {
@@ -82,14 +82,13 @@ const categoryColors: Record<string, string> = {
 
 const badgeColors: Record<string, string> = {
    HOT: "bg-promotion text-neutral-light",
-   MỚI: "bg-accent text-neutral-light",
+   "MỚI": "bg-accent text-neutral-light",
    "SỰ KIỆN": "bg-dark text-neutral-light",
 };
 
 export default function NewsPage() {
    return (
       <div className="min-h-screen bg-neutral-light">
-         {/* Header */}
          <div className="border-b border-neutral bg-neutral-light">
             <div className="py-8">
                <div className="flex items-end justify-between">
@@ -102,36 +101,34 @@ export default function NewsPage() {
                      </h1>
                   </div>
 
-                  {/* Filter tabs */}
                   <div className="flex gap-1 bg-neutral-light-active rounded-lg p-1">
-                     {["Tất cả", "Khuyến mãi", "Tin tức", "Sự kiện"].map(
-                        (tab, i) => (
-                           <button
-                              key={tab}
-                              className={[
-                                 "px-4 py-1.5 rounded-md font-medium transition-colors cursor-pointer",
-                                 i === 0
-                                    ? "bg-neutral-light text-primary shadow-sm"
-                                    : "text-primary hover:text-primary",
-                              ].join(" ")}
-                           >
-                              {tab}
-                           </button>
-                        ),
-                     )}
+                     {[
+                        "Tất cả",
+                        "Khuyến mãi",
+                        "Tin tức",
+                        "Sự kiện",
+                     ].map((tab, i) => (
+                        <button
+                           key={tab}
+                           className={[
+                              "px-4 py-1.5 rounded-md font-medium transition-colors cursor-pointer",
+                              i === 0
+                                 ? "bg-neutral-light text-primary shadow-sm"
+                                 : "text-primary hover:text-primary",
+                           ].join(" ")}
+                        >
+                           {tab}
+                        </button>
+                     ))}
                   </div>
                </div>
             </div>
          </div>
 
          <div className="py-8">
-            <Link
-               href={`/news/${featuredNews.id}`}
-               className="group block mb-8"
-            >
+            <Link href={`/news/${featuredNews.id}`} className="group block mb-8">
                <div className="grid grid-cols-5 gap-0 rounded-xl overflow-hidden border border-neutral bg-neutral-light hover:shadow-md transition-shadow duration-200">
-                  {/* Image */}
-                  <div className="col-span-3 relative overflow-hidden bg-accent-light aspect-[16/9]">
+                  <div className="col-span-3 relative overflow-hidden bg-accent-light aspect-video">
                      <Image
                         src={featuredNews.image}
                         alt={featuredNews.title}
@@ -147,7 +144,6 @@ export default function NewsPage() {
                      )}
                   </div>
 
-                  {/* Content */}
                   <div className="col-span-2 p-7 flex flex-col justify-between">
                      <div>
                         <div className="flex items-center gap-2 mb-3">
@@ -156,9 +152,7 @@ export default function NewsPage() {
                            >
                               {featuredNews.category}
                            </span>
-                           <span className="text-primary">
-                              {featuredNews.date}
-                           </span>
+                           <span className="text-primary">{featuredNews.date}</span>
                         </div>
                         <h2 className="font-bold text-primary leading-snug mb-3 group-hover:text-accent transition-colors">
                            {featuredNews.title}
@@ -170,12 +164,7 @@ export default function NewsPage() {
                      <div className="mt-5">
                         <span className="inline-flex items-center gap-1.5 font-semibold text-accent group-hover:gap-2.5 transition-all">
                            Xem chi tiết
-                           <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                           >
+                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                               <path
                                  d="M2 7h10M8 3l4 4-4 4"
                                  stroke="currentColor"
@@ -190,7 +179,6 @@ export default function NewsPage() {
                </div>
             </Link>
 
-            {/* Grid list */}
             <div className="grid grid-cols-3 gap-5">
                {restNews.map((item) => (
                   <Link
@@ -198,8 +186,7 @@ export default function NewsPage() {
                      href={`/news/${item.id}`}
                      className="group flex flex-col rounded-xl overflow-hidden border border-neutral bg-neutral-light hover:shadow-md transition-shadow duration-200"
                   >
-                     {/* Image */}
-                     <div className="relative overflow-hidden aspect-[16/9] bg-accent-light">
+                     <div className="relative overflow-hidden aspect-video bg-accent-light">
                         <Image
                            src={item.image}
                            alt={item.title}
@@ -215,7 +202,6 @@ export default function NewsPage() {
                         )}
                      </div>
 
-                     {/* Content */}
                      <div className="p-4 flex flex-col flex-1">
                         <div className="flex items-center gap-2 mb-2">
                            <span
@@ -233,12 +219,7 @@ export default function NewsPage() {
                         </p>
                         <span className="inline-flex items-center gap-1 font-semibold text-accent group-hover:gap-2 transition-all mt-auto">
                            Xem chi tiết
-                           <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                           >
+                           <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                               <path
                                  d="M2 7h10M8 3l4 4-4 4"
                                  stroke="currentColor"
@@ -253,7 +234,6 @@ export default function NewsPage() {
                ))}
             </div>
 
-            {/* Pagination */}
             <div className="flex items-center justify-center gap-1 mt-10">
                <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral text-primary hover:bg-neutral-light-active transition-colors cursor-pointer">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
