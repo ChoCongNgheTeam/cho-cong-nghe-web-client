@@ -4,6 +4,7 @@ import { Facebook, Twitter, Instagram, Music, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
+
 interface OpenSections {
    about: boolean;
    policy: boolean;
@@ -40,7 +41,17 @@ const Footer = () => {
          <div className="container not-only-of-type:py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                <div>
-                  <h3 className="text-xl font-bold mb-6">ChoCongNghe.</h3>
+                  {/* Logo */}
+                              <Link href="/" className="shrink-0 pr-10">
+                                 <Image
+                                    src="/logo.png"
+                                    width={180}
+                                    height={60}
+                                    alt="Logo"
+                                    className="h-15 lg:h-18 w-auto hover:opacity-90 transition-opacity"
+                                    priority
+                                 />
+                              </Link>
                   <p className="text-gray-300 text-sm mb-6 leading-relaxed">
                      ChoCongNghe – Nền tảng mua sắm thiết bị điện tử chính hãng,
                      giao nhanh toàn quốc.
