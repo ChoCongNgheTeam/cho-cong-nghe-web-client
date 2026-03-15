@@ -6,32 +6,31 @@ import ProductCard from "@/components/product/ProductCard";
 import WishlistToolbar from "./components/WishlistToolbar";
 import WishlistPagination from "./components/WishlistPagination";
 import { getWishlist } from "./_libs/wishlist.api";
-import { WishlistItem } from "./types/wishlist";
 import { Product } from "@/components/product/types";
 import { useWishlist } from "@/contexts/WishlistContext";
-
+import { WishlistItem } from "./types/wishlist";
 function mapToProduct(item: WishlistItem): Product {
-   const { product } = item;
+   const { product, price } = item;
    const thumbnail = product.img.find((i) => i.imageUrl)?.imageUrl ?? "";
    return {
       id: product.id,
       name: product.name,
       slug: product.slug,
       thumbnail,
-      priceOrigin: 0,
+      priceOrigin: price.base,
       inStock: true,
       price: {
-         base: 0,
-         final: 0,
-         hasPromotion: false,
-         discountPercentage: 0,
-         discountAmount: 0,
+         base: price.base,
+         final: price.final,
+         hasPromotion: price.hasPromotion,
+         discountPercentage: price.discountPercentage,
+         discountAmount: price.discountAmount,
       },
       rating: {
          average: parseFloat(product.ratingAverage) || 0,
          count: product.ratingCount,
       },
-      highlights: [],
+      highlights: [], // ProductHighlight[] cần key + icon, API không trả về
       isWishlist: true,
    };
 }
@@ -139,6 +138,7 @@ export default function WishlistPage() {
                      key={product.id}
                      product={product}
                      index={index}
+                     showWishlist={true}
                   />
                ))}
             </div>

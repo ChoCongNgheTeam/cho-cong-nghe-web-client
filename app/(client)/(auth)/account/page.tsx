@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -19,8 +20,14 @@ const AuthPage = () => {
          setActiveTab(tabParam);
       }
    }, [tabParam]);
+=======
+import { Suspense } from "react";
+import AuthPage from "./AuthPage";
+>>>>>>> 9922c0230709679efe6e15f69c0ede9a23668955
 
+export default function AccountPage() {
    return (
+<<<<<<< HEAD
       <div className="container py-4 sm:py-6 lg:py-8">
          <div className="pb-4 sm:pb-6">
             <Breadcrumb
@@ -83,3 +90,10 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+=======
+      <Suspense fallback={null}>
+         <AuthPage />
+      </Suspense>
+   );
+}
+>>>>>>> 9922c0230709679efe6e15f69c0ede9a23668955

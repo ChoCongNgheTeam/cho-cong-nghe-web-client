@@ -1,5 +1,9 @@
+"use client";
+
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import BlogListClient from "./components/blog-list-client";
 import {
   ADMIN_BLOG_CATEGORIES,
@@ -14,14 +18,6 @@ import {
   getAdminBlogs,
   getAdminBlogStats,
 } from "./_lib/blog.api";
-
-type AdminBlogPageProps = {
-  searchParams?: Promise<{
-    page?: string;
-    category?: string;
-    search?: string;
-  }>;
-};
 
 const PAGE_SIZE = 10;
 const FETCH_LIMIT = 50;
@@ -121,37 +117,66 @@ function buildFilterHref({
   return `/admin/blogs?${params.toString()}`;
 }
 
-export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const parsedPage = Number(resolvedSearchParams.page ?? "1");
+export default function AdminBlogPage() {
+  const searchParams = useSearchParams();
+
+  const pageParam = searchParams.get("page") ?? "1";
+  const category = searchParams.get("category") ?? undefined;
+  const search = (searchParams.get("search") ?? "").trim();
+
+  const parsedPage = Number(pageParam);
   const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const category = resolvedSearchParams.category;
-  const search = resolvedSearchParams.search?.trim();
 
-  let allBlogs: AdminBlog[] = [];
-  let stats: AdminBlogStats = EMPTY_STATS;
-  let hasError = false;
-  let hasStatsError = false;
+  const [allBlogs, setAllBlogs] = useState<AdminBlog[]>([]);
+  const [stats, setStats] = useState<AdminBlogStats>(EMPTY_STATS);
+  const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [hasStatsError, setHasStatsError] = useState(false);
 
-  const [blogListResult, blogStatsResult] = await Promise.allSettled([
-    getAllAdminBlogs(search),
-    getAdminBlogStats(),
-  ]);
+  useEffect(() => {
+    let mounted = true;
 
-  if (blogListResult.status === "fulfilled") {
-    allBlogs = blogListResult.value;
-  } else {
-    hasError = true;
-  }
+    const load = async () => {
+      setLoading(true);
+      setHasError(false);
+      setHasStatsError(false);
 
-  if (blogStatsResult.status === "fulfilled") {
-    stats = blogStatsResult.value;
-  } else {
-    hasStatsError = true;
-    stats = buildFallbackStats(allBlogs);
-  }
+      const [blogResult, statsResult] = await Promise.allSettled([
+        getAllAdminBlogs(search),
+        getAdminBlogStats(),
+      ]);
 
-  const filteredBlogs = allBlogs.filter((blog) => isAdminBlogInCategory(blog, category));
+      if (!mounted) return;
+
+      if (blogResult.status === "fulfilled") {
+        setAllBlogs(blogResult.value);
+      } else {
+        setHasError(true);
+        setAllBlogs([]);
+      }
+
+      if (statsResult.status === "fulfilled") {
+        setStats(statsResult.value);
+      } else {
+        setHasStatsError(true);
+        setStats(buildFallbackStats(blogResult.status === "fulfilled" ? blogResult.value : []));
+      }
+
+      setLoading(false);
+    };
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [search]);
+
+  const filteredBlogs = useMemo(
+    () => allBlogs.filter((blog) => isAdminBlogInCategory(blog, category)),
+    [allBlogs, category]
+  );
+
   const total = filteredBlogs.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
@@ -165,19 +190,26 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
     totalPages,
   };
 
-  const categoryCounts = ADMIN_BLOG_CATEGORIES.map((item) => ({
-    ...item,
-    count: allBlogs.filter((blog) => resolveAdminBlogCategory(blog).key === item.key).length,
-  }));
+  const categoryCounts = useMemo(
+    () =>
+      ADMIN_BLOG_CATEGORIES.map((item) => ({
+        ...item,
+        count: allBlogs.filter((blog) => resolveAdminBlogCategory(blog).key === item.key).length,
+      })),
+    [allBlogs]
+  );
 
   const currentCategoryLabel = getAdminBlogCategoryTitle(category);
 
   return (
     <section className="min-h-screen bg-neutral-light p-6 text-primary">
-      <div className="mx-auto flex w-full max-w-350 flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="space-y-3">
           <h1 className="text-2xl font-semibold">Quản lý bài viết</h1>
-          <p className="text-xl font-semibold">Blogs</p>
+          <p className="text-xl font-semibold">Bài viết</p>
+          {loading && (
+            <p className="text-sm text-primary-light">Đang tải dữ liệu...</p>
+          )}
           {hasError && (
             <p className="text-sm text-promotion">
               Không thể tải dữ liệu từ API. Vui lòng kiểm tra backend.
@@ -185,14 +217,14 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
           )}
           {hasStatsError && (
             <p className="text-sm text-promotion">
-              Không thể tải thống kê blogs. Đang hiển thị thống kê tạm theo dữ liệu bảng.
+              Không thể tải thống kê bài viết. Đang hiển thị thống kê tạm theo dữ liệu bảng.
             </p>
           )}
         </header>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <article className="rounded-xl border border-neutral bg-neutral-light p-4">
-            <p className="text-sm text-primary-light">Tổng blogs</p>
+            <p className="text-sm text-primary-light">Tổng bài viết</p>
             <p className="mt-2 text-2xl font-semibold text-primary">
               {formatNumber(stats.totalBlogs)}
             </p>
@@ -225,7 +257,7 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
 
         <div className="rounded-xl border border-neutral bg-neutral-light p-3">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-primary">Filter Blogs</h2>
+            <h2 className="text-base font-semibold text-primary">Danh mục tin tức</h2>
             <Link
               href="/admin/blogs"
               className="text-sm font-medium text-accent hover:text-accent-hover"
@@ -314,7 +346,7 @@ export default async function AdminBlogPage({ searchParams }: AdminBlogPageProps
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-primary">
-              {category ? `Danh mục: ${currentCategoryLabel}` : "Tất cả blogs"}
+              {category ? `Danh mục: ${currentCategoryLabel}` : "Tất cả bài viết"}
             </h2>
             <p className="text-sm text-primary-light">
               Hiển thị {pageBlogs.length} / {pagination.total} bài viết

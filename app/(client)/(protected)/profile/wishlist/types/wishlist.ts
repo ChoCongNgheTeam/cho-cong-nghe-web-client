@@ -1,6 +1,4 @@
 // types/wishlist.ts
-import { Product } from "@/components/product/types";
-
 export interface WishlistItem {
    id: string;
    userId: string;
@@ -12,9 +10,20 @@ export interface WishlistItem {
       slug: string;
       isActive: boolean;
       brandId: string;
-      categoryId: string;
       ratingAverage: string;
       ratingCount: number;
+      category: {
+         id: string;
+         parent: {
+            id: string;
+            parent: { id: string };
+         };
+      };
+      variants: { id: string; price: string }[];
+      productSpecifications: {
+         value: string;
+         specification: { name: string; unit: string | null };
+      }[];
       img: {
          id: string;
          imageUrl: string | null;
@@ -22,6 +31,13 @@ export interface WishlistItem {
          altText: string;
          position: number;
       }[];
+   };
+   price: {
+      base: number;
+      final: number;
+      discountAmount: number;
+      discountPercentage: number;
+      hasPromotion: boolean;
    };
 }
 
@@ -37,5 +53,3 @@ export interface WishlistResponse {
    meta: WishlistMeta;
    message: string;
 }
-
-export type { Product as WishlistProduct };

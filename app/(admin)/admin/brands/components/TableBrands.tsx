@@ -150,13 +150,15 @@ export function getBrandColumns({
                >
                   <Pencil size={14} />
                </Link>
-               <button
-                  title="Xoá"
-                  onClick={() => onDeleteClick(brand)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-               >
-                  <Trash2 size={14} />
-               </button>
+               {brand._count.products === 0 && (
+                  <button
+                     title="Xoá"
+                     onClick={() => onDeleteClick(brand)}
+                     className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
+                  >
+                     <Trash2 size={14} />
+                  </button>
+               )}
             </div>
          ),
       },

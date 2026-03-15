@@ -138,9 +138,7 @@ export default function OrderSummary({
                 {isCheckoutPage && shippingFee !== undefined && (
                   <div className="flex justify-between">
                     <span className="text-neutral-darker">Phí vận chuyển</span>
-                    <span className="font-medium text-accent-dark">
-                      {shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}
-                    </span>
+                    <span className="font-medium text-accent-dark">{shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}</span>
                   </div>
                 )}
 
@@ -166,9 +164,7 @@ export default function OrderSummary({
           <button
             onClick={handleCheckoutClick}
             disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
-            className={`block w-full py-3.5 text-center text-base font-semibold transition ${
-              showTerms ? "" : "rounded-b-lg"
-            } ${
+            className={`block w-full py-3.5 text-center text-base font-semibold transition ${showTerms ? "" : "rounded-b-lg"} ${
               selectedItemsCount === 0 || (showTerms && !agreedToTerms)
                 ? "cursor-not-allowed bg-primary text-neutral-light opacity-50"
                 : "bg-primary text-neutral-light hover:bg-primary-hover shadow-lg cursor-pointer"

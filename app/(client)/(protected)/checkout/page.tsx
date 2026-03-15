@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
+import PaymentResultModal from "./components/PaymentResultModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -28,10 +29,9 @@ interface CartItem {
   colorValue?: string;
   quantity: number;
   unit_price: number;
-  discount_value: number;
+  original_price?: number;
   image?: string;
 }
-
 interface SelectedItem {
   id: string;
   productName?: string;
@@ -98,14 +98,11 @@ export default function CheckoutPage() {
   const [voucherValue, setVoucherValue] = useState(0);
   const [voucherId, setVoucherId] = useState("");
 
-  const handleApplyVoucher = useCallback(
-    (code: string, value: number, id: string) => {
-      setVoucherCode(code);
-      setVoucherValue(value);
-      setVoucherId(id);
-    },
-    [],
-  );
+  const handleApplyVoucher = useCallback((code: string, value: number, id: string) => {
+    setVoucherCode(code);
+    setVoucherValue(value);
+    setVoucherId(id);
+  }, []);
 
   // ── Preview ────────────────────────────────────────────────────────────────
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
@@ -138,13 +135,37 @@ export default function CheckoutPage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [paymentResultModal, setPaymentResultModal] = useState<{
+    isOpen: boolean;
+    paymentInfo: any;
+    orderId: string;
+  }>({ isOpen: false, paymentInfo: null, orderId: "" });
+
+  // Tách thành 2 hàm: 1 mở confirm, 1 thực sự đặt hàng
+  const handleCheckoutClick = () => {
+    if (!contactName) {
+      toast.error("Vui lòng kiểm tra thông tin người đặt");
+      return;
+    }
+    if (!selectedAddress) {
+      toast.error("Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+    if (!selectedPaymentMethodId) {
+      toast.error("Vui lòng chọn phương thức thanh toán");
+      return;
+    }
+    if (!agreedToTerms) {
+      toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
+      return;
+    }
+    setShowConfirmModal(true);
+  };
+
   const { refetchCart } = useCart();
 
-  const formatDisplayAddress = (addr: ApiAddress) =>
-    addr.fullAddress ??
-    [addr.detailAddress, addr.ward?.name, addr.province?.name]
-      .filter(Boolean)
-      .join(", ");
+  const formatDisplayAddress = (addr: ApiAddress) => addr.fullAddress ?? [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
 
   // ── Sync contactPhone từ địa chỉ được chọn ───────────────────────────────
   // SĐT chỉ hiển thị 1 lần ở phần địa chỉ nhận hàng, không cần hiện lại ở người đặt
@@ -160,10 +181,7 @@ export default function CheckoutPage() {
       const res = await apiRequest.get<{ success: boolean; data: ApiAddress[] }>("/addresses");
       const list = res?.data ?? [];
       if (list.length === 0) return;
-      const target =
-        list.find((a) => a.id === addressId) ??
-        list.find((a) => a.isDefault) ??
-        list[0];
+      const target = list.find((a) => a.id === addressId) ?? list.find((a) => a.isDefault) ?? list[0];
       setSelectedAddress(target);
     } catch {
       // silent
@@ -197,8 +215,7 @@ export default function CheckoutPage() {
           colorValue: item.colorValue ?? "",
           quantity: item.quantity,
           unit_price: item.unitPrice ?? item.unit_price ?? 0,
-          discount_value:
-            (item.originalPrice ?? item.unitPrice ?? 0) - (item.unitPrice ?? 0),
+          original_price: item.originalPrice ?? item.original_price,
           image: item.image ?? item.image_url ?? "",
         })),
       );
@@ -226,10 +243,7 @@ export default function CheckoutPage() {
           .get<{ success: boolean; data: ApiAddress[] }>("/addresses")
           .then((res) => {
             const list = res?.data ?? [];
-            const target =
-              list.find((a) => a.id === targetId) ??
-              list.find((a) => a.isDefault) ??
-              list[0];
+            const target = list.find((a) => a.id === targetId) ?? list.find((a) => a.isDefault) ?? list[0];
             if (target) setSelectedAddress(target);
           })
           .catch(() => {});
@@ -251,6 +265,7 @@ export default function CheckoutPage() {
   }, [authLoading, user]);
 
   // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
+  // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
   useEffect(() => {
     if (authLoading) return;
     if (searchParams.get("newAddress") === "1") return;
@@ -258,14 +273,20 @@ export default function CheckoutPage() {
     const loadDefaultAddress = async () => {
       try {
         const res = await apiRequest.get<{ success: boolean; data: ApiAddress | null }>("/addresses/default");
-        if (res?.data) { setSelectedAddress(res.data); return; }
-      } catch { /* fallback */ }
+        if (res?.data) {
+          setSelectedAddress(res.data);
+          return;
+        }
+      } catch {
+        /* fallback */
+      }
       try {
         const listRes = await apiRequest.get<{ success: boolean; data: ApiAddress[] }>("/addresses");
         const list = listRes?.data ?? [];
-        if (list.length > 0)
-          setSelectedAddress(list.find((a) => a.isDefault) ?? list[0]);
-      } catch { /* silent */ }
+        if (list.length > 0) setSelectedAddress(list.find((a) => a.isDefault) ?? list[0]);
+      } catch {
+        /* silent */
+      }
     };
     loadDefaultAddress();
   }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -279,14 +300,16 @@ export default function CheckoutPage() {
         shippingAddressId: selectedAddress.id,
         ...(voucherId ? { voucherId } : {}),
       });
-      const res = await apiRequest.get<{ success: boolean; data: PreviewData }>(
-        `/checkout/preview?${params.toString()}`,
-      );
+      const res = await apiRequest.get<{ success: boolean; data: PreviewData }>(`/checkout/preview?${params.toString()}`);
       if (res?.data) setPreviewData(res.data);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, [selectedAddress?.id, selectedPaymentMethodId, voucherId]);
 
-  useEffect(() => { fetchPreview(); }, [fetchPreview]);
+  useEffect(() => {
+    fetchPreview();
+  }, [fetchPreview]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -302,55 +325,67 @@ export default function CheckoutPage() {
         parsed.contactEmail = data.email;
         localStorage.setItem("checkoutData", JSON.stringify(parsed));
       }
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
 
     toast.success("Cập nhật thông tin người đặt thành công");
   };
 
   const handlePlaceOrder = async () => {
-    if (!contactName) {
-      toast.error("Vui lòng kiểm tra thông tin người đặt"); return;
-    }
-    if (!selectedAddress) {
-      toast.error("Vui lòng chọn địa chỉ giao hàng"); return;
-    }
-    if (!selectedPaymentMethodId) {
-      toast.error("Vui lòng chọn phương thức thanh toán"); return;
-    }
-    if (!agreedToTerms) {
-      toast.error("Vui lòng đồng ý với điều khoản đặt hàng"); return;
-    }
-
+    setShowConfirmModal(false);
     setIsSubmitting(true);
     try {
       const res = await apiRequest.post<{
         success: boolean;
-        data: { orderId: string; orderCode: string; paymentInfo?: any };
-        message?: string;
+        data: {
+          orderId: string;
+          orderCode: string;
+          paymentMethodCode: string;
+          paymentInfo: any;
+        };
       }>("/checkout", {
         paymentMethodId: selectedPaymentMethodId,
-        shippingAddressId: selectedAddress.id,
-        shippingContactName: selectedAddress.contactName,
-        shippingPhone: selectedAddress.phone,
+        shippingAddressId: selectedAddress!.id,
+        shippingContactName: selectedAddress!.contactName,
+        shippingPhone: selectedAddress!.phone,
         ...(voucherId ? { voucherId } : {}),
       });
 
       if (res?.success) {
-        const rawCheckout = localStorage.getItem("checkoutData");
-        if (rawCheckout) sessionStorage.setItem("checkoutData", rawCheckout);
         localStorage.removeItem("checkoutData");
         await refetchCart();
 
-        const info = res.data?.paymentInfo ?? { type: "COD" };
-        sessionStorage.setItem("paymentInfo", JSON.stringify(info));
-        sessionStorage.setItem("pendingOrderId", res.data?.orderId ?? "");
-        sessionStorage.setItem("pendingOrderCode", res.data?.orderCode ?? "");
-        router.push("/payment");
+        const { paymentMethodCode, paymentInfo, orderCode, orderId } = res.data;
+        const methodUpper = paymentMethodCode.toUpperCase();
+
+        // COD / Bank Transfer → trang thanh toán dedicated
+        if (methodUpper.includes("COD") || methodUpper.includes("BANK_TRANSFER")) {
+          router.push(`/order/${orderCode}/payment`);
+          return;
+        }
+
+        // Momo / VNPay / ZaloPay → redirect thẳng cổng thanh toán
+        if (methodUpper.includes("MOMO") || methodUpper.includes("VNPAY") || methodUpper.includes("ZALOPAY")) {
+          if (paymentInfo?.paymentUrl) {
+            window.location.href = paymentInfo.paymentUrl;
+          } else {
+            toast.error("Không lấy được đường dẫn thanh toán. Vui lòng thử lại.");
+          }
+          return;
+        }
+
+        // Stripe / Credit Card → modal tại trang checkout
+        if (methodUpper.includes("STRIPE") || methodUpper.includes("CREDIT_CARD")) {
+          setPaymentResultModal({ isOpen: true, paymentInfo, orderId });
+          return;
+        }
+
+        // Fallback
+        router.push(`/order/${orderCode}/payment`);
       }
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng",
-      );
+      toast.error(err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng");
     } finally {
       setIsSubmitting(false);
     }
@@ -390,13 +425,7 @@ export default function CheckoutPage() {
       <div className="hidden md:block">
         <div className="container py-4 sm:py-6">
           <div className="mb-4 sm:mb-6">
-            <Breadcrumb
-              items={[
-                { label: "Trang chủ", href: "/" },
-                { label: "Giỏ hàng", href: "/cart" },
-                { label: "Thanh toán" },
-              ]}
-            />
+            <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Giỏ hàng", href: "/cart" }, { label: "Thanh toán" }]} />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
@@ -408,7 +437,9 @@ export default function CheckoutPage() {
               <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm sm:text-base font-semibold text-primary">Người đặt hàng</h2>
-                  <button onClick={() => setShowUserSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">Thay đổi</button>
+                  <button onClick={() => setShowUserSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">
+                    Thay đổi
+                  </button>
                 </div>
                 <div className="space-y-1">
                   <p className="font-medium text-sm text-primary">{contactName || "Chưa có tên"}</p>
@@ -420,21 +451,17 @@ export default function CheckoutPage() {
               <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm sm:text-base font-semibold text-primary">Địa chỉ nhận hàng</h2>
-                  <button onClick={() => setShowAddressSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">Thay đổi</button>
+                  <button onClick={() => setShowAddressSidebar(true)} className="text-xs sm:text-sm hover:underline cursor-pointer text-primary">
+                    Thay đổi
+                  </button>
                 </div>
                 {selectedAddress ? (
                   <div>
                     <p className="font-semibold text-sm text-primary mb-1">
                       {selectedAddress.contactName} • {selectedAddress.phone}
                     </p>
-                    <p className="text-sm text-neutral-darker leading-relaxed">
-                      {formatDisplayAddress(selectedAddress)}
-                    </p>
-                    {selectedAddress.isDefault && (
-                      <span className="mt-2 inline-block text-xs px-2 py-0.5 rounded-full bg-accent text-primary-darker font-medium">
-                        Địa chỉ mặc định
-                      </span>
-                    )}
+                    <p className="text-sm text-neutral-darker leading-relaxed">{formatDisplayAddress(selectedAddress)}</p>
+                    {selectedAddress.isDefault && <span className="mt-2 inline-block text-xs px-2 py-0.5 rounded-full bg-accent text-primary-darker font-medium">Địa chỉ mặc định</span>}
                   </div>
                 ) : (
                   <>
@@ -496,7 +523,7 @@ export default function CheckoutPage() {
                 selectedPromotions={selectedPromotions}
                 promotionValue={promotionValue}
                 onOpenVoucherModal={() => setShowVoucherModal(true)}
-                onCheckout={handlePlaceOrder}
+                onCheckout={handleCheckoutClick}
                 buttonText={isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
                 showTerms={true}
                 agreedToTerms={agreedToTerms}
@@ -524,8 +551,22 @@ export default function CheckoutPage() {
           <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-primary mb-3">Người đặt hàng</h2>
             <div className="space-y-2">
-              <input type="text" value={contactName} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary" placeholder="Họ và tên" />
-              <input type="email" value={contactEmail} readOnly onClick={() => setShowUserSidebar(true)} className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark" placeholder="Email (Không bắt buộc)" />
+              <input
+                type="text"
+                value={contactName}
+                readOnly
+                onClick={() => setShowUserSidebar(true)}
+                className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
+                placeholder="Họ và tên"
+              />
+              <input
+                type="email"
+                value={contactEmail}
+                readOnly
+                onClick={() => setShowUserSidebar(true)}
+                className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark"
+                placeholder="Email (Không bắt buộc)"
+              />
             </div>
           </div>
         </div>
@@ -533,11 +574,15 @@ export default function CheckoutPage() {
           <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-primary">Địa chỉ nhận hàng</h2>
-              <button onClick={() => setShowAddressSidebar(true)} className="text-xs text-primary hover:underline">Thay đổi</button>
+              <button onClick={() => setShowAddressSidebar(true)} className="text-xs text-primary hover:underline">
+                Thay đổi
+              </button>
             </div>
             {selectedAddress ? (
               <div onClick={() => setShowAddressSidebar(true)} className="cursor-pointer">
-                <p className="font-semibold text-sm text-primary mb-1">{selectedAddress.contactName} • {selectedAddress.phone}</p>
+                <p className="font-semibold text-sm text-primary mb-1">
+                  {selectedAddress.contactName} • {selectedAddress.phone}
+                </p>
                 <p className="text-sm text-neutral-darker">{formatDisplayAddress(selectedAddress)}</p>
               </div>
             ) : (
@@ -548,7 +593,10 @@ export default function CheckoutPage() {
           </div>
         </div>
         <div className="fixed bottom-0 left-0 right-0 bg-accent border-t-2 border-accent-dark p-3 z-30 shadow-2xl">
-          <button onClick={() => setShowSidebar(true)} className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl">
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="w-full bg-primary-darker hover:bg-primary text-accent font-bold py-3.5 px-4 rounded-xl transition flex items-center justify-between shadow-xl"
+          >
             <div className="flex items-center gap-3">
               <ShoppingCart className="h-5 w-5 shrink-0" />
               <span>Xem đơn hàng ({cartItems.length})</span>
@@ -573,7 +621,7 @@ export default function CheckoutPage() {
         appliedVoucherCode={voucherCode}
         appliedVoucherValue={displayVoucherDiscount}
         onOpenVoucherModal={() => setShowVoucherModal(true)}
-        onCheckout={handlePlaceOrder}
+        onCheckout={handleCheckoutClick}
         isCheckoutPage={true}
         showTerms={true}
         agreedToTerms={agreedToTerms}
@@ -589,6 +637,40 @@ export default function CheckoutPage() {
         appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
         cartTotal={subtotal}
+      />
+
+      {/* ── Confirm Modal ── */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowConfirmModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <h3 className="text-base font-semibold text-primary mb-2">Xác nhận đặt hàng</h3>
+            <p className="text-sm text-neutral-darker mb-1">
+              Tổng thanh toán: <span className="font-bold text-primary">{formatVND(displayFinalTotal)}</span>
+            </p>
+            <p className="text-xs text-neutral-darker mb-5">Bạn có chắc chắn muốn đặt đơn hàng này không?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-2.5 border border-neutral rounded-lg text-sm text-neutral-darker hover:bg-neutral transition-colors">
+                Hủy
+              </button>
+              <button
+                onClick={handlePlaceOrder}
+                disabled={isSubmitting}
+                className="flex-1 py-2.5 bg-accent text-primary-darker font-semibold rounded-lg text-sm hover:bg-accent-dark transition-colors disabled:opacity-60"
+              >
+                {isSubmitting ? "Đang xử lý..." : "Xác nhận"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Payment Result Modal (Stripe / Credit Card only) ── */}
+      <PaymentResultModal
+        isOpen={paymentResultModal.isOpen}
+        paymentInfo={paymentResultModal.paymentInfo}
+        onClose={() => setPaymentResultModal((p) => ({ ...p, isOpen: false }))}
+        onDone={() => router.push("/profile/orders")}
       />
     </div>
   );

@@ -7,18 +7,26 @@ export interface CartItemWithDetails {
    brandName: string;
    variantCode: string;
    image: string;
-   color: string;
-   colorValue: string;
-   quantity: number;
+   // color display
+   color: string; // label hiển thị, vd: "Trắng"
+   colorValue: string; // slug/hex cho swatch, vd: "white" | "#fff"
+   colorLabel: string; // === color, dùng cho API param
+   storageLabel: string; // vd: "128GB", dùng cho API param
+   // pricing
    unitPrice: number;
+   originalPrice?: number;
    totalPrice: number;
+   // inventory
+   quantity: number;
    availableQuantity: number;
+   // timestamps
+   addedAt?: number; // unix ms, guest only
    createdAt: string;
    updatedAt: string;
-   // client-side only
+   // client-side UI state
    selected: boolean;
-   originalPrice?: number;
 }
+
 export interface ApiCartItem {
    id: string;
    productVariantId: string;
@@ -28,8 +36,8 @@ export interface ApiCartItem {
    brandName: string;
    variantCode: string;
    image: string;
-   color: string; // thêm
-   colorValue: string; // thêm
+   color: string;
+   colorValue: string;
    quantity: number;
    unitPrice: number;
    totalPrice: number;
@@ -37,6 +45,7 @@ export interface ApiCartItem {
    createdAt: string;
    updatedAt: string;
 }
+
 export interface ApiCartData {
    items: ApiCartItem[];
    totalItems: number;

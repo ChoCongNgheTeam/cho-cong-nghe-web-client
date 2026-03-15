@@ -1,737 +1,587 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Pagination, Product } from "./product.types";
-import { getAllProduct } from "./_libs";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, XCircle, Loader2, Trash2, Filter, ChevronDown, ChevronUp, X, Star, ArchiveRestore } from "lucide-react";
+import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
-// ─── Types ────────────────────────────────────────────────────────────────────
+import AdminTable from "@/components/admin/AdminTables";
+import { Popzy } from "@/components/Modal";
+import type { ProductCard } from "./product.types";
+import { getAllProducts, softDeleteProduct, toggleProductActive, bulkAction } from "./_libs/products";
+import { getProductColumns } from "./components/TableProducts";
+import { formatDate } from "@/helpers";
 
-type StatusType = "active" | "hidden" | "out";
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<StatusType, { label: string; cls: string }> = {
-   active: {
-      label: "Hoạt động",
-      cls: "bg-[rgb(var(--accent-light))] text-accent border border-[rgb(var(--accent-light-active))]",
-   },
-   hidden: {
-      label: "Ẩn",
-      cls: "bg-amber-50 text-amber-700 border border-amber-200",
-   },
-   out: {
-      label: "Hết hàng",
-      cls: "bg-[rgb(var(--promotion-light))] text-promotion border border-[rgb(var(--promotion-light-active))]",
-   },
-};
-
-const fmt = (n: number) =>
-   new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-   }).format(n);
-
-const SAMPLE_STATUSES: StatusType[] = [
-   "active",
-   "active",
-   "active",
-   "hidden",
-   "active",
-   "active",
-   "active",
-   "active",
-   "active",
-   "out",
-   "active",
-   "active",
+const STATUS_TABS = [
+  { value: "ALL", label: "Tất cả" },
+  { value: "active", label: "Hiển thị" },
+  { value: "inactive", label: "Ẩn" },
+  { value: "outOfStock", label: "Hết hàng" },
+  { value: "featured", label: "Nổi bật" },
 ];
 
-// ─── Status Dropdown ──────────────────────────────────────────────────────────
-
-function StatusDropdown({
-   value,
-   onChange,
-}: {
-   value: StatusType;
-   onChange: (v: StatusType) => void;
-}) {
-   const [open, setOpen] = useState(false);
-   const s = STATUS_MAP[value];
-
-   return (
-      <div className="relative inline-block text-left">
-         <button
-            onClick={() => setOpen((o) => !o)}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${s.cls}`}
-         >
-            {s.label}
-            <svg
-               className="w-3 h-3"
-               fill="none"
-               stroke="currentColor"
-               viewBox="0 0 24 24"
-            >
-               <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-               />
-            </svg>
-         </button>
-         {open && (
-            <div className="absolute z-30 mt-1.5 left-0 w-32 bg-neutral-light border border-neutral rounded-xl shadow-xl overflow-hidden">
-               {(Object.keys(STATUS_MAP) as StatusType[]).map((k) => (
-                  <button
-                     key={k}
-                     onClick={() => {
-                        onChange(k);
-                        setOpen(false);
-                     }}
-                     className={`w-full text-left px-3 py-2 text-xs font-medium transition-colors hover:bg-neutral-light-active ${value === k ? "bg-neutral-light-active" : ""}`}
-                  >
-                     <span
-                        className={`inline-flex px-2 py-0.5 rounded-md font-semibold ${STATUS_MAP[k].cls}`}
-                     >
-                        {STATUS_MAP[k].label}
-                     </span>
-                  </button>
-               ))}
-            </div>
-         )}
-      </div>
-   );
-}
-
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-
-function StatCard({
-   title,
-   value,
-   trend,
-   sub,
-   sparkline,
-   children,
-}: {
-   title: string;
-   value?: string;
-   trend?: string;
-   sub?: string;
-   sparkline?: boolean;
-   children?: React.ReactNode;
-}) {
-   return (
-      <div className="bg-neutral-light border border-neutral rounded-2xl p-5 shadow-sm relative overflow-hidden">
-         {sparkline && (
-            <svg
-               className="absolute right-4 top-4 w-16 h-8 opacity-20"
-               viewBox="0 0 64 32"
-               fill="none"
-            >
-               <polyline
-                  points="0,28 10,20 20,24 30,12 40,16 50,8 64,14"
-                  stroke="rgb(var(--accent))"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-               />
-            </svg>
-         )}
-         {children ?? (
-            <>
-               <p className="text-3xl font-bold text-primary tracking-tight">
-                  {value}
-               </p>
-               <p className="text-xs text-neutral-dark font-medium mt-0.5">
-                  {title}
-               </p>
-               <div className="flex items-center gap-1.5 mt-3">
-                  {trend && (
-                     <span className="flex items-center gap-0.5 text-xs font-semibold text-green-600">
-                        <svg
-                           className="w-3 h-3"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2.5}
-                              d="M5 15l7-7 7 7"
-                           />
-                        </svg>
-                        {trend}
-                     </span>
-                  )}
-                  {sub && (
-                     <span className="text-xs text-neutral-dark">{sub}</span>
-                  )}
-               </div>
-            </>
-         )}
-      </div>
-   );
-}
-
-// ─── Rating Circle ────────────────────────────────────────────────────────────
-
-function RatingCircle({ value }: { value: number }) {
-   const pct = value / 5;
-   const r = 22,
-      circ = 2 * Math.PI * r;
-   return (
-      <div className="flex items-center justify-center relative w-14 h-14">
-         <svg
-            className="absolute inset-0 w-full h-full -rotate-90"
-            viewBox="0 0 56 56"
-         >
-            <circle
-               cx="28"
-               cy="28"
-               r={r}
-               fill="none"
-               stroke="rgb(var(--neutral-light-active))"
-               strokeWidth="4"
-            />
-            <circle
-               cx="28"
-               cy="28"
-               r={r}
-               fill="none"
-               stroke="#22c55e"
-               strokeWidth="4"
-               strokeDasharray={`${pct * circ} ${circ}`}
-               strokeLinecap="round"
-            />
-         </svg>
-         <span className="text-sm font-bold text-primary relative z-10">
-            {value.toFixed(1)}
-         </span>
-      </div>
-   );
-}
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-function SkeletonRow() {
-   return (
-      <tr className="border-b border-neutral">
-         {[10, 48, 20, 24, 12, 16, 24, 20, 16].map((w, i) => (
-            <td key={i} className="py-3.5 px-4">
-               <div
-                  className="h-3 bg-neutral rounded-full animate-pulse"
-                  style={{ width: `${w * 4}px` }}
-               />
-            </td>
-         ))}
-      </tr>
-   );
-}
-
-// ─── Product Row ──────────────────────────────────────────────────────────────
-
-function ProductRow({
-   product,
-   idx,
-   checked,
-   onCheck,
-}: {
-   product: Product;
-   idx: number;
-   checked: boolean;
-   onCheck: () => void;
-}) {
-   const [status, setStatus] = useState<StatusType>(
-      SAMPLE_STATUSES[idx % SAMPLE_STATUSES.length],
-   );
-
-   return (
-      <tr className="border-b border-neutral hover:bg-neutral-light-hover transition-colors group">
-         <td className="py-3.5 px-4 w-10">
-            <input
-               type="checkbox"
-               checked={checked}
-               onChange={onCheck}
-               className="rounded border-neutral w-4 h-4 cursor-pointer accent-accent"
-            />
-         </td>
-         <td className="py-3.5 px-4">
-            <div className="flex items-center gap-3">
-               <div className="w-9 h-9 rounded-xl bg-neutral shrink-0 overflow-hidden flex items-center justify-center">
-                  {product.thumbnail ? (
-                     <img
-                        src={product.thumbnail}
-                        alt=""
-                        className="w-full h-full object-cover"
-                     />
-                  ) : (
-                     <svg
-                        className="w-4 h-4 text-neutral-dark"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                     >
-                        <path
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           strokeWidth={1.5}
-                           d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                     </svg>
-                  )}
-               </div>
-               <div className="min-w-0">
-                  <p className="text-sm font-medium text-primary truncate max-w-45">
-                     {product.name}
-                  </p>
-                  <p className="text-[11px] text-neutral-dark mt-0.5 flex items-center gap-1">
-                     SKU: {product.slug.toUpperCase().slice(0, 14)}
-                     <svg
-                        className="w-2.5 h-2.5 opacity-40"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                     >
-                        <path
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           strokeWidth={2}
-                           d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                     </svg>
-                  </p>
-               </div>
-            </div>
-         </td>
-         <td className="py-3.5 px-4">
-            <span className="text-xs text-neutral-dark bg-neutral px-2 py-1 rounded-lg">
-               Điện thoại
-            </span>
-         </td>
-         <td className="py-3.5 px-4 text-sm font-semibold text-primary whitespace-nowrap">
-            {fmt(product.priceOrigin)}
-         </td>
-         <td className="py-3.5 px-4 text-sm text-primary text-center font-medium">
-            8
-         </td>
-         <td className="py-3.5 px-4 text-sm text-neutral-dark text-center">
-            0.00
-         </td>
-         <td className="py-3.5 px-4 text-sm font-medium text-primary whitespace-nowrap">
-            {fmt(product.priceOrigin * 8)}
-         </td>
-         <td className="py-3.5 px-4">
-            <StatusDropdown value={status} onChange={setStatus} />
-         </td>
-         <td className="py-3.5 px-4">
-            <div className="flex items-center gap-0.5 opacity-40 group-hover:opacity-100 transition-opacity">
-               <button className="p-1.5 rounded-lg hover:bg-neutral-light-active text-neutral-dark hover:text-primary transition-colors">
-                  <svg
-                     className="w-3.5 h-3.5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                     />
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                     />
-                  </svg>
-               </button>
-               <button className="p-1.5 rounded-lg hover:bg-accent-light text-neutral-dark hover:text-accent transition-colors">
-                  <svg
-                     className="w-3.5 h-3.5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                     />
-                  </svg>
-               </button>
-               <button className="p-1.5 rounded-lg hover:bg-promotion-light text-neutral-dark hover:text-promotion transition-colors">
-                  <svg
-                     className="w-3.5 h-3.5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                     />
-                  </svg>
-               </button>
-            </div>
-         </td>
-      </tr>
-   );
-}
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-const TABS = [
-   { key: "all", label: "Tất cả sản phẩm", count: 145 },
-   { key: "featured", label: "Sản phẩm nổi bật" },
-   { key: "promo", label: "Sản phẩm khuyến mãi" },
-   { key: "out", label: "Hết hàng" },
+const SORT_OPTIONS = [
+  { value: "createdAt", label: "Ngày tạo" },
+  { value: "updatedAt", label: "Cập nhật gần nhất" },
+  { value: "name", label: "Tên sản phẩm" },
+  { value: "viewsCount", label: "Lượt xem" },
+  { value: "ratingAverage", label: "Đánh giá" },
+  { value: "totalSoldCount", label: "Đã bán" },
 ];
 
-const TH = ({ children }: { children: React.ReactNode }) => (
-   <th className="py-3 px-4 text-xs font-semibold text-neutral-dark whitespace-nowrap cursor-pointer select-none hover:text-primary transition-colors">
-      <span className="flex items-center gap-1">
-         {children}
-         <svg
-            className="w-3 h-3 opacity-30"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-         >
-            <path
-               strokeLinecap="round"
-               strokeLinejoin="round"
-               strokeWidth={2}
-               d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-            />
-         </svg>
-      </span>
-   </th>
-);
+// ─────────────────────────────────────────────────────────────────────────────
+// STATS CARD
+// ─────────────────────────────────────────────────────────────────────────────
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+function StatsCard({ label, value, sub, icon, color = "text-accent" }: { label: string; value: number | string; sub: string; icon: React.ReactNode; color?: string }) {
+  return (
+    <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">{label}</span>
+        <span className={`${color} opacity-70`}>{icon}</span>
+      </div>
+      <p className={`text-[26px] font-bold ${color}`}>{value}</p>
+      <p className="text-[11px] text-neutral-dark">{sub}</p>
+    </div>
+  );
+}
 
-export default function AdminProducts() {
-   const [products, setProducts] = useState<Product[]>([]);
-   const [pagination, setPagination] = useState<Pagination>({
-      page: 1,
-      limit: 12,
-      total: 0,
-      totalPages: 1,
-   });
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState<string | null>(null);
-   const [search, setSearch] = useState("");
-   const [page, setPage] = useState(1);
-   const [pageSize, setPageSize] = useState(12);
-   const [activeTab, setActiveTab] = useState("all");
-   const [selected, setSelected] = useState<Set<string>>(new Set());
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 
-   const fetchProducts = useCallback(async () => {
-      setLoading(true);
-      setError(null);
+export default function ProductsPage() {
+  // ── Data ────────────────────────────────────────────────────────────────────
+  const [allProducts, setAllProducts] = useState<ProductCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // ── Filters / Toolbar ───────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  // ── Selection ───────────────────────────────────────────────────────────────
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // ── Delete modal ────────────────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<ProductCard | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // ── Bulk action ─────────────────────────────────────────────────────────────
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  // ── Fetch ───────────────────────────────────────────────────────────────────
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getAllProducts({ limit: 500 }); // load all, filter client-side
+      setAllProducts(res.data);
+    } catch (e: any) {
+      setError(e?.message ?? "Không thể tải danh sách sản phẩm");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // ── Stats ───────────────────────────────────────────────────────────────────
+  const stats = useMemo(
+    () => ({
+      total: allProducts.length,
+      active: allProducts.filter((p) => p.isActive && !p.deletedAt).length,
+      inactive: allProducts.filter((p) => !p.isActive && !p.deletedAt).length,
+      outOfStock: allProducts.filter((p) => !p.inStock && !p.deletedAt).length,
+      featured: allProducts.filter((p) => p.isFeatured && !p.deletedAt).length,
+    }),
+    [allProducts],
+  );
+
+  // ── Tab counts ──────────────────────────────────────────────────────────────
+  const tabCounts = useMemo<Record<string, number>>(
+    () => ({
+      ALL: allProducts.length,
+      active: stats.active,
+      inactive: stats.inactive,
+      outOfStock: stats.outOfStock,
+      featured: stats.featured,
+    }),
+    [allProducts, stats],
+  );
+
+  // ── Client-side filter + sort ────────────────────────────────────────────────
+  const filteredProducts = useMemo(() => {
+    let list = [...allProducts];
+
+    // Tab filter
+    if (activeTab === "active") {
+      list = list.filter((p) => p.isActive && !p.deletedAt);
+    } else if (activeTab === "inactive") {
+      list = list.filter((p) => !p.isActive && !p.deletedAt);
+    } else if (activeTab === "outOfStock") {
+      list = list.filter((p) => !p.inStock && !p.deletedAt);
+    } else if (activeTab === "featured") {
+      list = list.filter((p) => p.isFeatured && !p.deletedAt);
+    }
+
+    // Search
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
+    }
+
+    // Date range (createdAt)
+    if (dateFrom) {
+      list = list.filter((p) => p.createdAt && new Date(p.createdAt) >= new Date(dateFrom));
+    }
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      list = list.filter((p) => p.createdAt && new Date(p.createdAt) <= end);
+    }
+
+    // Sort
+    list.sort((a, b) => {
+      let aVal: any = (a as any)[sortBy] ?? "";
+      let bVal: any = (b as any)[sortBy] ?? "";
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [allProducts, activeTab, search, dateFrom, dateTo, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const paginatedProducts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredProducts.slice(start, start + pageSize);
+  }, [filteredProducts, page, pageSize]);
+
+  // ── Search ───────────────────────────────────────────────────────────────────
+  const handleSearch = useCallback(() => {
+    setSearch(searchInput);
+    setPage(1);
+  }, [searchInput]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchInput("");
+    setSearch("");
+    setPage(1);
+  }, []);
+
+  const hasActiveFilters = !!(search || dateFrom || dateTo || activeTab !== "ALL");
+
+  const handleClearAllFilters = useCallback(() => {
+    setSearch("");
+    setSearchInput("");
+    setDateFrom("");
+    setDateTo("");
+    setActiveTab("ALL");
+    setPage(1);
+  }, []);
+
+  // ── Selection ────────────────────────────────────────────────────────────────
+  const toggleOne = useCallback((id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    setSelected((prev) => (prev.size === paginatedProducts.length ? new Set() : new Set(paginatedProducts.map((p) => p.id))));
+  }, [paginatedProducts]);
+
+  // ── Toggle active ────────────────────────────────────────────────────────────
+  const handleToggleActive = useCallback(async (product: ProductCard) => {
+    try {
+      await toggleProductActive(product.id, !product.isActive);
+      setAllProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, isActive: !p.isActive } : p)));
+    } catch (e: any) {
+      setError(e?.message ?? "Không thể cập nhật trạng thái");
+    }
+  }, []);
+
+  // ── Delete ───────────────────────────────────────────────────────────────────
+  const handleDeleteClick = useCallback((product: ProductCard) => {
+    setDeleteTarget(product);
+    setDeleteError(null);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await softDeleteProduct(deleteTarget.id);
+      // Mark as deleted in local state (move to trash)
+      setAllProducts((prev) => prev.map((p) => (p.id === deleteTarget.id ? { ...p, deletedAt: new Date().toISOString(), isActive: false } : p)));
+      setDeleteTarget(null);
+    } catch (e: any) {
+      setDeleteError(e?.message ?? "Không thể xóa sản phẩm");
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteTarget]);
+
+  // ── Bulk actions ─────────────────────────────────────────────────────────────
+  const handleBulkAction = useCallback(
+    async (action: "delete" | "activate" | "deactivate" | "feature" | "unfeature") => {
+      if (selected.size === 0) return;
+      setBulkLoading(true);
       try {
-         const res = await getAllProduct({
-            page,
-            limit: pageSize,
-            ...(search ? { search } : {}),
-         });
-         setProducts(res.data);
-         setPagination(res.pagination);
-      } catch (e) {
-         setError(e instanceof Error ? e.message : "Lỗi tải dữ liệu");
+        const ids = Array.from(selected);
+        await bulkAction(action, ids);
+        setSelected(new Set());
+        await fetchProducts(); // refetch to sync state
+      } catch (e: any) {
+        setError(e?.message ?? "Thao tác thất bại");
       } finally {
-         setLoading(false);
+        setBulkLoading(false);
       }
-   }, [page, pageSize, search]);
+    },
+    [selected, fetchProducts],
+  );
 
-   useEffect(() => {
-      fetchProducts();
-   }, [fetchProducts]);
+  // ── Columns ──────────────────────────────────────────────────────────────────
+  const columns = useMemo(
+    () =>
+      getProductColumns({
+        page,
+        pageSize,
+        selected,
+        toggleOne,
+        onToggleActive: handleToggleActive,
+        onDeleteClick: handleDeleteClick,
+      }),
+    [page, pageSize, selected, toggleOne, handleToggleActive, handleDeleteClick],
+  );
 
-   const allChecked = products.length > 0 && selected.size === products.length;
-   const toggleAll = () =>
-      setSelected(allChecked ? new Set() : new Set(products.map((p) => p.id)));
-   const toggleOne = (id: string) =>
-      setSelected((s) => {
-         const n = new Set(s);
-         n.has(id) ? n.delete(id) : n.add(id);
-         return n;
-      });
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
 
-   const handlePageChange = (p: number) => {
-      setPage(p);
-      setSelected(new Set());
-   };
-   const handlePageSizeChange = (size: number) => {
-      setPageSize(size);
-      setPage(1);
-      setSelected(new Set());
-   };
-
-   return (
-      <div className="min-h-screen bg-neutral-light-active">
-         <div className="mx-auto px-6 py-8 space-y-5">
-            {/* ── Stat Cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-               <StatCard
-                  value="1,230"
-                  title="Tổng sản phẩm trong hệ thống"
-                  trend="7 ngày qua"
-                  sub=""
-                  sparkline
-               />
-               <StatCard
-                  value="1,200"
-                  title="Tổng sản phẩm đang Bán"
-                  trend="189"
-                  sub="với ngày qua"
-               />
-               <StatCard title="">
-                  <div className="flex items-center justify-between">
-                     <div>
-                        <p className="text-3xl font-bold text-primary tracking-tight">
-                           5,0/5.0
-                        </p>
-                        <p className="text-xs text-neutral-dark font-medium mt-0.5">
-                           Điểm trung bình
-                        </p>
-                        <div className="flex items-center gap-0.5 mt-2">
-                           {[...Array(5)].map((_, i) => (
-                              <svg
-                                 key={i}
-                                 className="w-3.5 h-3.5 text-amber-400"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20"
-                              >
-                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                           ))}
-                           <span className="text-xs text-green-600 font-medium ml-1.5">
-                              ↑ Chất lượng tốt
-                           </span>
-                        </div>
-                     </div>
-                     <RatingCircle value={5.0} />
-                  </div>
-               </StatCard>
-            </div>
-
-            {/* ── Table Card ── */}
-            <div className="bg-neutral-light border border-neutral rounded-2xl shadow-sm overflow-hidden">
-               {/* Tabs + Controls */}
-               <div className="flex items-end justify-between gap-4 flex-wrap px-5 pt-4 border-b border-neutral">
-                  {/* Tabs */}
-                  <div className="flex items-center">
-                     {TABS.map((tab) => (
-                        <button
-                           key={tab.key}
-                           onClick={() => {
-                              setActiveTab(tab.key);
-                              setPage(1);
-                           }}
-                           className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-all ${
-                              activeTab === tab.key
-                                 ? "text-primary border-accent"
-                                 : "text-neutral-dark border-transparent hover:text-primary"
-                           }`}
-                        >
-                           {tab.label}
-                           {tab.count != null && (
-                              <span
-                                 className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full font-semibold ${
-                                    activeTab === tab.key
-                                       ? "bg-accent text-white"
-                                       : "bg-neutral text-neutral-dark"
-                                 }`}
-                              >
-                                 {tab.count}
-                              </span>
-                           )}
-                        </button>
-                     ))}
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex items-center gap-2 pb-3">
-                     {/* Search */}
-                     <div className="relative">
-                        <svg
-                           className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-dark"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                           />
-                        </svg>
-                        <input
-                           type="text"
-                           placeholder="Search"
-                           value={search}
-                           onChange={(e) => {
-                              setSearch(e.target.value);
-                              setPage(1);
-                           }}
-                           className="pl-8 pr-3 py-2 text-sm bg-neutral-light-active border border-neutral rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent w-44 placeholder:text-neutral-dark text-primary transition-all"
-                        />
-                     </div>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs text-primary border border-neutral rounded-xl hover:bg-neutral-light-active transition-colors font-medium">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                           />
-                        </svg>
-                        Bộ lọc
-                     </button>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs text-primary border border-neutral rounded-xl hover:bg-neutral-light-active transition-colors font-medium whitespace-nowrap">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                           />
-                        </svg>
-                        Lọc theo ngày
-                     </button>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs text-primary border border-neutral rounded-xl hover:bg-neutral-light-active transition-colors">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                           />
-                        </svg>
-                     </button>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs bg-accent text-white rounded-xl hover:bg-accent-hover transition-colors font-medium shadow-sm">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                           />
-                        </svg>
-                        Thêm
-                     </button>
-                  </div>
-               </div>
-
-               {/* Table */}
-               <div className="overflow-x-auto">
-                  {error ? (
-                     <div className="flex flex-col items-center py-16 gap-2">
-                        <p className="text-sm text-neutral-dark">{error}</p>
-                        <button
-                           onClick={fetchProducts}
-                           className="text-xs text-accent hover:underline"
-                        >
-                           Thử lại
-                        </button>
-                     </div>
-                  ) : (
-                     <table className="w-full text-left">
-                        <thead>
-                           <tr className="border-b border-neutral bg-neutral-light-active/60">
-                              <th className="py-3 px-4 w-10">
-                                 <input
-                                    type="checkbox"
-                                    checked={allChecked}
-                                    onChange={toggleAll}
-                                    className="rounded border-neutral w-4 h-4 cursor-pointer accent-accent"
-                                 />
-                              </th>
-                              <TH>Tên sản phẩm</TH>
-                              <TH>Danh mục</TH>
-                              <TH>Giá sản phẩm</TH>
-                              <TH>Tồn Kho</TH>
-                              <TH>Giảm giá</TH>
-                              <TH>Tổng giá trị</TH>
-                              <TH>Trạng thái</TH>
-                              <th className="py-3 px-4 text-xs font-semibold text-neutral-dark">
-                                 Hành động
-                              </th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {loading ? (
-                              [...Array(pageSize > 10 ? 10 : pageSize)].map(
-                                 (_, i) => <SkeletonRow key={i} />,
-                              )
-                           ) : products.length === 0 ? (
-                              <tr>
-                                 <td
-                                    colSpan={9}
-                                    className="py-16 text-center text-sm text-neutral-dark"
-                                 >
-                                    Không có sản phẩm nào.
-                                 </td>
-                              </tr>
-                           ) : (
-                              products.map((p, i) => (
-                                 <ProductRow
-                                    key={p.id}
-                                    product={p}
-                                    idx={i}
-                                    checked={selected.has(p.id)}
-                                    onCheck={() => toggleOne(p.id)}
-                                 />
-                              ))
-                           )}
-                        </tbody>
-                     </table>
-                  )}
-               </div>
-
-               {/* Pagination */}
-               {!loading && !error && pagination.totalPages > 0 && (
-                  <div className="px-5 py-4 border-t border-neutral">
-                     <AdminPagination
-                        currentPage={pagination.page}
-                        totalPages={pagination.totalPages}
-                        total={pagination.total}
-                        pageSize={pageSize}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
-                        pageSizeOptions={[10, 20, 50]}
-                        siblingCount={1}
-                     />
-                  </div>
-               )}
-            </div>
-         </div>
+  return (
+    <div className="space-y-5 p-5 bg-neutral-light min-h-full">
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard label="Tổng sản phẩm" value={stats.total} sub="Tất cả sản phẩm trong hệ thống" icon={<Package size={16} />} />
+        <StatsCard label="Đang hiển thị" value={stats.active} sub="Khách hàng có thể xem được" icon={<CheckCircle2 size={16} />} color="text-emerald-600" />
+        <StatsCard label="Đang ẩn" value={stats.inactive} sub="Chưa được hiển thị cho khách" icon={<EyeOff size={16} />} color="text-orange-500" />
+        <StatsCard label="Nổi bật" value={stats.featured} sub="Sản phẩm được đánh dấu featured" icon={<Star size={16} />} color="text-amber-500" />
       </div>
-   );
+
+      {/* ── Main table card ── */}
+      <div className="bg-neutral-light border border-neutral rounded-xl">
+        {/* ── Toolbar ── */}
+        <div className="px-5 py-4 border-b border-neutral space-y-3">
+          {/* Row 1: Tabs + Actions */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            {/* Status tabs */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => {
+                    setActiveTab(tab.value);
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                    activeTab === tab.value ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active"
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
+                    {tabCounts[tab.value] ?? 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={fetchProducts}
+                disabled={loading}
+                title="Làm mới"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              </button>
+              <button
+                onClick={() => setShowFilters((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
+                  showFilters || hasActiveFilters ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:bg-neutral-light-active"
+                }`}
+              >
+                <Filter size={13} />
+                Lọc
+                {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />}
+                {showFilters ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </button>
+              <Link href="/admin/products/create" className="flex items-center gap-1.5 px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[12px] font-semibold rounded-lg transition-colors">
+                <Plus size={14} />
+                Thêm sản phẩm
+              </Link>
+            </div>
+          </div>
+
+          {/* Row 2: Search */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 max-w-sm">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Tìm theo tên, slug..."
+                className="w-full pl-8 pr-8 py-1.5 text-[12px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
+              />
+              {searchInput && (
+                <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+            <button onClick={handleSearch} className="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[12px] font-medium rounded-lg transition-colors cursor-pointer">
+              Tìm
+            </button>
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearAllFilters}
+                className="px-3 py-1.5 border border-neutral text-[12px] text-neutral-dark hover:bg-neutral-light-active rounded-lg transition-colors cursor-pointer"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+          </div>
+
+          {/* Row 3: Expanded filters */}
+          {showFilters && (
+            <div className="pt-2 border-t border-neutral grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Từ ngày</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Đến ngày</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Sắp xếp theo</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thứ tự</label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => {
+                    setSortOrder(e.target.value as "asc" | "desc");
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+                >
+                  <option value="desc">Mới nhất trước</option>
+                  <option value="asc">Cũ nhất trước</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Bulk action bar ── */}
+        {selected.size > 0 && (
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20 flex-wrap">
+            <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} sản phẩm</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => handleBulkAction("activate")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-emerald-300 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Hiển thị
+              </button>
+              <button
+                onClick={() => handleBulkAction("deactivate")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-orange-300 text-[11px] font-medium text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Ẩn
+              </button>
+              <button
+                onClick={() => handleBulkAction("feature")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-amber-300 text-[11px] font-medium text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Nổi bật
+              </button>
+              <button
+                onClick={() => handleBulkAction("unfeature")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Bỏ nổi bật
+              </button>
+              <button
+                onClick={() => handleBulkAction("delete")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-promotion/30 text-[11px] font-medium text-promotion hover:bg-promotion-light transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Xóa
+              </button>
+            </div>
+            {bulkLoading && <Loader2 size={13} className="animate-spin text-accent" />}
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer ml-auto">
+              Bỏ chọn
+            </button>
+          </div>
+        )}
+
+        {/* ── Table / States ── */}
+        {error ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <XCircle size={36} className="text-promotion opacity-50" />
+            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <button onClick={fetchProducts} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
+              Thử lại
+            </button>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin text-accent" />
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Package size={36} className="text-neutral-dark opacity-30" />
+            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
+            {hasActiveFilters ? (
+              <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                Xóa bộ lọc
+              </button>
+            ) : (
+              <Link href="/admin/products/create" className="px-4 py-2 rounded-lg bg-accent text-white text-[13px]">
+                Tạo sản phẩm đầu tiên
+              </Link>
+            )}
+          </div>
+        ) : (
+          <AdminTable columns={columns} data={paginatedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} />
+        )}
+
+        {/* ── Pagination ── */}
+        {!loading && !error && filteredProducts.length > 0 && (
+          <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
+              >
+                {[10, 20, 50, 100].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[12px] text-neutral-dark">/ {filteredProducts.length} sản phẩm</span>
+            </div>
+            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Delete Confirm Modal ── */}
+      {deleteTarget && (
+        <Popzy
+          isOpen={!!deleteTarget}
+          onClose={() => !deleting && setDeleteTarget(null)}
+          footer={false}
+          closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
+          content={
+            <div className="py-2">
+              <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
+                <Trash2 size={22} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xóa sản phẩm?</h3>
+              <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xóa</p>
+              <p className="text-[14px] font-semibold text-primary text-center mb-2">"{deleteTarget.name}"</p>
+              <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau.</p>
+              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Huỷ
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {deleting && <Loader2 size={13} className="animate-spin" />}
+                  {deleting ? "Đang xóa..." : "Xóa sản phẩm"}
+                </button>
+              </div>
+            </div>
+          }
+        />
+      )}
+    </div>
+  );
 }

@@ -62,23 +62,16 @@ interface ReplyApiResponse {
 
 interface ProductReviewProps {
    productId: string;
+   rating: {
+      average: number;
+      total: number;
+      distribution: Record<string, number>;
+   };
+   slug: string;
 }
 
-// ── Static rating stats (replace with API later) ──────────────────
-const ratingStats = {
-   average: 4.7,
-   total: 19,
-   breakdown: [
-      { stars: 5, count: 17 },
-      { stars: 4, count: 10 },
-      { stars: 3, count: 0 },
-      { stars: 2, count: 0 },
-      { stars: 1, count: 1 },
-   ],
-};
-
 // ── Component ─────────────────────────────────────────────────────
-export default function ProductReview({ productId }: ProductReviewProps) {
+export default function ProductReview({ productId, rating, slug }: ProductReviewProps) {
    const [comments, setComments] = useState<Comment[]>([]);
    const [loading, setLoading] = useState(false);
 
@@ -213,7 +206,7 @@ export default function ProductReview({ productId }: ProductReviewProps) {
 
    return (
       <div className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
-         <RatingSummary ratingStats={ratingStats} />
+         <RatingSummary rating={rating}  slug={slug}/>
          <CommentSection
             productId={productId}
             comments={comments}

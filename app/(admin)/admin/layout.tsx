@@ -6,40 +6,34 @@ import { useEffect } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeaderAuto from "@/components/admin/AdminHeaderAuto";
 
-export default function AdminLayout({
-   children,
-}: {
-   children: React.ReactNode;
-}) {
-   const { user, loading } = useAuth();
-   const router = useRouter();
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-   useEffect(() => {
-      if (!loading) {
-         console.log(user);
-         if (!user) {
-            router.replace("/account");
-         } else if (user.role !== "ADMIN") {
-            router.replace("/");
-         }
+  useEffect(() => {
+    if (!loading) {
+      // console.log(user);
+      if (!user) {
+        router.replace("/account");
+      } else if (user.role !== "ADMIN") {
+        router.replace("/");
       }
-   }, [user, loading, router]);
+    }
+  }, [user, loading, router]);
 
-   if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
 
-   if (!user || user.role !== "ADMIN") return null;
+  if (!user || user.role !== "ADMIN") return null;
 
-   return (
-      <div className="flex h-screen bg-gray-50">
-         <div className="shrink-0 h-full">
-            <AdminSidebar />
-         </div>
-         <div className="flex-1 flex flex-col min-h-0">
-            <AdminHeaderAuto />
-            <main className="flex-1 overflow-y-auto scrollbar-thin">
-               {children}
-            </main>
-         </div>
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <div className="shrink-0 h-full">
+        <AdminSidebar />
       </div>
-   );
+      <div className="flex-1 flex flex-col min-h-0">
+        <AdminHeaderAuto />
+        <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>
+      </div>
+    </div>
+  );
 }

@@ -13,12 +13,15 @@ import {
   Link2,
   List,
   ListOrdered,
+  Loader2,
   Palette,
   Strikethrough,
   Type,
   Underline,
 } from "lucide-react";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import apiRequest from "@/lib/api";
+import { useToasty } from "@/components/Toast";
 
 type CkEditorFieldProps = {
   value: string;
@@ -39,7 +42,11 @@ type ToolbarState = {
   justifyFull: boolean;
   orderedList: boolean;
   unorderedList: boolean;
+  fontSize: string;
+  hasImage: boolean;
 };
+
+type ImageAlign = "left" | "center" | "right" | "none";
 
 const defaultToolbarState: ToolbarState = {
   block: "p",
@@ -53,6 +60,8 @@ const defaultToolbarState: ToolbarState = {
   justifyFull: false,
   orderedList: false,
   unorderedList: false,
+  fontSize: "",
+  hasImage: false,
 };
 
 function isEditorEmpty(html: string): boolean {
@@ -93,8 +102,13 @@ function normalizeBlockType(blockValue: string): BlockType {
 export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToasty();
   const [toolbarState, setToolbarState] = useState<ToolbarState>(defaultToolbarState);
   const [isEditorFocused, setIsEditorFocused] = useState(false);
+  const selectedImageRef = useRef<HTMLImageElement | null>(null);
+  const [imageSize, setImageSize] = useState<string>("");
+  const [imageAlign, setImageAlign] = useState<ImageAlign>("none");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -107,9 +121,41 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
     if (!editor) return;
 
     const selection = window.getSelection();
-    if (!selection?.anchorNode || !editor.contains(selection.anchorNode)) {
+    const anchorNode = selection?.anchorNode;
+
+    if (!anchorNode || !editor.contains(anchorNode)) {
       setToolbarState(defaultToolbarState);
+      selectedImageRef.current = null;
+      setImageSize("");
+      setImageAlign("none");
       return;
+    }
+
+    const imageNode = anchorNode.nodeType === Node.ELEMENT_NODE
+      ? (anchorNode as Element).closest("img")
+      : (anchorNode.parentElement?.closest("img") ?? null);
+
+    const resolvedImage =
+      (imageNode && imageNode instanceof HTMLImageElement ? imageNode : null) ||
+      (selectedImageRef.current instanceof HTMLImageElement ? selectedImageRef.current : null) ||
+      (editor.querySelector("img") as HTMLImageElement | null);
+
+    if (resolvedImage) {
+      selectedImageRef.current = resolvedImage;
+      setImageSize(resolvedImage.style.width || `${resolvedImage.width}`);
+
+      const floatStyle = resolvedImage.style.float as ImageAlign;
+      if (floatStyle === "left" || floatStyle === "right") {
+        setImageAlign(floatStyle);
+      } else if (resolvedImage.style.display === "block" && resolvedImage.style.margin === "0 auto") {
+        setImageAlign("center");
+      } else {
+        setImageAlign("none");
+      }
+    } else {
+      selectedImageRef.current = null;
+      setImageSize("");
+      setImageAlign("none");
     }
 
     setToolbarState({
@@ -124,6 +170,8 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
       justifyFull: safeQueryCommandState("justifyFull"),
       orderedList: safeQueryCommandState("insertOrderedList"),
       unorderedList: safeQueryCommandState("insertUnorderedList"),
+      fontSize: mapExecCommandFontSizeValue(safeQueryCommandValue("fontSize")),
+      hasImage: Boolean(resolvedImage),
     });
   }, []);
 
@@ -140,6 +188,29 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
     editorRef.current?.focus();
   };
 
+  const ensureFigureCaption = (img: HTMLImageElement) => {
+    const parent = img.parentElement;
+    if (!parent) return;
+
+    // If already wrapped in a <figure>, keep it as-is.
+    if (parent.tagName.toLowerCase() === "figure") return;
+
+    const figure = document.createElement("figure");
+    figure.style.margin = "0";
+    figure.style.padding = "0";
+    figure.style.textAlign = "center";
+
+    const caption = document.createElement("figcaption");
+    caption.contentEditable = "true";
+    caption.dataset.placeholder = "Chú thích ảnh...";
+    caption.className = "text-center text-sm text-slate-500 mt-1";
+    caption.innerHTML = "<br>";
+
+    parent.insertBefore(figure, img);
+    figure.appendChild(img);
+    figure.appendChild(caption);
+  };
+
   const handleInput = () => {
     const nextValue = editorRef.current?.innerHTML ?? "";
     onChange(nextValue);
@@ -149,6 +220,46 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
   const applyCommand = (command: string, commandValue?: string) => {
     focusEditor();
     document.execCommand(command, false, commandValue);
+    handleInput();
+    requestAnimationFrame(refreshToolbarState);
+  };
+
+  const mapExecCommandFontSizeValue = (value: string): string => {
+    // document.execCommand("fontSize") uses a 1-7 scale; map it to a pixel value for UI.
+    const mapping: Record<string, string> = {
+      "1": "12px",
+      "2": "14px",
+      "3": "16px",
+      "4": "18px",
+      "5": "20px",
+      "6": "24px",
+      "7": "28px",
+    };
+
+    return mapping[value] ?? "";
+  };
+
+  const applyFontSize = (fontSize: string) => {
+    focusEditor();
+    // Use execCommand to insert a <font size="7"> wrapper, then convert it to inline style.
+    document.execCommand("styleWithCSS", false, "true");
+    document.execCommand("fontSize", false, "7");
+    document.execCommand("styleWithCSS", false, "false");
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const parent = range.commonAncestorContainer as HTMLElement | null;
+      const fontNode = parent?.closest("font[size=7]") as HTMLElement | null;
+
+      if (fontNode) {
+        if (fontSize) {
+          fontNode.style.fontSize = fontSize;
+        }
+        fontNode.removeAttribute("size");
+      }
+    }
+
     handleInput();
     requestAnimationFrame(refreshToolbarState);
   };
@@ -169,12 +280,109 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
     imageInputRef.current?.click();
   };
 
+  const uploadImageToServer = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("folder", "blogs");
+
+    const response = await apiRequest.post<{ message: string; data: { url: string } }>(
+      "/upload",
+      formData,
+      { timeout: 60000, noAuth: true },
+    );
+
+    return response.data.url;
+  };
+
   const handlePickImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const imageUrl = URL.createObjectURL(file);
-    applyCommand("insertImage", imageUrl);
+
+    const blobUrl = URL.createObjectURL(file);
+    applyCommand("insertImage", blobUrl);
+
+    // After inserting, keep the newly inserted image active so the size/alignment controls appear.
+    requestAnimationFrame(() => {
+      const insertedImage = editorRef.current?.querySelector("img:last-of-type");
+      if (insertedImage instanceof HTMLImageElement) {
+        ensureFigureCaption(insertedImage);
+
+        selectedImageRef.current = insertedImage;
+        setImageSize(insertedImage.style.width || `${insertedImage.width}`);
+
+        const floatStyle = insertedImage.style.float as ImageAlign;
+        if (floatStyle === "left" || floatStyle === "right") {
+          setImageAlign(floatStyle);
+        } else if (insertedImage.style.display === "block" && insertedImage.style.margin === "0 auto") {
+          setImageAlign("center");
+        } else {
+          setImageAlign("none");
+        }
+
+        setToolbarState((current) => ({
+          ...current,
+          hasImage: true,
+        }));
+      }
+    });
+
+    // Upload image and replace blob src with server URL.
+    (async () => {
+      setIsUploading(true);
+      try {
+        const uploadedUrl = await uploadImageToServer(file);
+        requestAnimationFrame(() => {
+          const replacedImg = editorRef.current?.querySelector(`img[src="${blobUrl}"]`);
+          if (replacedImg instanceof HTMLImageElement) {
+            replacedImg.src = uploadedUrl;
+            selectedImageRef.current = replacedImg;
+            handleInput();
+          }
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err ?? "Không thể upload ảnh");
+        toast.error(message);
+      } finally {
+        setIsUploading(false);
+        URL.revokeObjectURL(blobUrl);
+      }
+    })();
+
     event.currentTarget.value = "";
+  };
+
+  const updateSelectedImage = (updates: Partial<{ width: string; align: ImageAlign }>) => {
+    const img = selectedImageRef.current;
+    if (!img) return;
+
+    if (updates.width !== undefined) {
+      img.style.width = updates.width;
+      img.style.height = "auto";
+      setImageSize(updates.width);
+    }
+
+    if (updates.align !== undefined) {
+      setImageAlign(updates.align);
+      // Reset style cũ trước khi áp dụng style mới
+      img.style.float = "";
+      img.style.display = "";
+      img.style.margin = "";
+
+      if (updates.align === "center") {
+        img.style.display = "block";
+        img.style.margin = "0 auto";
+      } else if (updates.align === "left") {
+        img.style.float = "left";
+        img.style.display = "inline";
+        img.style.margin = "0 1rem 1rem 0";
+      } else if (updates.align === "right") {
+        img.style.float = "right";
+        img.style.display = "inline";
+        img.style.margin = "0 0 1rem 1rem";
+      }
+    }
+
+    handleInput();
   };
 
   const toolbarGroupClass = "flex items-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 p-1";
@@ -196,10 +404,13 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
         <button
           type="button"
           onClick={handleAddMedia}
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+          disabled={isUploading}
+          className={`inline-flex h-9 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${
+            isUploading ? "cursor-wait opacity-70" : ""
+          }`}
         >
-          <ImageIcon size={16} className="text-blue-500" />
-          Thêm nội dung đa phương tiện
+          {isUploading ? <Loader2 size={16} className="animate-spin text-blue-500" /> : <ImageIcon size={16} className="text-blue-500" />}
+          {isUploading ? "Đang upload..." : "Thêm nội dung đa phương tiện"}
         </button>
         <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handlePickImage} />
       </div>
@@ -265,6 +476,20 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
           >
             <Strikethrough size={16} />
           </button>
+
+          <select
+            value={toolbarState.fontSize}
+            onChange={(e) => applyFontSize(e.target.value)}
+            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-[13px] font-semibold text-slate-700 outline-none"
+          >
+            <option value="">Cỡ chữ</option>
+            <option value="12px">12px</option>
+            <option value="14px">14px</option>
+            <option value="16px">16px</option>
+            <option value="18px">18px</option>
+            <option value="20px">20px</option>
+            <option value="24px">24px</option>
+          </select>
         </div>
 
         {/* Group 3: Alignment */}
@@ -349,6 +574,48 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
             <Link2 size={16} />
           </button>
         </div>
+
+        {/* Group 6: Image Settings (size + alignment) */}
+        {toolbarState.hasImage ? (
+          <div className={toolbarGroupClass}>
+            <select
+              value={imageSize}
+              onChange={(event) => updateSelectedImage({ width: event.target.value })}
+              className="h-8 rounded-md border border-slate-200 bg-white px-2 text-[13px] font-semibold text-slate-700 outline-none"
+            >
+              <option value="">Kích thước</option>
+              <option value="100%">100%</option>
+              <option value="75%">75%</option>
+              <option value="50%">50%</option>
+              <option value="25%">25%</option>
+            </select>
+
+            <button
+              type="button"
+              className={getToolbarBtnClass(imageAlign === "left")}
+              onClick={() => updateSelectedImage({ align: "left" })}
+              title="Căn trái"
+            >
+              <AlignLeft size={16} />
+            </button>
+            <button
+              type="button"
+              className={getToolbarBtnClass(imageAlign === "center")}
+              onClick={() => updateSelectedImage({ align: "center" })}
+              title="Căn giữa"
+            >
+              <AlignCenter size={16} />
+            </button>
+            <button
+              type="button"
+              className={getToolbarBtnClass(imageAlign === "right")}
+              onClick={() => updateSelectedImage({ align: "right" })}
+              title="Căn phải"
+            >
+              <AlignRight size={16} />
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Editor Content Area */}
@@ -374,7 +641,7 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
 
         {isEmpty && (
           <div className="pointer-events-none absolute left-8 top-7 select-none">
-            <p className="text-[40px] font-semibold leading-[1.1] text-slate-300">Heading 1</p>
+            {/* <p className="text-[40px] font-semibold leading-[1.1] text-slate-300">Heading 1</p> */}
             <p className="mt-3 text-[16px] text-slate-400">Bắt đầu viết nội dung tin tức tại đây...</p>
           </div>
         )}
@@ -383,6 +650,17 @@ export default function CkEditorField({ value, onChange }: CkEditorFieldProps) {
       <style jsx>{`
         div[contenteditable]:empty:before {
           content: none;
+        }
+
+        /* Placeholder for caption */
+        figcaption:empty:before {
+          content: attr(data-placeholder);
+          color: #94a3b8; /* slate-400 */
+          font-size: 0.875rem;
+        }
+
+        figcaption:empty {
+          min-height: 1.5rem;
         }
       `}</style>
     </div>
