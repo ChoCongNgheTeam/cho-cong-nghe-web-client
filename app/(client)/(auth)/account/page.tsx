@@ -8,6 +8,7 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 const AuthPage = () => {
    const searchParams = useSearchParams();
    const tabParam = searchParams.get("tab");
+   const returnUrl = searchParams.get("returnUrl") || "/"; // ← đọc returnUrl ở đây
 
    const [activeTab, setActiveTab] = useState<"login" | "register">(
       tabParam === "register" ? "register" : "login",
@@ -29,7 +30,6 @@ const AuthPage = () => {
                ]}
             />
          </div>
-
          <div className="md:hidden mb-6">
             <div className="relative flex border-b border-neutral">
                <div
@@ -63,12 +63,16 @@ const AuthPage = () => {
          </div>
 
          <div className="md:hidden">
-            {activeTab === "login" ? <LoginForm /> : <RegisterForm />}
+            {activeTab === "login" ? (
+               <LoginForm returnUrl={returnUrl} /> // ← truyền xuống
+            ) : (
+               <RegisterForm />
+            )}
          </div>
 
          <div className="hidden md:grid md:grid-cols-2 gap-0">
             <div className="border-r border-neutral">
-               <LoginForm />
+               <LoginForm returnUrl={returnUrl} /> 
             </div>
             <div>
                <RegisterForm />
