@@ -69,9 +69,9 @@ export default function VariantDropdown({ triggerLabel, options, selectedId, isO
       {isOpen && (
         <div
           role="listbox"
-          className="absolute left-0 top-full mt-1 z-50
+          className="absolute left-0 top-full mt-1 z-2
             bg-neutral-light border border-neutral rounded-lg shadow-lg
-            min-w-[240px] max-w-[320px]"
+            min-w-60 max-w-[320px]"
         >
           {isFetching && (
             <div className="flex items-center justify-center gap-2 py-4 px-3">

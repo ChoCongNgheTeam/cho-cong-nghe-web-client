@@ -66,16 +66,15 @@ const DesktopHeader = memo(
             <div className="flex-1 max-w-2xl relative">
                <SearchBar />
                {/* ✅ absolute — không đẩy layout */}
-               <div
-                  className={
-                     "hidden md:flex items-center gap-x-2 flex-wrap mt-1.5 ml-3 px-1 absolute top-full left-0"
-                  }
-               >
+               <div className="hidden md:flex items-center gap-x-2 flex-nowrap mt-1.5 ml-3 px-1 absolute top-full left-0 z-10 overflow-hidden">
                   {TOP_KEYWORDS.map((kw) => (
                      <Link
                         key={kw.label}
                         href={kw.href}
-                        className="text-[14px] text-neutral-dark-active hover:text-primary transition-colors whitespace-nowrap"
+                        className={`text-[13px] lg:text-[14px] text-neutral-dark-active hover:text-primary transition-colors whitespace-nowrap
+            ${kw.showFrom === "lg" ? "hidden lg:block" : ""}
+            ${kw.showFrom === "xl" ? "hidden xl:block" : ""}
+         `}
                      >
                         {kw.label}
                      </Link>

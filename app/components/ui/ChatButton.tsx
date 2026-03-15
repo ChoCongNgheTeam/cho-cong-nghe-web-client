@@ -1,15 +1,30 @@
 "use client";
 
 import { MessageCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function ChatButton() {
    const [open, setOpen] = useState(false);
+   const ref = useRef<HTMLDivElement>(null);
+
+   useEffect(() => {
+      if (!open) return;
+      const handler = (e: MouseEvent) => {
+         if (ref.current && !ref.current.contains(e.target as Node)) {
+            setOpen(false);
+         }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+   }, [open]);
 
    return (
-      <div className="fixed bottom-20 right-4 sm:right-6 z-50 flex flex-col items-end gap-3">
+      <div
+         ref={ref}
+         className="hidden md:flex fixed bottom-20 right-4 sm:right-6 z-50 flex-col items-end gap-3"
+      >
          {open && (
-            <div className="rounded-2xl border border-neutral bg-neutral-light shadow-xl overflow-hidden w-[calc(100vw-2rem)] max-w-[20rem] sm:w-72">
+            <div className="rounded-2xl border border-neutral bg-neutral-light shadow-xl overflow-hidden w-72">
                <div className="bg-accent px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -32,15 +47,13 @@ export default function ChatButton() {
                   </button>
                </div>
 
-               {/* Body */}
-               <div className="h-48 sm:h-56 flex flex-col items-center justify-center gap-2 bg-neutral-light-hover px-6 text-center">
+               <div className="h-56 flex flex-col items-center justify-center gap-2 bg-neutral-light-hover px-6 text-center">
                   <MessageCircle size={28} className="text-neutral-dark" />
                   <p className="text-[13px] text-neutral-dark">
                      Tính năng chat sẽ sớm ra mắt
                   </p>
                </div>
 
-               {/* Input */}
                <div className="px-3 py-3 border-t border-neutral flex items-center gap-2">
                   <input
                      disabled
@@ -70,7 +83,6 @@ export default function ChatButton() {
             </div>
          )}
 
-         {/* Toggle button */}
          <button
             onClick={() => setOpen((v) => !v)}
             aria-label="Chat support"

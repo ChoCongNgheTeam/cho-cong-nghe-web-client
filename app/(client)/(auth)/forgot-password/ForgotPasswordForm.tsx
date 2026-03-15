@@ -4,6 +4,7 @@ import { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import apiRequest, { ApiError } from "@/lib/api";
 import { AuthContext } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ForgotPasswordForm() {
    const [email, setEmail] = useState("");
@@ -11,15 +12,14 @@ export default function ForgotPasswordForm() {
    const [message, setMessage] = useState<string | null>(null);
    const [error, setError] = useState<string | null>(null);
 
-   const auth = useContext(AuthContext);
+   const { isAuthenticated, loading: authLoading } = useAuth(); // ✅
    const router = useRouter();
 
-   // 🔐 Nếu user đã login → không cho reset
    useEffect(() => {
-      if (!auth?.loading && auth?.isAuthenticated) {
+      if (!authLoading && isAuthenticated) {
          router.replace("/");
       }
-   }, [auth?.loading, auth?.isAuthenticated, router]);
+   }, [authLoading, isAuthenticated, router]);
 
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();

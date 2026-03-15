@@ -61,18 +61,33 @@ function SkeletonItem() {
 
 const SKELETON_COUNT = 4;
 
-// ✅ export để dùng ở DesktopHeader
 export const TOP_KEYWORDS = [
-   { label: "iphone 17", href: "/products/iphone-17" },
-   { label: "laptop", href: "/products/laptop" },
-   { label: "iphone 13", href: "/products/iphone-13" },
-   { label: "oppo find x9", href: "/products/oppo-find-x9-pro-5g" },
-   { label: "xiaomi poco", href: "/products/xiaomi-poco-m6-pro" },
-   { label: "samsung", href: "/products/samsung-galaxy-a56-5g" },
-   { label: "oppo reno", href: "/products/oppo-reno14-5g" },
+   { label: "iphone 17", href: "/products/iphone-17", showFrom: "md" },
+   { label: "laptop", href: "/products/laptop", showFrom: "md" },
+   { label: "iphone 13", href: "/products/iphone-13", showFrom: "md" },
+   {
+      label: "oppo find x9",
+      href: "/products/oppo-find-x9-pro-5g",
+      showFrom: "lg",
+   },
+   {
+      label: "xiaomi poco",
+      href: "/products/xiaomi-poco-m6-pro",
+      showFrom: "lg",
+   },
+   {
+      label: "samsung",
+      href: "/products/samsung-galaxy-a56-5g",
+      showFrom: "lg",
+   },
+   { label: "oppo reno", href: "/products/oppo-reno14-5g", showFrom: "xl" },
 ];
 
-export default function SearchBar() {
+interface SearchBarProps {
+   isMobile?: boolean;
+}
+
+export default function SearchBar({ isMobile = false }: SearchBarProps) {
    const [query, setQuery] = useState("");
    const [results, setResults] = useState<ApiProduct[]>([]);
    const [isOpen, setIsOpen] = useState(false);
@@ -170,25 +185,34 @@ export default function SearchBar() {
                onFocus={() => {
                   if (results.length > 0) setIsOpen(true);
                }}
-               className="w-full pl-4 pr-48 lg:pr-60 py-2.5 lg:py-3
-               border border-neutral rounded-full
-               focus:outline-none focus:border-accent-hover
-               text-sm lg:text-base
-               bg-neutral-light text-primary placeholder:text-neutral-dark"
+               className={`w-full pl-4 py-2.5 lg:py-3
+                  border border-neutral rounded-full
+                  focus:outline-none focus:border-accent-hover
+                  text-sm lg:text-base
+                  bg-neutral-light text-primary placeholder:text-neutral-dark
+                  ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
+               `}
             />
 
             <div className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
-               <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors">
-                  <span className="hidden xl:inline">Tất cả các danh mục</span>
-                  <span className="xl:hidden">Danh mục</span>
-                  <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
-               </button>
+               {/* Nút danh mục — chỉ hiện trên desktop */}
+               {!isMobile && (
+                  <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors">
+                     <span className="hidden xl:inline">
+                        Tất cả các danh mục
+                     </span>
+                     <span className="xl:hidden">Danh mục</span>
+                     <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
+                  </button>
+               )}
                <button
                   onClick={() => query.trim() && setIsOpen(true)}
                   className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-accent-hover transition-colors cursor-pointer"
                >
                   <Search
-                     className={`w-4 h-4 lg:w-5 lg:h-5 text-primary transition-opacity duration-200 ${isSearching ? "opacity-40" : "opacity-100"}`}
+                     className={`w-4 h-4 lg:w-5 lg:h-5 text-primary transition-opacity duration-200 ${
+                        isSearching ? "opacity-40" : "opacity-100"
+                     }`}
                   />
                </button>
             </div>
@@ -196,19 +220,21 @@ export default function SearchBar() {
             {/* Dropdown */}
             <div
                className={`
-               absolute top-full left-0 right-0 mt-2
-               bg-neutral-light border border-neutral rounded-xl shadow-xl z-50
-               overflow-hidden
-               transition-[opacity,transform] duration-200 ease-out
-               ${
-                  showDropdown
-                     ? "opacity-100 translate-y-0 pointer-events-auto"
-                     : "opacity-0 -translate-y-1 pointer-events-none"
-               }
-            `}
+                  absolute top-full left-0 right-0 mt-2
+                  bg-neutral-light border border-neutral rounded-xl shadow-xl z-50
+                  overflow-hidden
+                  transition-[opacity,transform] duration-200 ease-out
+                  ${
+                     showDropdown
+                        ? "opacity-100 translate-y-0 pointer-events-auto"
+                        : "opacity-0 -translate-y-1 pointer-events-none"
+                  }
+               `}
             >
                <div
-                  className={`transition-opacity duration-150 ${isStale ? "opacity-50" : "opacity-100"}`}
+                  className={`transition-opacity duration-150 ${
+                     isStale ? "opacity-50" : "opacity-100"
+                  }`}
                >
                   {showSkeleton ? (
                      <ul>

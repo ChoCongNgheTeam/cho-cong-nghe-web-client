@@ -119,7 +119,7 @@ export default function CartSidebar({
               </div>
             )}
 
-            {/* Points Toggle - Show on both Cart and Checkout */}
+            {/* Points Toggle - Show on both Cart and Checkout
             <div className="px-4 py-3 border-b border-neutral">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export default function CartSidebar({
                   <div className="peer h-6 w-11 rounded-full bg-neutral-dark/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50 shadow-inner"></div>
                 </label>
               </div>
-            </div>
+            </div> */}
 
             {/* Summary Section */}
             <div className="px-4 py-4 space-y-2.5">
