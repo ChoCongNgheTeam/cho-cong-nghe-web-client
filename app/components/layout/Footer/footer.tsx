@@ -178,7 +178,7 @@ const Footer = () => {
                      }`}
                   >
                      {[
-                        { label: "Chính sách bảo hành", href: "#" },
+                        { label: "Chính sách bảo hành", href: "/policies/warranty-policy" },
                         { label: "Chính sách đổi trả", href: "#" },
                         { label: "Chính sách bảo mật", href: "#" },
                         { label: "Chính sách trả góp", href: "#" },
