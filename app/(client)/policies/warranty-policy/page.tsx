@@ -2,7 +2,7 @@
 
 export default function ChinhSachBaoHanhPage() {
    return (
-      <div className="min-h-screen py-5 px-4 md:px-8 max-w-3xl mx-auto">
+      <div className="min-h-screen">
          <h1 className="font-bold mb-5 text-primary text-center text-2xl">
             Chính sách bảo hành
          </h1>

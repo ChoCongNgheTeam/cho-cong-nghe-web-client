@@ -2,7 +2,7 @@
 
 export default function InstallmentPolicy() {
    return (
-      <div className="min-h-screen py-5 px-4 md:px-8 max-w-3xl mx-auto">
+      <div className="min-h-screen">
          <h1 className="font-bold mb-5 text-primary text-center text-2xl">
             Chính sách trả góp
          </h1>
@@ -148,7 +148,7 @@ export default function InstallmentPolicy() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
    return (
       <section className="mb-6">
-         <h2 className="font-bold mb-3 text-primary text-sm">{title}</h2>
+         <h2 className="font-bold mb-3 text-primary">{title}</h2>
          {children}
       </section>
    );
