@@ -37,9 +37,9 @@ export const menuItems: MenuItem[] = [
       href: "/policies/giao-hang-lap-dat",
    },
    {
-      id: "electronics-delivery",
-      label: "Chính sách giao hàng & lắp đặt Điện máy",
-      href: "/policies/giao-hang-dien-may",
+      id: "Delivery-Installation",
+      label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
+      href: "/policies/DeliveryInstallation",
    },
    {
       id: "electronics-delivery-only",
@@ -62,19 +62,19 @@ export const menuItems: MenuItem[] = [
       href: "/policies/exchangeIntro",
    },
    {
-      id: "tech-support",
+      id: "Technical-Support",
       label: "Quy định hỗ trợ kỹ thuật và sao lưu dữ liệu",
-      href: "/policies/ho-tro-ky-thuat",
+      href: "/policies/TechnicalSupport",
    },
    {
       id: "privacy-policy",
       label: "Chính sách bảo mật",
-      href: "/policies/bao-mat",
+      href: "/policies/Privacy",
    },
    {
-      id: "warranty-policy",
+      id: "Warranty-policy",
       label: "Chính sách bảo hành",
-      href: "/policies/bao-hanh",
+      href: "/policies/warranty-policy",
    },
    {
       id: "data-privacy",
@@ -89,6 +89,16 @@ export const menuItems: MenuItem[] = [
    {
       id: "return-policy",
       label: "Chính sách đổi trả",
-      href: "/policies/doi-tra",
+      href: "/policies/Return",
    },
+   {
+      id: "installment-policy",
+      label: "Chính sách trả góp",
+      href: "/policies/Installment",
+   },
+   {
+      id: "Loyalty-policy",
+      label: "Chính sách Chương trình Khách hàng thân thiết tại ChoCongNghe",
+      href: "/policies/Loyalty",
+   }
 ];

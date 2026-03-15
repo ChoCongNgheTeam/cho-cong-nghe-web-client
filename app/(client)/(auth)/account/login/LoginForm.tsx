@@ -10,7 +10,11 @@ import { SocialLoginButtons } from "./SocialLoginButtons";
 import type { User as AuthUser } from "./types";
 import { useGoogleLogin } from "@/hooks/useGoogleLogin";
 
-const LoginForm = () => {
+interface LoginFormProps {
+   returnUrl?: string; // ← nhận từ AuthPage
+}
+
+const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
    const { login } = useAuth();
    const router = useRouter();
    const toast = useToasty();
@@ -25,7 +29,7 @@ const LoginForm = () => {
 
    const handleLoginSuccess = useCallback(
       async (user: AuthUser, accessToken: string) => {
-         const redirectPath = user.role === "ADMIN" ? "/admin/dashboard" : "/";
+         const redirectPath = user.role === "ADMIN" ? "/admin/dashboard" : returnUrl; // ← dùng prop
          toast.success("Đăng nhập thành công 👋", {
             duration: 1000,
             id: "login-success",
@@ -33,7 +37,7 @@ const LoginForm = () => {
          await login(user, accessToken);
          router.push(redirectPath);
       },
-      [login, router, toast],
+      [login, router, toast, returnUrl], // ← returnUrl vào deps
    );
 
    const { prompt: googlePrompt, buttonRef } = useGoogleLogin({
@@ -58,8 +62,6 @@ const LoginForm = () => {
          setLoading(false);
       }
    };
-
-   // Hiện skeleton ngay lập tức khi đang redirect — không có khoảng trắng
 
    const isAnyLoading = loading || googleLoading;
 

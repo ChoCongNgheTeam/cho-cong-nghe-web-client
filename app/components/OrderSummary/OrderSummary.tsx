@@ -59,7 +59,7 @@ export default function OrderSummary({
 
   const handleCheckoutClick = () => {
     if (isCheckoutPage && !user) {
-      router.push("/account");
+      router.push("/account?returnUrl=/cart");
       return;
     }
 
