@@ -178,12 +178,12 @@ const Footer = () => {
                      }`}
                   >
                      {[
-                        { label: "Chính sách bảo hành", href: "#" },
-                        { label: "Chính sách đổi trả", href: "#" },
-                        { label: "Chính sách bảo mật", href: "#" },
-                        { label: "Chính sách trả góp", href: "#" },
-                        { label: "Chính sách khui hộp sản phẩm", href: "#" },
-                        { label: "Chính sách giao hàng & lắp đặt", href: "#" },
+                        { label: "Chính sách bảo hành", href: "/policies/warranty-policy" },
+                        { label: "Chính sách đổi trả", href: "/policies/Return" },
+                        { label: "Chính sách bảo mật", href: "/policies/Privacy" },
+                        { label: "Chính sách trả góp", href: "/policies/Installment" },
+                        { label: "Chính sách khui hộp sản phẩm", href: "/policies/unbox-policy" },
+                        { label: "Chính sách giao hàng & lắp đặt", href: "/policies/DeliveryInstallation" },
                         {
                            label: "Chính sách mạng di động ChoCongNghe",
                            href: "#",
@@ -198,11 +198,11 @@ const Footer = () => {
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
-                           href: "#",
+                           href: "/policies/DeliveryInstallation",
                         },
                         {
                            label: "Chính sách chương trình khách hàng thân thiết",
-                           href: "#",
+                           href: "/policies/Loyalty",
                         },
                      ].map((item) => (
                         <li key={item.label}>
