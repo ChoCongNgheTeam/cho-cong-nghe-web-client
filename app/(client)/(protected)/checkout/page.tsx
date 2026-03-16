@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShoppingCart, MapPin, AlertTriangle } from "lucide-react";
+import {
+   ShoppingCart,
+   MapPin,
+   ChevronDown,
+   Check,
+   Loader2,
+   X,
+   User,
+} from "lucide-react";
 import { useToasty } from "@/components/Toast";
-import UserInfoSidebar from "./components/UserInfoSidebar";
 import AddressSidebar, { ApiAddress } from "./components/AddressSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
 import CartSidebar from "@/(client)/cart/components/CartSidebar";
@@ -18,8 +25,40 @@ import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
 import PaymentResultModal from "./components/PaymentResultModal";
+import { getProvinces } from "@/(client)/(protected)/profile/_lib/get-provice";
+import { getWards } from "@/(client)/(protected)/profile/_lib/get-wards";
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface Province {
+   id: string;
+   name: string;
+   fullName: string;
+}
+interface Ward {
+   id: string;
+   name: string;
+   fullName: string;
+}
+
+interface UserProfile {
+   id: string;
+   fullName: string;
+   phone: string | null;
+   email: string;
+}
+
+interface SavedAddress {
+   id: string;
+   contactName: string;
+   phone: string;
+   province: { id: string; name: string; fullName: string };
+   ward: { id: string; name: string; fullName: string };
+   detailAddress: string;
+   fullAddress: string;
+   type: "HOME" | "OFFICE" | "OTHER";
+   isDefault: boolean;
+}
 
 interface CartItem {
    id: string;
@@ -32,6 +71,7 @@ interface CartItem {
    original_price?: number;
    image?: string;
 }
+
 interface SelectedItem {
    id: string;
    productName?: string;
@@ -62,9 +102,6 @@ interface CheckoutData {
    rewardPoints: number;
    usePoints: boolean;
    newAddressId?: string;
-   contactName?: string;
-   contactPhone?: string;
-   contactEmail?: string;
 }
 
 interface PreviewData {
@@ -75,15 +112,25 @@ interface PreviewData {
    totalAmount: number;
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const inputCls =
+   "w-full px-3 py-2.5 border border-neutral rounded-lg text-sm focus:outline-none focus:border-accent bg-neutral-light text-primary placeholder:text-neutral-dark transition-colors";
+const selectCls =
+   "w-full px-3 py-2.5 pr-9 border border-neutral rounded-lg text-sm focus:outline-none focus:border-accent bg-neutral-light text-primary appearance-none cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral";
+const disabledInputCls =
+   "disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral";
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
    const router = useRouter();
    const searchParams = useSearchParams();
    const toast = useToasty();
-   const { user, loading: authLoading } = useAuth();
+   const { loading: authLoading } = useAuth();
+   const { refetchCart } = useCart();
 
-   // ── Cart state ─────────────────────────────────────────────────────────────
+   // ── Cart ──────────────────────────────────────────────────────────────────
    const [cartItems, setCartItems] = useState<CartItem[]>([]);
    const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
    const [promotionValue, setPromotionValue] = useState(0);
@@ -93,11 +140,10 @@ export default function CheckoutPage() {
    const [rewardPoints, setRewardPoints] = useState(0);
    const [usePoints, setUsePoints] = useState(false);
 
-   // ── Voucher state ──────────────────────────────────────────────────────────
+   // ── Voucher ───────────────────────────────────────────────────────────────
    const [voucherCode, setVoucherCode] = useState("");
    const [voucherValue, setVoucherValue] = useState(0);
    const [voucherId, setVoucherId] = useState("");
-
    const handleApplyVoucher = useCallback(
       (code: string, value: number, id: string) => {
          setVoucherCode(code);
@@ -107,116 +153,179 @@ export default function CheckoutPage() {
       [],
    );
 
-   // ── Preview ────────────────────────────────────────────────────────────────
-   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-
-   // ── User info ──────────────────────────────────────────────────────────────
-   const [contactName, setContactName] = useState("");
-   // contactPhone được sync tự động từ selectedAddress, không hiện trong form người đặt
-   const [contactPhone, setContactPhone] = useState("");
-   const [contactEmail, setContactEmail] = useState("");
-
-   // ── Address ────────────────────────────────────────────────────────────────
-   const [selectedAddress, setSelectedAddress] = useState<ApiAddress | null>(
+   // ── Contact (người đặt hàng) ──────────────────────────────────────────────
+   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+   const [contactSelectedId, setContactSelectedId] = useState<string | null>(
       null,
    );
+   const [contactName, setContactName] = useState("");
+   const [contactPhone, setContactPhone] = useState("");
+   const [isContactOpen, setIsContactOpen] = useState(false);
+   const contactRef = useRef<HTMLDivElement>(null);
 
-   // ── Payment ────────────────────────────────────────────────────────────────
+   // ── Address (địa chỉ nhận hàng) ───────────────────────────────────────────
+   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+   const [hasFetchedAddresses, setHasFetchedAddresses] = useState(false);
+   const [selectedSavedAddress, setSelectedSavedAddress] =
+      useState<SavedAddress | null>(null);
+   const [isAddressOpen, setIsAddressOpen] = useState(false);
+   const addressRef = useRef<HTMLDivElement>(null);
+
+   // Address form (nhập tay — chỉ dùng khi không chọn saved)
+   const [provinceId, setProvinceId] = useState("");
+   const [wardId, setWardId] = useState("");
+   const [detailAddress, setDetailAddress] = useState("");
+   const [provinces, setProvinces] = useState<Province[]>([]);
+   const [wards, setWards] = useState<Ward[]>([]);
+   const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+   const [isLoadingWards, setIsLoadingWards] = useState(false);
+
+   // ── Misc ──────────────────────────────────────────────────────────────────
    const [selectedPaymentMethodId, setSelectedPaymentMethodId] =
       useState<string>("");
-
-   // ── Misc ───────────────────────────────────────────────────────────────────
    const [notes, setNotes] = useState("");
    const [sendInvoice, setSendInvoice] = useState(false);
    const [agreedToTerms, setAgreedToTerms] = useState(false);
-   const [deliveryDate, setDeliveryDate] = useState("Thứ Hai (12/01)");
-   const [deliveryTime, setDeliveryTime] = useState("16:00 -> 17:00");
+   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+   const [mobileSelectedAddress, setMobileSelectedAddress] =
+      useState<ApiAddress | null>(null);
 
-   // ── UI state ───────────────────────────────────────────────────────────────
-   const [showUserSidebar, setShowUserSidebar] = useState(false);
+   // ── UI ────────────────────────────────────────────────────────────────────
    const [showAddressSidebar, setShowAddressSidebar] = useState(false);
-   const [showTimeSidebar, setShowTimeSidebar] = useState(false);
    const [showVoucherModal, setShowVoucherModal] = useState(false);
    const [showSidebar, setShowSidebar] = useState(false);
    const [isPageLoading, setIsPageLoading] = useState(true);
    const [isSubmitting, setIsSubmitting] = useState(false);
-
    const [showConfirmModal, setShowConfirmModal] = useState(false);
+   const [showSaveAddressModal, setShowSaveAddressModal] = useState(false);
+   const [pendingOrderResult, setPendingOrderResult] = useState<{
+      orderCode: string;
+      orderId: string;
+      paymentMethodCode: string;
+      paymentInfo: any;
+      tempAddressId: string;
+   } | null>(null);
    const [paymentResultModal, setPaymentResultModal] = useState<{
       isOpen: boolean;
       paymentInfo: any;
       orderId: string;
    }>({ isOpen: false, paymentInfo: null, orderId: "" });
 
-   // Tách thành 2 hàm: 1 mở confirm, 1 thực sự đặt hàng
-   const handleCheckoutClick = () => {
-      if (!contactName) {
-         toast.error("Vui lòng kiểm tra thông tin người đặt");
-         return;
-      }
-      if (!selectedAddress) {
-         toast.error("Vui lòng chọn địa chỉ giao hàng");
-         return;
-      }
-      if (!selectedPaymentMethodId) {
-         toast.error("Vui lòng chọn phương thức thanh toán");
-         return;
-      }
-      if (!agreedToTerms) {
-         toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
-         return;
-      }
-      setShowConfirmModal(true);
-   };
-
-   const { refetchCart } = useCart();
-
-   const formatDisplayAddress = (addr: ApiAddress) =>
-      addr.fullAddress ??
-      [addr.detailAddress, addr.ward?.name, addr.province?.name]
-         .filter(Boolean)
-         .join(", ");
-
-   // ── Sync contactPhone từ địa chỉ được chọn ───────────────────────────────
-   // SĐT chỉ hiển thị 1 lần ở phần địa chỉ nhận hàng, không cần hiện lại ở người đặt
+   // ── Close dropdowns on outside click ─────────────────────────────────────
    useEffect(() => {
-      if (selectedAddress?.phone) {
-         setContactPhone(selectedAddress.phone);
-      }
-   }, [selectedAddress]);
-
-   // ── Helper: fetch & apply địa chỉ mới nhất ────────────────────────────────
-   const fetchAndApplyLatestAddress = useCallback(async (addressId: string) => {
-      try {
-         const res = await apiRequest.get<{
-            success: boolean;
-            data: ApiAddress[];
-         }>("/addresses");
-         const list = res?.data ?? [];
-         if (list.length === 0) return;
-         const target =
-            list.find((a) => a.id === addressId) ??
-            list.find((a) => a.isDefault) ??
-            list[0];
-         setSelectedAddress(target);
-      } catch {
-         // silent
-      }
+      const handler = (e: MouseEvent) => {
+         if (
+            contactRef.current &&
+            !contactRef.current.contains(e.target as Node)
+         )
+            setIsContactOpen(false);
+         if (
+            addressRef.current &&
+            !addressRef.current.contains(e.target as Node)
+         )
+            setIsAddressOpen(false);
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
    }, []);
 
-   // ── Effect 1: Load checkout data từ localStorage ───────────────────────────
+   // ── Fetch user profile ────────────────────────────────────────────────────
+   useEffect(() => {
+      const load = async () => {
+         setIsLoadingProfiles(true);
+         try {
+            const res = await apiRequest.get<{ data: UserProfile }>(
+               "/users/me",
+            );
+            if (res?.data) setUserProfiles([res.data]);
+         } catch {
+            setUserProfiles([]);
+         } finally {
+            setIsLoadingProfiles(false);
+         }
+      };
+      load();
+   }, []);
+
+   // ── Fetch provinces ───────────────────────────────────────────────────────
+   useEffect(() => {
+      const load = async () => {
+         setIsLoadingProvinces(true);
+         try {
+            setProvinces(await getProvinces());
+         } finally {
+            setIsLoadingProvinces(false);
+         }
+      };
+      load();
+   }, []);
+
+   // ── Fetch wards when province changes ────────────────────────────────────
+   useEffect(() => {
+      if (!provinceId) {
+         setWards([]);
+         return;
+      }
+      const load = async () => {
+         setIsLoadingWards(true);
+         try {
+            setWards(await getWards(provinceId));
+         } finally {
+            setIsLoadingWards(false);
+         }
+      };
+      load();
+   }, [provinceId]);
+
+   // ── Fetch saved addresses — auto-select mặc định khi mount ─────────────
+   const fetchSavedAddresses = async () => {
+      if (hasFetchedAddresses) return;
+      setIsLoadingAddresses(true);
+      try {
+         const res = await apiRequest.get<{ data: SavedAddress[] }>(
+            "/addresses",
+         );
+         const list = res?.data ?? [];
+         setSavedAddresses(list);
+         setHasFetchedAddresses(true);
+         // Auto chọn mặc định
+         const defaultAddr = list.find((a) => a.isDefault) ?? list[0];
+         if (defaultAddr) {
+            setSelectedSavedAddress(defaultAddr);
+            setProvinceId(defaultAddr.province.id);
+            setWardId(defaultAddr.ward.id);
+            setDetailAddress(defaultAddr.detailAddress);
+            setContactName(defaultAddr.contactName);
+            setContactPhone(defaultAddr.phone);
+         }
+      } catch {
+         setSavedAddresses([]);
+      } finally {
+         setIsLoadingAddresses(false);
+      }
+   };
+
+   // Auto-fetch khi mount
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   useEffect(() => {
+      fetchSavedAddresses();
+   }, []);
+
+   // ── Effect: Load checkout data ────────────────────────────────────────────
    useEffect(() => {
       sessionStorage.removeItem("paymentInfo");
       sessionStorage.removeItem("pendingOrderId");
       sessionStorage.removeItem("pendingOrderCode");
 
-      const savedCheckoutData = localStorage.getItem("checkoutData");
-      if (!savedCheckoutData) {
+      const raw = localStorage.getItem("checkoutData");
+      if (!raw) {
          router.replace("/");
          return;
       }
       try {
-         const data: CheckoutData = JSON.parse(savedCheckoutData);
+         const data: CheckoutData = JSON.parse(raw);
          if (!data.selectedItems?.length) {
             toast.error("Vui lòng chọn sản phẩm từ giỏ hàng");
             router.push("/cart");
@@ -246,12 +355,8 @@ export default function CheckoutPage() {
          setVoucherValue(data.appliedVoucherValue ?? 0);
          setVoucherId(data.appliedVoucherId ?? "");
 
-         if (data.contactName) setContactName(data.contactName);
-         // contactPhone không load từ checkoutData — sẽ được sync từ selectedAddress
-         if (data.contactEmail) setContactEmail(data.contactEmail);
-
          if (data.newAddressId) {
-            const targetId = data.newAddressId as string;
+            const targetId = data.newAddressId;
             delete data.newAddressId;
             localStorage.setItem("checkoutData", JSON.stringify(data));
             router.replace("/checkout", { scroll: false });
@@ -263,7 +368,7 @@ export default function CheckoutPage() {
                      list.find((a) => a.id === targetId) ??
                      list.find((a) => a.isDefault) ??
                      list[0];
-                  if (target) setSelectedAddress(target);
+                  if (target) setMobileSelectedAddress(target);
                })
                .catch(() => {});
          }
@@ -275,28 +380,18 @@ export default function CheckoutPage() {
       }
    }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
-   // ── Effect 2: Sync user info ───────────────────────────────────────────────
-   useEffect(() => {
-      if (!authLoading && user) {
-         setContactName((prev) => prev || user.fullName);
-         setContactEmail((prev) => prev || user.email);
-      }
-   }, [authLoading, user]);
-
-   // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
-   // ── Effect 3: Load địa chỉ mặc định ──────────────────────────────────────
+   // ── Effect: Load default address (mobile) ────────────────────────────────
    useEffect(() => {
       if (authLoading) return;
       if (searchParams.get("newAddress") === "1") return;
-
-      const loadDefaultAddress = async () => {
+      const load = async () => {
          try {
             const res = await apiRequest.get<{
                success: boolean;
                data: ApiAddress | null;
             }>("/addresses/default");
             if (res?.data) {
-               setSelectedAddress(res.data);
+               setMobileSelectedAddress(res.data);
                return;
             }
          } catch {
@@ -309,21 +404,23 @@ export default function CheckoutPage() {
             }>("/addresses");
             const list = listRes?.data ?? [];
             if (list.length > 0)
-               setSelectedAddress(list.find((a) => a.isDefault) ?? list[0]);
+               setMobileSelectedAddress(
+                  list.find((a) => a.isDefault) ?? list[0],
+               );
          } catch {
             /* silent */
          }
       };
-      loadDefaultAddress();
+      load();
    }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-   // ── Effect 4: Fetch preview ────────────────────────────────────────────────
+   // ── Preview ───────────────────────────────────────────────────────────────
    const fetchPreview = useCallback(async () => {
-      if (!selectedAddress?.id || !selectedPaymentMethodId) return;
+      if (!mobileSelectedAddress?.id || !selectedPaymentMethodId) return;
       try {
          const params = new URLSearchParams({
             paymentMethodId: selectedPaymentMethodId,
-            shippingAddressId: selectedAddress.id,
+            shippingAddressId: mobileSelectedAddress.id,
             ...(voucherId ? { voucherId } : {}),
          });
          const res = await apiRequest.get<{
@@ -334,37 +431,132 @@ export default function CheckoutPage() {
       } catch {
          /* non-critical */
       }
-   }, [selectedAddress?.id, selectedPaymentMethodId, voucherId]);
+   }, [mobileSelectedAddress?.id, selectedPaymentMethodId, voucherId]);
 
    useEffect(() => {
       fetchPreview();
    }, [fetchPreview]);
 
-   // ── Handlers ───────────────────────────────────────────────────────────────
-
-   const handleUserUpdate = async (data: { name: string; email: string }) => {
-      setContactName(data.name);
-      setContactEmail(data.email);
-
-      try {
-         const raw = localStorage.getItem("checkoutData");
-         if (raw) {
-            const parsed = JSON.parse(raw);
-            parsed.contactName = data.name;
-            parsed.contactEmail = data.email;
-            localStorage.setItem("checkoutData", JSON.stringify(parsed));
-         }
-      } catch {
-         /* silent */
-      }
-
-      toast.success("Cập nhật thông tin người đặt thành công");
+   // ── Handlers: Contact ─────────────────────────────────────────────────────
+   const handleSelectContact = (profile: UserProfile) => {
+      setContactSelectedId(profile.id);
+      setContactName(profile.fullName ?? "");
+      setContactPhone(profile.phone ?? "");
+      setIsContactOpen(false);
    };
 
+   const handleClearContact = () => {
+      setContactSelectedId(null);
+      setContactName("");
+      setContactPhone("");
+   };
+
+   const contactPhoneDisabled =
+      !!contactSelectedId &&
+      !!userProfiles.find((p) => p.id === contactSelectedId)?.phone;
+   const contactNameDisabled = !!contactSelectedId;
+
+   // ── Handlers: Address ─────────────────────────────────────────────────────
+   const handleSelectSavedAddress = (addr: SavedAddress) => {
+      setSelectedSavedAddress(addr);
+      setProvinceId(addr.province.id);
+      setWardId(addr.ward.id);
+      setDetailAddress(addr.detailAddress);
+      // ✅ Sync contact từ address — không cần section người đặt hàng riêng
+      setContactName(addr.contactName);
+      setContactPhone(addr.phone);
+      setContactSelectedId(null);
+      setIsAddressOpen(false);
+   };
+
+   const handleClearAddress = () => {
+      setSelectedSavedAddress(null);
+      setProvinceId("");
+      setWardId("");
+      setDetailAddress("");
+      setWards([]);
+      // ✅ reset luôn contact
+      setContactName("");
+      setContactPhone("");
+      setContactSelectedId(null);
+   };
+
+   const handleProvinceChange = (id: string) => {
+      if (selectedSavedAddress) setSelectedSavedAddress(null);
+      setProvinceId(id);
+      setWardId("");
+      setWards([]);
+   };
+
+   const handleFieldChange = (
+      field: "wardId" | "detailAddress",
+      val: string,
+   ) => {
+      if (selectedSavedAddress) setSelectedSavedAddress(null);
+      if (field === "wardId") setWardId(val);
+      else setDetailAddress(val);
+   };
+
+   // ── Validate ──────────────────────────────────────────────────────────────
+   const handleCheckoutClick = () => {
+      if (!contactName.trim()) {
+         toast.error("Vui lòng nhập họ tên người đặt");
+         return;
+      }
+      if (!contactPhone.trim()) {
+         toast.error("Vui lòng nhập số điện thoại người đặt");
+         return;
+      }
+      if (
+         !selectedSavedAddress &&
+         (!provinceId || !wardId || !detailAddress.trim())
+      ) {
+         toast.error("Vui lòng điền đầy đủ địa chỉ giao hàng");
+         return;
+      }
+      if (!selectedPaymentMethodId) {
+         toast.error("Vui lòng chọn phương thức thanh toán");
+         return;
+      }
+      if (!agreedToTerms) {
+         toast.error("Vui lòng đồng ý với điều khoản đặt hàng");
+         return;
+      }
+      setShowConfirmModal(true);
+   };
+
+   // ── Place order ───────────────────────────────────────────────────────────
    const handlePlaceOrder = async () => {
       setShowConfirmModal(false);
       setIsSubmitting(true);
+      let tempAddressId: string | null = null;
+
       try {
+         let addressId = selectedSavedAddress?.id ?? null;
+
+         // Nhập tay → tạo address tạm
+         if (!addressId) {
+            const createRes = await apiRequest.post<{ data: { id: string } }>(
+               "/addresses",
+               {
+                  contactName,
+                  phone: contactPhone,
+                  provinceId,
+                  wardId,
+                  detailAddress,
+                  type: "HOME",
+                  isDefault: false,
+               },
+            );
+            tempAddressId = createRes?.data?.id ?? null;
+            addressId = tempAddressId;
+         }
+
+         if (!addressId) {
+            toast.error("Không thể xác định địa chỉ giao hàng");
+            return;
+         }
+
          const res = await apiRequest.post<{
             success: boolean;
             data: {
@@ -375,9 +567,9 @@ export default function CheckoutPage() {
             };
          }>("/checkout", {
             paymentMethodId: selectedPaymentMethodId,
-            shippingAddressId: selectedAddress!.id,
-            shippingContactName: selectedAddress!.contactName,
-            shippingPhone: selectedAddress!.phone,
+            shippingAddressId: addressId,
+            contactName,
+            phone: contactPhone,
             ...(voucherId ? { voucherId } : {}),
          });
 
@@ -385,48 +577,30 @@ export default function CheckoutPage() {
             localStorage.removeItem("checkoutData");
             await refetchCart();
 
-            const { paymentMethodCode, paymentInfo, orderCode, orderId } =
-               res.data;
-            const methodUpper = paymentMethodCode.toUpperCase();
-
-            // COD / Bank Transfer → trang thanh toán dedicated
-            if (
-               methodUpper.includes("COD") ||
-               methodUpper.includes("BANK_TRANSFER")
-            ) {
-               router.push(`/order/${orderCode}/payment`);
+            // Nếu có address tạm → hỏi lưu không, xử lý sau
+            if (tempAddressId) {
+               setPendingOrderResult({
+                  orderCode: res.data.orderCode,
+                  orderId: res.data.orderId,
+                  paymentMethodCode: res.data.paymentMethodCode,
+                  paymentInfo: res.data.paymentInfo,
+                  tempAddressId,
+               });
+               setShowSaveAddressModal(true);
                return;
             }
 
-            // Momo / VNPay / ZaloPay → redirect thẳng cổng thanh toán
-            if (
-               methodUpper.includes("MOMO") ||
-               methodUpper.includes("VNPAY") ||
-               methodUpper.includes("ZALOPAY")
-            ) {
-               if (paymentInfo?.paymentUrl) {
-                  window.location.href = paymentInfo.paymentUrl;
-               } else {
-                  toast.error(
-                     "Không lấy được đường dẫn thanh toán. Vui lòng thử lại.",
-                  );
-               }
-               return;
-            }
-
-            // Stripe / Credit Card → modal tại trang checkout
-            if (
-               methodUpper.includes("STRIPE") ||
-               methodUpper.includes("CREDIT_CARD")
-            ) {
-               setPaymentResultModal({ isOpen: true, paymentInfo, orderId });
-               return;
-            }
-
-            // Fallback
-            router.push(`/order/${orderCode}/payment`);
+            navigateAfterOrder(
+               res.data.orderCode,
+               res.data.orderId,
+               res.data.paymentMethodCode,
+               res.data.paymentInfo,
+            );
          }
       } catch (err: any) {
+         if (tempAddressId) {
+            apiRequest.delete(`/addresses/${tempAddressId}`).catch(() => {});
+         }
          toast.error(
             err?.response?.data?.message ??
                err?.message ??
@@ -437,7 +611,73 @@ export default function CheckoutPage() {
       }
    };
 
-   // ── Computed values ────────────────────────────────────────────────────────
+   const navigateAfterOrder = (
+      orderCode: string,
+      orderId: string,
+      paymentMethodCode: string,
+      paymentInfo: any,
+   ) => {
+      const methodUpper = paymentMethodCode.toUpperCase();
+      if (
+         methodUpper.includes("COD") ||
+         methodUpper.includes("BANK_TRANSFER")
+      ) {
+         router.push(`/order/${orderCode}/payment`);
+         return;
+      }
+      if (
+         methodUpper.includes("MOMO") ||
+         methodUpper.includes("VNPAY") ||
+         methodUpper.includes("ZALOPAY")
+      ) {
+         if (paymentInfo?.paymentUrl)
+            window.location.href = paymentInfo.paymentUrl;
+         else toast.error("Không lấy được đường dẫn thanh toán.");
+         return;
+      }
+      if (
+         methodUpper.includes("STRIPE") ||
+         methodUpper.includes("CREDIT_CARD")
+      ) {
+         setPaymentResultModal({ isOpen: true, paymentInfo, orderId });
+         return;
+      }
+      router.push(`/order/${orderCode}/payment`);
+   };
+
+   // ── Save address modal handlers ───────────────────────────────────────────
+   const handleSaveAddress = async () => {
+      if (!pendingOrderResult) return;
+      // Cập nhật address tạm → đổi isDefault nếu muốn, không xóa
+      // Địa chỉ đã tồn tại trong DB rồi (tạo khi checkout), chỉ cần đóng modal
+      setShowSaveAddressModal(false);
+      toast.success("Đã lưu địa chỉ vào sổ địa chỉ");
+      navigateAfterOrder(
+         pendingOrderResult.orderCode,
+         pendingOrderResult.orderId,
+         pendingOrderResult.paymentMethodCode,
+         pendingOrderResult.paymentInfo,
+      );
+      setPendingOrderResult(null);
+   };
+
+   const handleDontSaveAddress = async () => {
+      if (!pendingOrderResult) return;
+      // Xóa address tạm
+      apiRequest
+         .delete(`/addresses/${pendingOrderResult.tempAddressId}`)
+         .catch(() => {});
+      setShowSaveAddressModal(false);
+      navigateAfterOrder(
+         pendingOrderResult.orderCode,
+         pendingOrderResult.orderId,
+         pendingOrderResult.paymentMethodCode,
+         pendingOrderResult.paymentInfo,
+      );
+      setPendingOrderResult(null);
+   };
+
+   // ── Computed ──────────────────────────────────────────────────────────────
    const displaySubtotal = subtotal;
    const displayDiscount = totalDiscount;
    const displayVoucherDiscount = voucherValue;
@@ -445,8 +685,17 @@ export default function CheckoutPage() {
    const mobileFinalTotal = Math.max(0, finalTotal - voucherValue);
    const shippingFee = previewData?.shippingFee;
    const taxAmount = previewData?.taxAmount;
+   const selectedContactProfile = userProfiles.find(
+      (p) => p.id === contactSelectedId,
+   );
 
-   // ── Loading guard ──────────────────────────────────────────────────────────
+   const formatDisplayAddress = (addr: ApiAddress) =>
+      addr.fullAddress ??
+      [addr.detailAddress, addr.ward?.name, addr.province?.name]
+         .filter(Boolean)
+         .join(", ");
+
+   // ── Loading ───────────────────────────────────────────────────────────────
    if (isPageLoading || authLoading) {
       return (
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
@@ -460,13 +709,7 @@ export default function CheckoutPage() {
       );
    }
 
-   const userInfoForSidebar = {
-      id: user?.id ? Number(user.id) : 0,
-      full_name: contactName,
-      email: contactEmail,
-   };
-
-   // ─── Render ────────────────────────────────────────────────────────────────
+   // ─── Render ───────────────────────────────────────────────────────────────
    return (
       <div className="min-h-screen bg-neutral-light">
          {/* ── Desktop ── */}
@@ -483,97 +726,272 @@ export default function CheckoutPage() {
                </div>
 
                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-                  {/* Left column */}
                   <div className="lg:col-span-2 space-y-4">
                      <CartItems items={cartItems} />
 
-                     {/* Người đặt hàng */}
+                     {/* ── Thông tin giao hàng (1 section) ── */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
-                        <div className="flex items-center justify-between mb-3">
-                           <h2 className="text-sm sm:text-base font-semibold text-primary">
-                              Người đặt hàng
-                           </h2>
+                        <h2 className="text-sm sm:text-base font-semibold text-primary mb-4">
+                           Thông tin giao hàng
+                        </h2>
+
+                        {/* Dropdown saved address */}
+                        <div className="relative mb-4" ref={addressRef}>
                            <button
-                              onClick={() => setShowUserSidebar(true)}
-                              className="text-xs sm:text-sm hover:underline cursor-pointer text-primary"
+                              type="button"
+                              onClick={() => {
+                                 setIsAddressOpen((v) => !v);
+                                 fetchSavedAddresses();
+                              }}
+                              className="w-full flex items-center justify-between gap-2 px-4 py-3 border border-neutral rounded-lg text-sm bg-neutral-light hover:border-accent transition-colors cursor-pointer"
                            >
-                              Thay đổi
+                              <div className="flex items-center gap-2 min-w-0">
+                                 <MapPin
+                                    size={16}
+                                    className="text-accent shrink-0"
+                                 />
+                                 {selectedSavedAddress ? (
+                                    <span className="text-primary font-medium truncate">
+                                       {selectedSavedAddress.contactName} —{" "}
+                                       {selectedSavedAddress.fullAddress}
+                                    </span>
+                                 ) : (
+                                    <span className="text-neutral-dark">
+                                       Chọn từ địa chỉ đã lưu
+                                    </span>
+                                 )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                 {selectedSavedAddress && (
+                                    <span className="text-[11px] px-2 py-0.5 bg-accent/10 text-accent font-medium rounded-full">
+                                       Đã chọn
+                                    </span>
+                                 )}
+                                 <ChevronDown
+                                    size={16}
+                                    className={`text-neutral-dark transition-transform duration-200 ${isAddressOpen ? "rotate-180" : ""}`}
+                                 />
+                              </div>
                            </button>
-                        </div>
-                        <div className="space-y-1">
-                           <p className="font-medium text-sm text-primary">
-                              {contactName || "Chưa có tên"}
-                           </p>
-                           {contactEmail && (
-                              <p className="text-neutral-darker text-sm">
-                                 {contactEmail}
-                              </p>
+
+                           {isAddressOpen && (
+                              <div className="absolute top-full left-0 right-0 mt-1.5 bg-neutral-light border border-neutral rounded-lg shadow-xl z-30 overflow-hidden">
+                                 {isLoadingAddresses ? (
+                                    <div className="flex items-center justify-center gap-2 py-6 text-sm text-neutral-dark">
+                                       <Loader2
+                                          size={16}
+                                          className="animate-spin"
+                                       />{" "}
+                                       Đang tải...
+                                    </div>
+                                 ) : savedAddresses.length === 0 ? (
+                                    <p className="text-sm text-neutral-dark text-center py-6">
+                                       Chưa có địa chỉ nào được lưu
+                                    </p>
+                                 ) : (
+                                    <ul className="max-h-64 overflow-y-auto divide-y divide-neutral">
+                                       {savedAddresses.map((addr) => (
+                                          <li key={addr.id}>
+                                             <button
+                                                type="button"
+                                                onClick={() =>
+                                                   handleSelectSavedAddress(
+                                                      addr,
+                                                   )
+                                                }
+                                                className={`w-full text-left px-4 py-3 hover:bg-neutral transition-colors cursor-pointer flex items-start gap-3 ${selectedSavedAddress?.id === addr.id ? "bg-accent/5" : ""}`}
+                                             >
+                                                <div className="flex-1 min-w-0">
+                                                   <div className="flex items-center gap-2 flex-wrap">
+                                                      <span className="text-sm font-semibold text-primary">
+                                                         {addr.contactName}
+                                                      </span>
+                                                      <span className="text-sm text-neutral-darker">
+                                                         {addr.phone}
+                                                      </span>
+                                                      {addr.isDefault && (
+                                                         <span className="text-[10px] px-1.5 py-0.5 bg-accent text-white font-medium rounded">
+                                                            Mặc định
+                                                         </span>
+                                                      )}
+                                                   </div>
+                                                   <p className="text-xs text-neutral-darker mt-0.5 line-clamp-1">
+                                                      {addr.fullAddress}
+                                                   </p>
+                                                </div>
+                                                {selectedSavedAddress?.id ===
+                                                   addr.id && (
+                                                   <Check
+                                                      size={16}
+                                                      className="text-accent shrink-0 mt-0.5"
+                                                   />
+                                                )}
+                                             </button>
+                                          </li>
+                                       ))}
+                                    </ul>
+                                 )}
+                              </div>
                            )}
                         </div>
-                     </div>
 
-                     {/* Địa chỉ nhận hàng */}
-                     <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
-                        <div className="flex items-center justify-between mb-3">
-                           <h2 className="text-sm sm:text-base font-semibold text-primary">
-                              Địa chỉ nhận hàng
-                           </h2>
+                        {selectedSavedAddress && (
                            <button
-                              onClick={() => setShowAddressSidebar(true)}
-                              className="text-xs sm:text-sm hover:underline cursor-pointer text-primary"
+                              type="button"
+                              onClick={handleClearAddress}
+                              className="flex items-center gap-1.5 text-xs text-promotion transition-colors cursor-pointer mb-4"
                            >
-                              Thay đổi
+                              <X size={13} /> Xóa lựa chọn và nhập thủ công
                            </button>
-                        </div>
-                        {selectedAddress ? (
-                           <div>
-                              <p className="font-semibold text-sm text-primary mb-1">
-                                 {selectedAddress.contactName} •{" "}
-                                 {selectedAddress.phone}
-                              </p>
-                              <p className="text-sm text-neutral-darker leading-relaxed">
-                                 {formatDisplayAddress(selectedAddress)}
-                              </p>
-                              {selectedAddress.isDefault && (
-                                 <span className="mt-2 inline-block text-xs px-2 py-0.5 rounded-full bg-accent text-primary-darker font-medium">
-                                    Địa chỉ mặc định
-                                 </span>
-                              )}
-                           </div>
-                        ) : (
-                           <>
-                              <button
-                                 onClick={() => setShowAddressSidebar(true)}
-                                 className="flex items-center gap-2 w-full p-3 border-2 border-dashed border-neutral-dark rounded-lg hover:border-accent hover:bg-accent-light transition-all cursor-pointer"
-                              >
-                                 <MapPin
-                                    size={18}
-                                    className="text-neutral-darker shrink-0"
-                                 />
-                                 <span className="text-sm text-neutral-darker">
-                                    Chọn địa chỉ giao hàng
-                                 </span>
-                              </button>
-                              <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-                                 <AlertTriangle
-                                    size={15}
-                                    className="text-yellow-600 shrink-0 mt-0.5"
-                                 />
-                                 <p className="text-xs text-yellow-700">
-                                    Bạn chưa có địa chỉ nào.{" "}
-                                    <Link
-                                       href="/profile/addresses?redirect=checkout"
-                                       className="font-semibold underline"
-                                    >
-                                       Thêm địa chỉ tại đây
-                                    </Link>
-                                 </p>
-                              </div>
-                           </>
                         )}
+
+                        {/* Tên + SĐT */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                           <div>
+                              <label className="block text-xs font-medium text-neutral-darker mb-1.5">
+                                 Họ tên người nhận{" "}
+                                 <span className="text-promotion">*</span>
+                              </label>
+                              <input
+                                 type="text"
+                                 value={contactName}
+                                 onChange={(e) => {
+                                    if (selectedSavedAddress)
+                                       setSelectedSavedAddress(null);
+                                    setContactName(e.target.value);
+                                 }}
+                                 placeholder="Nguyễn Văn A"
+                                 disabled={!!selectedSavedAddress}
+                                 className={`${inputCls} ${disabledInputCls}`}
+                              />
+                           </div>
+                           <div>
+                              <label className="block text-xs font-medium text-neutral-darker mb-1.5">
+                                 Số điện thoại{" "}
+                                 <span className="text-promotion">*</span>
+                              </label>
+                              <input
+                                 type="tel"
+                                 value={contactPhone}
+                                 onChange={(e) => {
+                                    if (selectedSavedAddress)
+                                       setSelectedSavedAddress(null);
+                                    setContactPhone(e.target.value);
+                                 }}
+                                 placeholder="0901 234 567"
+                                 disabled={!!selectedSavedAddress}
+                                 className={`${inputCls} ${disabledInputCls}`}
+                              />
+                           </div>
+                        </div>
+
+                        {/* Form tỉnh / phường / địa chỉ */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                           <div>
+                              <label className="block text-xs font-medium text-neutral-darker mb-1.5">
+                                 Tỉnh / Thành phố{" "}
+                                 <span className="text-promotion">*</span>
+                              </label>
+                              <div className="relative">
+                                 <select
+                                    value={provinceId}
+                                    onChange={(e) =>
+                                       handleProvinceChange(e.target.value)
+                                    }
+                                    disabled={
+                                       isLoadingProvinces ||
+                                       !!selectedSavedAddress
+                                    }
+                                    className={selectCls}
+                                 >
+                                    <option value="">Chọn tỉnh / thành</option>
+                                    {provinces.map((p) => (
+                                       <option key={p.id} value={p.id}>
+                                          {p.fullName}
+                                       </option>
+                                    ))}
+                                 </select>
+                                 <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                                    {isLoadingProvinces ? (
+                                       <Loader2
+                                          size={14}
+                                          className="animate-spin text-neutral-dark"
+                                       />
+                                    ) : (
+                                       <ChevronDown
+                                          size={14}
+                                          className="text-neutral-dark"
+                                       />
+                                    )}
+                                 </div>
+                              </div>
+                           </div>
+                           <div>
+                              <label className="block text-xs font-medium text-neutral-darker mb-1.5">
+                                 Phường / Xã{" "}
+                                 <span className="text-promotion">*</span>
+                              </label>
+                              <div className="relative">
+                                 <select
+                                    value={wardId}
+                                    onChange={(e) =>
+                                       handleFieldChange(
+                                          "wardId",
+                                          e.target.value,
+                                       )
+                                    }
+                                    disabled={
+                                       !provinceId ||
+                                       isLoadingWards ||
+                                       !!selectedSavedAddress
+                                    }
+                                    className={selectCls}
+                                 >
+                                    <option value="">Chọn phường / xã</option>
+                                    {wards.map((w) => (
+                                       <option key={w.id} value={w.id}>
+                                          {w.fullName}
+                                       </option>
+                                    ))}
+                                 </select>
+                                 <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                                    {isLoadingWards ? (
+                                       <Loader2
+                                          size={14}
+                                          className="animate-spin text-neutral-dark"
+                                       />
+                                    ) : (
+                                       <ChevronDown
+                                          size={14}
+                                          className="text-neutral-dark"
+                                       />
+                                    )}
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                        <div>
+                           <label className="block text-xs font-medium text-neutral-darker mb-1.5">
+                              Địa chỉ chi tiết{" "}
+                              <span className="text-promotion">*</span>
+                           </label>
+                           <input
+                              type="text"
+                              value={detailAddress}
+                              onChange={(e) =>
+                                 handleFieldChange(
+                                    "detailAddress",
+                                    e.target.value,
+                                 )
+                              }
+                              placeholder="Số nhà, tên đường..."
+                              disabled={!!selectedSavedAddress}
+                              className={`${inputCls} ${disabledInputCls}`}
+                           />
+                        </div>
                      </div>
 
-                     {/* Ghi chú */}
+                     {/* ── Ghi chú ── */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <label className="block text-sm font-medium mb-2 text-primary">
                            Ghi chú
@@ -582,8 +1000,8 @@ export default function CheckoutPage() {
                            value={notes}
                            onChange={(e) => setNotes(e.target.value)}
                            maxLength={1000}
-                           className="w-full px-3 py-2 border-2 border-neutral-dark rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none bg-neutral-light text-primary"
                            rows={4}
+                           className="w-full px-3 py-2 border-2 border-neutral-dark rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none bg-neutral-light text-primary"
                            placeholder="Ví dụ: Hãy gọi tôi khi chuẩn bị hàng xong"
                         />
                         <div className="text-xs text-neutral-dark mt-1 text-right">
@@ -591,7 +1009,7 @@ export default function CheckoutPage() {
                         </div>
                      </div>
 
-                     {/* Hóa đơn */}
+                     {/* ── Hóa đơn ── */}
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <label className="flex items-center gap-2 cursor-pointer">
                            <input
@@ -615,7 +1033,6 @@ export default function CheckoutPage() {
                      />
                   </div>
 
-                  {/* Right column */}
                   <div className="lg:col-span-1">
                      <OrderSummary
                         subtotal={displaySubtotal}
@@ -630,10 +1047,10 @@ export default function CheckoutPage() {
                         onOpenVoucherModal={() => setShowVoucherModal(true)}
                         onCheckout={handleCheckoutClick}
                         buttonText={isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
-                        showTerms={true}
+                        showTerms
                         agreedToTerms={agreedToTerms}
                         onTermsChange={setAgreedToTerms}
-                        isCheckoutPage={true}
+                        isCheckoutPage
                         shippingFee={shippingFee}
                         taxAmount={taxAmount}
                      />
@@ -656,32 +1073,30 @@ export default function CheckoutPage() {
                <CartItems items={cartItems} />
             </div>
             <div className="px-3 mt-3">
-               <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
+               <div className="bg-neutral-light rounded-lg p-4 shadow-sm border border-neutral">
                   <h2 className="text-sm font-semibold text-primary mb-3">
                      Người đặt hàng
                   </h2>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-2">
                      <input
                         type="text"
                         value={contactName}
-                        readOnly
-                        onClick={() => setShowUserSidebar(true)}
-                        className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary"
+                        onChange={(e) => setContactName(e.target.value)}
                         placeholder="Họ và tên"
+                        className={inputCls}
                      />
                      <input
-                        type="email"
-                        value={contactEmail}
-                        readOnly
-                        onClick={() => setShowUserSidebar(true)}
-                        className="w-full px-3 py-2 border border-neutral-dark rounded text-sm cursor-pointer bg-neutral-light text-primary placeholder:text-neutral-dark"
-                        placeholder="Email (Không bắt buộc)"
+                        type="tel"
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        placeholder="Số điện thoại"
+                        className={inputCls}
                      />
                   </div>
                </div>
             </div>
             <div className="px-3 mt-3">
-               <div className="bg-neutral-light rounded-lg p-4 shadow-sm">
+               <div className="bg-neutral-light rounded-lg p-4 shadow-sm border border-neutral">
                   <div className="flex items-center justify-between mb-3">
                      <h2 className="text-sm font-semibold text-primary">
                         Địa chỉ nhận hàng
@@ -693,17 +1108,17 @@ export default function CheckoutPage() {
                         Thay đổi
                      </button>
                   </div>
-                  {selectedAddress ? (
+                  {mobileSelectedAddress ? (
                      <div
                         onClick={() => setShowAddressSidebar(true)}
                         className="cursor-pointer"
                      >
                         <p className="font-semibold text-sm text-primary mb-1">
-                           {selectedAddress.contactName} •{" "}
-                           {selectedAddress.phone}
+                           {mobileSelectedAddress.contactName} •{" "}
+                           {mobileSelectedAddress.phone}
                         </p>
                         <p className="text-sm text-neutral-darker">
-                           {formatDisplayAddress(selectedAddress)}
+                           {formatDisplayAddress(mobileSelectedAddress)}
                         </p>
                      </div>
                   ) : (
@@ -734,17 +1149,11 @@ export default function CheckoutPage() {
          </div>
 
          {/* ── Sidebars & Modals ── */}
-         <UserInfoSidebar
-            isOpen={showUserSidebar}
-            onClose={() => setShowUserSidebar(false)}
-            userInfo={userInfoForSidebar}
-            onUpdate={handleUserUpdate}
-         />
          <AddressSidebar
             isOpen={showAddressSidebar}
             onClose={() => setShowAddressSidebar(false)}
-            selectedAddressId={selectedAddress?.id}
-            onSelect={setSelectedAddress}
+            selectedAddressId={mobileSelectedAddress?.id}
+            onSelect={setMobileSelectedAddress}
          />
          <CartSidebar
             isOpen={showSidebar}
@@ -758,8 +1167,8 @@ export default function CheckoutPage() {
             appliedVoucherValue={displayVoucherDiscount}
             onOpenVoucherModal={() => setShowVoucherModal(true)}
             onCheckout={handleCheckoutClick}
-            isCheckoutPage={true}
-            showTerms={true}
+            isCheckoutPage
+            showTerms
             agreedToTerms={agreedToTerms}
             onTermsChange={setAgreedToTerms}
             usePoints={usePoints}
@@ -814,7 +1223,37 @@ export default function CheckoutPage() {
             </div>
          )}
 
-         {/* ── Payment Result Modal (Stripe / Credit Card only) ── */}
+         {/* ── Save Address Modal ── */}
+         {showSaveAddressModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+               <div className="absolute inset-0 bg-black/50" />
+               <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+                  <h3 className="text-base font-semibold text-primary mb-2">
+                     Lưu địa chỉ?
+                  </h3>
+                  <p className="text-sm text-neutral-darker mb-5">
+                     Bạn có muốn lưu địa chỉ này vào sổ địa chỉ để dùng cho lần
+                     sau không?
+                  </p>
+                  <div className="flex gap-3">
+                     <button
+                        onClick={handleDontSaveAddress}
+                        className="flex-1 py-2.5 border border-neutral rounded-lg text-sm text-neutral-darker hover:bg-neutral transition-colors"
+                     >
+                        Không lưu
+                     </button>
+                     <button
+                        onClick={handleSaveAddress}
+                        className="flex-1 py-2.5 bg-accent text-primary-darker font-semibold rounded-lg text-sm hover:bg-accent-dark transition-colors"
+                     >
+                        Lưu địa chỉ
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* ── Payment Result Modal ── */}
          <PaymentResultModal
             isOpen={paymentResultModal.isOpen}
             paymentInfo={paymentResultModal.paymentInfo}
