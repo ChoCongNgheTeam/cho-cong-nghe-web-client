@@ -133,20 +133,20 @@ const Footer = () => {
                            label: "Quy chế hoạt động",
                            href: "/policies/regulations",
                         },
-                        { label: "Tư án Doanh nghiệp", href: "#" },
-                        { label: "Tin tức khuyến mãi", href: "#" },
-                        { label: "Giới thiệu máy đổi trả", href: "#" },
+                        { label: "Tư án Doanh nghiệp", href: "/policies/enterprise-projects" },
+                        { label: "Tin tức khuyến mãi", href: "/policies/news" },
+                        { label: "Giới thiệu máy đổi trả", href: "/policies/exchangeIntro" },
                         {
                            label: "Hướng dẫn mua hàng & thanh toán online",
-                           href: "#",
+                           href: "/policies/shoppingGuide",
                         },
                         {
                            label: "Đại lý ủy quyền và TTBH ủy quyền của Apple",
-                           href: "#",
+                           href: "/policies/apple-authorized-centers",
                         },
-                        { label: "Tra cứu hoá đơn điện tử", href: "#" },
-                        { label: "Tra cứu bảo hành", href: "#" },
-                        { label: "Câu hỏi thường gặp", href: "#" },
+                        { label: "Tra cứu hoá đơn điện tử", href: "/Invoicelookup" },
+                        { label: "Tra cứu bảo hành", href: "/policies/warranty-lookup" },
+                        { label: "Câu hỏi thường gặp", href: "/policies/faq" },
                      ].map((item) => (
                         <li key={item.label}>
                            <Link
