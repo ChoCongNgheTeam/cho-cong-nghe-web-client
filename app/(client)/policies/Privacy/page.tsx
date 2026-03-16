@@ -2,8 +2,8 @@
 
 export default function PrivacyPolicy() {
    return (
-      <div className="min-h-screen py-5 px-4 md:px-8 max-w-3xl mx-auto">
-         <h1 className="font-bold mb-5 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-5 text-primary text-center ">
             Chính sách bảo mật
          </h1>
 
@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
                      "Đối với thẻ nội địa (internet banking), Shop chỉ lưu trữ mã đơn hàng, mã giao dịch và tên ngân hàng.",
                      "Shop cam kết đảm bảo thực hiện nghiêm túc các biện pháp bảo mật cần thiết cho mọi hoạt động thanh toán thực hiện trên trang.",
                   ].map((item, i) => (
-                     <li key={i} className="flex gap-2 leading-relaxed text-primary-light">
+                     <li key={i} className="flex gap-2 leading-relaxed text-neutral-darker">
                         <span className="mt-1 shrink-0">•</span>
                         <span>{item}</span>
                      </li>
@@ -86,14 +86,14 @@ export default function PrivacyPolicy() {
                Yêu cầu sẽ được chuyển đến nhóm thích hợp để đánh giá và xử lý. Chúng tôi sẽ liên hệ từng bước để cập nhật cho bạn về tiến trình xóa.
             </p>
          </Section>
-      </div>
+      </>
    );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
    return (
       <section className="mb-6">
-         <h2 className="font-bold mb-3 text-primary text-sm">{title}</h2>
+         <h2 className="font-bold mb-3 text-primary ">{title}</h2>
          {children}
       </section>
    );

@@ -2,8 +2,8 @@
 
 export default function InstallmentPolicy() {
    return (
-      <div className="min-h-screen py-5 px-4 md:px-8 max-w-3xl mx-auto">
-         <h1 className="font-bold mb-5 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-5 text-primary text-center ">
             Chính sách trả góp
          </h1>
 
@@ -38,7 +38,7 @@ export default function InstallmentPolicy() {
                   { amount: "Từ 3.000.000đ", bank: "Các ngân hàng còn lại" },
                ].map((row, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion text-xs">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion ">
                         {row.amount}
                      </span>
                      <span className="text-primary">{row.bank}</span>
@@ -68,7 +68,7 @@ export default function InstallmentPolicy() {
                      "Trong thời gian đó chủ thẻ vui lòng sử dụng thẻ của các ngân hàng còn lại để thực hiện giao dịch trả góp.",
                      "Chương trình không áp dụng cho thẻ phụ, thẻ Debit và thẻ tín dụng phát hành tại nước ngoài.",
                   ].map((item, i) => (
-                     <li key={i} className="flex gap-2 leading-relaxed text-primary-light">
+                     <li key={i} className="flex gap-2 leading-relaxed text-neutral-darker">
                         <span className="mt-1 shrink-0">•</span>
                         <span>{item}</span>
                      </li>
@@ -84,7 +84,7 @@ export default function InstallmentPolicy() {
                Khách hàng mang hồ sơ được yêu cầu tới CHOCONGNGHE gần nhất để đăng ký và hoàn tất thủ tục trả góp qua nhà tài chính.
             </p>
             <div className="rounded-lg overflow-hidden border border-neutral">
-               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary text-xs">
+               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary ">
                   <span>Công ty tài chính</span>
                   <span>Độ tuổi</span>
                   <span>Hồ sơ</span>
@@ -93,10 +93,10 @@ export default function InstallmentPolicy() {
                <div className="grid grid-cols-4 px-4 py-3 gap-2 text-primary">
                   <div className="space-y-1">
                      {["HDS", "HOME CREDIT", "SHINHAN FINANCE", "FE CREDIT", "MIRAE ASSET", "SAMSUNG FINANCE PLUS"].map((c, i) => (
-                        <span key={i} className="block font-semibold text-promotion text-xs">{c}</span>
+                        <span key={i} className="block font-semibold text-promotion ">{c}</span>
                      ))}
                   </div>
-                  <div className="space-y-1 text-xs">
+                  <div className="space-y-1 ">
                      <span className="block">18 - 60</span>
                      <span className="block">18 - 60</span>
                      <span className="block">Nam: 21 - 60 / Nữ: 18 - 60</span>
@@ -104,7 +104,7 @@ export default function InstallmentPolicy() {
                   </div>
                   <ul className="space-y-1">
                      {["Căn cước/CMND", "Bằng lái xe / Sổ hộ khẩu", "Email", "SIM chính chủ"].map((d, i) => (
-                        <li key={i} className="flex gap-1 text-primary text-xs">
+                        <li key={i} className="flex gap-1 text-primary ">
                            <span className="shrink-0">•</span>
                            <span>{d}</span>
                         </li>
@@ -116,7 +116,7 @@ export default function InstallmentPolicy() {
                         "Thu nhập từ 4.000.000 VNĐ/tháng",
                         "Có tài khoản Kredivo",
                      ].map((r, i) => (
-                        <li key={i} className="flex gap-1 text-primary text-xs">
+                        <li key={i} className="flex gap-1 text-primary ">
                            <span className="shrink-0">•</span>
                            <span>{r}</span>
                         </li>
@@ -130,7 +130,7 @@ export default function InstallmentPolicy() {
 
          <Section title="3. Trả góp qua Kredivo">
             <div className="rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-               <p className="italic text-primary-light">Chính sách đang được cập nhật.</p>
+               <p className="italic text-neutral-darker">Chính sách đang được cập nhật.</p>
             </div>
          </Section>
 
@@ -138,17 +138,17 @@ export default function InstallmentPolicy() {
 
          <Section title="4. Trả góp qua Home PayLater">
             <div className="rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-               <p className="italic text-primary-light">Chính sách đang được cập nhật.</p>
+               <p className="italic text-neutral-darker">Chính sách đang được cập nhật.</p>
             </div>
          </Section>
-      </div>
+      </>
    );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
    return (
       <section className="mb-6">
-         <h2 className="font-bold mb-3 text-primary text-sm">{title}</h2>
+         <h2 className="font-bold mb-3 text-primary ">{title}</h2>
          {children}
       </section>
    );
@@ -157,7 +157,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SubSection({ label, content }: { label: string; content: string }) {
    return (
       <div className="rounded-lg p-4 bg-neutral-light-active border border-neutral">
-         <p className="font-semibold mb-1.5 text-primary-light text-xs">{label}</p>
+         <p className="font-semibold mb-1.5 text-neutral-darker ">{label}</p>
          <p className="leading-relaxed text-primary">→ {content}</p>
       </div>
    );

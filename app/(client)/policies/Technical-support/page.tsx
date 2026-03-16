@@ -2,8 +2,8 @@
 
 export default function TechnicalSupportPolicy() {
    return (
-      <div className="min-h-screen py-5 px-4 md:px-8 max-w-3xl mx-auto">
-         <h1 className="font-bold mb-5 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-5 text-primary text-center ">
             Quy định hỗ trợ kỹ thuật và sao lưu dữ liệu
          </h1>
 
@@ -28,13 +28,13 @@ export default function TechnicalSupportPolicy() {
                <>Nếu chưa có tài khoản iCloud, Quý khách liên hệ nhân viên kỹ thuật để được hỗ trợ tạo <strong>Tài khoản iCloud (Apple ID) / Google</strong> và các tài khoản khác <strong>miễn phí</strong> tại cửa hàng. Đồng thời yêu cầu nhân viên cung cấp thông tin, mật khẩu tài khoản vừa được tạo trước khi rời cửa hàng.</>,
             ].map((item, i) => (
                <li key={i} className="flex gap-3 leading-relaxed text-primary">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion-light text-promotion mt-0.5 text-xs">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion-light text-promotion mt-0.5 ">
                      {i + 1}
                   </span>
                   <span>{item}</span>
                </li>
             ))}
          </ul>
-      </div>
+      </>
    );
 }

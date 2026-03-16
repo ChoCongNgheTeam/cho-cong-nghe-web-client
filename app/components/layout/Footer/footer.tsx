@@ -182,19 +182,19 @@ const Footer = () => {
                         { label: "Chính sách đổi trả", href: "/policies/Return" },
                         { label: "Chính sách bảo mật", href: "/policies/Privacy" },
                         { label: "Chính sách trả góp", href: "/policies/Installment" },
-                        { label: "Chính sách khui hộp sản phẩm", href: "/policies/unbox-policy" },
+                        { label: "Chính sách khui hộp sản phẩm", href: "/policies/unboxing" },
                         { label: "Chính sách giao hàng & lắp đặt", href: "/policies/DeliveryInstallation" },
                         {
                            label: "Chính sách mạng di động ChoCongNghe",
-                           href: "#",
+                           href: "/policies/MobileNetwork",
                         },
                         {
                            label: "Chính sách thu thập & xử lý dữ liệu cá nhân",
-                           href: "#",
+                           href: "/policies/DataPrivacy",
                         },
                         {
                            label: "Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu",
-                           href: "#",
+                           href: "/policies/Technical-support",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",

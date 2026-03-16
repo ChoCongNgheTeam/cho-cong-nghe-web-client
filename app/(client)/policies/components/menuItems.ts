@@ -34,7 +34,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "delivery-policy",
       label: "Chính sách giao hàng & lắp đặt",
-      href: "/policies/giao-hang-lap-dat",
+      href: "/policies/Delivery",
    },
    {
       id: "Delivery-Installation",
@@ -42,19 +42,9 @@ export const menuItems: MenuItem[] = [
       href: "/policies/DeliveryInstallation",
    },
    {
-      id: "electronics-delivery-only",
-      label: "Chính sách giao hàng & lắp đặt Điện máy chỉ bán",
-      href: "/policies/giao-hang-dien-may-chi-ban",
-   },
-   {
-      id: "loyalty-policy",
-      label: "Chính sách khách hàng thân thiết tại Shop",
-      href: "/policies/khach-hang-than-thiet",
-   },
-   {
       id: "unbox-policy",
       label: "Chính sách khui hộp sản phẩm",
-      href: "/policies/khui-hop-san-pham",
+      href: "/policies/unboxing",
    },
    {
       id: "exchange-intro",
@@ -64,7 +54,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "Technical-Support",
       label: "Quy định hỗ trợ kỹ thuật và sao lưu dữ liệu",
-      href: "/policies/TechnicalSupport",
+      href: "/policies/Technical-support",
    },
    {
       id: "privacy-policy",
@@ -79,7 +69,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "data-privacy",
       label: "Chính sách bảo mật dữ liệu cá nhân khách hàng",
-      href: "/policies/bao-mat-du-lieu-ca-nhan",
+      href: "/policies/Data-privacy",
    },
    {
       id: "online-purchase",
@@ -100,5 +90,12 @@ export const menuItems: MenuItem[] = [
       id: "Loyalty-policy",
       label: "Chính sách Chương trình Khách hàng thân thiết tại ChoCongNghe",
       href: "/policies/Loyalty",
+   },
+  
+   {
+      id: "Mobile-Network-Policy",
+      label: "Chính sách mạng di động",
+      href: "/policies/Mobile-network",
    }
+
 ];
