@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import { Toast, ToastOptions, ToastContextType } from "./types";
 import ToastContainer from "./ToastContainer";
 
+
+
 const ToastyContext = createContext<ToastContextType | undefined>(undefined);
 
 let toastId = 0;

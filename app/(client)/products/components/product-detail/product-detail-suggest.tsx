@@ -40,7 +40,7 @@ export default function ProductDetailSuggest({ slug }: { slug: string }) {
   return (
     <div className="container mx-auto px-2 sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
       <h1 className="text-xl sm:text-2xl font-semibold text-primary mb-6">
-        Sản phẩm tương tự
+        Sản phẩm liên quan
       </h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {products.slice(0, 4).map((p) => (
