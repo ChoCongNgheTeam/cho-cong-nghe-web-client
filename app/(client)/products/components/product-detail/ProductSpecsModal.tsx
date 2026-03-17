@@ -141,7 +141,7 @@ const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProp
                       className={`w-full text-left px-4 py-3 cursor-pointer text-sm font-medium border-b border-neutral transition-colors
                         ${
                           activeTab === index
-                            ? "bg-neutral-light text-promotion border-l-2 border-l-promotion"
+                            ? "bg-neutral-light text-accent border-l-2 border-l-accent"
                             : "text-primary hover:bg-neutral"
                         }`}
                     >

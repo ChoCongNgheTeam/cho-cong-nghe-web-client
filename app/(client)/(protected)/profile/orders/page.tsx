@@ -7,7 +7,11 @@ import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
 import { Popzy } from "@/components/Modal";
 import { tabs } from "./components/Constants";
-import { ErrorState, EmptyState, LoadingState } from "./components/OrderStatesTemp";
+import {
+  ErrorState,
+  EmptyState,
+  LoadingState,
+} from "./components/OrderStatesTemp";
 import OrderCard from "./components/OrderCard";
 import OrderDetailModal from "./components/OrderDetailModal";
 import Pagination from "./components/Pagination";
@@ -43,13 +47,21 @@ export default function OrdersPage() {
     fetchOrders();
   }, [user]);
 
-  const filteredOrders = orders.filter((order) => (activeTab === "all" ? true : order.orderStatus === activeTab));
+  const filteredOrders = orders.filter((order) =>
+    activeTab === "all" ? true : order.orderStatus === activeTab,
+  );
 
   // Count per tab for badges
-  const countByStatus = (statusId: string) => (statusId === "all" ? orders.length : orders.filter((o) => o.orderStatus === statusId).length);
+  const countByStatus = (statusId: string) =>
+    statusId === "all"
+      ? orders.length
+      : orders.filter((o) => o.orderStatus === statusId).length;
 
   const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
-  const paginatedOrders = filteredOrders.slice((currentPage - 1) * ORDERS_PER_PAGE, currentPage * ORDERS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ORDERS_PER_PAGE,
+    currentPage * ORDERS_PER_PAGE,
+  );
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -65,9 +77,11 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-primary mb-4 mt-2">Đơn hàng của tôi</h1>
+      <h1 className="text-xl font-bold text-primary mb-4 mt-2">
+        Đơn hàng của tôi
+      </h1>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-neutral">
+      <div className="bg-neutral-light rounded-xl shadow-sm overflow-hidden border border-neutral">
         {/* ── Tabs ── */}
         <div className="border-b border-neutral">
           <div className="flex overflow-x-auto scrollbar-hide">
@@ -78,13 +92,13 @@ export default function OrdersPage() {
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 px-3 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap cursor-pointer min-w-[80px]
-                    ${activeTab === tab.id ? "border-promotion text-promotion" : "border-transparent text-neutral-darker hover:text-primary"}`}
+                ${activeTab === tab.id ? "border-accent text-accent" : "border-transparent text-neutral-darker hover:text-primary"}`}
                 >
                   {tab.label}
                   {count > 0 && (
                     <span
                       className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold
-                      ${activeTab === tab.id ? "bg-promotion text-white" : "bg-neutral text-neutral-darker"}`}
+                  ${activeTab === tab.id ? "bg-accent text-neutral-light" : "bg-neutral text-neutral-darker"}`}
                     >
                       {count}
                     </span>
@@ -115,7 +129,13 @@ export default function OrdersPage() {
                   onBeforeNavigate={() => refetchCart(true)}
                 />
               ))}
-              {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              )}
             </div>
           )}
         </div>
@@ -129,7 +149,9 @@ export default function OrdersPage() {
         closeMethods={["escape", "overlay", "button"]}
         footer={false}
         cssClass="max-w-[680px] w-full"
-        content={selectedOrder ? <OrderDetailModal order={selectedOrder} /> : null}
+        content={
+          selectedOrder ? <OrderDetailModal order={selectedOrder} /> : null
+        }
       />
     </div>
   );

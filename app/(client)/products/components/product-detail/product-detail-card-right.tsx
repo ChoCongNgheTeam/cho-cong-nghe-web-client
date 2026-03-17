@@ -197,7 +197,7 @@ export default function ProductDetailRight({
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
         <span>{product.currentVariant?.code}</span>
         <div className="flex items-center gap-1">
-          <FaStar className="text-accent text-xs sm:text-sm" />
+          <FaStar className="text-yellow-400 text-xs sm:text-sm" />
           <span className="text-primary">
             {product.rating.average.toFixed(1)}
           </span>
@@ -236,21 +236,21 @@ export default function ProductDetailRight({
                     onClick={() =>
                       !disabled && onOptionChange?.(option.type, val.value)
                     }
-                    className={`border border-accent text-accent
+                    className={`border 
                                 rounded-sm px-3 py-2 sm:px-4 sm:py-3 
                                 text-xs sm:text-sm font-bold 
                                 relative overflow-hidden 
                                 transition-colors duration-300 
                                 flex items-center gap-2
                                  hover:border-accent
-          ${
-            disabled
-              ? "border-neutral text-primary bg-neutral opacity-40 cursor-not-allowed "
-              : active
-                ? "border-promotion text-promotion bg-neutral-light cursor-pointer"
-                : "text-primary bg-neutral-light hover:bg-promotion-light cursor-pointer"
-          }
-        `}
+             ${
+               disabled
+                 ? "border-neutral text-primary bg-neutral opacity-40 cursor-not-allowed"
+                 : active
+                   ? "border-accent text-primary bg-accent-light cursor-pointer"
+                   : "border-neutral-dark text-primary bg-neutral-light cursor-pointer hover:border-accent hover:bg-accent-light"
+             }
+  `}
                   >
                     {val.image?.imageUrl && (
                       <Image
@@ -263,7 +263,7 @@ export default function ProductDetailRight({
                     )}
                     {val.label}
                     {active && !disabled && (
-                      <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-promotion">
+                      <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-accent">
                         <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
                           ✓
                         </span>
@@ -319,19 +319,8 @@ export default function ProductDetailRight({
 
       {isInStock ? (
         <>
-          {/* Banner */}
-          <div className="py-4 sm:py-6 rounded-lg">
-            <Image
-              src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
-              alt="Banner"
-              width={507}
-              height={85}
-              className="w-full h-auto rounded-lg"
-            />
-          </div>
-
           {/* Price */}
-          <div className="bg-accent-light p-3 sm:p-4 rounded-lg mb-4 border border-accent">
+          <div className="bg-neutral/40 p-4 sm:py-6 rounded-lg mt-6 ">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex flex-col gap-2 flex-1">
                 <div>
@@ -376,6 +365,17 @@ export default function ProductDetailRight({
               )}
           </div>
 
+          {/* Banner */}
+          <div className="py-4 sm:py-6 rounded-lg">
+            <Image
+              src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
+              alt="Banner"
+              width={507}
+              height={85}
+              className="w-full h-auto rounded-lg"
+            />
+          </div>
+
           {/* Gifts */}
           <div className="flex flex-col border border-neutral rounded-lg mb-4">
             <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 bg-neutral rounded-t-lg">
@@ -383,27 +383,44 @@ export default function ProductDetailRight({
                 Quà tặng và ưu đãi khác
               </p>
             </div>
+
             <div className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm">
+              {/* Item 1 */}
               <div className="flex items-start gap-3 my-3">
-                <FaGift className="text-promotion text-base sm:text-lg shrink-0 mt-0.5" />
+                <FaGift className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
+
                 <div className="flex flex-col min-w-0">
                   <span className="break-words text-primary">
                     Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy
                   </span>
-                  <Link href="#" className="text-promotion hover:underline">
+
+                  <Link
+                    href="#"
+                    className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer inline-block w-fit"
+                  >
                     Xem chi tiết
                   </Link>
                 </div>
               </div>
+
+              {/* Divider */}
               <div className="flex items-center gap-3 mb-3">
-                <p className="whitespace-nowrap text-xs sm:text-sm">Ưu đãi</p>
+                <p className="whitespace-nowrap text-xs sm:text-sm text-primary">
+                  Ưu đãi
+                </p>
                 <span className="border border-neutral w-full"></span>
               </div>
+
+              {/* Item 2 */}
               <div className="flex items-start gap-3 mb-3">
-                <FaCog className="text-base sm:text-lg shrink-0 mt-0.5" />
+                <FaCog className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
+
                 <span className="break-words text-primary">
                   Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
-                  <Link href="#" className="text-promotion hover:underline">
+                  <Link
+                    href="#"
+                    className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer"
+                  >
                     Xem chi tiết
                   </Link>
                 </span>
@@ -437,21 +454,57 @@ export default function ProductDetailRight({
                 colorValue: selectedVariant?.colorValue ?? "",
               }}
               label=""
-              iconSize={28}
-              className="!w-full sm:!w-auto sm:flex-1 !text-promotion !py-3 !rounded-lg !border !border-promotion !bg-neutral-light !px-0"
+              iconSize={26}
+              className={`
+      !w-full sm:!w-auto sm:flex-1 
+      !py-3 !rounded-lg 
+      !border !border-neutral-dark 
+      !bg-neutral-light !text-primary 
+      hover:!bg-neutral 
+      active:scale-95
+      transition-all duration-200
+      disabled:!opacity-50 disabled:!cursor-not-allowed
+    `}
             />
+
             <button
               onClick={handleBuyNow}
-              className="flex-1 sm:flex-[2] bg-promotion hover:bg-promotion-hover text-neutral-light py-3 rounded-lg transition-colors text-sm sm:text-base cursor-pointer"
+              disabled={!selectedVariant?.id}
+              className={`
+      flex-1 sm:flex-[2] 
+      bg-primary text-neutral-light 
+      py-3 rounded-lg 
+      hover:bg-primary-hover 
+      active:scale-95
+      transition-all duration-200 
+      text-sm sm:text-base 
+      cursor-pointer
+
+      disabled:opacity-50 disabled:cursor-not-allowed
+    `}
             >
               Mua ngay
             </button>
-            {/* <button
-              onClick={handleInstallment}
-              className="flex-1 sm:flex-[2] bg-primary-dark hover:bg-primary-hover text-neutral-light py-3 rounded-lg transition-colors text-sm sm:text-base cursor-pointer"
-            >
-              Trả góp 0%
-            </button> */}
+
+            {/* 💳 Installment */}
+            {/* (optional bật lại nếu cần) */}
+            {/* 
+  <button
+    onClick={handleInstallment}
+    className="
+      flex-1 sm:flex-[2] 
+      border border-neutral 
+      bg-neutral-light text-primary 
+      py-3 rounded-lg 
+      hover:bg-neutral 
+      transition-all duration-200 
+      text-sm sm:text-base 
+      cursor-pointer
+    "
+  >
+    Trả góp 0%
+  </button> 
+  */}
           </div>
         </>
       ) : (

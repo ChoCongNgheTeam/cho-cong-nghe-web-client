@@ -354,7 +354,7 @@ export default function AddressPage() {
   };
 
   const inputClass =
-    "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-promotion focus:ring-2 focus:ring-promotion-light placeholder:text-primary-dark";
+    "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent-light placeholder:text-primary-dark";
 
   if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
 
@@ -378,7 +378,7 @@ export default function AddressPage() {
           {addresses.length > 0 && (
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center gap-1 bg-promotion hover:bg-promotion-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
+              className="flex items-center gap-1 bg-accent hover:bg-accent-hover text-neutral-light px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
             >
               <Plus size={24} />
               Thêm địa chỉ
@@ -403,7 +403,7 @@ export default function AddressPage() {
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className="bg-promotion hover:bg-promotion-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
             >
               Cập nhật ngay
             </button>
@@ -495,7 +495,7 @@ export default function AddressPage() {
             >
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
-                  <MapPin size={22} className="text-promotion" />
+                  <MapPin size={22} className="text-accent" />
                 </div>
                 <h3 className="text-base font-semibold text-primary">
                   Xóa địa chỉ này?
@@ -520,7 +520,7 @@ export default function AddressPage() {
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-promotion hover:bg-promotion-hover text-white text-sm font-medium transition-colors cursor-pointer"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
                 >
                   Xóa
                 </button>
@@ -554,7 +554,7 @@ export default function AddressPage() {
                     className={inputClass}
                   />
                   {errors.contactName && (
-                    <p className="text-xs text-promotion">
+                    <p className="text-xs text-accent">
                       {errors.contactName}
                     </p>
                   )}
@@ -571,7 +571,7 @@ export default function AddressPage() {
                     className={inputClass}
                   />
                   {errors.phone && (
-                    <p className="text-xs text-promotion">{errors.phone}</p>
+                    <p className="text-xs text-accent">{errors.phone}</p>
                   )}
                 </div>
                 <div className="py-4 space-y-2">
@@ -595,7 +595,7 @@ export default function AddressPage() {
                     ))}
                   </select>
                   {errors.provinceId && (
-                    <p className="text-xs text-promotion">
+                    <p className="text-xs text-accent">
                       {errors.provinceId}
                     </p>
                   )}
@@ -618,7 +618,7 @@ export default function AddressPage() {
                     ))}
                   </select>
                   {errors.wardId && (
-                    <p className="text-xs text-promotion">{errors.wardId}</p>
+                    <p className="text-xs text-accent">{errors.wardId}</p>
                   )}
                 </div>
                 <div className="py-4 space-y-2">
@@ -633,7 +633,7 @@ export default function AddressPage() {
                     className={inputClass}
                   />
                   {errors.detailAddress && (
-                    <p className="text-xs text-promotion">
+                    <p className="text-xs text-accent">
                       {errors.detailAddress}
                     </p>
                   )}
@@ -652,7 +652,7 @@ export default function AddressPage() {
                           onClick={() => setField("type", t)}
                           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
                             form.type === t
-                              ? "border-promotion text-promotion bg-promotion-light"
+                              ? "border-accent text-accent bg-accent-light"
                               : "border-neutral text-primary-dark hover:border-neutral-dark"
                           }`}
                         >
@@ -669,7 +669,7 @@ export default function AddressPage() {
                       type="checkbox"
                       checked={form.isDefault}
                       onChange={(e) => setField("isDefault", e.target.checked)}
-                      className="w-4 h-4 accent-promotion"
+                      className="w-4 h-4 accent-accent"
                     />
                     <span className="text-sm text-primary">
                       Đặt làm địa chỉ mặc định
@@ -694,7 +694,7 @@ export default function AddressPage() {
                   : "Lưu địa chỉ",
               onClick: handleSubmit,
               className:
-                "px-4 py-2 bg-promotion hover:bg-promotion-hover text-white rounded-lg cursor-pointer transition-colors disabled:opacity-50",
+                "px-4 py-2 bg-accent hover:bg-accent-hover text-neutral-light rounded-lg cursor-pointer transition-colors disabled:opacity-50",
             },
           ]}
         />
