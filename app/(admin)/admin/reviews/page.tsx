@@ -7,9 +7,9 @@ import AdminPagination from "@/components/admin/PaginationAdmin";
 import { getAllReviews, approveReview, deleteReview } from "./_libs/reviews";
 import { getReviewColumns } from "./components/TableReviews";
 import { ReviewDetailDrawer } from "./components/ReviewDetailDrawer";
-import { StatsCard } from "@/(admin)/admin/promotions/components/StatsCard";
 import { Review, ReviewsResponse, GetReviewsParams, ReviewStatus } from "./review.types";
 import { REVIEW_STATUS_TABS, RATING_OPTIONS } from "./const";
+import { StatsCard } from "@/components/admin/StatsCard";
 
 export default function ReviewsAdminPage() {
   const [data, setData] = useState<ReviewsResponse | null>(null);
@@ -154,10 +154,13 @@ export default function ReviewsAdminPage() {
       <div className="px-6 space-y-4 pb-8">
         {/* Stats */}
         <div className="grid grid-cols-4 gap-3">
-          <StatsCard label="Tổng đánh giá" value={total} icon={<Star size={16} />} color="text-amber-500" />
-          <StatsCard label="Chờ duyệt" value={pending} sub="Trên trang hiện tại" icon={<Clock size={16} />} color="text-orange-500" />
-          <StatsCard label="Đã duyệt" value={approved} sub="Trên trang hiện tại" icon={<CheckCircle size={16} />} color="text-emerald-600" />
-          <StatsCard label="Đánh giá TB" value={avgRating} sub="Trên trang hiện tại" icon={<Star size={16} />} color="text-amber-500" />
+          <StatsCard label="Tổng đánh giá" value={total} sub="Tất cả đánh giá" icon={<Star size={16} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
+
+          <StatsCard label="Chờ duyệt" value={pending} sub="Trên trang hiện tại" icon={<Clock size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
+
+          <StatsCard label="Đã duyệt" value={approved} sub="Trên trang hiện tại" icon={<CheckCircle size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+
+          <StatsCard label="Đánh giá TB" value={avgRating} sub="Điểm trung bình" icon={<Star size={16} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
         </div>
 
         {/* Tabs */}

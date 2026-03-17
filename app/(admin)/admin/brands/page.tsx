@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Filter, CalendarDays, Plus, Trash2, Upload, X, ChevronDown } from "lucide-react";
-
+import { Search, Plus, RefreshCw, Tag, Trash2, Upload, X, XCircle, Loader2, CalendarDays, ChevronDown, Star } from "lucide-react";
 import { Brand, GetBrandsParams } from "./brand.types";
 import { createBrand, deleteBrand, getAllBrands, updateBrand } from "./_libs/brands";
 import AdminPagination from "@/components/admin/PaginationAdmin";
@@ -10,10 +9,19 @@ import AdminTable from "@/components/admin/AdminTables";
 import { getBrandColumns } from "./components/TableBrands";
 import { usePopzy } from "@/components/Modal/usePopzy";
 import { Popzy } from "@/components/Modal";
+import { StatsCard } from "@/components/admin/StatsCard";
 import Image from "next/image";
 
 type SortBy = "name" | "createdAt" | "productCount";
 type SortOrder = "asc" | "desc";
+
+interface Meta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number; FEATURED: number };
+}
 
 // ── Date filter popover ────────────────────────────────────────────────────────
 function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: string; dateTo: string; onApply: (from: string, to: string) => void; onClear: () => void }) {
@@ -22,7 +30,6 @@ function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: s
   const [to, setTo] = useState(dateTo);
   const ref = useRef<HTMLDivElement>(null);
 
-  // sync khi parent clear
   useEffect(() => {
     setFrom(dateFrom);
     setTo(dateTo);
@@ -42,12 +49,12 @@ function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: s
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[13px] transition-colors cursor-pointer ${
-          hasFilter ? "border-accent bg-accent-light text-accent font-medium" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active"
+        className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-[13px] transition-colors cursor-pointer ${
+          hasFilter ? "border-accent bg-accent/5 text-accent font-medium" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active"
         }`}
       >
-        <CalendarDays size={13} />
-        Lọc theo ngày
+        <CalendarDays size={14} />
+        Ngày tạo
         {hasFilter && (
           <span
             onClick={(e) => {
@@ -103,7 +110,7 @@ function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: s
                 onApply(from, to);
                 setOpen(false);
               }}
-              className="flex-1 px-3 py-1.5 text-[12px] bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors cursor-pointer font-medium"
+              className="flex-1 px-3 py-1.5 text-[12px] bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer font-medium"
             >
               Áp dụng
             </button>
@@ -114,160 +121,30 @@ function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: s
   );
 }
 
-// ── Filter popover (isActive / isFeatured / sortBy) ────────────────────────────
-function FilterPopover({
-  isActive,
-  isFeatured,
-  sortBy,
-  sortOrder,
-  onChange,
-}: {
-  isActive: boolean | undefined;
-  isFeatured: boolean | undefined;
-  sortBy: SortBy;
-  sortOrder: SortOrder;
-  onChange: (v: { isActive?: boolean; isFeatured?: boolean; sortBy: SortBy; sortOrder: SortOrder }) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const hasFilter = isActive !== undefined || isFeatured !== undefined;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[13px] transition-colors cursor-pointer ${
-          hasFilter ? "border-accent bg-accent-light text-accent font-medium" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active"
-        }`}
-      >
-        <Filter size={13} />
-        Bộ lọc
-        {hasFilter && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
-        <ChevronDown size={11} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-2 z-30 bg-neutral-light border border-neutral rounded-xl shadow-lg p-4 w-64 space-y-4">
-          <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Bộ lọc</p>
-
-          {/* Trạng thái */}
-          <div>
-            <p className="text-[11px] text-neutral-dark mb-1.5">Trạng thái</p>
-            <div className="flex gap-1.5">
-              {[
-                { label: "Tất cả", value: undefined },
-                { label: "Hoạt động", value: true },
-                { label: "Ẩn", value: false },
-              ].map((opt) => (
-                <button
-                  key={String(opt.value)}
-                  onClick={() => onChange({ isActive: opt.value, isFeatured, sortBy, sortOrder })}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                    isActive === opt.value ? "bg-accent text-white" : "border border-neutral text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Nổi bật */}
-          <div>
-            <p className="text-[11px] text-neutral-dark mb-1.5">Nổi bật</p>
-            <div className="flex gap-1.5">
-              {[
-                { label: "Tất cả", value: undefined },
-                { label: "Nổi bật", value: true },
-                { label: "Bình thường", value: false },
-              ].map((opt) => (
-                <button
-                  key={String(opt.value)}
-                  onClick={() => onChange({ isActive, isFeatured: opt.value, sortBy, sortOrder })}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                    isFeatured === opt.value ? "bg-accent text-white" : "border border-neutral text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sắp xếp */}
-          <div>
-            <p className="text-[11px] text-neutral-dark mb-1.5">Sắp xếp theo</p>
-            <div className="flex gap-1.5 flex-wrap">
-              {(["name", "createdAt", "productCount"] as SortBy[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => onChange({ isActive, isFeatured, sortBy: s, sortOrder })}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                    sortBy === s ? "bg-accent text-white" : "border border-neutral text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {s === "name" ? "Tên" : s === "createdAt" ? "Ngày tạo" : "Sản phẩm"}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-1.5 mt-1.5">
-              {(["asc", "desc"] as SortOrder[]).map((o) => (
-                <button
-                  key={o}
-                  onClick={() => onChange({ isActive, isFeatured, sortBy, sortOrder: o })}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                    sortOrder === o ? "bg-accent text-white" : "border border-neutral text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {o === "asc" ? "A → Z" : "Z → A"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onChange({ isActive: undefined, isFeatured: undefined, sortBy: "name", sortOrder: "asc" })}
-            className="w-full text-[11px] text-neutral-dark hover:text-promotion transition-colors cursor-pointer pt-1"
-          >
-            Xoá tất cả bộ lọc
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AdminBrandsPage() {
+  // ── Data ──────────────────────────────────────────────────────────────────────
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0, FEATURED: 0 } });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch] = useState("");
+  // ── Filters ───────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
-  const [isActive, setIsActive] = useState<boolean | undefined>(undefined);
-  const [isFeatured, setIsFeatured] = useState<boolean | undefined>(undefined);
+  const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
 
+  // ── Selection ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
+  // ── Modals ────────────────────────────────────────────────────────────────────
   const deleteModal = usePopzy();
   const [deletingBrand, setDeletingBrand] = useState<Brand | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -283,7 +160,7 @@ export default function AdminBrandsPage() {
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [newPreviewUrl, setNewPreviewUrl] = useState<string | null>(null);
 
-  // ── Fetch (server-side pagination) ──────────────────────────────────────────
+  // ── Fetch ─────────────────────────────────────────────────────────────────────
   const fetchBrands = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -292,8 +169,8 @@ export default function AdminBrandsPage() {
         page,
         limit: pageSize,
         ...(search ? { search } : {}),
-        ...(isActive !== undefined ? { isActive } : {}),
-        ...(isFeatured !== undefined ? { isFeatured } : {}),
+        ...(activeTab === "ACTIVE" ? { isActive: true } : activeTab === "INACTIVE" ? { isActive: false } : {}),
+        ...(activeTab === "FEATURED" ? { isFeatured: true } : {}),
         ...(dateFrom ? { dateFrom } : {}),
         ...(dateTo ? { dateTo } : {}),
         sortBy,
@@ -301,34 +178,36 @@ export default function AdminBrandsPage() {
       };
       const res = await getAllBrands(params);
       setBrands(res.data);
-      setTotal(res.meta.total);
-      setTotalPages(res.meta.totalPages);
+      setMeta(res.meta);
     } catch (err: any) {
       setError(err?.message || "Không thể tải danh sách thương hiệu");
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, isActive, isFeatured, dateFrom, dateTo, sortBy, sortOrder]);
+  }, [page, pageSize, search, activeTab, dateFrom, dateTo, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchBrands();
     setSelected(new Set());
   }, [fetchBrands]);
 
-  // Reset page khi filter thay đổi (trừ page/pageSize)
-  const applyFilter = (updates: Partial<{ isActive: boolean | undefined; isFeatured: boolean | undefined; sortBy: SortBy; sortOrder: SortOrder }>) => {
-    if (updates.isActive !== undefined || "isActive" in updates) setIsActive(updates.isActive);
-    if (updates.isFeatured !== undefined || "isFeatured" in updates) setIsFeatured(updates.isFeatured);
-    if (updates.sortBy) setSortBy(updates.sortBy);
-    if (updates.sortOrder) setSortOrder(updates.sortOrder);
+  const resetPage = useCallback(() => setPage(1), []);
+
+  const hasActiveFilters = search || activeTab !== "ALL" || dateFrom || dateTo;
+
+  const handleClearAllFilters = useCallback(() => {
+    setSearch("");
+    setSearchInput("");
+    setActiveTab("ALL");
+    setDateFrom("");
+    setDateTo("");
     setPage(1);
-  };
+  }, []);
 
-  // ── Checkbox ────────────────────────────────────────────────────────────────
-  const allChecked = brands.length > 0 && brands.every((b) => selected.has(b.id));
-
+  // ── Selection ─────────────────────────────────────────────────────────────────
   const toggleAll = () => {
     const next = new Set(selected);
+    const allChecked = brands.length > 0 && brands.every((b) => selected.has(b.id));
     if (allChecked) brands.forEach((b) => next.delete(b.id));
     else brands.forEach((b) => next.add(b.id));
     setSelected(next);
@@ -340,11 +219,12 @@ export default function AdminBrandsPage() {
     setSelected(next);
   };
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────────────────────
   const handleToggleActive = async (brand: Brand) => {
     try {
       const res = await updateBrand(brand.id, { isActive: !brand.isActive });
       setBrands((prev) => prev.map((b) => (b.id === brand.id ? res.data : b)));
+      fetchBrands();
     } catch (err: any) {
       setError(err?.message || "Không thể cập nhật trạng thái");
     }
@@ -362,10 +242,9 @@ export default function AdminBrandsPage() {
     setDeleteError(null);
     try {
       await deleteBrand(deletingBrand.id);
-      setBrands((prev) => prev.filter((b) => b.id !== deletingBrand.id));
-      setTotal((prev) => prev - 1);
       deleteModal.close();
       setDeletingBrand(null);
+      fetchBrands();
     } catch (err: any) {
       setDeleteError(err?.message || "Không thể xoá thương hiệu");
     } finally {
@@ -373,7 +252,7 @@ export default function AdminBrandsPage() {
     }
   };
 
-  // ── Create ───────────────────────────────────────────────────────────────────
+  // ── Create ────────────────────────────────────────────────────────────────────
   const openCreateModal = () => {
     setNewName("");
     setNewDescription("");
@@ -409,11 +288,9 @@ export default function AdminBrandsPage() {
         isFeatured: newIsFeatured,
         ...(newImageFile ? { imageUrl: newImageFile } : {}),
       });
-      // Refetch trang 1 để thấy brand mới
-      setPage(1);
-      if (page === 1) fetchBrands();
       createModal.close();
       if (newPreviewUrl) URL.revokeObjectURL(newPreviewUrl);
+      fetchBrands();
     } catch (err: any) {
       setCreateError(err?.message || "Không thể tạo thương hiệu");
     } finally {
@@ -421,7 +298,7 @@ export default function AdminBrandsPage() {
     }
   };
 
-  // ── Columns ──────────────────────────────────────────────────────────────────
+  // ── Columns ───────────────────────────────────────────────────────────────────
   const columns = getBrandColumns({
     page,
     pageSize,
@@ -433,114 +310,232 @@ export default function AdminBrandsPage() {
     onDeleteClick: handleDeleteClick,
   });
 
+  const TABS = [
+    { label: "Tất cả", value: "ALL", count: meta.activeCounts.ALL },
+    { label: "Hoạt động", value: "ACTIVE", count: meta.activeCounts.ACTIVE },
+    { label: "Không hoạt động", value: "INACTIVE", count: meta.activeCounts.INACTIVE },
+    { label: "Nổi bật", value: "FEATURED", count: meta.activeCounts.FEATURED },
+  ];
+
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* Header */}
-      <div className="flex items-center justify-end px-6 pt-5 pb-3">
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover active:bg-accent-active text-white text-[13px] font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm cursor-pointer"
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          Thêm thương hiệu
-        </button>
-      </div>
-
-      {/* Toolbar */}
-      <div className="px-6 flex items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-1">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-light-active text-[13px] font-semibold text-primary transition-colors cursor-pointer">
-            Tất cả nhãn hiệu
-            <span className="text-accent font-bold text-[12px]">({total})</span>
+      {/* ── Header ── */}
+      <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+            <Tag size={18} />
+          </div>
+          <div>
+            <h1 className="text-[20px] font-bold text-primary">Thương hiệu</h1>
+            <p className="text-[12px] text-neutral-dark">Quản lý thương hiệu sản phẩm</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchBrands}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            Làm mới
+          </button>
+          <button onClick={openCreateModal} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer">
+            <Plus size={15} />
+            Thêm thương hiệu
           </button>
         </div>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSearch(searchInput);
-              setPage(1);
-            }}
-            className="relative"
-          >
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+      {/* ── Stats ── */}
+      <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatsCard label="Tổng thương hiệu" value={meta.activeCounts.ALL} sub="Tất cả thương hiệu" icon={<Tag size={16} />} />
+        <StatsCard label="Đang hoạt động" value={meta.activeCounts.ACTIVE} sub="Khách hàng có thể xem" icon={<Tag size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-neutral-dark" iconClassName="text-neutral-dark" />
+        <StatsCard label="Nổi bật" value={meta.activeCounts.FEATURED} sub="Hiển thị trang chủ" icon={<Star size={16} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
+      </div>
+
+      {/* ── Main card ── */}
+      <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
+        {/* ── Toolbar: 1 row ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {/* Tabs */}
+          {TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => {
+                setActiveTab(tab.value);
+                resetPage();
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
+                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+              }`}
+            >
+              {tab.label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
             <input
-              type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search"
-              className="pl-8 pr-3 py-1.5 text-[13px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/40 w-52 transition-all"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  resetPage();
+                }
+              }}
+              placeholder="Tìm thương hiệu..."
+              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
             />
-          </form>
+            {searchInput && (
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  resetPage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
 
-          <FilterPopover
-            isActive={isActive}
-            isFeatured={isFeatured}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onChange={({ isActive: a, isFeatured: f, sortBy: s, sortOrder: o }) => {
-              setIsActive(a);
-              setIsFeatured(f);
-              setSortBy(s);
-              setSortOrder(o);
-              setPage(1);
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value as SortBy);
+              resetPage();
             }}
-          />
+            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+          >
+            <option value="name">Tên</option>
+            <option value="createdAt">Ngày tạo</option>
+            <option value="productCount">Sản phẩm</option>
+          </select>
 
+          <select
+            value={sortOrder}
+            onChange={(e) => {
+              setSortOrder(e.target.value as SortOrder);
+              resetPage();
+            }}
+            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+          >
+            <option value="asc">A → Z</option>
+            <option value="desc">Z → A</option>
+          </select>
+
+          {/* Date filter */}
           <DateFilterPopover
             dateFrom={dateFrom}
             dateTo={dateTo}
             onApply={(from, to) => {
               setDateFrom(from);
               setDateTo(to);
-              setPage(1);
+              resetPage();
             }}
             onClear={() => {
               setDateFrom("");
               setDateTo("");
-              setPage(1);
+              resetPage();
             }}
           />
+
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearAllFilters}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
+          )}
+
+          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} thương hiệu</span>
         </div>
-      </div>
 
-      {/* Bulk action bar */}
-      {selected.size > 0 && (
-        <div className="mx-6 mb-3 flex items-center gap-3 px-4 py-2.5 rounded-lg border border-accent-light bg-accent-light text-[13px] text-primary">
-          <input type="checkbox" checked={allChecked} onChange={toggleAll} className="w-3.5 h-3.5 rounded accent-accent cursor-pointer" />
-          <span className="font-medium">
-            Đã chọn <span className="text-accent font-semibold">{selected.size}</span> mục
-          </span>
-          <button className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-medium text-promotion hover:bg-promotion-light transition-colors cursor-pointer">
-            <Trash2 size={13} /> Xoá đã chọn
-          </button>
-        </div>
-      )}
+        {/* ── Selection bar ── */}
+        {selected.size > 0 && (
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
+            <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thương hiệu</span>
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer">
+              Bỏ chọn
+            </button>
+            <button className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-medium text-promotion hover:bg-promotion-light transition-colors cursor-pointer">
+              <Trash2 size={13} /> Xoá đã chọn
+            </button>
+          </div>
+        )}
 
-      {error && <div className="mx-6 mb-3 border border-promotion/30 bg-promotion-light text-promotion text-[13px] px-4 py-2.5 rounded-lg">{error}</div>}
+        {/* ── Table ── */}
+        {error ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <XCircle size={36} className="text-promotion opacity-50" />
+            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <button onClick={fetchBrands} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
+              Thử lại
+            </button>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin text-accent" />
+          </div>
+        ) : brands.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Tag size={36} className="text-neutral-dark opacity-30" />
+            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thương hiệu nào"}</p>
+            {hasActiveFilters ? (
+              <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                Xoá bộ lọc
+              </button>
+            ) : (
+              <button onClick={openCreateModal} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
+                Thêm thương hiệu đầu tiên
+              </button>
+            )}
+          </div>
+        ) : (
+          <AdminTable<Brand> columns={columns} data={brands} rowKey="id" className="mx-0" rowClassName={(brand) => (selected.has(brand.id) ? "bg-accent/5" : "")} />
+        )}
 
-      <AdminTable<Brand> columns={columns} data={brands} rowKey="id" loading={loading} className="mx-6" rowClassName={(brand) => (selected.has(brand.id) ? "bg-accent-light/30" : "")} />
-
-      <div className="px-6 py-4">
-        <AdminPagination
-          currentPage={page}
-          totalPages={totalPages}
-          total={total}
-          pageSize={pageSize}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          siblingCount={1}
-        />
+        {/* ── Pagination ── */}
+        {!loading && !error && meta.total > 0 && (
+          <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  resetPage();
+                }}
+                className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
+              >
+                {[10, 20, 50].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[12px] text-neutral-dark">/ {meta.total} thương hiệu</span>
+            </div>
+            <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
 
       {openStatusId && <div className="fixed inset-0 z-10" onClick={() => setOpenStatusId(null)} />}
 
-      {/* Delete modal */}
+      {/* ── Delete modal ── */}
       <Popzy
         isOpen={deleteModal.isOpen}
         onClose={deleteModal.close}
@@ -576,7 +571,7 @@ export default function AdminBrandsPage() {
         }
       />
 
-      {/* Create modal */}
+      {/* ── Create modal ── */}
       <Popzy
         isOpen={createModal.isOpen}
         onClose={createModal.close}
@@ -585,7 +580,6 @@ export default function AdminBrandsPage() {
         content={
           <div className="py-1">
             <h3 className="text-[16px] font-bold text-primary mb-5">Thêm thương hiệu mới</h3>
-
             <div className="space-y-4">
               {/* Ảnh */}
               <div>
@@ -611,7 +605,6 @@ export default function AdminBrandsPage() {
                   </div>
                 )}
               </div>
-
               {/* Tên */}
               <div>
                 <label className="text-[10px] font-semibold text-primary uppercase tracking-wider block mb-1.5">
@@ -625,7 +618,6 @@ export default function AdminBrandsPage() {
                   className="w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
                 />
               </div>
-
               {/* Mô tả */}
               <div>
                 <label className="text-[10px] font-semibold text-primary uppercase tracking-wider block mb-1.5">Mô tả</label>
@@ -637,7 +629,6 @@ export default function AdminBrandsPage() {
                   className="w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all resize-none"
                 />
               </div>
-
               {/* Toggles */}
               <div className="flex gap-4">
                 <div className="flex items-center justify-between flex-1 px-3 py-2.5 border border-neutral rounded-xl">
@@ -654,9 +645,7 @@ export default function AdminBrandsPage() {
                 </div>
               </div>
             </div>
-
             {createError && <div className="mt-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px]">{createError}</div>}
-
             <div className="flex gap-2 mt-5">
               <button
                 onClick={createModal.close}
@@ -668,7 +657,7 @@ export default function AdminBrandsPage() {
               <button
                 onClick={handleCreateConfirm}
                 disabled={creating}
-                className="flex-1 px-4 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer"
+                className="flex-1 px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer"
               >
                 {creating ? "Đang tạo..." : "Tạo thương hiệu"}
               </button>

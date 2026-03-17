@@ -6,9 +6,9 @@ import AdminTable from "@/components/admin/AdminTables";
 import { getAllComments, approveComment, bulkApproveComments, deleteComment } from "./_libs/comments";
 import { getCommentColumns } from "./components/TableComments";
 import { CommentDetailDrawer } from "./components/CommentDetailDrawer";
-import { StatsCard } from "@/(admin)/admin/promotions/components/StatsCard";
 import { Comment, CommentsResponse, GetCommentsParams } from "./comment.types";
 import { APPROVAL_TABS, TARGET_TYPE_LABELS } from "./const";
+import { StatsCard } from "@/components/admin/StatsCard";
 
 const PAGE_SIZE = 20;
 
@@ -170,10 +170,13 @@ export default function CommentsAdminPage() {
 
       <div className="px-6 space-y-4 pb-8">
         {/* Stats */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <StatsCard label="Tổng bình luận" value={total} icon={<MessageSquare size={16} />} color="text-accent" />
-          <StatsCard label="Đã duyệt" value={approved} sub="Trên trang hiện tại" icon={<CheckCircle size={16} />} color="text-emerald-600" />
-          <StatsCard label="Chờ duyệt" value={pending} sub="Trên trang hiện tại" icon={<Clock size={16} />} color="text-orange-500" />
+          <StatsCard label="Tổng bình luận" value={total} sub="Tất cả bình luận" icon={<MessageSquare size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
+
+          <StatsCard label="Đã duyệt" value={approved} sub="Trên trang hiện tại" icon={<CheckCircle size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+
+          <StatsCard label="Chờ duyệt" value={pending} sub="Trên trang hiện tại" icon={<Clock size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
         </div>
 
         {/* Tabs */}

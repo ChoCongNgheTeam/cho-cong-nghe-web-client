@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, XCircle, Loader2, Trash2, Filter, ChevronDown, ChevronUp, X, Star, ArchiveRestore } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, Trash2, X, Star, ArrowUpDown, ChevronDown, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
@@ -9,7 +9,7 @@ import { Popzy } from "@/components/Modal";
 import type { ProductCard } from "./product.types";
 import { getAllProducts, softDeleteProduct, toggleProductActive, bulkAction } from "./_libs/products";
 import { getProductColumns } from "./components/TableProducts";
-import { formatDate } from "@/helpers";
+import { StatsCard } from "@/components/admin/StatsCard";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -18,36 +18,42 @@ import { formatDate } from "@/helpers";
 const STATUS_TABS = [
   { value: "ALL", label: "Tất cả" },
   { value: "active", label: "Hiển thị" },
-  { value: "inactive", label: "Ẩn" },
+  { value: "inactive", label: "Đang ẩn" },
   { value: "outOfStock", label: "Hết hàng" },
   { value: "featured", label: "Nổi bật" },
 ];
 
 const SORT_OPTIONS = [
-  { value: "createdAt", label: "Ngày tạo" },
-  { value: "updatedAt", label: "Cập nhật gần nhất" },
-  { value: "name", label: "Tên sản phẩm" },
-  { value: "viewsCount", label: "Lượt xem" },
-  { value: "ratingAverage", label: "Đánh giá" },
-  { value: "totalSoldCount", label: "Đã bán" },
-];
+  { value: "createdAt", order: "desc", label: "Mới nhất" },
+  { value: "createdAt", order: "asc", label: "Cũ nhất" },
+  { value: "name", order: "asc", label: "Tên A → Z" },
+  { value: "name", order: "desc", label: "Tên Z → A" },
+  { value: "viewsCount", order: "desc", label: "Lượt xem nhiều nhất" },
+  { value: "ratingAverage", order: "desc", label: "Đánh giá cao nhất" },
+  { value: "totalSoldCount", order: "desc", label: "Bán chạy nhất" },
+] as const;
+
+type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS)[number]["order"]}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STATS CARD
+// TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StatsCard({ label, value, sub, icon, color = "text-accent" }: { label: string; value: number | string; sub: string; icon: React.ReactNode; color?: string }) {
-  return (
-    <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">{label}</span>
-        <span className={`${color} opacity-70`}>{icon}</span>
-      </div>
-      <p className={`text-[26px] font-bold ${color}`}>{value}</p>
-      <p className="text-[11px] text-neutral-dark">{sub}</p>
-    </div>
-  );
+interface ProductMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusCounts: Record<string, number>;
 }
+
+const DEFAULT_META: ProductMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 1,
+  statusCounts: { ALL: 0, active: 0, inactive: 0, outOfStock: 0, featured: 0 },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -55,150 +61,128 @@ function StatsCard({ label, value, sub, icon, color = "text-accent" }: { label: 
 
 export default function ProductsPage() {
   // ── Data ────────────────────────────────────────────────────────────────────
-  const [allProducts, setAllProducts] = useState<ProductCard[]>([]);
+  const [products, setProducts] = useState<ProductCard[]>([]);
+  const [meta, setMeta] = useState<ProductMeta>(DEFAULT_META);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Pagination ──────────────────────────────────────────────────────────────
+  // ── Query params ─────────────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-
-  // ── Filters / Toolbar ───────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt_desc");
+
+  // Date range
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const dateRef = useRef<HTMLDivElement>(null);
 
-  // ── Selection ───────────────────────────────────────────────────────────────
+  // Sort dropdown
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  // ── Selection ────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // ── Delete modal ────────────────────────────────────────────────────────────
+  // ── Delete modal ─────────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<ProductCard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // ── Bulk action ─────────────────────────────────────────────────────────────
+  // ── Bulk action ──────────────────────────────────────────────────────────────
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  // ── Fetch ───────────────────────────────────────────────────────────────────
+  // ── Close dropdowns on outside click ─────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const [sortBy, sortOrder] = sortKey.split("_") as [string, "asc" | "desc"];
+
+  const tabToParams = (tab: string) => {
+    if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
+    if (tab === "inactive") return { isActive: false, inStock: undefined, isFeatured: undefined };
+    if (tab === "outOfStock") return { isActive: undefined, inStock: false, isFeatured: undefined };
+    if (tab === "featured") return { isActive: undefined, inStock: undefined, isFeatured: true };
+    return { isActive: undefined, inStock: undefined, isFeatured: undefined };
+  };
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllProducts({ limit: 500 }); // load all, filter client-side
-      setAllProducts(res.data);
+      const res = await getAllProducts({
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        sortBy,
+        sortOrder,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        ...tabToParams(activeTab),
+      });
+      setProducts(res.data);
+      setMeta(res.meta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // ── Stats ───────────────────────────────────────────────────────────────────
-  const stats = useMemo(
-    () => ({
-      total: allProducts.length,
-      active: allProducts.filter((p) => p.isActive && !p.deletedAt).length,
-      inactive: allProducts.filter((p) => !p.isActive && !p.deletedAt).length,
-      outOfStock: allProducts.filter((p) => !p.inStock && !p.deletedAt).length,
-      featured: allProducts.filter((p) => p.isFeatured && !p.deletedAt).length,
-    }),
-    [allProducts],
-  );
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  const resetPage = useCallback(() => setPage(1), []);
 
-  // ── Tab counts ──────────────────────────────────────────────────────────────
-  const tabCounts = useMemo<Record<string, number>>(
-    () => ({
-      ALL: allProducts.length,
-      active: stats.active,
-      inactive: stats.inactive,
-      outOfStock: stats.outOfStock,
-      featured: stats.featured,
-    }),
-    [allProducts, stats],
-  );
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    resetPage();
+  };
 
-  // ── Client-side filter + sort ────────────────────────────────────────────────
-  const filteredProducts = useMemo(() => {
-    let list = [...allProducts];
-
-    // Tab filter
-    if (activeTab === "active") {
-      list = list.filter((p) => p.isActive && !p.deletedAt);
-    } else if (activeTab === "inactive") {
-      list = list.filter((p) => !p.isActive && !p.deletedAt);
-    } else if (activeTab === "outOfStock") {
-      list = list.filter((p) => !p.inStock && !p.deletedAt);
-    } else if (activeTab === "featured") {
-      list = list.filter((p) => p.isFeatured && !p.deletedAt);
-    }
-
-    // Search
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
-    }
-
-    // Date range (createdAt)
-    if (dateFrom) {
-      list = list.filter((p) => p.createdAt && new Date(p.createdAt) >= new Date(dateFrom));
-    }
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      list = list.filter((p) => p.createdAt && new Date(p.createdAt) <= end);
-    }
-
-    // Sort
-    list.sort((a, b) => {
-      let aVal: any = (a as any)[sortBy] ?? "";
-      let bVal: any = (b as any)[sortBy] ?? "";
-      if (typeof aVal === "string") aVal = aVal.toLowerCase();
-      if (typeof bVal === "string") bVal = bVal.toLowerCase();
-      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [allProducts, activeTab, search, dateFrom, dateTo, sortBy, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
-  const paginatedProducts = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredProducts.slice(start, start + pageSize);
-  }, [filteredProducts, page, pageSize]);
-
-  // ── Search ───────────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    setSearch(searchInput);
-    setPage(1);
-  }, [searchInput]);
-
-  const handleClearSearch = useCallback(() => {
+  const handleClearSearch = () => {
     setSearchInput("");
     setSearch("");
-    setPage(1);
-  }, []);
+    resetPage();
+  };
 
-  const hasActiveFilters = !!(search || dateFrom || dateTo || activeTab !== "ALL");
+  const handleClearDate = () => {
+    setDateFrom("");
+    setDateTo("");
+    setShowDatePicker(false);
+    resetPage();
+  };
 
-  const handleClearAllFilters = useCallback(() => {
+  const handleSortChange = (key: SortKey) => {
+    setSortKey(key);
+    setShowSortDropdown(false);
+    resetPage();
+  };
+
+  const handleClearAllFilters = () => {
     setSearch("");
     setSearchInput("");
     setDateFrom("");
     setDateTo("");
     setActiveTab("ALL");
-    setPage(1);
-  }, []);
+    setSortKey("createdAt_desc");
+    resetPage();
+  };
+
+  const hasDateFilter = !!dateFrom || !!dateTo;
+  const hasSortFilter = sortKey !== "createdAt_desc";
+  const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
 
   // ── Selection ────────────────────────────────────────────────────────────────
   const toggleOne = useCallback((id: string) => {
@@ -210,17 +194,12 @@ export default function ProductsPage() {
   }, []);
 
   const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === paginatedProducts.length ? new Set() : new Set(paginatedProducts.map((p) => p.id))));
-  }, [paginatedProducts]);
+    setSelected((prev) => (prev.size === products.length ? new Set() : new Set(products.map((p) => p.id))));
+  }, [products]);
 
-  // ── Toggle active ────────────────────────────────────────────────────────────
-  const handleToggleActive = useCallback(async (product: ProductCard) => {
-    try {
-      await toggleProductActive(product.id, !product.isActive);
-      setAllProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, isActive: !p.isActive } : p)));
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể cập nhật trạng thái");
-    }
+  // ── Toggle status — optimistic update ────────────────────────────────────────
+  const handleStatusChange = useCallback((productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => {
+    setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updates } : p)));
   }, []);
 
   // ── Delete ───────────────────────────────────────────────────────────────────
@@ -235,15 +214,14 @@ export default function ProductsPage() {
     setDeleteError(null);
     try {
       await softDeleteProduct(deleteTarget.id);
-      // Mark as deleted in local state (move to trash)
-      setAllProducts((prev) => prev.map((p) => (p.id === deleteTarget.id ? { ...p, deletedAt: new Date().toISOString(), isActive: false } : p)));
       setDeleteTarget(null);
+      fetchProducts();
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xóa sản phẩm");
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget]);
+  }, [deleteTarget, fetchProducts]);
 
   // ── Bulk actions ─────────────────────────────────────────────────────────────
   const handleBulkAction = useCallback(
@@ -251,10 +229,9 @@ export default function ProductsPage() {
       if (selected.size === 0) return;
       setBulkLoading(true);
       try {
-        const ids = Array.from(selected);
-        await bulkAction(action, ids);
+        await bulkAction(action, Array.from(selected));
         setSelected(new Set());
-        await fetchProducts(); // refetch to sync state
+        fetchProducts();
       } catch (e: any) {
         setError(e?.message ?? "Thao tác thất bại");
       } finally {
@@ -272,10 +249,10 @@ export default function ProductsPage() {
         pageSize,
         selected,
         toggleOne,
-        onToggleActive: handleToggleActive,
+        onStatusChange: handleStatusChange,
         onDeleteClick: handleDeleteClick,
       }),
-    [page, pageSize, selected, toggleOne, handleToggleActive, handleDeleteClick],
+    [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -283,160 +260,215 @@ export default function ProductsPage() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5 p-5 bg-neutral-light min-h-full">
+    <div className="min-h-screen bg-neutral-light">
+      {/* ── Header ── */}
+      <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+            <Package size={18} />
+          </div>
+          <div>
+            <h1 className="text-[20px] font-bold text-primary">Sản phẩm</h1>
+            <p className="text-[12px] text-neutral-dark">Quản lý toàn bộ sản phẩm trong hệ thống</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchProducts}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            Làm mới
+          </button>
+          <Link
+            href="/admin/products/create"
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer"
+          >
+            <Plus size={15} />
+            Thêm sản phẩm
+          </Link>
+        </div>
+      </div>
+
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard label="Tổng sản phẩm" value={stats.total} sub="Tất cả sản phẩm trong hệ thống" icon={<Package size={16} />} />
-        <StatsCard label="Đang hiển thị" value={stats.active} sub="Khách hàng có thể xem được" icon={<CheckCircle2 size={16} />} color="text-emerald-600" />
-        <StatsCard label="Đang ẩn" value={stats.inactive} sub="Chưa được hiển thị cho khách" icon={<EyeOff size={16} />} color="text-orange-500" />
-        <StatsCard label="Nổi bật" value={stats.featured} sub="Sản phẩm được đánh dấu featured" icon={<Star size={16} />} color="text-amber-500" />
+      <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatsCard label="Tổng sản phẩm" value={meta.statusCounts.ALL ?? 0} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
+        <StatsCard
+          label="Đang hiển thị"
+          value={meta.statusCounts.active ?? 0}
+          sub="Khách hàng có thể xem"
+          icon={<CheckCircle2 size={18} />}
+          valueClassName="text-emerald-600"
+          iconClassName="text-emerald-600"
+        />
+        <StatsCard label="Đang ẩn" value={meta.statusCounts.inactive ?? 0} sub="Chưa hiển thị cho khách" icon={<EyeOff size={18} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
+        <StatsCard label="Nổi bật" value={meta.statusCounts.featured ?? 0} sub="Sản phẩm được featured" icon={<Star size={18} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
       </div>
 
       {/* ── Main table card ── */}
-      <div className="bg-neutral-light border border-neutral rounded-xl">
-        {/* ── Toolbar ── */}
-        <div className="px-5 py-4 border-b border-neutral space-y-3">
-          {/* Row 1: Tabs + Actions */}
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Status tabs */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {STATUS_TABS.map((tab) => (
-                <button
-                  key={tab.value}
-                  onClick={() => {
-                    setActiveTab(tab.value);
-                    setPage(1);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
-                    activeTab === tab.value ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {tab.label}
-                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                    {tabCounts[tab.value] ?? 0}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={fetchProducts}
-                disabled={loading}
-                title="Làm mới"
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              </button>
-              <button
-                onClick={() => setShowFilters((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
-                  showFilters || hasActiveFilters ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:bg-neutral-light-active"
-                }`}
-              >
-                <Filter size={13} />
-                Lọc
-                {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />}
-                {showFilters ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              </button>
-              <Link href="/admin/products/create" className="flex items-center gap-1.5 px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[12px] font-semibold rounded-lg transition-colors">
-                <Plus size={14} />
-                Thêm sản phẩm
-              </Link>
-            </div>
-          </div>
-
-          {/* Row 2: Search */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Tìm theo tên, slug..."
-                className="w-full pl-8 pr-8 py-1.5 text-[12px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-              />
-              {searchInput && (
-                <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer">
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-            <button onClick={handleSearch} className="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[12px] font-medium rounded-lg transition-colors cursor-pointer">
-              Tìm
+      <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
+        {/* ── Toolbar: 1 row ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {/* Status tabs */}
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => handleTabChange(tab.value)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+              }`}
+            >
+              {tab.label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                {meta.statusCounts[tab.value] ?? 0}
+              </span>
             </button>
-            {hasActiveFilters && (
-              <button
-                onClick={handleClearAllFilters}
-                className="px-3 py-1.5 border border-neutral text-[12px] text-neutral-dark hover:bg-neutral-light-active rounded-lg transition-colors cursor-pointer"
-              >
-                Xóa bộ lọc
+          ))}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  resetPage();
+                }
+              }}
+              placeholder="Tìm tên, slug..."
+              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
+            />
+            {searchInput && (
+              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer">
+                <X size={13} />
               </button>
             )}
           </div>
 
-          {/* Row 3: Expanded filters */}
-          {showFilters && (
-            <div className="pt-2 border-t border-neutral grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Từ ngày</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => {
-                    setDateFrom(e.target.value);
-                    setPage(1);
+          {/* Sort dropdown */}
+          <div ref={sortRef} className="relative">
+            <button
+              onClick={() => setShowSortDropdown((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <ArrowUpDown size={14} />
+              {hasSortFilter ? SORT_OPTIONS.find((o) => `${o.value}_${o.order}` === sortKey)?.label : "Sắp xếp"}
+              {hasSortFilter ? (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSortChange("createdAt_desc");
                   }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
+                  className="hover:text-promotion"
                 />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Đến ngày</label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => {
-                    setDateTo(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Sắp xếp theo</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
+              ) : (
+                <ChevronDown size={12} className={`transition-transform ${showSortDropdown ? "rotate-180" : ""}`} />
+              )}
+            </button>
+            {showSortDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                {SORT_OPTIONS.map((opt) => {
+                  const key = `${opt.value}_${opt.order}` as SortKey;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleSortChange(key)}
+                      className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                        sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                      }`}
+                    >
                       {opt.label}
-                    </option>
-                  ))}
-                </select>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thứ tự</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    setSortOrder(e.target.value as "asc" | "desc");
-                    setPage(1);
+            )}
+          </div>
+
+          {/* Date filter */}
+          <div ref={dateRef} className="relative">
+            <button
+              onClick={() => setShowDatePicker((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <CalendarDays size={14} />
+              {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
+              {hasDateFilter && (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClearDate();
                   }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-                >
-                  <option value="desc">Mới nhất trước</option>
-                  <option value="asc">Cũ nhất trước</option>
-                </select>
+                  className="hover:text-promotion"
+                />
+              )}
+            </button>
+            {showDatePicker && (
+              <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
+                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Khoảng thời gian</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-neutral-dark">Từ ngày</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      max={dateTo || undefined}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-neutral-dark">Đến ngày</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      min={dateFrom || undefined}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={handleClearDate} className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                    Xóa
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDatePicker(false);
+                      resetPage();
+                    }}
+                    className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 cursor-pointer"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          {/* Clear filters */}
+          {(hasActiveFilters || hasSortFilter) && (
+            <button
+              onClick={handleClearAllFilters}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
           )}
+
+          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} sản phẩm</span>
         </div>
 
         {/* ── Bulk action bar ── */}
@@ -487,20 +519,22 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Table / States ── */}
-        {error ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <XCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
-            <button onClick={fetchProducts} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
-              Thử lại
+        {/* ── Error banner ── */}
+        {error && (
+          <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion/20">
+            <span className="text-[12px] text-promotion">{error}</span>
+            <button onClick={fetchProducts} className="flex items-center gap-1 text-[12px] text-promotion hover:underline cursor-pointer">
+              <RefreshCw size={12} /> Thử lại
             </button>
           </div>
-        ) : loading ? (
+        )}
+
+        {/* ── Table ── */}
+        {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-accent" />
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Package size={36} className="text-neutral-dark opacity-30" />
             <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
@@ -509,17 +543,17 @@ export default function ProductsPage() {
                 Xóa bộ lọc
               </button>
             ) : (
-              <Link href="/admin/products/create" className="px-4 py-2 rounded-lg bg-accent text-white text-[13px]">
+              <Link href="/admin/products/create" className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
                 Tạo sản phẩm đầu tiên
               </Link>
             )}
           </div>
         ) : (
-          <AdminTable columns={columns} data={paginatedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={products} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
         {/* ── Pagination ── */}
-        {!loading && !error && filteredProducts.length > 0 && (
+        {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-neutral-dark">Hiển thị</span>
@@ -527,7 +561,7 @@ export default function ProductsPage() {
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
-                  setPage(1);
+                  resetPage();
                 }}
                 className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
               >
@@ -537,9 +571,21 @@ export default function ProductsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {filteredProducts.length} sản phẩm</span>
+              <span className="text-[12px] text-neutral-dark">/ {meta.total} sản phẩm</span>
             </div>
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={meta.limit}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
           </div>
         )}
       </div>

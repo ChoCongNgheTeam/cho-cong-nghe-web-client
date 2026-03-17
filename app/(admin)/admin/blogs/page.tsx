@@ -9,8 +9,8 @@ import { Popzy } from "@/components/Modal";
 import type { BlogCard, BlogAuthor } from "./blog.types";
 import { getAllBlogs, deleteBlog, bulkDeleteBlogs, bulkUpdateBlogStatus, getBlogAuthors } from "./_libs/blogs";
 import { BLOG_STATUS_TABS, SORT_OPTIONS } from "./const";
-import { StatsCard } from "@/(admin)/admin/promotions/components/StatsCard";
 import { getBlogColumns } from "./components/TableBlogs";
+import { StatsCard } from "@/components/admin/StatsCard";
 
 export default function BlogsPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
@@ -224,11 +224,22 @@ export default function BlogsPage() {
 
       {/* ── Stats ── */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatsCard label="Tổng bài viết" value={stats.total} icon={<BookOpen size={16} />} />
-        <StatsCard label="Đã đăng" value={stats.published} color="text-emerald-600" icon={<Eye size={16} />} />
-        <StatsCard label="Nháp" value={stats.draft} color="text-blue-600" icon={<FileText size={16} />} />
-        <StatsCard label="Lưu trữ" value={stats.archived} color="text-neutral-dark" icon={<Archive size={16} />} />
-        <StatsCard label="Tổng lượt xem" value={stats.views.toLocaleString("vi-VN")} color="text-purple-600" icon={<Eye size={16} />} />
+        <StatsCard label="Tổng bài viết" value={stats.total} sub="Tất cả bài viết" icon={<BookOpen size={16} />} />
+
+        <StatsCard label="Đã đăng" value={stats.published} sub="Đang hiển thị" icon={<Eye size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+
+        <StatsCard label="Nháp" value={stats.draft} sub="Chưa công khai" icon={<FileText size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
+
+        <StatsCard label="Lưu trữ" value={stats.archived} sub="Không còn sử dụng" icon={<Archive size={16} />} valueClassName="text-gray-500" iconClassName="text-gray-500" />
+
+        <StatsCard
+          label="Tổng lượt xem"
+          value={stats.views.toLocaleString("vi-VN")}
+          sub="Tổng số lượt truy cập"
+          icon={<Eye size={16} />}
+          valueClassName="text-purple-600"
+          iconClassName="text-purple-600"
+        />
       </div>
 
       {/* ── Main card ── */}
