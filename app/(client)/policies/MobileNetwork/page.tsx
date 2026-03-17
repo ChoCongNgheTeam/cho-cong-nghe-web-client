@@ -118,7 +118,7 @@ export default function MobileNetworkPolicy() {
                   ].map((row, i) => (
                      <div key={i} className="grid grid-cols-4 px-4 py-3 border-b border-neutral last:border-b-0">
                         <span className="text-primary">{row.nv}</span>
-                        <span className="font-semibold text-promotion">{row.cp}</span>
+                        <span className="font-semibold text-accent">{row.cp}</span>
                         <span className="text-primary">{row.ds}</span>
                         <span className="text-primary">{row.fee}</span>
                      </div>
@@ -201,7 +201,7 @@ export default function MobileNetworkPolicy() {
                   ].map((row, i) => (
                      <div key={i} className="grid grid-cols-3 px-4 py-3 border-b border-neutral last:border-b-0 gap-2">
                         <span className="font-semibold text-primary">{row.action}</span>
-                        <span className="font-semibold text-promotion whitespace-pre-line">{row.syntax}</span>
+                        <span className="font-semibold text-accent whitespace-pre-line">{row.syntax}</span>
                         <span className="text-neutral-darker">{row.note}</span>
                      </div>
                   ))}
@@ -223,10 +223,10 @@ export default function MobileNetworkPolicy() {
                      { reg: "DK MCAP gửi 9232", fee: "9.000đ", time: "30 ngày", cancel: "HUY gửi 9232" },
                   ].map((row, i) => (
                      <div key={i} className="grid grid-cols-4 px-4 py-3 border-b border-neutral last:border-b-0">
-                        <span className="font-semibold text-promotion">{row.reg}</span>
+                        <span className="font-semibold text-accent">{row.reg}</span>
                         <span className="text-primary">{row.fee}</span>
                         <span className="text-primary">{row.time}</span>
-                        <span className="font-semibold text-promotion">{row.cancel}</span>
+                        <span className="font-semibold text-accent">{row.cancel}</span>
                      </div>
                   ))}
                </div>
@@ -249,21 +249,21 @@ export default function MobileNetworkPolicy() {
 
                <p className="font-semibold mb-2 text-primary">2. Dịch vụ chuyển vùng quốc tế (CVQT)</p>
                <div className="space-y-3 mb-4">
-                  <div className="pl-4 border-l-[3px] border-promotion">
+                  <div className="pl-4 border-l-[3px] border-accent">
                      <p className="font-semibold mb-1 text-neutral-darker">Bước 1: Đăng ký CVQT</p>
                      <p className="text-primary">→ Chỉ Thoại & SMS: <strong>DK CVQT</strong> gửi 9199 hoặc bấm <strong>*093*1*1#</strong></p>
                      <p className="text-primary">→ Thoại, SMS & Data: <strong>DK CVQT ALL</strong> gửi 9199 hoặc bấm <strong>*093*2*1#</strong></p>
                   </div>
-                  <div className="pl-4 border-l-[3px] border-promotion">
+                  <div className="pl-4 border-l-[3px] border-accent">
                      <p className="font-semibold mb-1 text-neutral-darker">Bước 2: Bật Data Roaming trên điện thoại</p>
                      <p className="text-primary">→ iOS: Settings → Cellular Data Option → Roaming ON → Data Roaming ON</p>
                      <p className="text-primary">→ Android: Settings → Connections → Mobile Networks → Access Point Names → Roaming ON</p>
                   </div>
-                  <div className="pl-4 border-l-[3px] border-promotion">
+                  <div className="pl-4 border-l-[3px] border-accent">
                      <p className="font-semibold mb-1 text-neutral-darker">Bước 3: Đăng ký gói cước quốc tế</p>
                      <p className="text-primary">→ Soạn <strong>DK [Tên gói]</strong> gửi 9199. Để xem danh sách gói cước CVQT, vui lòng liên hệ hotline <strong>1800.6060</strong>.</p>
                   </div>
-                  <div className="pl-4 border-l-[3px] border-promotion">
+                  <div className="pl-4 border-l-[3px] border-accent">
                      <p className="font-semibold mb-1 text-neutral-darker">Hủy dịch vụ CVQT</p>
                      <p className="text-primary">→ Hủy Data: <strong>HUY CVQT DATA</strong> gửi 9199</p>
                      <p className="text-primary">→ Hủy toàn bộ: <strong>HUY CVQT ALL</strong> gửi 9199 hoặc bấm <strong>*093*2*2#</strong></p>
@@ -367,7 +367,7 @@ export default function MobileNetworkPolicy() {
                      "Kích hoạt thuê bao.",
                   ].map((step, i) => (
                      <li key={i} className="flex items-start gap-3 text-primary">
-                        <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion text-white mt-0.5">
+                        <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent text-white mt-0.5">
                            {i + 1}
                         </span>
                         <span className="leading-relaxed">{step}</span>
@@ -409,7 +409,7 @@ export default function MobileNetworkPolicy() {
                      { title: "Phản hồi tới khách hàng", desc: "ChoCongNghe sẽ phản hồi kết quả xử lý trong thời hạn 7 – 10 ngày làm việc kể từ ngày xác minh, xử lý thông tin được hoàn thành." },
                   ].map((step, i) => (
                      <li key={i} className="flex items-start gap-3 text-primary">
-                        <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion text-white mt-0.5">
+                        <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent text-white mt-0.5">
                            {i + 1}
                         </span>
                         <div>

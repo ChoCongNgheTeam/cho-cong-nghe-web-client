@@ -62,7 +62,7 @@ export default function ReturnPolicy() {
                   { range: "1 năm", desc: "Bảo hành chính hãng" },
                ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion ">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent ">
                         {item.range}
                      </span>
                      <span className="text-primary">{item.desc}</span>
@@ -82,7 +82,7 @@ export default function ReturnPolicy() {
                   "Có hóa đơn mua hàng",
                ].map((item, i) => (
                   <li key={i} className="flex gap-2 leading-relaxed text-primary">
-                     <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion-light text-promotion">
+                     <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent-light text-accent">
                         ✓
                      </span>
                      {item}
@@ -103,7 +103,7 @@ export default function ReturnPolicy() {
                   "Xử lý đổi trả / hoàn tiền",
                ].map((step, i) => (
                   <li key={i} className="flex items-center gap-3 text-primary">
-                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion text-white ">
+                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent text-white ">
                         {i + 1}
                      </span>
                      {step}
@@ -124,7 +124,7 @@ export default function ReturnPolicy() {
                ].map((row, i) => (
                   <div key={i} className="flex items-center justify-between rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
                      <span className="text-primary">{row.label}</span>
-                     <span className={`font-semibold ${row.highlight ? "text-promotion" : "text-neutral-darker"}`}>
+                     <span className={`font-semibold ${row.highlight ? "text-accent" : "text-neutral-darker"}`}>
                         {row.fee}
                      </span>
                   </div>
@@ -149,7 +149,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
    return (
-      <div className="pl-4 border-l-[3px] border-promotion">
+      <div className="pl-4 border-l-[3px] border-accent">
          <p className="font-semibold mb-1 text-primary">{title}</p>
          {children}
       </div>

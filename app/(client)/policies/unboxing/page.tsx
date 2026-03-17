@@ -41,7 +41,7 @@ export default function UnboxingPolicy() {
                   "Nếu Quý khách báo lỗi ngoại quan sau khi sản phẩm đã được kích hoạt bảo hành điện tử (Active) hoặc sau khi nhân viên giao hàng rời đi, ChoCongNghe chỉ hỗ trợ chuyển sản phẩm của khách hàng đến hãng để thẩm định và xử lý.",
                ].map((item, i) => (
                   <li key={i} className="flex gap-3 leading-relaxed text-primary">
-                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion-light text-promotion mt-0.5">
+                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent-light text-accent mt-0.5">
                         {i + 1}
                      </span>
                      <span>{item}</span>

@@ -1,250 +1,89 @@
 "use client";
 
-export default function DeliveryInstallationPolicy() {
+export default function ChinhSachBaoHanhPage() {
    return (
       <>
-         <h1 className="font-bold mb-6 text-primary text-center">
-            Chính sách giao hàng & lắp đặt Điện máy, Gia dụng
+         <h1 className="font-bold mb-5 text-primary text-center ">
+            Chính sách bảo hành
          </h1>
 
-         <Section title="1. Một số định nghĩa">
-            <ul className="space-y-2">
-               {[
-                  <><strong className="text-primary">Khoảng cách giao hàng:</strong> Là khoảng cách tính từ nơi mua hàng (cửa hàng) đến cửa nhà khách hàng.</>,
-                  <><strong className="text-primary">Khoảng cách lắp đặt:</strong> Là khoảng cách từ vị trí đặt thiết bị so với các nguồn cấp điện, cấp nước, đường thoát nước, vị trí treo/khoan bắt vít (đối với thiết bị cần lắp đặt cố định như máy lạnh, máy nước nóng, máy giặt, v.v.).</>,
-               ].map((item, i) => (
-                  <li key={i} className="flex gap-2 leading-relaxed text-primary">
-                     <span className="mt-1 shrink-0">•</span>
-                     <span>{item}</span>
-                  </li>
-               ))}
-            </ul>
-         </Section>
+         <p className="leading-relaxed mb-4 text-primary">
+            Tất cả sản phẩm tại ChoCongNghe kinh doanh đều là sản phẩm
+            chính hãng và được bảo hành theo đúng chính sách của nhà
+            sản xuất(*). Ngoài ra ChoCongNghe cũng hỗ trợ gửi bảo hành
+            miễn phí giúp khách hàng đối với cả sản phẩm do ChoCongNghe
+            bán ra và sản phẩm Quý khách mua tại các chuỗi bán lẻ khác.
+         </p>
 
-         <Divider />
+         <p className="leading-relaxed mb-4 text-primary">
+            Mua hàng tại ChoCongNghe, Quý khách sẽ được hưởng những đặc quyền sau:
+         </p>
 
-         <Section title="2. Chính sách giao hàng">
-            <div className="rounded-lg overflow-hidden border border-neutral mb-4">
-               <div className="grid grid-cols-3 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
-                  <span>Tiêu chí</span>
-                  <span>Điều kiện</span>
-                  <span>Chi phí</span>
-               </div>
-               <div className="divide-y divide-neutral">
-                  <div className="grid grid-cols-3 px-4 py-3 gap-2">
-                     <span className="text-primary font-medium">Thời gian giao hàng</span>
-                     <span className="col-span-2 text-primary">24 - 48 tiếng tính từ lúc khách đặt hàng (hoặc theo thoả thuận với khách hàng).</span>
-                  </div>
-                  <div className="grid grid-cols-3 px-4 py-3 gap-2">
-                     <span className="text-primary font-medium">Chi phí giao hàng</span>
-                     <span className="text-primary">≤ 30km</span>
-                     <span className="font-semibold text-promotion">Miễn phí</span>
-                  </div>
-                  <div className="grid grid-cols-3 px-4 py-3 gap-2">
-                     <span></span>
-                     <span className="text-primary">&gt; 30km</span>
-                     <span className="text-primary">Mỗi km tiếp theo tính phí <strong>5.000đ/km</strong></span>
-                  </div>
-               </div>
-            </div>
-         </Section>
+         <ul className="mb-6 space-y-2">
+            {[
+               <>Bảo hành đổi sản phẩm mới ngay tại shop trong 30 ngày nếu có lỗi NSX.(**)</>,
+               <>Gửi bảo hành chính hãng không mất phí vận chuyển.(***)</>,
+               <>Theo dõi tiến độ bảo hành nhanh chóng qua hotline <strong>1800.6060</strong> hoặc <strong>1800.6626</strong>.</>,
+               <>Hỗ trợ làm việc với hãng để xử lý phát sinh trong quá trình bảo hành.</>,
+            ].map((item, i) => (
+               <li key={i} className="flex gap-2 leading-relaxed text-primary">
+                  <span className="mt-1 shrink-0">•</span>
+                  <span>{item}</span>
+               </li>
+            ))}
+         </ul>
 
-         <Divider />
+         <p className="leading-relaxed mb-4 text-primary">
+            Bên cạnh đó Quý khách có thể tham khảo một số các trường hợp thường gặp nằm ngoài
+            chính sách bảo hành sau để xác định sơ bộ máy có đủ điều kiện bảo hành hãng:
+         </p>
 
-         <Section title="3. Chính sách lắp đặt">
-            <ul className="space-y-2 mb-5">
-               {[
-                  <><strong className="text-primary">Thời gian lắp đặt:</strong> 24 - 48 tiếng tính từ lúc khách nhận hàng (hoặc theo thời gian thoả thuận với khách hàng).</>,
-                  <><strong className="text-primary">Thời gian phản ánh tình trạng sau lắp đặt:</strong> Trong vòng 48 tiếng sau khi hoàn tất lắp đặt (chi phí phát sinh sau thời gian này sẽ do 2 bên thỏa thuận).</>,
-               ].map((item, i) => (
-                  <li key={i} className="flex gap-2 leading-relaxed text-primary">
-                     <span className="mt-1 shrink-0">•</span>
-                     <span>{item}</span>
-                  </li>
-               ))}
-            </ul>
+         <ul className="mb-6 space-y-2">
+            {[
+               "Sản phẩm hết hạn bảo hành. Vui lòng liên hệ hotline <strong>1800.6060</strong> để tra cứu thời hạn bảo hành sản phẩm.",
+               "Sản phẩm đã bị thay đổi, sửa chữa không thuộc các Trung Tâm Bảo Hành Ủy Quyền của Hãng.",
+               "Sản phẩm lắp đặt, bảo trì, sử dụng không đúng theo hướng dẫn của Nhà sản xuất gây ra hư hỏng.",
+               "Sản phẩm lỗi do ngấm nước, chất lỏng và bụi bẩn. Quy định này áp dụng cho cả những thiết bị đạt chứng nhận kháng nước/kháng bụi cao nhất là IP68.",
+               "Sản phẩm bị biến dạng, nứt vỡ, cấn móp, trầy xước nặng do tác động nhiệt, tác động bên ngoài.",
+               "Sản phẩm có vết mốc, rỉ sét hoặc bị ăn mòn, oxy hóa bởi hóa chất.",
+               "Sản phẩm bị hư hại do thiên tai, hỏa hoạn, lụt lội, sét đánh, côn trùng, động vật vào.",
+               "Sản phẩm trong tình trạng bị khóa tài khoản cá nhân như: Tài khoản khóa máy/màn hình, khóa tài khoản trực tuyến Xiaomi Cloud, Samsung Cloud, iCloud, Gmail...",
+               "Khách hàng sử dụng phần mềm, ứng dụng không chính hãng, không bản quyền.",
+               "Màn hình có bốn (04) điểm chết trở xuống.",
+            ].map((item, i) => (
+               <li key={i} className="flex gap-2 leading-relaxed text-primary">
+                  <span className="mt-1 shrink-0">•</span>
+                  <span>{item}</span>
+               </li>
+            ))}
+         </ul>
 
-            <SubTitle>3.1. Chính sách lắp đặt sản phẩm điện máy</SubTitle>
+         <p className="font-semibold mb-3 text-primary">Lưu ý:</p>
+         <ul className="mb-6 space-y-2">
+            {[
+               "Chương trình bảo hành bắt đầu có hiệu lực từ thời điểm ChoCongNghe xuất hóa đơn cho Quý khách.",
+               "Với mỗi dòng sản phẩm khác nhau sẽ có chính sách bảo hành khác nhau tùy theo chính sách của Hãng/Nhà cung cấp.",
+               <>Để tìm hiểu thông tin chi tiết về chính sách bảo hành cho sản phẩm cụ thể, xin liên hệ bộ phận Chăm sóc Khách hàng của ChoCongNghe <strong>1800.6060</strong> hoặc <strong>1800.6626</strong>.</>,
+               "Quý khách có thể tra cứu tình trạng bảo hành bằng cách liên hệ trực tiếp hotline hoặc đến cửa hàng ChoCongNghe gần nhất bất cứ lúc nào.",
+               "Trong quá trình thực hiện dịch vụ bảo hành, các nội dung lưu trữ trên sản phẩm của Quý khách sẽ bị xóa và định dạng lại. Do đó, Quý khách vui lòng tự sao lưu toàn bộ dữ liệu trong sản phẩm, đồng thời gỡ bỏ tất cả các thông tin cá nhân mà Quý khách muốn bảo mật. ChoCongNghe không chịu trách nhiệm đối với bất kỳ mất mát nào liên quan tới các chương trình phần mềm, dữ liệu hoặc thông tin nào khác lưu trữ trên sản phẩm bảo hành.",
+               "Vui lòng tắt tất cả các mật khẩu bảo vệ, ChoCongNghe sẽ từ chối tiếp nhận bảo hành nếu thiết bị của bạn bị khóa bởi bất cứ phương pháp nào.",
+            ].map((item, i) => (
+               <li key={i} className="flex gap-2 leading-relaxed text-primary">
+                  <span className="mt-1 shrink-0">•</span>
+                  <span>{item}</span>
+               </li>
+            ))}
+         </ul>
 
-            <div className="rounded-lg overflow-hidden border border-neutral mb-4">
-               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
-                  <span>Loại lắp đặt</span>
-                  <span>Sản phẩm</span>
-                  <span>Điều kiện</span>
-                  <span>Chi phí</span>
-               </div>
-
-               <div className="divide-y divide-neutral">
-                  {[
-                     { product: "Máy giặt, máy sấy", condition: "Vị trí lắp đặt của KH có sẵn đường ống nước" },
-                     { product: "Tủ lạnh, tủ đông, tủ mát", condition: "Đường điện không quá 2m" },
-                     { product: "Máy lạnh", condition: "Vị trí lắp đặt không cao quá 4m (tính từ mặt sàn)" },
-                  ].map((row, i) => (
-                     <div key={i} className="grid grid-cols-4 px-4 py-3 gap-2 items-start">
-                        {i === 0 ? (
-                           <span className="font-semibold text-promotion">Lắp đặt tiêu chuẩn (miễn phí)</span>
-                        ) : (
-                           <span />
-                        )}
-                        <span className="text-primary">{row.product}</span>
-                        <span className="text-neutral-darker">{row.condition}</span>
-                        {i === 0 ? (
-                           <span className="font-semibold text-promotion">Miễn phí</span>
-                        ) : (
-                           <span />
-                        )}
-                     </div>
-                  ))}
-               </div>
-
-               <div className="border-t border-neutral divide-y divide-neutral">
-                  {[
-                     {
-                        product: "Máy giặt, máy sấy",
-                        conditions: ["Vị trí lắp đặt không thuận lợi, cần xe cẩu, giàn giáo để đưa vào", "Nguồn nước yếu cần lắp thêm bơm tăng áp."],
-                     },
-                     {
-                        product: "Tủ lạnh",
-                        conditions: ["Vị trí lắp đặt không thuận lợi cần xe cẩu, giàn giáo để đưa vào"],
-                     },
-                     {
-                        product: "Máy lạnh",
-                        conditions: ["Phát sinh vật tư (vật tư chính và phụ) thêm ngoài khuyến mãi.", "Vị trí đặt dàn nóng cao hơn 4m và cần thuê giàn giáo", "Thi công đường ống âm tường", "Vệ sinh đường ống cũ", "Tháo, lắp máy cũ", "Hàn ống đồng"],
-                     },
-                     {
-                        product: "Tivi",
-                        conditions: ["Lắp đặt giá treo di động"],
-                     },
-                  ].map((row, i) => (
-                     <div key={i} className="grid grid-cols-4 px-4 py-3 gap-2 items-start">
-                        {i === 0 ? (
-                           <span className="font-semibold text-neutral-darker">Lắp đặt nâng cao (có tính phí)</span>
-                        ) : (
-                           <span />
-                        )}
-                        <span className="text-primary font-medium">{row.product}</span>
-                        <ul className="space-y-1">
-                           {row.conditions.map((c, j) => (
-                              <li key={j} className="flex gap-1 text-neutral-darker">
-                                 <span className="shrink-0">•</span>
-                                 <span>{c}</span>
-                              </li>
-                           ))}
-                        </ul>
-                        {i === 0 ? (
-                           <span className="text-neutral-darker">KH chịu phí phát sinh (thỏa thuận với đơn vị thi công)</span>
-                        ) : (
-                           <span />
-                        )}
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            <div className="rounded-lg p-4 bg-neutral-light-active border border-neutral mb-6">
-               <p className="font-semibold mb-2 text-primary">Lưu ý</p>
-               <p className="leading-relaxed text-neutral-darker">
-                  TV từ 65inch khuyến cáo không treo tường. Nếu khách hàng yêu cầu thì cần ký biên bản miễn trừ trách nhiệm nếu bị rơi trong quá trình sử dụng.
-               </p>
-            </div>
-
-            <SubTitle>3.2. Chính sách lắp đặt sản phẩm gia dụng</SubTitle>
-
-            <div className="rounded-lg overflow-hidden border border-neutral">
-               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
-                  <span>Loại lắp đặt</span>
-                  <span>Sản phẩm</span>
-                  <span>Điều kiện</span>
-                  <span>Chi phí</span>
-               </div>
-
-               <div className="divide-y divide-neutral">
-                  {[
-                     { product: "Máy nước nóng gián tiếp/trực tiếp", condition: "Vị trí lắp đặt của KH có sẵn đường ống nước chờ tại vị trí lắp máy" },
-                     { product: "Máy lọc nước", condition: "Vị trí lắp đặt của KH có sẵn đường ống nước chờ tại vị trí lắp máy" },
-                     { product: "Máy rửa bát", condition: "Vị trí lắp đặt của KH có sẵn đường ống nước chờ tại vị trí lắp máy" },
-                     { product: "Bếp từ/hồng ngoại đa, Máy hút mùi", condition: "Vị trí lắp vừa với kích thước Bếp/Hút mùi và có sẵn đường điện chờ (Loại trừ KG498, KG499, HS-I15521FG)" },
-                  ].map((row, i) => (
-                     <div key={i} className="grid grid-cols-4 px-4 py-3 gap-2 items-start">
-                        {i === 0 ? (
-                           <span className="font-semibold text-promotion">Lắp đặt tiêu chuẩn (miễn phí)</span>
-                        ) : (
-                           <span />
-                        )}
-                        <span className="text-primary">{row.product}</span>
-                        <span className="text-neutral-darker">{row.condition}</span>
-                        {i === 0 ? (
-                           <span className="font-semibold text-promotion">Miễn phí</span>
-                        ) : (
-                           <span />
-                        )}
-                     </div>
-                  ))}
-               </div>
-
-               <div className="border-t border-neutral divide-y divide-neutral">
-                  {[
-                     {
-                        product: "Máy nước nóng gián tiếp/trực tiếp",
-                        conditions: ["Có thêm vật tư phát sinh", "Thi công ống âm tường", "Tháo, lắp máy cũ"],
-                     },
-                     {
-                        product: "Máy lọc nước",
-                        conditions: ["Có thêm vật tư phát sinh", "Thi công ống âm tường", "Khoan/khoét lỗ tường gạch bê tông/Tủ gỗ"],
-                     },
-                     {
-                        product: "Máy rửa bát",
-                        conditions: ["Có thêm vật tư phát sinh", "Thi công ống âm tường"],
-                     },
-                     {
-                        product: "Máy hút mùi, Bếp từ/hồng ngoại đa",
-                        conditions: ["Có thêm vật tư phát sinh", "Khoan/cắt ghép đá, bê tông, gỗ (hãng Hafele, Pramie hỗ trợ khoan cắt đá miễn phí)"],
-                     },
-                  ].map((row, i) => (
-                     <div key={i} className="grid grid-cols-4 px-4 py-3 gap-2 items-start">
-                        {i === 0 ? (
-                           <span className="font-semibold text-neutral-darker">Lắp đặt nâng cao (có tính phí)</span>
-                        ) : (
-                           <span />
-                        )}
-                        <span className="text-primary font-medium">{row.product}</span>
-                        <ul className="space-y-1">
-                           {row.conditions.map((c, j) => (
-                              <li key={j} className="flex gap-1 text-neutral-darker">
-                                 <span className="shrink-0">•</span>
-                                 <span>{c}</span>
-                              </li>
-                           ))}
-                        </ul>
-                        {i === 0 ? (
-                           <span className="text-neutral-darker">KH chịu phí phát sinh (thỏa thuận với đơn vị thi công)</span>
-                        ) : (
-                           <span />
-                        )}
-                     </div>
-                  ))}
-               </div>
-            </div>
-         </Section>
+         <div className="pt-4 space-y-1.5 border-t border-neutral">
+            {[
+               "(*) Áp dụng với các sản phẩm bán mới hoặc còn hạn bảo hành mặc định nếu đã qua sử dụng.",
+               "(**) Áp dụng với các sản phẩm thuộc diện đổi mới trong 30 ngày nếu có lỗi NSX được công bố trên website Chính sách đổi trả.",
+               "(***) Trừ các sản phẩm có chính sách bảo hành tại nhà, sản phẩm thuộc diện cồng kềnh.",
+            ].map((note, i) => (
+               <p key={i} className="leading-relaxed text-neutral-darker">{note}</p>
+            ))}
+         </div>
       </>
    );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-   return (
-      <section className="mb-6">
-         <h2 className="font-bold mb-3 text-primary">{title}</h2>
-         {children}
-      </section>
-   );
-}
-
-function SubTitle({ children }: { children: React.ReactNode }) {
-   return (
-      <p className="font-semibold mb-3 text-primary">{children}</p>
-   );
-}
-
-function Divider() {
-   return <hr className="my-6 border-neutral" />;
 }

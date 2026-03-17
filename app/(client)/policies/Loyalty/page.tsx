@@ -96,7 +96,7 @@ export default function LoyaltyPolicy() {
                   { range: "Đơn từ 1.000.000đ trở lên", desc: "Quy đổi tối đa 20% giá trị đơn hàng" },
                ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion ">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent ">
                         {item.range}
                      </span>
                      <span className="text-primary">{item.desc}</span>
@@ -133,7 +133,7 @@ export default function LoyaltyPolicy() {
                   "Sau khi kết bạn thành công, khách hàng có thể đổi điểm thưởng thành ưu đãi giảm giá khi mua hàng trực tiếp trên website hoặc hệ thống cửa hàng ChoCongNghe trên toàn quốc.",
                ].map((step, i) => (
                   <li key={i} className="flex items-start gap-3 text-primary">
-                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion text-white mt-0.5 ">
+                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent text-white mt-0.5 ">
                         {i + 1}
                      </span>
                      <span className="leading-relaxed">{step}</span>
@@ -222,7 +222,7 @@ function SubTitle({ children }: { children: React.ReactNode }) {
 
 function SubSection({ label, children }: { label: string; children: React.ReactNode }) {
    return (
-      <div className="pl-4 border-l-[3px] border-promotion">
+      <div className="pl-4 border-l-[3px] border-accent">
          <p className="font-semibold mb-1 text-neutral-darker ">{label}</p>
          <p className="leading-relaxed text-primary">→ {children}</p>
       </div>

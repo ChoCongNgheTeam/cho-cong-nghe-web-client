@@ -38,7 +38,7 @@ export default function DeliveryInstallationPolicy() {
                   <div className="grid grid-cols-3 px-4 py-3 gap-2">
                      <span className="text-primary font-medium">Chi phí giao hàng</span>
                      <span className="text-primary">≤ 30km</span>
-                     <span className="font-semibold text-promotion">Miễn phí</span>
+                     <span className="font-semibold text-accent">Miễn phí</span>
                   </div>
                   <div className="grid grid-cols-3 px-4 py-3 gap-2">
                      <span></span>
@@ -82,14 +82,14 @@ export default function DeliveryInstallationPolicy() {
                   ].map((row, i) => (
                      <div key={i} className="grid grid-cols-4 px-4 py-3 gap-2 items-start">
                         {i === 0 ? (
-                           <span className="font-semibold text-promotion">Lắp đặt tiêu chuẩn (miễn phí)</span>
+                           <span className="font-semibold text-accent">Lắp đặt tiêu chuẩn (miễn phí)</span>
                         ) : (
                            <span />
                         )}
                         <span className="text-primary">{row.product}</span>
                         <span className="text-neutral-darker">{row.condition}</span>
                         {i === 0 ? (
-                           <span className="font-semibold text-promotion">Miễn phí</span>
+                           <span className="font-semibold text-accent">Miễn phí</span>
                         ) : (
                            <span />
                         )}
@@ -167,14 +167,14 @@ export default function DeliveryInstallationPolicy() {
                   ].map((row, i) => (
                      <div key={i} className="grid grid-cols-4 px-4 py-3 gap-2 items-start">
                         {i === 0 ? (
-                           <span className="font-semibold text-promotion">Lắp đặt tiêu chuẩn (miễn phí)</span>
+                           <span className="font-semibold text-accent">Lắp đặt tiêu chuẩn (miễn phí)</span>
                         ) : (
                            <span />
                         )}
                         <span className="text-primary">{row.product}</span>
                         <span className="text-neutral-darker">{row.condition}</span>
                         {i === 0 ? (
-                           <span className="font-semibold text-promotion">Miễn phí</span>
+                           <span className="font-semibold text-accent">Miễn phí</span>
                         ) : (
                            <span />
                         )}

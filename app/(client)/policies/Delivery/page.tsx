@@ -35,7 +35,7 @@ export default function DeliveryPolicy() {
                   { range: "Đơn dưới 50 triệu", desc: "Quý khách có thể nhận hàng và thanh toán tại nhà khi đồng ý mua hàng." },
                ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent">
                         {item.range}
                      </span>
                      <span className="text-primary leading-relaxed">{item.desc}</span>

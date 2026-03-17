@@ -38,7 +38,7 @@ export default function InstallmentPolicy() {
                   { amount: "Từ 3.000.000đ", bank: "Các ngân hàng còn lại" },
                ].map((row, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion ">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent ">
                         {row.amount}
                      </span>
                      <span className="text-primary">{row.bank}</span>
@@ -93,7 +93,7 @@ export default function InstallmentPolicy() {
                <div className="grid grid-cols-4 px-4 py-3 gap-2 text-primary">
                   <div className="space-y-1">
                      {["HDS", "HOME CREDIT", "SHINHAN FINANCE", "FE CREDIT", "MIRAE ASSET", "SAMSUNG FINANCE PLUS"].map((c, i) => (
-                        <span key={i} className="block font-semibold text-promotion ">{c}</span>
+                        <span key={i} className="block font-semibold text-accent ">{c}</span>
                      ))}
                   </div>
                   <div className="space-y-1 ">

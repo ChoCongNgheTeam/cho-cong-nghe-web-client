@@ -221,7 +221,7 @@ export default function DataPrivacyPolicy() {
                   { label: "Địa chỉ", value: "Vui lòng đến cửa hàng ChoCongNghe gần nhất để được hỗ trợ trực tiếp." },
                ].map((row, i) => (
                   <div key={i} className="flex items-start gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
-                     <span className="font-bold shrink-0 text-promotion">{row.label}:</span>
+                     <span className="font-bold shrink-0 text-accent">{row.label}:</span>
                      <span className="text-primary">{row.value}</span>
                   </div>
                ))}
