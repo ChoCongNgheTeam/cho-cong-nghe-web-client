@@ -23,7 +23,7 @@ export default function ToastContainer({
    ];
 
    const getPositionClasses = (position: ToastPosition) => {
-      const base = "fixed z-50 flex flex-col gap-3 p-4 pointer-events-none";
+      const base = "fixed z-9999 flex flex-col gap-3 p-4 pointer-events-none";
       const classes: Record<ToastPosition, string> = {
          "top-left": `${base} top-16 left-0`,
          "top-center": `${base} top-16 left-1/2 -translate-x-1/2`,

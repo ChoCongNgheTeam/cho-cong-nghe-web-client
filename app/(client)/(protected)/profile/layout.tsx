@@ -125,7 +125,7 @@ export default function ProfileLayout({
                         href={item.href}
                         className={`flex items-center gap-3 px-4 py-3 transition-all border-l-4 ${
                           isActive
-                            ? "bg-promotion-light border-promotion text-promotion font-medium"
+                            ? "bg-promotion-light border-promotion text-primary font-medium"
                             : "hover:bg-neutral-light border-transparent text-primary"
                         }`}
                       >

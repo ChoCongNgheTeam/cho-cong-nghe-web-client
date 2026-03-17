@@ -78,19 +78,19 @@ export default function ProductDetailSection({
 
   return (
     <>
-      <div className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div>
+        <div className="flex flex-col lg:flex-row lg:gap-12">
           {/* RIGHT: SPEC */}
-          <div className="lg:col-span-7 bg-neutral-light  ">
+          <div className="lg:w-[60%] bg-neutral-light   py-6 sm:py-4 lg:py-6 rounded-lg px-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-semibold text-primary">
                 Thông số kỹ thuật
               </h3>
-              {/* Ẩn nút khi không có thông số */}
+
               {specifications.length > 0 && (
                 <button
                   onClick={openDialog}
-                  className="text-sm text-promotion cursor-pointer"
+                  className="text-sm text-promotion cursor-pointer hover:underline"
                 >
                   Xem tất cả
                 </button>
@@ -98,7 +98,6 @@ export default function ProductDetailSection({
             </div>
 
             <div className="space-y-6">
-              {/* Hiện thông báo khi không có thông số */}
               {specifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-neutral-dark gap-2">
                   <svg
@@ -122,9 +121,10 @@ export default function ProductDetailSection({
               ) : (
                 specifications.slice(0, 3).map((group) => (
                   <div key={group.groupName}>
-                    <h3 className="block text-primary mb-2">
+                    <h3 className="text-primary mb-2 font-medium">
                       {group.groupName}
                     </h3>
+
                     <table className="w-full text-sm">
                       <tbody>
                         {group.items.map((item) => (
@@ -132,10 +132,10 @@ export default function ProductDetailSection({
                             key={item.id}
                             className="border-b border-neutral-dark/20"
                           >
-                            <td className="py-2 text-neutral-darker align-top">
+                            <td className="py-2 text-neutral-darker">
                               {item.name}
                             </td>
-                            <td className="py-2 text-primary align-top w-2/5">
+                            <td className="py-2 text-primary w-2/5">
                               {formatSpecValue(item)}
                             </td>
                           </tr>
@@ -148,8 +148,8 @@ export default function ProductDetailSection({
             </div>
           </div>
 
-          {/* LEFT: Combo khuyến mãi */}
-          <div className="lg:col-span-5 bg-neutral-light lg:pl-8 border-l border-l-neutral-dark/50 pl-2">
+          {/* LEFT: Combo */}
+          <div className="lg:w-[40%] bg-neutral-light py-6 sm:py-4 lg:py-6 rounded-lg px-6 " >
             <div className="flex items-center gap-3 mb-6">
               <FaFire className="w-7 h-7 text-promotion" />
               <h2 className="text-xl lg:text-2xl font-bold text-primary">
@@ -163,11 +163,11 @@ export default function ProductDetailSection({
                   key={combo.id}
                   onClick={() => setActiveIndex(index)}
                   className={`px-5 py-3 rounded-full font-medium text-sm transition-all duration-200 border
-                    ${
-                      activeIndex === index
-                        ? "bg-promotion text-white border-promotion shadow-md"
-                        : "bg-transparent text-primary border-neutral-dark hover:bg-neutral hover:border-neutral-dark/70"
-                    }`}
+          ${
+            activeIndex === index
+              ? "bg-promotion text-white border-promotion shadow-md"
+              : "bg-transparent text-primary border-neutral-dark hover:bg-neutral"
+          }`}
                 >
                   {combo.title}
                 </button>
@@ -182,10 +182,12 @@ export default function ProductDetailSection({
                 height={80}
                 className="w-20 h-20 rounded-lg object-contain shrink-0"
               />
+
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-primary line-clamp-2">
                   {activeCombo.product.name}
                 </h3>
+
                 <div className="flex items-baseline gap-3 mt-2">
                   <span className="text-2xl font-bold text-primary">
                     {formatPrice(activeCombo.product.currentPrice)}
@@ -194,6 +196,7 @@ export default function ProductDetailSection({
                     {formatPrice(activeCombo.product.originalPrice)}
                   </s>
                 </div>
+
                 <p className="text-accent font-medium mt-1">
                   Tiết kiệm {formatPrice(activeCombo.product.savings)}
                 </p>
@@ -204,29 +207,34 @@ export default function ProductDetailSection({
               <div>
                 <div className="flex flex-wrap items-baseline gap-3">
                   <span className="text-neutral-darker">Tổng tiền:</span>
+
                   <span className="text-xl font-bold text-promotion">
                     {formatPrice(activeCombo.totalPrice)}
                   </span>
+
                   <s className="text-lg text-neutral-darker opacity-50">
                     {formatPrice(activeCombo.totalOriginalPrice)}
                   </s>
+
                   <span className="text-lg font-semibold text-accent">
                     -{activeCombo.discount}%
                   </span>
                 </div>
+
                 <p className="text-accent font-medium mt-2">
                   Tiết kiệm: {formatPrice(activeCombo.totalSavings)}
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-10 justify-end">
+              <div className="flex flex-col sm:flex-row gap-4 mt-10 sm:justify-end">
                 <button
-                  className="p-4 rounded-full border-2 border-promotion hover:bg-promotion-light transition-all duration-200 flex items-center justify-center sm:w-auto"
+                  className="p-3 rounded-full border-2 border-promotion hover:bg-promotion-light transition flex items-center justify-center cursor-pointer"
                   aria-label="Thêm vào giỏ hàng"
                 >
                   <FaShoppingCart className="w-6 h-6 text-promotion" />
                 </button>
-                <button className="px-6 py-4 rounded-full bg-promotion hover:bg-promotion-hover active:bg-promotion-active text-neutral-light font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
+
+                <button className="px-4 py-2 rounded-full bg-promotion hover:bg-promotion-hover text-neutral-light font-semibold transition shadow-sm hover:shadow-md cursor-pointer">
                   Chọn mua kèm
                 </button>
               </div>
@@ -235,7 +243,11 @@ export default function ProductDetailSection({
         </div>
       </div>
 
-      <ProductSpecsModal ref={modalRef} specifications={modalSpecs} isLoading={loadingModal} />
+      <ProductSpecsModal
+        ref={modalRef}
+        specifications={modalSpecs}
+        isLoading={loadingModal}
+      />
     </>
   );
 }

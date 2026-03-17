@@ -35,13 +35,10 @@ export default function ProductDetailSection1({
   }, [expanded]);
 
   return (
-    <div
-      className="container sm:px-6 lg:px-12 py-6 sm:py-4 lg:py-8 bg-neutral-light rounded-lg"
-      ref={descriptionRef}
-    >
-      <div className="flex flex-col lg:flex-row gap-12">
+    <div className="" ref={descriptionRef}>
+      <div className="flex flex-col lg:flex-row lg:gap-12">
         {/* LEFT - MÔ TẢ */}
-        <div className="flex flex-col gap-4 lg:flex-[1.5] ">
+        <div className="lg:w-[60%] bg-neutral-light   py-6 sm:py-4 lg:py-6 rounded-lg px-6">
           <h2 className="text-xl sm:text-2xl font-semibold text-primary">
             Mô tả sản phẩm
           </h2>
@@ -112,8 +109,8 @@ export default function ProductDetailSection1({
           </button>
         </div>
 
-        {/* RIGHT - THÔNG TIN HAY - ✅ STICKY */}
-        <div className="lg:flex-1  lg:mt-0 px-6">
+        {/* RIGHT - THÔNG TIN HAY - STICKY */}
+        <div className="lg:w-[40%] bg-neutral-light py-6 sm:py-4 lg:py-6 rounded-lg px-6">
           <div
             className={`flex flex-col gap-3 ${expanded ? "lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]" : ""} `}
           >
@@ -125,7 +122,7 @@ export default function ProductDetailSection1({
             <div className="flex gap-2 mb-2 sm:mb-4">
               <button
                 onClick={() => setActiveTab("baiviet")}
-                className={`px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base font-medium transition-all duration-200 ${
+                className={`px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base font-medium transition-all duration-200 cursor-pointer ${
                   activeTab === "baiviet"
                     ? "bg-promotion text-neutral-light shadow-sm"
                     : "bg-neutral text-neutral-darker hover:bg-neutral-active"
@@ -136,7 +133,7 @@ export default function ProductDetailSection1({
 
               <button
                 onClick={() => setActiveTab("meohay")}
-                className={`px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base font-medium transition-all duration-200 ${
+                className={`px-3 sm:px-4 py-2 w-1/2 rounded-full text-sm sm:text-base font-medium transition-all duration-200 cursor-pointer ${
                   activeTab === "meohay"
                     ? "bg-promotion text-neutral-light shadow-sm"
                     : "bg-neutral text-neutral-darker hover:bg-neutral-active"
@@ -147,10 +144,10 @@ export default function ProductDetailSection1({
             </div>
 
             {/* TAB CONTENT */}
-            <div className="text-sm sm:text-base min-h-95 overflow-y-auto">
+            <div className="text-sm sm:text-base  overflow-y-auto">
               {activeTab === "baiviet" && (
                 <iframe
-                  className="w-full aspect-video rounded-lg"
+                  className=" h-[400px] rounded-lg "
                   src="https://www.youtube.com/embed/NmF82mn0oS8"
                   title="Video sản phẩm"
                   allowFullScreen
