@@ -1,6 +1,14 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Gpu, Package, Cpu, Images, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Gpu,
+  Package,
+  Cpu,
+  Images,
+  Loader2,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { ProductDetail, CurrentVariant } from "@/lib/types/product";
 import { MdVerified } from "react-icons/md";
@@ -30,15 +38,14 @@ export default function ProductDetailBanner({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // ── Gallery state ──────────────────────────────────────────────────────────
-  const [galleryImages, setGalleryImages]   = useState<GalleryImage[]>([]);
-  const [galleryLoaded, setGalleryLoaded]   = useState(false);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [galleryLoaded, setGalleryLoaded] = useState(false);
   const [galleryLoading, setGalleryLoading] = useState(false);
-  const [galleryIndex, setGalleryIndex]     = useState(0);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const EXPAND_INDEX = images.length;
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
   const totalVariantSlots = images.length + 1;
-  
 
   useEffect(() => {
     if (images && images.length > 0) {
@@ -48,9 +55,10 @@ export default function ProductDetailBanner({
   }, [images]);
 
   // ── Stock ──────────────────────────────────────────────────────────────────
-  const maxStock     = selectedVariant?.quantity ?? 0;
-  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
-  const isInStock    = !isOutOfStock && maxStock > 0;
+  const maxStock = selectedVariant?.quantity ?? 0;
+  const isOutOfStock =
+    selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isInStock = !isOutOfStock && maxStock > 0;
 
   // ── Fetch gallery ──────────────────────────────────────────────────────────
   const fetchGallery = useCallback(async () => {
@@ -135,10 +143,14 @@ export default function ProductDetailBanner({
     : (images[currentImageIndex]?.altText ?? "Product image");
 
   const counterCurrent = isExpandSlot
-    ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryIndex + 1}` : "▶")
+    ? galleryLoaded && galleryImages.length > 0
+      ? `G${galleryIndex + 1}`
+      : "▶"
     : currentImageIndex + 1;
   const counterTotal = isExpandSlot
-    ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryImages.length}` : totalVariantSlots)
+    ? galleryLoaded && galleryImages.length > 0
+      ? `G${galleryImages.length}`
+      : totalVariantSlots
     : totalVariantSlots;
 
   // ── Thumbnail window (hiện tối đa 6) ─────────────────────────────────────
@@ -157,12 +169,15 @@ export default function ProductDetailBanner({
     Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)),
     Math.max(0, totalThumbs - THUMB_WINDOW),
   );
-  const visibleThumbs = allThumbs.slice(windowStart, windowStart + THUMB_WINDOW);
+  const visibleThumbs = allThumbs.slice(
+    windowStart,
+    windowStart + THUMB_WINDOW,
+  );
   const highlights = product.highlights || [];
   const iconMap: Record<string, any> = {
-    gpu:     Gpu,
+    gpu: Gpu,
     storage: Package,
-    cpu:     Cpu,
+    cpu: Cpu,
   };
 
   return (
@@ -250,7 +265,9 @@ export default function ProductDetailBanner({
                       ) : (
                         <>
                           <Images className="w-5 h-5 text-neutral-darker" />
-                          <span className="text-[10px] text-neutral-darker">Xem thêm</span>
+                          <span className="text-[10px] text-neutral-darker">
+                            Xem thêm
+                          </span>
                         </>
                       )}
                     </div>
@@ -290,10 +307,14 @@ export default function ProductDetailBanner({
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
                 {highlights.map((highlight, index) => {
-                  const IconComponent = highlight?.icon ? iconMap[highlight.icon] : null;
+                  const IconComponent = highlight?.icon
+                    ? iconMap[highlight.icon]
+                    : null;
                   return (
                     <div className="flex-1" key={index}>
-                      <span className="text-sm">{highlight?.name || "N/A"}</span>
+                      <span className="text-sm">
+                        {highlight?.name || "N/A"}
+                      </span>
                       <div className="flex items-center gap-2 mt-2">
                         {IconComponent && <IconComponent size={28} />}
                         <span className="text-sm font-semibold text-primary">
@@ -311,23 +332,31 @@ export default function ProductDetailBanner({
           {isInStock && (
             <div>
               <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-                <button className="text-sm text-promotion hover:text-accent-hover hover:underline cursor-pointer transition-colors duration-200">
+                <h2 className="text-base font-semibold text-primary">
+                  Chính sách sản phẩm
+                </h2>
+                <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
                   Tìm hiểu thêm
                 </button>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
                 <div className="flex items-center gap-2 sm:mr-12">
                   <MdVerified size={28} />
-                  <p className="text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
+                  <p className="text-sm text-primary">
+                    Hàng chính hãng - Bảo hành 18 tháng
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaShippingFast size={28} />
-                  <p className="text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
+                  <p className="text-sm text-primary">
+                    Miễn phí giao hàng toàn quốc
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaUserCog size={28} />
-                  <p className="text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
+                  <p className="text-sm text-primary">
+                    Kỹ thuật viên hỗ trợ trực tuyến
+                  </p>
                 </div>
               </div>
             </div>
@@ -353,15 +382,15 @@ function ThumbnailCell({
   return (
     <button
       onClick={onClick}
-      className={`relative group rounded-xl overflow-hidden transition-all duration-300 ease-out ${
+      className={`relative group rounded-xl overflow-hidden transition-all duration-200 ease-out ${
         isActive
-          ? "ring-2 ring-blue-500 shadow-lg shadow-blue-500/20 scale-105 cursor-pointer"
-          : "ring-1 ring-black/10 hover:ring-2 hover:ring-blue-500 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-105 cursor-pointer"
-      } ${isExpand ? " border-neutral-dark" : ""}`}
+          ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105 cursor-pointer"
+          : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105 cursor-pointer"
+      } `}
     >
       <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
         {children}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
       </div>
     </button>
   );

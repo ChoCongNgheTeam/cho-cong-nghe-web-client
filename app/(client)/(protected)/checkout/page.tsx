@@ -19,394 +19,18 @@ import PaymentResultModal from "./components/PaymentResultModal";
 import { getProvinces } from "@/(client)/(protected)/profile/_lib/get-provice";
 import { getWards } from "@/(client)/(protected)/profile/_lib/get-wards";
 import { Popzy } from "@/components/Modal";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface Province {
-   id: string;
-   name: string;
-   fullName: string;
-}
-interface Ward {
-   id: string;
-   name: string;
-   fullName: string;
-}
-interface UserProfile {
-   id: string;
-   fullName: string;
-   phone: string | null;
-   email: string;
-}
-interface SavedAddress {
-   id: string;
-   contactName: string;
-   phone: string;
-   province: { id: string; name: string; fullName: string };
-   ward: { id: string; name: string; fullName: string };
-   detailAddress: string;
-   fullAddress: string;
-   type: "HOME" | "OFFICE" | "OTHER";
-   isDefault: boolean;
-}
-interface CartItem {
-   id: string;
-   name: string;
-   variant: string;
-   color?: string;
-   colorValue?: string;
-   quantity: number;
-   unit_price: number;
-   original_price?: number;
-   image?: string;
-}
-interface SelectedItem {
-   id: string;
-   productName?: string;
-   product_name?: string;
-   variantCode?: string;
-   variant_name?: string;
-   quantity: number;
-   unitPrice?: number;
-   unit_price?: number;
-   originalPrice?: number;
-   original_price?: number;
-   image?: string;
-   image_url?: string;
-   color?: string;
-   colorValue?: string;
-}
-interface CheckoutData {
-   selectedItems: SelectedItem[];
-   selectedPromotions: string[];
-   promotionValue: number;
-   appliedVoucherCode: string;
-   appliedVoucherValue: number;
-   appliedVoucherId?: string;
-   subtotal: number;
-   totalDiscount: number;
-   finalTotal: number;
-   rewardPoints: number;
-   usePoints: boolean;
-   newAddressId?: string;
-}
-interface PreviewData {
-   subtotalAmount: number;
-   shippingFee: number;
-   voucherDiscount: number;
-   taxAmount: number;
-   totalAmount: number;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const inputCls =
-   "w-full px-3 py-2.5 border border-neutral rounded-lg text-sm focus:outline-none focus:border-accent bg-neutral-light text-primary placeholder:text-neutral-dark transition-colors";
-const selectCls =
-   "w-full px-3 py-2.5 pr-9 border border-neutral rounded-lg text-sm focus:outline-none focus:border-accent bg-neutral-light text-primary appearance-none cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral";
-
-// ─── ShippingSection — tách ra ngoài CheckoutPage để tránh remount ────────────
-
-interface ShippingSectionProps {
-   isLoadingAddresses: boolean;
-   savedAddresses: SavedAddress[];
-   showManualForm: boolean;
-   selectedSavedAddress: SavedAddress | null;
-   contactName: string;
-   contactPhone: string;
-   provinceId: string;
-   wardId: string;
-   detailAddress: string;
-   provinces: Province[];
-   wards: Ward[];
-   isLoadingProvinces: boolean;
-   isLoadingWards: boolean;
-   wantSaveAddress: boolean | null;
-   instanceId?: string; // thêm dòng này
-   onSelectSavedAddress: (addr: SavedAddress) => void;
-   onShowManualForm: () => void;
-   onBackToSaved: () => void;
-   onContactNameChange: (v: string) => void;
-   onContactPhoneChange: (v: string) => void;
-   onProvinceChange: (v: string) => void;
-   onWardChange: (v: string) => void;
-   onDetailAddressChange: (v: string) => void;
-   onWantSaveAddressChange: (v: boolean) => void;
-   onEditAddress: () => void;
-}
-
-function ShippingSection({
-   isLoadingAddresses,
-   savedAddresses,
-   showManualForm,
-   selectedSavedAddress,
-   contactName,
-   contactPhone,
-   provinceId,
-   wardId,
-   detailAddress,
-   provinces,
-   wards,
-   isLoadingProvinces,
-   isLoadingWards,
-   wantSaveAddress,
-   instanceId = "default",
-   onSelectSavedAddress,
-   onShowManualForm,
-   onBackToSaved,
-   onContactNameChange,
-   onContactPhoneChange,
-   onProvinceChange,
-   onWardChange,
-   onDetailAddressChange,
-   onWantSaveAddressChange,
-   onEditAddress,
-}: ShippingSectionProps) {
-   return (
-      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
-         <h2 className="text-sm sm:text-base font-semibold text-primary mb-4">
-            Thông tin giao hàng
-         </h2>
-
-         {isLoadingAddresses ? (
-            <div className="flex items-center justify-center gap-2 py-6 text-sm text-neutral-dark">
-               <Loader2 size={16} className="animate-spin" /> Đang tải...
-            </div>
-         ) : savedAddresses.length === 0 && !showManualForm ? (
-            <p className="text-sm text-neutral-dark text-center py-4">
-               Chưa có địa chỉ nào được lưu
-            </p>
-         ) : (
-            !showManualForm && (
-               <ul className="divide-y divide-neutral mb-4">
-                  {savedAddresses
-                     .filter((addr) => addr.isDefault)
-                     .map((addr) => (
-                        <li key={addr.id}>
-                           <div
-                              onClick={() => onSelectSavedAddress(addr)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => {
-                                 if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    onSelectSavedAddress(addr);
-                                 }
-                              }}
-                              className="w-full text-left px-2 py-3 hover:bg-neutral/50 transition-colors cursor-pointer flex items-start gap-3 focus:outline-none focus:ring-2 focus:ring-accent/50 rounded"
-                           >
-                              <div className="shrink-0 mt-0.5">
-                                 <div
-                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedSavedAddress?.id === addr.id ? "border-accent bg-accent" : "border-neutral-dark"}`}
-                                 >
-                                    {selectedSavedAddress?.id === addr.id && (
-                                       <div className="w-2 h-2 rounded-full bg-white" />
-                                    )}
-                                 </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                 <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                       <span className="text-sm font-semibold text-primary">
-                                          {addr.contactName}
-                                       </span>
-                                       <span className="text-sm text-neutral-darker">
-                                          (+84) {addr.phone.replace(/^0/, "")}
-                                       </span>
-                                    </div>
-                                    <button
-                                       type="button"
-                                       onClick={(e) => {
-                                          e.stopPropagation();
-                                          onEditAddress();
-                                       }}
-                                       className="shrink-0 text-xs text-neutral-darker hover:text-primary transition-colors focus:outline-none focus:underline"
-                                    >
-                                       Sửa
-                                    </button>
-                                 </div>
-                                 <p className="text-sm text-neutral-darker mt-0.5">
-                                    {addr.detailAddress}
-                                 </p>
-                                 <p className="text-sm text-neutral-darker">
-                                    {addr.ward?.fullName},{" "}
-                                    {addr.province?.fullName}
-                                 </p>
-                                 <span className="inline-block mt-1.5 text-[11px] px-2 py-0.5 border border-accent text-accent rounded">
-                                    Mặc định
-                                 </span>
-                              </div>
-                           </div>
-                        </li>
-                     ))}
-               </ul>
-            )
-         )}
-
-         {!showManualForm ? (
-            <button
-               type="button"
-               onClick={onShowManualForm}
-               className="flex items-center gap-1.5 text-sm text-accent hover:underline transition-colors cursor-pointer mt-1 focus:outline-none focus:underline"
-            >
-               + Nhập địa chỉ khác
-            </button>
-         ) : (
-            <>
-               {savedAddresses.length > 0 && (
-                  <button
-                     type="button"
-                     onClick={onBackToSaved}
-                     className="flex items-center gap-1.5 text-xs text-neutral-darker hover:text-primary transition-colors cursor-pointer mb-4 focus:outline-none focus:underline"
-                  >
-                     ← Chọn từ địa chỉ đã lưu
-                  </button>
-               )}
-
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                  <div>
-                     <label className="block text-xs font-medium text-neutral-darker mb-1.5">
-                        Họ tên người nhận{" "}
-                        <span className="text-promotion">*</span>
-                     </label>
-                     <input
-                        type="text"
-                        value={contactName}
-                        onChange={(e) => onContactNameChange(e.target.value)}
-                        placeholder="Nguyễn Văn A"
-                        className={inputCls}
-                     />
-                  </div>
-                  <div>
-                     <label className="block text-xs font-medium text-neutral-darker mb-1.5">
-                        Số điện thoại <span className="text-promotion">*</span>
-                     </label>
-                     <input
-                        type="tel"
-                        value={contactPhone}
-                        onChange={(e) => onContactPhoneChange(e.target.value)}
-                        placeholder="0901 234 567"
-                        className={inputCls}
-                     />
-                  </div>
-               </div>
-
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                  <div>
-                     <label className="block text-xs font-medium text-neutral-darker mb-1.5">
-                        Tỉnh / Thành phố{" "}
-                        <span className="text-promotion">*</span>
-                     </label>
-                     <div className="relative">
-                        <select
-                           value={provinceId}
-                           onChange={(e) => onProvinceChange(e.target.value)}
-                           disabled={isLoadingProvinces}
-                           className={selectCls}
-                        >
-                           <option value="">Chọn tỉnh / thành</option>
-                           {provinces.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                 {p.fullName}
-                              </option>
-                           ))}
-                        </select>
-                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                           {isLoadingProvinces ? (
-                              <Loader2
-                                 size={14}
-                                 className="animate-spin text-neutral-dark"
-                              />
-                           ) : (
-                              <ChevronDown
-                                 size={14}
-                                 className="text-neutral-dark"
-                              />
-                           )}
-                        </div>
-                     </div>
-                  </div>
-                  <div>
-                     <label className="block text-xs font-medium text-neutral-darker mb-1.5">
-                        Phường / Xã <span className="text-promotion">*</span>
-                     </label>
-                     <div className="relative">
-                        <select
-                           value={wardId}
-                           onChange={(e) => onWardChange(e.target.value)}
-                           disabled={!provinceId || isLoadingWards}
-                           className={selectCls}
-                        >
-                           <option value="">Chọn phường / xã</option>
-                           {wards.map((w) => (
-                              <option key={w.id} value={w.id}>
-                                 {w.fullName}
-                              </option>
-                           ))}
-                        </select>
-                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                           {isLoadingWards ? (
-                              <Loader2
-                                 size={14}
-                                 className="animate-spin text-neutral-dark"
-                              />
-                           ) : (
-                              <ChevronDown
-                                 size={14}
-                                 className="text-neutral-dark"
-                              />
-                           )}
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-               <div className="mb-3">
-                  <label className="block text-xs font-medium text-neutral-darker mb-1.5">
-                     Địa chỉ chi tiết <span className="text-promotion">*</span>
-                  </label>
-                  <input
-                     type="text"
-                     value={detailAddress}
-                     onChange={(e) => onDetailAddressChange(e.target.value)}
-                     placeholder="Số nhà, tên đường..."
-                     className={inputCls}
-                  />
-               </div>
-
-               {/* ── Hỏi lưu địa chỉ inline ── */}
-               <div className="flex items-center gap-4 pt-2 border-t border-neutral mt-1">
-                  <span className="text-xs text-neutral-darker">
-                     Bạn có muốn lưu địa chỉ này không?
-                  </span>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-primary">
-                     <input
-                        type="radio"
-                        name={`saveAddress-${instanceId}`}
-                        checked={wantSaveAddress === false}
-                        onChange={() => onWantSaveAddressChange(false)}
-                        className="accent-accent"
-                     />
-                     Không
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-primary">
-                     <input
-                        type="radio"
-                        name={`saveAddress-${instanceId}`}
-                        checked={wantSaveAddress === true}
-                        onChange={() => onWantSaveAddressChange(true)}
-                        className="accent-accent"
-                     />
-                     Có
-                  </label>
-               </div>
-            </>
-         )}
-      </div>
-   );
-}
-
-// ─── CheckoutPage ─────────────────────────────────────────────────────────────
+import {
+   Province,
+   Ward,
+   UserProfile,
+   SavedAddress,
+   CartItem,
+   SelectedItem,
+   CheckoutData,
+   PreviewData,
+   ShippingSectionProps,
+} from "./types";
+import ShippingSection from "./components/shippingSection";
 
 export default function CheckoutPage() {
    const router = useRouter();
@@ -863,7 +487,6 @@ export default function CheckoutPage() {
    const shippingFee = previewData?.shippingFee;
    const taxAmount = previewData?.taxAmount;
 
-   // Props cho ShippingSection
    const shippingProps: ShippingSectionProps = {
       isLoadingAddresses,
       savedAddresses,
@@ -931,7 +554,6 @@ export default function CheckoutPage() {
                   <div className="lg:col-span-2 space-y-4">
                      <CartItems items={cartItems} />
                      <ShippingSection {...shippingProps} instanceId="desktop" />
-
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <label className="block text-sm font-medium mb-2 text-primary">
                            Ghi chú
@@ -944,11 +566,10 @@ export default function CheckoutPage() {
                            className="w-full px-3 py-2 border-2 border-neutral-dark rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none bg-neutral-light text-primary"
                            placeholder="Ví dụ: Hãy gọi tôi khi chuẩn bị hàng xong"
                         />
-                        <div className="text-xs text-neutral-dark mt-1 text-right">
+                        <div className="text-base text-neutral-dark mt-1 text-right">
                            {notes.length}/1000
                         </div>
                      </div>
-
                      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                         <label className="flex items-center gap-2 cursor-pointer">
                            <input
@@ -965,13 +586,11 @@ export default function CheckoutPage() {
                            </span>
                         </label>
                      </div>
-
                      <PaymentMethods
                         selectedMethod={selectedPaymentMethodId}
                         onSelect={setSelectedPaymentMethodId}
                      />
                   </div>
-
                   <div className="lg:col-span-1">
                      <OrderSummary
                         subtotal={displaySubtotal}
@@ -1011,7 +630,6 @@ export default function CheckoutPage() {
                   <span>←</span> Quay lại giỏ hàng
                </Link>
             </div>
-
             <div className="px-3 pt-3 space-y-3">
                <CartItems items={cartItems} />
                <ShippingSection {...shippingProps} instanceId="mobile" />
@@ -1027,11 +645,10 @@ export default function CheckoutPage() {
                      className="w-full px-3 py-2 border-2 border-neutral-dark rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none bg-neutral-light text-primary"
                      placeholder="Ví dụ: Hãy gọi tôi khi chuẩn bị hàng xong"
                   />
-                  <div className="text-xs text-neutral-dark mt-1 text-right">
+                  <div className="text-base text-neutral-dark mt-1 text-right">
                      {notes.length}/1000
                   </div>
                </div>
-
                <div className="bg-neutral-light rounded-lg p-4 border border-neutral">
                   <label className="flex items-center gap-2 cursor-pointer">
                      <input
@@ -1046,7 +663,6 @@ export default function CheckoutPage() {
                      </span>
                   </label>
                </div>
-
                <PaymentMethods
                   selectedMethod={selectedPaymentMethodId}
                   onSelect={setSelectedPaymentMethodId}
@@ -1061,7 +677,6 @@ export default function CheckoutPage() {
                      onClick={() => setShowSidebar(false)}
                   />
                )}
-
                <div
                   className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? "max-h-[70vh]" : "max-h-0"}`}
                >
@@ -1077,7 +692,6 @@ export default function CheckoutPage() {
                            <X className="h-5 w-5 text-neutral-darker" />
                         </button>
                      </div>
-
                      <div className="border-b border-neutral">
                         <button
                            type="button"
@@ -1096,12 +710,12 @@ export default function CheckoutPage() {
                                     Chọn hoặc nhập ưu đãi
                                  </span>
                                  {voucherCode ? (
-                                    <span className="text-xs text-accent-dark font-semibold truncate w-full">
+                                    <span className="text-base text-accent-dark font-semibold truncate w-full">
                                        {voucherCode} • -
                                        {formatVND(voucherValue)}
                                     </span>
                                  ) : (
-                                    <span className="text-xs text-neutral-dark">
+                                    <span className="text-base text-neutral-dark">
                                        Chưa áp dụng
                                     </span>
                                  )}
@@ -1110,7 +724,6 @@ export default function CheckoutPage() {
                            <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-accent transition-colors shrink-0" />
                         </button>
                      </div>
-
                      <div className="px-4 py-4 space-y-2.5">
                         <h3 className="text-sm font-semibold text-primary mb-3">
                            Chi tiết thanh toán
@@ -1133,7 +746,7 @@ export default function CheckoutPage() {
                               </span>
                            </div>
                            <div className="flex justify-between pl-4">
-                              <span className="text-neutral-dark text-xs">
+                              <span className="text-neutral-dark text-base">
                                  Giảm giá sản phẩm
                               </span>
                               <span className="text-primary text-sm">
@@ -1141,7 +754,7 @@ export default function CheckoutPage() {
                               </span>
                            </div>
                            <div className="flex justify-between pl-4">
-                              <span className="text-neutral-dark text-xs">
+                              <span className="text-neutral-dark text-base">
                                  Voucher
                               </span>
                               <span className="text-primary text-sm font-medium">
@@ -1171,7 +784,7 @@ export default function CheckoutPage() {
                               </div>
                            </div>
                            <div className="flex items-center gap-1 pt-1 pb-1">
-                              <span className="text-xs text-neutral-darker">
+                              <span className="text-base text-neutral-darker">
                                  Điểm thưởng
                               </span>
                               <span className="text-sm">🪙</span>
@@ -1185,7 +798,7 @@ export default function CheckoutPage() {
                </div>
 
                <div className="bg-neutral-light border-t border-neutral flex items-center gap-2 px-3 py-2.5">
-                  <label className="flex items-start gap-2 cursor-pointer pt-2">
+                  <label className="flex items-start gap-2 cursor-pointer pt-2 shrink-0 max-w-[45%]">
                      <input
                         type="checkbox"
                         checked={agreedToTerms}
@@ -1193,7 +806,7 @@ export default function CheckoutPage() {
                         style={{ accentColor: "rgb(var(--accent-active))" }}
                         className="w-4 h-4 cursor-pointer rounded mt-0.5 shrink-0"
                      />
-                     <span className="text-xs text-neutral-darker leading-relaxed">
+                     <span className="text-xs text-neutral-darker leading-relaxed break-words">
                         Tôi đồng ý với{" "}
                         <Link href="/terms" className="text-accent underline">
                            điều khoản đặt hàng
@@ -1225,7 +838,7 @@ export default function CheckoutPage() {
                   <button
                      onClick={handleCheckoutClick}
                      disabled={isSubmitting}
-                     className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${isSubmitting ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50" : "bg-accent text-white hover:bg-accent-hover active:scale-[0.98]"}`}
+                     className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${isSubmitting ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50" : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"}`}
                   >
                      {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
                   </button>
@@ -1240,7 +853,6 @@ export default function CheckoutPage() {
             selectedAddressId={mobileSelectedAddress?.id}
             onSelect={setMobileSelectedAddress}
          />
-
          <VoucherPromotionModal
             isOpen={showVoucherModal}
             onClose={() => setShowVoucherModal(false)}
@@ -1250,7 +862,6 @@ export default function CheckoutPage() {
             onApplyVoucher={handleApplyVoucher}
             cartTotal={subtotal}
          />
-
          <Popzy
             isOpen={showConfirmModal}
             enableScrollLock={false}
@@ -1268,7 +879,7 @@ export default function CheckoutPage() {
                         {formatVND(displayFinalTotal)}
                      </span>
                   </p>
-                  <p className="text-xs text-neutral-darker mb-5">
+                  <p className="text-base text-neutral-darker mb-5">
                      Bạn có chắc chắn muốn đặt đơn hàng này không?
                   </p>
                   <div className="flex gap-3">
@@ -1289,7 +900,6 @@ export default function CheckoutPage() {
                </div>
             }
          />
-
          <PaymentResultModal
             isOpen={paymentResultModal.isOpen}
             paymentInfo={paymentResultModal.paymentInfo}

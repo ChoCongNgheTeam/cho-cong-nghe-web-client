@@ -13,6 +13,7 @@ import ProductDetailSection1 from "../components/product-detail/product-detail-s
 import ProductDetailSuggest from "../components/product-detail/product-detail-suggest";
 import ProductReview from "../product-comment/Productreview";
 import Breadcrumb from "../../../components/layout/Breadcrumb/Breadcrumb";
+import ProductStickyFooter from "./ProductStickyFooter";
 
 import { ProductDetail } from "@/lib/types/product";
 import apiRequest from "@/lib/api";
@@ -63,10 +64,10 @@ export function ProductDetailContent({
   useEffect(() => {
     if (searchParams?.get("review") !== "true") return;
 
-    // Đợi page render xong + header đo xong rồi mới scroll
     const timer = setTimeout(() => {
       const TAB_BAR_HEIGHT = 48;
-      const top = (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
+      const top =
+        (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
       window.scrollTo({ top, behavior: "smooth" });
     }, 600);
 
@@ -78,22 +79,27 @@ export function ProductDetailContent({
    * ========================================================================== */
   const isInitialLoad = useRef(true);
 
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
-    () => {
-      const init: Record<string, string> = {};
-      product.availableOptions?.forEach((opt) => {
-        const defaultVal =
-          opt.values?.find((v: any) => v.selected) ?? opt.values?.[0];
-        if (defaultVal) init[opt.type] = defaultVal.value;
-      });
-      return init;
-    },
-  );
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<string, string>
+  >(() => {
+    const init: Record<string, string> = {};
+    product.availableOptions?.forEach((opt) => {
+      const defaultVal =
+        opt.values?.find((v: any) => v.selected) ?? opt.values?.[0];
+      if (defaultVal) init[opt.type] = defaultVal.value;
+    });
+    return init;
+  });
 
-  const [availableOptions, setAvailableOptions] = useState(product.availableOptions || []);
-  const [currentVariant, setCurrentVariant]     = useState(product.currentVariant);
-  const [variantImages, setVariantImages]       = useState(product.currentVariant?.images || []);
-  const [price, setPrice]                       = useState(product.price);
+  const [availableOptions, setAvailableOptions] = useState(
+    product.availableOptions || [],
+  );
+  const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
+  const [variantImages, setVariantImages] = useState(
+    product.currentVariant?.images || [],
+  );
+  const [price, setPrice] = useState(product.price);
+  const [quantity, setQuantity] = useState(1);
 
   /* ============================================================================
    * HANDLERS
@@ -102,7 +108,7 @@ export function ProductDetailContent({
     setSelectedOptions((prev) => ({ ...prev, [type]: value }));
   };
 
-  const scrollToReviews        = () => scrollToSection("reviews");
+  const scrollToReviews = () => scrollToSection("reviews");
   const scrollToSpecifications = () => scrollToSection("specs");
 
   /* ============================================================================
@@ -126,6 +132,7 @@ export function ProductDetailContent({
           setCurrentVariant(json.data.currentVariant);
           setVariantImages(json.data.currentVariant.images);
           setPrice(json.data.price);
+          setQuantity(1); // reset quantity khi đổi variant
         }
       } catch (error) {
         console.error("Error fetching variant:", error);
@@ -143,7 +150,7 @@ export function ProductDetailContent({
       {/* ── Sticky Tab Header ─────────────────────────────────────────────── */}
       <div
         style={{ top: effectiveHeaderHeight }}
-        className={`fixed left-0 right-0 z-40 bg-white shadow-md border-b border-gray-200
+        className={`fixed left-0 right-0 z-40 bg-neutral-light shadow-md border-b border-neutral
           transition-[top,transform] duration-300 ease-in-out
           ${showStickyHeader ? "translate-y-0" : "-translate-y-full"}`}
       >
@@ -283,6 +290,15 @@ export function ProductDetailContent({
           </div>
         </div>
       </div>
+
+      {/* ── Sticky Footer ─────────────────────────────────────────────────── */}
+      <ProductStickyFooter
+        product={product}
+        selectedVariant={currentVariant}
+        selectedPrice={price}
+        quantity={quantity}
+        infoRef={infoRef}
+      />
     </div>
   );
 }

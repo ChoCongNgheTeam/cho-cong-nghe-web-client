@@ -324,7 +324,7 @@ export default function CartPage() {
                         {items.map((item) => (
                            <div
                               key={item.id}
-                              className="rounded-lg bg-neutral-light p-2 sm:p-4 border border-neutral overflow-hidden"
+                              className="rounded-lg bg-neutral-light p-2 sm:p-4 border border-neutral"
                            >
                               <div className="flex gap-2 sm:gap-3 min-w-0">
                                  {/* Checkbox */}
@@ -810,7 +810,7 @@ export default function CartPage() {
                      className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${
                         selectedItems.length === 0
                            ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
-                           : "bg-accent text-white hover:bg-accent-hover active:scale-[0.98]"
+                           : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"
                      }`}
                   >
                      Xác nhận đơn

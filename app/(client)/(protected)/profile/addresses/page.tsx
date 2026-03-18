@@ -73,14 +73,14 @@ export default function AddressPage() {
    );
    const [provinces, setProvinces] = useState<Province[]>([]);
    const [wards, setWards] = useState<Ward[]>([]);
-   const [errors, setErrors] = useState<Partial<AddressForm>>({});
+   const [errors, setErrors] = useState<
+      Partial<Record<keyof AddressForm, string>>
+   >({});
    const [form, setForm] = useState<AddressForm>(defaultForm);
-
    const [editingOriginalPhone, setEditingOriginalPhone] = useState("");
    const [editingIsDefault, setEditingIsDefault] = useState(false);
 
    const { user, refreshUser } = useAuth();
-
    const router = useRouter();
    const searchParams = useSearchParams();
    const redirectTo = searchParams.get("redirect");
@@ -125,7 +125,7 @@ export default function AddressPage() {
    };
 
    const validate = (): boolean => {
-      const newErrors: Partial<AddressForm> = {};
+      const newErrors: Partial<Record<keyof AddressForm, string>> = {};
 
       if (!form.contactName.trim())
          newErrors.contactName = "Vui lòng nhập họ tên";
@@ -137,23 +137,39 @@ export default function AddressPage() {
       } else {
          const isDuplicate = addresses.some((a) => {
             if (editingId && a.id === editingId) return false;
-            return (
-               a.phone === form.phone &&
-               a.detailAddress.trim().toLowerCase() ===
-                  form.detailAddress.trim().toLowerCase()
-            );
+            return a.phone === form.phone;
          });
-         if (isDuplicate) {
+         if (isDuplicate)
             newErrors.phone =
-               "Số điện thoại này đã được dùng với địa chỉ trên. Vui lòng dùng SĐT khác hoặc thay đổi địa chỉ cụ thể.";
-         }
+               "Số điện thoại này đã được sử dụng ở địa chỉ khác.";
       }
 
       if (!form.provinceId)
          newErrors.provinceId = "Vui lòng chọn tỉnh/thành phố";
+
       if (!form.wardId) newErrors.wardId = "Vui lòng chọn phường/xã";
-      if (!form.detailAddress.trim())
+
+      if (!form.detailAddress.trim()) {
          newErrors.detailAddress = "Vui lòng nhập địa chỉ cụ thể";
+      } else if (form.detailAddress.trim().length < 5) {
+         newErrors.detailAddress = "Địa chỉ cụ thể quá ngắn";
+      } else if (form.detailAddress.trim().length > 200) {
+         newErrors.detailAddress =
+            "Địa chỉ cụ thể không được vượt quá 200 ký tự";
+      } else {
+         const isDuplicateAddress = addresses.some((a) => {
+            if (editingId && a.id === editingId) return false;
+            return (
+               a.province.id === form.provinceId &&
+               a.ward.id === form.wardId &&
+               a.detailAddress.trim().toLowerCase() ===
+                  form.detailAddress.trim().toLowerCase()
+            );
+         });
+         if (isDuplicateAddress)
+            newErrors.detailAddress =
+               "Địa chỉ này đã tồn tại trong sổ địa chỉ.";
+      }
 
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
@@ -212,8 +228,6 @@ export default function AddressPage() {
             await syncPhoneToProfile(
                addresses.find((a) => a.id === id)?.phone ?? "",
             );
-
-            // ✅ Redirect về checkout nếu đến từ checkout
             if (redirectTo === "checkout") {
                router.push("/checkout");
                return;
@@ -225,12 +239,13 @@ export default function AddressPage() {
          setSettingDefaultId(null);
       }
    };
+
    const handleApiError = (error: any) => {
       const message: string = error?.message ?? "";
       if (message.toLowerCase().includes("duplicate")) {
          setErrors((prev) => ({
             ...prev,
-            phone: "Số điện thoại này đã được dùng với địa chỉ trên. Vui lòng dùng SĐT khác hoặc thay đổi địa chỉ cụ thể.",
+            phone: "Số điện thoại này đã được sử dụng ở địa chỉ khác.",
          }));
       } else {
          setErrors((prev) => ({
@@ -310,7 +325,6 @@ export default function AddressPage() {
             success: boolean;
             data: Address;
          }>(`/addresses/${editingId}`, form);
-
          if (res?.success) {
             const phoneChanged = form.phone !== editingOriginalPhone;
             if (editingIsDefault && phoneChanged) {
@@ -324,7 +338,6 @@ export default function AddressPage() {
                }),
             );
             handleClose();
-
             if (redirectTo === "checkout") {
                router.push("/checkout");
             }
@@ -335,6 +348,7 @@ export default function AddressPage() {
          setSubmitting(false);
       }
    };
+
    const handleSubmit = () => (editingId ? handleUpdate() : handleCreate());
 
    const handleDelete = async () => {
@@ -366,13 +380,14 @@ export default function AddressPage() {
    };
 
    const inputClass =
-      "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-promotion focus:ring-2 focus:ring-promotion-light placeholder:text-primary-dark";
+      "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent-light placeholder:text-primary-dark";
 
    if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
 
    return (
       <>
          <div>
+            {/* ── Header ── */}
             <div className="flex items-center justify-between mt-2 mb-4">
                <div className="flex items-center gap-3">
                   {redirectTo === "checkout" && (
@@ -390,7 +405,7 @@ export default function AddressPage() {
                {addresses.length > 0 && (
                   <button
                      onClick={() => setIsOpen(true)}
-                     className="flex items-center gap-1 bg-promotion hover:bg-promotion-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
+                     className="flex items-center gap-1 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
                   >
                      <Plus size={24} />
                      Thêm địa chỉ
@@ -398,6 +413,7 @@ export default function AddressPage() {
                )}
             </div>
 
+            {/* ── Empty state ── */}
             {addresses.length === 0 ? (
                <div className="flex flex-col items-center justify-center py-10 px-4">
                   <div className="mb-2">
@@ -416,12 +432,13 @@ export default function AddressPage() {
                   </p>
                   <button
                      onClick={() => setIsOpen(true)}
-                     className="bg-promotion hover:bg-promotion-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+                     className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
                   >
                      Cập nhật ngay
                   </button>
                </div>
             ) : (
+               /* ── Address list ── */
                <div className="space-y-3">
                   {addresses.map((addr) => {
                      const { label, icon } = typeLabel(addr.type);
@@ -441,10 +458,10 @@ export default function AddressPage() {
                                        {addr.phone}
                                     </span>
                                     {addr.isDefault && (
-                                       <span className="flex items-center gap-1 text-sm text-yellow-600 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded-full font-medium">
+                                       <span className="flex items-center gap-1 text-xs text-accent border border-accent/30 bg-accent/5 px-2 py-0.5 rounded-full font-medium">
                                           <Star
                                              size={11}
-                                             className="fill-yellow-500 text-yellow-500"
+                                             className="fill-accent text-accent"
                                           />
                                           Mặc định
                                        </span>
@@ -453,7 +470,7 @@ export default function AddressPage() {
                                  <p className="text-sm text-primary-dark">
                                     {addr.fullAddress}
                                  </p>
-                                 <div>
+                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="inline-flex items-center gap-1 text-sm text-primary-dark bg-neutral-light-active px-2 py-0.5 rounded-full">
                                        {icon}
                                        {label}
@@ -466,11 +483,11 @@ export default function AddressPage() {
                                           disabled={
                                              settingDefaultId === addr.id
                                           }
-                                          className="inline-flex items-center gap-1.5 text-xs font-medium text-yellow-600 bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 hover:border-yellow-300 px-3 py-1 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-3 py-1 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                        >
                                           <Star
                                              size={11}
-                                             className="text-yellow-500"
+                                             className="text-accent"
                                           />
                                           {settingDefaultId === addr.id
                                              ? "Đang đặt..."
@@ -507,35 +524,31 @@ export default function AddressPage() {
                </div>
             )}
 
-            {/* Modal xác nhận xóa */}
-            {confirmDeleteId && (
-               <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                  onClick={() => setConfirmDeleteId(null)}
-               >
-                  <div
-                     className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4"
-                     onClick={(e) => e.stopPropagation()}
-                  >
-                     <div className="flex flex-col items-center text-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
-                           <MapPin size={22} className="text-promotion" />
-                        </div>
-                        <h3 className="text-base font-semibold text-primary">
-                           Xóa địa chỉ này?
-                        </h3>
-                        <p className="text-sm text-primary-dark leading-relaxed">
-                           Địa chỉ{" "}
-                           <span className="font-medium text-primary">
-                              {
-                                 addresses.find((a) => a.id === confirmDeleteId)
-                                    ?.fullAddress
-                              }
-                           </span>{" "}
-                           sẽ bị xóa vĩnh viễn và không thể khôi phục.
-                        </p>
+            {/* ── Confirm delete modal ── */}
+            <Popzy
+               isOpen={!!confirmDeleteId}
+               onClose={() => setConfirmDeleteId(null)}
+               closeMethods={["overlay", "escape"]}
+               cssClass="!max-w-sm !mx-4"
+               content={
+                  <div className="flex flex-col items-center text-center gap-3 pt-2">
+                     <div className="w-12 h-12 rounded-full bg-promotion-light flex items-center justify-center">
+                        <MapPin size={22} className="text-promotion" />
                      </div>
-                     <div className="flex gap-3 mt-6">
+                     <h3 className="text-base font-semibold text-primary">
+                        Xóa địa chỉ này?
+                     </h3>
+                     <p className="text-sm text-primary-dark leading-relaxed">
+                        Địa chỉ{" "}
+                        <span className="font-medium text-primary">
+                           {
+                              addresses.find((a) => a.id === confirmDeleteId)
+                                 ?.fullAddress
+                           }
+                        </span>{" "}
+                        sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                     </p>
+                     <div className="flex gap-3 w-full mt-3">
                         <button
                            onClick={() => setConfirmDeleteId(null)}
                            className="flex-1 px-4 py-2.5 rounded-xl border border-neutral bg-neutral-light hover:bg-neutral text-primary text-sm font-medium transition-colors cursor-pointer"
@@ -550,9 +563,10 @@ export default function AddressPage() {
                         </button>
                      </div>
                   </div>
-               </div>
-            )}
+               }
+            />
 
+            {/* ── Add / Edit modal ── */}
             <Popzy
                isOpen={isOpen}
                scrollLockTarget={() => document.documentElement}
@@ -689,7 +703,7 @@ export default function AddressPage() {
                                           onClick={() => setField("type", t)}
                                           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
                                              form.type === t
-                                                ? "border-promotion text-promotion bg-promotion-light"
+                                                ? "border-accent text-accent bg-accent-light"
                                                 : "border-neutral text-primary-dark hover:border-neutral-dark"
                                           }`}
                                        >
@@ -709,7 +723,7 @@ export default function AddressPage() {
                                  onChange={(e) =>
                                     setField("isDefault", e.target.checked)
                                  }
-                                 className="w-4 h-4 accent-promotion"
+                                 className="w-4 h-4 accent-accent"
                               />
                               <span className="text-sm text-primary">
                                  Đặt làm địa chỉ mặc định
@@ -734,7 +748,7 @@ export default function AddressPage() {
                           : "Lưu địa chỉ",
                      onClick: handleSubmit,
                      className:
-                        "px-4 py-2 bg-promotion hover:bg-promotion-hover text-white rounded-lg cursor-pointer transition-colors disabled:opacity-50",
+                        "px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg cursor-pointer transition-colors disabled:opacity-50",
                   },
                ]}
             />
