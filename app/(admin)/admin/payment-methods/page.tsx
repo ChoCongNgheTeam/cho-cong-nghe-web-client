@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CreditCard, Plus, RefreshCw, Pencil, Loader2, X, AlertCircle, CheckCircle2, EyeOff } from "lucide-react";
+import { CreditCard, Plus, RefreshCw, Pencil, Loader2, X, AlertCircle, CheckCircle2, EyeOff, CheckCircle, PauseCircle } from "lucide-react";
 import { Popzy } from "@/components/Modal";
 import { formatDate } from "@/helpers";
 import type { PaymentMethod, CreatePaymentMethodPayload, UpdatePaymentMethodPayload } from "./payment-method.types";
 import { getAllPaymentMethods, createPaymentMethod, updatePaymentMethod } from "./_libs/payment-methods";
+import { StatsCard } from "@/components/admin/StatsCard";
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -231,21 +232,11 @@ export default function PaymentMethodsPage() {
     <div className="space-y-5 p-5 bg-neutral-light min-h-full">
       {/* ── Stats ── */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-neutral-light border border-neutral rounded-xl px-4 py-3.5">
-          <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Tổng</p>
-          <p className="text-[22px] font-bold text-accent mt-1">{methods.length}</p>
-          <p className="text-[11px] text-neutral-dark">Phương thức đã cấu hình</p>
-        </div>
-        <div className="bg-neutral-light border border-neutral rounded-xl px-4 py-3.5">
-          <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Đang hoạt động</p>
-          <p className="text-[22px] font-bold text-emerald-600 mt-1">{activeCount}</p>
-          <p className="text-[11px] text-neutral-dark">Khách hàng có thể chọn</p>
-        </div>
-        <div className="bg-neutral-light border border-neutral rounded-xl px-4 py-3.5">
-          <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Tạm dừng</p>
-          <p className="text-[22px] font-bold text-orange-500 mt-1">{methods.length - activeCount}</p>
-          <p className="text-[11px] text-neutral-dark">Đã bị vô hiệu hóa</p>
-        </div>
+        <StatsCard label="Tổng" value={methods.length} sub="Phương thức đã cấu hình" icon={<CreditCard size={18} />} valueClassName="text-accent" />
+
+        <StatsCard label="Đang hoạt động" value={activeCount} sub="Khách hàng có thể chọn" icon={<CheckCircle size={18} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+
+        <StatsCard label="Tạm dừng" value={methods.length - activeCount} sub="Đã bị vô hiệu hóa" icon={<PauseCircle size={18} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
       </div>
 
       {/* ── Main card ── */}

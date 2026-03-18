@@ -1,37 +1,74 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Search, Plus, RefreshCw, Tag, Zap, Clock, CheckCircle2, XCircle, Loader2, Trash2, Filter, ChevronDown, ChevronUp, X } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Search, Plus, RefreshCw, Zap, Clock, XCircle, Loader2, Trash2, X, Tag, EyeOff, CalendarDays, ChevronDown, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
 import type { Promotion } from "./promotion.types";
 import { getAllPromotions, updatePromotion, deletePromotion } from "./_libs/promotions";
-import { STATUS_TABS, SORT_OPTIONS } from "./const";
-import { StatsCard } from "./components/StatsCard";
+import { SORT_OPTIONS } from "./const";
 import { getPromotionColumns } from "./components/TablePromotions";
-import { getPromotionStatus } from "./components/PromotionStatusBadge";
+import { StatsCard } from "@/components/admin/StatsCard";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PromotionMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusCounts: { ALL: number; active: number; inactive: number; expired: number; upcoming: number };
+}
+
+const DEFAULT_META: PromotionMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 1,
+  statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
+};
+
+const STATUS_TABS = [
+  { value: "ALL", label: "Tất cả" },
+  { value: "active", label: "Đang hoạt động" },
+  { value: "upcoming", label: "Sắp diễn ra" },
+  { value: "expired", label: "Đã hết hạn" },
+  { value: "inactive", label: "Không hoạt động" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function PromotionsPage() {
   // ── Data ─────────────────────────────────────────────────────────────────────
-  const [allPromotions, setAllPromotions] = useState<Promotion[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [meta, setMeta] = useState<PromotionMeta>(DEFAULT_META);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Pagination ────────────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // ── Filters / Toolbar ─────────────────────────────────────────────────────────
+  // ── Filters ───────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Date picker dropdown
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const dateRef = useRef<HTMLDivElement>(null);
+
+  // Sort dropdown
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   // ── Selection ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -42,115 +79,59 @@ export default function PromotionsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  // ── Close dropdowns on outside click ─────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // ── Tab → query params mapping ────────────────────────────────────────────────
+  const tabToParams = (tab: string) => {
+    if (tab === "active") return { isActive: true, isExpired: false };
+    if (tab === "inactive") return { isActive: false, isExpired: undefined };
+    if (tab === "expired") return { isActive: undefined, isExpired: true };
+    if (tab === "upcoming") return { isActive: true, isExpired: false };
+    return { isActive: undefined, isExpired: undefined };
+  };
+
+  // ── Fetch (server-side) ───────────────────────────────────────────────────────
   const fetchPromotions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllPromotions({ limit: 100 }); // load all, filter client-side
-      setAllPromotions(res.data);
+      const res = await getAllPromotions({
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        sortBy,
+        sortOrder,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        ...tabToParams(activeTab),
+      });
+      setPromotions(res.data);
+      setMeta(res.meta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách khuyến mãi");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchPromotions();
   }, [fetchPromotions]);
 
-  // ── Stats ─────────────────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    const now = new Date();
-    return {
-      total: allPromotions.length,
-      active: allPromotions.filter((p) => {
-        const s = getPromotionStatus(p);
-        return s.value === "active";
-      }).length,
-      upcoming: allPromotions.filter((p) => {
-        const s = getPromotionStatus(p);
-        return s.value === "upcoming";
-      }).length,
-      expired: allPromotions.filter((p) => {
-        const s = getPromotionStatus(p);
-        return s.value === "expired";
-      }).length,
-      inactive: allPromotions.filter((p) => !p.isActive).length,
-    };
-  }, [allPromotions]);
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  const resetPage = useCallback(() => setPage(1), []);
 
-  // ── Tab counts ─────────────────────────────────────────────────────────────────
-  const tabCounts = useMemo<Record<string, number>>(
-    () => ({
-      ALL: allPromotions.length,
-      active: stats.active,
-      inactive: stats.inactive,
-      expired: stats.expired,
-      upcoming: stats.upcoming,
-    }),
-    [allPromotions, stats],
-  );
-
-  // ── Client-side filter + sort ─────────────────────────────────────────────────
-  const filteredPromotions = useMemo(() => {
-    let list = [...allPromotions];
-
-    // Tab filter
-    if (activeTab !== "ALL") {
-      list = list.filter((p) => getPromotionStatus(p).value === activeTab);
-    }
-
-    // Search
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q));
-    }
-
-    // Date range filter (createdAt)
-    if (dateFrom) {
-      list = list.filter((p) => new Date(p.createdAt) >= new Date(dateFrom));
-    }
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      list = list.filter((p) => new Date(p.createdAt) <= end);
-    }
-
-    // Sort
-    list.sort((a, b) => {
-      let aVal: any = (a as any)[sortBy] ?? "";
-      let bVal: any = (b as any)[sortBy] ?? "";
-      if (typeof aVal === "string") aVal = aVal.toLowerCase();
-      if (typeof bVal === "string") bVal = bVal.toLowerCase();
-      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [allPromotions, activeTab, search, dateFrom, dateTo, sortBy, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredPromotions.length / pageSize));
-  const paginatedPromotions = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredPromotions.slice(start, start + pageSize);
-  }, [filteredPromotions, page, pageSize]);
-
-  // ── Search submit ──────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    setSearch(searchInput);
-    setPage(1);
-  }, [searchInput]);
-
-  const handleClearSearch = useCallback(() => {
-    setSearchInput("");
-    setSearch("");
-    setPage(1);
-  }, []);
-
-  const hasActiveFilters = search || dateFrom || dateTo || activeTab !== "ALL";
+  const hasDateFilter = !!dateFrom || !!dateTo;
+  const hasSortFilter = sortBy !== "createdAt" || sortOrder !== "desc";
+  const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
 
   const handleClearAllFilters = useCallback(() => {
     setSearch("");
@@ -158,10 +139,12 @@ export default function PromotionsPage() {
     setDateFrom("");
     setDateTo("");
     setActiveTab("ALL");
-    setPage(1);
-  }, []);
+    setSortBy("createdAt");
+    setSortOrder("desc");
+    resetPage();
+  }, [resetPage]);
 
-  // ── Selection handlers ────────────────────────────────────────────────────────
+  // ── Selection ─────────────────────────────────────────────────────────────────
   const toggleOne = useCallback((id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -171,20 +154,24 @@ export default function PromotionsPage() {
   }, []);
 
   const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === paginatedPromotions.length ? new Set() : new Set(paginatedPromotions.map((p) => p.id))));
-  }, [paginatedPromotions]);
+    setSelected((prev) => (prev.size === promotions.length ? new Set() : new Set(promotions.map((p) => p.id))));
+  }, [promotions]);
 
-  // ── Toggle active ──────────────────────────────────────────────────────────────
-  const handleToggleActive = useCallback(async (promotion: Promotion) => {
-    try {
-      const res = await updatePromotion(promotion.id, { isActive: !promotion.isActive });
-      setAllPromotions((prev) => prev.map((p) => (p.id === promotion.id ? res.data : p)));
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể cập nhật trạng thái");
-    }
-  }, []);
+  // ── Toggle active ─────────────────────────────────────────────────────────────
+  const handleToggleActive = useCallback(
+    async (promotion: Promotion) => {
+      try {
+        const res = await updatePromotion(promotion.id, { isActive: !promotion.isActive });
+        setPromotions((prev) => prev.map((p) => (p.id === promotion.id ? res.data : p)));
+        fetchPromotions(); // refresh statusCounts
+      } catch (e: any) {
+        setError(e?.message ?? "Không thể cập nhật trạng thái");
+      }
+    },
+    [fetchPromotions],
+  );
 
-  // ── Delete handlers ────────────────────────────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────────────────────────────
   const handleDeleteClick = useCallback((promotion: Promotion) => {
     setDeleteTarget(promotion);
     setDeleteError(null);
@@ -196,17 +183,17 @@ export default function PromotionsPage() {
     setDeleteError(null);
     try {
       await deletePromotion(deleteTarget.id);
-      setAllPromotions((prev) => prev.filter((p) => p.id !== deleteTarget.id));
       setDeleteTarget(null);
+      fetchPromotions();
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xóa khuyến mãi");
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget]);
+  }, [deleteTarget, fetchPromotions]);
 
-  // ── Columns ────────────────────────────────────────────────────────────────────
-  const columns = useMemo(
+  // ── Columns ───────────────────────────────────────────────────────────────────
+  const columns = useCallback(
     () =>
       getPromotionColumns({
         page,
@@ -221,176 +208,257 @@ export default function PromotionsPage() {
     [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, handleDeleteClick],
   );
 
-  // ── Click outside to close status dropdown ─────────────────────────────────────
-  useEffect(() => {
-    if (!openStatusId) return;
-    const handle = () => setOpenStatusId(null);
-    document.addEventListener("click", handle);
-    return () => document.removeEventListener("click", handle);
-  }, [openStatusId]);
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5 p-5 bg-neutral-light min-h-full">
+    <div className="min-h-screen bg-neutral-light">
+      {/* ── Header ── */}
+      <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+            <Zap size={18} />
+          </div>
+          <div>
+            <h1 className="text-[20px] font-bold text-primary">Khuyến mãi</h1>
+            <p className="text-[12px] text-neutral-dark">Quản lý các chương trình khuyến mãi và giảm giá</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchPromotions}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            Làm mới
+          </button>
+          <Link href="/admin/promotions/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all">
+            <Plus size={15} />
+            Thêm khuyến mãi
+          </Link>
+        </div>
+      </div>
+
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard label="Tổng khuyến mãi" value={stats.total} sub="Tất cả chương trình đã tạo" icon={<Tag size={16} />} />
-        <StatsCard label="Đang hoạt động" value={stats.active} sub="Đang được áp dụng cho sản phẩm" icon={<Zap size={16} />} color="text-emerald-600" />
-        <StatsCard label="Sắp diễn ra" value={stats.upcoming} sub="Chưa đến ngày bắt đầu" icon={<Clock size={16} />} color="text-blue-600" />
-        <StatsCard label="Đã hết hạn" value={stats.expired} sub="Vượt quá ngày kết thúc" icon={<XCircle size={16} />} color="text-neutral-dark" />
+      <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatsCard label="Tổng khuyến mãi" value={meta.statusCounts.ALL} sub="Tất cả chương trình" icon={<Tag size={18} />} valueClassName="text-accent" />
+        <StatsCard label="Đang hoạt động" value={meta.statusCounts.active} sub="Đang được áp dụng" icon={<Zap size={18} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+        <StatsCard label="Sắp diễn ra" value={meta.statusCounts.upcoming} sub="Chưa đến ngày bắt đầu" icon={<Clock size={18} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
+        <StatsCard
+          label="Đã hết hạn"
+          value={meta.statusCounts.expired}
+          sub="Vượt quá ngày kết thúc"
+          icon={<XCircle size={18} />}
+          valueClassName="text-neutral-dark"
+          iconClassName="text-neutral-dark"
+        />
       </div>
 
       {/* ── Main table card ── */}
-      <div className="bg-neutral-light border border-neutral rounded-xl">
-        {/* ── Toolbar ── */}
-        <div className="px-5 py-4 border-b border-neutral space-y-3">
-          {/* Row 1: Tabs + Actions */}
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Status tabs */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {STATUS_TABS.map((tab) => (
-                <button
-                  key={tab.value}
-                  onClick={() => {
-                    setActiveTab(tab.value);
-                    setPage(1);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer ${
-                    activeTab === tab.value ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {tab.label}
-                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                    {tabCounts[tab.value] ?? 0}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={fetchPromotions}
-                disabled={loading}
-                title="Làm mới"
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              </button>
-              <button
-                onClick={() => setShowFilters((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer ${
-                  showFilters || hasActiveFilters ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:bg-neutral-light-active"
-                }`}
-              >
-                <Filter size={13} />
-                Lọc
-                {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />}
-                {showFilters ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              </button>
-              <Link href="/admin/promotions/new" className="flex items-center gap-1.5 px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[12px] font-semibold rounded-lg transition-colors">
-                <Plus size={14} />
-                Thêm mới
-              </Link>
-            </div>
-          </div>
-
-          {/* Row 2: Search */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-xs">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Tìm theo tên, mô tả..."
-                className="w-full pl-8 pr-8 py-1.5 text-[12px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-              />
-              {searchInput && (
-                <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer">
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-            <button onClick={handleSearch} className="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[12px] font-medium rounded-lg transition-colors cursor-pointer">
-              Tìm
+      <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
+        {/* ── Toolbar: 1 row ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {/* Status tabs */}
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => {
+                setActiveTab(tab.value);
+                resetPage();
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+              }`}
+            >
+              {tab.label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                {meta.statusCounts[tab.value as keyof typeof meta.statusCounts] ?? 0}
+              </span>
             </button>
-            {hasActiveFilters && (
+          ))}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  resetPage();
+                }
+              }}
+              placeholder="Tìm tên, mô tả..."
+              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
+            />
+            {searchInput && (
               <button
-                onClick={handleClearAllFilters}
-                className="px-3 py-1.5 border border-neutral text-[12px] text-neutral-dark hover:bg-neutral-light-active rounded-lg transition-colors cursor-pointer"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  resetPage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
               >
-                Xoá bộ lọc
+                <X size={13} />
               </button>
             )}
           </div>
 
-          {/* Row 3: Expanded filters */}
-          {showFilters && (
-            <div className="pt-2 border-t border-neutral grid grid-cols-2 md:grid-cols-4 gap-3">
-              {/* Date from */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Từ ngày</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => {
-                    setDateFrom(e.target.value);
-                    setPage(1);
+          {/* Sort dropdown */}
+          <div ref={sortRef} className="relative">
+            <button
+              onClick={() => setShowSortDropdown((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <ArrowUpDown size={14} />
+              {hasSortFilter ? (SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Sắp xếp") : "Sắp xếp"}
+              {hasSortFilter ? (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSortBy("createdAt");
+                    setSortOrder("desc");
+                    resetPage();
                   }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
+                  className="hover:text-promotion"
                 />
-              </div>
-
-              {/* Date to */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Đến ngày</label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => {
-                    setDateTo(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-                />
-              </div>
-
-              {/* Sort by */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Sắp xếp theo</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+              ) : (
+                <ChevronDown size={12} className={`transition-transform ${showSortDropdown ? "rotate-180" : ""}`} />
+              )}
+            </button>
+            {showSortDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setSortBy(opt.value);
+                      setShowSortDropdown(false);
+                      resetPage();
+                    }}
+                    className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                      sortBy === opt.value ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                <div className="border-t border-neutral px-3 py-2 flex gap-1.5">
+                  {(["asc", "desc"] as const).map((o) => (
+                    <button
+                      key={o}
+                      onClick={() => {
+                        setSortOrder(o);
+                        setShowSortDropdown(false);
+                        resetPage();
+                      }}
+                      className={`flex-1 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
+                        sortOrder === o ? "bg-accent text-white" : "border border-neutral text-primary hover:bg-neutral-light-active"
+                      }`}
+                    >
+                      {o === "asc" ? "Tăng dần" : "Giảm dần"}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
+            )}
+          </div>
 
-              {/* Sort order */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thứ tự</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    setSortOrder(e.target.value as "asc" | "desc");
-                    setPage(1);
+          {/* Date filter */}
+          <div ref={dateRef} className="relative">
+            <button
+              onClick={() => setShowDatePicker((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <CalendarDays size={14} />
+              {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
+              {hasDateFilter && (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDateFrom("");
+                    setDateTo("");
+                    resetPage();
                   }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-                >
-                  <option value="desc">Mới nhất trước</option>
-                  <option value="asc">Cũ nhất trước</option>
-                </select>
+                  className="hover:text-promotion"
+                />
+              )}
+            </button>
+            {showDatePicker && (
+              <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
+                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Khoảng thời gian</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-neutral-dark">Từ ngày</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      max={dateTo || undefined}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-neutral-dark">Đến ngày</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      min={dateFrom || undefined}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setDateFrom("");
+                      setDateTo("");
+                      setShowDatePicker(false);
+                      resetPage();
+                    }}
+                    className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer"
+                  >
+                    Xóa
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDatePicker(false);
+                      resetPage();
+                    }}
+                    className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 cursor-pointer"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          {/* Clear filters */}
+          {(hasActiveFilters || hasSortFilter) && (
+            <button
+              onClick={handleClearAllFilters}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
           )}
+
+          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} khuyến mãi</span>
         </div>
 
         {/* ── Selection bar ── */}
@@ -416,9 +484,9 @@ export default function PromotionsPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-accent" />
           </div>
-        ) : filteredPromotions.length === 0 ? (
+        ) : promotions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Tag size={36} className="text-neutral-dark opacity-30" />
+            <Zap size={36} className="text-neutral-dark opacity-30" />
             <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có khuyến mãi nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
@@ -431,11 +499,11 @@ export default function PromotionsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns} data={paginatedPromotions} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns()} data={promotions} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
         {/* ── Pagination ── */}
-        {!loading && !error && filteredPromotions.length > 0 && (
+        {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-neutral-dark">Hiển thị</span>
@@ -443,7 +511,7 @@ export default function PromotionsPage() {
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
-                  setPage(1);
+                  resetPage();
                 }}
                 className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
               >
@@ -453,9 +521,21 @@ export default function PromotionsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {filteredPromotions.length} khuyến mãi</span>
+              <span className="text-[12px] text-neutral-dark">/ {meta.total} khuyến mãi</span>
             </div>
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={meta.limit}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
           </div>
         )}
       </div>

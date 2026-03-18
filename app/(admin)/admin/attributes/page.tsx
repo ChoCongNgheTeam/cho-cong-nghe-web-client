@@ -1,33 +1,39 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Search, Plus, RefreshCw, Tag, Loader2, XCircle, ChevronDown, ChevronUp, Filter, X, Layers } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Search, Plus, RefreshCw, Tag, Loader2, XCircle, X, Layers, CheckCircle2 } from "lucide-react";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import type { Attribute, CreateOptionPayload, UpdateOptionPayload } from "./attribute.types";
 import { getAllAttributes, toggleAttributeActive, createAttribute, updateAttribute, createOption, updateOption, getAttribute } from "./_libs/attributes";
 import { SORT_OPTIONS, STATUS_TABS } from "./const/index";
-import { StatsCard } from "@/(admin)/admin/promotions/components/StatsCard";
 import { getAttributeColumns } from "./components/TableAttributes";
 import { AttributeForm, DEFAULT_FORM, attrToForm, formToCreatePayload, formToUpdatePayload, type AttributeFormData } from "./components/AttributeForm";
+import { StatsCard } from "@/components/admin/StatsCard";
+
+interface Meta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number };
+}
 
 export default function AttributesPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
-  const [allAttrs, setAllAttrs] = useState<Attribute[]>([]);
+  const [attrs, setAttrs] = useState<Attribute[]>([]);
+  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0 } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Pagination ────────────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-
   // ── Filters ───────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   // ── Selection ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -39,66 +45,35 @@ export default function AttributesPage() {
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  // ── Fetch (server-side filter/sort/pagination) ────────────────────────────────
   const fetchAttrs = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllAttributes({ limit: 200 });
-      setAllAttrs(res.data);
+      const isActiveParam = activeTab === "ACTIVE" ? true : activeTab === "INACTIVE" ? false : undefined;
+      const res = await getAllAttributes({
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        isActive: isActiveParam,
+        sortBy,
+        sortOrder,
+      });
+      setAttrs(res.data);
+      setMeta(res.meta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách thuộc tính");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, search, activeTab, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchAttrs();
   }, [fetchAttrs]);
 
-  // ── Stats ─────────────────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    const totalOptions = allAttrs.reduce((sum, a) => sum + a.options.length, 0);
-    return {
-      total: allAttrs.length,
-      active: allAttrs.filter((a) => a.isActive).length,
-      inactive: allAttrs.filter((a) => !a.isActive).length,
-      totalOptions,
-      avgOptions: allAttrs.length ? Math.round(totalOptions / allAttrs.length) : 0,
-    };
-  }, [allAttrs]);
-
-  // ── Filter + sort ─────────────────────────────────────────────────────────────
-  const filteredAttrs = useMemo(() => {
-    let list = [...allAttrs];
-
-    if (activeTab === "active") list = list.filter((a) => a.isActive);
-    else if (activeTab === "inactive") list = list.filter((a) => !a.isActive);
-
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((a) => a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q));
-    }
-
-    list.sort((a, b) => {
-      let aVal: any = (a as any)[sortBy] ?? "";
-      let bVal: any = (b as any)[sortBy] ?? "";
-      if (typeof aVal === "string") aVal = aVal.toLowerCase();
-      if (typeof bVal === "string") bVal = bVal.toLowerCase();
-      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [allAttrs, activeTab, search, sortBy, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredAttrs.length / pageSize));
-  const paginatedAttrs = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredAttrs.slice(start, start + pageSize);
-  }, [filteredAttrs, page, pageSize]);
+  // Reset page khi filter thay đổi
+  const resetPage = useCallback(() => setPage(1), []);
 
   const hasActiveFilters = search || activeTab !== "ALL";
 
@@ -119,18 +94,23 @@ export default function AttributesPage() {
   }, []);
 
   const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === paginatedAttrs.length ? new Set() : new Set(paginatedAttrs.map((a) => a.id))));
-  }, [paginatedAttrs]);
+    setSelected((prev) => (prev.size === attrs.length ? new Set() : new Set(attrs.map((a) => a.id))));
+  }, [attrs]);
 
   // ── Toggle active ─────────────────────────────────────────────────────────────
-  const handleToggleActive = useCallback(async (attr: Attribute) => {
-    try {
-      const res = await toggleAttributeActive(attr.id);
-      setAllAttrs((prev) => prev.map((a) => (a.id === attr.id ? res.data : a)));
-    } catch (e: any) {
-      alert(e?.message ?? "Không thể cập nhật trạng thái");
-    }
-  }, []);
+  const handleToggleActive = useCallback(
+    async (attr: Attribute) => {
+      try {
+        const res = await toggleAttributeActive(attr.id);
+        setAttrs((prev) => prev.map((a) => (a.id === attr.id ? res.data : a)));
+        // Refresh meta counts
+        fetchAttrs();
+      } catch (e: any) {
+        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      }
+    },
+    [fetchAttrs],
+  );
 
   // ── Form handlers ─────────────────────────────────────────────────────────────
   const handleOpenCreate = useCallback(() => {
@@ -153,13 +133,13 @@ export default function AttributesPage() {
         if (editTarget) {
           const payload = formToUpdatePayload(form);
           const res = await updateAttribute(editTarget.id, payload);
-          setAllAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? res.data : a)));
-          setEditTarget(res.data); // refresh local edit target
+          setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? res.data : a)));
+          setEditTarget(res.data);
         } else {
           const payload = formToCreatePayload(form);
-          const res = await createAttribute(payload);
-          setAllAttrs((prev) => [res.data, ...prev]);
+          await createAttribute(payload);
           setFormOpen(false);
+          fetchAttrs();
         }
       } catch (e: any) {
         setFormError(e?.message ?? "Có lỗi xảy ra");
@@ -167,17 +147,16 @@ export default function AttributesPage() {
         setFormSaving(false);
       }
     },
-    [editTarget],
+    [editTarget, fetchAttrs],
   );
 
-  // ── Option handlers (only when editing) ──────────────────────────────────────
+  // ── Option handlers ───────────────────────────────────────────────────────────
   const handleAddOption = useCallback(
     async (payload: CreateOptionPayload) => {
       if (!editTarget) return;
-      const res = await createOption(editTarget.id, payload);
-      // Refresh attribute to get updated options list
+      await createOption(editTarget.id, payload);
       const updated = await getAttribute(editTarget.id);
-      setAllAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? updated.data : a)));
+      setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? updated.data : a)));
       setEditTarget(updated.data);
     },
     [editTarget],
@@ -188,14 +167,14 @@ export default function AttributesPage() {
       if (!editTarget) return;
       await updateOption(editTarget.id, optionId, payload);
       const updated = await getAttribute(editTarget.id);
-      setAllAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? updated.data : a)));
+      setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? updated.data : a)));
       setEditTarget(updated.data);
     },
     [editTarget],
   );
 
   // ── Columns ───────────────────────────────────────────────────────────────────
-  const columns = useMemo(
+  const columns = useCallback(
     () =>
       getAttributeColumns({
         page,
@@ -242,138 +221,121 @@ export default function AttributesPage() {
 
       {/* ── Stats ── */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatsCard label="Tổng thuộc tính" value={stats.total} icon={<Tag size={16} />} />
-        <StatsCard label="Đang hoạt động" value={stats.active} color="text-emerald-600" icon={<span className="text-sm">✓</span>} />
-        <StatsCard label="Tổng Options" value={stats.totalOptions} color="text-blue-600" icon={<Layers size={16} />} />
-        <StatsCard label="TB Options/thuộc tính" value={stats.avgOptions} color="text-purple-600" icon={<span className="text-sm">~</span>} />
+        <StatsCard label="Tổng thuộc tính" value={meta.activeCounts.ALL} sub="Tất cả attributes" icon={<Tag size={16} />} />
+        <StatsCard
+          label="Đang hoạt động"
+          value={meta.activeCounts.ACTIVE}
+          sub="Khách hàng có thể xem được"
+          icon={<CheckCircle2 size={18} />}
+          valueClassName="text-emerald-600"
+          iconClassName="text-emerald-600"
+        />
+        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-neutral-dark" iconClassName="text-neutral-dark" />
+        <StatsCard
+          label="Tổng Options"
+          value={attrs.reduce((s, a) => s + a.options.length, 0)}
+          sub="Tổng số lựa chọn"
+          icon={<Layers size={16} />}
+          valueClassName="text-blue-600"
+          iconClassName="text-blue-600"
+        />
       </div>
 
       {/* ── Main card ── */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar ── */}
-        <div className="px-5 py-4 space-y-3 border-b border-neutral">
-          {/* Row 1: Status tabs */}
-          <div className="flex items-center gap-1 flex-wrap">
-            {STATUS_TABS.map((tab) => {
-              const count = tab.value === "ALL" ? allAttrs.length : tab.value === "active" ? stats.active : stats.inactive;
-              return (
-                <button
-                  key={tab.value}
-                  onClick={() => {
-                    setActiveTab(tab.value);
-                    setPage(1);
-                  }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
-                    activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
-                  }`}
-                >
-                  {tab.label}
-                  <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Row 2: Search + Filter */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setSearch(searchInput);
-                    setPage(1);
-                  }
-                }}
-                placeholder="Tìm tên hoặc code..."
-                className="w-full pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-              />
-              {searchInput && (
-                <button
-                  onClick={() => {
-                    setSearchInput("");
-                    setSearch("");
-                    setPage(1);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
-                >
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                setSearch(searchInput);
-                setPage(1);
-              }}
-              className="px-3 py-2 bg-accent text-white text-[13px] font-medium rounded-xl hover:bg-accent/90 transition-all cursor-pointer"
-            >
-              Tìm
-            </button>
-
-            <button
-              onClick={() => setShowFilters((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-[13px] transition-all cursor-pointer ${
-                showFilters ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:bg-neutral-light-active"
-              }`}
-            >
-              <Filter size={14} />
-              Sắp xếp
-              {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            </button>
-
-            {hasActiveFilters && (
+        {/* ── Toolbar: 1 row ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {/* Status tabs */}
+          {STATUS_TABS.map((tab) => {
+            const count = tab.value === "ALL" ? meta.activeCounts.ALL : tab.value === "ACTIVE" ? meta.activeCounts.ACTIVE : meta.activeCounts.INACTIVE;
+            return (
               <button
-                onClick={handleClearAllFilters}
-                className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+                key={tab.value}
+                onClick={() => {
+                  setActiveTab(tab.value);
+                  resetPage();
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
+                  activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                }`}
               >
-                <X size={13} /> Xoá lọc
+                {tab.label}
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  resetPage();
+                }
+              }}
+              placeholder="Tìm tên hoặc code..."
+              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
+            />
+            {searchInput && (
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  resetPage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+              >
+                <X size={13} />
               </button>
             )}
-
-            <span className="ml-auto text-[12px] text-neutral-dark">{filteredAttrs.length} thuộc tính</span>
           </div>
 
-          {/* Row 3: Sort options */}
-          {showFilters && (
-            <div className="pt-2 border-t border-neutral grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Sắp xếp theo</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thứ tự</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    setSortOrder(e.target.value as "asc" | "desc");
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-                >
-                  <option value="desc">Mới nhất trước</option>
-                  <option value="asc">Cũ nhất trước</option>
-                </select>
-              </div>
-            </div>
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              resetPage();
+            }}
+            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sortOrder}
+            onChange={(e) => {
+              setSortOrder(e.target.value as "asc" | "desc");
+              resetPage();
+            }}
+            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+          >
+            <option value="desc">Mới nhất</option>
+            <option value="asc">Cũ nhất</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearAllFilters}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
           )}
+
+          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} thuộc tính</span>
         </div>
 
         {/* ── Selection bar ── */}
@@ -399,7 +361,7 @@ export default function AttributesPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-accent" />
           </div>
-        ) : filteredAttrs.length === 0 ? (
+        ) : attrs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Tag size={36} className="text-neutral-dark opacity-30" />
             <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thuộc tính nào"}</p>
@@ -414,11 +376,11 @@ export default function AttributesPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns} data={paginatedAttrs} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns()} data={attrs} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
         {/* ── Pagination ── */}
-        {!loading && !error && filteredAttrs.length > 0 && (
+        {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-neutral-dark">Hiển thị</span>
@@ -426,7 +388,7 @@ export default function AttributesPage() {
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
-                  setPage(1);
+                  resetPage();
                 }}
                 className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
               >
@@ -436,9 +398,21 @@ export default function AttributesPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {filteredAttrs.length} thuộc tính</span>
+              <span className="text-[12px] text-neutral-dark">/ {meta.total} thuộc tính</span>
             </div>
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={meta.limit}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
           </div>
         )}
       </div>
@@ -448,7 +422,6 @@ export default function AttributesPage() {
         <>
           <div className="fixed inset-0 bg-black/30 z-40" onClick={() => !formSaving && setFormOpen(false)} />
           <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-neutral-light shadow-2xl z-50 flex flex-col">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -467,7 +440,6 @@ export default function AttributesPage() {
                 <X size={16} />
               </button>
             </div>
-            {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5">
               <AttributeForm
                 initialData={editTarget ? attrToForm(editTarget) : DEFAULT_FORM}

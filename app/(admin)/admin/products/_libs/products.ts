@@ -1,5 +1,5 @@
 import apiRequest from "@/lib/api";
-import type { ProductsResponse, ProductDetailResponse, GetProductsParams } from "../product.types";
+import type { ProductsResponse, ProductDetailResponse, GetProductsParams, ProductCard } from "../product.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIST
@@ -66,8 +66,171 @@ export const bulkAction = async (action: BulkAction, ids: string[]): Promise<{ c
 // TOGGLE ACTIVE (quick update)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const toggleProductActive = async (id: string, isActive: boolean): Promise<ProductDetailResponse> => {
+export const toggleProductActive = async (id: string, isActive: boolean, isFeatured?: boolean): Promise<any> => {
   const fd = new FormData();
-  fd.append("data", JSON.stringify({ isActive }));
-  return apiRequest.patch<ProductDetailResponse>(`/products/admin/${id}`, fd);
+  const payload: Record<string, boolean> = { isActive };
+  if (isFeatured !== undefined) payload.isFeatured = isFeatured;
+  fd.append("data", JSON.stringify(payload));
+  return apiRequest.patch<any>(`/products/admin/${id}`, fd);
+};
+
+export interface SearchSuggestion {
+  id: string;
+  name: string;
+  slug: string;
+  thumbnail: string | null;
+  viewsCount: number;
+  priceOrigin: number;
+  isTrending: boolean;
+}
+
+export interface SaleScheduleDay {
+  date: string;
+  isToday: boolean;
+  hasActiveSale: boolean;
+  promotions: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    priority: number;
+    targetsCount: number;
+    rules: Array<{
+      actionType: string;
+      discountValue: number | null;
+    }>;
+  }>;
+}
+
+export interface SaleByDateResponse {
+  date: string;
+  promotions: Array<{ id: string; name: string; description: string | null; priority: number }>;
+  data: Array<{ card: ProductCard; pricingContext: any }>;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface CompareSpecValue {
+  key: string;
+  name: string;
+  icon?: string | null;
+  unit?: string | null;
+  values: (string | null)[];
+}
+
+export interface CompareSpecGroup {
+  groupName: string;
+  specs: CompareSpecValue[];
+}
+
+export interface CompareProductSummary {
+  id: string;
+  name: string;
+  slug: string;
+  thumbnail: string | null;
+  brand: { id: string; name: string; slug: string };
+  price: number;
+  inStock: boolean;
+  rating: { average: number; count: number };
+  totalSoldCount: number;
+  isFeatured: boolean;
+}
+
+export interface CompareResponse {
+  categoryId: string;
+  categoryName: string;
+  categorySlug: string;
+  products: CompareProductSummary[];
+  specMatrix: CompareSpecGroup[];
+}
+
+export interface AdminProductStats {
+  total: number;
+  active: number;
+  inactive: number;
+  outOfStock: number;
+  deleted: number;
+  featured: number;
+}
+// SEARCH TRENDING
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * getSearchTrending
+ *
+ * q rỗng → top trending (focus vào ô search chưa gõ)
+ * q có nội dung → filter + sort trending
+ */
+export const getSearchTrending = async (q: string = "", options: { limit?: number; category?: string } = {}): Promise<{ data: SearchSuggestion[]; total: number }> => {
+  return apiRequest.get("/products/search-trending", {
+    params: { q, ...options },
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SALE SCHEDULE V2
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * getSaleScheduleV2
+ *
+ * Lấy lịch sale dạng calendar (chỉ metadata, không có products).
+ * FE dùng để render calendar, khi click vào ngày mới gọi getProductsByDate.
+ */
+export const getSaleScheduleV2 = async (startDate?: string, endDate?: string): Promise<{ data: SaleScheduleDay[]; total: number }> => {
+  return apiRequest.get("/products/sale-schedule-v2", {
+    params: { startDate, endDate },
+  });
+};
+
+/**
+ * getProductsByDate
+ *
+ * Lấy products có sale vào ngày cụ thể.
+ * Gọi khi FE click vào 1 ô ngày trên calendar.
+ */
+export const getProductsByDate = async (
+  date: string,
+  options: {
+    promotionId?: string;
+    page?: number;
+    limit?: number;
+    categoryId?: string;
+  } = {},
+): Promise<SaleByDateResponse> => {
+  return apiRequest.get("/products/sale-by-date", {
+    params: { date, ...options },
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCT COMPARISON
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * compareProducts
+ *
+ * So sánh 2-4 sản phẩm cùng category.
+ * ids: mảng product IDs.
+ */
+export const compareProducts = async (ids: string[]): Promise<{ data: CompareResponse }> => {
+  return apiRequest.get("/products/compare", {
+    params: { ids: ids.join(",") },
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN STATS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * getAdminProductStats
+ *
+ * Dashboard overview: total, active, inactive, outOfStock, deleted, featured.
+ */
+export const getAdminProductStats = async (): Promise<{ data: AdminProductStats }> => {
+  return apiRequest.get("/products/admin/stats");
 };
