@@ -2,8 +2,8 @@
 
 export default function ReturnPolicy() {
    return (
-      <div className="min-h-screen">
-         <h1 className="font-bold mb-6 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-6 text-primary text-center ">
             Chính sách đổi trả
          </h1>
 
@@ -51,7 +51,7 @@ export default function ReturnPolicy() {
                <p className="font-semibold mb-2 text-primary">
                   Chính sách bảo hành điển hình — Sản phẩm điện tử
                </p>
-               <p className="leading-relaxed text-primary-light">
+               <p className="leading-relaxed text-neutral-darker">
                   Đa số sản phẩm có bảo hành của nhà sản xuất{" "}
                   <strong className="text-primary">1 năm</strong>. Bảo hành mở
                   rộng có sẵn cho hầu hết các sản phẩm với mức phí nhỏ.
@@ -79,11 +79,8 @@ export default function ReturnPolicy() {
                   { range: "30 ngày", desc: "Đổi trả do lỗi sản phẩm" },
                   { range: "1 năm", desc: "Bảo hành chính hãng" },
                ].map((item, i) => (
-                  <div
-                     key={i}
-                     className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral"
-                  >
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion text-xs">
+                  <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent ">
                         {item.range}
                      </span>
                      <span className="text-primary">{item.desc}</span>
@@ -102,14 +99,8 @@ export default function ReturnPolicy() {
                   "Tem bảo hành còn nguyên vẹn",
                   "Có hóa đơn mua hàng",
                ].map((item, i) => (
-                  <li
-                     key={i}
-                     className="flex gap-2 leading-relaxed text-primary"
-                  >
-                     <span
-                        className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion-light text-promotion"
-                        style={{ fontSize: "11px" }}
-                     >
+                  <li key={i} className="flex gap-2 leading-relaxed text-primary">
+                     <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent-light text-accent">
                         ✓
                      </span>
                      {item}
@@ -130,15 +121,11 @@ export default function ReturnPolicy() {
                   "Xử lý đổi trả / hoàn tiền",
                ].map((step, i) => (
                   <li key={i} className="flex items-center gap-3 text-primary">
-                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion text-white text-xs">
+                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent text-white ">
                         {i + 1}
                      </span>
                      {step}
-                     {i < 4 && (
-                        <span className="ml-auto text-neutral-dark text-xs">
-                           →
-                        </span>
-                     )}
+                     {i < 4 && <span className="ml-auto text-neutral-dark ">→</span>}
                   </li>
                ))}
             </ol>
@@ -170,23 +157,17 @@ export default function ReturnPolicy() {
                      className="flex items-center justify-between rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral"
                   >
                      <span className="text-primary">{row.label}</span>
-                     <span
-                        className={`font-semibold ${row.highlight ? "text-promotion" : "text-primary-light"}`}
-                     >
+                     <span className={`font-semibold ${row.highlight ? "text-accent" : "text-neutral-darker"}`}>
                         {row.fee}
                      </span>
                   </div>
                ))}
             </div>
-            <p className="mt-4 leading-relaxed text-primary-light">
-               Quy trình hoàn tiền và đổi trả được thực hiện đơn giản. Khách
-               hàng có thể liên hệ hotline{" "}
-               <strong className="text-primary">1800.6060</strong> hoặc{" "}
-               <strong className="text-primary">1800.6626</strong> để được hỗ
-               trợ trực tiếp.
+            <p className="mt-4 leading-relaxed text-neutral-darker">
+               Quy trình hoàn tiền và đổi trả được thực hiện đơn giản. Khách hàng có thể liên hệ hotline <strong className="text-primary">1800.6060</strong> hoặc <strong className="text-primary">1800.6626</strong> để được hỗ trợ trực tiếp.
             </p>
          </Section>
-      </div>
+      </>
    );
 }
 
@@ -199,7 +180,7 @@ function Section({
 }) {
    return (
       <section className="mb-6">
-         <h2 className="font-bold mb-3 text-primary">{title}</h2>
+         <h2 className="font-bold mb-3 text-primary ">{title}</h2>
          {children}
       </section>
    );
@@ -213,7 +194,7 @@ function SubSection({
    children: React.ReactNode;
 }) {
    return (
-      <div className="pl-4 border-l-[3px] border-promotion">
+      <div className="pl-4 border-l-[3px] border-accent">
          <p className="font-semibold mb-1 text-primary">{title}</p>
          {children}
       </div>

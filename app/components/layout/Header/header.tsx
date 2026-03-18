@@ -152,7 +152,7 @@ const Header = () => {
             </div>
 
             {/* Main Header */}
-            <div className="bg-accent md:bg-transparent">
+            <div>
                <div className="container py-1 md:py-2">
                   <MobileHeader
                      mobileMenuOpen={mobileMenuOpen}
@@ -176,24 +176,6 @@ const Header = () => {
                      onUserMenuClose={() => setShowUserMenu(false)}
                      onLogout={logout}
                   />
-
-                  {/* Mobile Search Bar */}
-                  {mobileSearchOpen && (
-                     <div className="md:hidden mt-3 pb-2">
-                        <div className="relative">
-                           <input
-                              type="text"
-                              placeholder="Tìm kiếm sản phẩm..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="w-full pl-4 pr-12 py-2.5 border border-primary md:border-2 md:border-accent-hover rounded-full focus:outline-none bg-neutral-light text-primary placeholder:text-neutral-dark"
-                           />
-                           <button className="absolute right-0 top-0 bottom-0 px-4 bg-primary-dark hover:bg-accent-hover transition-colors rounded-r-full">
-                              <Search className="w-5 h-5 text-white dark:text-neutral-dark" />
-                           </button>
-                        </div>
-                     </div>
-                  )}
                </div>
             </div>
 

@@ -2,8 +2,8 @@
 
 export default function LoyaltyPolicy() {
    return (
-      <div className="min-h-screen">
-         <h1 className="font-bold mb-5 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-5 text-primary text-center ">
             Chính sách Chương trình Khách hàng thân thiết tại ChoCongNghe
          </h1>
 
@@ -79,9 +79,8 @@ export default function LoyaltyPolicy() {
             <div className="rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
                <p className="text-primary">
                   Từ ngày <strong>05/01/2024</strong>
-                  <span className="text-primary-light ml-2 text-xs">
-                     (*) Có thể thay đổi và sẽ cập nhật khi đang diễn ra chương
-                     trình.
+                  <span className="text-neutral-darker ml-2 ">
+                     (*) Có thể thay đổi và sẽ cập nhật khi đang diễn ra chương trình.
                   </span>
                </p>
             </div>
@@ -94,17 +93,7 @@ export default function LoyaltyPolicy() {
             <ul className="space-y-3 mb-5">
                {[
                   "Điểm thưởng được tích lũy dựa trên giá trị hóa đơn hàng hóa/dịch vụ của hệ thống bán lẻ ChoCongNghe (không bao gồm các dịch vụ thu hộ, dịch vụ ChoCongNghe bán hàng thay cho đối tác không ghi nhận doanh thu trực tiếp ChoCongNghe, đơn hàng nằm trong chương trình ưu đãi dành riêng cho đối tác/dự án/xuất hoá đơn công ty).",
-                  <>
-                     Cứ mỗi <strong>4.000 đồng</strong> trên hóa đơn thanh toán,
-                     khách hàng sẽ được tích <strong>01 điểm thưởng</strong>. Số
-                     điểm thưởng được tích sẽ dựa vào giá trị cuối cùng của hóa
-                     đơn khách hàng thanh toán.{" "}
-                     <span className="text-primary-light">
-                        Ví dụ: Giá trị đơn hàng là 500.000đ, khách hàng áp dụng
-                        mã khuyến mãi 100.000đ → giá trị thanh toán 400.000đ →
-                        được tích 100 điểm.
-                     </span>
-                  </>,
+                  <>Cứ mỗi <strong>4.000 đồng</strong> trên hóa đơn thanh toán, khách hàng sẽ được tích <strong>01 điểm thưởng</strong>. Số điểm thưởng được tích sẽ dựa vào giá trị cuối cùng của hóa đơn khách hàng thanh toán. <span className="text-neutral-darker">Ví dụ: Giá trị đơn hàng là 500.000đ, khách hàng áp dụng mã khuyến mãi 100.000đ → giá trị thanh toán 400.000đ → được tích 100 điểm.</span></>,
                ].map((item, i) => (
                   <li
                      key={i}
@@ -131,11 +120,8 @@ export default function LoyaltyPolicy() {
                      desc: "Quy đổi tối đa 20% giá trị đơn hàng",
                   },
                ].map((item, i) => (
-                  <div
-                     key={i}
-                     className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral"
-                  >
-                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-promotion-light text-promotion text-xs">
+                  <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
+                     <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent ">
                         {item.range}
                      </span>
                      <span className="text-primary">{item.desc}</span>
@@ -153,18 +139,14 @@ export default function LoyaltyPolicy() {
                      "Khi tích đủ mức điểm, khách hàng có thể đổi suất mua đặc quyền với giá 1.000đ theo 4 mốc điểm: 1.000 / 3.000 / 8.000 / 15.000 điểm.",
                      "Mỗi suất mua đặc quyền có hạn sử dụng 30 ngày kể từ ngày đổi.",
                   ].map((item, i) => (
-                     <li
-                        key={i}
-                        className="flex gap-2 leading-relaxed text-primary-light"
-                     >
+                     <li key={i} className="flex gap-2 leading-relaxed text-neutral-darker">
                         <span className="mt-1 shrink-0">•</span>
                         <span>{item}</span>
                      </li>
                   ))}
                </ul>
-               <p className="mt-2 text-primary-light text-xs">
-                  Lưu ý: Điểm đã đổi thành suất mua đặc quyền khi hết hạn sẽ
-                  không được hoàn lại.
+               <p className="mt-2 text-neutral-darker ">
+                  Lưu ý: Điểm đã đổi thành suất mua đặc quyền khi hết hạn sẽ không được hoàn lại.
                </p>
             </div>
 
@@ -186,7 +168,7 @@ export default function LoyaltyPolicy() {
                   "Sau khi kết bạn thành công, khách hàng có thể đổi điểm thưởng thành ưu đãi giảm giá khi mua hàng trực tiếp trên website hoặc hệ thống cửa hàng ChoCongNghe trên toàn quốc.",
                ].map((step, i) => (
                   <li key={i} className="flex items-start gap-3 text-primary">
-                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion text-white mt-0.5 text-xs">
+                     <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent text-white mt-0.5 ">
                         {i + 1}
                      </span>
                      <span className="leading-relaxed">{step}</span>
@@ -220,15 +202,7 @@ export default function LoyaltyPolicy() {
                {[
                   "Khi điểm thưởng được sử dụng, số điểm có thời gian hết hạn gần nhất sẽ được tự động ưu tiên dùng trước để bảo toàn lợi ích cho khách hàng.",
                   "Khách hàng vui lòng kiểm tra thời hạn sử dụng của điểm thưởng để tránh trường hợp điểm hết hạn.",
-                  <>
-                     Điểm thưởng có hạn sử dụng trong vòng{" "}
-                     <strong>12 tháng</strong> kể từ lúc tích điểm và hết hạn
-                     vào ngày cuối cùng của tháng.{" "}
-                     <span className="text-primary-light">
-                        Ví dụ: Điểm tích vào ngày 24/09/2023 sẽ hết hạn vào ngày
-                        30/09/2024.
-                     </span>
-                  </>,
+                  <>Điểm thưởng có hạn sử dụng trong vòng <strong>12 tháng</strong> kể từ lúc tích điểm và hết hạn vào ngày cuối cùng của tháng. <span className="text-neutral-darker">Ví dụ: Điểm tích vào ngày 24/09/2023 sẽ hết hạn vào ngày 30/09/2024.</span></>,
                   "Điểm thưởng được tích tại mỗi thời điểm khác nhau sẽ có thời hạn sử dụng khác nhau.",
                ].map((item, i) => (
                   <li
@@ -280,7 +254,7 @@ export default function LoyaltyPolicy() {
                ))}
             </ul>
          </Section>
-      </div>
+      </>
    );
 }
 
@@ -293,14 +267,16 @@ function Section({
 }) {
    return (
       <section className="mb-6">
-         <h2 className="font-bold mb-3 text-primary">{title}</h2>
+         <h2 className="font-bold mb-3 text-primary ">{title}</h2>
          {children}
       </section>
    );
 }
 
 function SubTitle({ children }: { children: React.ReactNode }) {
-   return <p className="font-semibold mb-3 text-primary text-xs">{children}</p>;
+   return (
+      <p className="font-semibold mb-3 text-primary ">{children}</p>
+   );
 }
 
 function SubSection({
@@ -311,10 +287,8 @@ function SubSection({
    children: React.ReactNode;
 }) {
    return (
-      <div className="pl-4 border-l-[3px] border-promotion">
-         <p className="font-semibold mb-1 text-primary-light text-xs">
-            {label}
-         </p>
+      <div className="pl-4 border-l-[3px] border-accent">
+         <p className="font-semibold mb-1 text-neutral-darker ">{label}</p>
          <p className="leading-relaxed text-primary">→ {children}</p>
       </div>
    );
