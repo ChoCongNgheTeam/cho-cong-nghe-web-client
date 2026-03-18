@@ -7,7 +7,7 @@ export interface UserInfo {
   full_name: string;
   phone: string;
   email: string;
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   avatar_image?: string;
   role?: string;
   is_active?: boolean;
@@ -26,7 +26,7 @@ export interface Address {
   province_name?: string;
   district_name?: string;
   ward_name?: string;
-  type: 'home' | 'office' | 'other';
+  type: "home" | "office" | "other";
   is_default: boolean;
   created_at?: string;
   updated_at?: string;
@@ -117,19 +117,19 @@ export interface Order {
   updated_at: string;
 }
 
-export type OrderStatus = 
-  | 'pending'       // Chờ xác nhận
-  | 'confirmed'     // Đã xác nhận
-  | 'preparing'     // Đang chuẩn bị hàng
-  | 'shipping'      // Đang giao hàng
-  | 'delivered'     // Đã giao hàng
-  | 'cancelled'     // Đã hủy
-  | 'returned';     // Đã trả hàng
+export type OrderStatus =
+  | "pending" // Chờ xác nhận
+  | "confirmed" // Đã xác nhận
+  | "preparing" // Đang chuẩn bị hàng
+  | "shipping" // Đang giao hàng
+  | "delivered" // Đã giao hàng
+  | "cancelled" // Hủy đơn
+  | "returned"; // Đã trả hàng
 
 export type PaymentStatus =
-  | 'unpaid'        // Chưa thanh toán
-  | 'paid'          // Đã thanh toán
-  | 'refunded';     // Đã hoàn tiền
+  | "unpaid" // Chưa thanh toán
+  | "paid" // Đã thanh toán
+  | "refunded"; // Đã hoàn tiền
 
 export interface OrderItem {
   id: number;
@@ -158,7 +158,7 @@ export interface Voucher {
   id: number;
   code: string;
   description?: string;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: "percentage" | "fixed";
   discount_value: number;
   min_order_value: number;
   max_uses: number;
@@ -265,7 +265,7 @@ export interface AddressFormData {
   province_id: number;
   district_id: number;
   ward_id: number;
-  type: 'home' | 'office' | 'other';
+  type: "home" | "office" | "other";
   is_default: boolean;
 }
 
@@ -330,23 +330,23 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 // ==================== CONSTANTS ====================
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: 'Chờ xác nhận',
-  confirmed: 'Đã xác nhận',
-  preparing: 'Đang chuẩn bị',
-  shipping: 'Đang giao hàng',
-  delivered: 'Đã giao hàng',
-  cancelled: 'Đã hủy',
-  returned: 'Đã trả hàng',
+  pending: "Chờ xác nhận",
+  confirmed: "Đã xác nhận",
+  preparing: "Đang chuẩn bị",
+  shipping: "Đang giao hàng",
+  delivered: "Đã giao hàng",
+  cancelled: "Hủy đơn",
+  returned: "Đã trả hàng",
 };
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  unpaid: 'Chưa thanh toán',
-  paid: 'Đã thanh toán',
-  refunded: 'Đã hoàn tiền',
+  unpaid: "Chưa thanh toán",
+  paid: "Đã thanh toán",
+  refunded: "Đã hoàn tiền",
 };
 
 export const ADDRESS_TYPE_LABELS = {
-  home: 'Nhà riêng',
-  office: 'Văn phòng',
-  other: 'Khác',
+  home: "Nhà riêng",
+  office: "Văn phòng",
+  other: "Khác",
 } as const;
