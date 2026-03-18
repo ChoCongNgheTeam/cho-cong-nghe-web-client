@@ -11,6 +11,7 @@ interface CartVariantSelectorProps {
    currentVariantId: string;
    colorLabel: string;
    storageLabel: string;
+   storageValue?: string; // ← thêm: "128gb", "256gb", ...
    colorValue?: string;
    currentQuantity: number;
    onSuccess?: () => void;
@@ -23,6 +24,7 @@ export default function CartVariantSelector({
    currentVariantId,
    colorLabel,
    storageLabel,
+   storageValue, // ← thêm
    colorValue,
    currentQuantity,
    onSuccess,
@@ -44,6 +46,7 @@ export default function CartVariantSelector({
       currentVariantId,
       colorLabel,
       storageLabel,
+      storageValue, // ← truyền xuống hook
       colorValue,
       currentQuantity,
       onSuccess,

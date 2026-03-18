@@ -57,7 +57,7 @@ export function EmptyState() {
       </p>
       <Link
         href="/products"
-        className="bg-promotion hover:bg-promotion-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+        className="bg-accent hover:bg-accent-hover text-neutral-light px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
       >
         Khám phá ngay
       </Link>

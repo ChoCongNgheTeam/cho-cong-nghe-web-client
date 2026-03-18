@@ -61,7 +61,7 @@ export default function ProfilePage() {
 
               <div className="pt-4">
                 <Link href="/profile/editProfile">
-                  <button className="w-full flex items-center justify-center gap-2 bg-promotion hover:bg-promotion-hover active:bg-promotion-active text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer">
+                  <button className="w-full flex items-center justify-center gap-2 bg-primary text-neutral-light hover:bg-primary-hover active:bg-primary-active font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer">
                     <Pencil size={18} />
                     Chỉnh sửa thông tin
                   </button>

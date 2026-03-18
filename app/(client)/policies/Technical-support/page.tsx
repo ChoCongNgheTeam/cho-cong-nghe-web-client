@@ -2,8 +2,8 @@
 
 export default function TechnicalSupportPolicy() {
    return (
-      <div className="min-h-screen">
-         <h1 className="font-bold mb-5 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-5 text-primary text-center ">
             Quy định hỗ trợ kỹ thuật và sao lưu dữ liệu
          </h1>
 
@@ -41,13 +41,13 @@ export default function TechnicalSupportPolicy() {
                </>,
             ].map((item, i) => (
                <li key={i} className="flex gap-3 leading-relaxed text-primary">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-promotion-light text-promotion mt-0.5 text-xs">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold bg-accent-light text-accent mt-0.5 ">
                      {i + 1}
                   </span>
                   <span>{item}</span>
                </li>
             ))}
          </ul>
-      </div>
+      </>
    );
 }

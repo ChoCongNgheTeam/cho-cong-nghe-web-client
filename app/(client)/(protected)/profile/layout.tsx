@@ -19,7 +19,7 @@ const menuItems = [
   { icon: Package, label: "Đơn hàng của tôi", href: "/profile/orders" },
   { icon: Bell, label: "Thông báo của tôi", href: "/profile/notifications" },
   { icon: Heart, label: "Sản phẩm yêu thích", href: "/profile/wishlist" },
-  { icon: MapPin, label: "Sổ địa chỉ nhận hàng", href: "/profile/addresses" },
+  { icon: MapPin, label: "Địa chỉ nhận hàng", href: "/profile/addresses" },
   { icon: Shield, label: "Thông tin bảo hành", href: "/profile/warranty" },
   { icon: Key, label: "Đổi mật khẩu", href: "/profile/change-password" },
 ];
@@ -125,7 +125,7 @@ export default function ProfileLayout({
                         href={item.href}
                         className={`flex items-center gap-3 px-4 py-3 transition-all border-l-4 ${
                           isActive
-                            ? "bg-promotion-light border-promotion text-primary font-medium"
+                            ? "bg-accent-light border-accent text-primary font-medium"
                             : "hover:bg-neutral-light border-transparent text-primary"
                         }`}
                       >

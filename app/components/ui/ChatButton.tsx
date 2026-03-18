@@ -21,7 +21,7 @@ export default function ChatButton() {
    return (
       <div
          ref={ref}
-         className="hidden md:flex fixed bottom-20 right-4 sm:right-6 z-50 flex-col items-end gap-3"
+         className="flex fixed bottom-32 lg:bottom-20 right-4 sm:right-6 z-50 flex-col items-end gap-3"
       >
          {open && (
             <div className="rounded-2xl border border-neutral bg-neutral-light shadow-xl overflow-hidden w-72">

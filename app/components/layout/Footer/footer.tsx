@@ -37,8 +37,8 @@ const Footer = () => {
                </p>
             </div>
          </div>
-         <div className="container not-only-of-type:py-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+         <div className="container not-only-of-type:py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                <div>
                   <Link href={"/"}>
                      <Image
@@ -104,7 +104,7 @@ const Footer = () => {
                               <span className="text-gray-400">(Nhánh 2)</span>
                            </p>
                         </div>
-                        {/* <div>
+                        <div>
                            <p className="text-gray-400">Góp ý, khiếu nại</p>
                            <p className="font-semibold">
                               1800.6616{" "}
@@ -112,7 +112,7 @@ const Footer = () => {
                                  (8h00 - 22h00)
                               </span>
                            </p>
-                        </div> */}
+                        </div>
                      </div>
                   </div>
                </div>
@@ -120,7 +120,7 @@ const Footer = () => {
                <div>
                   <button
                      onClick={() => toggleSection("about")}
-                     className="w-full flex items-center justify-between md:cursor-default"
+                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
                   >
                      <h4 className="font-semibold">VỀ CHÚNG TÔI</h4>
                      <ChevronDown
@@ -130,7 +130,7 @@ const Footer = () => {
                      />
                   </button>
                   <ul
-                     className={`space-y-2 text-sm mt-4 text-gray-300 ${
+                     className={`space-y-2 text-sm text-gray-300 ${
                         openSections.about ? "block" : "hidden md:block"
                      }`}
                   >
@@ -173,7 +173,7 @@ const Footer = () => {
                <div>
                   <button
                      onClick={() => toggleSection("policy")}
-                     className="w-full flex items-center justify-between md:cursor-default"
+                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
                   >
                      <h4 className="font-semibold">CHÍNH SÁCH</h4>
                      <ChevronDown
@@ -183,7 +183,7 @@ const Footer = () => {
                      />
                   </button>
                   <ul
-                     className={`space-y-2 text-sm mt-4 text-gray-300 ${
+                     className={`space-y-2 text-sm text-gray-300 ${
                         openSections.policy ? "block" : "hidden md:block"
                      }`}
                   >
@@ -206,7 +206,7 @@ const Footer = () => {
                         },
                         {
                            label: "Chính sách khui hộp sản phẩm",
-                           href: "/policies/unbox-policy",
+                           href: "/policies/unboxing",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt",
@@ -214,15 +214,15 @@ const Footer = () => {
                         },
                         {
                            label: "Chính sách mạng di động ChoCongNghe",
-                           href: "#",
+                           href: "/policies/MobileNetwork",
                         },
                         {
                            label: "Chính sách thu thập & xử lý dữ liệu cá nhân",
-                           href: "#",
+                           href: "/policies/DataPrivacy",
                         },
                         {
                            label: "Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu",
-                           href: "#",
+                           href: "/policies/Technical-support",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
@@ -248,7 +248,7 @@ const Footer = () => {
                <div>
                   <button
                      onClick={() => toggleSection("payment")}
-                     className="w-full flex items-center justify-between md:cursor-default"
+                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
                   >
                      <h4 className="font-semibold">HỖ TRỢ THANH TOÁN</h4>
                      <ChevronDown
@@ -258,10 +258,10 @@ const Footer = () => {
                      />
                   </button>
                   <div
-                     className={`${openSections.payment ? "block" : "hidden md:block"} mt-4`}
+                     className={`${openSections.payment ? "block" : "hidden md:block"}`}
                   >
                      <div className="grid grid-cols-3 gap-2 mb-6">
-                        {/* Thanh toán khi nhận hàng - COD */}
+                        {/* COD */}
                         <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
                            <span className="text-green-700 font-bold text-xs leading-tight">
                               COD
@@ -270,21 +270,18 @@ const Footer = () => {
                               Nhận hàng
                            </span>
                         </div>
-
                         {/* MoMo */}
                         <div className="bg-pink-600 rounded p-2 flex items-center justify-center h-12">
                            <span className="text-white font-bold text-sm">
                               MoMo
                            </span>
                         </div>
-
                         {/* VNPay */}
                         <div className="bg-blue-600 rounded p-2 flex items-center justify-center h-12">
                            <span className="text-white font-bold text-xs">
                               VNPay
                            </span>
                         </div>
-
                         {/* ZaloPay */}
                         <div className="bg-blue-500 rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
                            <span className="text-white font-bold text-xs leading-tight">
@@ -294,7 +291,6 @@ const Footer = () => {
                               Pay
                            </span>
                         </div>
-
                         {/* Chuyển khoản ngân hàng */}
                         <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
                            <span className="text-blue-700 font-bold text-[9px] leading-tight text-center">
@@ -304,8 +300,7 @@ const Footer = () => {
                               Chuyển khoản
                            </span>
                         </div>
-
-                        {/* Thẻ tín dụng / VISA */}
+                        {/* VISA */}
                         <div className="bg-white rounded p-2 flex items-center justify-center h-12">
                            <span className="text-blue-700 font-bold text-lg italic">
                               VISA
