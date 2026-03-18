@@ -1,36 +1,69 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Search, Plus, RefreshCw, Megaphone, Loader2, XCircle, Filter, ChevronDown, ChevronUp, X, Trash2, Zap, Clock, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Search, Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
 import type { Campaign } from "./campaign.types";
 import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_libs/campaigns";
-import { STATUS_TABS, SORT_OPTIONS, TYPE_OPTIONS } from "./const";
-import { StatsCard } from "@/(admin)/admin/promotions/components/StatsCard";
+import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
 import { getCampaignColumns } from "./components/TableCampaigns";
-import { getCampaignStatus } from "./components/CampaignStatusBadge";
+import { StatsCard } from "@/components/admin/StatsCard";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CampaignMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusCounts: { ALL: number; active: number; inactive: number; upcoming: number; expired: number };
+}
+
+const DEFAULT_META: CampaignMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 1,
+  statusCounts: { ALL: 0, active: 0, inactive: 0, upcoming: 0, expired: 0 },
+};
+
+const STATUS_TABS = [
+  { value: "ALL", label: "Tất cả" },
+  { value: "active", label: "Đang hoạt động" },
+  { value: "upcoming", label: "Sắp diễn ra" },
+  { value: "expired", label: "Đã kết thúc" },
+  { value: "inactive", label: "Tạm dừng" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function CampaignsPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
-  const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [meta, setMeta] = useState<CampaignMeta>(DEFAULT_META);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Pagination ────────────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
   // ── Filters ───────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Sort dropdown
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   // ── Selection ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -42,89 +75,66 @@ export default function CampaignsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  // ── Close dropdown on outside click ──────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // ── Tab → query params ────────────────────────────────────────────────────────
+  const tabToParams = (tab: string) => {
+    if (tab === "active") return { isActive: true };
+    if (tab === "inactive") return { isActive: false };
+    if (tab === "upcoming") return { isActive: true }; // BE filter by startDate > now
+    if (tab === "expired") return { isActive: undefined };
+    return { isActive: undefined };
+  };
+
+  // ── Fetch (server-side) ───────────────────────────────────────────────────────
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllCampaigns();
-      setAllCampaigns(res.data);
+      const res = await getAllCampaigns({
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        type: typeFilter || undefined,
+        sortBy,
+        sortOrder,
+        ...tabToParams(activeTab),
+      });
+      setCampaigns(res.data);
+      setMeta(res.meta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách chiến dịch");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, activeTab, search, typeFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchCampaigns();
   }, [fetchCampaigns]);
 
-  // ── Stats ─────────────────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    return {
-      total: allCampaigns.length,
-      active: allCampaigns.filter((c) => getCampaignStatus(c).value === "active").length,
-      upcoming: allCampaigns.filter((c) => getCampaignStatus(c).value === "upcoming").length,
-      expired: allCampaigns.filter((c) => getCampaignStatus(c).value === "expired").length,
-      inactive: allCampaigns.filter((c) => !c.isActive).length,
-    };
-  }, [allCampaigns]);
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  const resetPage = useCallback(() => setPage(1), []);
 
-  const tabCounts = useMemo<Record<string, number>>(
-    () => ({
-      ALL: allCampaigns.length,
-      active: stats.active,
-      inactive: stats.inactive,
-      upcoming: stats.upcoming,
-      expired: stats.expired,
-    }),
-    [allCampaigns, stats],
-  );
-
-  // ── Filter + sort (client-side) ───────────────────────────────────────────────
-  const filteredCampaigns = useMemo(() => {
-    let list = [...allCampaigns];
-
-    if (activeTab !== "ALL") {
-      list = list.filter((c) => getCampaignStatus(c).value === activeTab);
-    }
-    if (typeFilter) {
-      list = list.filter((c) => c.type === typeFilter);
-    }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((c) => c.name.toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q) || c.slug.toLowerCase().includes(q));
-    }
-
-    list.sort((a, b) => {
-      let aVal: any = (a as any)[sortBy] ?? "";
-      let bVal: any = (b as any)[sortBy] ?? "";
-      if (typeof aVal === "string") aVal = aVal.toLowerCase();
-      if (typeof bVal === "string") bVal = bVal.toLowerCase();
-      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [allCampaigns, activeTab, typeFilter, search, sortBy, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredCampaigns.length / pageSize));
-  const paginatedCampaigns = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredCampaigns.slice(start, start + pageSize);
-  }, [filteredCampaigns, page, pageSize]);
-
-  const hasActiveFilters = search || activeTab !== "ALL" || typeFilter;
+  const hasSortFilter = sortBy !== "createdAt" || sortOrder !== "desc";
+  const hasActiveFilters = !!(search || activeTab !== "ALL" || typeFilter);
 
   const handleClearAllFilters = useCallback(() => {
     setSearch("");
     setSearchInput("");
     setActiveTab("ALL");
     setTypeFilter("");
-    setPage(1);
-  }, []);
+    setSortBy("createdAt");
+    setSortOrder("desc");
+    resetPage();
+  }, [resetPage]);
 
   // ── Selection ─────────────────────────────────────────────────────────────────
   const toggleOne = useCallback((id: string) => {
@@ -136,18 +146,22 @@ export default function CampaignsPage() {
   }, []);
 
   const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === paginatedCampaigns.length ? new Set() : new Set(paginatedCampaigns.map((c) => c.id))));
-  }, [paginatedCampaigns]);
+    setSelected((prev) => (prev.size === campaigns.length ? new Set() : new Set(campaigns.map((c) => c.id))));
+  }, [campaigns]);
 
   // ── Toggle active ─────────────────────────────────────────────────────────────
-  const handleToggleActive = useCallback(async (campaign: Campaign) => {
-    try {
-      const res = await updateCampaign(campaign.id, { isActive: !campaign.isActive });
-      setAllCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? res.data : c)));
-    } catch (e: any) {
-      alert(e?.message ?? "Không thể cập nhật trạng thái");
-    }
-  }, []);
+  const handleToggleActive = useCallback(
+    async (campaign: Campaign) => {
+      try {
+        const res = await updateCampaign(campaign.id, { isActive: !campaign.isActive });
+        setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? res.data : c)));
+        fetchCampaigns();
+      } catch (e: any) {
+        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      }
+    },
+    [fetchCampaigns],
+  );
 
   // ── Delete ────────────────────────────────────────────────────────────────────
   const handleDeleteConfirm = useCallback(async () => {
@@ -156,36 +170,36 @@ export default function CampaignsPage() {
     setDeleteError(null);
     try {
       await deleteCampaign(deleteTarget.id);
-      setAllCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id));
       setDeleteTarget(null);
       setSelected((prev) => {
         const next = new Set(prev);
         next.delete(deleteTarget.id);
         return next;
       });
+      fetchCampaigns();
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xoá chiến dịch");
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget]);
+  }, [deleteTarget, fetchCampaigns]);
 
   const handleBulkDelete = useCallback(async () => {
     if (selected.size === 0) return;
     setBulkDeleting(true);
     try {
       await bulkDeleteCampaigns([...selected]);
-      setAllCampaigns((prev) => prev.filter((c) => !selected.has(c.id)));
       setSelected(new Set());
+      fetchCampaigns();
     } catch (e: any) {
       alert(e?.message ?? "Không thể xoá các chiến dịch đã chọn");
     } finally {
       setBulkDeleting(false);
     }
-  }, [selected]);
+  }, [selected, fetchCampaigns]);
 
   // ── Columns ───────────────────────────────────────────────────────────────────
-  const columns = useMemo(
+  const columns = useCallback(
     () =>
       getCampaignColumns({
         page,
@@ -200,7 +214,10 @@ export default function CampaignsPage() {
     [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive],
   );
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
+
   return (
     <div className="min-h-screen bg-neutral-light">
       {/* ── Header ── */}
@@ -231,151 +248,158 @@ export default function CampaignsPage() {
       </div>
 
       {/* ── Stats ── */}
-      <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatsCard label="Tổng chiến dịch" value={stats.total} icon={<Megaphone size={16} />} />
-        <StatsCard label="Đang hoạt động" value={stats.active} color="text-emerald-600" icon={<CheckCircle2 size={16} />} />
-        <StatsCard label="Sắp diễn ra" value={stats.upcoming} color="text-blue-600" icon={<Clock size={16} />} />
-        <StatsCard label="Đã kết thúc" value={stats.expired} color="text-neutral-dark" icon={<span className="text-sm">✕</span>} />
-        <StatsCard label="Tạm dừng" value={stats.inactive} color="text-orange-500" icon={<Zap size={16} />} />
+      <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatsCard label="Tổng chiến dịch" value={meta.statusCounts.ALL} sub="Tất cả chiến dịch" icon={<Megaphone size={16} />} />
+        <StatsCard label="Đang hoạt động" value={meta.statusCounts.active} sub="Đang chạy" icon={<CheckCircle2 size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+        <StatsCard label="Sắp diễn ra" value={meta.statusCounts.upcoming} sub="Chưa bắt đầu" icon={<Clock size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
+        <StatsCard label="Tạm dừng" value={meta.statusCounts.inactive} sub="Đang bị tắt" icon={<Zap size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
       </div>
 
       {/* ── Main card ── */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar ── */}
-        <div className="px-5 py-4 space-y-3 border-b border-neutral">
-          {/* Row 1: Status tabs */}
-          <div className="flex items-center gap-1 flex-wrap">
-            {STATUS_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => {
-                  setActiveTab(tab.value);
-                  setPage(1);
-                }}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
-                  activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
-                }`}
-              >
-                {tab.label}
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
-                  {tabCounts[tab.value] ?? 0}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Row 2: Search + Filter toggle */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setSearch(searchInput);
-                    setPage(1);
-                  }
-                }}
-                placeholder="Tìm tên, mô tả, slug..."
-                className="w-full pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-              />
-              {searchInput && (
-                <button
-                  onClick={() => {
-                    setSearchInput("");
-                    setSearch("");
-                    setPage(1);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
-                >
-                  <X size={13} />
-                </button>
-              )}
-            </div>
+        {/* ── Toolbar: 1 row ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {/* Status tabs */}
+          {STATUS_TABS.map((tab) => (
             <button
+              key={tab.value}
               onClick={() => {
-                setSearch(searchInput);
-                setPage(1);
+                setActiveTab(tab.value);
+                resetPage();
               }}
-              className="px-3 py-2 bg-accent text-white text-[13px] font-medium rounded-xl hover:bg-accent/90 cursor-pointer"
-            >
-              Tìm
-            </button>
-            <button
-              onClick={() => setShowFilters((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-[13px] transition-all cursor-pointer ${
-                showFilters || typeFilter ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:bg-neutral-light-active"
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
               }`}
             >
-              <Filter size={14} />
-              Bộ lọc
-              {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              {tab.label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                {meta.statusCounts[tab.value as keyof typeof meta.statusCounts] ?? 0}
+              </span>
             </button>
-            {hasActiveFilters && (
+          ))}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  resetPage();
+                }
+              }}
+              placeholder="Tìm tên, mô tả..."
+              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
+            />
+            {searchInput && (
               <button
-                onClick={handleClearAllFilters}
-                className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  resetPage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
               >
-                <X size={13} /> Xoá lọc
+                <X size={13} />
               </button>
             )}
-            <span className="ml-auto text-[12px] text-neutral-dark">{filteredCampaigns.length} chiến dịch</span>
           </div>
 
-          {/* Row 3: Expanded filters */}
-          {showFilters && (
-            <div className="pt-2 border-t border-neutral grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Loại chiến dịch</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => {
-                    setTypeFilter(e.target.value);
-                    setPage(1);
+          {/* Type filter */}
+          <select
+            value={typeFilter}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              resetPage();
+            }}
+            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+          >
+            {TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Sort dropdown */}
+          <div ref={sortRef} className="relative">
+            <button
+              onClick={() => setShowSortDropdown((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <ArrowUpDown size={14} />
+              {hasSortFilter ? (SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Sắp xếp") : "Sắp xếp"}
+              {hasSortFilter ? (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSortBy("createdAt");
+                    setSortOrder("desc");
+                    resetPage();
                   }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent cursor-pointer"
-                >
-                  {TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                  className="hover:text-promotion"
+                />
+              ) : (
+                <ChevronDown size={12} className={`transition-transform ${showSortDropdown ? "rotate-180" : ""}`} />
+              )}
+            </button>
+            {showSortDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setSortBy(opt.value);
+                      setShowSortDropdown(false);
+                      resetPage();
+                    }}
+                    className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                      sortBy === opt.value ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                <div className="border-t border-neutral px-3 py-2 flex gap-1.5">
+                  {(["asc", "desc"] as const).map((o) => (
+                    <button
+                      key={o}
+                      onClick={() => {
+                        setSortOrder(o);
+                        setShowSortDropdown(false);
+                        resetPage();
+                      }}
+                      className={`flex-1 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
+                        sortOrder === o ? "bg-accent text-white" : "border border-neutral text-primary hover:bg-neutral-light-active"
+                      }`}
+                    >
+                      {o === "asc" ? "Tăng dần" : "Giảm dần"}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Sắp xếp theo</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent cursor-pointer"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thứ tự</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    setSortOrder(e.target.value as "asc" | "desc");
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent cursor-pointer"
-                >
-                  <option value="desc">Mới nhất trước</option>
-                  <option value="asc">Cũ nhất trước</option>
-                </select>
-              </div>
-            </div>
+            )}
+          </div>
+
+          {/* Clear filters */}
+          {(hasActiveFilters || hasSortFilter) && (
+            <button
+              onClick={handleClearAllFilters}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
           )}
+
+          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} chiến dịch</span>
         </div>
 
         {/* ── Selection bar ── */}
@@ -409,7 +433,7 @@ export default function CampaignsPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-accent" />
           </div>
-        ) : filteredCampaigns.length === 0 ? (
+        ) : campaigns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Megaphone size={36} className="text-neutral-dark opacity-30" />
             <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có chiến dịch nào"}</p>
@@ -424,11 +448,11 @@ export default function CampaignsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns} data={paginatedCampaigns} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns()} data={campaigns} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
         {/* ── Pagination ── */}
-        {!loading && !error && filteredCampaigns.length > 0 && (
+        {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-neutral-dark">Hiển thị</span>
@@ -436,7 +460,7 @@ export default function CampaignsPage() {
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
-                  setPage(1);
+                  resetPage();
                 }}
                 className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
               >
@@ -446,9 +470,21 @@ export default function CampaignsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {filteredCampaigns.length} chiến dịch</span>
+              <span className="text-[12px] text-neutral-dark">/ {meta.total} chiến dịch</span>
             </div>
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={meta.limit}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
           </div>
         )}
       </div>

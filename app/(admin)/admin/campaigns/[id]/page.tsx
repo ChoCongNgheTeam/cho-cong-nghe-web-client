@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Megaphone, Pencil, Loader2, XCircle, Trash2, CheckCircle2, Clock, Tag, X, Check } from "lucide-react";
 import { Popzy } from "@/components/Modal";
@@ -12,10 +12,13 @@ import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../const";
 import type { Campaign } from "../campaign.types";
 import { formatDate } from "@/helpers";
 
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
+export default function CampaignDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditMode = searchParams.get("edit") === "true";
+
+  const params = useParams();
+  const id = params.id as string;
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,14 +38,14 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     setLoading(true);
     setError(null);
     try {
-      const res = await getCampaign(params.id);
+      const res = await getCampaign(id);
       setCampaign(res.data);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải chiến dịch");
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     fetchCampaign();
@@ -54,7 +57,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     setSaveSuccess(false);
     try {
       const payload = formToUpdatePayload(form);
-      const res = await updateCampaign(params.id, payload);
+      const res = await updateCampaign(id, payload);
       setCampaign(res.data);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
@@ -69,7 +72,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     setDeleting(true);
     setDeleteError(null);
     try {
-      await deleteCampaign(params.id);
+      await deleteCampaign(id);
       router.push("/admin/campaigns");
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xoá chiến dịch");
@@ -182,7 +185,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
                   <Tag size={12} /> Danh mục
                 </span>
-                <span className="text-[12px] font-semibold text-primary">{campaign._count.categories}</span>
+                {/* <span className="text-[12px] font-semibold text-primary">{campaign._count.categories}</span> */}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-neutral-dark">Ngày tạo</span>

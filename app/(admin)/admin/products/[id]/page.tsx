@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Pencil, Trash2, Package, Star, CheckCircle2, EyeOff, Loader2, ArchiveRestore, ShoppingCart, ImageOff, ChevronDown, ChevronUp } from "lucide-react";
-import { getProduct, softDeleteProduct, restoreProduct, updateProduct } from "../_libs/products";
+import { ArrowLeft, Pencil, Trash2, Package, Star, CheckCircle2, EyeOff, Loader2, ArchiveRestore, ShoppingCart, ImageOff, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { getProduct, softDeleteProduct, restoreProduct } from "../_libs/products";
 import { usePopzy } from "@/components/Modal/usePopzy";
 import { Popzy } from "@/components/Modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
@@ -15,29 +15,16 @@ import { formatDate, formatVND } from "@/helpers";
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Toggle({ value, onChange, color = "bg-accent" }: { value: boolean; onChange: (v: boolean) => void; color?: string }) {
-  return (
-    <button type="button" onClick={() => onChange(!value)} className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${value ? color : "bg-neutral"}`}>
-      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${value ? "left-5" : "left-0.5"}`} />
-    </button>
-  );
-}
-
-/** Group ảnh theo màu */
 function groupImagesByColor(imgs: ProductDetail["img"]): ColorGroup[] {
   const map = new Map<string, ColorGroup>();
   for (const img of imgs) {
     if (!map.has(img.color)) map.set(img.color, { color: img.color, images: [] });
     map.get(img.color)!.images.push(img);
   }
-  // Sort images in each group by position
-  for (const group of map.values()) {
-    group.images.sort((a, b) => a.position - b.position);
-  }
+  for (const group of map.values()) group.images.sort((a, b) => a.position - b.position);
   return Array.from(map.values());
 }
 
-/** Group specs theo groupName */
 function groupSpecs(specs: ProductDetail["productSpecifications"]): SpecGroup[] {
   const map = new Map<string, SpecGroup>();
   const sorted = [...specs].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -49,7 +36,6 @@ function groupSpecs(specs: ProductDetail["productSpecifications"]): SpecGroup[] 
   return Array.from(map.values());
 }
 
-/** Tính priceRange từ variants */
 function getPriceRange(variants: ProductVariant[]) {
   const active = variants.filter((v) => v.isActive && !v.deletedAt);
   if (!active.length) return { min: 0, max: 0 };
@@ -61,7 +47,6 @@ function getPriceRange(variants: ProductVariant[]) {
 // SUB-COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Bảng variants */
 function VariantsTable({ variants }: { variants: ProductVariant[] }) {
   return (
     <div className="overflow-x-auto">
@@ -80,7 +65,6 @@ function VariantsTable({ variants }: { variants: ProductVariant[] }) {
           {variants.map((v) => {
             const attrs = v.variantAttributes.map((va) => va.attributeOption.label).join(" / ");
             const isDeleted = !!v.deletedAt;
-
             return (
               <tr key={v.id} className={`border-b border-neutral/50 ${isDeleted ? "opacity-40" : ""} ${v.isDefault ? "bg-accent/5" : ""}`}>
                 <td className="py-2 px-3 font-mono text-[11px] text-neutral-dark">
@@ -109,7 +93,6 @@ function VariantsTable({ variants }: { variants: ProductVariant[] }) {
   );
 }
 
-/** Collapsible section */
 function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -130,26 +113,13 @@ function Section({ title, defaultOpen = true, children }: { title: string; defau
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const id = params?.id as string;
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Edit mode
-  const [editMode, setEditMode] = useState(searchParams.get("edit") === "true");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  const [editIsActive, setEditIsActive] = useState(true);
-  const [editIsFeatured, setEditIsFeatured] = useState(false);
-
-  // Selected color for image preview
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
-  // Delete / Restore
   const deleteModal = usePopzy();
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -166,8 +136,6 @@ export default function ProductDetailPage() {
     getProduct(id)
       .then((res) => {
         setProduct(res.data);
-        syncEditFields(res.data);
-        // Set first color as selected
         const colors = [...new Set(res.data.img.map((i) => i.color))];
         if (colors.length) setSelectedColor(colors[0]);
       })
@@ -175,68 +143,20 @@ export default function ProductDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const syncEditFields = (p: ProductDetail) => {
-    setEditName(p.name);
-    setEditDesc(p.description ?? "");
-    setEditIsActive(p.isActive);
-    setEditIsFeatured(p.isFeatured);
-  };
-
-  // ── Derived data ─────────────────────────────────────────────────────────────
+  // ── Derived ─────────────────────────────────────────────────────────────────
 
   const colorGroups = useMemo(() => (product ? groupImagesByColor(product.img) : []), [product]);
-
   const specGroups = useMemo(() => (product ? groupSpecs(product.productSpecifications) : []), [product]);
-
   const highlightSpecs = useMemo(() => product?.productSpecifications.filter((s) => s.isHighlight) ?? [], [product]);
-
   const priceRange = useMemo(() => (product ? getPriceRange(product.variants) : { min: 0, max: 0 }), [product]);
-
   const activeVariants = useMemo(() => product?.variants.filter((v) => v.isActive && !v.deletedAt) ?? [], [product]);
-
   const selectedImages = useMemo(() => {
     if (!selectedColor || !colorGroups.length) return [];
     return colorGroups.find((g) => g.color === selectedColor)?.images ?? colorGroups[0]?.images ?? [];
   }, [selectedColor, colorGroups]);
-
   const thumbnail = selectedImages[0]?.imageUrl ?? null;
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
-
-  const handleSave = async () => {
-    if (!product || !editName.trim()) {
-      setSaveError("Tên sản phẩm không được để trống");
-      return;
-    }
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const fd = new FormData();
-      fd.append(
-        "data",
-        JSON.stringify({
-          name: editName.trim(),
-          description: editDesc.trim() || undefined,
-          isActive: editIsActive,
-          isFeatured: editIsFeatured,
-        }),
-      );
-      const res = await updateProduct(product.id, fd);
-      setProduct(res.data);
-      syncEditFields(res.data);
-      setEditMode(false);
-    } catch (e: any) {
-      setSaveError(e?.message ?? "Không thể cập nhật sản phẩm");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    if (product) syncEditFields(product);
-    setEditMode(false);
-    setSaveError(null);
-  };
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleDeleteConfirm = async () => {
     if (!product) return;
@@ -343,7 +263,6 @@ export default function ProductDetailPage() {
           <div className="w-72 shrink-0 space-y-4">
             {/* Image gallery */}
             <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
-              {/* Main image */}
               <div className="relative w-full h-56 bg-neutral-light-active">
                 {thumbnail ? (
                   <Image src={thumbnail} alt={product.name} fill className="object-contain p-4" unoptimized />
@@ -354,10 +273,9 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Thumbnails strip */}
               {selectedImages.length > 1 && (
                 <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
-                  {selectedImages.slice(0, 5).map((img, i) => (
+                  {selectedImages.slice(0, 5).map((img) => (
                     <div key={img.id} className="w-10 h-10 rounded-md overflow-hidden border border-neutral shrink-0 bg-neutral-light-active">
                       {img.imageUrl && <Image src={img.imageUrl} alt={img.altText ?? img.color} width={40} height={40} className="object-contain" unoptimized />}
                     </div>
@@ -370,7 +288,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Color selector */}
               {colorGroups.length > 1 && (
                 <div className="px-3 pb-3 space-y-1.5">
                   <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Màu sắc ({colorGroups.length})</p>
@@ -395,50 +312,28 @@ export default function ProductDetailPage() {
             <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-3 text-[13px]">
               <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thông tin</p>
 
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Thương hiệu</span>
-                <div className="flex items-center gap-1.5">
-                  {product.brand.imageUrl && <Image src={product.brand.imageUrl} alt={product.brand.name} width={16} height={16} className="object-contain rounded" unoptimized />}
-                  <span className="font-medium text-primary">{product.brand.name}</span>
+              {[
+                { label: "Thương hiệu", value: product.brand.name },
+                { label: "Danh mục", value: <span className="font-mono text-[11px] text-accent">{product.category.slug}</span> },
+                { label: "Variant display", value: <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-light-active text-primary">{product.variantDisplay}</span> },
+                {
+                  label: "Đánh giá",
+                  value: (
+                    <span className="text-amber-500 font-medium">
+                      ★ {Number(product.ratingAverage).toFixed(1)} <span className="text-neutral-dark">({product.ratingCount})</span>
+                    </span>
+                  ),
+                },
+                { label: "Lượt xem", value: <span className="font-semibold">{Number(product.viewsCount).toLocaleString()}</span> },
+                { label: "Tổng đã bán", value: <span className="font-semibold">{product.totalSoldCount}</span> },
+                { label: "Ngày tạo", value: <span className="text-[12px]">{formatDate(product.createdAt)}</span> },
+                { label: "Cập nhật", value: <span className="text-[12px]">{formatDate(product.updatedAt)}</span> },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-center justify-between gap-2">
+                  <span className="text-neutral-dark shrink-0">{label}</span>
+                  <span className="text-primary text-right">{value}</span>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Danh mục</span>
-                <span className="font-mono text-[11px] text-accent">{product.category.slug}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Hiển thị variant</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-light-active text-primary">{product.variantDisplay}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Đánh giá</span>
-                <span className="text-amber-500 font-medium">
-                  ★ {Number(product.ratingAverage).toFixed(1)} <span className="text-neutral-dark">({product.ratingCount})</span>
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Lượt xem</span>
-                <span className="font-semibold text-primary">{Number(product.viewsCount).toLocaleString()}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Tổng đã bán</span>
-                <span className="font-semibold text-primary">{product.totalSoldCount}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Ngày tạo</span>
-                <span className="text-primary text-[12px]">{formatDate(product.createdAt)}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-dark">Cập nhật</span>
-                <span className="text-primary text-[12px]">{formatDate(product.updatedAt)}</span>
-              </div>
+              ))}
 
               <div className="flex items-start justify-between gap-2">
                 <span className="text-neutral-dark shrink-0">Slug</span>
@@ -465,19 +360,10 @@ export default function ProductDetailPage() {
 
           {/* ── RIGHT MAIN ── */}
           <div className="flex-1 min-w-0 space-y-4">
-            {/* Header card */}
-            <div className="bg-neutral-light border border-neutral rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+            {/* Header card — actions */}
+            <div className="bg-neutral-light border border-neutral rounded-xl px-5 py-4 flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                {editMode ? (
-                  <input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="text-[18px] font-bold text-primary bg-transparent border-b border-accent focus:outline-none w-full"
-                    placeholder="Tên sản phẩm"
-                  />
-                ) : (
-                  <h1 className="text-[18px] font-bold text-primary">{product.name}</h1>
-                )}
+                <h1 className="text-[18px] font-bold text-primary leading-tight">{product.name}</h1>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -498,99 +384,73 @@ export default function ProductDetailPage() {
                       </>
                     )}
                   </span>
+
                   {product.isFeatured && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-500">
                       <Star size={10} /> Nổi bật
                     </span>
                   )}
+
                   {defaultVariant && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/10 text-accent">
                       <ShoppingCart size={10} />
                       {priceRange.min === priceRange.max ? formatVND(priceRange.min) : `${formatVND(priceRange.min)} – ${formatVND(priceRange.max)}`}
                     </span>
                   )}
+
                   <span className="text-[11px] text-neutral-dark">
                     {product.variants.filter((v) => !v.deletedAt).length} variants · {colorGroups.length} màu
                   </span>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0">
-                {!isDeleted &&
-                  (editMode ? (
-                    <>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={saving}
-                        className="px-3 py-1.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        Huỷ
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-[13px] font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
-                      >
-                        {saving && <Loader2 size={12} className="animate-spin" />}
-                        {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setEditMode(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
-                      >
-                        <Pencil size={13} /> Chỉnh sửa
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteError(null);
-                          deleteModal.open();
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-promotion/30 rounded-lg text-[13px] text-promotion hover:bg-promotion-light transition-colors cursor-pointer"
-                      >
-                        <Trash2 size={13} /> Xoá
-                      </button>
-                    </>
-                  ))}
-              </div>
+              {/* Action buttons — chỉ navigate, không inline edit */}
+              {!isDeleted && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href={`/admin/products/${product.id}/edit`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
+                  >
+                    <Pencil size={13} /> Chỉnh sửa
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setDeleteError(null);
+                      deleteModal.open();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-promotion/30 rounded-lg text-[13px] text-promotion hover:bg-promotion-light transition-colors cursor-pointer"
+                  >
+                    <Trash2 size={13} /> Xoá
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Edit form */}
-            {editMode && !isDeleted && (
-              <div className="bg-neutral-light border border-neutral rounded-xl p-5 space-y-4">
-                <div>
-                  <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider block mb-1.5">Mô tả</label>
-                  <textarea
-                    value={editDesc}
-                    onChange={(e) => setEditDesc(e.target.value)}
-                    rows={4}
-                    placeholder="Nhập mô tả sản phẩm"
-                    className="w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all resize-none"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <div className="flex items-center justify-between flex-1 px-3 py-2.5 border border-neutral rounded-xl">
-                    <span className="text-[13px] text-primary">Hiển thị</span>
-                    <Toggle value={editIsActive} onChange={setEditIsActive} />
-                  </div>
-                  <div className="flex items-center justify-between flex-1 px-3 py-2.5 border border-neutral rounded-xl">
-                    <span className="text-[13px] text-primary">Nổi bật</span>
-                    <Toggle value={editIsFeatured} onChange={setEditIsFeatured} color="bg-amber-400" />
-                  </div>
-                </div>
-                {saveError && <div className="px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px]">{saveError}</div>}
-              </div>
-            )}
-
-            {/* Description */}
+            {/* Description — render HTML từ CKEditor */}
             <Section title="Mô tả sản phẩm" defaultOpen={false}>
               {product.description ? (
-                <div className="text-[14px] text-primary leading-relaxed prose prose-sm max-w-none mt-2" dangerouslySetInnerHTML={{ __html: product.description }} />
+                <div
+                  className="mt-3 text-[14px] text-primary leading-relaxed prose prose-sm max-w-none
+                    prose-headings:text-primary prose-headings:font-semibold
+                    prose-p:text-primary/90 prose-p:leading-relaxed
+                    prose-strong:text-primary prose-strong:font-semibold
+                    prose-ul:text-primary/90 prose-ol:text-primary/90
+                    prose-li:leading-relaxed prose-li:my-0.5
+                    prose-a:text-accent prose-a:no-underline hover:prose-a:underline
+                    prose-blockquote:border-accent/40 prose-blockquote:text-primary/70
+                    prose-code:text-accent prose-code:bg-neutral-light-active prose-code:px-1 prose-code:rounded
+                    prose-pre:bg-neutral-light-active prose-pre:border prose-pre:border-neutral prose-pre:rounded-xl
+                    prose-table:text-[13px] prose-th:bg-neutral-light-active prose-th:text-primary
+                    prose-img:rounded-xl prose-img:border prose-img:border-neutral"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
               ) : (
-                <p className="text-[13px] italic text-neutral-dark mt-2">Chưa có mô tả</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-[13px] italic text-neutral-dark">Chưa có mô tả</p>
+                  <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
+                    <Pencil size={11} /> Thêm mô tả
+                  </Link>
+                </div>
               )}
             </Section>
 
@@ -610,11 +470,16 @@ export default function ProductDetailPage() {
                       Đến: <strong className="text-accent">{formatVND(priceRange.max)}</strong>
                     </span>
                   )}
+                  {!isDeleted && (
+                    <Link href={`/admin/products/${product.id}/edit`} className="ml-auto flex items-center gap-1 text-accent hover:underline cursor-pointer">
+                      <Pencil size={10} /> Sửa variants
+                    </Link>
+                  )}
                 </div>
               </div>
             </Section>
 
-            {/* Specifications by group */}
+            {/* Specifications */}
             {specGroups.length > 0 && (
               <Section title={`Thông số kỹ thuật (${product.productSpecifications.length})`} defaultOpen={false}>
                 <div className="mt-3 space-y-4">

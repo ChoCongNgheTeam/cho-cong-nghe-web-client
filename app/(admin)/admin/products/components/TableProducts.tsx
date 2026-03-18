@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import type { ProductCard } from "../product.types";
-import { ProductStatusBadge } from "./ProductStatusBadge";
+import { ProductStatusCell } from "./ProductStatusCell";
 import { formatVND, formatDate } from "@/helpers";
 
 interface GetProductColumnsParams {
@@ -11,11 +11,11 @@ interface GetProductColumnsParams {
   pageSize: number;
   selected: Set<string>;
   toggleOne: (id: string) => void;
-  onToggleActive: (product: ProductCard) => void;
+  onStatusChange: (productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => void;
   onDeleteClick: (product: ProductCard) => void;
 }
 
-export function getProductColumns({ page, pageSize, selected, toggleOne, onToggleActive, onDeleteClick }: GetProductColumnsParams): AdminColumn<ProductCard>[] {
+export function getProductColumns({ page, pageSize, selected, toggleOne, onStatusChange, onDeleteClick }: GetProductColumnsParams): AdminColumn<ProductCard>[] {
   return [
     {
       key: "_select",
@@ -45,7 +45,6 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onToggl
       label: "Sản phẩm",
       render: (product) => (
         <div className="flex items-center gap-3">
-          {/* Thumbnail */}
           <div className="w-10 h-10 rounded-lg overflow-hidden border border-neutral bg-neutral-light-active shrink-0">
             {product.thumbnail ? (
               <Image src={product.thumbnail} alt={product.name} width={40} height={40} className="object-contain w-full h-full" unoptimized />
@@ -53,7 +52,6 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onToggl
               <div className="w-full h-full flex items-center justify-center text-neutral-dark text-[10px]">N/A</div>
             )}
           </div>
-          {/* Name + slug */}
           <div className="min-w-0">
             <span className="text-[13px] font-medium text-primary block truncate max-w-[220px]">{product.name}</span>
             <span className="text-[11px] text-neutral-dark font-mono truncate block max-w-[220px]">{product.slug}</span>
@@ -86,19 +84,15 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onToggl
     {
       key: "isActive",
       label: "Trạng thái",
-      render: (product) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!product.deletedAt) onToggleActive(product);
-          }}
-          disabled={!!product.deletedAt}
-          className="cursor-pointer disabled:cursor-default"
-          title={product.deletedAt ? "Sản phẩm đã xóa" : "Nhấn để đổi trạng thái"}
-        >
-          <ProductStatusBadge product={product} />
-        </button>
-      ),
+      render: (product) =>
+        product.deletedAt ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-neutral-light-active text-neutral-dark border-neutral">
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark shrink-0" />
+            Đã xóa
+          </span>
+        ) : (
+          <ProductStatusCell productId={product.id} isActive={product.isActive} isFeatured={product.isFeatured} onStatusChange={onStatusChange} />
+        ),
     },
     {
       key: "createdAt",
@@ -114,7 +108,7 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onToggl
           <Link
             href={`/admin/products/${product.id}`}
             title="Xem"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
           >
             <Eye size={14} />
           </Link>
@@ -122,7 +116,7 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onToggl
             <Link
               href={`/admin/products/${product.id}?edit=true`}
               title="Chỉnh sửa"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
             >
               <Pencil size={14} />
             </Link>

@@ -2,8 +2,8 @@
 
 export default function ChinhSachBaoHanhPage() {
    return (
-      <div className="min-h-screen">
-         <h1 className="font-bold mb-5 text-primary text-center text-2xl">
+      <>
+         <h1 className="font-bold mb-5 text-primary text-center ">
             Chính sách bảo hành
          </h1>
 
@@ -40,7 +40,7 @@ export default function ChinhSachBaoHanhPage() {
 
          <ul className="mb-6 space-y-2">
             {[
-               "Sản phẩm hết hạn bảo hành. Vui lòng liên hệ hotline 1800.6060 để tra cứu thời hạn bảo hành sản phẩm.",
+               <>Sản phẩm hết hạn bảo hành. Vui lòng liên hệ hotline <strong>1800.6060</strong> để tra cứu thời hạn bảo hành sản phẩm.</>,
                "Sản phẩm đã bị thay đổi, sửa chữa không thuộc các Trung Tâm Bảo Hành Ủy Quyền của Hãng.",
                "Sản phẩm lắp đặt, bảo trì, sử dụng không đúng theo hướng dẫn của Nhà sản xuất gây ra hư hỏng.",
                "Sản phẩm lỗi do ngấm nước, chất lỏng và bụi bẩn. Quy định này áp dụng cho cả những thiết bị đạt chứng nhận kháng nước/kháng bụi cao nhất là IP68.",
@@ -81,9 +81,9 @@ export default function ChinhSachBaoHanhPage() {
                "(**) Áp dụng với các sản phẩm thuộc diện đổi mới trong 30 ngày nếu có lỗi NSX được công bố trên website Chính sách đổi trả.",
                "(***) Trừ các sản phẩm có chính sách bảo hành tại nhà, sản phẩm thuộc diện cồng kềnh.",
             ].map((note, i) => (
-               <p key={i} className="leading-relaxed text-primary-light">{note}</p>
+               <p key={i} className="leading-relaxed text-neutral-darker">{note}</p>
             ))}
          </div>
-      </div>
+      </>
    );
 }

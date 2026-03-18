@@ -41,7 +41,7 @@ export default function ScrollBarTop() {
          <button
             onClick={scrollToTop}
             aria-label="Scroll to top"
-            className={`fixed bottom-6 right-4 sm:right-6 z-[49] w-10 h-10 rounded-xl bg-accent hover:bg-accent-hover active:bg-accent-active text-white flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${
+            className={`fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-49 w-10 h-10 rounded-xl bg-accent hover:bg-accent-hover active:bg-accent-active text-white flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${
                showBackToTop
                   ? "opacity-100 translate-y-0 pointer-events-auto"
                   : "opacity-0 translate-y-4 pointer-events-none"

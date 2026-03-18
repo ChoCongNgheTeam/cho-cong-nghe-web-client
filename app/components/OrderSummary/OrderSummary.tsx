@@ -47,8 +47,6 @@ export default function OrderSummary({
    shippingFee,
    taxAmount,
 }: OrderSummaryProps) {
-   const [usePoints, setUsePoints] = useState(false);
-   const [showDetails, setShowDetails] = useState(true);
    const router = useRouter();
    const { user } = useAuth();
 
@@ -123,7 +121,6 @@ export default function OrderSummary({
                      Thông tin đơn hàng
                   </h3>
 
-                  {showDetails && (
                      <div className="space-y-2.5 text-sm">
                         <div className="flex justify-between">
                            <span className="text-neutral-darker">
@@ -187,17 +184,6 @@ export default function OrderSummary({
                            </div>
                         </div>
                      </div>
-                  )}
-
-                  <button
-                     onClick={() => setShowDetails(!showDetails)}
-                     className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors cursor-pointer"
-                  >
-                     {showDetails ? "Rút gọn" : "Xem chi tiết"}
-                     <ChevronUp
-                        className={`h-4 w-4 transition-transform ${showDetails ? "" : "rotate-180"}`}
-                     />
-                  </button>
                </div>
 
                {/* Checkout Button */}

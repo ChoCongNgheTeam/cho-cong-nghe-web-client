@@ -32,25 +32,50 @@ const Header = () => {
    const headerRef = useRef<HTMLDivElement>(null);
    const lastScrollY = useRef(0);
    const ticking = useRef(false);
+   // ✅ Lưu initial height riêng — placeholder chỉ dùng cái này, không đổi theo scroll
+   const initialHeightRef = useRef(0);
 
    const { user, logout, isAuthenticated, loading } = useAuth();
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
 
-   // Đo chiều cao header thực tế
+   // Đo chiều cao header + set CSS variables
    useEffect(() => {
       if (!headerRef.current) return;
+
+      const updateHeight = (h: number) => {
+         setHeaderHeight(h);
+         document.documentElement.style.setProperty(
+            "--header-height",
+            `${h}px`,
+         );
+         // Chỉ set initial height 1 lần
+         if (!initialHeightRef.current) {
+            initialHeightRef.current = h;
+         }
+      };
+
       const observer = new ResizeObserver(() => {
          if (headerRef.current) {
-            setHeaderHeight(headerRef.current.offsetHeight);
+            updateHeight(headerRef.current.offsetHeight);
          }
       });
+
       observer.observe(headerRef.current);
-      setHeaderHeight(headerRef.current.offsetHeight);
+      updateHeight(headerRef.current.offsetHeight);
+
       return () => observer.disconnect();
    }, []);
 
-   // Scroll logic
+   // Sync --header-visible CSS variable
+   useEffect(() => {
+      document.documentElement.style.setProperty(
+         "--header-visible",
+         isVisible ? "1" : "0",
+      );
+   }, [isVisible]);
+
+   // Scroll logic — dùng initialHeightRef thay vì headerHeight để tránh re-trigger
    useEffect(() => {
       const handleScroll = () => {
          if (ticking.current) return;
@@ -59,11 +84,12 @@ const Header = () => {
          requestAnimationFrame(() => {
             const currentScrollY = window.scrollY;
             const diff = currentScrollY - lastScrollY.current;
+            const threshold = initialHeightRef.current || headerHeight;
 
-            setIsPastTop(currentScrollY > headerHeight);
+            setIsPastTop(currentScrollY > threshold);
 
             if (Math.abs(diff) > 4) {
-               if (diff > 0 && currentScrollY > headerHeight) {
+               if (diff > 0 && currentScrollY > threshold) {
                   setIsVisible(false);
                } else {
                   setIsVisible(true);
@@ -77,7 +103,8 @@ const Header = () => {
 
       window.addEventListener("scroll", handleScroll, { passive: true });
       return () => window.removeEventListener("scroll", handleScroll);
-   }, [headerHeight]);
+      // ✅ không depend vào headerHeight — dùng ref nên không cần re-register listener
+   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
    // Click outside user menu
    useEffect(() => {
@@ -101,7 +128,7 @@ const Header = () => {
 
    return (
       <>
-         {/* Placeholder đúng chiều cao thực tế của header */}
+         {/* ✅ Placeholder dùng headerHeight ban đầu — không thay đổi khi isPastTop */}
          <div style={{ height: headerHeight }} />
 
          <div
@@ -125,7 +152,7 @@ const Header = () => {
             </div>
 
             {/* Main Header */}
-            <div className="bg-accent md:bg-transparent">
+            <div>
                <div className="container py-1 md:py-2">
                   <MobileHeader
                      mobileMenuOpen={mobileMenuOpen}
@@ -157,7 +184,6 @@ const Header = () => {
                <div className="md:hidden bg-neutral-light border-b border-neutral-dark shadow-lg">
                   <div className="container py-4">
                      <nav className="flex flex-col gap-3">
-                        {/* Khi đang loading: hiển thị skeleton thay vì nhảy về "chưa đăng nhập" */}
                         {loading ? (
                            <div className="px-3 py-3 bg-neutral/50 rounded-lg animate-pulse">
                               <div className="flex items-center gap-3">

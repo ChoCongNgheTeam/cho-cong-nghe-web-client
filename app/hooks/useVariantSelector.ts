@@ -89,6 +89,7 @@ export interface UseVariantSelectorProps {
    currentVariantId: string;
    colorLabel: string;
    storageLabel: string;
+   storageValue?: string; // ← THÊM: "128gb", "256gb", ...
    colorValue?: string;
    currentQuantity: number;
    onSuccess?: () => void;
@@ -101,6 +102,7 @@ export function useVariantSelector({
    currentVariantId,
    colorLabel,
    storageLabel,
+   storageValue, // ← THÊM
    colorValue,
    currentQuantity,
    onSuccess,
@@ -116,12 +118,14 @@ export function useVariantSelector({
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
    const [isChanging, setIsChanging] = useState(false);
 
+   // ← THÊM: cache key gồm cả storage để re-fetch khi storage thay đổi
+   const cacheKey = `${productSlug}-${storageValue ?? storageLabel}`;
    const fetchedSlugRef = useRef<string | null>(null);
 
    const fetchVariants = useCallback(
       async (forceRefresh = false) => {
-         if (!forceRefresh && fetchedSlugRef.current === productSlug) return;
-         fetchedSlugRef.current = productSlug;
+         if (!forceRefresh && fetchedSlugRef.current === cacheKey) return; // ← đổi productSlug → cacheKey
+         fetchedSlugRef.current = cacheKey; // ← đổi productSlug → cacheKey
 
          setIsFetching(true);
          setErrorMessage(null);
@@ -131,9 +135,17 @@ export function useVariantSelector({
                ? {}
                : { noAuth: true, noRedirectOn401: true, silentAuth: true };
 
+            const params: Record<string, string> = {};
+            if (storageValue) {
+               params.storage = storageValue; // "128gb"
+            }
+
             const res = await apiRequest.get<{ data: VariantOption[] }>(
                `/products/slug/${productSlug}/variant-options`,
-               opts,
+               {
+                  ...opts,
+                  ...(Object.keys(params).length > 0 ? { params } : {}),
+               },
             );
 
             setOptions(res?.data ?? []);
@@ -144,16 +156,18 @@ export function useVariantSelector({
             setIsFetching(false);
          }
       },
-      [productSlug, isAuthenticated],
+      [productSlug, storageValue, storageLabel, isAuthenticated, cacheKey], // ← thêm deps
    );
+
    const handleToggle = useCallback(() => {
       if (isChanging) return;
       const willOpen = !isOpen;
       setIsOpen(willOpen);
-      if (willOpen && fetchedSlugRef.current !== productSlug) {
+      if (willOpen && fetchedSlugRef.current !== cacheKey) {
+         // ← đổi productSlug → cacheKey
          fetchVariants();
       }
-   }, [isChanging, isOpen, productSlug, fetchVariants]);
+   }, [isChanging, isOpen, cacheKey, fetchVariants]); // ← đổi productSlug → cacheKey
 
    const handleRetry = useCallback(() => {
       fetchedSlugRef.current = null;
@@ -222,13 +236,14 @@ export function useVariantSelector({
          onUpdateItem,
       ],
    );
+
    return {
       isOpen,
       options,
       isFetching,
       isChanging,
       errorMessage,
-      hasFetched: fetchedSlugRef.current === productSlug,
+      hasFetched: fetchedSlugRef.current === cacheKey,
       handleToggle,
       handleRetry,
       handleSelect,
