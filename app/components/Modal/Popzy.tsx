@@ -98,6 +98,18 @@ export default function Popzy({
       return () => document.removeEventListener("keydown", handleEscape);
    }, [isOpen, allowEscapeClose, onClose]);
 
+   useEffect(() => {
+      if (!isOpen) {
+         document.documentElement.style.overflow = "";
+         return;
+      }
+      document.documentElement.style.overflow = "hidden";
+
+      return () => {
+         document.documentElement.style.overflow = "";
+      };
+   }, [isOpen]);
+
    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (allowBackdropClose && e.target === backdropRef.current) {
          onClose();
@@ -136,7 +148,7 @@ export default function Popzy({
                   </button>
                )}
 
-               <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-6 scrollbar-thin">
+               <div className="max-h-[80vh] overflow-y-auto custom-scroll pr-1 scrollbar-thin">
                   {typeof content === "string" ? (
                      <div dangerouslySetInnerHTML={{ __html: content }} />
                   ) : (

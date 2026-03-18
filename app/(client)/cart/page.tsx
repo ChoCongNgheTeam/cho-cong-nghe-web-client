@@ -284,7 +284,7 @@ export default function CartPage() {
                   </p>
                   <Link
                      href="/category/dien-thoai"
-                     className="inline-flex items-center gap-2 rounded-xl bg-primary-dark text-neutral-light px-8 sm:px-10 py-3 sm:py-3.5 font-semibold transition hover:bg-accent-hover shadow-md hover:shadow-lg hover:-translate-y-0.5 transform duration-150"
+                     className="inline-flex items-center gap-2 rounded-xl bg-primary-dark text-neutral-light px-8 sm:px-10 py-3 sm:py-3.5 font-semibold transition shadow-md hover:shadow-lg hover:-translate-y-0.5 transform duration-150"
                   >
                      <ShoppingCart className="h-4 w-4" />
                      Mua sắm ngay

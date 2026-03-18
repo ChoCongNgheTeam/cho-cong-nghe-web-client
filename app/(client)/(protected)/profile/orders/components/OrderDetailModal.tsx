@@ -79,7 +79,7 @@ export default function OrderDetailModal({ order }: { order: Order }) {
             ) : (
               <button
                 onClick={() => window.open(order.paymentRedirectUrl!, "_blank", "noopener,noreferrer")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-primary-darker text-xs font-semibold hover:bg-accent-dark transition-colors shrink-0 cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent text-white text-xs font-semibold hover:bg-accent-dark transition-colors shrink-0 cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 Thanh toán ngay
