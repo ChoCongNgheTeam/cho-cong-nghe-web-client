@@ -1,49 +1,162 @@
+﻿import Image from "next/image";
+
 export default function About() {
    return (
       <div className="text-primary leading-relaxed mb-10 w-full">
-         <h1 className="text-[24px] font-bold text-primary text-center mb-7">
-            Giới thiệu về ChoCongNghe Shop
-         </h1>
+         <div className="mb-8 text-center">
+            <p className="text-[12px] uppercase tracking-[0.3em] text-accent mb-2">
+               ChoCongNghe
+            </p>
+            <h1 className="text-[24px] font-bold text-primary mb-3">
+               Giới thiệu về ChoCongNghe Shop
+            </h1>
+            <p className="text-primary max-w-2xl mx-auto">
+               ChoCongNghe là nền tảng thương mại điện tử chuyên biệt về thiết kế
+               và phân phối các sản phẩm công nghệ thông minh, tối ưu cho trải
+               nghiệm mua sắm trực tuyến trong kỷ nguyên số.
+            </p>
+         </div>
 
-         <section className="mb-6">
-            <h2 className="font-bold text-primary mb-2">1. Về chúng tôi</h2>
-            <p className="mb-2 text-primary">
-               ChoCongNghe Shop là chuỗi chuyên bán lẻ các sản phẩm kỹ thuật số
-               di động...
+         <section className="mb-8">
+            <h2 className="font-bold text-primary mb-4 text-center">
+               Nhận diện thương hiệu
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+               <div className="rounded-lg border border-neutral-light bg-white p-4 flex items-center justify-center">
+                  <Image
+                     src="/logo.png"
+                     alt="Logo ChoCongNghe"
+                     width={140}
+                     height={140}
+                     className="h-auto w-28 sm:w-32"
+                     priority
+                  />
+               </div>
+               <div className="rounded-lg border border-neutral-light bg-white p-4">
+                  <Image
+                     src="/welcome.png"
+                     alt="Hình ảnh mẫu 1"
+                     width={360}
+                     height={240}
+                     className="h-auto w-full rounded-md"
+                  />
+               </div>
+               <div className="rounded-lg border border-neutral-light bg-white p-4">
+                  <Image
+                     src="/images/avatar.png"
+                     alt="Hình ảnh mẫu 2"
+                     width={360}
+                     height={240}
+                     className="h-auto w-full rounded-md"
+                  />
+               </div>
+            </div>
+         </section>
+
+         <section className="mb-8">
+            <h2 className="font-bold text-primary mb-2">1. Tổng quan</h2>
+            <p className="mb-3 text-primary">
+               Với mục tiêu xây dựng một hệ sinh thái mua sắm hiện đại, tiện lợi
+               và đáng tin cậy, ChoCongNghe mang đến cho khách hàng cơ hội tiếp
+               cận những thiết kế công nghệ tiên tiến nhất thông qua giao diện
+               trực quan và quy trình thanh toán tối giản.
             </p>
             <p className="text-primary">
-               ChoCongNghe Shop là hệ thống bán lẻ đầu tiên ở Việt Nam được cấp
-               chứng chỉ ISO 9001:2000...
+               Dự án được phát triển theo định hướng lấy người dùng làm trung
+               tâm, đồng thời đảm bảo khả năng mở rộng linh hoạt để đáp ứng nhu
+               cầu tăng trưởng dài hạn.
             </p>
          </section>
 
-         <section className="mb-6">
-            <h2 className="font-bold text-primary mb-2">2. Sứ mệnh</h2>
-            <p className="text-primary">
-               Hệ thống ChoCongNghe Shop kỳ vọng mang đến cho khách hàng những
-               trải nghiệm mua sắm tốt nhất...
-            </p>
+         <section className="mb-8">
+            <h2 className="font-bold text-primary mb-4">2. Điểm nổi bật</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+               {[
+                  {
+                     title: "Danh mục thông minh",
+                     desc: "Hệ thống quản lý danh mục sản phẩm linh hoạt, giúp phân loại và hiển thị chính xác theo nhu cầu.",
+                  },
+                  {
+                     title: "Tìm kiếm tối ưu",
+                     desc: "Bộ lọc nhanh và chính xác giúp người dùng tìm được thiết bị phù hợp chỉ trong vài thao tác.",
+                  },
+                  {
+                     title: "Thanh toán đa phương thức",
+                     desc: "Tích hợp nhiều lựa chọn thanh toán an toàn, tối giản hóa quy trình mua sắm.",
+                  },
+                  {
+                     title: "Theo dõi đơn hàng thời gian thực",
+                     desc: "Cập nhật trạng thái đơn hàng minh bạch, giúp khách hàng chủ động trong mọi bước.",
+                  },
+               ].map((item) => (
+                  <div
+                     key={item.title}
+                     className="rounded-lg border border-neutral-light bg-neutral-light/20 p-4"
+                  >
+                     <p className="font-semibold text-primary mb-1">{item.title}</p>
+                     <p className="text-primary">{item.desc}</p>
+                  </div>
+               ))}
+            </div>
          </section>
 
-         <section className="mb-6">
-            <h2 className="font-bold text-primary mb-3">3. Giá trị cốt lõi</h2>
+         <section className="mb-8">
+            <h2 className="font-bold text-primary mb-4">
+               3. Dành cho khách hàng & quản trị viên
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+               <div className="rounded-lg border border-neutral-light bg-white p-4">
+                  <p className="font-semibold text-primary mb-2">Khách hàng</p>
+                  <ul className="space-y-2">
+                     {[
+                        "Khám phá nhanh các thiết bị công nghệ thông minh.",
+                        "So sánh lựa chọn rõ ràng với thông tin minh bạch.",
+                        "Trải nghiệm thanh toán gọn gàng và bảo mật.",
+                     ].map((item) => (
+                        <li key={item} className="flex gap-2">
+                           <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                           <p className="text-primary">{item}</p>
+                        </li>
+                     ))}
+                  </ul>
+               </div>
+               <div className="rounded-lg border border-neutral-light bg-white p-4">
+                  <p className="font-semibold text-primary mb-2">Quản trị viên</p>
+                  <ul className="space-y-2">
+                     {[
+                        "Quản lý kho hàng và danh mục hiệu quả.",
+                        "Theo dõi doanh thu và dữ liệu khách hàng khoa học.",
+                        "Vận hành linh hoạt với hệ thống báo cáo rõ ràng.",
+                     ].map((item) => (
+                        <li key={item} className="flex gap-2">
+                           <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                           <p className="text-primary">{item}</p>
+                        </li>
+                     ))}
+                  </ul>
+               </div>
+            </div>
+         </section>
+
+         <section className="mb-8">
+            <h2 className="font-bold text-primary mb-3">4. Cam kết vận hành</h2>
             <ul className="space-y-3">
                {[
                   {
-                     title: "Chất lượng và Uy tín",
-                     desc: "ChoCongNghe Shop cam kết cung cấp các sản phẩm chính hãng, chất lượng cao...",
+                     title: "Bảo mật",
+                     desc: "Ưu tiên an toàn dữ liệu khách hàng và tuân thủ các tiêu chuẩn bảo mật.",
                   },
                   {
-                     title: "Khách hàng là trọng tâm",
-                     desc: "Phục vụ khách hàng luôn là ưu tiên số 1...",
+                     title: "Hiệu năng",
+                     desc: "Tối ưu tốc độ tải trang, bảo đảm trải nghiệm mượt mà khi truy cập.",
                   },
                   {
-                     title: "Đổi mới và phát triển",
-                     desc: "ChoCongNghe Shop luôn cập nhật và đổi mới sản phẩm...",
+                     title: "Mở rộng",
+                     desc: "Kiến trúc linh hoạt giúp nền tảng sẵn sàng phục vụ lượng truy cập lớn.",
                   },
                   {
-                     title: "Đồng hành cùng cộng đồng",
-                     desc: "ChoCongNghe Shop không chỉ tập trung vào phát triển kinh doanh...",
+                     title: "Chuẩn SEO",
+                     desc: "Cấu trúc thân thiện tìm kiếm giúp nội dung dễ tiếp cận và phát triển bền vững.",
                   },
                ].map((item) => (
                   <li key={item.title} className="flex gap-2.5">
@@ -59,56 +172,14 @@ export default function About() {
             </ul>
          </section>
 
-         <section className="mb-6">
-            <h2 className="font-bold text-primary mb-2">
-               4. Định hướng phát triển
-            </h2>
-            <p className="text-primary">
-               Với mục tiêu{" "}
-               <span className="font-semibold text-primary">
-                  "Tạo trải nghiệm xuất sắc cho khách hàng"
-               </span>
-               , ChoCongNghe Shop tiếp tục đẩy mạnh chuyển đổi số...
-            </p>
-         </section>
-
          <section>
-            <h2 className="font-bold text-primary mb-4">
-               5. Cột mốc phát triển
-            </h2>
-            <div className="relative border-l-2 border-accent-light-active ml-3">
-               {[
-                  {
-                     year: "2013",
-                     desc: "ChoCongNghe Shop chính thức đạt mốc 100 cửa hàng.",
-                  },
-                  {
-                     year: "2014",
-                     desc: "Trở thành nhà nhập khẩu trực tiếp của iPhone chính hãng.",
-                  },
-                  {
-                     year: "2015",
-                     desc: "Đạt mức tăng trưởng nhanh nhất so với các công ty trực thuộc.",
-                  },
-                  {
-                     year: "2016",
-                     desc: "Doanh thu online tăng gấp đôi. Khai trương 80 khu trải nghiệm Apple Corner.",
-                  },
-                  {
-                     year: "08/2024",
-                     desc: "Đồng loạt khai trương 10 cửa hàng điện máy trên toàn quốc.",
-                  },
-               ].map((item, i, arr) => (
-                  <div
-                     key={i}
-                     className={`relative pl-6 ${i < arr.length - 1 ? "pb-5" : ""}`}
-                  >
-                     <span className="absolute -left-2.5 top-1 w-4 h-4 rounded-full bg-neutral-light border-2 border-accent ring-2 ring-accent-light" />
-                     <p className="font-bold text-accent mb-0.5">{item.year}</p>
-                     <p className="text-primary">{item.desc}</p>
-                  </div>
-               ))}
-            </div>
+            <h2 className="font-bold text-primary mb-2">5. Sứ mệnh</h2>
+            <p className="text-primary">
+               ChoCongNghe hướng tới việc trở thành nền tảng mua sắm thông minh,
+               nơi kết nối giữa giá trị sản phẩm và nhu cầu thực tế của người
+               tiêu dùng, đồng thời thúc đẩy sự phát triển của thương mại điện
+               tử trong ngành công nghệ.
+            </p>
          </section>
       </div>
    );
