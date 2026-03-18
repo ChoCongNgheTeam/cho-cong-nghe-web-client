@@ -107,7 +107,7 @@ export default function ReviewModal({
                 }}
                 onMouseEnter={() => setHover(s)}
                 onMouseLeave={() => setHover(0)}
-                className="transition-transform hover:scale-110 active:scale-95"
+                className="transition-transform hover:scale-110 active:scale-95 cursor-pointer"
               >
                 <Star
                   className={`w-10 h-10 transition-colors duration-150 ${
