@@ -157,7 +157,7 @@ export default function ProductStickyFooter({
 
           {/* ── Buttons ──────────────────────────────────────────────── */}
           {isOutOfStock ? (
-            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-neutral-dark text-sm font-medium">
+            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-primary text-sm font-medium">
               Hết hàng
             </span>
           ) : (

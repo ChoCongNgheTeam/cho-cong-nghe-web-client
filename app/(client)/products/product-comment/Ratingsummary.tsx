@@ -125,7 +125,7 @@ export default function RatingSummary({ slug, rating, product }: RatingSummaryPr
                 </div>
                 <button
                   onClick={handleWriteReview}
-                  className="px-6 py-2 bg-promotion text-white rounded-full hover:bg-promotion-hover cursor-pointer transition-colors"
+                  className="px-6 py-2 bg-promotion text-white rounded-full hover:bg-promotion-hover cursor-pointer transition-colors cursor-pointer"
                 >
                   Đánh giá sản phẩm
                 </button>
