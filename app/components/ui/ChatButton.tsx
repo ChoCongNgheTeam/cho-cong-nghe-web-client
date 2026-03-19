@@ -186,7 +186,8 @@ export default function ChatButton() {
                ...prev,
                {
                   role: "assistant",
-                  content: "Xin lỗi, không thể kết nối. Vui lòng thử lại sau.",
+                  content:
+                     "Xin lỗi, chatbot đang bận quá tải. Vui lòng thử lại sau ít phút nhé! 🙏",
                },
             ]);
          } finally {
