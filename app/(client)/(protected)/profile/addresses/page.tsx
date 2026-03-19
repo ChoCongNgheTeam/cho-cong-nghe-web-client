@@ -391,7 +391,7 @@ export default function AddressPage() {
                 ← Quay lại thanh toán
               </button>
             )}
-            <h1 className="text-2xl font-semibold text-primary">
+            <h1 className="text-xl font-bold text-primary">
               Sổ địa chỉ nhận hàng
             </h1>
           </div>
