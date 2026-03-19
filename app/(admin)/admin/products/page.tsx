@@ -34,7 +34,8 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS)[number]["order"]}`;
-
+type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+type SortOrder = (typeof SORT_OPTIONS)[number]["order"];
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ export default function ProductsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const [sortBy, sortOrder] = sortKey.split("_") as [string, "asc" | "desc"];
+  const [sortBy, sortOrder] = sortKey.split("_") as [SortValue, SortOrder];
 
   const tabToParams = (tab: string) => {
     if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };

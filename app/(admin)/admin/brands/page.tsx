@@ -178,7 +178,7 @@ export default function AdminBrandsPage() {
       };
       const res = await getAllBrands(params);
       setBrands(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as Meta);
     } catch (err: any) {
       setError(err?.message || "Không thể tải danh sách thương hiệu");
     } finally {
@@ -527,7 +527,7 @@ export default function AdminBrandsPage() {
               </select>
               <span className="text-[12px] text-neutral-dark">/ {meta.total} thương hiệu</span>
             </div>
-            <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            {/* <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} /> */}
           </div>
         )}
       </div>

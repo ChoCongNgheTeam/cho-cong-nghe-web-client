@@ -36,10 +36,12 @@ export interface Campaign {
 }
 
 export interface GetCampaignsParams {
+  page?: number;
+  limit?: number;
   search?: string;
   type?: CampaignType;
   isActive?: boolean;
-  sortBy?: "name" | "createdAt" | "startDate" | "endDate";
+  sortBy?: "name" | "createdAt" | "startDate" | "endDate" | "publishedAt";
   sortOrder?: "asc" | "desc";
   includeDeleted?: boolean;
 }

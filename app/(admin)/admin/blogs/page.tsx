@@ -451,7 +451,7 @@ export default function BlogsPage() {
               </select>
               <span className="text-[12px] text-neutral-dark">/ {totalFromServer} bài viết</span>
             </div>
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            {/* <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} /> */}
           </div>
         )}
       </div>

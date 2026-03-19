@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Loader2, ImagePlus, X, AlertCircle, Toggle, ChevronDown } from "lucide-react";
+import { Loader2, ImagePlus, AlertCircle } from "lucide-react";
 import type { Category } from "../category.types";
 import { getAllCategories, createCategory, updateCategory } from "../_libs/categories";
 

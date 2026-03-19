@@ -39,10 +39,24 @@ export interface VoucherPagination {
   totalPages: number;
 }
 
+export interface VoucherMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusCounts: { ALL: number; active: number; inactive: number; expired: number; upcoming: number };
+  ALL: number;
+  active: number;
+  inactive: number;
+  expired: number;
+  upcoming: number;
+}
+
 export interface VouchersResponse {
   data: VoucherCard[];
   pagination: VoucherPagination;
   message: string;
+  meta: VoucherMeta;
 }
 
 export interface GetVouchersParams {

@@ -91,7 +91,7 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
           // ── Upload adapter ───────────────────────────────────────────────
           // Phải khai báo qua extraPlugins để CKEditor khởi tạo FileRepository
           // trước khi adapter được gắn vào.
-          extraPlugins: [createUploadAdapterPlugin(uploadFolder)],
+          extraPlugins: [createUploadAdapterPlugin(uploadFolder as "products" | "avatars" | "banners" | "blogs" | "documents")],
 
           plugins: [
             Essentials,

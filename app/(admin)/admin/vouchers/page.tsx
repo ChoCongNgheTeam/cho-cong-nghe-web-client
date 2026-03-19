@@ -468,7 +468,7 @@ export default function VouchersPage() {
               </select>
               <span className="text-[12px] text-neutral-dark">/ {meta.total} voucher</span>
             </div>
-            <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            {/* <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} /> */}
           </div>
         )}
       </div>

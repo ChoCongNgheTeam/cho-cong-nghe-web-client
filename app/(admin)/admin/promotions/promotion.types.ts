@@ -41,6 +41,7 @@ export interface PromotionsMeta {
   limit: number;
   total: number;
   totalPages: number;
+  statusCounts: { [key: string]: number };
 }
 
 export interface PromotionsResponse {

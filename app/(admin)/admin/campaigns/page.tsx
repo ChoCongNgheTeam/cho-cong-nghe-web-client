@@ -6,7 +6,7 @@ import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
-import type { Campaign } from "./campaign.types";
+import type { Campaign, CampaignType } from "./campaign.types";
 import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_libs/campaigns";
 import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
 import { getCampaignColumns } from "./components/TableCampaigns";
@@ -39,6 +39,7 @@ const STATUS_TABS = [
   { value: "expired", label: "Đã kết thúc" },
   { value: "inactive", label: "Tạm dừng" },
 ];
+type SortField = "createdAt" | "name" | "startDate" | "endDate" | "publishedAt" | undefined;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -55,8 +56,9 @@ export default function CampaignsPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(undefined);
+
+  const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -90,7 +92,7 @@ export default function CampaignsPage() {
     if (tab === "inactive") return { isActive: false };
     if (tab === "upcoming") return { isActive: true }; // BE filter by startDate > now
     if (tab === "expired") return { isActive: undefined };
-    return { isActive: undefined };
+    return {};
   };
 
   // ── Fetch (server-side) ───────────────────────────────────────────────────────
@@ -102,13 +104,13 @@ export default function CampaignsPage() {
         page,
         limit: pageSize,
         search: search || undefined,
-        type: typeFilter || undefined,
+        type: typeFilter,
         sortBy,
         sortOrder,
         ...tabToParams(activeTab),
       });
       setCampaigns(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as CampaignMeta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách chiến dịch");
     } finally {
@@ -130,7 +132,7 @@ export default function CampaignsPage() {
     setSearch("");
     setSearchInput("");
     setActiveTab("ALL");
-    setTypeFilter("");
+    setTypeFilter(undefined);
     setSortBy("createdAt");
     setSortOrder("desc");
     resetPage();
@@ -311,10 +313,7 @@ export default function CampaignsPage() {
           {/* Type filter */}
           <select
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              resetPage();
-            }}
+            onChange={(e) => setTypeFilter(e.target.value === "" ? undefined : (e.target.value as CampaignType))}
             className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
           >
             {TYPE_OPTIONS.map((opt) => (

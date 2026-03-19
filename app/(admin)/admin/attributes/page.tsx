@@ -30,7 +30,7 @@ export default function AttributesPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortBy, setSortBy] = useState<"createdAt" | "name" | "code">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -60,7 +60,7 @@ export default function AttributesPage() {
         sortOrder,
       });
       setAttrs(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as Meta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách thuộc tính");
     } finally {
@@ -301,7 +301,7 @@ export default function AttributesPage() {
           <select
             value={sortBy}
             onChange={(e) => {
-              setSortBy(e.target.value);
+              setSortBy(e.target.value as "createdAt" | "name" | "code");
               resetPage();
             }}
             className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
