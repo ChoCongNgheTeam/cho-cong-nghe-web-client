@@ -593,11 +593,18 @@ export default function CommentSection({
             <button
               key={option.value}
               onClick={() => setSelectedRating(option.value)}
-              className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm border whitespace-nowrap transition-colors cursor-pointer ${
-                selectedRating === option.value
-                  ? "border-promotion text-promotion bg-promotion/10"
-                  : "border-neutral-dark text-neutral-darker hover:border-neutral-darker"
-              }`}
+              className={`
+    relative px-4 sm:px-5 py-1.5 sm:py-2
+    rounded-full text-xs sm:text-sm font-medium
+    whitespace-nowrap cursor-pointer
+    border transition-all duration-200
+    select-none
+    ${
+      selectedRating === option.value
+        ? "border-accent text-accent bg-accent/10 shadow-sm shadow-accent/20"
+        : "border-neutral-dark text-neutral-darker bg-transparent hover:border-neutral-darker hover:bg-neutral-dark/10"
+    }
+  `}
             >
               {option.label}
             </button>

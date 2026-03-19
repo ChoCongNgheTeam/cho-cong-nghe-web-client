@@ -146,6 +146,7 @@ export default function OrderPaymentPage() {
                success: boolean;
                data: OrderData;
             }>(`/orders/by-code/${orderCode}/payment-info`);
+            console.log(res);
             if (res?.success && res.data) setData(res.data);
             else setError("Không tìm thấy thông tin đơn hàng.");
          } catch {
@@ -195,8 +196,7 @@ export default function OrderPaymentPage() {
    const subtotal = Number(data.subtotalAmount);
    const shipping = Number(data.shippingFee);
    const voucher = Number(data.voucherDiscount);
-   const tax = Math.max(0, total - subtotal - shipping + voucher);
-
+   const tax = Math.max(0, total - subtotal + voucher - shipping);
    return (
       <div className="min-h-screen bg-neutral-light py-8 px-4">
          <div className="w-full max-w-lg mx-auto space-y-4">

@@ -26,6 +26,7 @@ const Footer = () => {
 
    return (
       <footer className="bg-gray-900 text-white">
+         {/* ── Banner toàn quốc ── */}
          <div className="bg-gray-800 py-8">
             <div className="container">
                <h2 className="text-xl font-bold mb-2">
@@ -37,26 +38,30 @@ const Footer = () => {
                </p>
             </div>
          </div>
-         <div className="container not-only-of-type:py-12">
+
+         {/* ── Main grid ── */}
+         <div className="container py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+               {/* ── Cột 1: Logo + MXH + Hotline ── */}
                <div>
-                  <Link href={"/"}>
+                  <Link href="/">
                      <Image
-                        src={"/logo-dark.png"}
+                        src="/logo-dark.png"
                         width={180}
                         height={60}
                         alt="Logo"
-                        className="lg:h-18 w-auto hover:opacity-90 transition-opacity -mt-5 mb-5"
+                        className="w-auto hover:opacity-90 transition-opacity -mt-5 mb-5"
                         priority
                      />
                   </Link>
                   <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                     <span className="text-xl">ChoCongNghe</span> – Nền tảng mua
-                     sắm thiết bị điện tử chính hãng, giao nhanh toàn quốc.
+                     <span className="font-semibold">ChoCongNghe</span> – Nền
+                     tảng mua sắm thiết bị điện tử chính hãng, giao nhanh toàn
+                     quốc.
                   </p>
                   <div className="mb-6">
                      <h4 className="font-semibold mb-3">
-                        KẾT NÔI VỚI ChoCongNghe.
+                        KẾT NỐI VỚI ChoCongNghe
                      </h4>
                      <div className="flex gap-3">
                         <Link
@@ -117,6 +122,7 @@ const Footer = () => {
                   </div>
                </div>
 
+               {/* ── Cột 2: Về chúng tôi ── */}
                <div>
                   <button
                      onClick={() => toggleSection("about")}
@@ -124,15 +130,11 @@ const Footer = () => {
                   >
                      <h4 className="font-semibold">VỀ CHÚNG TÔI</h4>
                      <ChevronDown
-                        className={`w-5 h-5 md:hidden transition-transform ${
-                           openSections.about ? "rotate-180" : ""
-                        }`}
+                        className={`w-5 h-5 md:hidden transition-transform ${openSections.about ? "rotate-180" : ""}`}
                      />
                   </button>
                   <ul
-                     className={`space-y-2 text-sm text-gray-300 ${
-                        openSections.about ? "block" : "hidden md:block"
-                     }`}
+                     className={`space-y-2 text-sm text-gray-300 ${openSections.about ? "block" : "hidden md:block"}`}
                   >
                      {[
                         {
@@ -143,20 +145,32 @@ const Footer = () => {
                            label: "Quy chế hoạt động",
                            href: "/policies/regulations",
                         },
-                        { label: "Tư án Doanh nghiệp", href: "#" },
-                        { label: "Tin tức khuyến mãi", href: "#" },
-                        { label: "Giới thiệu máy đổi trả", href: "#" },
+                        {
+                           label: "Tư án Doanh nghiệp",
+                           href: "/policies/enterprise-projects",
+                        },
+                        { label: "Tin tức khuyến mãi", href: "/policies/news" },
+                        {
+                           label: "Giới thiệu máy đổi trả",
+                           href: "/policies/exchangeIntro",
+                        },
                         {
                            label: "Hướng dẫn mua hàng & thanh toán online",
-                           href: "#",
+                           href: "/policies/shoppingGuide",
                         },
                         {
                            label: "Đại lý ủy quyền và TTBH ủy quyền của Apple",
-                           href: "#",
+                           href: "/policies/apple-authorized-centers",
                         },
-                        { label: "Tra cứu hoá đơn điện tử", href: "#" },
-                        { label: "Tra cứu bảo hành", href: "#" },
-                        { label: "Câu hỏi thường gặp", href: "#" },
+                        {
+                           label: "Tra cứu hoá đơn điện tử",
+                           href: "/Invoicelookup",
+                        },
+                        {
+                           label: "Tra cứu bảo hành",
+                           href: "/policies/warranty-lookup",
+                        },
+                        { label: "Câu hỏi thường gặp", href: "/policies/faq" },
                      ].map((item) => (
                         <li key={item.label}>
                            <Link
@@ -170,6 +184,7 @@ const Footer = () => {
                   </ul>
                </div>
 
+               {/* ── Cột 3: Chính sách ── */}
                <div>
                   <button
                      onClick={() => toggleSection("policy")}
@@ -177,15 +192,11 @@ const Footer = () => {
                   >
                      <h4 className="font-semibold">CHÍNH SÁCH</h4>
                      <ChevronDown
-                        className={`w-5 h-5 md:hidden transition-transform ${
-                           openSections.policy ? "rotate-180" : ""
-                        }`}
+                        className={`w-5 h-5 md:hidden transition-transform ${openSections.policy ? "rotate-180" : ""}`}
                      />
                   </button>
                   <ul
-                     className={`space-y-2 text-sm text-gray-300 ${
-                        openSections.policy ? "block" : "hidden md:block"
-                     }`}
+                     className={`space-y-2 text-sm text-gray-300 ${openSections.policy ? "block" : "hidden md:block"}`}
                   >
                      {[
                         {
@@ -206,7 +217,7 @@ const Footer = () => {
                         },
                         {
                            label: "Chính sách khui hộp sản phẩm",
-                           href: "/policies/unboxing",
+                           href: "/policies/unbox-policy",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt",
@@ -245,6 +256,7 @@ const Footer = () => {
                   </ul>
                </div>
 
+               {/* ── Cột 4: Thanh toán + Chứng nhận ── */}
                <div>
                   <button
                      onClick={() => toggleSection("payment")}
@@ -252,22 +264,17 @@ const Footer = () => {
                   >
                      <h4 className="font-semibold">HỖ TRỢ THANH TOÁN</h4>
                      <ChevronDown
-                        className={`w-5 h-5 md:hidden transition-transform ${
-                           openSections.payment ? "rotate-180" : ""
-                        }`}
+                        className={`w-5 h-5 md:hidden transition-transform ${openSections.payment ? "rotate-180" : ""}`}
                      />
                   </button>
                   <div
                      className={`${openSections.payment ? "block" : "hidden md:block"}`}
                   >
                      <div className="grid grid-cols-3 gap-2 mb-6">
-                        {/* COD */}
-                        <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
-                           <span className="text-green-700 font-bold text-xs leading-tight">
-                              COD
-                           </span>
-                           <span className="text-gray-500 text-[8px] leading-tight text-center">
-                              Nhận hàng
+                        {/* VISA */}
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-blue-700 font-bold text-lg italic">
+                              VISA
                            </span>
                         </div>
                         {/* MoMo */}
@@ -283,27 +290,27 @@ const Footer = () => {
                            </span>
                         </div>
                         {/* ZaloPay */}
-                        <div className="bg-blue-500 rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
-                           <span className="text-white font-bold text-xs leading-tight">
-                              Zalo
-                           </span>
-                           <span className="text-white font-bold text-xs leading-tight">
-                              Pay
+                        <div className="bg-blue-500 rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-white font-bold text-xs">
+                              ZaloPay
                            </span>
                         </div>
-                        {/* Chuyển khoản ngân hàng */}
+                        {/* COD */}
                         <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
-                           <span className="text-blue-700 font-bold text-[9px] leading-tight text-center">
+                           <span className="text-green-700 font-bold text-xs">
+                              COD
+                           </span>
+                           <span className="text-gray-500 text-[8px]">
+                              Nhận hàng
+                           </span>
+                        </div>
+                        {/* Chuyển khoản */}
+                        <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
+                           <span className="text-blue-700 font-bold text-[9px] text-center">
                               Ngân hàng
                            </span>
-                           <span className="text-blue-700 text-[8px] leading-tight text-center">
+                           <span className="text-blue-700 text-[8px] text-center">
                               Chuyển khoản
-                           </span>
-                        </div>
-                        {/* VISA */}
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-blue-700 font-bold text-lg italic">
-                              VISA
                            </span>
                         </div>
                      </div>
@@ -345,6 +352,8 @@ const Footer = () => {
                </div>
             </div>
          </div>
+
+         {/* ── Bottom bar ── */}
          <div className="border-t border-gray-700">
             <div className="container py-6">
                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-sm text-gray-400">

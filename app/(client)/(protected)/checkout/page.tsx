@@ -483,10 +483,15 @@ export default function CheckoutPage() {
    const displayDiscount = totalDiscount;
    const displayVoucherDiscount = voucherValue;
    const displayFinalTotal = finalTotal;
-   const mobileFinalTotal = Math.max(0, finalTotal - voucherValue);
    const shippingFee = previewData?.shippingFee;
-   const taxAmount = previewData?.taxAmount;
-
+   const amountAfterDiscount = Math.max(
+      0,
+      subtotal - totalDiscount - voucherValue,
+   );
+   const calculatedTax = amountAfterDiscount * 0.1;
+   const confirmTotal =
+      amountAfterDiscount + calculatedTax + (shippingFee ?? 0);
+   const mobileFinalTotal = confirmTotal; // ← dùng chung 1 biến
    const shippingProps: ShippingSectionProps = {
       isLoadingAddresses,
       savedAddresses,
@@ -610,7 +615,8 @@ export default function CheckoutPage() {
                         onTermsChange={setAgreedToTerms}
                         isCheckoutPage
                         shippingFee={shippingFee}
-                        taxAmount={taxAmount}
+                        taxAmount={calculatedTax}
+                        computedTotal={confirmTotal}
                      />
                   </div>
                </div>
@@ -876,7 +882,7 @@ export default function CheckoutPage() {
                   <p className="text-sm text-neutral-darker mb-1">
                      Tổng thanh toán:{" "}
                      <span className="font-bold text-primary">
-                        {formatVND(displayFinalTotal)}
+                        {formatVND(confirmTotal)}{" "}
                      </span>
                   </p>
                   <p className="text-base text-neutral-darker mb-5">

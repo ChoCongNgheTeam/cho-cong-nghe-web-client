@@ -61,29 +61,27 @@ const defaultForm: AddressForm = {
 };
 
 export default function AddressPage() {
-   const [isOpen, setIsOpen] = useState(false);
-   const [editingId, setEditingId] = useState<string | null>(null);
-   const [addresses, setAddresses] = useState<Address[]>([]);
-   const [loading, setLoading] = useState(true);
-   const [submitting, setSubmitting] = useState(false);
-   const [deletingId, setDeletingId] = useState<string | null>(null);
-   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(
-      null,
-   );
-   const [provinces, setProvinces] = useState<Province[]>([]);
-   const [wards, setWards] = useState<Ward[]>([]);
-   const [errors, setErrors] = useState<
-      Partial<Record<keyof AddressForm, string>>
-   >({});
-   const [form, setForm] = useState<AddressForm>(defaultForm);
-   const [editingOriginalPhone, setEditingOriginalPhone] = useState("");
-   const [editingIsDefault, setEditingIsDefault] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof AddressForm, string>>
+  >({});
+  const [form, setForm] = useState<AddressForm>(defaultForm);
+  const [editingOriginalPhone, setEditingOriginalPhone] = useState("");
+  const [editingIsDefault, setEditingIsDefault] = useState(false);
 
-   const { user, refreshUser } = useAuth();
-   const router = useRouter();
-   const searchParams = useSearchParams();
-   const redirectTo = searchParams.get("redirect");
+  const { user, refreshUser } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
 
    useEffect(() => {
       const fetchAddresses = async () => {
@@ -124,52 +122,48 @@ export default function AddressPage() {
       setErrors((prev) => ({ ...prev, [key]: undefined }));
    };
 
-   const validate = (): boolean => {
-      const newErrors: Partial<Record<keyof AddressForm, string>> = {};
+  const validate = (): boolean => {
+    const newErrors: Partial<Record<keyof AddressForm, string>> = {};
 
       if (!form.contactName.trim())
          newErrors.contactName = "Vui lòng nhập họ tên";
 
-      if (!form.phone.trim()) {
-         newErrors.phone = "Vui lòng nhập số điện thoại";
-      } else if (!/^(\+84|0)[0-9]{9,10}$/.test(form.phone)) {
-         newErrors.phone = "Số điện thoại không hợp lệ";
-      } else {
-         const isDuplicate = addresses.some((a) => {
-            if (editingId && a.id === editingId) return false;
-            return a.phone === form.phone;
-         });
-         if (isDuplicate)
-            newErrors.phone =
-               "Số điện thoại này đã được sử dụng ở địa chỉ khác.";
-      }
+    if (!form.phone.trim()) {
+      newErrors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!/^(\+84|0)[0-9]{9,10}$/.test(form.phone)) {
+      newErrors.phone = "Số điện thoại không hợp lệ";
+    } else {
+      const isDuplicate = addresses.some((a) => {
+        if (editingId && a.id === editingId) return false;
+        return a.phone === form.phone;
+      });
+      if (isDuplicate)
+        newErrors.phone = "Số điện thoại này đã được sử dụng ở địa chỉ khác.";
+    }
 
-      if (!form.provinceId)
-         newErrors.provinceId = "Vui lòng chọn tỉnh/thành phố";
+    if (!form.provinceId) newErrors.provinceId = "Vui lòng chọn tỉnh/thành phố";
 
-      if (!form.wardId) newErrors.wardId = "Vui lòng chọn phường/xã";
+    if (!form.wardId) newErrors.wardId = "Vui lòng chọn phường/xã";
 
-      if (!form.detailAddress.trim()) {
-         newErrors.detailAddress = "Vui lòng nhập địa chỉ cụ thể";
-      } else if (form.detailAddress.trim().length < 5) {
-         newErrors.detailAddress = "Địa chỉ cụ thể quá ngắn";
-      } else if (form.detailAddress.trim().length > 200) {
-         newErrors.detailAddress =
-            "Địa chỉ cụ thể không được vượt quá 200 ký tự";
-      } else {
-         const isDuplicateAddress = addresses.some((a) => {
-            if (editingId && a.id === editingId) return false;
-            return (
-               a.province.id === form.provinceId &&
-               a.ward.id === form.wardId &&
-               a.detailAddress.trim().toLowerCase() ===
-                  form.detailAddress.trim().toLowerCase()
-            );
-         });
-         if (isDuplicateAddress)
-            newErrors.detailAddress =
-               "Địa chỉ này đã tồn tại trong sổ địa chỉ.";
-      }
+    if (!form.detailAddress.trim()) {
+      newErrors.detailAddress = "Vui lòng nhập địa chỉ cụ thể";
+    } else if (form.detailAddress.trim().length < 5) {
+      newErrors.detailAddress = "Địa chỉ cụ thể quá ngắn";
+    } else if (form.detailAddress.trim().length > 200) {
+      newErrors.detailAddress = "Địa chỉ cụ thể không được vượt quá 200 ký tự";
+    } else {
+      const isDuplicateAddress = addresses.some((a) => {
+        if (editingId && a.id === editingId) return false;
+        return (
+          a.province.id === form.provinceId &&
+          a.ward.id === form.wardId &&
+          a.detailAddress.trim().toLowerCase() ===
+            form.detailAddress.trim().toLowerCase()
+        );
+      });
+      if (isDuplicateAddress)
+        newErrors.detailAddress = "Địa chỉ này đã tồn tại trong sổ địa chỉ.";
+    }
 
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
@@ -214,46 +208,46 @@ export default function AddressPage() {
       }
    };
 
-   const handleSetDefault = async (id: string) => {
-      setSettingDefaultId(id);
-      try {
-         const res = await apiRequest.patch<{
-            success: boolean;
-            data: Address;
-         }>(`/addresses/${id}`, { isDefault: true });
-         if (res?.success) {
-            setAddresses((prev) =>
-               prev.map((a) => ({ ...a, isDefault: a.id === id })),
-            );
-            await syncPhoneToProfile(
-               addresses.find((a) => a.id === id)?.phone ?? "",
-            );
-            if (redirectTo === "checkout") {
-               router.push("/checkout");
-               return;
-            }
-         }
-      } catch (error: any) {
-         console.error("Lỗi khi đặt địa chỉ mặc định:", error?.message);
-      } finally {
-         setSettingDefaultId(null);
+  const handleSetDefault = async (id: string) => {
+    setSettingDefaultId(id);
+    try {
+      const res = await apiRequest.patch<{
+        success: boolean;
+        data: Address;
+      }>(`/addresses/${id}`, { isDefault: true });
+      if (res?.success) {
+        setAddresses((prev) =>
+          prev.map((a) => ({ ...a, isDefault: a.id === id })),
+        );
+        await syncPhoneToProfile(
+          addresses.find((a) => a.id === id)?.phone ?? "",
+        );
+        if (redirectTo === "checkout") {
+          router.push("/checkout");
+          return;
+        }
       }
-   };
+    } catch (error: any) {
+      console.error("Lỗi khi đặt địa chỉ mặc định:", error?.message);
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
 
-   const handleApiError = (error: any) => {
-      const message: string = error?.message ?? "";
-      if (message.toLowerCase().includes("duplicate")) {
-         setErrors((prev) => ({
-            ...prev,
-            phone: "Số điện thoại này đã được sử dụng ở địa chỉ khác.",
-         }));
-      } else {
-         setErrors((prev) => ({
-            ...prev,
-            detailAddress: message || "Có lỗi xảy ra, vui lòng thử lại.",
-         }));
-      }
-   };
+  const handleApiError = (error: any) => {
+    const message: string = error?.message ?? "";
+    if (message.toLowerCase().includes("duplicate")) {
+      setErrors((prev) => ({
+        ...prev,
+        phone: "Số điện thoại này đã được sử dụng ở địa chỉ khác.",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        detailAddress: message || "Có lỗi xảy ra, vui lòng thử lại.",
+      }));
+    }
+  };
 
    const handleCreate = async () => {
       if (!validate()) return;
@@ -317,37 +311,37 @@ export default function AddressPage() {
       }
    };
 
-   const handleUpdate = async () => {
-      if (!validate() || !editingId) return;
-      setSubmitting(true);
-      try {
-         const res = await apiRequest.patch<{
-            success: boolean;
-            data: Address;
-         }>(`/addresses/${editingId}`, form);
-         if (res?.success) {
-            const phoneChanged = form.phone !== editingOriginalPhone;
-            if (editingIsDefault && phoneChanged) {
-               await syncPhoneToProfile(form.phone);
-            }
-            setAddresses((prev) =>
-               prev.map((a) => {
-                  if (a.id === editingId) return res.data;
-                  if (res.data.isDefault) return { ...a, isDefault: false };
-                  return a;
-               }),
-            );
-            handleClose();
-            if (redirectTo === "checkout") {
-               router.push("/checkout");
-            }
-         }
-      } catch (error: any) {
-         handleApiError(error);
-      } finally {
-         setSubmitting(false);
+  const handleUpdate = async () => {
+    if (!validate() || !editingId) return;
+    setSubmitting(true);
+    try {
+      const res = await apiRequest.patch<{
+        success: boolean;
+        data: Address;
+      }>(`/addresses/${editingId}`, form);
+      if (res?.success) {
+        const phoneChanged = form.phone !== editingOriginalPhone;
+        if (editingIsDefault && phoneChanged) {
+          await syncPhoneToProfile(form.phone);
+        }
+        setAddresses((prev) =>
+          prev.map((a) => {
+            if (a.id === editingId) return res.data;
+            if (res.data.isDefault) return { ...a, isDefault: false };
+            return a;
+          }),
+        );
+        handleClose();
+        if (redirectTo === "checkout") {
+          router.push("/checkout");
+        }
       }
-   };
+    } catch (error: any) {
+      handleApiError(error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
    const handleSubmit = () => (editingId ? handleUpdate() : handleCreate());
 
@@ -384,375 +378,344 @@ export default function AddressPage() {
 
    if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
 
-   return (
-      <>
-         <div>
-            {/* ── Header ── */}
-            <div className="flex items-center justify-between mt-2 mb-4">
-               <div className="flex items-center gap-3">
-                  {redirectTo === "checkout" && (
-                     <button
-                        onClick={() => router.push("/checkout")}
-                        className="flex items-center gap-1 text-sm text-primary-dark hover:text-primary transition-colors cursor-pointer"
-                     >
-                        ← Quay lại thanh toán
-                     </button>
-                  )}
-                  <h1 className="text-2xl font-semibold text-primary">
-                     Sổ địa chỉ nhận hàng
-                  </h1>
-               </div>
-               {addresses.length > 0 && (
-                  <button
-                     onClick={() => setIsOpen(true)}
-                     className="flex items-center gap-1 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
-                  >
-                     <Plus size={24} />
-                     Thêm địa chỉ
-                  </button>
-               )}
-            </div>
-
-            {/* ── Empty state ── */}
-            {addresses.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-10 px-4">
-                  <div className="mb-2">
-                     <img
-                        src="https://cdn2.fptshop.com.vn/unsafe/750x0/filters:format(webp):quality(75)/estore-v2/img/empty_address_book.png"
-                        alt="Không có địa chỉ"
-                        className="object-contain w-60 h-60 mx-auto"
-                     />
-                  </div>
-                  <h3 className="text-lg font-semibold text-primary mb-2">
-                     Bạn chưa có lưu địa chỉ nào
-                  </h3>
-                  <p className="text-primary-dark mb-6 text-center text-sm">
-                     Cập nhật địa chỉ ngay để có trải nghiệm mua hàng nhanh
-                     nhất!
-                  </p>
-                  <button
-                     onClick={() => setIsOpen(true)}
-                     className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
-                  >
-                     Cập nhật ngay
-                  </button>
-               </div>
-            ) : (
-               /* ── Address list ── */
-               <div className="space-y-3">
-                  {addresses.map((addr) => {
-                     const { label, icon } = typeLabel(addr.type);
-                     return (
-                        <div
-                           key={addr.id}
-                           className="bg-neutral-light border border-neutral rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-                        >
-                           <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 space-y-3">
-                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-primary">
-                                       {addr.contactName}
-                                    </span>
-                                    <span className="text-primary">|</span>
-                                    <span className="text-primary-dark text-sm">
-                                       {addr.phone}
-                                    </span>
-                                    {addr.isDefault && (
-                                       <span className="flex items-center gap-1 text-xs text-accent border border-accent/30 bg-accent/5 px-2 py-0.5 rounded-full font-medium">
-                                          <Star
-                                             size={11}
-                                             className="fill-accent text-accent"
-                                          />
-                                          Mặc định
-                                       </span>
-                                    )}
-                                 </div>
-                                 <p className="text-sm text-primary-dark">
-                                    {addr.fullAddress}
-                                 </p>
-                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="inline-flex items-center gap-1 text-sm text-primary-dark bg-neutral-light-active px-2 py-0.5 rounded-full">
-                                       {icon}
-                                       {label}
-                                    </span>
-                                    {!addr.isDefault && (
-                                       <button
-                                          onClick={() =>
-                                             handleSetDefault(addr.id)
-                                          }
-                                          disabled={
-                                             settingDefaultId === addr.id
-                                          }
-                                          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-3 py-1 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                       >
-                                          <Star
-                                             size={11}
-                                             className="text-accent"
-                                          />
-                                          {settingDefaultId === addr.id
-                                             ? "Đang đặt..."
-                                             : "Đặt làm mặc định"}
-                                       </button>
-                                    )}
-                                 </div>
-                              </div>
-                              <div className="flex gap-2 shrink-0">
-                                 <button
-                                    onClick={() => handleOpenEdit(addr)}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
-                                 >
-                                    Sửa
-                                 </button>
-                                 {!addr.isDefault && (
-                                    <button
-                                       onClick={() =>
-                                          setConfirmDeleteId(addr.id)
-                                       }
-                                       disabled={deletingId === addr.id}
-                                       className="inline-flex items-center gap-1.5 text-xs font-medium text-promotion border border-promotion/30 bg-promotion/5 hover:bg-promotion/10 px-3 py-1.5 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                       {deletingId === addr.id
-                                          ? "Đang xóa..."
-                                          : "Xóa"}
-                                    </button>
-                                 )}
-                              </div>
-                           </div>
-                        </div>
-                     );
-                  })}
-               </div>
+  return (
+    <>
+      <div>
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between mt-2 mb-4">
+          <div className="flex items-center gap-3">
+            {redirectTo === "checkout" && (
+              <button
+                onClick={() => router.push("/checkout")}
+                className="flex items-center gap-1 text-sm text-primary-dark hover:text-primary transition-colors cursor-pointer"
+              >
+                ← Quay lại thanh toán
+              </button>
             )}
+            <h1 className="text-2xl font-semibold text-primary">
+              Sổ địa chỉ nhận hàng
+            </h1>
+          </div>
+          {addresses.length > 0 && (
+            <button
+              onClick={() => setIsOpen(true)}
+              className="flex items-center gap-1 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-full text-base font-semibold transition-colors shadow-md cursor-pointer"
+            >
+              <Plus size={24} />
+              Thêm địa chỉ
+            </button>
+          )}
+        </div>
 
-            {/* ── Confirm delete modal ── */}
-            <Popzy
-               isOpen={!!confirmDeleteId}
-               onClose={() => setConfirmDeleteId(null)}
-               closeMethods={["overlay", "escape"]}
-               cssClass="!max-w-sm !mx-4"
-               content={
-                  <div className="flex flex-col items-center text-center gap-3 pt-2">
-                     <div className="w-12 h-12 rounded-full bg-promotion-light flex items-center justify-center">
-                        <MapPin size={22} className="text-promotion" />
-                     </div>
-                     <h3 className="text-base font-semibold text-primary">
-                        Xóa địa chỉ này?
-                     </h3>
-                     <p className="text-sm text-primary-dark leading-relaxed">
-                        Địa chỉ{" "}
-                        <span className="font-medium text-primary">
-                           {
-                              addresses.find((a) => a.id === confirmDeleteId)
-                                 ?.fullAddress
-                           }
-                        </span>{" "}
-                        sẽ bị xóa vĩnh viễn và không thể khôi phục.
-                     </p>
-                     <div className="flex gap-3 w-full mt-3">
+        {/* ── Empty state ── */}
+        {addresses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 px-4">
+            <div className="mb-2">
+              <img
+                src="https://cdn2.fptshop.com.vn/unsafe/750x0/filters:format(webp):quality(75)/estore-v2/img/empty_address_book.png"
+                alt="Không có địa chỉ"
+                className="object-contain w-60 h-60 mx-auto"
+              />
+            </div>
+            <h3 className="text-lg font-semibold text-primary mb-2">
+              Bạn chưa có lưu địa chỉ nào
+            </h3>
+            <p className="text-primary-dark mb-6 text-center text-sm">
+              Cập nhật địa chỉ ngay để có trải nghiệm mua hàng nhanh nhất!
+            </p>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+            >
+              Cập nhật ngay
+            </button>
+          </div>
+        ) : (
+          /* ── Address list ── */
+          <div className="space-y-3">
+            {addresses.map((addr) => {
+              const { label, icon } = typeLabel(addr.type);
+              return (
+                <div
+                  key={addr.id}
+                  className="bg-neutral-light border border-neutral rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-primary">
+                          {addr.contactName}
+                        </span>
+                        <span className="text-primary">|</span>
+                        <span className="text-primary-dark text-sm">
+                          {addr.phone}
+                        </span>
+                        {addr.isDefault && (
+                          <span className="flex items-center gap-1 text-xs text-accent border border-accent/30 bg-accent/5 px-2 py-0.5 rounded-full font-medium">
+                            <Star
+                              size={11}
+                              className="fill-accent text-accent"
+                            />
+                            Mặc định
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-primary-dark">
+                        {addr.fullAddress}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 text-sm text-primary-dark bg-neutral-light-active px-2 py-0.5 rounded-full">
+                          {icon}
+                          {label}
+                        </span>
+                        {!addr.isDefault && (
+                          <button
+                            onClick={() => handleSetDefault(addr.id)}
+                            disabled={settingDefaultId === addr.id}
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-3 py-1 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            <Star size={11} className="text-accent" />
+                            {settingDefaultId === addr.id
+                              ? "Đang đặt..."
+                              : "Đặt làm mặc định"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => handleOpenEdit(addr)}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                      >
+                        Sửa
+                      </button>
+                      {!addr.isDefault && (
                         <button
-                           onClick={() => setConfirmDeleteId(null)}
-                           className="flex-1 px-4 py-2.5 rounded-xl border border-neutral bg-neutral-light hover:bg-neutral text-primary text-sm font-medium transition-colors cursor-pointer"
+                          onClick={() => setConfirmDeleteId(addr.id)}
+                          disabled={deletingId === addr.id}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-promotion border border-promotion/30 bg-promotion/5 hover:bg-promotion/10 px-3 py-1.5 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                           Hủy
+                          {deletingId === addr.id ? "Đang xóa..." : "Xóa"}
                         </button>
-                        <button
-                           onClick={handleDelete}
-                           className="flex-1 px-4 py-2.5 rounded-xl bg-promotion hover:bg-promotion-hover text-white text-sm font-medium transition-colors cursor-pointer"
-                        >
-                           Xóa
-                        </button>
-                     </div>
+                      )}
+                    </div>
                   </div>
-               }
-            />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-            {/* ── Add / Edit modal ── */}
-            <Popzy
-               isOpen={isOpen}
-               scrollLockTarget={() => document.documentElement}
-               onClose={handleClose}
-               closeMethods={["escape", "overlay", "button"]}
-               footer={true}
-               cssClass="max-w-[600px] w-full"
-               content={
-                  <div className="overflow-y-auto scrollbar-thin pl-2 mt-6">
-                     <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2 border-neutral">
-                        {editingId ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
-                     </h2>
-                     <div className="divide-y divide-neutral">
-                        <div className="py-4 space-y-2">
-                           <label className="block text-sm font-medium text-primary">
-                              Thông tin người nhận
-                           </label>
-                           <input
-                              type="text"
-                              value={form.contactName}
-                              onChange={(e) =>
-                                 setField("contactName", e.target.value)
-                              }
-                              placeholder="Nhập họ và tên người nhận"
-                              className={inputClass}
-                           />
-                           {errors.contactName && (
-                              <p className="text-xs text-promotion">
-                                 {errors.contactName}
-                              </p>
-                           )}
-                        </div>
-                        <div className="py-4 space-y-2">
-                           <label className="block text-sm font-medium text-primary">
-                              Số điện thoại
-                           </label>
-                           <input
-                              type="text"
-                              value={form.phone}
-                              onChange={(e) =>
-                                 setField("phone", e.target.value)
-                              }
-                              placeholder="Nhập số điện thoại"
-                              className={inputClass}
-                           />
-                           {errors.phone && (
-                              <p className="text-xs text-promotion">
-                                 {errors.phone}
-                              </p>
-                           )}
-                        </div>
-                        <div className="py-4 space-y-2">
-                           <label className="block text-sm font-medium text-primary">
-                              Tỉnh/Thành phố
-                           </label>
-                           <select
-                              value={form.provinceId}
-                              onChange={(e) => {
-                                 setField("provinceId", e.target.value);
-                                 setField("wardId", "");
-                                 setWards([]);
-                              }}
-                              className={inputClass}
-                           >
-                              <option value="">Chọn Tỉnh/Thành phố</option>
-                              {provinces.map((p) => (
-                                 <option key={p.id} value={p.id}>
-                                    {p.fullName}
-                                 </option>
-                              ))}
-                           </select>
-                           {errors.provinceId && (
-                              <p className="text-xs text-promotion">
-                                 {errors.provinceId}
-                              </p>
-                           )}
-                        </div>
-                        <div className="py-4 space-y-2">
-                           <label className="block text-sm font-medium text-primary">
-                              Phường/Xã
-                           </label>
-                           <select
-                              value={form.wardId}
-                              onChange={(e) =>
-                                 setField("wardId", e.target.value)
-                              }
-                              disabled={!form.provinceId}
-                              className={`${inputClass} disabled:bg-neutral-light-active disabled:text-primary-dark disabled:cursor-not-allowed`}
-                           >
-                              <option value="">Chọn Phường/Xã</option>
-                              {wards.map((w) => (
-                                 <option key={w.id} value={w.id}>
-                                    {w.fullName}
-                                 </option>
-                              ))}
-                           </select>
-                           {errors.wardId && (
-                              <p className="text-xs text-promotion">
-                                 {errors.wardId}
-                              </p>
-                           )}
-                        </div>
-                        <div className="py-4 space-y-2">
-                           <label className="block text-sm font-medium text-primary">
-                              Địa chỉ cụ thể
-                           </label>
-                           <input
-                              type="text"
-                              value={form.detailAddress}
-                              onChange={(e) =>
-                                 setField("detailAddress", e.target.value)
-                              }
-                              placeholder="Nhập địa chỉ cụ thể"
-                              className={inputClass}
-                           />
-                           {errors.detailAddress && (
-                              <p className="text-xs text-promotion">
-                                 {errors.detailAddress}
-                              </p>
-                           )}
-                        </div>
-                        <div className="py-4 space-y-2">
-                           <label className="block text-sm font-medium text-primary">
-                              Loại địa chỉ
-                           </label>
-                           <div className="flex gap-3">
-                              {(["HOME", "OFFICE", "OTHER"] as const).map(
-                                 (t) => {
-                                    const { label, icon } = typeLabel(t);
-                                    return (
-                                       <button
-                                          key={t}
-                                          type="button"
-                                          onClick={() => setField("type", t)}
-                                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
-                                             form.type === t
-                                                ? "border-accent text-accent bg-accent-light"
-                                                : "border-neutral text-primary-dark hover:border-neutral-dark"
-                                          }`}
-                                       >
-                                          {icon}
-                                          {label}
-                                       </button>
-                                    );
-                                 },
-                              )}
-                           </div>
-                        </div>
-                        <div className="py-4">
-                           <label className="flex items-center gap-2 cursor-pointer select-none">
-                              <input
-                                 type="checkbox"
-                                 checked={form.isDefault}
-                                 onChange={(e) =>
-                                    setField("isDefault", e.target.checked)
-                                 }
-                                 className="w-4 h-4 accent-accent"
-                              />
-                              <span className="text-sm text-primary">
-                                 Đặt làm địa chỉ mặc định
-                              </span>
-                           </label>
-                        </div>
-                     </div>
+        {/* ── Confirm delete modal ── */}
+        <Popzy
+          isOpen={!!confirmDeleteId}
+          onClose={() => setConfirmDeleteId(null)}
+          closeMethods={["overlay", "escape"]}
+          cssClass="!max-w-sm !mx-4"
+          content={
+            <div className="flex flex-col items-center text-center gap-3 pt-2">
+              <div className="w-12 h-12 rounded-full bg-promotion-light flex items-center justify-center">
+                <MapPin size={22} className="text-promotion" />
+              </div>
+              <h3 className="text-base font-semibold text-primary">
+                Xóa địa chỉ này?
+              </h3>
+              <p className="text-sm text-primary-dark leading-relaxed">
+                Địa chỉ{" "}
+                <span className="font-medium text-primary">
+                  {addresses.find((a) => a.id === confirmDeleteId)?.fullAddress}
+                </span>{" "}
+                sẽ bị xóa vĩnh viễn và không thể khôi phục.
+              </p>
+              <div className="flex gap-3 w-full mt-3">
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-neutral bg-neutral-light hover:bg-neutral text-primary text-sm font-medium transition-colors cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-promotion hover:bg-promotion-hover text-white text-sm font-medium transition-colors cursor-pointer"
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+          }
+        />
+
+        {/* ── Add / Edit modal ── */}
+        <Popzy
+          isOpen={isOpen}
+          scrollLockTarget={() => document.documentElement}
+          onClose={handleClose}
+          closeMethods={["escape", "overlay", "button"]}
+          footer={true}
+          cssClass="max-w-[600px] w-full"
+          content={
+            <div className="overflow-y-auto scrollbar-thin pl-2 mt-6">
+              <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2 border-neutral">
+                {editingId ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
+              </h2>
+              <div className="divide-y divide-neutral">
+                <div className="py-4 space-y-2">
+                  <label className="block text-sm font-medium text-primary">
+                    Thông tin người nhận
+                  </label>
+                  <input
+                    type="text"
+                    value={form.contactName}
+                    onChange={(e) => setField("contactName", e.target.value)}
+                    placeholder="Nhập họ và tên người nhận"
+                    className={inputClass}
+                  />
+                  {errors.contactName && (
+                    <p className="text-xs text-promotion">
+                      {errors.contactName}
+                    </p>
+                  )}
+                </div>
+                <div className="py-4 space-y-2">
+                  <label className="block text-sm font-medium text-primary">
+                    Số điện thoại
+                  </label>
+                  <input
+                    type="text"
+                    value={form.phone}
+                    onChange={(e) => setField("phone", e.target.value)}
+                    placeholder="Nhập số điện thoại"
+                    className={inputClass}
+                  />
+                  {errors.phone && (
+                    <p className="text-xs text-promotion">{errors.phone}</p>
+                  )}
+                </div>
+                <div className="py-4 space-y-2">
+                  <label className="block text-sm font-medium text-primary">
+                    Tỉnh/Thành phố
+                  </label>
+                  <select
+                    value={form.provinceId}
+                    onChange={(e) => {
+                      setField("provinceId", e.target.value);
+                      setField("wardId", "");
+                      setWards([]);
+                    }}
+                    className={inputClass}
+                  >
+                    <option value="">Chọn Tỉnh/Thành phố</option>
+                    {provinces.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.fullName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.provinceId && (
+                    <p className="text-xs text-promotion">
+                      {errors.provinceId}
+                    </p>
+                  )}
+                </div>
+                <div className="py-4 space-y-2">
+                  <label className="block text-sm font-medium text-primary">
+                    Phường/Xã
+                  </label>
+                  <select
+                    value={form.wardId}
+                    onChange={(e) => setField("wardId", e.target.value)}
+                    disabled={!form.provinceId}
+                    className={`${inputClass} disabled:bg-neutral-light-active disabled:text-primary-dark disabled:cursor-not-allowed`}
+                  >
+                    <option value="">Chọn Phường/Xã</option>
+                    {wards.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.fullName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.wardId && (
+                    <p className="text-xs text-promotion">{errors.wardId}</p>
+                  )}
+                </div>
+                <div className="py-4 space-y-2">
+                  <label className="block text-sm font-medium text-primary">
+                    Địa chỉ cụ thể
+                  </label>
+                  <input
+                    type="text"
+                    value={form.detailAddress}
+                    onChange={(e) => setField("detailAddress", e.target.value)}
+                    placeholder="Nhập địa chỉ cụ thể"
+                    className={inputClass}
+                  />
+                  {errors.detailAddress && (
+                    <p className="text-xs text-promotion">
+                      {errors.detailAddress}
+                    </p>
+                  )}
+                </div>
+                <div className="py-4 space-y-2">
+                  <label className="block text-sm font-medium text-primary">
+                    Loại địa chỉ
+                  </label>
+                  <div className="flex gap-3">
+                    {(["HOME", "OFFICE", "OTHER"] as const).map((t) => {
+                      const { label, icon } = typeLabel(t);
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setField("type", t)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
+                            form.type === t
+                              ? "border-accent text-accent bg-accent-light"
+                              : "border-neutral text-primary-dark hover:border-neutral-dark"
+                          }`}
+                        >
+                          {icon}
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
-               }
-               footerButtons={[
-                  {
-                     title: "Hủy",
-                     onClick: handleClose,
-                     className:
-                        "px-4 py-2 bg-neutral-light-active hover:bg-neutral text-primary rounded-lg cursor-pointer transition-colors",
-                  },
-                  {
-                     title: submitting
-                        ? "Đang lưu..."
-                        : editingId
-                          ? "Cập nhật"
-                          : "Lưu địa chỉ",
-                     onClick: handleSubmit,
-                     className:
-                        "px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg cursor-pointer transition-colors disabled:opacity-50",
-                  },
-               ]}
-            />
-         </div>
-      </>
-   );
+                </div>
+                <div className="py-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={form.isDefault}
+                      onChange={(e) => setField("isDefault", e.target.checked)}
+                      className="w-4 h-4 accent-accent"
+                    />
+                    <span className="text-sm text-primary">
+                      Đặt làm địa chỉ mặc định
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          }
+          footerButtons={[
+            {
+              title: "Hủy",
+              onClick: handleClose,
+              className:
+                "px-4 py-2 bg-neutral-light-active hover:bg-neutral text-primary rounded-lg cursor-pointer transition-colors",
+            },
+            {
+              title: submitting
+                ? "Đang lưu..."
+                : editingId
+                  ? "Cập nhật"
+                  : "Lưu địa chỉ",
+              onClick: handleSubmit,
+              className:
+                "px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg cursor-pointer transition-colors disabled:opacity-50",
+            },
+          ]}
+        />
+      </div>
+    </>
+  );
 }
