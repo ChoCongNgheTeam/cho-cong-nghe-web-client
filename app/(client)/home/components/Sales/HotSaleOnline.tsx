@@ -291,7 +291,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             </div>
 
             {/* ── Promotion info bar (nếu có nhiều promotion trong ngày) ── */}
-            {currentPromotions.length > 1 && (
+            {/* {currentPromotions.length > 1 && (
               <div className="flex gap-2 px-4 py-2 bg-promotion/5 border-b border-promotion/20 overflow-x-auto [scrollbar-width:none]">
                 {currentPromotions.map((promo) => (
                   <span key={promo.id} className="shrink-0 text-[11px] px-2.5 py-1 rounded-full bg-promotion/10 text-promotion font-medium whitespace-nowrap">
@@ -299,7 +299,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                   </span>
                 ))}
               </div>
-            )}
+            )} */}
 
             {/* ── Products ── */}
             <div className="px-4 py-3">
