@@ -1,9 +1,8 @@
-import { useState, useCallback, useRef, useContext } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import apiRequest from "@/lib/api";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
 import { useCart, NewVariantData } from "@/contexts/CartContext";
-import { AuthContext } from "@/contexts/AuthContext";
 import { useToasty } from "@/components/Toast";
 import { useAuth } from "./useAuth";
 
@@ -89,7 +88,7 @@ export interface UseVariantSelectorProps {
    currentVariantId: string;
    colorLabel: string;
    storageLabel: string;
-   storageValue?: string; // ← THÊM: "128gb", "256gb", ...
+   storageValue?: string;
    colorValue?: string;
    currentQuantity: number;
    onSuccess?: () => void;
@@ -102,7 +101,7 @@ export function useVariantSelector({
    currentVariantId,
    colorLabel,
    storageLabel,
-   storageValue, // ← THÊM
+   storageValue,
    colorValue,
    currentQuantity,
    onSuccess,
@@ -110,22 +109,21 @@ export function useVariantSelector({
 }: UseVariantSelectorProps) {
    const { changeVariant } = useCart();
    const toast = useToasty();
-   const { isAuthenticated } = useAuth(); // ✅ thay useContext(AuthContext)
-
+   const { isAuthenticated } = useAuth();
    const [isOpen, setIsOpen] = useState(false);
+
    const [options, setOptions] = useState<VariantOption[]>([]);
    const [isFetching, setIsFetching] = useState(false);
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
    const [isChanging, setIsChanging] = useState(false);
 
-   // ← THÊM: cache key gồm cả storage để re-fetch khi storage thay đổi
    const cacheKey = `${productSlug}-${storageValue ?? storageLabel}`;
    const fetchedSlugRef = useRef<string | null>(null);
 
    const fetchVariants = useCallback(
       async (forceRefresh = false) => {
-         if (!forceRefresh && fetchedSlugRef.current === cacheKey) return; // ← đổi productSlug → cacheKey
-         fetchedSlugRef.current = cacheKey; // ← đổi productSlug → cacheKey
+         if (!forceRefresh && fetchedSlugRef.current === cacheKey) return;
+         fetchedSlugRef.current = cacheKey;
 
          setIsFetching(true);
          setErrorMessage(null);
@@ -136,9 +134,7 @@ export function useVariantSelector({
                : { noAuth: true, noRedirectOn401: true, silentAuth: true };
 
             const params: Record<string, string> = {};
-            if (storageValue) {
-               params.storage = storageValue; // "128gb"
-            }
+            if (storageValue) params.storage = storageValue;
 
             const res = await apiRequest.get<{ data: VariantOption[] }>(
                `/products/slug/${productSlug}/variant-options`,
@@ -156,18 +152,14 @@ export function useVariantSelector({
             setIsFetching(false);
          }
       },
-      [productSlug, storageValue, storageLabel, isAuthenticated, cacheKey], // ← thêm deps
+      [productSlug, storageValue, isAuthenticated, cacheKey],
    );
-
    const handleToggle = useCallback(() => {
-      if (isChanging) return;
-      const willOpen = !isOpen;
-      setIsOpen(willOpen);
-      if (willOpen && fetchedSlugRef.current !== cacheKey) {
-         // ← đổi productSlug → cacheKey
-         fetchVariants();
-      }
-   }, [isChanging, isOpen, cacheKey, fetchVariants]); // ← đổi productSlug → cacheKey
+      setIsOpen((prev) => !prev);
+   }, []);
+   useEffect(() => {
+      fetchVariants();
+   }, [fetchVariants]);
 
    const handleRetry = useCallback(() => {
       fetchedSlugRef.current = null;
@@ -182,7 +174,6 @@ export function useVariantSelector({
 
          setIsChanging(true);
 
-         // Dùng finalPrice nếu có sale, fallback về price
          const effectivePrice = variant.finalPrice ?? variant.price;
 
          onUpdateItem?.({
@@ -194,9 +185,9 @@ export function useVariantSelector({
             colorValue:
                variant.colorValue ??
                variant.colorLabel.toLowerCase().replace(/\s+/g, "-"),
-            unitPrice: effectivePrice, // giá sau sale
-            originalPrice: variant.price, // giá gốc để hiện gạch ngang
-            ...(variant.imageUrl ? { image: variant.imageUrl } : {}), // cập nhật ảnh
+            unitPrice: effectivePrice,
+            originalPrice: variant.price,
+            ...(variant.imageUrl ? { image: variant.imageUrl } : {}),
          });
 
          try {
@@ -204,18 +195,16 @@ export function useVariantSelector({
                id: variant.id,
                colorLabel: variant.colorLabel,
                storageLabel: variant.storageLabel,
-               price: effectivePrice, // giá sau sale
-               originalPrice: variant.price, // giá gốc
+               price: effectivePrice,
+               originalPrice: variant.price,
                colorValue: variant.colorValue,
             } as NewVariantData);
 
             toast.success("Đã cập nhật phiên bản sản phẩm");
             onSuccess?.();
-            setIsOpen(false);
          } catch (err) {
             console.error("[useVariantSelector] handleSelect error:", err);
             toast.error("Không thể đổi phiên bản, vui lòng thử lại");
-            // Rollback
             onUpdateItem?.({
                productVariantId: currentVariantId,
                variantCode: `${storageLabel} / ${colorLabel}`,
@@ -238,14 +227,14 @@ export function useVariantSelector({
    );
 
    return {
-      isOpen,
       options,
       isFetching,
+      isOpen, // ← thêm
       isChanging,
       errorMessage,
       hasFetched: fetchedSlugRef.current === cacheKey,
-      handleToggle,
       handleRetry,
+      handleToggle,
       handleSelect,
    };
 }

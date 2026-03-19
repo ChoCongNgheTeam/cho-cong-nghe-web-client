@@ -210,7 +210,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                   className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-accent-hover transition-colors cursor-pointer"
                >
                   <Search
-                     className={`w-4 h-4 lg:w-5 lg:h-5 text-primary transition-opacity duration-200 ${
+                     className={`w-4 h-4 lg:w-5 lg:h-5 text-neutral-light-dark transition-opacity duration-200 ${
                         isSearching ? "opacity-40" : "opacity-100"
                      }`}
                   />

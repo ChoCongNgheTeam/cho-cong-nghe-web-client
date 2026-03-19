@@ -45,7 +45,6 @@ export default function CartPage() {
       rewardPoints,
       refetchCart,
    } = useCart();
-
    // const [showSummary, setShowSummary] = useState(true);
    const [usePoints, setUsePoints] = useState(false);
    const [showSidebar, setShowSidebar] = useState(false);
@@ -384,8 +383,12 @@ export default function CartPage() {
                                           currentVariantId={
                                              item.productVariantId
                                           }
+                                          productName={item.productName}
                                           colorLabel={item.colorLabel}
                                           storageLabel={item.storageLabel}
+                                          storageValue={item.storageLabel
+                                             .toLowerCase()
+                                             .replace(/\s+/g, "")}
                                           currentQuantity={item.quantity}
                                           onSuccess={() => refetchCart(true)}
                                           onUpdateItem={(patch) =>
