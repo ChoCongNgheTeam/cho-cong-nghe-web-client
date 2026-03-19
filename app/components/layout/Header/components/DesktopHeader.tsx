@@ -15,7 +15,7 @@ import { DesktopHeaderProps } from "../types";
 import UserAvatar from "@/components/ui/UserAvatar";
 import CartIcon from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
-import SearchBar, { TOP_KEYWORDS } from "./SearchBar";
+import SearchBar from "./SearchBar"; // ✅ bỏ TOP_KEYWORDS
 import WishlistIcon from "@/components/ui/HeartIcons";
 
 const DesktopHeader = memo(
@@ -46,7 +46,7 @@ const DesktopHeader = memo(
       }, [showUserMenu, onUserMenuClose]);
 
       return (
-         <div className="hidden md:flex items-center justify-between gap-4 lg:gap-4 relative pb-5">
+         <div className="hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
             {/* Logo */}
             <Link href="/" className="shrink-0 pr-10">
                <Image
@@ -65,21 +65,6 @@ const DesktopHeader = memo(
             {/* Search + Keywords */}
             <div className="flex-1 max-w-2xl relative">
                <SearchBar />
-               {/* ✅ absolute — không đẩy layout */}
-               <div className="hidden md:flex items-center gap-x-2 flex-nowrap mt-1.5 ml-3 px-1 absolute top-full left-0 z-10 overflow-hidden">
-                  {TOP_KEYWORDS.map((kw) => (
-                     <Link
-                        key={kw.label}
-                        href={kw.href}
-                        className={`text-[13px] lg:text-[14px] text-neutral-dark-active hover:text-primary transition-colors whitespace-nowrap
-            ${kw.showFrom === "lg" ? "hidden lg:block" : ""}
-            ${kw.showFrom === "xl" ? "hidden xl:block" : ""}
-         `}
-                     >
-                        {kw.label}
-                     </Link>
-                  ))}
-               </div>
             </div>
 
             <div className="flex items-center gap-3 lg:gap-4">

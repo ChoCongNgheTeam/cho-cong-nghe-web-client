@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-   /* config options here */
    images: {
       domains: [
          "store.storeimages.cdn-apple.com",
@@ -10,6 +9,9 @@ const nextConfig: NextConfig = {
          "cdn2.cellphones.com.vn",
          "res.cloudinary.com",
          "lh3.googleusercontent.com",
+         "graph.facebook.com",
+         "platform-lookaside.fbsbx.com", // ← thêm
+         "*.fbcdn.net", // ← thêm phòng khi FB đổi domain
       ],
    },
    productionBrowserSourceMaps: false,

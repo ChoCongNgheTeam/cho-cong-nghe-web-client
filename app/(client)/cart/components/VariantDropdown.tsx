@@ -131,8 +131,8 @@ function OptionGrid({
 
                         {/* Out of stock overlay */}
                         {isOutOfStock && (
-                           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                              <span className="text-[9px] text-red-500 font-semibold">
+                           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                              <span className="text-[12px] text-red-500 font-semibold">
                                  Hết hàng
                               </span>
                            </div>
