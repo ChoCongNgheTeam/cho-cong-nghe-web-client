@@ -1,83 +1,54 @@
+import { BannersTop, HomeSlider, FeaturedCategories, FeaturedProducts, BannersSection1, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
 import {
-   BannersTop,
-   HomeSlider,
-   FeaturedCategories,
-   FeaturedProducts,
-   BannersSection1,
-   BestSellers,
-   BlogSection,
-   TrustBadges,
-   HotSaleOnline,
-   SeasonalSale,
-} from "./components";
-import {
-   getActiveCampaigns,
-   getBannersSection1,
-   getBannersTop,
-   getBestSellingProducts,
-   getBlogs,
-   getFeaturedCategories,
-   getFeaturedProducts,
-   getFlashSaleProducts,
-   getHomeSliders,
+  getActiveCampaigns,
+  getBannersSection1,
+  getBannersTop,
+  getBestSellingProducts,
+  getBlogs,
+  getFeaturedCategories,
+  getFeaturedProducts,
+  getHomeSliders,
+  getSaleSchedule, // ← đổi từ getFlashSaleProducts sang getSaleSchedule
 } from "./_libs";
+
 export default async function HomePage() {
-   const [
-      sliders,
-      featuredCategories,
-      bannersTop,
-      flashSaleProducts,
-      featuredProducts,
-      hotProducts,
-      activeCampaigns,
-      bannersSection1,
-      blogsData,
-   ] = await Promise.all([
-      getHomeSliders(),
-      getFeaturedCategories(),
-      getBannersTop(),
-      getFlashSaleProducts(),
-      getFeaturedProducts(),
-      getBestSellingProducts(),
-      getActiveCampaigns(),
-      getBannersSection1(),
-      getBlogs(),
-   ]);
-   console.log(bannersTop);
-   return (
-      <main className="min-h-screen bg-neutral-light">
-         {/* Main Hero Banner */}
-         <HomeSlider sliders={sliders} />
+  const [
+    sliders,
+    featuredCategories,
+    bannersTop,
+    saleSchedule, // ← đổi tên biến từ flashSaleProducts / saleSchedule
+    featuredProducts,
+    hotProducts,
+    activeCampaigns,
+    bannersSection1,
+    blogsData,
+  ] = await Promise.all([
+    getHomeSliders(),
+    getFeaturedCategories(),
+    getBannersTop(),
+    getSaleSchedule(), // ← gọi hàm mới
+    getFeaturedProducts(),
+    getBestSellingProducts(),
+    getActiveCampaigns(),
+    getBannersSection1(),
+    getBlogs(),
+  ]);
 
-         {/* Double Banner (ngay sau MainBanner) */}
-         <BannersTop bannersTop={bannersTop} />
+  return (
+    <main className="min-h-screen bg-neutral-light">
+      <HomeSlider sliders={sliders} />
+      <BannersTop bannersTop={bannersTop} />
+      <FeaturedCategories featuredCategories={featuredCategories} />
 
-         {/* Category Grid */}
-         <FeaturedCategories featuredCategories={featuredCategories} />
+      {/* Truyền saleSchedule thay vì flashSale */}
+      <HotSaleOnline saleSchedule={saleSchedule ?? { schedule: [] }} />
 
-         {/* Hot Sale Online */}
-         <HotSaleOnline flashSale={flashSaleProducts} />
-
-         {/* Featured Products */}
-         <FeaturedProducts products={featuredProducts} />
-
-         {/* Best Sellers */}
-         <BestSellers products={hotProducts} />
-
-         {/* Seasonal Sale */}
-         <SeasonalSale campaigns={activeCampaigns} />
-
-         {/* Triple Banners */}
-         <BannersSection1 banners={bannersSection1} />
-
-         {/* Blog Section */}
-         <BlogSection blogs={blogsData.data} />
-
-         {/* Recently Viewed */}
-         {/* <RecentlyViewed products={featuredProducts.slice(0, 6)} /> */}
-
-         {/* Trust Badges Section */}
-         <TrustBadges />
-      </main>
-   );
+      <FeaturedProducts products={featuredProducts} />
+      <BestSellers products={hotProducts} />
+      <SeasonalSale campaigns={activeCampaigns} />
+      <BannersSection1 banners={bannersSection1} />
+      <BlogSection blogs={blogsData.data} />
+      <TrustBadges />
+    </main>
+  );
 }

@@ -6,35 +6,32 @@ import { Aperture } from "lucide-react";
 import { FeaturedProduct } from "../../_libs";
 import { HighlightIcon } from "../../common/HighlightIcon";
 import Badge from "@/components/ui/Badge";
+import { formatVND } from "@/helpers";
+import { memo } from "react";
+import { StarRating } from "@/components/product/StarRating";
 
 interface HotSaleProductCardProps {
    product: FeaturedProduct;
    index?: number;
-   stockCurrent?: number;
-   stockTotal?: number;
 }
 
-export default function HotSaleProductCard({
+const HotSaleProductCard = memo(function HotSaleProductCard({
    product,
    index = 0,
-   stockCurrent = 9,
-   stockTotal = 10,
 }: HotSaleProductCardProps) {
-   const hasDiscount = product.price.discountPercentage > 0;
-
+   console.log(product);
    return (
       <Link
          href={`/products/${product.slug}`}
-         className="group relative flex flex-col bg-neutral-light rounded-sm select-none p-3.5 ease-in-out"
+         className="group relative flex flex-col h-full bg-neutral-light rounded-sm select-none p-3.5 ease-in-out"
          style={{ animationDelay: `${index * 0.08}s` }}
       >
-         {/* Sale Star Badge */}
-         <Badge />
+         {product.price.hasPromotion && (
+            <Badge discountPercent={product.price.discountPercentage} />
+         )}
 
-         {/* Image + Feature Icons */}
-         <div className="flex flex-row items-center px-4 pt-7 pb-3">
-            {/* Product Image – 62% width */}
-            <div className="relative w-[62%] aspect-square">
+         <div className="flex flex-row items-center px-4 pt-7 pb-3 h-44 shrink-0">
+            <div className="relative w-[62%] h-full">
                {product.thumbnail ? (
                   <Image
                      src={product.thumbnail}
@@ -53,8 +50,7 @@ export default function HotSaleProductCard({
                )}
             </div>
 
-            {/* Feature Icons – 38% width */}
-            <div className="flex flex-col w-[38%] self-stretch items-center justify-evenly pt-1 pb-1">
+            <div className="flex flex-col w-[38%] h-full items-center justify-evenly pt-1 pb-1">
                {product.highlights.map((highlight) => (
                   <div
                      key={highlight.key}
@@ -71,36 +67,47 @@ export default function HotSaleProductCard({
             </div>
          </div>
 
-         {/* Stock Badge */}
-         <div className="px-4 pt-3 pb-2.5">
-            <span className="inline-block font-bold rounded text-[11.5px] pt-1.25 pb-1.25 pl-3 pr-3 bg-promotion-light text-promotion-dark">
-               Còn {stockCurrent}/{stockTotal} sản phẩm
-            </span>
-         </div>
-
          {/* Product Name */}
-         <div className="px-4 pb-3">
+         <div className="px-4 py-2.5">
             <h3 className="font-medium line-clamp-2 transition-colors duration-200 text-primary min-h-10">
                {product.name}
             </h3>
          </div>
 
          {/* Pricing */}
-         <div className="px-4 pb-5">
+         <div className="px-4 pb-3">
             <p className="text-xl font-bold text-promotion">
-               {product.price.final.toLocaleString("vi-VN")}₫
+               {formatVND(
+                  product.price.hasPromotion
+                     ? product.price.final
+                     : product.price.base,
+               )}
             </p>
-            {hasDiscount && (
-               <div className="flex items-center mt-1.5 gap-2">
-                  <span className="line-through text-[13px] text-neutral-dark font-normal">
-                     {product.price.base.toLocaleString("vi-VN")}₫
-                  </span>
-                  <span className="font-bold text-[22px] leading-none text-promotion">
-                     -{product.price.discountPercentage}%
-                  </span>
-               </div>
-            )}
+            {/* ✅ luôn render để giữ chiều cao đều */}
+            <div className="flex items-center mt-1.5 gap-2 min-h-7">
+               {product.price.hasPromotion && (
+                  <>
+                     <span className="line-through text-[13px] text-neutral-dark font-normal">
+                        {formatVND(product.price.base)}
+                     </span>
+                     <span className="font-bold text-[22px] leading-none text-promotion">
+                        -{product.price.discountPercentage}%
+                     </span>
+                  </>
+               )}
+            </div>
          </div>
+
+         {product.rating.count > 0 && (
+            <div className="px-4 pb-4 flex items-center gap-1">
+               <StarRating average={product.rating.average} />
+               <span className="text-xs text-neutral-dark">
+                  ({product.rating.count})
+               </span>
+            </div>
+         )}
       </Link>
    );
-}
+});
+
+export default HotSaleProductCard;

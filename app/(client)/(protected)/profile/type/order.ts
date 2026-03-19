@@ -27,6 +27,9 @@ export interface Order {
   voucherDiscount: string;
   totalAmount: string;
 
+  paymentRedirectUrl: string | null;
+  paymentExpiredAt: string | null;
+
   // Status
   orderStatus: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
@@ -69,7 +72,7 @@ export interface OrderItem {
   id: string;
   quantity: number;
   unitPrice: string;
-
+  image: string | null;
   productVariant: ProductVariant | null;
 }
 

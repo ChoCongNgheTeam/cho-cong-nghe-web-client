@@ -15,7 +15,7 @@ export default function WishlistIcon() {
       >
          <Heart className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
          {count > 0 && (
-            <span className="absolute -right-2 -bottom-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary">
+            <span className="absolute -right-2 -bottom-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
                {count > 99 ? "99+" : count}
             </span>
          )}

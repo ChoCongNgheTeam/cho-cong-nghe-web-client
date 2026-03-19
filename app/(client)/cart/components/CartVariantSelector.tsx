@@ -11,8 +11,10 @@ interface CartVariantSelectorProps {
    currentVariantId: string;
    colorLabel: string;
    storageLabel: string;
+   storageValue?: string;
    colorValue?: string;
    currentQuantity: number;
+   productName: string;
    onSuccess?: () => void;
    onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
 }
@@ -23,7 +25,9 @@ export default function CartVariantSelector({
    currentVariantId,
    colorLabel,
    storageLabel,
+   storageValue, // ← thêm
    colorValue,
+   productName,
    currentQuantity,
    onSuccess,
    onUpdateItem,
@@ -44,6 +48,7 @@ export default function CartVariantSelector({
       currentVariantId,
       colorLabel,
       storageLabel,
+      storageValue, // ← truyền xuống hook
       colorValue,
       currentQuantity,
       onSuccess,
@@ -52,10 +57,12 @@ export default function CartVariantSelector({
 
    const displayLabel =
       [storageLabel, colorLabel].filter(Boolean).join(" / ") || "Mặc định";
-
    if (hasFetched && !isFetching && options.length <= 1) {
       return (
-         <div className="text-xs text-neutral-darker mb-2">{displayLabel}</div>
+         <div className="text-xs text-neutral-darker mb-2 flex items-center gap-1">
+            <span className="font-medium">{displayLabel}</span>
+            <span className="text-neutral-dark">· Hiện chỉ có một màu</span>
+         </div>
       );
    }
 
@@ -66,6 +73,7 @@ export default function CartVariantSelector({
          selectedId={currentVariantId}
          isOpen={isOpen}
          isFetching={isFetching}
+         productName={productName}
          isChanging={isChanging}
          errorMessage={errorMessage}
          onToggle={handleToggle}

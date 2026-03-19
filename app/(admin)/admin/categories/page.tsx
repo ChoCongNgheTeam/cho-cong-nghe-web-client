@@ -3,558 +3,686 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-   Search,
-   Filter,
-   Plus,
-   Eye,
-   Pencil,
-   Trash2,
-   ChevronDown,
-   ChevronRight,
-   Star,
-   Loader2,
-   ImageOff,
-   FolderTree,
-   Layers,
-} from "lucide-react";
-import { Category, GetCategoriesParams } from "./category.types";
-import { getAllCategories } from "./_libs/getAllCategories";
+import { Search, Plus, Eye, Pencil, Trash2, X, RefreshCw, Loader2, ImageOff, FolderTree, Layers, Star, ChevronRight, ChevronDown, AlertCircle, SlidersHorizontal } from "lucide-react";
+import type { Category, CategoryMeta, GetCategoriesParams } from "./category.types";
+import { getCategoriesAdmin, softDeleteCategory, updateCategory } from "./_libs/categories";
 import AdminPagination from "@/components/admin/PaginationAdmin";
+import { StatsCard } from "@/components/admin/StatsCard";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STATUS_TABS = [
+  { label: "Tất cả", value: "ALL" },
+  { label: "Hoạt động", value: "active" },
+  { label: "Ẩn", value: "inactive" },
+] as const;
+
+type StatusTab = (typeof STATUS_TABS)[number]["value"];
+
+const SORT_OPTIONS = [
+  { label: "Vị trí", value: "position" },
+  { label: "Tên", value: "name" },
+  { label: "Ngày tạo", value: "createdAt" },
+];
+
+// "null" là giá trị đặc biệt để filter parentId IS NULL (danh mục gốc)
+const LEVEL_OPTIONS = [
+  { label: "Tất cả cấp", value: "" },
+  { label: "Danh mục gốc", value: "root" },
+  { label: "Danh mục con", value: "child" },
+];
+
+const FEATURED_OPTIONS = [
+  { label: "Tất cả", value: "" },
+  { label: "Nổi bật", value: "true" },
+  { label: "Không nổi bật", value: "false" },
+];
+
+const DEFAULT_META: CategoryMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 1,
+  statusCounts: { ALL: 0, active: 0, inactive: 0, featured: 0 },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CategoryImage
+// ─────────────────────────────────────────────────────────────────────────────
 
 function CategoryImage({ category }: { category: Category }) {
-   const [imgError, setImgError] = useState(false);
-   const src = category.imageUrl ?? category.imagePath ?? null;
-
-   if (src && !imgError) {
-      return (
-         <div className="relative w-7 h-7 shrink-0">
-            <Image
-               src={src}
-               alt={category.name}
-               fill
-               className="object-contain"
-               onError={() => setImgError(true)}
-               unoptimized={!category.imageUrl}
-            />
-         </div>
-      );
-   }
-
-   return (
-      <div className="w-7 h-7 rounded-lg bg-neutral-light-active flex items-center justify-center shrink-0 text-primary">
-         <ImageOff size={13} strokeWidth={1.5} />
+  const [imgError, setImgError] = useState(false);
+  const src = category.imageUrl ?? category.imagePath ?? null;
+  if (src && !imgError) {
+    return (
+      <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-neutral/40 bg-neutral-light-active">
+        <Image src={src} alt={category.name} fill className="object-cover" onError={() => setImgError(true)} unoptimized />
       </div>
-   );
+    );
+  }
+  return (
+    <div className="w-9 h-9 rounded-lg bg-neutral-light-active flex items-center justify-center shrink-0 border border-neutral/30">
+      <ImageOff size={15} className="text-neutral-dark/50" />
+    </div>
+  );
 }
 
-export default function AdminCategories() {
-   // allCategories = toàn bộ data gốc từ API, không bao giờ bị lọc
-   const [allCategories, setAllCategories] = useState<Category[]>([]);
-   const [loading, setLoading] = useState(false);
-   const [error, setError] = useState<string | null>(null);
-   const [updatingId, setUpdatingId] = useState<string | null>(null);
+// ─────────────────────────────────────────────────────────────────────────────
+// StatusDropdown
+// ─────────────────────────────────────────────────────────────────────────────
 
-   const [searchInput, setSearchInput] = useState("");
-   const [search, setSearch] = useState("");
-   const [filterActive, setFilterActive] = useState<boolean | undefined>(
-      undefined,
-   );
-   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
+function StatusDropdown({ category, onUpdated }: { category: Category; onUpdated: (id: string, patch: Partial<Category>) => void }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-   const [page, setPage] = useState(1);
-   const [pageSize, setPageSize] = useState(10);
+  const toggle = async (field: "isActive" | "isFeatured", value: boolean) => {
+    setOpen(false);
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("data", JSON.stringify({ [field]: value }));
+      await updateCategory(category.id, fd);
+      onUpdated(category.id, { [field]: value });
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  };
 
-   // ── Fetch toàn bộ data từ API, không truyền isActive ──
-   const fetchCategories = useCallback(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-         const params: GetCategoriesParams = {
-            ...(search ? { search } : {}),
-         };
-         const res = await getAllCategories(params);
-         setAllCategories(res.data);
-      } catch (err: any) {
-         setError(err?.message || "Không thể tải danh sách danh mục");
-      } finally {
-         setLoading(false);
-      }
-   }, [search]);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={loading}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all cursor-pointer ${
+          category.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+        } ${loading ? "opacity-60" : ""}`}
+      >
+        {loading ? <Loader2 size={10} className="animate-spin" /> : <span className={`w-1.5 h-1.5 rounded-full ${category.isActive ? "bg-emerald-500" : "bg-orange-400"}`} />}
+        {category.isActive ? "Hoạt động" : "Ẩn"}
+        <ChevronDown size={10} />
+      </button>
 
-   useEffect(() => {
-      fetchCategories();
-      setPage(1);
-   }, [fetchCategories]);
-
-   // ── FE filter theo filterActive ──
-   const filtered =
-      filterActive === undefined
-         ? allCategories
-         : allCategories.filter((c) => c.isActive === filterActive);
-
-   const total = filtered.length;
-   const totalPages = Math.ceil(total / pageSize) || 1;
-   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-   const handleSearchSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      setSearch(searchInput);
-   };
-
-   // ── Stats từ allCategories (luôn chính xác dù đang lọc) ──
-   const activeCount = allCategories.filter((c) => c.isActive).length;
-   const hiddenCount = allCategories.filter((c) => !c.isActive).length;
-   const featuredCount = allCategories.filter((c) => c.isFeatured).length;
-   const rootCount = allCategories.filter((c) => !c.parentId).length;
-
-   const statusTabs = [
-      { label: "Tất cả", value: undefined, count: allCategories.length },
-      { label: "Hoạt động", value: true, count: activeCount },
-      { label: "Ẩn", value: false, count: hiddenCount },
-   ];
-
-   return (
-      <div className="min-h-screen bg-neutral-light">
-         {/* ── Header ── */}
-         <div className="px-6 pt-5 pb-4 flex items-center justify-between">
-            <div>
-               <h1 className="text-[16px] font-bold text-primary">
-                  Danh mục sản phẩm
-               </h1>
-               <p className="text-[12px] text-primary mt-0.5">
-                  Quản lý toàn bộ danh mục và danh mục con
-               </p>
-            </div>
-            <button className="flex items-center gap-2 bg-accent hover:bg-accent-hover active:bg-accent-active text-white text-[13px] font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm cursor-pointer">
-               <Plus size={15} strokeWidth={2.5} />
-               Thêm danh mục
-            </button>
-         </div>
-
-         {/* ── Stats row ── */}
-         <div className="px-6 grid grid-cols-4 gap-3 mb-5">
-            {[
-               {
-                  icon: <Layers size={15} />,
-                  label: "Tổng danh mục",
-                  value: allCategories.length,
-                  color: "bg-blue-50 text-blue-500",
-               },
-               {
-                  icon: <FolderTree size={15} />,
-                  label: "Danh mục gốc",
-                  value: rootCount,
-                  color: "bg-violet-50 text-violet-500",
-               },
-               {
-                  icon: <ChevronRight size={15} />,
-                  label: "Đang hoạt động",
-                  value: activeCount,
-                  color: "bg-emerald-50 text-emerald-500",
-               },
-               {
-                  icon: <Star size={14} />,
-                  label: "Nổi bật",
-                  value: featuredCount,
-                  color: "bg-amber-50 text-amber-500",
-               },
-            ].map((s) => (
-               <div
-                  key={s.label}
-                  className="bg-neutral-light border border-neutral rounded-2xl px-4 py-3 flex items-center gap-3"
-               >
-                  <div
-                     className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}
-                  >
-                     {s.icon}
-                  </div>
-                  <div>
-                     <p className="text-[13px] text-primary">{s.label}</p>
-                     <p className="text-[15px] font-bold text-primary">
-                        {loading ? (
-                           <span className="animate-pulse">—</span>
-                        ) : (
-                           s.value
-                        )}
-                     </p>
-                  </div>
-               </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-white border border-neutral rounded-xl shadow-lg py-1 overflow-hidden">
+            <p className="px-3 py-1.5 text-[10px] font-bold text-neutral-dark uppercase tracking-wider border-b border-neutral mb-1">Trạng thái hiển thị</p>
+            {(
+              [
+                { label: "Hoạt động", value: true, dot: "bg-emerald-500" },
+                { label: "Ẩn", value: false, dot: "bg-orange-400" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={String(opt.value)}
+                onClick={() => toggle("isActive", opt.value)}
+                disabled={category.isActive === opt.value}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors cursor-pointer ${
+                  category.isActive === opt.value ? "bg-neutral-light-active text-neutral-dark font-medium cursor-default" : "text-primary hover:bg-neutral-light-active"
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full shrink-0 ${opt.dot}`} />
+                {opt.label}
+                {category.isActive === opt.value && <span className="ml-auto text-[10px] text-accent">✓</span>}
+              </button>
             ))}
-         </div>
 
-         {/* ── Toolbar ── */}
-         <div className="px-6 flex items-center justify-between gap-3 mb-4">
-            {/* Filter tabs */}
-            <div className="flex items-center gap-1 bg-neutral-light-hover/60 p-1 rounded-xl border border-neutral">
-               {statusTabs.map((tab) => {
-                  const isSelected = filterActive === tab.value;
-                  return (
-                     <button
-                        key={String(tab.value)}
-                        onClick={() => {
-                           setFilterActive(tab.value);
-                           setPage(1);
-                        }}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium cursor-pointer whitespace-nowrap ${
-                           isSelected
-                              ? "bg-neutral-light text-primary font-semibold shadow-sm border border-neutral"
-                              : "text-primary hover:text-primary hover:bg-neutral-light/60"
-                        }`}
-                     >
-                        {tab.label}
-                        <span
-                           className={`text-[13px] font-semibold px-1.5 py-0.5 rounded-md min-w-5 text-center ${
-                              isSelected
-                                 ? tab.value === true
-                                    ? "bg-emerald-100 text-emerald-600"
-                                    : tab.value === false
-                                      ? "bg-orange-100 text-orange-500"
-                                      : "bg-blue-100 text-blue-500"
-                                 : "bg-neutral text-primary"
-                           }`}
-                        >
-                           {loading ? "—" : tab.count}
-                        </span>
-                     </button>
-                  );
-               })}
+            <div className="border-t border-neutral mt-1 pt-1">
+              <p className="px-3 py-1.5 text-[10px] font-bold text-neutral-dark uppercase tracking-wider">Nổi bật</p>
+              {(
+                [
+                  { label: "Nổi bật", value: true, icon: "⭐" },
+                  { label: "Bình thường", value: false, icon: "—" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={String(opt.value)}
+                  onClick={() => toggle("isFeatured", opt.value)}
+                  disabled={category.isFeatured === opt.value}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors cursor-pointer ${
+                    category.isFeatured === opt.value ? "bg-neutral-light-active text-neutral-dark font-medium cursor-default" : "text-primary hover:bg-neutral-light-active"
+                  }`}
+                >
+                  <span className="w-2 shrink-0 text-center">{opt.icon}</span>
+                  {opt.label}
+                  {category.isFeatured === opt.value && <span className="ml-auto text-[10px] text-accent">✓</span>}
+                </button>
+              ))}
             </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
-            <div className="flex items-center gap-2">
-               <form onSubmit={handleSearchSubmit} className="relative">
-                  <Search
-                     size={14}
-                     className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
-                  />
-                  <input
-                     type="text"
-                     value={searchInput}
-                     onChange={(e) => setSearchInput(e.target.value)}
-                     placeholder="Tìm danh mục..."
-                     className="pl-8 pr-3 py-1.5 text-[13px] bg-neutral-light border border-neutral rounded-lg text-primary placeholder:text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 w-52 transition-all"
-                  />
-               </form>
+// ─────────────────────────────────────────────────────────────────────────────
+// DeleteConfirmModal
+// ─────────────────────────────────────────────────────────────────────────────
 
-               <button className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg bg-neutral-light text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer">
-                  <Filter size={13} />
-                  Bộ lọc
-               </button>
-            </div>
-         </div>
-
-         {/* ── Error ── */}
-         {error && (
-            <div className="mx-6 mb-3 border border-promotion/30 bg-promotion-light text-promotion text-[13px] px-4 py-2.5 rounded-lg">
-               {error}
-            </div>
-         )}
-
-         {/* ── Table ── */}
-         <div className="mx-6 border border-neutral rounded-xl overflow-hidden bg-neutral-light">
-            <table className="w-full">
-               <thead>
-                  <tr className="border-b border-neutral bg-neutral-light-hover">
-                     <th className="w-12 px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        STT
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        Tên danh mục
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        Mô tả
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        Danh mục con
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        Vị trí
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        Nổi bật
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        <div className="flex items-center gap-1">
-                           Trạng thái
-                           <ChevronDown size={11} />
-                        </div>
-                     </th>
-                     <th className="px-4 py-3 text-left text-[13px] font-semibold text-primary tracking-wide uppercase">
-                        Hành động
-                     </th>
-                  </tr>
-               </thead>
-
-               <tbody>
-                  {loading ? (
-                     Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i} className="border-b border-neutral">
-                           {Array.from({ length: 8 }).map((_, j) => (
-                              <td key={j} className="px-4 py-3">
-                                 <div className="h-4 bg-neutral rounded animate-pulse" />
-                              </td>
-                           ))}
-                        </tr>
-                     ))
-                  ) : paginated.length === 0 ? (
-                     <tr>
-                        <td
-                           colSpan={8}
-                           className="py-20 text-center text-[13px] text-primary"
-                        >
-                           Không có dữ liệu
-                        </td>
-                     </tr>
-                  ) : (
-                     paginated.map((cat, idx) => {
-                        const stt = (page - 1) * pageSize + idx + 1;
-                        const isUpdating = updatingId === cat.id;
-                        const isOpen = openStatusId === cat.id;
-                        const isChild = !!cat.parentId;
-
-                        const statusOption = cat.isActive
-                           ? {
-                                label: "Hoạt động",
-                                color: "text-emerald-600 bg-emerald-50",
-                             }
-                           : {
-                                label: "Ẩn",
-                                color: "text-orange-500 bg-orange-50",
-                             };
-
-                        return (
-                           <tr
-                              key={cat.id}
-                              className={`border-b border-neutral last:border-b-0 hover:bg-neutral-light-active/50 transition-colors ${
-                                 isChild ? "bg-neutral-light-hover/30" : ""
-                              }`}
-                           >
-                              <td className="px-4 py-3 text-[13px] text-primary tabular-nums">
-                                 {stt}
-                              </td>
-
-                              <td className="px-4 py-3">
-                                 <div className="flex items-center gap-2.5">
-                                    {isChild && (
-                                       <span className="text-primary/40 shrink-0">
-                                          <ChevronRight size={12} />
-                                       </span>
-                                    )}
-                                    <CategoryImage category={cat} />
-                                    <div>
-                                       <span className="text-[13px] font-medium text-primary">
-                                          {cat.name}
-                                       </span>
-                                       <p className="text-[13px] text-primary font-mono">
-                                          /{cat.slug}
-                                       </p>
-                                    </div>
-                                 </div>
-                              </td>
-
-                              <td className="px-4 py-3 text-[13px] text-primary max-w-50">
-                                 <span className="line-clamp-1">
-                                    {cat.description ?? "—"}
-                                 </span>
-                              </td>
-
-                              <td className="px-4 py-3">
-                                 <span className="inline-flex items-center gap-1 text-[12px] text-primary bg-neutral-light-active px-2.5 py-1 rounded-lg">
-                                    <FolderTree size={11} />
-                                    {cat._count.children}
-                                 </span>
-                              </td>
-
-                              <td className="px-4 py-3 text-[13px] text-primary tabular-nums">
-                                 #{cat.position}
-                              </td>
-
-                              <td className="px-4 py-3">
-                                 <button
-                                    disabled={isUpdating}
-                                    onClick={async () => {
-                                       setUpdatingId(cat.id);
-                                       setAllCategories((prev) =>
-                                          prev.map((c) =>
-                                             c.id === cat.id
-                                                ? {
-                                                     ...c,
-                                                     isFeatured: !c.isFeatured,
-                                                  }
-                                                : c,
-                                          ),
-                                       );
-                                       try {
-                                          // updateCategory(cat.id, { isFeatured: !cat.isFeatured })
-                                       } catch {
-                                          fetchCategories();
-                                       } finally {
-                                          setUpdatingId(null);
-                                       }
-                                    }}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium cursor-pointer disabled:opacity-50 ${
-                                       cat.isFeatured
-                                          ? "text-amber-600 bg-amber-50 hover:bg-amber-100"
-                                          : "text-primary bg-neutral-light-active hover:bg-neutral-light-hover"
-                                    }`}
-                                 >
-                                    {isUpdating ? (
-                                       <Loader2
-                                          size={11}
-                                          className="animate-spin"
-                                       />
-                                    ) : (
-                                       <Star
-                                          size={11}
-                                          fill={
-                                             cat.isFeatured
-                                                ? "currentColor"
-                                                : "none"
-                                          }
-                                       />
-                                    )}
-                                    {cat.isFeatured ? "Nổi bật" : "Thường"}
-                                 </button>
-                              </td>
-
-                              <td className="px-4 py-3">
-                                 <div className="relative inline-block">
-                                    <button
-                                       disabled={isUpdating}
-                                       onClick={() =>
-                                          setOpenStatusId(
-                                             isOpen ? null : cat.id,
-                                          )
-                                       }
-                                       className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-medium transition-colors cursor-pointer disabled:opacity-50 ${statusOption.color}`}
-                                    >
-                                       {isUpdating ? (
-                                          <Loader2
-                                             size={11}
-                                             className="animate-spin"
-                                          />
-                                       ) : (
-                                          <ChevronDown size={11} />
-                                       )}
-                                       {statusOption.label}
-                                    </button>
-
-                                    {isOpen && (
-                                       <div className="absolute z-20 left-0 top-full mt-1 w-40 bg-neutral-light border border-neutral rounded-xl shadow-lg overflow-hidden">
-                                          {[
-                                             {
-                                                value: "active",
-                                                label: "Hoạt động",
-                                                color: "text-emerald-600 bg-emerald-50",
-                                             },
-                                             {
-                                                value: "hidden",
-                                                label: "Ẩn",
-                                                color: "text-orange-500 bg-orange-50",
-                                             },
-                                          ].map((opt) => {
-                                             const isCurrent =
-                                                (opt.value === "active") ===
-                                                cat.isActive;
-                                             return (
-                                                <button
-                                                   key={opt.value}
-                                                   disabled={isCurrent}
-                                                   onClick={async () => {
-                                                      const newActive =
-                                                         opt.value === "active";
-                                                      setUpdatingId(cat.id);
-                                                      setOpenStatusId(null);
-                                                      // Cập nhật optimistic trong allCategories
-                                                      setAllCategories((prev) =>
-                                                         prev.map((c) =>
-                                                            c.id === cat.id
-                                                               ? {
-                                                                    ...c,
-                                                                    isActive:
-                                                                       newActive,
-                                                                 }
-                                                               : c,
-                                                         ),
-                                                      );
-                                                      try {
-                                                         // updateCategory(cat.id, { isActive: newActive })
-                                                      } catch {
-                                                         fetchCategories();
-                                                      } finally {
-                                                         setUpdatingId(null);
-                                                      }
-                                                   }}
-                                                   className={`w-full text-left px-3 py-2 text-[12px] font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default hover:bg-neutral-light-active ${opt.color}`}
-                                                >
-                                                   {opt.label}
-                                                   {isCurrent && (
-                                                      <span className="float-right text-[10px]">
-                                                         ✓
-                                                      </span>
-                                                   )}
-                                                </button>
-                                             );
-                                          })}
-                                       </div>
-                                    )}
-                                 </div>
-                              </td>
-
-                              <td className="px-4 py-3">
-                                 <div className="flex items-center gap-2">
-                                    <Link
-                                       href={`/admin/categories/${cat.id}`}
-                                       title="Xem"
-                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent transition-colors"
-                                    >
-                                       <Eye size={14} />
-                                    </Link>
-                                    <button
-                                       title="Chỉnh sửa"
-                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
-                                    >
-                                       <Pencil size={14} />
-                                    </button>
-                                    <button
-                                       title="Xoá"
-                                       className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-                                    >
-                                       <Trash2 size={14} />
-                                    </button>
-                                 </div>
-                              </td>
-                           </tr>
-                        );
-                     })
-                  )}
-               </tbody>
-            </table>
-         </div>
-
-         {/* ── Pagination ── */}
-         <div className="px-6 py-4">
-            <AdminPagination
-               currentPage={page}
-               totalPages={totalPages}
-               total={total}
-               pageSize={pageSize}
-               onPageChange={setPage}
-               onPageSizeChange={(size) => {
-                  setPageSize(size);
-                  setPage(1);
-               }}
-               pageSizeOptions={[10, 20, 50]}
-               siblingCount={1}
-            />
-         </div>
-
-         {openStatusId && (
-            <div
-               className="fixed inset-0 z-10"
-               onClick={() => setOpenStatusId(null)}
-            />
-         )}
+function DeleteConfirmModal({ category, onConfirm, onCancel, loading }: { category: Category; onConfirm: () => void; onCancel: () => void; loading: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+      <div className="bg-neutral-light border border-neutral rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4 mx-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-promotion-light flex items-center justify-center shrink-0">
+            <Trash2 size={18} className="text-promotion" />
+          </div>
+          <div>
+            <p className="text-[14px] font-semibold text-primary">Xóa danh mục?</p>
+            <p className="text-[12px] text-neutral-dark mt-0.5">Hành động này có thể hoàn tác</p>
+          </div>
+        </div>
+        <p className="text-[13px] text-primary bg-neutral-light-active px-3 py-2 rounded-xl border border-neutral">
+          <span className="font-medium">{category.name}</span>
+        </p>
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="flex-1 px-4 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Huỷ
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 px-4 py-2 bg-promotion hover:bg-promotion/90 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
+          >
+            {loading ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+            Xóa
+          </button>
+        </div>
       </div>
-   );
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function AdminCategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [meta, setMeta] = useState<CategoryMeta>(DEFAULT_META);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // filter state
+  const [activeTab, setActiveTab] = useState<StatusTab>("ALL");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("position");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [levelFilter, setLevelFilter] = useState(""); // "" | "null" | "child"
+  const [featuredFilter, setFeaturedFilter] = useState(""); // "" | "true" | "false"
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // delete modal
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const resetPage = () => setPage(1);
+
+  const hasActiveFilters = activeTab !== "ALL" || !!search || sortBy !== "position" || levelFilter !== "" || featuredFilter !== "";
+
+  // ── fetch ──────────────────────────────────────────────────────────────────
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params: GetCategoriesParams = {
+        page,
+        limit: pageSize,
+        sortBy: sortBy as any,
+        sortOrder,
+        ...(search && { search }),
+        ...(activeTab === "active" && { isActive: true }),
+        ...(activeTab === "inactive" && { isActive: false }),
+        // featured filter
+        ...(featuredFilter === "true" && { isFeatured: true }),
+        ...(featuredFilter === "false" && { isFeatured: false }),
+        // level filter: "null" = root only (parentId IS NULL), "child" handled client-side
+        ...(levelFilter === "root" && { rootOnly: true }),
+      };
+      const res = await getCategoriesAdmin(params);
+      let data = res.data ?? [];
+
+      // "child" filter: BE không có filter "có parentId" nên filter client-side
+      if (levelFilter === "child") data = data.filter((c) => !!c.parentId);
+
+      setCategories(data);
+      setMeta(res.meta ?? DEFAULT_META);
+    } catch (err: any) {
+      setError(err?.message ?? "Không thể tải danh sách danh mục");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, activeTab, search, sortBy, sortOrder, levelFilter, featuredFilter]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // ── handlers ──────────────────────────────────────────────────────────────
+  const handleTabChange = (v: StatusTab) => {
+    setActiveTab(v);
+    resetPage();
+  };
+  const handleSearch = () => {
+    setSearch(searchInput);
+    resetPage();
+  };
+  const handleClearAll = () => {
+    setActiveTab("ALL");
+    setSearch("");
+    setSearchInput("");
+    setSortBy("position");
+    setSortOrder("asc");
+    setLevelFilter("");
+    setFeaturedFilter("");
+    resetPage();
+  };
+  const handleInlineUpdate = (id: string, patch: Partial<Category>) => setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await softDeleteCategory(deleteTarget.id);
+      setDeleteTarget(null);
+      fetchCategories();
+    } catch (err: any) {
+      setError(err?.message ?? "Xóa thất bại");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // ── render ────────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-5 p-5 bg-neutral-light min-h-full">
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard label="Tổng danh mục" value={meta.statusCounts.ALL} sub="Tất cả trong hệ thống" icon={<Layers size={18} />} valueClassName="text-blue-600" />
+        <StatsCard
+          label="Danh mục gốc"
+          value={loading ? "—" : categories.filter((c) => !c.parentId).length}
+          sub="Không có danh mục cha"
+          icon={<FolderTree size={18} />}
+          valueClassName="text-violet-600"
+        />
+        <StatsCard label="Hoạt động" value={meta.statusCounts.active} sub="Hiển thị trên website" icon={<ChevronRight size={18} />} valueClassName="text-emerald-600" />
+        <StatsCard label="Nổi bật" value={meta.statusCounts.featured} sub="Được đánh dấu nổi bật" icon={<Star size={18} />} valueClassName="text-amber-600" />
+      </div>
+
+      {/* Main card */}
+      <div className="bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm">
+        {/* ── Toolbar row 1: tabs + search + actions ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {STATUS_TABS.map((tab) => {
+            const count = tab.value === "ALL" ? meta.statusCounts.ALL : tab.value === "active" ? meta.statusCounts.active : meta.statusCounts.inactive;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => handleTabChange(tab.value)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
+                  activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                }`}
+              >
+                {tab.label}
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
+              placeholder="Tìm tên, slug..."
+              className="pl-9 pr-8 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
+            />
+            {searchInput && (
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  resetPage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearAll}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
+          )}
+
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-[12px] text-neutral-dark">{meta.total} danh mục</span>
+            <Link href="/admin/categories/create" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all shadow-sm">
+              <Plus size={14} /> Thêm mới
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Toolbar row 2: advanced filters ── */}
+        <div className="px-5 py-2.5 border-b border-neutral bg-neutral-light-active/40 flex items-center gap-2 flex-wrap">
+          <SlidersHorizontal size={13} className="text-neutral-dark shrink-0" />
+          <span className="text-[11px] text-neutral-dark font-medium mr-1">Lọc thêm:</span>
+
+          {/* Cấp */}
+          <select
+            value={levelFilter}
+            onChange={(e) => {
+              setLevelFilter(e.target.value);
+              resetPage();
+            }}
+            className={`px-3 py-1.5 text-[12px] border rounded-lg bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer transition-all ${
+              levelFilter ? "border-accent text-accent font-medium" : "border-neutral text-primary"
+            }`}
+          >
+            {LEVEL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Nổi bật */}
+          <select
+            value={featuredFilter}
+            onChange={(e) => {
+              setFeaturedFilter(e.target.value);
+              resetPage();
+            }}
+            className={`px-3 py-1.5 text-[12px] border rounded-lg bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer transition-all ${
+              featuredFilter ? "border-accent text-accent font-medium" : "border-neutral text-primary"
+            }`}
+          >
+            {FEATURED_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Sort */}
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="text-[11px] text-neutral-dark">Sắp xếp:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                resetPage();
+              }}
+              className="px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => {
+                setSortOrder(e.target.value as "asc" | "desc");
+                resetPage();
+              }}
+              className="px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer"
+            >
+              <option value="asc">↑ Tăng</option>
+              <option value="desc">↓ Giảm</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Active filter chips */}
+        {hasActiveFilters && (
+          <div className="px-5 py-2 border-b border-neutral flex items-center gap-2 flex-wrap bg-accent/5">
+            <span className="text-[11px] text-neutral-dark">Đang lọc:</span>
+            {activeTab !== "ALL" && (
+              <Chip
+                label={`Trạng thái: ${activeTab === "active" ? "Hoạt động" : "Ẩn"}`}
+                onRemove={() => {
+                  setActiveTab("ALL");
+                  resetPage();
+                }}
+              />
+            )}
+            {search && (
+              <Chip
+                label={`Tìm: "${search}"`}
+                onRemove={() => {
+                  setSearch("");
+                  setSearchInput("");
+                  resetPage();
+                }}
+              />
+            )}
+            {levelFilter && (
+              <Chip
+                label={levelFilter === "root" ? "Danh mục gốc" : "Danh mục con"}
+                onRemove={() => {
+                  setLevelFilter("");
+                  resetPage();
+                }}
+              />
+            )}
+            {featuredFilter && (
+              <Chip
+                label={featuredFilter === "true" ? "Nổi bật" : "Không nổi bật"}
+                onRemove={() => {
+                  setFeaturedFilter("");
+                  resetPage();
+                }}
+              />
+            )}
+            {sortBy !== "position" && (
+              <Chip
+                label={`Sắp xếp: ${SORT_OPTIONS.find((o) => o.value === sortBy)?.label}`}
+                onRemove={() => {
+                  setSortBy("position");
+                  resetPage();
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion/20 text-promotion text-[12px]">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={13} />
+              {error}
+            </div>
+            <button onClick={fetchCategories} className="flex items-center gap-1 hover:underline cursor-pointer">
+              <RefreshCw size={11} /> Thử lại
+            </button>
+          </div>
+        )}
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-neutral-light-active border-b border-neutral">
+                {["STT", "Danh mục", "Cấp", "Danh mục con", "Vị trí", "Trạng thái", "Hành động"].map((col) => (
+                  <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark uppercase tracking-wider whitespace-nowrap">
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3 text-neutral-dark">
+                      <Loader2 size={28} className="animate-spin opacity-40" />
+                      <span className="text-[13px]">Đang tải...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : categories.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3 text-neutral-dark">
+                      <FolderTree size={32} className="opacity-30" />
+                      <span className="text-[13px]">Không có danh mục nào</span>
+                      {hasActiveFilters && (
+                        <button onClick={handleClearAll} className="text-[12px] text-accent hover:underline cursor-pointer">
+                          Xóa bộ lọc
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                categories.map((cat, idx) => {
+                  const rowNum = (meta.page - 1) * meta.limit + idx + 1;
+                  const isChild = !!cat.parentId;
+                  return (
+                    <tr key={cat.id} className={`border-b border-neutral hover:bg-neutral-light-active/50 transition-colors duration-100 ${isChild ? "bg-neutral-light-active/20" : ""}`}>
+                      <td className="px-4 py-3.5 text-[12px] text-neutral-dark w-12">{rowNum}</td>
+
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          {isChild && <ChevronRight size={13} className="text-neutral-dark/40 shrink-0" />}
+                          <CategoryImage category={cat} />
+                          <div className="min-w-0">
+                            <div className="text-[13px] font-medium text-primary truncate max-w-[200px]">{cat.name}</div>
+                            <div className="text-[11px] text-neutral-dark font-mono truncate max-w-[200px]">/{cat.slug}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium ${isChild ? "bg-violet-50 text-violet-600" : "bg-blue-50 text-blue-600"}`}>
+                          {isChild ? "Danh mục con" : "Danh mục gốc"}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3.5 text-[12px] text-primary">
+                        {cat._count?.children > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-light-active text-[11px] font-medium">
+                            <FolderTree size={11} />
+                            {cat._count.children}
+                          </span>
+                        ) : (
+                          <span className="text-neutral-dark/40">—</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3.5 text-[12px] text-neutral-dark">#{cat.position ?? "—"}</td>
+
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <StatusDropdown category={cat} onUpdated={handleInlineUpdate} />
+                          {cat.isFeatured && (
+                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-600">
+                              <Star size={9} fill="currentColor" /> Nổi bật
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1">
+                          <Link
+                            href={`/admin/categories/${cat.id}`}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-all"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={14} />
+                          </Link>
+                          <Link
+                            href={`/admin/categories/${cat.id}/edit`}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-all"
+                            title="Chỉnh sửa"
+                          >
+                            <Pencil size={14} />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteTarget(cat)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-all cursor-pointer"
+                            title="Xóa"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {!loading && categories.length > 0 && (
+          <div className="px-5 py-3 border-t border-neutral">
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={meta.limit}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                resetPage();
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
+          </div>
+        )}
+      </div>
+
+      {deleteTarget && <DeleteConfirmModal category={deleteTarget} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} loading={deleteLoading} />}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Chip helper
+// ─────────────────────────────────────────────────────────────────────────────
+
+function Chip({ label, onRemove }: { label: string | undefined; onRemove: () => void }) {
+  if (!label) return null;
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-[11px] text-accent font-medium">
+      {label}
+      <button onClick={onRemove} className="hover:text-promotion cursor-pointer ml-0.5">
+        <X size={10} />
+      </button>
+    </span>
+  );
 }

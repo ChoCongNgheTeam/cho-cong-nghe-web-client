@@ -203,7 +203,7 @@ export default function AddressSidebar({
                         <span className="font-semibold text-sm text-primary">{addr.contactName}</span>
                         <span className="text-neutral-darker text-sm">{addr.phone}</span>
                         {addr.isDefault && (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent text-primary-darker font-medium">
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent text-white font-medium">
                             <CheckCircle2 size={11} />
                             Mặc định
                           </span>

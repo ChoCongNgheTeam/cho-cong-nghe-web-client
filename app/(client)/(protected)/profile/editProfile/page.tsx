@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToasty } from "@/components/Toast";
 import { Pencil, ChevronDown, Loader2 } from "lucide-react";
@@ -179,7 +179,7 @@ export default function ProfileForm() {
                 />
                 <button
                   type="button"
-                  className="absolute bottom-0 right-0 bg-promotion hover:bg-promotion-hover text-white rounded-full p-1 shadow-md transition-colors"
+                  className="absolute bottom-0 right-0 bg-accent  text-white rounded-full p-1 shadow-md transition-colors"
                 >
                   <Pencil size={14} />
                 </button>
@@ -197,7 +197,7 @@ export default function ProfileForm() {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="Nhập họ và tên"
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-neutral-light border border-neutral text-primary placeholder:text-neutral-dark focus:outline-none focus:border-promotion focus:ring-1 focus:ring-promotion transition-colors"
+                  className="w-full px-3 py-2 rounded-lg text-sm bg-neutral-light border border-neutral text-primary placeholder:text-neutral-dark focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                 />
               </div>
 
@@ -210,7 +210,7 @@ export default function ProfileForm() {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Nhập số điện thoại"
-                  className="w-full px-3 py-2 rounded-lg text-sm bg-neutral-light border border-neutral text-primary placeholder:text-neutral-dark focus:outline-none focus:border-promotion focus:ring-1 focus:ring-promotion transition-colors"
+                  className="w-full px-3 py-2 rounded-lg text-sm bg-neutral-light border border-neutral text-primary placeholder:text-neutral-dark focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                 />
                 <p className="text-xs text-neutral-dark">
                   Thay đổi SĐT sẽ tự động cập nhật vào địa chỉ mặc định
@@ -225,7 +225,7 @@ export default function ProfileForm() {
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm appearance-none cursor-pointer bg-neutral-light border border-neutral text-primary focus:outline-none focus:border-promotion focus:ring-1 focus:ring-promotion transition-colors"
+                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm appearance-none cursor-pointer bg-neutral-light border border-neutral text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                   >
                     <option value="">Chọn giới tính</option>
                     <option value="MALE">Nam</option>
@@ -289,7 +289,7 @@ export default function ProfileForm() {
                 <button
                   type="submit"
                   disabled={!isDirty || submitting}
-                  className="w-full flex items-center justify-center gap-2 bg-promotion hover:bg-promotion-hover active:bg-promotion-active disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 bg-primary text-neutral-light hover:bg-primary-hover active:bg-primary-active font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
                 >
                   {submitting ? (
                     <><Loader2 size={18} className="animate-spin" /> Đang cập nhật...</>

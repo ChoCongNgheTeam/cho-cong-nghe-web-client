@@ -28,30 +28,90 @@ const Header = () => {
    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
    const [isVisible, setIsVisible] = useState(true);
    const [isPastTop, setIsPastTop] = useState(false);
-   const [headerHeight, setHeaderHeight] = useState(0);
+
    const headerRef = useRef<HTMLDivElement>(null);
+   const placeholderRef = useRef<HTMLDivElement>(null);
    const lastScrollY = useRef(0);
    const ticking = useRef(false);
+   const scrollAccum = useRef(0);
+   // Store the initial height once — never changes after first measure
+   const initialHeightRef = useRef(0);
+   // Track isPastTop in a ref to avoid stale closure issues in scroll handler
+   const isPastTopRef = useRef(false);
+   const isVisibleRef = useRef(true);
 
    const { user, logout, isAuthenticated, loading } = useAuth();
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
 
-   // Đo chiều cao header thực tế
+   // Measure header height ONCE on mount, then never update from ResizeObserver.
+   // The placeholder keeps the document flow stable.
+
    useEffect(() => {
       if (!headerRef.current) return;
+      // Đợi transition xong (300ms) mới đo
+      const timer = setTimeout(() => {
+         const h = headerRef.current!.offsetHeight;
+         if (h > 0) {
+            document.documentElement.style.setProperty(
+               "--header-height",
+               `${h}px`,
+            );
+         }
+      }, 310);
+      return () => clearTimeout(timer);
+   }, [isPastTop]);
+
+   useEffect(() => {
+      if (!headerRef.current) return;
+
+      const measureOnce = () => {
+         if (initialHeightRef.current > 0) return; // already measured
+         const h = headerRef.current!.offsetHeight;
+         if (h === 0) return; // not painted yet
+         initialHeightRef.current = h;
+         // Set placeholder height via DOM — no React state, no re-render
+         if (placeholderRef.current) {
+            placeholderRef.current.style.height = `${h}px`;
+         }
+         document.documentElement.style.setProperty(
+            "--header-height",
+            `${h}px`,
+         );
+      };
+
+      // Use ResizeObserver only to catch the first non-zero paint
       const observer = new ResizeObserver(() => {
-         if (headerRef.current) {
-            setHeaderHeight(headerRef.current.offsetHeight);
+         if (initialHeightRef.current === 0) {
+            measureOnce();
+         }
+         // Once we have an initial height, disconnect — we don't want
+         // ResizeObserver firing during scroll and causing reflows.
+         if (initialHeightRef.current > 0) {
+            observer.disconnect();
          }
       });
+
       observer.observe(headerRef.current);
-      setHeaderHeight(headerRef.current.offsetHeight);
+      measureOnce(); // try immediately too
+
       return () => observer.disconnect();
    }, []);
 
-   // Scroll logic
+   // Keep --header-visible CSS variable in sync without extra renders
+   // We drive visibility purely via transform (no height/max-height changes).
    useEffect(() => {
+      document.documentElement.style.setProperty(
+         "--header-visible",
+         isVisible ? "1" : "0",
+      );
+   }, [isVisible]);
+
+   useEffect(() => {
+      const HIDE_THRESHOLD = 80;
+      const SHOW_THRESHOLD = 30;
+      const MIN_SCROLL_Y = 120;
+
       const handleScroll = () => {
          if (ticking.current) return;
          ticking.current = true;
@@ -59,16 +119,46 @@ const Header = () => {
          requestAnimationFrame(() => {
             const currentScrollY = window.scrollY;
             const diff = currentScrollY - lastScrollY.current;
+            lastScrollY.current = currentScrollY;
 
-            setIsPastTop(currentScrollY > headerHeight);
+            // --- isPastTop ---
+            const nextIsPastTop =
+               currentScrollY > (initialHeightRef.current || 60);
+            if (nextIsPastTop !== isPastTopRef.current) {
+               isPastTopRef.current = nextIsPastTop;
+               setIsPastTop(nextIsPastTop);
+            }
 
-            if (Math.abs(diff) > 4) {
-               if (diff > 0 && currentScrollY > headerHeight) {
-                  setIsVisible(false);
-               } else {
+            // Always show header near the top
+            if (currentScrollY < MIN_SCROLL_Y) {
+               if (!isVisibleRef.current) {
+                  isVisibleRef.current = true;
                   setIsVisible(true);
                }
-               lastScrollY.current = currentScrollY;
+               scrollAccum.current = 0;
+               ticking.current = false;
+               return;
+            }
+
+            scrollAccum.current += diff;
+
+            if (scrollAccum.current > HIDE_THRESHOLD && isVisibleRef.current) {
+               isVisibleRef.current = false;
+               setIsVisible(false);
+               scrollAccum.current = 0;
+            } else if (
+               scrollAccum.current < -SHOW_THRESHOLD &&
+               !isVisibleRef.current
+            ) {
+               isVisibleRef.current = true;
+               setIsVisible(true);
+               scrollAccum.current = 0;
+            } else if (
+               scrollAccum.current > HIDE_THRESHOLD ||
+               scrollAccum.current < -SHOW_THRESHOLD
+            ) {
+               // Reset accumulator even when state didn't change to prevent drift
+               scrollAccum.current = 0;
             }
 
             ticking.current = false;
@@ -77,7 +167,7 @@ const Header = () => {
 
       window.addEventListener("scroll", handleScroll, { passive: true });
       return () => window.removeEventListener("scroll", handleScroll);
-   }, [headerHeight]);
+   }, []);
 
    // Click outside user menu
    useEffect(() => {
@@ -101,8 +191,7 @@ const Header = () => {
 
    return (
       <>
-         {/* Placeholder đúng chiều cao thực tế của header */}
-         <div style={{ height: headerHeight }} />
+         <div ref={placeholderRef} aria-hidden="true" />
 
          <div
             ref={headerRef}
@@ -114,18 +203,26 @@ const Header = () => {
                isVisible ? "translate-y-0" : "-translate-y-full",
             ].join(" ")}
          >
-            {/* HeaderTop - ẩn khi đã scroll qua */}
+            {/*
+               HeaderTop: hidden via opacity + pointer-events + translateY only.
+               NO max-height / height animation — those trigger layout reflow
+               and cause scroll position jitter via ResizeObserver feedback loops.
+            */}
             <div
                className={[
-                  "overflow-hidden transition-all duration-300",
-                  isPastTop ? "max-h-0 opacity-0" : "max-h-20 opacity-100",
+                  "transition-all duration-300",
+                  "overflow-hidden",
+                  isPastTop
+                     ? "opacity-0 pointer-events-none max-h-0"
+                     : "opacity-100 pointer-events-auto max-h-[200px]",
                ].join(" ")}
+               aria-hidden={isPastTop}
             >
                <HeaderTop isAuthenticated={isAuthenticated} />
             </div>
 
             {/* Main Header */}
-            <div className="bg-accent md:bg-transparent">
+            <div>
                <div className="container py-1 md:py-2">
                   <MobileHeader
                      mobileMenuOpen={mobileMenuOpen}
@@ -149,24 +246,6 @@ const Header = () => {
                      onUserMenuClose={() => setShowUserMenu(false)}
                      onLogout={logout}
                   />
-
-                  {/* Mobile Search Bar */}
-                  {mobileSearchOpen && (
-                     <div className="md:hidden mt-3 pb-2">
-                        <div className="relative">
-                           <input
-                              type="text"
-                              placeholder="Tìm kiếm sản phẩm..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="w-full pl-4 pr-12 py-2.5 border border-primary md:border-2 md:border-accent-hover rounded-full focus:outline-none bg-neutral-light text-primary placeholder:text-neutral-dark"
-                           />
-                           <button className="absolute right-0 top-0 bottom-0 px-4 bg-primary-dark hover:bg-accent-hover transition-colors rounded-r-full">
-                              <Search className="w-5 h-5 text-white dark:text-neutral-dark" />
-                           </button>
-                        </div>
-                     </div>
-                  )}
                </div>
             </div>
 
@@ -175,7 +254,6 @@ const Header = () => {
                <div className="md:hidden bg-neutral-light border-b border-neutral-dark shadow-lg">
                   <div className="container py-4">
                      <nav className="flex flex-col gap-3">
-                        {/* Khi đang loading: hiển thị skeleton thay vì nhảy về "chưa đăng nhập" */}
                         {loading ? (
                            <div className="px-3 py-3 bg-neutral/50 rounded-lg animate-pulse">
                               <div className="flex items-center gap-3">

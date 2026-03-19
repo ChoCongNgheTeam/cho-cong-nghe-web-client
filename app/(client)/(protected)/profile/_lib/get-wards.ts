@@ -4,7 +4,7 @@ export async function getWards(provinceId: string) {
   try {
     const response = await apiRequest.get<{ data: any[] }>(
       `/addresses/locations/${provinceId}/wards`,
-      { noAuth: true }
+      { noAuth: true },
     );
     return response?.data || [];
   } catch (error) {

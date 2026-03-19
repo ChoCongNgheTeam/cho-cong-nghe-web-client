@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef, useContext } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import apiRequest from "@/lib/api";
-import toast from "react-hot-toast";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
 import { useCart, NewVariantData } from "@/contexts/CartContext";
-import { AuthContext } from "@/contexts/AuthContext";
+import { useToasty } from "@/components/Toast";
+import { useAuth } from "./useAuth";
 
 interface ColorOption {
    id: string;
@@ -88,6 +88,7 @@ export interface UseVariantSelectorProps {
    currentVariantId: string;
    colorLabel: string;
    storageLabel: string;
+   storageValue?: string;
    colorValue?: string;
    currentQuantity: number;
    onSuccess?: () => void;
@@ -100,151 +101,65 @@ export function useVariantSelector({
    currentVariantId,
    colorLabel,
    storageLabel,
+   storageValue,
    colorValue,
    currentQuantity,
    onSuccess,
    onUpdateItem,
 }: UseVariantSelectorProps) {
    const { changeVariant } = useCart();
-   const auth = useContext(AuthContext);
-   const isAuthenticated = auth?.isAuthenticated ?? false;
-
+   const toast = useToasty();
+   const { isAuthenticated } = useAuth();
    const [isOpen, setIsOpen] = useState(false);
+
    const [options, setOptions] = useState<VariantOption[]>([]);
    const [isFetching, setIsFetching] = useState(false);
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
    const [isChanging, setIsChanging] = useState(false);
 
+   const cacheKey = `${productSlug}-${storageValue ?? storageLabel}`;
    const fetchedSlugRef = useRef<string | null>(null);
 
    const fetchVariants = useCallback(
       async (forceRefresh = false) => {
-         if (!forceRefresh && fetchedSlugRef.current === productSlug) return;
-         fetchedSlugRef.current = productSlug;
+         if (!forceRefresh && fetchedSlugRef.current === cacheKey) return;
+         fetchedSlugRef.current = cacheKey;
 
          setIsFetching(true);
          setErrorMessage(null);
 
          try {
-            const availableOptions = await fetchProductOptions(
-               productSlug,
-               isAuthenticated,
+            const opts = isAuthenticated
+               ? {}
+               : { noAuth: true, noRedirectOn401: true, silentAuth: true };
+
+            const params: Record<string, string> = {};
+            if (storageValue) params.storage = storageValue;
+
+            const res = await apiRequest.get<{ data: VariantOption[] }>(
+               `/products/slug/${productSlug}/variant-options`,
+               {
+                  ...opts,
+                  ...(Object.keys(params).length > 0 ? { params } : {}),
+               },
             );
 
-            const colorOptions = (availableOptions.find(
-               (o) => o.type === "color",
-            )?.values ?? []) as ColorOption[];
-            const storageOptions = (availableOptions.find(
-               (o) => o.type === "storage",
-            )?.values ?? []) as StorageOption[];
-            const enabledColors = colorOptions.filter((c) => c.enabled);
-            const enabledStorages = storageOptions.filter((s) => s.enabled);
-
-            console.log(
-               "[useVariantSelector] colors:",
-               enabledColors,
-               "storages:",
-               enabledStorages,
-            );
-
-            // Sản phẩm không có variant matrix
-            if (enabledColors.length === 0 || enabledStorages.length === 0) {
-               try {
-                  const res = await fetchVariantApi(
-                     productSlug,
-                     {},
-                     isAuthenticated,
-                  );
-                  const cv = res?.data?.currentVariant;
-                  setOptions(
-                     cv?.isActive
-                        ? [
-                             {
-                                id: cv.id,
-                                colorLabel: colorLabel || cv.color || "",
-                                storageLabel: storageLabel || cv.code || "",
-                                price: cv.price,
-                                available: cv.available,
-                                colorValue: cv.colorValue,
-                             },
-                          ]
-                        : [],
-                  );
-               } catch {
-                  setOptions([]);
-               }
-               return;
-            }
-            const combos = enabledColors.flatMap((c) =>
-               enabledStorages.map((s) => ({
-                  colorSlug: c.value,
-                  storageSlug: s.value,
-                  colorLabel: c.label,
-                  storageLabel: s.label,
-               })),
-            );
-
-            const results = await Promise.allSettled(
-               combos.map((combo) =>
-                  fetchVariantApi(
-                     productSlug,
-                     buildParams(combo.colorSlug, combo.storageSlug),
-                     isAuthenticated,
-                  )
-                     .then((res) => ({
-                        combo,
-                        variant: res?.data?.currentVariant ?? null,
-                     }))
-                     .catch((e) => {
-                        console.warn(
-                           "[useVariantSelector] combo failed:",
-                           combo,
-                           e,
-                        );
-                        return { combo, variant: null };
-                     }),
-               ),
-            );
-
-            const seen = new Set<string>();
-            const built: VariantOption[] = [];
-            for (const r of results) {
-               if (r.status !== "fulfilled") continue;
-               const { combo, variant } = r.value;
-               if (!variant || !variant.isActive || seen.has(variant.id))
-                  continue;
-               seen.add(variant.id);
-               built.push({
-                  id: variant.id,
-                  colorLabel: combo.colorLabel,
-                  storageLabel: combo.storageLabel,
-                  price: variant.price,
-                  available: variant.available,
-                  colorValue: variant.colorValue ?? combo.colorSlug,
-               });
-            }
-
-            console.log("[useVariantSelector] built options:", built);
-            setOptions(built);
-         } catch (err) {
-            console.error("[useVariantSelector] unexpected error:", err);
+            setOptions(res?.data ?? []);
+         } catch {
             setErrorMessage("Có lỗi xảy ra, vui lòng thử lại");
             fetchedSlugRef.current = null;
          } finally {
             setIsFetching(false);
          }
       },
-      [productSlug, colorLabel, storageLabel, isAuthenticated],
+      [productSlug, storageValue, isAuthenticated, cacheKey],
    );
-
    const handleToggle = useCallback(() => {
-      if (isChanging) return;
-      const willOpen = !isOpen;
-      setIsOpen(willOpen);
-      if (willOpen && fetchedSlugRef.current !== productSlug) {
-         fetchVariants();
-      }
-   }, [isChanging, isOpen, productSlug, fetchVariants]);
+      setIsOpen((prev) => !prev);
+   }, []);
+   useEffect(() => {
+      fetchVariants();
+   }, [fetchVariants]);
 
    const handleRetry = useCallback(() => {
       fetchedSlugRef.current = null;
@@ -259,7 +174,8 @@ export function useVariantSelector({
 
          setIsChanging(true);
 
-         // colorValue đã có sẵn trong variant object từ bước build
+         const effectivePrice = variant.finalPrice ?? variant.price;
+
          onUpdateItem?.({
             productVariantId: variant.id,
             variantCode: `${variant.storageLabel} / ${variant.colorLabel}`,
@@ -269,8 +185,9 @@ export function useVariantSelector({
             colorValue:
                variant.colorValue ??
                variant.colorLabel.toLowerCase().replace(/\s+/g, "-"),
-            unitPrice: variant.price,
+            unitPrice: effectivePrice,
             originalPrice: variant.price,
+            ...(variant.imageUrl ? { image: variant.imageUrl } : {}),
          });
 
          try {
@@ -278,13 +195,13 @@ export function useVariantSelector({
                id: variant.id,
                colorLabel: variant.colorLabel,
                storageLabel: variant.storageLabel,
-               price: variant.price,
+               price: effectivePrice,
+               originalPrice: variant.price,
                colorValue: variant.colorValue,
             } as NewVariantData);
 
             toast.success("Đã cập nhật phiên bản sản phẩm");
             onSuccess?.();
-            setIsOpen(false);
          } catch (err) {
             console.error("[useVariantSelector] handleSelect error:", err);
             toast.error("Không thể đổi phiên bản, vui lòng thử lại");
@@ -303,7 +220,6 @@ export function useVariantSelector({
          currentVariantId,
          colorLabel,
          storageLabel,
-         currentQuantity,
          changeVariant,
          onSuccess,
          onUpdateItem,
@@ -311,14 +227,14 @@ export function useVariantSelector({
    );
 
    return {
-      isOpen,
       options,
       isFetching,
+      isOpen, // ← thêm
       isChanging,
       errorMessage,
-      hasFetched: fetchedSlugRef.current === productSlug,
-      handleToggle,
+      hasFetched: fetchedSlugRef.current === cacheKey,
       handleRetry,
+      handleToggle,
       handleSelect,
    };
 }

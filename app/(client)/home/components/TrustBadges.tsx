@@ -1,6 +1,10 @@
-export const TrustBadges = () => {
+interface Props {
+  className?: string;
+}
+
+export const TrustBadges = ({ className = "" }: Props) => {
    return (
-      <section className="py-12 bg-neutral-light">
+      <section className={`py-12 bg-neutral-light ${className}`}>
          <div className="container">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                {/* Authentic Products */}
