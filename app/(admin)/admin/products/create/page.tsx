@@ -26,7 +26,7 @@ export default function CreateProductPage() {
         <span className="text-[13px] text-primary font-medium">Tạo mới</span>
       </div>
 
-      <div className="px-6 py-4 max-w-4xl mx-auto">
+      <div className="px-6 py-4 max-w-7xl mx-auto">
         <div className="mb-5">
           <h1 className="text-[20px] font-bold text-primary">Tạo sản phẩm mới</h1>
           <p className="text-[13px] text-neutral-dark mt-1">Điền đầy đủ thông tin, biến thể và hình ảnh sản phẩm.</p>

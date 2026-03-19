@@ -41,15 +41,18 @@ import {
   WordCount,
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
+import { createUploadAdapterPlugin } from "./CKEditorUploadAdapter";
 
 interface CKEditorClientProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   minHeight?: number;
+  /** Cloudinary folder nhận ảnh upload, mặc định "products" */
+  uploadFolder?: string;
 }
 
-export default function CKEditorClient({ value, onChange, placeholder = "Nhập nội dung bài viết...", minHeight = 400 }: CKEditorClientProps) {
+export default function CKEditorClient({ value, onChange, placeholder = "Nhập nội dung...", minHeight = 400, uploadFolder = "products" }: CKEditorClientProps) {
   return (
     <div className="ck-editor-wrapper rounded-xl overflow-hidden border border-neutral" style={{ "--ck-min-height": `${minHeight}px` } as React.CSSProperties}>
       <style>{`
@@ -76,15 +79,20 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
           box-shadow: none;
         }
       `}</style>
+
       <CKEditor
         editor={ClassicEditor}
         data={value}
-        onChange={(_, editor) => {
-          onChange(editor.getData());
-        }}
+        onChange={(_, editor) => onChange(editor.getData())}
         config={{
           licenseKey: "GPL",
           placeholder,
+
+          // ── Upload adapter ───────────────────────────────────────────────
+          // Phải khai báo qua extraPlugins để CKEditor khởi tạo FileRepository
+          // trước khi adapter được gắn vào.
+          extraPlugins: [createUploadAdapterPlugin(uploadFolder)],
+
           plugins: [
             Essentials,
             Bold,
@@ -100,7 +108,7 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
             Link,
             AutoLink,
             Image,
-            ImageUpload,
+            ImageUpload, // kích hoạt nút "Insert Image" + kéo thả
             ImageResize,
             ImageStyle,
             ImageToolbar,
@@ -123,6 +131,7 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
             FindAndReplace,
             WordCount,
           ],
+
           toolbar: {
             items: [
               "undo",
@@ -160,6 +169,7 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
             ],
             shouldNotGroupWhenFull: false,
           },
+
           heading: {
             options: [
               { model: "paragraph", title: "Đoạn văn", class: "ck-heading_paragraph" },
@@ -169,12 +179,15 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
               { model: "heading4", view: "h4", title: "Tiêu đề 4", class: "ck-heading_heading4" },
             ],
           },
+
           image: {
             toolbar: ["imageStyle:inline", "imageStyle:block", "imageStyle:side", "|", "toggleImageCaption", "imageTextAlternative", "|", "resizeImage"],
           },
+
           table: {
             contentToolbar: ["tableColumn", "tableRow", "mergeTableCells", "tableProperties", "tableCellProperties"],
           },
+
           codeBlock: {
             languages: [
               { language: "plaintext", label: "Plain text" },
@@ -189,10 +202,12 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
               { language: "bash", label: "Bash" },
             ],
           },
+
           link: {
             addTargetToExternalLinks: true,
             defaultProtocol: "https://",
           },
+
           fontSize: {
             options: [10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32],
             supportAllValues: false,

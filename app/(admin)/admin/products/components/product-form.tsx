@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * ProductForm — Create & Edit (v2)
- *
- * Cải tiến:
- * 1. CKEditor thay textarea cho mô tả
- * 2. Auto-generate SKU từ tên sản phẩm + attributes (button + bulk)
- * 3. Color images tự đồng bộ màu từ variants — không cần chọn lại màu
- * 4. Edit mode: quản lý ảnh per-image (click để đánh dấu xóa, thêm ảnh mới vào màu đã có)
- * 5. Variant display type selector
- * 6. Attributes đặt lên trên SKU để có context khi auto-generate
- */
-
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -37,12 +25,17 @@ interface CategoryOption {
   slug: string;
   parentId?: string | null;
 }
+interface AttrOption {
+  id: string;
+  value: string;
+  label: string;
+}
 interface TemplateAttribute {
   id: string;
   code: string;
   name: string;
   isRequired: boolean;
-  options: { id: string; value: string; label: string }[];
+  options: AttrOption[];
 }
 interface TemplateSpecItem {
   id: string;
@@ -50,7 +43,6 @@ interface TemplateSpecItem {
   name: string;
   groupName: string;
   unit?: string | null;
-  icon?: string | null;
   isRequired: boolean;
   isFilterable: boolean;
   sortOrder: number;
@@ -87,14 +79,16 @@ interface ColorImageForm {
   altText: string;
   files: File[];
   previews: string[];
-  existingImages?: ExistingImage[]; // edit mode
+  existingImages?: ExistingImage[];
 }
 
 interface SpecForm {
   specificationId: string;
   value: string;
   isHighlight: boolean;
+  enabled: boolean; // true = admin muốn nhập; false = bỏ qua
 }
+
 interface SelectOption {
   value: string;
   label: string;
@@ -106,7 +100,7 @@ interface SelectOption {
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-function generateSKU(productName: string, attrLabels: string[]): string {
+function generateSKU(productName: string, attrLabels: string[], id?: string): string {
   const normalize = (s: string) =>
     s
       .normalize("NFD")
@@ -116,8 +110,12 @@ function generateSKU(productName: string, attrLabels: string[]): string {
       .trim()
       .toUpperCase()
       .replace(/\s+/g, "-");
-  return [normalize(productName), ...attrLabels.map(normalize)].filter(Boolean).join("-");
+  return [normalize(productName), ...attrLabels.map(normalize), id].filter(Boolean).join("-");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMALL COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -195,12 +193,14 @@ export default function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
   const isEdit = !!product;
 
+  // ── Remote data ────────────────────────────────────────────────────────────
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [template, setTemplate] = useState<CategoryTemplate | null>(null);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
 
+  // ── Basic fields ───────────────────────────────────────────────────────────
   const [name, setName] = useState(product?.name ?? "");
   const [brandId, setBrandId] = useState(product?.brandId ?? "");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? "");
@@ -211,6 +211,7 @@ export default function ProductForm({ product }: ProductFormProps) {
 
   const colorOptions = template?.attributes.find((a) => a.code === "color")?.options ?? [];
 
+  // ── Variants ───────────────────────────────────────────────────────────────
   const [variants, setVariants] = useState<VariantForm[]>(() => {
     if (product?.variants?.length) {
       return product.variants
@@ -229,6 +230,7 @@ export default function ProductForm({ product }: ProductFormProps) {
     return [{ _key: uid(), code: "", price: "", quantity: "10", isDefault: true, isActive: true, attributes: {} }];
   });
 
+  // ── Color images ───────────────────────────────────────────────────────────
   const [colorImages, setColorImages] = useState<ColorImageForm[]>(() => {
     if (product?.img?.length) {
       const colorMap = new Map<string, ExistingImage[]>();
@@ -248,22 +250,25 @@ export default function ProductForm({ product }: ProductFormProps) {
     return [{ _key: uid(), color: "", altText: "", files: [], previews: [] }];
   });
 
+  // ── Specs ──────────────────────────────────────────────────────────────────
   const [specs, setSpecs] = useState<SpecForm[]>(() => {
     if (product?.productSpecifications?.length) {
       return product.productSpecifications.map((s) => ({
         specificationId: s.specificationId,
         value: s.value,
         isHighlight: s.isHighlight,
+        enabled: true,
       }));
     }
     return [];
   });
 
+  // ── UI state ───────────────────────────────────────────────────────────────
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // ── Load brands + categories ────────────────────────────────────────────────
+  // ── Load brands + categories ───────────────────────────────────────────────
   useEffect(() => {
     Promise.allSettled([apiRequest.get<any>("/brands/admin/all", { params: { limit: 100 } }), apiRequest.get<any>("/categories/admin/all", { params: { limit: 500 } })])
       .then(([b, c]) => {
@@ -279,7 +284,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       .finally(() => setLoadingOptions(false));
   }, []);
 
-  // ── Load template ───────────────────────────────────────────────────────────
+  // ── Load template when category changes ────────────────────────────────────
   useEffect(() => {
     if (!categoryId) {
       setTemplate(null);
@@ -296,18 +301,19 @@ export default function ProductForm({ product }: ProductFormProps) {
       .finally(() => setLoadingTemplate(false));
   }, [categoryId]);
 
-  // ── Auto-check required specs ───────────────────────────────────────────────
+  // ── Sync specs when template loads ────────────────────────────────────────
+  // All spec fields are enabled by default; admin can toggle off ones they don't need.
   useEffect(() => {
     if (!template) return;
-    const required = template.specifications.flatMap((g) => g.items).filter((s) => s.isRequired);
+    const allSpecItems = template.specifications.flatMap((g) => g.items);
     setSpecs((prev) => {
-      const ids = new Set(prev.map((s) => s.specificationId));
-      const toAdd = required.filter((s) => !ids.has(s.id)).map((s) => ({ specificationId: s.id, value: "", isHighlight: false }));
+      const existingIds = new Set(prev.map((s) => s.specificationId));
+      const toAdd = allSpecItems.filter((s) => !existingIds.has(s.id)).map((s) => ({ specificationId: s.id, value: "", isHighlight: false, enabled: true }));
       return toAdd.length ? [...prev, ...toAdd] : prev;
     });
   }, [template]);
 
-  // ── Auto-sync color groups từ variants (create mode only) ─────────────────
+  // ── Auto-sync color groups from variants (create mode only) ───────────────
   const syncColors = useCallback(() => {
     const colorAttr = template?.attributes.find((a) => a.code === "color");
     if (!colorAttr) return;
@@ -328,7 +334,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   }, [variants, template, isEdit, syncColors]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // HANDLERS
+  // VARIANT HANDLERS
   // ─────────────────────────────────────────────────────────────────────────────
 
   const addVariant = () => setVariants((p) => [...p, { _key: uid(), code: "", price: "", quantity: "10", isDefault: false, isActive: true, attributes: {} }]);
@@ -345,7 +351,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       .filter((a) => a.code !== "color")
       .map((a) => a.options.find((o) => o.id === v.attributes[a.id])?.label ?? "")
       .filter(Boolean);
-    const sku = generateSKU(name, labels);
+    const sku = generateSKU(name, labels, vKey);
     if (sku) updateVariant(vKey, "code", sku);
   };
 
@@ -357,11 +363,15 @@ export default function ProductForm({ product }: ProductFormProps) {
           .filter((a) => a.code !== "color")
           .map((a) => a.options.find((o) => o.id === v.attributes[a.id])?.label ?? "")
           .filter(Boolean);
-        const sku = generateSKU(name, labels);
+        const sku = generateSKU(name, labels, v._key);
         return sku ? { ...v, code: sku } : v;
       }),
     );
   };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // COLOR IMAGE HANDLERS
+  // ─────────────────────────────────────────────────────────────────────────────
 
   const addColor = () => setColorImages((p) => [...p, { _key: uid(), color: "", altText: "", files: [], previews: [] }]);
   const removeColor = (key: string) => {
@@ -401,12 +411,18 @@ export default function ProductForm({ product }: ProductFormProps) {
       }),
     );
 
-  const toggleSpec = (id: string) =>
-    setSpecs((p) => (p.find((s) => s.specificationId === id) ? p.filter((s) => s.specificationId !== id) : [...p, { specificationId: id, value: "", isHighlight: false }]));
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SPEC HANDLERS
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const toggleSpec = (id: string) => setSpecs((p) => p.map((s) => (s.specificationId === id ? { ...s, enabled: !s.enabled, value: s.enabled ? "" : s.value } : s)));
   const updateSpec = (id: string, value: string) => setSpecs((p) => p.map((s) => (s.specificationId === id ? { ...s, value } : s)));
   const toggleHighlight = (id: string) => setSpecs((p) => p.map((s) => (s.specificationId === id ? { ...s, isHighlight: !s.isHighlight } : s)));
 
-  // ── Validate + Submit ───────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VALIDATE + SUBMIT
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!name.trim() || name.trim().length < 3) errs.name = "Tên sản phẩm phải có ít nhất 3 ký tự";
@@ -444,21 +460,16 @@ export default function ProductForm({ product }: ProductFormProps) {
       const colorImagesPayload = colorImages
         .filter((c) => {
           if (!c.color.trim()) return false;
-          if (!isEdit) return c.files.length > 0; // create: chỉ màu có file
-
-          // edit: chỉ đưa vào payload nếu có thay đổi thực sự
-          const hasNewFiles = c.files.length > 0;
-          const hasDeletes = (c.existingImages ?? []).some((i) => i.toDelete);
-          return hasNewFiles || hasDeletes;
+          if (!isEdit) return c.files.length > 0;
+          return c.files.length > 0 || (c.existingImages ?? []).some((i) => i.toDelete);
         })
         .map((c) => ({
           color: c.color.trim(),
           altText: c.altText.trim() || c.color.trim(),
-          // Chỉ gửi deleteImageIds nếu edit và có ảnh cần xóa
           ...(isEdit && c.existingImages ? { deleteImageIds: c.existingImages.filter((i) => i.toDelete).map((i) => i.id) } : {}),
         }));
 
-      const specificationsPayload = specs.filter((s) => s.value.trim()).map((s) => ({ specificationId: s.specificationId, value: s.value.trim(), isHighlight: s.isHighlight }));
+      const specificationsPayload = specs.filter((s) => s.enabled && s.value.trim()).map((s) => ({ specificationId: s.specificationId, value: s.value.trim(), isHighlight: s.isHighlight }));
 
       const payload = {
         name: name.trim(),
@@ -472,6 +483,7 @@ export default function ProductForm({ product }: ProductFormProps) {
         colorImages: colorImagesPayload,
         specifications: specificationsPayload,
       };
+
       const colorImagesWithFiles = colorImages.filter((c) => c.color.trim() && c.files.length > 0);
       const fd = buildFormData({ ...payload, colorImages: colorImagesPayload }, colorImagesWithFiles);
 
@@ -489,16 +501,21 @@ export default function ProductForm({ product }: ProductFormProps) {
     }
   };
 
-  if (loadingOptions)
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LOADING STATE
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  if (loadingOptions) {
     return (
       <div className="flex items-center justify-center py-20 gap-2">
         <Loader2 size={20} className="animate-spin text-accent" />
         <span className="text-[13px] text-neutral-dark">Đang tải dữ liệu...</span>
       </div>
     );
+  }
 
-  const filledSpecsCount = specs.filter((s) => s.value.trim()).length;
-  const totalSpecsCount = template?.specifications.flatMap((g) => g.items).length ?? 0;
+  const filledSpecsCount = specs.filter((s) => s.enabled && s.value.trim()).length;
+  const totalSpecsCount = specs.filter((s) => s.enabled).length;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
@@ -580,10 +597,9 @@ export default function ProductForm({ product }: ProductFormProps) {
           </div>
         </div>
 
-        {/* CKEditor mô tả */}
         <div>
           <Label>Mô tả sản phẩm</Label>
-          <CKEditorWrapper value={description} onChange={setDescription} placeholder="Nhập mô tả sản phẩm..." minHeight={300} />
+          <CKEditorWrapper value={description} onChange={setDescription} uploadFolder="products" minHeight={300} />
         </div>
       </SectionCard>
 
@@ -617,6 +633,7 @@ export default function ProductForm({ product }: ProductFormProps) {
         <div className="space-y-4">
           {variants.map((v, idx) => (
             <div key={v._key} className={`border rounded-xl p-4 space-y-3 transition-colors ${v.isDefault ? "border-accent bg-accent/5" : "border-neutral"}`}>
+              {/* Header */}
               <div className="flex items-center justify-between">
                 <p className="text-[12px] font-semibold text-primary">
                   Biến thể #{idx + 1}
@@ -640,7 +657,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                 </div>
               </div>
 
-              {/* Attributes — đặt lên trên SKU */}
+              {/* Attributes */}
               {template && template.attributes.length > 0 && (
                 <div>
                   <Label>Thuộc tính</Label>
@@ -665,6 +682,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                 </div>
               )}
 
+              {/* SKU / Price / Qty */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -760,7 +778,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                   )}
                 </div>
 
-                {/* Chọn màu thủ công (chỉ khi chưa có color) */}
+                {/* Manual color picker (only when color not yet set) */}
                 {!ci.color && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -790,7 +808,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                   </div>
                 )}
 
-                {/* Edit: ảnh hiện tại — click để đánh dấu xóa */}
+                {/* Edit: existing images — click to mark for delete */}
                 {isEdit && ci.existingImages && ci.existingImages.length > 0 && (
                   <div>
                     <p className="text-[11px] text-neutral-dark mb-2">
@@ -813,7 +831,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                   </div>
                 )}
 
-                {/* Upload ảnh mới */}
+                {/* Upload new images */}
                 <div>
                   <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-neutral rounded-xl text-[12px] text-neutral-dark hover:bg-neutral-light-active hover:border-accent transition-colors cursor-pointer w-full">
                     <ImagePlus size={14} />
@@ -854,60 +872,85 @@ export default function ProductForm({ product }: ProductFormProps) {
       </SectionCard>
 
       {/* ── 4. Thông số kỹ thuật ── */}
-      {categoryId && template && template.specifications.length > 0 && (
-        <SectionCard title="Thông số kỹ thuật" badge={`${filledSpecsCount} / ${totalSpecsCount}`}>
+      {categoryId && (
+        <>
           {loadingTemplate ? (
-            <div className="flex items-center gap-2 text-[12px] text-neutral-dark py-4 justify-center">
-              <Loader2 size={13} className="animate-spin" /> Đang tải thông số...
+            <div className="bg-neutral-light border border-neutral rounded-2xl px-5 py-6 flex items-center justify-center gap-2 text-[13px] text-neutral-dark">
+              <Loader2 size={15} className="animate-spin text-accent" /> Đang tải thông số kỹ thuật...
             </div>
-          ) : (
-            <div className="space-y-6">
-              {template.specifications.map((group) => (
-                <div key={group.groupName}>
-                  <p className="text-[11px] font-semibold text-accent uppercase tracking-wider mb-2.5">{group.groupName}</p>
-                  <div className="space-y-2">
-                    {group.items.map((spec) => {
-                      const sel = specs.find((s) => s.specificationId === spec.id);
-                      return (
-                        <div
-                          key={spec.id}
-                          className={`border rounded-xl p-3 transition-colors ${sel ? "border-accent/40 bg-accent/5" : "border-neutral"} ${spec.isRequired ? "border-l-[3px] border-l-accent/60" : ""}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <input type="checkbox" checked={!!sel} onChange={() => toggleSpec(spec.id)} disabled={spec.isRequired} className="w-3.5 h-3.5 accent-accent cursor-pointer shrink-0" />
-                            <span className="text-[12px] text-primary flex-1">
-                              {spec.name}
-                              {spec.isRequired && <span className="ml-1.5 text-[10px] text-accent font-medium">(bắt buộc)</span>}
-                            </span>
-                            {spec.unit && <span className="text-[11px] text-neutral-dark shrink-0">({spec.unit})</span>}
-                            {spec.isFilterable && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 shrink-0">filter</span>}
-                            {sel && (
+          ) : template && template.specifications.length > 0 ? (
+            <SectionCard title="Thông số kỹ thuật" badge={`${filledSpecsCount} / ${totalSpecsCount} trường`}>
+              <div className="space-y-6">
+                {template.specifications.map((group) => (
+                  <div key={group.groupName}>
+                    {/* Group header */}
+                    <p className="text-[11px] font-bold text-accent uppercase tracking-wider mb-3 pb-2 border-b border-neutral">{group.groupName}</p>
+
+                    {/* 2-column grid */}
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+                      {group.items.map((spec) => {
+                        const s = specs.find((s) => s.specificationId === spec.id);
+                        const isEnabled = s?.enabled ?? true;
+
+                        return (
+                          <div
+                            key={spec.id}
+                            className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-colors ${isEnabled ? "border-neutral bg-white" : "border-transparent bg-neutral-light/50 opacity-50"}`}
+                          >
+                            {/* Label column */}
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <p className={`text-[12px] font-medium leading-tight ${isEnabled ? "text-primary" : "text-neutral-dark"}`}>
+                                  {spec.name}
+                                  {spec.isRequired && <span className="text-promotion ml-0.5">*</span>}
+                                </p>
+                                {spec.unit && <span className="text-[10px] text-neutral-dark shrink-0">({spec.unit})</span>}
+                                {spec.isFilterable && <span className="text-[9px] px-1 py-0.5 rounded bg-blue-50 text-blue-400 shrink-0 font-medium">filter</span>}
+                              </div>
+
+                              {/* Input — always visible when enabled */}
+                              {isEnabled && (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    value={s?.value ?? ""}
+                                    onChange={(e) => updateSpec(spec.id, e.target.value)}
+                                    placeholder={`Nhập giá trị${spec.unit ? ` (${spec.unit})` : ""}...`}
+                                    className={`flex-1 px-2.5 py-1.5 text-[12px] border rounded-lg bg-neutral-light text-primary placeholder:text-neutral-dark/40 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all ${!s?.value && spec.isRequired ? "border-promotion/50" : "border-neutral"}`}
+                                  />
+                                  {/* Highlight star */}
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleHighlight(spec.id)}
+                                    title={s?.isHighlight ? "Bỏ highlight" : "Đánh dấu nổi bật"}
+                                    className={`shrink-0 p-1 rounded-lg transition-colors cursor-pointer ${s?.isHighlight ? "text-amber-500 bg-amber-50" : "text-neutral-dark/40 hover:text-amber-400 hover:bg-amber-50"}`}
+                                  >
+                                    <Star size={12} fill={s?.isHighlight ? "currentColor" : "none"} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Toggle switch — allow disabling non-required specs */}
+                            {!spec.isRequired && (
                               <button
                                 type="button"
-                                onClick={() => toggleHighlight(spec.id)}
-                                className={`cursor-pointer transition-colors ${sel.isHighlight ? "text-amber-500" : "text-neutral-dark hover:text-amber-400"}`}
+                                onClick={() => toggleSpec(spec.id)}
+                                title={isEnabled ? "Bỏ qua trường này" : "Bật trường này"}
+                                className={`mt-0.5 shrink-0 relative w-8 h-4 rounded-full transition-colors cursor-pointer ${isEnabled ? "bg-accent" : "bg-neutral"}`}
                               >
-                                <Star size={13} fill={sel.isHighlight ? "currentColor" : "none"} />
+                                <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${isEnabled ? "left-4" : "left-0.5"}`} />
                               </button>
                             )}
                           </div>
-                          {sel && (
-                            <input
-                              value={sel.value}
-                              onChange={(e) => updateSpec(spec.id, e.target.value)}
-                              placeholder={`Nhập giá trị${spec.unit ? ` (${spec.unit})` : ""}`}
-                              className={inputCls(!sel.value && spec.isRequired) + " mt-2 text-[12px]"}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
+                ))}
+              </div>
+            </SectionCard>
+          ) : null}
+        </>
       )}
 
       {!categoryId && (
@@ -916,12 +959,14 @@ export default function ProductForm({ product }: ProductFormProps) {
         </div>
       )}
 
+      {/* ── Submit error ── */}
       {submitError && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-promotion-light border border-promotion/30 text-promotion text-[13px]">
           <AlertCircle size={15} /> {submitError}
         </div>
       )}
 
+      {/* ── Actions ── */}
       <div className="flex items-center gap-3 justify-end pb-6">
         <button
           type="button"
