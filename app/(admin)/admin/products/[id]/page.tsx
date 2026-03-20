@@ -549,8 +549,8 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      <div className="px-6 py-4 flex justify-center">
-        <div className="w-full max-w-6xl flex gap-6 items-start">
+      <div className="px-6 py-4">
+        <div className="flex gap-6 items-start">
           {/* LEFT SIDEBAR */}
           <div className="w-72 shrink-0 space-y-4">
             {/* Image */}
