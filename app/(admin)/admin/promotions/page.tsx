@@ -32,17 +32,20 @@ const DEFAULT_META: PromotionMeta = {
   statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
 };
 
-const STATUS_TABS = [
+type StatusTab = "ALL" | "active" | "inactive" | "expired" | "upcoming";
+
+const STATUS_TABS: { value: StatusTab; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "active", label: "Đang hoạt động" },
   { value: "upcoming", label: "Sắp diễn ra" },
   { value: "expired", label: "Đã hết hạn" },
   { value: "inactive", label: "Không hoạt động" },
 ];
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+
+type SortBy = "createdAt" | "name" | "priority" | "startDate" | "endDate";
 
 export default function PromotionsPage() {
   // ── Data ─────────────────────────────────────────────────────────────────────
@@ -52,10 +55,10 @@ export default function PromotionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState<StatusTab>("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortBy, setSortBy] = useState<SortBy>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -91,11 +94,36 @@ export default function PromotionsPage() {
 
   // ── Tab → query params mapping ────────────────────────────────────────────────
   const tabToParams = (tab: string) => {
-    if (tab === "active") return { isActive: true, isExpired: false };
-    if (tab === "inactive") return { isActive: false, isExpired: undefined };
-    if (tab === "expired") return { isActive: undefined, isExpired: true };
-    if (tab === "upcoming") return { isActive: true, isExpired: false };
-    return { isActive: undefined, isExpired: undefined };
+    const now = new Date().toISOString();
+
+    if (tab === "active") {
+      return {
+        isActive: true,
+        startedBefore: now,
+        notExpiredAfter: now,
+      };
+    }
+
+    if (tab === "upcoming") {
+      return {
+        isActive: true,
+        startsAfter: now,
+      };
+    }
+
+    if (tab === "expired") {
+      return {
+        isExpired: true,
+      };
+    }
+
+    if (tab === "inactive") {
+      return {
+        isActive: false,
+      };
+    }
+
+    return {};
   };
 
   // ── Fetch (server-side) ───────────────────────────────────────────────────────
@@ -114,7 +142,7 @@ export default function PromotionsPage() {
         ...tabToParams(activeTab),
       });
       setPromotions(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as PromotionMeta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách khuyến mãi");
     } finally {
@@ -232,7 +260,6 @@ export default function PromotionsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <Link href="/admin/promotions/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all">
             <Plus size={15} />

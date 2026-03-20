@@ -16,11 +16,20 @@ const roleColor: Record<UserRole, string> = {
   CUSTOMER: "bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
-const STATUS_TABS = [
-  { label: "Tất cả", value: "ALL" },
-  { label: "Hoạt động", value: "ACTIVE" },
-  { label: "Bị khóa", value: "BLOCKED" },
-  { label: "Admin", value: "ADMIN" },
+// const STATUS_TABS = [
+//   { label: "Tất cả", value: "ALL" },
+//   { label: "Hoạt động", value: "ACTIVE" },
+//   { label: "Bị khóa", value: "BLOCKED" },
+//   { label: "Admin", value: "ADMIN" },
+// ];
+
+type UserStatus = "ALL" | "ACTIVE" | "BLOCKED" | "ADMIN";
+
+const STATUS_TABS: { value: UserStatus; label: string }[] = [
+  { value: "ALL", label: "Tất cả" },
+  { value: "ACTIVE", label: "Hoạt động" },
+  { value: "BLOCKED", label: "Bị khóa" },
+  { value: "ADMIN", label: "Admin" },
 ];
 
 export default function UserPage() {

@@ -33,4 +33,4 @@ export const SORT_OPTIONS = [
   { value: "priority", label: "Ưu tiên" },
   { value: "startDate", label: "Ngày bắt đầu" },
   { value: "endDate", label: "Ngày kết thúc" },
-];
+] as const;

@@ -153,6 +153,27 @@ const navGroups: NavGroup[] = [
   },
 ];
 
+// Tập hợp toàn bộ href đã khai báo để tránh false-positive startsWith
+const allHrefs = new Set(navGroups.flatMap((g) => g.items.map((i) => i.href)));
+
+/**
+ * Trả về true nếu item này đang active với pathname hiện tại.
+ * Logic: match exact hoặc startsWith — nhưng chỉ khi không có href
+ * cụ thể hơn (dài hơn) nào trong nav cũng đang match pathname đó.
+ *
+ * Ví dụ: pathname = "/admin/products/create"
+ *   - "/admin/products"        → startsWith match, NHƯNG có "/admin/products/create" cụ thể hơn → false
+ *   - "/admin/products/create" → exact match → true
+ */
+function isItemActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  if (pathname.startsWith(href + "/")) {
+    const hasMoreSpecificMatch = [...allHrefs].some((other) => other !== href && other.startsWith(href) && pathname.startsWith(other));
+    return !hasMoreSpecificMatch;
+  }
+  return false;
+}
+
 // ── Flyout (popup khi collapsed) ──────────────────────────────────────────────
 function CollapsedFlyout({ group, anchorY, pathname, onClose }: { group: NavGroup; anchorY: number; pathname: string; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -167,20 +188,17 @@ function CollapsedFlyout({ group, anchorY, pathname, onClose }: { group: NavGrou
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
-  // Tính top sao cho flyout không bị tràn màn hình
-  const flyoutHeight = group.items.length * 36 + 48; // ước lượng
+  const flyoutHeight = group.items.length * 36 + 48;
   const maxTop = typeof window !== "undefined" ? window.innerHeight - flyoutHeight - 8 : anchorY;
   const top = Math.min(anchorY, maxTop);
 
   return (
     <div ref={ref} style={{ top, left: 56 }} className="fixed z-50 w-52 bg-white border border-neutral rounded-xl shadow-lg py-1.5 overflow-hidden">
-      {/* Group label */}
       <div className="px-3 py-2 text-[11px] font-bold text-neutral-dark uppercase tracking-widest border-b border-neutral mb-1">{group.label}</div>
 
-      {/* Items */}
       {group.items.map((item) => {
         const Icon = item.icon;
-        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        const isActive = isItemActive(pathname, item.href);
         return (
           <Link
             key={item.href}
@@ -207,18 +225,16 @@ export default function AdminSidebar() {
 
   const [collapsed, setCollapsed] = useState(false);
 
-  // Accordion (expanded mode)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach((g) => {
-      if (g.items.some((i) => pathname === i.href || pathname.startsWith(i.href + "/"))) {
+      if (g.items.some((i) => isItemActive(pathname, i.href))) {
         init[g.label] = true;
       }
     });
     return init;
   });
 
-  // Flyout (collapsed mode)
   const [flyout, setFlyout] = useState<{ group: NavGroup; anchorY: number } | null>(null);
 
   const toggleGroup = (label: string) => setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -237,7 +253,7 @@ export default function AdminSidebar() {
     router.replace("/account");
   };
 
-  const isGroupActive = (group: NavGroup) => group.items.some((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
+  const isGroupActive = (group: NavGroup) => group.items.some((i) => isItemActive(pathname, i.href));
 
   return (
     <>
@@ -264,7 +280,6 @@ export default function AdminSidebar() {
             const groupActive = isGroupActive(group);
             const isFlyoutOpen = flyout?.group.label === group.label;
 
-            // ── COLLAPSED: chỉ hiện icon cha, click → flyout ──
             if (collapsed) {
               return (
                 <button
@@ -280,7 +295,6 @@ export default function AdminSidebar() {
               );
             }
 
-            // ── EXPANDED: accordion ──
             return (
               <div key={group.label} className="mb-0.5">
                 <button
@@ -298,7 +312,7 @@ export default function AdminSidebar() {
                   <div className="ml-2 pl-2 border-l border-neutral mt-0.5 space-y-0.5">
                     {group.items.map((item) => {
                       const Icon = item.icon;
-                      const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                      const isActive = isItemActive(pathname, item.href);
                       return (
                         <Link
                           key={item.href}
@@ -348,7 +362,6 @@ export default function AdminSidebar() {
         )}
       </div>
 
-      {/* ── Flyout Portal (rendered outside sidebar div để không bị clip) ── */}
       {collapsed && flyout && <CollapsedFlyout group={flyout.group} anchorY={flyout.anchorY} pathname={pathname} onClose={() => setFlyout(null)} />}
     </>
   );

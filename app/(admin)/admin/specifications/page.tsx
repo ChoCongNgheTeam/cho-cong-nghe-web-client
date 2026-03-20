@@ -18,7 +18,7 @@ interface Meta {
   totalPages: number;
   activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number; FILTERABLE: number };
 }
-
+type SortBy = "sortOrder" | "name" | "createdAt";
 export default function SpecificationsPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
   const [specs, setSpecs] = useState<Specification[]>([]);
@@ -36,7 +36,7 @@ export default function SpecificationsPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("sortOrder");
+  const [sortBy, setSortBy] = useState<SortBy>("sortOrder");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -200,7 +200,6 @@ export default function SpecificationsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <button onClick={handleOpenCreate} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer">
             <Plus size={15} />
@@ -282,7 +281,7 @@ export default function SpecificationsPage() {
           <select
             value={sortBy}
             onChange={(e) => {
-              setSortBy(e.target.value);
+              setSortBy(e.target.value as SortBy);
               resetPage();
             }}
             className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"

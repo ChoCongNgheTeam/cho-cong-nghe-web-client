@@ -322,7 +322,7 @@ export default function ReviewsAdminPage() {
                 </select>
                 <span className="text-[12px] text-neutral-dark">/ {data.pagination.total} đánh giá</span>
               </div>
-              <AdminPagination page={page} totalPages={data.pagination.totalPages} onPageChange={setPage} />
+              {/* <AdminPagination page={page} totalPages={data.pagination.totalPages} onPageChange={setPage} /> */}
             </div>
           )}
         </div>

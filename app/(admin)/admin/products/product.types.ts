@@ -173,6 +173,7 @@ export interface ProductMeta {
   limit: number;
   total: number;
   totalPages: number;
+  statusCounts: { [key: string]: number };
 }
 
 export interface ProductsResponse {

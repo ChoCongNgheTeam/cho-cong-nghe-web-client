@@ -34,7 +34,8 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS)[number]["order"]}`;
-
+type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+type SortOrder = (typeof SORT_OPTIONS)[number]["order"];
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ export default function ProductsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const [sortBy, sortOrder] = sortKey.split("_") as [string, "asc" | "desc"];
+  const [sortBy, sortOrder] = sortKey.split("_") as [SortValue, SortOrder];
 
   const tabToParams = (tab: string) => {
     if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
@@ -279,7 +280,6 @@ export default function ProductsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <Link
             href="/admin/products/create"
