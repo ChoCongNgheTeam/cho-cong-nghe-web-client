@@ -4,8 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useContext } from "react";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
-import { AuthContext } from "@/contexts/AuthContext";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import { useAuth } from "@/hooks/useAuth";
 
 type ErrorType =
    | "token_expired"
@@ -26,7 +26,7 @@ export default function ResetPasswordContent() {
    const searchParams = useSearchParams();
    const router = useRouter();
    const toast = useToasty();
-   const auth = useContext(AuthContext);
+   const { isAuthenticated, loading: authLoading } = useAuth();
 
    const token = searchParams.get("token");
    const error = searchParams.get("error");
@@ -36,10 +36,10 @@ export default function ResetPasswordContent() {
    const [loading, setLoading] = useState(false);
 
    useEffect(() => {
-      if (!auth?.loading && auth?.isAuthenticated) {
+      if (!authLoading && isAuthenticated) {
          router.replace("/");
       }
-   }, [auth?.loading, auth?.isAuthenticated, router]);
+   }, [authLoading, isAuthenticated, router]);
 
    useEffect(() => {
       if (error) {
@@ -95,7 +95,7 @@ export default function ResetPasswordContent() {
       }
    };
 
-   if (auth?.loading) {
+   if (authLoading) {
       return (
          <div className="min-h-screen flex items-center justify-center bg-neutral-light">
             <div className="animate-spin h-8 w-8 rounded-full border-4 border-primary border-t-transparent" />

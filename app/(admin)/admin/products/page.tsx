@@ -1,737 +1,633 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Pagination, Product } from "./product.types";
-import { getAllProduct } from "./_libs";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, Trash2, X, Star, ArrowUpDown, ChevronDown, CalendarDays } from "lucide-react";
+import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
-// ─── Types ────────────────────────────────────────────────────────────────────
+import AdminTable from "@/components/admin/AdminTables";
+import { Popzy } from "@/components/Modal";
+import type { ProductCard } from "./product.types";
+import { getAllProducts, softDeleteProduct, toggleProductActive, bulkAction } from "./_libs/products";
+import { getProductColumns } from "./components/TableProducts";
+import { StatsCard } from "@/components/admin/StatsCard";
 
-type StatusType = "active" | "hidden" | "out";
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<StatusType, { label: string; cls: string }> = {
-   active: {
-      label: "Hoạt động",
-      cls: "bg-[rgb(var(--accent-light))] text-accent border border-[rgb(var(--accent-light-active))]",
-   },
-   hidden: {
-      label: "Ẩn",
-      cls: "bg-amber-50 text-amber-700 border border-amber-200",
-   },
-   out: {
-      label: "Hết hàng",
-      cls: "bg-[rgb(var(--promotion-light))] text-promotion border border-[rgb(var(--promotion-light-active))]",
-   },
+const STATUS_TABS = [
+  { value: "ALL", label: "Tất cả" },
+  { value: "active", label: "Hiển thị" },
+  { value: "inactive", label: "Đang ẩn" },
+  { value: "outOfStock", label: "Hết hàng" },
+  { value: "featured", label: "Nổi bật" },
+];
+
+const SORT_OPTIONS = [
+  { value: "createdAt", order: "desc", label: "Mới nhất" },
+  { value: "createdAt", order: "asc", label: "Cũ nhất" },
+  { value: "name", order: "asc", label: "Tên A → Z" },
+  { value: "name", order: "desc", label: "Tên Z → A" },
+  { value: "viewsCount", order: "desc", label: "Lượt xem nhiều nhất" },
+  { value: "ratingAverage", order: "desc", label: "Đánh giá cao nhất" },
+  { value: "totalSoldCount", order: "desc", label: "Bán chạy nhất" },
+] as const;
+
+type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS)[number]["order"]}`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ProductMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusCounts: Record<string, number>;
+}
+
+const DEFAULT_META: ProductMeta = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 1,
+  statusCounts: { ALL: 0, active: 0, inactive: 0, outOfStock: 0, featured: 0 },
 };
 
-const fmt = (n: number) =>
-   new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-   }).format(n);
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 
-const SAMPLE_STATUSES: StatusType[] = [
-   "active",
-   "active",
-   "active",
-   "hidden",
-   "active",
-   "active",
-   "active",
-   "active",
-   "active",
-   "out",
-   "active",
-   "active",
-];
+export default function ProductsPage() {
+  // ── Data ────────────────────────────────────────────────────────────────────
+  const [products, setProducts] = useState<ProductCard[]>([]);
+  const [meta, setMeta] = useState<ProductMeta>(DEFAULT_META);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-// ─── Status Dropdown ──────────────────────────────────────────────────────────
+  // ── Query params ─────────────────────────────────────────────────────────────
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [activeTab, setActiveTab] = useState("ALL");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt_desc");
 
-function StatusDropdown({
-   value,
-   onChange,
-}: {
-   value: StatusType;
-   onChange: (v: StatusType) => void;
-}) {
-   const [open, setOpen] = useState(false);
-   const s = STATUS_MAP[value];
+  // Date range
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const dateRef = useRef<HTMLDivElement>(null);
 
-   return (
-      <div className="relative inline-block text-left">
-         <button
-            onClick={() => setOpen((o) => !o)}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${s.cls}`}
-         >
-            {s.label}
-            <svg
-               className="w-3 h-3"
-               fill="none"
-               stroke="currentColor"
-               viewBox="0 0 24 24"
-            >
-               <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-               />
-            </svg>
-         </button>
-         {open && (
-            <div className="absolute z-30 mt-1.5 left-0 w-32 bg-neutral-light border border-neutral rounded-xl shadow-xl overflow-hidden">
-               {(Object.keys(STATUS_MAP) as StatusType[]).map((k) => (
-                  <button
-                     key={k}
-                     onClick={() => {
-                        onChange(k);
-                        setOpen(false);
-                     }}
-                     className={`w-full text-left px-3 py-2 text-xs font-medium transition-colors hover:bg-neutral-light-active ${value === k ? "bg-neutral-light-active" : ""}`}
-                  >
-                     <span
-                        className={`inline-flex px-2 py-0.5 rounded-md font-semibold ${STATUS_MAP[k].cls}`}
-                     >
-                        {STATUS_MAP[k].label}
-                     </span>
-                  </button>
-               ))}
-            </div>
-         )}
-      </div>
-   );
-}
+  // Sort dropdown
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+  // ── Selection ────────────────────────────────────────────────────────────────
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-function StatCard({
-   title,
-   value,
-   trend,
-   sub,
-   sparkline,
-   children,
-}: {
-   title: string;
-   value?: string;
-   trend?: string;
-   sub?: string;
-   sparkline?: boolean;
-   children?: React.ReactNode;
-}) {
-   return (
-      <div className="bg-neutral-light border border-neutral rounded-2xl p-5 shadow-sm relative overflow-hidden">
-         {sparkline && (
-            <svg
-               className="absolute right-4 top-4 w-16 h-8 opacity-20"
-               viewBox="0 0 64 32"
-               fill="none"
-            >
-               <polyline
-                  points="0,28 10,20 20,24 30,12 40,16 50,8 64,14"
-                  stroke="rgb(var(--accent))"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-               />
-            </svg>
-         )}
-         {children ?? (
-            <>
-               <p className="text-3xl font-bold text-primary tracking-tight">
-                  {value}
-               </p>
-               <p className="text-xs text-neutral-dark font-medium mt-0.5">
-                  {title}
-               </p>
-               <div className="flex items-center gap-1.5 mt-3">
-                  {trend && (
-                     <span className="flex items-center gap-0.5 text-xs font-semibold text-green-600">
-                        <svg
-                           className="w-3 h-3"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2.5}
-                              d="M5 15l7-7 7 7"
-                           />
-                        </svg>
-                        {trend}
-                     </span>
-                  )}
-                  {sub && (
-                     <span className="text-xs text-neutral-dark">{sub}</span>
-                  )}
-               </div>
-            </>
-         )}
-      </div>
-   );
-}
+  // ── Delete modal ─────────────────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<ProductCard | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-// ─── Rating Circle ────────────────────────────────────────────────────────────
+  // ── Bulk action ──────────────────────────────────────────────────────────────
+  const [bulkLoading, setBulkLoading] = useState(false);
 
-function RatingCircle({ value }: { value: number }) {
-   const pct = value / 5;
-   const r = 22,
-      circ = 2 * Math.PI * r;
-   return (
-      <div className="flex items-center justify-center relative w-14 h-14">
-         <svg
-            className="absolute inset-0 w-full h-full -rotate-90"
-            viewBox="0 0 56 56"
-         >
-            <circle
-               cx="28"
-               cy="28"
-               r={r}
-               fill="none"
-               stroke="rgb(var(--neutral-light-active))"
-               strokeWidth="4"
-            />
-            <circle
-               cx="28"
-               cy="28"
-               r={r}
-               fill="none"
-               stroke="#22c55e"
-               strokeWidth="4"
-               strokeDasharray={`${pct * circ} ${circ}`}
-               strokeLinecap="round"
-            />
-         </svg>
-         <span className="text-sm font-bold text-primary relative z-10">
-            {value.toFixed(1)}
-         </span>
-      </div>
-   );
-}
+  // ── Close dropdowns on outside click ─────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+  const [sortBy, sortOrder] = sortKey.split("_") as [string, "asc" | "desc"];
 
-function SkeletonRow() {
-   return (
-      <tr className="border-b border-neutral">
-         {[10, 48, 20, 24, 12, 16, 24, 20, 16].map((w, i) => (
-            <td key={i} className="py-3.5 px-4">
-               <div
-                  className="h-3 bg-neutral rounded-full animate-pulse"
-                  style={{ width: `${w * 4}px` }}
-               />
-            </td>
-         ))}
-      </tr>
-   );
-}
+  const tabToParams = (tab: string) => {
+    if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
+    if (tab === "inactive") return { isActive: false, inStock: undefined, isFeatured: undefined };
+    if (tab === "outOfStock") return { isActive: undefined, inStock: false, isFeatured: undefined };
+    if (tab === "featured") return { isActive: undefined, inStock: undefined, isFeatured: true };
+    return { isActive: undefined, inStock: undefined, isFeatured: undefined };
+  };
 
-// ─── Product Row ──────────────────────────────────────────────────────────────
-
-function ProductRow({
-   product,
-   idx,
-   checked,
-   onCheck,
-}: {
-   product: Product;
-   idx: number;
-   checked: boolean;
-   onCheck: () => void;
-}) {
-   const [status, setStatus] = useState<StatusType>(
-      SAMPLE_STATUSES[idx % SAMPLE_STATUSES.length],
-   );
-
-   return (
-      <tr className="border-b border-neutral hover:bg-neutral-light-hover transition-colors group">
-         <td className="py-3.5 px-4 w-10">
-            <input
-               type="checkbox"
-               checked={checked}
-               onChange={onCheck}
-               className="rounded border-neutral w-4 h-4 cursor-pointer accent-accent"
-            />
-         </td>
-         <td className="py-3.5 px-4">
-            <div className="flex items-center gap-3">
-               <div className="w-9 h-9 rounded-xl bg-neutral shrink-0 overflow-hidden flex items-center justify-center">
-                  {product.thumbnail ? (
-                     <img
-                        src={product.thumbnail}
-                        alt=""
-                        className="w-full h-full object-cover"
-                     />
-                  ) : (
-                     <svg
-                        className="w-4 h-4 text-neutral-dark"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                     >
-                        <path
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           strokeWidth={1.5}
-                           d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                     </svg>
-                  )}
-               </div>
-               <div className="min-w-0">
-                  <p className="text-sm font-medium text-primary truncate max-w-45">
-                     {product.name}
-                  </p>
-                  <p className="text-[11px] text-neutral-dark mt-0.5 flex items-center gap-1">
-                     SKU: {product.slug.toUpperCase().slice(0, 14)}
-                     <svg
-                        className="w-2.5 h-2.5 opacity-40"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                     >
-                        <path
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           strokeWidth={2}
-                           d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                     </svg>
-                  </p>
-               </div>
-            </div>
-         </td>
-         <td className="py-3.5 px-4">
-            <span className="text-xs text-neutral-dark bg-neutral px-2 py-1 rounded-lg">
-               Điện thoại
-            </span>
-         </td>
-         <td className="py-3.5 px-4 text-sm font-semibold text-primary whitespace-nowrap">
-            {fmt(product.priceOrigin)}
-         </td>
-         <td className="py-3.5 px-4 text-sm text-primary text-center font-medium">
-            8
-         </td>
-         <td className="py-3.5 px-4 text-sm text-neutral-dark text-center">
-            0.00
-         </td>
-         <td className="py-3.5 px-4 text-sm font-medium text-primary whitespace-nowrap">
-            {fmt(product.priceOrigin * 8)}
-         </td>
-         <td className="py-3.5 px-4">
-            <StatusDropdown value={status} onChange={setStatus} />
-         </td>
-         <td className="py-3.5 px-4">
-            <div className="flex items-center gap-0.5 opacity-40 group-hover:opacity-100 transition-opacity">
-               <button className="p-1.5 rounded-lg hover:bg-neutral-light-active text-neutral-dark hover:text-primary transition-colors">
-                  <svg
-                     className="w-3.5 h-3.5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                     />
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                     />
-                  </svg>
-               </button>
-               <button className="p-1.5 rounded-lg hover:bg-accent-light text-neutral-dark hover:text-accent transition-colors">
-                  <svg
-                     className="w-3.5 h-3.5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                     />
-                  </svg>
-               </button>
-               <button className="p-1.5 rounded-lg hover:bg-promotion-light text-neutral-dark hover:text-promotion transition-colors">
-                  <svg
-                     className="w-3.5 h-3.5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                     />
-                  </svg>
-               </button>
-            </div>
-         </td>
-      </tr>
-   );
-}
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-const TABS = [
-   { key: "all", label: "Tất cả sản phẩm", count: 145 },
-   { key: "featured", label: "Sản phẩm nổi bật" },
-   { key: "promo", label: "Sản phẩm khuyến mãi" },
-   { key: "out", label: "Hết hàng" },
-];
-
-const TH = ({ children }: { children: React.ReactNode }) => (
-   <th className="py-3 px-4 text-xs font-semibold text-neutral-dark whitespace-nowrap cursor-pointer select-none hover:text-primary transition-colors">
-      <span className="flex items-center gap-1">
-         {children}
-         <svg
-            className="w-3 h-3 opacity-30"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-         >
-            <path
-               strokeLinecap="round"
-               strokeLinejoin="round"
-               strokeWidth={2}
-               d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-            />
-         </svg>
-      </span>
-   </th>
-);
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
-export default function AdminProducts() {
-   const [products, setProducts] = useState<Product[]>([]);
-   const [pagination, setPagination] = useState<Pagination>({
-      page: 1,
-      limit: 12,
-      total: 0,
-      totalPages: 1,
-   });
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState<string | null>(null);
-   const [search, setSearch] = useState("");
-   const [page, setPage] = useState(1);
-   const [pageSize, setPageSize] = useState(12);
-   const [activeTab, setActiveTab] = useState("all");
-   const [selected, setSelected] = useState<Set<string>>(new Set());
-
-   const fetchProducts = useCallback(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-         const res = await getAllProduct({
-            page,
-            limit: pageSize,
-            ...(search ? { search } : {}),
-         });
-         setProducts(res.data);
-         setPagination(res.pagination);
-      } catch (e) {
-         setError(e instanceof Error ? e.message : "Lỗi tải dữ liệu");
-      } finally {
-         setLoading(false);
-      }
-   }, [page, pageSize, search]);
-
-   useEffect(() => {
-      fetchProducts();
-   }, [fetchProducts]);
-
-   const allChecked = products.length > 0 && selected.size === products.length;
-   const toggleAll = () =>
-      setSelected(allChecked ? new Set() : new Set(products.map((p) => p.id)));
-   const toggleOne = (id: string) =>
-      setSelected((s) => {
-         const n = new Set(s);
-         n.has(id) ? n.delete(id) : n.add(id);
-         return n;
+  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getAllProducts({
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        sortBy,
+        sortOrder,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        ...tabToParams(activeTab),
       });
+      setProducts(res.data);
+      setMeta(res.meta);
+    } catch (e: any) {
+      setError(e?.message ?? "Không thể tải danh sách sản phẩm");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo]);
 
-   const handlePageChange = (p: number) => {
-      setPage(p);
-      setSelected(new Set());
-   };
-   const handlePageSizeChange = (size: number) => {
-      setPageSize(size);
-      setPage(1);
-      setSelected(new Set());
-   };
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
-   return (
-      <div className="min-h-screen bg-neutral-light-active">
-         <div className="mx-auto px-6 py-8 space-y-5">
-            {/* ── Stat Cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-               <StatCard
-                  value="1,230"
-                  title="Tổng sản phẩm trong hệ thống"
-                  trend="7 ngày qua"
-                  sub=""
-                  sparkline
-               />
-               <StatCard
-                  value="1,200"
-                  title="Tổng sản phẩm đang Bán"
-                  trend="189"
-                  sub="với ngày qua"
-               />
-               <StatCard title="">
-                  <div className="flex items-center justify-between">
-                     <div>
-                        <p className="text-3xl font-bold text-primary tracking-tight">
-                           5,0/5.0
-                        </p>
-                        <p className="text-xs text-neutral-dark font-medium mt-0.5">
-                           Điểm trung bình
-                        </p>
-                        <div className="flex items-center gap-0.5 mt-2">
-                           {[...Array(5)].map((_, i) => (
-                              <svg
-                                 key={i}
-                                 className="w-3.5 h-3.5 text-amber-400"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20"
-                              >
-                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                           ))}
-                           <span className="text-xs text-green-600 font-medium ml-1.5">
-                              ↑ Chất lượng tốt
-                           </span>
-                        </div>
-                     </div>
-                     <RatingCircle value={5.0} />
-                  </div>
-               </StatCard>
-            </div>
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  const resetPage = useCallback(() => setPage(1), []);
 
-            {/* ── Table Card ── */}
-            <div className="bg-neutral-light border border-neutral rounded-2xl shadow-sm overflow-hidden">
-               {/* Tabs + Controls */}
-               <div className="flex items-end justify-between gap-4 flex-wrap px-5 pt-4 border-b border-neutral">
-                  {/* Tabs */}
-                  <div className="flex items-center">
-                     {TABS.map((tab) => (
-                        <button
-                           key={tab.key}
-                           onClick={() => {
-                              setActiveTab(tab.key);
-                              setPage(1);
-                           }}
-                           className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-all ${
-                              activeTab === tab.key
-                                 ? "text-primary border-accent"
-                                 : "text-neutral-dark border-transparent hover:text-primary"
-                           }`}
-                        >
-                           {tab.label}
-                           {tab.count != null && (
-                              <span
-                                 className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full font-semibold ${
-                                    activeTab === tab.key
-                                       ? "bg-accent text-white"
-                                       : "bg-neutral text-neutral-dark"
-                                 }`}
-                              >
-                                 {tab.count}
-                              </span>
-                           )}
-                        </button>
-                     ))}
-                  </div>
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    resetPage();
+  };
 
-                  {/* Controls */}
-                  <div className="flex items-center gap-2 pb-3">
-                     {/* Search */}
-                     <div className="relative">
-                        <svg
-                           className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-dark"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                           />
-                        </svg>
-                        <input
-                           type="text"
-                           placeholder="Search"
-                           value={search}
-                           onChange={(e) => {
-                              setSearch(e.target.value);
-                              setPage(1);
-                           }}
-                           className="pl-8 pr-3 py-2 text-sm bg-neutral-light-active border border-neutral rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent w-44 placeholder:text-neutral-dark text-primary transition-all"
-                        />
-                     </div>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs text-primary border border-neutral rounded-xl hover:bg-neutral-light-active transition-colors font-medium">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                           />
-                        </svg>
-                        Bộ lọc
-                     </button>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs text-primary border border-neutral rounded-xl hover:bg-neutral-light-active transition-colors font-medium whitespace-nowrap">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                           />
-                        </svg>
-                        Lọc theo ngày
-                     </button>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs text-primary border border-neutral rounded-xl hover:bg-neutral-light-active transition-colors">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                           />
-                        </svg>
-                     </button>
-                     <button className="flex items-center gap-1.5 px-3 py-2 text-xs bg-accent text-white rounded-xl hover:bg-accent-hover transition-colors font-medium shadow-sm">
-                        <svg
-                           className="w-3.5 h-3.5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                           />
-                        </svg>
-                        Thêm
-                     </button>
-                  </div>
-               </div>
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearch("");
+    resetPage();
+  };
 
-               {/* Table */}
-               <div className="overflow-x-auto">
-                  {error ? (
-                     <div className="flex flex-col items-center py-16 gap-2">
-                        <p className="text-sm text-neutral-dark">{error}</p>
-                        <button
-                           onClick={fetchProducts}
-                           className="text-xs text-accent hover:underline"
-                        >
-                           Thử lại
-                        </button>
-                     </div>
-                  ) : (
-                     <table className="w-full text-left">
-                        <thead>
-                           <tr className="border-b border-neutral bg-neutral-light-active/60">
-                              <th className="py-3 px-4 w-10">
-                                 <input
-                                    type="checkbox"
-                                    checked={allChecked}
-                                    onChange={toggleAll}
-                                    className="rounded border-neutral w-4 h-4 cursor-pointer accent-accent"
-                                 />
-                              </th>
-                              <TH>Tên sản phẩm</TH>
-                              <TH>Danh mục</TH>
-                              <TH>Giá sản phẩm</TH>
-                              <TH>Tồn Kho</TH>
-                              <TH>Giảm giá</TH>
-                              <TH>Tổng giá trị</TH>
-                              <TH>Trạng thái</TH>
-                              <th className="py-3 px-4 text-xs font-semibold text-neutral-dark">
-                                 Hành động
-                              </th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {loading ? (
-                              [...Array(pageSize > 10 ? 10 : pageSize)].map(
-                                 (_, i) => <SkeletonRow key={i} />,
-                              )
-                           ) : products.length === 0 ? (
-                              <tr>
-                                 <td
-                                    colSpan={9}
-                                    className="py-16 text-center text-sm text-neutral-dark"
-                                 >
-                                    Không có sản phẩm nào.
-                                 </td>
-                              </tr>
-                           ) : (
-                              products.map((p, i) => (
-                                 <ProductRow
-                                    key={p.id}
-                                    product={p}
-                                    idx={i}
-                                    checked={selected.has(p.id)}
-                                    onCheck={() => toggleOne(p.id)}
-                                 />
-                              ))
-                           )}
-                        </tbody>
-                     </table>
-                  )}
-               </div>
+  const handleClearDate = () => {
+    setDateFrom("");
+    setDateTo("");
+    setShowDatePicker(false);
+    resetPage();
+  };
 
-               {/* Pagination */}
-               {!loading && !error && pagination.totalPages > 0 && (
-                  <div className="px-5 py-4 border-t border-neutral">
-                     <AdminPagination
-                        currentPage={pagination.page}
-                        totalPages={pagination.totalPages}
-                        total={pagination.total}
-                        pageSize={pageSize}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
-                        pageSizeOptions={[10, 20, 50]}
-                        siblingCount={1}
-                     />
-                  </div>
-               )}
-            </div>
-         </div>
+  const handleSortChange = (key: SortKey) => {
+    setSortKey(key);
+    setShowSortDropdown(false);
+    resetPage();
+  };
+
+  const handleClearAllFilters = () => {
+    setSearch("");
+    setSearchInput("");
+    setDateFrom("");
+    setDateTo("");
+    setActiveTab("ALL");
+    setSortKey("createdAt_desc");
+    resetPage();
+  };
+
+  const hasDateFilter = !!dateFrom || !!dateTo;
+  const hasSortFilter = sortKey !== "createdAt_desc";
+  const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
+
+  // ── Selection ────────────────────────────────────────────────────────────────
+  const toggleOne = useCallback((id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    setSelected((prev) => (prev.size === products.length ? new Set() : new Set(products.map((p) => p.id))));
+  }, [products]);
+
+  // ── Toggle status — optimistic update ────────────────────────────────────────
+  const handleStatusChange = useCallback((productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => {
+    setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updates } : p)));
+  }, []);
+
+  // ── Delete ───────────────────────────────────────────────────────────────────
+  const handleDeleteClick = useCallback((product: ProductCard) => {
+    setDeleteTarget(product);
+    setDeleteError(null);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await softDeleteProduct(deleteTarget.id);
+      setDeleteTarget(null);
+      fetchProducts();
+    } catch (e: any) {
+      setDeleteError(e?.message ?? "Không thể xóa sản phẩm");
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteTarget, fetchProducts]);
+
+  // ── Bulk actions ─────────────────────────────────────────────────────────────
+  const handleBulkAction = useCallback(
+    async (action: "delete" | "activate" | "deactivate" | "feature" | "unfeature") => {
+      if (selected.size === 0) return;
+      setBulkLoading(true);
+      try {
+        await bulkAction(action, Array.from(selected));
+        setSelected(new Set());
+        fetchProducts();
+      } catch (e: any) {
+        setError(e?.message ?? "Thao tác thất bại");
+      } finally {
+        setBulkLoading(false);
+      }
+    },
+    [selected, fetchProducts],
+  );
+
+  // ── Columns ──────────────────────────────────────────────────────────────────
+  const columns = useMemo(
+    () =>
+      getProductColumns({
+        page,
+        pageSize,
+        selected,
+        toggleOne,
+        onStatusChange: handleStatusChange,
+        onDeleteClick: handleDeleteClick,
+      }),
+    [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
+  );
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen bg-neutral-light">
+      {/* ── Header ── */}
+      <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+            <Package size={18} />
+          </div>
+          <div>
+            <h1 className="text-[20px] font-bold text-primary">Sản phẩm</h1>
+            <p className="text-[12px] text-neutral-dark">Quản lý toàn bộ sản phẩm trong hệ thống</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchProducts}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            Làm mới
+          </button>
+          <Link
+            href="/admin/products/create"
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer"
+          >
+            <Plus size={15} />
+            Thêm sản phẩm
+          </Link>
+        </div>
       </div>
-   );
+
+      {/* ── Stats ── */}
+      <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatsCard label="Tổng sản phẩm" value={meta.statusCounts.ALL ?? 0} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
+        <StatsCard
+          label="Đang hiển thị"
+          value={meta.statusCounts.active ?? 0}
+          sub="Khách hàng có thể xem"
+          icon={<CheckCircle2 size={18} />}
+          valueClassName="text-emerald-600"
+          iconClassName="text-emerald-600"
+        />
+        <StatsCard label="Đang ẩn" value={meta.statusCounts.inactive ?? 0} sub="Chưa hiển thị cho khách" icon={<EyeOff size={18} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
+        <StatsCard label="Nổi bật" value={meta.statusCounts.featured ?? 0} sub="Sản phẩm được featured" icon={<Star size={18} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
+      </div>
+
+      {/* ── Main table card ── */}
+      <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
+        {/* ── Toolbar: 1 row ── */}
+        <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
+          {/* Status tabs */}
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => handleTabChange(tab.value)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+              }`}
+            >
+              {tab.label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                {meta.statusCounts[tab.value] ?? 0}
+              </span>
+            </button>
+          ))}
+
+          <div className="w-px h-5 bg-neutral mx-1" />
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  resetPage();
+                }
+              }}
+              placeholder="Tìm tên, slug..."
+              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
+            />
+            {searchInput && (
+              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer">
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Sort dropdown */}
+          <div ref={sortRef} className="relative">
+            <button
+              onClick={() => setShowSortDropdown((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <ArrowUpDown size={14} />
+              {hasSortFilter ? SORT_OPTIONS.find((o) => `${o.value}_${o.order}` === sortKey)?.label : "Sắp xếp"}
+              {hasSortFilter ? (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSortChange("createdAt_desc");
+                  }}
+                  className="hover:text-promotion"
+                />
+              ) : (
+                <ChevronDown size={12} className={`transition-transform ${showSortDropdown ? "rotate-180" : ""}`} />
+              )}
+            </button>
+            {showSortDropdown && (
+              <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                {SORT_OPTIONS.map((opt) => {
+                  const key = `${opt.value}_${opt.order}` as SortKey;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleSortChange(key)}
+                      className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                        sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Date filter */}
+          <div ref={dateRef} className="relative">
+            <button
+              onClick={() => setShowDatePicker((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <CalendarDays size={14} />
+              {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
+              {hasDateFilter && (
+                <X
+                  size={12}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClearDate();
+                  }}
+                  className="hover:text-promotion"
+                />
+              )}
+            </button>
+            {showDatePicker && (
+              <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
+                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Khoảng thời gian</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-neutral-dark">Từ ngày</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      max={dateTo || undefined}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-neutral-dark">Đến ngày</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      min={dateFrom || undefined}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={handleClearDate} className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                    Xóa
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDatePicker(false);
+                      resetPage();
+                    }}
+                    className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 cursor-pointer"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Clear filters */}
+          {(hasActiveFilters || hasSortFilter) && (
+            <button
+              onClick={handleClearAllFilters}
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+            >
+              <X size={13} /> Xoá lọc
+            </button>
+          )}
+
+          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} sản phẩm</span>
+        </div>
+
+        {/* ── Bulk action bar ── */}
+        {selected.size > 0 && (
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20 flex-wrap">
+            <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} sản phẩm</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => handleBulkAction("activate")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-emerald-300 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Hiển thị
+              </button>
+              <button
+                onClick={() => handleBulkAction("deactivate")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-orange-300 text-[11px] font-medium text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Ẩn
+              </button>
+              <button
+                onClick={() => handleBulkAction("feature")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-amber-300 text-[11px] font-medium text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Nổi bật
+              </button>
+              <button
+                onClick={() => handleBulkAction("unfeature")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Bỏ nổi bật
+              </button>
+              <button
+                onClick={() => handleBulkAction("delete")}
+                disabled={bulkLoading}
+                className="px-2.5 py-1 rounded-lg border border-promotion/30 text-[11px] font-medium text-promotion hover:bg-promotion-light transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Xóa
+              </button>
+            </div>
+            {bulkLoading && <Loader2 size={13} className="animate-spin text-accent" />}
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer ml-auto">
+              Bỏ chọn
+            </button>
+          </div>
+        )}
+
+        {/* ── Error banner ── */}
+        {error && (
+          <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion/20">
+            <span className="text-[12px] text-promotion">{error}</span>
+            <button onClick={fetchProducts} className="flex items-center gap-1 text-[12px] text-promotion hover:underline cursor-pointer">
+              <RefreshCw size={12} /> Thử lại
+            </button>
+          </div>
+        )}
+
+        {/* ── Table ── */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin text-accent" />
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Package size={36} className="text-neutral-dark opacity-30" />
+            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
+            {hasActiveFilters ? (
+              <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                Xóa bộ lọc
+              </button>
+            ) : (
+              <Link href="/admin/products/create" className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
+                Tạo sản phẩm đầu tiên
+              </Link>
+            )}
+          </div>
+        ) : (
+          <AdminTable columns={columns} data={products} selectable selectedIds={selected} onToggleAll={toggleAll} />
+        )}
+
+        {/* ── Pagination ── */}
+        {!loading && !error && meta.total > 0 && (
+          <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  resetPage();
+                }}
+                className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
+              >
+                {[10, 20, 50, 100].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[12px] text-neutral-dark">/ {meta.total} sản phẩm</span>
+            </div>
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={meta.limit}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── Delete Confirm Modal ── */}
+      {deleteTarget && (
+        <Popzy
+          isOpen={!!deleteTarget}
+          onClose={() => !deleting && setDeleteTarget(null)}
+          footer={false}
+          closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
+          content={
+            <div className="py-2">
+              <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
+                <Trash2 size={22} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xóa sản phẩm?</h3>
+              <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xóa</p>
+              <p className="text-[14px] font-semibold text-primary text-center mb-2">"{deleteTarget.name}"</p>
+              <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau.</p>
+              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Huỷ
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {deleting && <Loader2 size={13} className="animate-spin" />}
+                  {deleting ? "Đang xóa..." : "Xóa sản phẩm"}
+                </button>
+              </div>
+            </div>
+          }
+        />
+      )}
+    </div>
+  );
 }

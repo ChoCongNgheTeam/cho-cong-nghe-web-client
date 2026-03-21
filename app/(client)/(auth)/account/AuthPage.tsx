@@ -9,6 +9,10 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 const AuthPage = () => {
    const searchParams = useSearchParams();
    const tabParam = searchParams.get("tab");
+   
+   const returnUrl = searchParams.get("redirect")       
+    ? decodeURIComponent(searchParams.get("redirect")!)
+    : "/";
 
    const [activeTab, setActiveTab] = useState<"login" | "register">(
       tabParam === "register" ? "register" : "login",
@@ -21,7 +25,7 @@ const AuthPage = () => {
    }, [tabParam]);
 
    return (
-      <div className="container py-4 sm:py-6 lg:py-8">
+      <div className="container py-4 sm:py-6 lg:py-8 min-h-[70vh]">
          <div className="pb-4 sm:pb-6">
             <Breadcrumb
                items={[
@@ -64,12 +68,12 @@ const AuthPage = () => {
          </div>
 
          <div className="md:hidden">
-            {activeTab === "login" ? <LoginForm /> : <RegisterForm />}
+            {activeTab === "login" ? <LoginForm returnUrl={returnUrl}/> : <RegisterForm />}
          </div>
 
          <div className="hidden md:grid md:grid-cols-2 gap-0">
             <div className="border-r border-neutral">
-               <LoginForm />
+               <LoginForm returnUrl={returnUrl}/>
             </div>
             <div>
                <RegisterForm />

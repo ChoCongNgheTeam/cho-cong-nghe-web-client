@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Facebook, Twitter, Instagram, Music, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface OpenSections {
    about: boolean;
@@ -39,10 +40,19 @@ const Footer = () => {
          <div className="container not-only-of-type:py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                <div>
-                  <h3 className="text-xl font-bold mb-6">ChoCongNghe.</h3>
+                  <Link href={"/"}>
+                     <Image
+                        src={"/logo-dark.png"}
+                        width={180}
+                        height={60}
+                        alt="Logo"
+                        className="lg:h-18 w-auto hover:opacity-90 transition-opacity -mt-5 mb-5"
+                        priority
+                     />
+                  </Link>
                   <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                     ChoCongNghe – Nền tảng mua sắm thiết bị điện tử chính hãng,
-                     giao nhanh toàn quốc.
+                     <span className="text-xl">ChoCongNghe</span> – Nền tảng mua
+                     sắm thiết bị điện tử chính hãng, giao nhanh toàn quốc.
                   </p>
                   <div className="mb-6">
                      <h4 className="font-semibold mb-3">
@@ -83,14 +93,14 @@ const Footer = () => {
                               Tư vấn mua hàng (Miễn phí)
                            </p>
                            <p className="font-semibold">
-                              1800.6601{" "}
+                              1800.6060{" "}
                               <span className="text-gray-400">(Nhánh 1)</span>
                            </p>
                         </div>
                         <div>
                            <p className="text-gray-400">Hỗ trợ kỹ thuật</p>
                            <p className="font-semibold">
-                              1800.6601{" "}
+                              1800.6626{" "}
                               <span className="text-gray-400">(Nhánh 2)</span>
                            </p>
                         </div>
@@ -178,31 +188,49 @@ const Footer = () => {
                      }`}
                   >
                      {[
-                        { label: "Chính sách bảo hành", href: "#" },
-                        { label: "Chính sách đổi trả", href: "#" },
-                        { label: "Chính sách bảo mật", href: "#" },
-                        { label: "Chính sách trả góp", href: "#" },
-                        { label: "Chính sách khui hộp sản phẩm", href: "#" },
-                        { label: "Chính sách giao hàng & lắp đặt", href: "#" },
+                        {
+                           label: "Chính sách bảo hành",
+                           href: "/policies/warranty-policy",
+                        },
+                        {
+                           label: "Chính sách đổi trả",
+                           href: "/policies/Return",
+                        },
+                        {
+                           label: "Chính sách bảo mật",
+                           href: "/policies/Privacy",
+                        },
+                        {
+                           label: "Chính sách trả góp",
+                           href: "/policies/Installment",
+                        },
+                        {
+                           label: "Chính sách khui hộp sản phẩm",
+                           href: "/policies/unboxing",
+                        },
+                        {
+                           label: "Chính sách giao hàng & lắp đặt",
+                           href: "/policies/DeliveryInstallation",
+                        },
                         {
                            label: "Chính sách mạng di động ChoCongNghe",
-                           href: "#",
+                           href: "/policies/MobileNetwork",
                         },
                         {
                            label: "Chính sách thu thập & xử lý dữ liệu cá nhân",
-                           href: "#",
+                           href: "/policies/DataPrivacy",
                         },
                         {
                            label: "Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu",
-                           href: "#",
+                           href: "/policies/Technical-support",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
-                           href: "#",
+                           href: "/policies/DeliveryInstallation",
                         },
                         {
                            label: "Chính sách chương trình khách hàng thân thiết",
-                           href: "#",
+                           href: "/policies/Loyalty",
                         },
                      ].map((item) => (
                         <li key={item.label}>
@@ -230,73 +258,56 @@ const Footer = () => {
                      />
                   </button>
                   <div
-                     className={`${
-                        openSections.payment ? "block" : "hidden md:block"
-                     }`}
+                     className={`${openSections.payment ? "block" : "hidden md:block"}`}
                   >
                      <div className="grid grid-cols-3 gap-2 mb-6">
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-blue-700 font-bold text-lg italic">
-                              VISA
-                           </span>
-                        </div>
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <div className="flex items-center gap-0.5">
-                              <div className="w-5 h-5 bg-red-500 rounded-full opacity-80"></div>
-                              <div className="w-5 h-5 bg-yellow-500 rounded-full opacity-80 -ml-2"></div>
-                           </div>
-                        </div>
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-blue-900 font-bold text-sm">
-                              JCB
-                           </span>
-                        </div>
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-blue-600 font-bold text-xs">
-                              AMEX
-                           </span>
-                        </div>
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-green-700 font-semibold text-xs">
+                        {/* COD */}
+                        <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
+                           <span className="text-green-700 font-bold text-xs leading-tight">
                               COD
                            </span>
-                        </div>
-                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-purple-700 font-semibold text-xs">
-                              Trả góp
+                           <span className="text-gray-500 text-[8px] leading-tight text-center">
+                              Nhận hàng
                            </span>
                         </div>
+                        {/* MoMo */}
                         <div className="bg-pink-600 rounded p-2 flex items-center justify-center h-12">
                            <span className="text-white font-bold text-sm">
                               MoMo
                            </span>
                         </div>
-                        <div className="bg-blue-500 rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-white font-bold text-xs">
-                              ZaloPay
-                           </span>
-                        </div>
+                        {/* VNPay */}
                         <div className="bg-blue-600 rounded p-2 flex items-center justify-center h-12">
                            <span className="text-white font-bold text-xs">
-                              VNPAY
+                              VNPay
                            </span>
                         </div>
-                        <div className="bg-red-600 rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-white font-semibold text-xs">
-                              Home Credit
+                        {/* ZaloPay */}
+                        <div className="bg-blue-500 rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
+                           <span className="text-white font-bold text-xs leading-tight">
+                              Zalo
+                           </span>
+                           <span className="text-white font-bold text-xs leading-tight">
+                              Pay
                            </span>
                         </div>
-                        <div className="bg-black rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-white font-semibold text-xs">
-                              Apple Pay
+                        {/* Chuyển khoản ngân hàng */}
+                        <div className="bg-white rounded p-2 flex flex-col items-center justify-center h-12 gap-0.5">
+                           <span className="text-blue-700 font-bold text-[9px] leading-tight text-center">
+                              Ngân hàng
+                           </span>
+                           <span className="text-blue-700 text-[8px] leading-tight text-center">
+                              Chuyển khoản
                            </span>
                         </div>
-                        <div className="bg-blue-700 rounded p-2 flex items-center justify-center h-12">
-                           <span className="text-white font-semibold text-xs">
-                              Samsung Pay
+                        {/* VISA */}
+                        <div className="bg-white rounded p-2 flex items-center justify-center h-12">
+                           <span className="text-blue-700 font-bold text-lg italic">
+                              VISA
                            </span>
                         </div>
                      </div>
+
                      <h4 className="font-semibold mb-4">CHỨNG NHẬN</h4>
                      <div className="flex gap-2">
                         <div className="bg-white rounded p-2 flex items-center justify-center w-16 h-16">
@@ -326,7 +337,7 @@ const Footer = () => {
                                  strokeLinejoin="round"
                                  strokeWidth="3"
                                  d="M5 13l4 4L19 7"
-                              ></path>
+                              />
                            </svg>
                         </div>
                      </div>
@@ -344,8 +355,8 @@ const Footer = () => {
                         Giấy chứng nhận đăng ký kinh doanh: 0315667679 do Sở Kế
                         hoạch & Đầu tư TP HCM cấp ngày 22/08/2025
                      </p>
-                     <p>Góp ý & khiếu nại: ceo@electro.com</p>
-                     <p>Hotline: 1800 6777</p>
+                     <p>Góp ý & khiếu nại: ceo@chocongnghe.com</p>
+                     <p>Hotline: 1800 6060</p>
                      <p>
                         Địa chỉ trụ sở: 50/22 Gò Dầu, Phường Tân Quý, Quận Tân
                         Phú, TP. Hồ Chí Minh

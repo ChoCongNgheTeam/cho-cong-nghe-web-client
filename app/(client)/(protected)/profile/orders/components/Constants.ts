@@ -4,7 +4,7 @@ export const tabs = [
   { id: "PROCESSING", label: "Đã xác nhận" },
   { id: "SHIPPED", label: "Đang giao" },
   { id: "DELIVERED", label: "Hoàn tất" },
-  { id: "CANCELLED", label: "Đã hủy" },
+  { id: "CANCELLED", label: "Hủy đơn" },
 ];
 
 export const orderStatusConfig: Record<string, { label: string; color: string; bgColor: string; dot: string }> = {
@@ -33,7 +33,7 @@ export const orderStatusConfig: Record<string, { label: string; color: string; b
     dot: "bg-green-500",
   },
   CANCELLED: {
-    label: "Đã hủy",
+    label: "Hủy đơn",
     color: "text-red-700",
     bgColor: "bg-red-50",
     dot: "bg-red-400",

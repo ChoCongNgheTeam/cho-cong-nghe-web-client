@@ -20,6 +20,7 @@ import {
 import CancelOrderButton from "./CancelOrderButton";
 import ReorderButton from "./ReorderButton";
 import ReviewModal from "./ReviewModal";
+import ReviewSuccessModal from "@/(client)/products/product-comment/ReviewSuccessModal ";
 import Link from "next/link";
 import { useToasty } from "@/components/Toast";
 
@@ -73,8 +74,14 @@ export default function OrderCard({
     productName: string;
   } | null>(null);
 
-  // Track các item đã review trong session này
-  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const [reviewedStars, setReviewedStars] = useState<number | null>(null);
+
+  // Khởi tạo từ server data: item nào canReview = false là đã review rồi
+  const [localReviewedIds, setLocalReviewedIds] = useState<Set<string>>(
+    new Set(
+      order.orderItems.filter((item) => !item.canReview).map((item) => item.id),
+    ),
+  );
 
   // ── Order status config ────────────────────────────────────────────────────
   const orderStatus = orderStatusConfig[order.orderStatus] ?? {
@@ -106,7 +113,7 @@ export default function OrderCard({
   };
 
   const handleReviewClick = (item: Order["orderItems"][number]) => {
-    if (reviewedIds.has(item.id)) {
+    if (localReviewedIds.has(item.id)) {
       toasty.info("Bạn đã đánh giá sản phẩm này rồi", {
         title: "Đã đánh giá",
         duration: 3000,
@@ -181,7 +188,7 @@ export default function OrderCard({
 
         {/* ── Product List ─────────────────────────────────────────────────── */}
         <div className="divide-y divide-neutral">
-          {order.orderItems.slice(0, 2).map((item) => {
+          {order.orderItems.map((item) => {
             const imageUrl =
               item.image ??
               getFirstValidImage(item.productVariant?.product?.img);
@@ -189,111 +196,88 @@ export default function OrderCard({
               ?.map((a) => a.attributeOption.value)
               .join(" · ");
             const productSlug = item.productVariant?.product?.slug;
+            const alreadyReviewed = localReviewedIds.has(item.id);
 
             return (
-              <Link
-                key={item.id}
-                href={productSlug ? `/products/${productSlug}` : "#"}
-                className="flex gap-3 px-5 py-3.5 hover:bg-neutral-light-active transition-colors"
-              >
-                <div className="relative w-14 h-14 shrink-0 rounded-lg bg-neutral overflow-hidden">
-                  {imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt={item.productVariant?.product?.name ?? ""}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-neutral-light flex items-center justify-center text-neutral-darker text-xs">
-                      N/A
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-primary line-clamp-1">
-                    {item.productVariant?.product?.name}
-                  </p>
-                  {attrs && (
+              <div key={item.id} className="flex flex-col">
+                <Link
+                  href={productSlug ? `/products/${productSlug}` : "#"}
+                  className="flex gap-3 px-5 py-3.5 hover:bg-neutral-light-active transition-colors"
+                >
+                  <div className="relative w-14 h-14 shrink-0 rounded-lg bg-neutral overflow-hidden">
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={item.productVariant?.product?.name ?? ""}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-neutral-light flex items-center justify-center text-neutral-darker text-xs">
+                        N/A
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-primary line-clamp-1">
+                      {item.productVariant?.product?.name}
+                    </p>
+                    {attrs && (
+                      <p className="text-xs text-neutral-darker mt-0.5">
+                        {attrs}
+                      </p>
+                    )}
                     <p className="text-xs text-neutral-darker mt-0.5">
-                      {attrs}
+                      x{item.quantity}
                     </p>
-                  )}
-                  <p className="text-xs text-neutral-darker mt-0.5">
-                    x{item.quantity}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-semibold text-primary">
-                    {Number(item.unitPrice).toLocaleString("vi-VN")}₫
-                  </p>
-                  {Number(item.productVariant?.price) >
-                    Number(item.unitPrice) && (
-                    <p className="text-xs line-through text-neutral-darker">
-                      {Number(item.productVariant?.price).toLocaleString(
-                        "vi-VN",
-                      )}
-                      ₫
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-semibold text-primary">
+                      {Number(item.unitPrice).toLocaleString("vi-VN")}₫
                     </p>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+                    {Number(item.productVariant?.price) >
+                      Number(item.unitPrice) && (
+                      <p className="text-xs line-through text-neutral-darker">
+                        {Number(item.productVariant?.price).toLocaleString(
+                          "vi-VN",
+                        )}
+                        ₫
+                      </p>
+                    )}
+                  </div>
+                </Link>
 
-          {order.orderItems.length > 2 && (
-            <div className="px-5 py-2 text-xs text-neutral-darker text-center bg-neutral-light-active">
-              +{order.orderItems.length - 2} sản phẩm khác
-            </div>
-          )}
-        </div>
-
-        {/* ── Đánh giá sản phẩm ───────────────────────────────────────────── */}
-        {showReview && (
-          <div className="px-5 py-3 border-t border-neutral bg-neutral-light-active">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5">
-                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                <span className="text-xs text-neutral-darker">
-                  Hãy đánh giá sản phẩm bạn vừa nhận được!
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {order.orderItems.map((item) => {
-                  const alreadyReviewed = reviewedIds.has(item.id);
-                  return (
+                {/* Nút đánh giá ngay dưới từng sản phẩm */}
+                {showReview && (
+                  <div className="px-5 py-2.5 flex items-center justify-between bg-neutral-light border-t border-neutral">
+                    <div className="flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                      <span className="text-xs text-neutral-darker">
+                        Hãy đánh giá sản phẩm bạn vừa nhận được!
+                      </span>
+                    </div>
                     <button
-                      key={item.id}
-                      onClick={() =>
-                        !alreadyReviewed && handleReviewClick(item)
-                      }
+                      onClick={() => handleReviewClick(item)}
                       disabled={alreadyReviewed}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors
-                  ${
-                    alreadyReviewed
-                      ? "bg-neutral text-neutral-darker cursor-default"
-                      : "bg-amber-400 hover:bg-amber-500 text-amber-900 cursor-pointer"
-                  }`}
+        ${
+          alreadyReviewed
+            ? "bg-neutral text-neutral-darker cursor-default"
+            : "bg-amber-400 hover:bg-amber-500 text-amber-900 cursor-pointer"
+        }`}
                     >
                       <Star
                         className={`w-3 h-3 ${alreadyReviewed ? "fill-neutral-darker" : "fill-amber-900"}`}
                       />
-                      {alreadyReviewed
-                        ? "Đã đánh giá ✓"
-                        : order.orderItems.length > 1
-                          ? item.productVariant?.product?.name
-                              ?.split(" ")
-                              .slice(0, 3)
-                              .join(" ")
-                          : "Đánh giá ngay"}
+                      {alreadyReviewed ? "Đã đánh giá ✓" : "Đánh giá ngay"}
                     </button>
-                  );
-                })}
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
 
         {/* ── Footer ───────────────────────────────────────────────────────── */}
         <div className="px-5 py-4 bg-neutral-light border-t border-neutral">
@@ -366,13 +350,22 @@ export default function OrderCard({
           onClose={() => setReviewTarget(null)}
           orderItemId={reviewTarget.orderItemId}
           productName={reviewTarget.productName}
-          onSuccess={() => {
-            setReviewedIds((prev) =>
+          onSuccess={(stars: number) => {
+            setLocalReviewedIds((prev) =>
               new Set(prev).add(reviewTarget.orderItemId),
             );
+            setReviewedStars(stars);
+            setReviewTarget(null);
           }}
         />
       )}
+
+      {/* ── Review Success Modal ──────────────────────────────────────────────── */}
+      <ReviewSuccessModal
+        isOpen={reviewedStars !== null}
+        stars={reviewedStars ?? 5}
+        onClose={() => setReviewedStars(null)}
+      />
     </>
   );
 }

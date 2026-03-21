@@ -10,54 +10,54 @@ import { getWards } from "../_lib/get-wards";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Province {
-  id: string;
-  name: string;
-  fullName: string;
+   id: string;
+   name: string;
+   fullName: string;
 }
 
 interface Ward {
-  id: string;
-  name: string;
-  fullName: string;
+   id: string;
+   name: string;
+   fullName: string;
 }
 
 interface Address {
-  id: string;
-  contactName: string;
-  phone: string;
-  province: Province;
-  ward: Ward;
-  detailAddress: string;
-  fullAddress: string;
-  type: "HOME" | "OFFICE" | "OTHER";
-  isDefault: boolean;
+   id: string;
+   contactName: string;
+   phone: string;
+   province: Province;
+   ward: Ward;
+   detailAddress: string;
+   fullAddress: string;
+   type: "HOME" | "OFFICE" | "OTHER";
+   isDefault: boolean;
 }
 
 interface ApiResponse {
-  success: boolean;
-  data: Address[];
-  total: number;
-  message: string;
+   success: boolean;
+   data: Address[];
+   total: number;
+   message: string;
 }
 
 interface AddressForm {
-  contactName: string;
-  phone: string;
-  provinceId: string;
-  wardId: string;
-  detailAddress: string;
-  type: "HOME" | "OFFICE" | "OTHER";
-  isDefault: boolean;
+   contactName: string;
+   phone: string;
+   provinceId: string;
+   wardId: string;
+   detailAddress: string;
+   type: "HOME" | "OFFICE" | "OTHER";
+   isDefault: boolean;
 }
 
 const defaultForm: AddressForm = {
-  contactName: "",
-  phone: "",
-  provinceId: "",
-  wardId: "",
-  detailAddress: "",
-  type: "HOME",
-  isDefault: false,
+   contactName: "",
+   phone: "",
+   provinceId: "",
+   wardId: "",
+   detailAddress: "",
+   type: "HOME",
+   isDefault: false,
 };
 
 export default function AddressPage() {
@@ -83,50 +83,50 @@ export default function AddressPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
 
-  useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const res = await apiRequest.get<ApiResponse>("/addresses");
-        setAddresses(res?.data || []);
-        const provinceData = await getProvinces();
-        setProvinces(provinceData);
-      } catch (error) {
-        console.error("Lỗi khi lấy địa chỉ:", error);
-      } finally {
-        setLoading(false);
+   useEffect(() => {
+      const fetchAddresses = async () => {
+         try {
+            const res = await apiRequest.get<ApiResponse>("/addresses");
+            setAddresses(res?.data || []);
+            const provinceData = await getProvinces();
+            setProvinces(provinceData);
+         } catch (error) {
+            console.error("Lỗi khi lấy địa chỉ:", error);
+         } finally {
+            setLoading(false);
+         }
+      };
+      fetchAddresses();
+   }, []);
+
+   useEffect(() => {
+      if (!loading && redirectTo === "checkout" && addresses.length === 0) {
+         setIsOpen(true);
       }
-    };
-    fetchAddresses();
-  }, []);
+   }, [loading, redirectTo, addresses.length]);
 
-  useEffect(() => {
-    if (!loading && redirectTo === "checkout" && addresses.length === 0) {
-      setIsOpen(true);
-    }
-  }, [loading, redirectTo, addresses.length]);
+   useEffect(() => {
+      if (!form.provinceId) return;
+      const fetchWards = async () => {
+         const data = await getWards(form.provinceId);
+         setWards(data);
+      };
+      fetchWards();
+   }, [form.provinceId]);
 
-  useEffect(() => {
-    if (!form.provinceId) return;
-    const fetchWards = async () => {
-      const data = await getWards(form.provinceId);
-      setWards(data);
-    };
-    fetchWards();
-  }, [form.provinceId]);
-
-  const setField = <K extends keyof AddressForm>(
-    key: K,
-    value: AddressForm[K],
-  ) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
+   const setField = <K extends keyof AddressForm>(
+      key: K,
+      value: AddressForm[K],
+   ) => {
+      setForm((prev) => ({ ...prev, [key]: value }));
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+   };
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof AddressForm, string>> = {};
 
-    if (!form.contactName.trim())
-      newErrors.contactName = "Vui lòng nhập họ tên";
+      if (!form.contactName.trim())
+         newErrors.contactName = "Vui lòng nhập họ tên";
 
     if (!form.phone.trim()) {
       newErrors.phone = "Vui lòng nhập số điện thoại";
@@ -165,48 +165,48 @@ export default function AddressPage() {
         newErrors.detailAddress = "Địa chỉ này đã tồn tại trong sổ địa chỉ.";
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-    setEditingId(null);
-    setForm(defaultForm);
-    setWards([]);
-    setErrors({});
-    setEditingOriginalPhone("");
-    setEditingIsDefault(false);
-  };
+   const handleClose = () => {
+      setIsOpen(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      setWards([]);
+      setErrors({});
+      setEditingOriginalPhone("");
+      setEditingIsDefault(false);
+   };
 
-  const handleOpenEdit = (addr: Address) => {
-    setEditingId(addr.id);
-    setEditingOriginalPhone(addr.phone);
-    setEditingIsDefault(addr.isDefault);
-    setForm({
-      contactName: addr.contactName,
-      phone: addr.phone,
-      provinceId: addr.province.id,
-      wardId: addr.ward.id,
-      detailAddress: addr.detailAddress,
-      type: addr.type,
-      isDefault: addr.isDefault,
-    });
-    setIsOpen(true);
-  };
-
-  const syncPhoneToProfile = async (newPhone: string) => {
-    if (!newPhone || newPhone === user?.phone) return;
-    try {
-      await apiRequest.patch("/users/me", {
-        fullName: user?.fullName ?? "",
-        phone: newPhone,
+   const handleOpenEdit = (addr: Address) => {
+      setEditingId(addr.id);
+      setEditingOriginalPhone(addr.phone);
+      setEditingIsDefault(addr.isDefault);
+      setForm({
+         contactName: addr.contactName,
+         phone: addr.phone,
+         provinceId: addr.province.id,
+         wardId: addr.ward.id,
+         detailAddress: addr.detailAddress,
+         type: addr.type,
+         isDefault: addr.isDefault,
       });
-      await refreshUser?.();
-    } catch {
-      /* silent */
-    }
-  };
+      setIsOpen(true);
+   };
+
+   const syncPhoneToProfile = async (newPhone: string) => {
+      if (!newPhone || newPhone === user?.phone) return;
+      try {
+         await apiRequest.patch("/users/me", {
+            fullName: user?.fullName ?? "",
+            phone: newPhone,
+         });
+         await refreshUser?.();
+      } catch {
+         /* silent */
+      }
+   };
 
   const handleSetDefault = async (id: string) => {
     setSettingDefaultId(id);
@@ -249,68 +249,67 @@ export default function AddressPage() {
     }
   };
 
-  const handleCreate = async () => {
-    if (!validate()) return;
-    setSubmitting(true);
-    try {
-      const res = await apiRequest.post<{
-        success: boolean;
-        data: Address;
-        message?: string;
-        code?: string;
-      }>("/addresses", form);
+   const handleCreate = async () => {
+      if (!validate()) return;
+      setSubmitting(true);
+      try {
+         const res = await apiRequest.post<{
+            success: boolean;
+            data: Address;
+            message?: string;
+            code?: string;
+         }>("/addresses", form);
 
-      if (!res?.success) {
-        const message = res?.message ?? "";
-        if (
-          message.toLowerCase().includes("duplicate") ||
-          res?.code === "DUPLICATE"
-        ) {
-          setErrors((prev) => ({
-            ...prev,
-            phone:
-              "Số điện thoại này đã được dùng với địa chỉ trên. Vui lòng dùng SĐT khác hoặc thay đổi địa chỉ cụ thể.",
-          }));
-        } else {
-          setErrors((prev) => ({
-            ...prev,
-            detailAddress: message || "Có lỗi xảy ra, vui lòng thử lại.",
-          }));
-        }
-        return;
-      }
+         if (!res?.success) {
+            const message = res?.message ?? "";
+            if (
+               message.toLowerCase().includes("duplicate") ||
+               res?.code === "DUPLICATE"
+            ) {
+               setErrors((prev) => ({
+                  ...prev,
+                  phone: "Số điện thoại này đã được dùng với địa chỉ trên. Vui lòng dùng SĐT khác hoặc thay đổi địa chỉ cụ thể.",
+               }));
+            } else {
+               setErrors((prev) => ({
+                  ...prev,
+                  detailAddress: message || "Có lỗi xảy ra, vui lòng thử lại.",
+               }));
+            }
+            return;
+         }
 
-      const isFirstAddress = addresses.length === 0;
-      if (form.isDefault || isFirstAddress) {
-        await syncPhoneToProfile(form.phone);
+         const isFirstAddress = addresses.length === 0;
+         if (form.isDefault || isFirstAddress) {
+            await syncPhoneToProfile(form.phone);
+         }
+         handleClose();
+         if (redirectTo === "checkout") {
+            try {
+               const raw = localStorage.getItem("checkoutData");
+               if (raw) {
+                  const parsed = JSON.parse(raw);
+                  parsed.newAddressId = res.data.id;
+                  localStorage.setItem("checkoutData", JSON.stringify(parsed));
+               }
+            } catch {
+               /* silent */
+            }
+            router.push("/checkout?newAddress=1");
+         } else {
+            setAddresses((prev) => {
+               const updated = res.data.isDefault
+                  ? prev.map((a) => ({ ...a, isDefault: false }))
+                  : prev;
+               return [...updated, res.data];
+            });
+         }
+      } catch (error: any) {
+         handleApiError(error);
+      } finally {
+         setSubmitting(false);
       }
-      handleClose();
-      if (redirectTo === "checkout") {
-        try {
-          const raw = localStorage.getItem("checkoutData");
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            parsed.newAddressId = res.data.id;
-            localStorage.setItem("checkoutData", JSON.stringify(parsed));
-          }
-        } catch {
-          /* silent */
-        }
-        router.push("/checkout?newAddress=1");
-      } else {
-        setAddresses((prev) => {
-          const updated = res.data.isDefault
-            ? prev.map((a) => ({ ...a, isDefault: false }))
-            : prev;
-          return [...updated, res.data];
-        });
-      }
-    } catch (error: any) {
-      handleApiError(error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+   };
 
   const handleUpdate = async () => {
     if (!validate() || !editingId) return;
@@ -344,38 +343,40 @@ export default function AddressPage() {
     }
   };
 
-  const handleSubmit = () => (editingId ? handleUpdate() : handleCreate());
+   const handleSubmit = () => (editingId ? handleUpdate() : handleCreate());
 
-  const handleDelete = async () => {
-    if (!confirmDeleteId) return;
-    setDeletingId(confirmDeleteId);
-    setConfirmDeleteId(null);
-    try {
-      const res = await apiRequest.delete<{ success: boolean }>(
-        `/addresses/${confirmDeleteId}`,
-      );
-      if (res?.success) {
-        setAddresses((prev) => prev.filter((a) => a.id !== confirmDeleteId));
+   const handleDelete = async () => {
+      if (!confirmDeleteId) return;
+      setDeletingId(confirmDeleteId);
+      setConfirmDeleteId(null);
+      try {
+         const res = await apiRequest.delete<{ success: boolean }>(
+            `/addresses/${confirmDeleteId}`,
+         );
+         if (res?.success) {
+            setAddresses((prev) =>
+               prev.filter((a) => a.id !== confirmDeleteId),
+            );
+         }
+      } catch (error) {
+         console.error("Lỗi khi xóa địa chỉ:", error);
+      } finally {
+         setDeletingId(null);
       }
-    } catch (error) {
-      console.error("Lỗi khi xóa địa chỉ:", error);
-    } finally {
-      setDeletingId(null);
-    }
-  };
+   };
 
-  const typeLabel = (type: string) => {
-    if (type === "HOME")
-      return { label: "Nhà riêng", icon: <Home size={14} /> };
-    if (type === "OFFICE")
-      return { label: "Văn phòng", icon: <Building2 size={14} /> };
-    return { label: "Khác", icon: <MapPin size={14} /> };
-  };
+   const typeLabel = (type: string) => {
+      if (type === "HOME")
+         return { label: "Nhà riêng", icon: <Home size={14} /> };
+      if (type === "OFFICE")
+         return { label: "Văn phòng", icon: <Building2 size={14} /> };
+      return { label: "Khác", icon: <MapPin size={14} /> };
+   };
 
-  const inputClass =
-    "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent-light placeholder:text-primary-dark";
+   const inputClass =
+      "w-full rounded-lg border border-neutral bg-neutral-light px-4 py-3 text-sm text-primary outline-none transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent-light placeholder:text-primary-dark";
 
-  if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
+   if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
 
   return (
     <>
@@ -424,7 +425,7 @@ export default function AddressPage() {
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg cursor-pointer"
             >
               Cập nhật ngay
             </button>

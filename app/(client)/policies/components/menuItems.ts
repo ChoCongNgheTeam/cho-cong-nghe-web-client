@@ -34,27 +34,17 @@ export const menuItems: MenuItem[] = [
    {
       id: "delivery-policy",
       label: "Chính sách giao hàng & lắp đặt",
-      href: "/policies/giao-hang-lap-dat",
+      href: "/policies/Delivery",
    },
    {
-      id: "electronics-delivery",
-      label: "Chính sách giao hàng & lắp đặt Điện máy",
-      href: "/policies/giao-hang-dien-may",
-   },
-   {
-      id: "electronics-delivery-only",
-      label: "Chính sách giao hàng & lắp đặt Điện máy chỉ bán",
-      href: "/policies/giao-hang-dien-may-chi-ban",
-   },
-   {
-      id: "loyalty-policy",
-      label: "Chính sách khách hàng thân thiết tại Shop",
-      href: "/policies/khach-hang-than-thiet",
+      id: "Delivery-Installation",
+      label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
+      href: "/policies/DeliveryInstallation",
    },
    {
       id: "unbox-policy",
       label: "Chính sách khui hộp sản phẩm",
-      href: "/policies/khui-hop-san-pham",
+      href: "/policies/unboxing",
    },
    {
       id: "exchange-intro",
@@ -62,24 +52,24 @@ export const menuItems: MenuItem[] = [
       href: "/policies/exchangeIntro",
    },
    {
-      id: "tech-support",
+      id: "Technical-Support",
       label: "Quy định hỗ trợ kỹ thuật và sao lưu dữ liệu",
-      href: "/policies/ho-tro-ky-thuat",
+      href: "/policies/Technical-support",
    },
    {
       id: "privacy-policy",
       label: "Chính sách bảo mật",
-      href: "/policies/bao-mat",
+      href: "/policies/Privacy",
    },
    {
-      id: "warranty-policy",
+      id: "Warranty-policy",
       label: "Chính sách bảo hành",
-      href: "/policies/bao-hanh",
+      href: "/policies/warranty-policy",
    },
    {
       id: "data-privacy",
       label: "Chính sách bảo mật dữ liệu cá nhân khách hàng",
-      href: "/policies/bao-mat-du-lieu-ca-nhan",
+      href: "/policies/Data-privacy",
    },
    {
       id: "online-purchase",
@@ -89,6 +79,23 @@ export const menuItems: MenuItem[] = [
    {
       id: "return-policy",
       label: "Chính sách đổi trả",
-      href: "/policies/doi-tra",
+      href: "/policies/Return",
    },
+   {
+      id: "installment-policy",
+      label: "Chính sách trả góp",
+      href: "/policies/Installment",
+   },
+   {
+      id: "Loyalty-policy",
+      label: "Chính sách Chương trình Khách hàng thân thiết tại ChoCongNghe",
+      href: "/policies/Loyalty",
+   },
+  
+   {
+      id: "Mobile-Network-Policy",
+      label: "Chính sách mạng di động",
+      href: "/policies/Mobile-network",
+   }
+
 ];
