@@ -220,7 +220,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                      <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
                   </button>
                )}
-               {/* Click nút → navigate thay vì chỉ mở dropdown */}
                <button
                   onClick={navigateToSearch}
                   className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-neutral-hover transition-colors cursor-pointer"
