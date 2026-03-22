@@ -24,7 +24,8 @@ export default function DeliveryInstallationPolicy() {
          <Divider />
 
          <Section title="2. Chính sách giao hàng">
-            <div className="rounded-lg overflow-hidden border border-neutral mb-4">
+            <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+               <div className="min-w-[520px]">
                <div className="grid grid-cols-3 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                   <span>Tiêu chí</span>
                   <span>Điều kiện</span>
@@ -46,6 +47,7 @@ export default function DeliveryInstallationPolicy() {
                      <span className="text-primary">Mỗi km tiếp theo tính phí <strong>5.000đ/km</strong></span>
                   </div>
                </div>
+               </div>
             </div>
          </Section>
 
@@ -66,7 +68,8 @@ export default function DeliveryInstallationPolicy() {
 
             <SubTitle>3.1. Chính sách lắp đặt sản phẩm điện máy</SubTitle>
 
-            <div className="rounded-lg overflow-hidden border border-neutral mb-4">
+            <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+               <div className="min-w-[520px]">
                <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                   <span>Loại lắp đặt</span>
                   <span>Sản phẩm</span>
@@ -139,6 +142,7 @@ export default function DeliveryInstallationPolicy() {
                      </div>
                   ))}
                </div>
+               </div>
             </div>
 
             <div className="rounded-lg p-4 bg-neutral-light-active border border-neutral mb-6">
@@ -150,7 +154,8 @@ export default function DeliveryInstallationPolicy() {
 
             <SubTitle>3.2. Chính sách lắp đặt sản phẩm gia dụng</SubTitle>
 
-            <div className="rounded-lg overflow-hidden border border-neutral">
+            <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+               <div className="min-w-[520px]">
                <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                   <span>Loại lắp đặt</span>
                   <span>Sản phẩm</span>
@@ -223,6 +228,7 @@ export default function DeliveryInstallationPolicy() {
                         )}
                      </div>
                   ))}
+               </div>
                </div>
             </div>
          </Section>
