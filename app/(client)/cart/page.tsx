@@ -45,7 +45,6 @@ export default function CartPage() {
       rewardPoints,
       refetchCart,
    } = useCart();
-
    // const [showSummary, setShowSummary] = useState(true);
    const [usePoints, setUsePoints] = useState(false);
    const [showSidebar, setShowSidebar] = useState(false);
@@ -202,7 +201,7 @@ export default function CartPage() {
             }}
          >
             {items.length === 0 ? (
-               <div className="rounded-2xl bg-neutral-light p-8 sm:p-12 lg:p-16 text-center shadow-sm border border-neutral">
+               <div className="rounded-2xl bg-neutral-light p-8 sm:p-12 lg:p-16 text-center">
                   {/* Animated Cart Illustration */}
                   <div className="flex justify-center mb-6">
                      <div className="relative">
@@ -223,7 +222,7 @@ export default function CartPage() {
                                  strokeWidth="3.5"
                                  strokeLinecap="round"
                                  strokeLinejoin="round"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                               <path
                                  d="M14 18h6l6 24h26l4-16H24"
@@ -231,42 +230,42 @@ export default function CartPage() {
                                  strokeWidth="3.5"
                                  strokeLinecap="round"
                                  strokeLinejoin="round"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                               <circle
                                  cx="30"
                                  cy="49"
                                  r="3.5"
                                  fill="currentColor"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                               <circle
                                  cx="46"
                                  cy="49"
                                  r="3.5"
                                  fill="currentColor"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                               <circle
                                  cx="35"
                                  cy="31"
                                  r="1.5"
                                  fill="currentColor"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                               <circle
                                  cx="45"
                                  cy="31"
                                  r="1.5"
                                  fill="currentColor"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                               <path
                                  d="M33 37.5 Q40 34 47 37.5"
                                  stroke="currentColor"
                                  strokeWidth="2.5"
                                  strokeLinecap="round"
-                                 className="text-primary-darker"
+                                 className="text-white"
                               />
                            </svg>
                         </div>
@@ -384,8 +383,12 @@ export default function CartPage() {
                                           currentVariantId={
                                              item.productVariantId
                                           }
+                                          productName={item.productName}
                                           colorLabel={item.colorLabel}
                                           storageLabel={item.storageLabel}
+                                          storageValue={item.storageLabel
+                                             .toLowerCase()
+                                             .replace(/\s+/g, "")}
                                           currentQuantity={item.quantity}
                                           onSuccess={() => refetchCart(true)}
                                           onUpdateItem={(patch) =>

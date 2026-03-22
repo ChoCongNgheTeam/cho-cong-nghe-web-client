@@ -182,7 +182,7 @@ export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "
 
           {/* Nội dung */}
           <FormRow label="Nội dung" required>
-            <CKEditorWrapper value={form.content} onChange={(val) => set("content", val)} placeholder="Nhập nội dung bài viết..." minHeight={350} />
+            <CKEditorWrapper value={form.content} onChange={(val) => set("content", val)} uploadFolder="blogs" minHeight={350} />
           </FormRow>
 
           {/* Thumbnail */}
@@ -215,7 +215,7 @@ export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "
               </FormRow>
 
               <FormRow label="Nội dung" required>
-                <CKEditorWrapper value={form.content} onChange={(val) => set("content", val)} placeholder="Nhập nội dung bài viết..." minHeight={500} />
+                <CKEditorWrapper value={form.content} onChange={(val) => set("content", val)} uploadFolder="blogs" minHeight={500} />
               </FormRow>
             </div>
           </div>

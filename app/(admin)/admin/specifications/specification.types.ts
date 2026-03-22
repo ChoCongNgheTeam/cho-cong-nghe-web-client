@@ -20,6 +20,7 @@ export interface SpecificationsMeta {
   limit: number;
   total: number;
   totalPages: number;
+  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number; FILTERABLE: number };
 }
 
 export interface SpecificationsResponse {

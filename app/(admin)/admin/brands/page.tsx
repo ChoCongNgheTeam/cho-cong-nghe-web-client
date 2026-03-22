@@ -178,7 +178,7 @@ export default function AdminBrandsPage() {
       };
       const res = await getAllBrands(params);
       setBrands(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as Meta);
     } catch (err: any) {
       setError(err?.message || "Không thể tải danh sách thương hiệu");
     } finally {
@@ -338,7 +338,6 @@ export default function AdminBrandsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <button onClick={openCreateModal} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer">
             <Plus size={15} />
@@ -528,7 +527,7 @@ export default function AdminBrandsPage() {
               </select>
               <span className="text-[12px] text-neutral-dark">/ {meta.total} thương hiệu</span>
             </div>
-            <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            {/* <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} /> */}
           </div>
         )}
       </div>

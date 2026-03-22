@@ -9,9 +9,10 @@ import { handleLoginSubmit } from "./loginHandler";
 import { SocialLoginButtons } from "./SocialLoginButtons";
 import type { User as AuthUser } from "./types";
 import { useGoogleLogin } from "@/hooks/useGoogleLogin";
+import { useFacebookLogin } from "@/hooks/useFacebookLogin";
 
 interface LoginFormProps {
-   returnUrl?: string; // ← nhận từ AuthPage
+   returnUrl?: string;
 }
 
 const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
@@ -25,11 +26,13 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
    const [rememberMe, setRememberMe] = useState(false);
    const [loading, setLoading] = useState(false);
    const [googleLoading, setGoogleLoading] = useState(false);
+   const [facebookLoading, setFacebookLoading] = useState(false);
    const [error, setError] = useState("");
 
    const handleLoginSuccess = useCallback(
       async (user: AuthUser, accessToken: string) => {
-         const redirectPath = user.role === "ADMIN" ? "/admin/dashboard" : returnUrl; // ← dùng prop
+         const redirectPath =
+            user.role === "ADMIN" ? "/admin/dashboard" : returnUrl;
          toast.success("Đăng nhập thành công 👋", {
             duration: 1000,
             id: "login-success",
@@ -37,7 +40,7 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
          await login(user, accessToken);
          router.push(redirectPath);
       },
-      [login, router, toast, returnUrl], // ← returnUrl vào deps
+      [login, router, toast, returnUrl],
    );
 
    const { prompt: googlePrompt, buttonRef } = useGoogleLogin({
@@ -45,6 +48,8 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
       onError: (msg) => setError(msg),
       onLoadingChange: setGoogleLoading,
    });
+
+   const { login: facebookLogin } = useFacebookLogin();
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -164,12 +169,14 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
                   </span>
                </div>
             </div>
+
             <div ref={buttonRef} className="hidden" aria-hidden="true" />
             <SocialLoginButtons
                onGoogleLogin={googlePrompt}
-               onFacebookLogin={() => console.log("TODO: Facebook login")}
+               onFacebookLogin={facebookLogin}
                onAppleLogin={() => console.log("TODO: Apple login")}
                googleLoading={googleLoading}
+               // facebookLoading={false}
                disabled={isAnyLoading}
             />
          </form>

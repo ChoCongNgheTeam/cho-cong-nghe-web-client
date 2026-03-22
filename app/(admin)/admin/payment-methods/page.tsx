@@ -251,7 +251,7 @@ export default function PaymentMethodsPage() {
             <button
               onClick={fetchMethods}
               disabled={loading}
-              title="Làm mới"
+              title=""
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />

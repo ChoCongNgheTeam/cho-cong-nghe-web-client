@@ -68,12 +68,24 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
       key: "rating",
       label: "Đánh giá",
       align: "center",
-      render: (product) => (
-        <div className="text-center">
-          <span className="text-[13px] font-medium text-amber-500">★ {Number(product.rating.average).toFixed(1)}</span>
-          <span className="text-[11px] text-neutral-dark block">({product.rating.count})</span>
-        </div>
-      ),
+      render: (product) => {
+        const rating = product.rating;
+
+        const hasRating = rating && rating.count > 0 && rating.average !== undefined;
+
+        return (
+          <div className="text-center">
+            {hasRating ? (
+              <>
+                <span className="text-[13px] font-medium text-amber-500">★ {Number(rating.average).toFixed(1)}</span>
+                <span className="text-[11px] text-neutral-dark block">({rating.count})</span>
+              </>
+            ) : (
+              <span className="text-neutral-400">_</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "inStock",
@@ -114,7 +126,7 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
           </Link>
           {!product.deletedAt && (
             <Link
-              href={`/admin/products/${product.id}?edit=true`}
+              href={`/admin/products/${product.id}/edit`}
               title="Chỉnh sửa"
               className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
             >

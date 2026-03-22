@@ -368,7 +368,7 @@ export default function CategoryMegaMenu() {
                   isOpen ? "rotate-90" : "rotate-0",
                ].join(" ")}
             />
-            <span className="text-sm font-medium">Danh mục</span>
+            <span className="text-sm font-medium cursor-pointer">Danh mục</span>
          </button>
 
          <div
