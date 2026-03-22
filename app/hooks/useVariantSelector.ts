@@ -2,9 +2,10 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import apiRequest from "@/lib/api";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
-import { useCart, NewVariantData } from "@/contexts/CartContext";
+import {  NewVariantData } from "@/contexts/CartContext";
 import { useToasty } from "@/components/Toast";
 import { useAuth } from "./useAuth";
+import { useCart } from "./useCart";
 
 interface ColorOption {
   id: string;
