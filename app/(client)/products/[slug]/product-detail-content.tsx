@@ -246,6 +246,7 @@ export function ProductDetailContent({
             rating={product.rating}
             slug={product.slug}
             product={product}
+            currentVariant={currentVariant}
           />
         </div>
       </div>
