@@ -65,7 +65,6 @@ export default function RatingSummary({
         `/products/slug/${slug}`,
       );
       const p = res.data;
-      console.log("fetchProductData response:", p);
       setPermission({
         canReview: p.canReview,
         orderItemId: p.orderItemId ?? undefined,
