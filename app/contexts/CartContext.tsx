@@ -269,21 +269,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const duplicate = prev.find((i) => i.productVariantId === newVariant.id && i.id !== cartItemId);
 
         if (duplicate) {
-          // Merge: cộng quantity vào duplicate, xóa item hiện tại
-          return prev
-            .filter((i) => i.id !== cartItemId)
-            .map((i) =>
-              i.id === duplicate.id
-                ? {
-                    ...i,
-                    quantity: i.quantity + currentItem.quantity,
-                    updatedAt: new Date().toISOString(),
-                  }
-                : i,
-            );
+          return prev.filter((i) => i.id !== cartItemId).map((i) => (i.id === duplicate.id ? { ...i, quantity: i.quantity + currentItem.quantity, updatedAt: new Date().toISOString() } : i));
         }
 
-        // Replace in-place
+        // Replace in-place — GIỮ NGUYÊN unitPrice/originalPrice cũ
+        // Chỉ update labels + image để UI không bị NaN
         return prev.map((i) =>
           i.id !== cartItemId
             ? i
@@ -295,9 +285,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 storageLabel: newVariant.storageLabel,
                 color: newVariant.colorLabel,
                 colorValue: newVariant.colorValue ?? newVariant.colorLabel.toLowerCase().replace(/\s+/g, "-"),
-                unitPrice: newVariant.price,
-                originalPrice: newVariant.originalPrice ?? newVariant.price,
-                totalPrice: newVariant.price * i.quantity,
+                // ← GIỮ NGUYÊN: unitPrice, originalPrice, totalPrice
+                // Price sẽ được update đúng sau refetchCart
                 updatedAt: new Date().toISOString(),
               },
         );
@@ -306,37 +295,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (isAuthenticated) {
         try {
           const currentItem = items.find((i) => i.id === cartItemId);
-          const res = (await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
+          await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
             newVariantId: newVariant.id,
             quantity: currentItem?.quantity ?? 1,
-          })) as any;
-
-          if (res?.data) {
-            // Sync lại từ server response — đảm bảo giá đúng
-            const serverItem = res.data;
-            setItems((prev) =>
-              prev.map((i) =>
-                i.id === cartItemId || i.id === serverItem.id
-                  ? {
-                      ...i,
-                      ...transformApiItem(serverItem),
-                      // Lấy finalPrice từ price object server trả về
-                      unitPrice: serverItem.price?.final ?? serverItem.unitPrice,
-                      originalPrice: serverItem.price?.base ?? serverItem.unitPrice,
-                      selected: i.selected,
-                    }
-                  : i,
-              ),
-            );
-          } else {
-            await refetchCart(true);
-          }
+          });
+          // ← KHÔNG gọi refetchCart ở đây
+          // onSuccess trong useVariantSelector sẽ gọi refetchCart
         } catch {
-          await refetchCart(true);
+          await refetchCart(true); // chỉ refetch khi lỗi để rollback
         }
         return;
       }
-
       // ── Guest: persist localStorage ──
       // Đọc lại từ state hiện tại (sau optimistic update)
       setItems((prev) => {
