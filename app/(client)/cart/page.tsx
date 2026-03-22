@@ -1,18 +1,8 @@
 "use client";
-
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-   Trash2,
-   Plus,
-   Minus,
-   ShoppingCart,
-   ChevronUp,
-   ChevronDown,
-   X,
-   ChevronRight,
-} from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import CartVariantSelector from "./components/CartVariantSelector";
@@ -20,11 +10,11 @@ import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useVoucher } from "@/hooks/useVoucher";
-import CartSidebar from "./components/CartSidebar";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
 import { useToasty } from "@/components/Toast";
+import CartBottomBar from "./components/CartBottomMobile";
 
 export default function CartPage() {
    const router = useRouter();
@@ -45,9 +35,8 @@ export default function CartPage() {
       rewardPoints,
       refetchCart,
    } = useCart();
-   // const [showSummary, setShowSummary] = useState(true);
+
    const [usePoints, setUsePoints] = useState(false);
-   const [showSidebar, setShowSidebar] = useState(false);
    const [showVoucherModal, setShowVoucherModal] = useState(false);
    const toast = useToasty();
 
@@ -59,16 +48,10 @@ export default function CartPage() {
       name: string;
    } | null>(null);
    const [isDeleting, setIsDeleting] = useState(false);
-
    const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
    const [isDeletingAll, setIsDeletingAll] = useState(false);
 
-   const {
-      applied: appliedVoucher,
-      applyByInput: _applyByInput,
-      applyFromList: _applyFromList,
-      clearVoucher: _clearVoucher,
-   } = useVoucher({ cartTotal: subtotal });
+   const { applied: appliedVoucher } = useVoucher({ cartTotal: subtotal });
 
    const [voucherCode, setVoucherCode] = useState("");
    const [voucherValue, setVoucherValue] = useState(0);
@@ -76,10 +59,7 @@ export default function CartPage() {
 
    const handleIncrease = async (itemId: string) => {
       const success = await updateQuantity(itemId, 1);
-
-      if (!success) {
-         toast.error("Số lượng vượt quá tồn kho");
-      }
+      if (!success) toast.error("Số lượng vượt quá tồn kho");
    };
 
    const handleDecrease = async (itemId: string) => {
@@ -95,7 +75,6 @@ export default function CartPage() {
       [],
    );
 
-   // ── Single item delete ────────────────────────────────────────────────────
    const handleRemoveClick = useCallback((item: CartItemWithDetails) => {
       setDeleteTarget({ id: item.id, name: item.productName });
    }, []);
@@ -112,7 +91,6 @@ export default function CartPage() {
       if (!isDeleting) setDeleteTarget(null);
    }, [isDeleting]);
 
-   // ── Delete ALL selected ───────────────────────────────────────────────────
    const handleRemoveAllClick = useCallback(() => {
       if (selectedItems.length === 0) return;
       setShowDeleteAllConfirm(true);
@@ -129,13 +107,11 @@ export default function CartPage() {
       if (!isDeletingAll) setShowDeleteAllConfirm(false);
    }, [isDeletingAll]);
 
-   // ── Checkout ──────────────────────────────────────────────────────────────
    const handleCheckout = useCallback(() => {
       if (selectedItems.length === 0) {
          toast.error("Vui lòng chọn ít nhất một sản phẩm");
          return;
       }
-
       const checkoutData = {
          selectedItems,
          selectedPromotions,
@@ -149,7 +125,6 @@ export default function CartPage() {
          rewardPoints,
          usePoints,
       };
-
       localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
       router.push("/checkout");
    }, [
@@ -196,9 +171,7 @@ export default function CartPage() {
 
          <div
             className="container space-y-4 px-3"
-            style={{
-               paddingBottom: "clamp(7rem, 15vw, 12rem)",
-            }}
+            style={{ paddingBottom: "clamp(7rem, 15vw, 12rem)" }}
          >
             {items.length === 0 ? (
                <div className="rounded-2xl bg-neutral-light p-8 sm:p-12 lg:p-16 text-center">
@@ -308,7 +281,6 @@ export default function CartPage() {
                               Chọn tất cả ({items.length})
                            </span>
                         </label>
-                        {/* ── Nút xoá đã chọn → mở confirm sidebar ── */}
                         <button
                            onClick={handleRemoveAllClick}
                            className="text-neutral-darker transition hover:text-primary disabled:cursor-not-allowed disabled:text-neutral-dark cursor-pointer"
@@ -326,7 +298,6 @@ export default function CartPage() {
                               className="rounded-lg bg-neutral-light p-2 sm:p-4 border border-neutral"
                            >
                               <div className="flex gap-2 sm:gap-3 min-w-0">
-                                 {/* Checkbox */}
                                  <div className="flex items-start shrink-0 pt-1">
                                     <input
                                        type="checkbox"
@@ -357,9 +328,7 @@ export default function CartPage() {
                                     )}
                                  </div>
 
-                                 {/* Product info */}
                                  <div className="flex-1 min-w-0">
-                                    {/* Tên + nút xóa (mobile/tablet) */}
                                     <div className="flex items-start justify-between gap-2 mb-1">
                                        <h3 className="text-sm font-medium text-primary line-clamp-2 min-w-0 flex-1">
                                           {item.productName}
@@ -375,7 +344,6 @@ export default function CartPage() {
                                        </button>
                                     </div>
 
-                                    {/* Variant selector */}
                                     <div className="mb-1.5">
                                        <CartVariantSelector
                                           cartItemId={item.id}
@@ -397,9 +365,8 @@ export default function CartPage() {
                                        />
                                     </div>
 
-                                    {/* === MOBILE/TABLET (<xl): đơn giá + số lượng + tổng ngang hàng === */}
-                                    <div className="xl:hidden flex items-center  gap-1 sm:gap-3 flex-wrap">
-                                       {/* Đơn giá */}
+                                    {/* Mobile/tablet layout */}
+                                    <div className="xl:hidden flex items-center gap-1 sm:gap-3 flex-wrap">
                                        <div className="flex flex-col shrink-0">
                                           <span className="text-sm font-semibold text-promotion whitespace-nowrap">
                                              {formatVND(item.unitPrice)}
@@ -414,8 +381,6 @@ export default function CartPage() {
                                                 </span>
                                              )}
                                        </div>
-
-                                       {/* Nút +/- gộp liền */}
                                        <div className="flex items-center border border-neutral rounded w-fit shrink-0">
                                           <button
                                              onClick={() =>
@@ -438,8 +403,6 @@ export default function CartPage() {
                                              <Plus className="h-4 w-4" />
                                           </button>
                                        </div>
-
-                                       {/* Tổng tiền */}
                                        <span className="text-sm font-bold text-promotion whitespace-nowrap shrink-0 ml-auto">
                                           {formatVND(
                                              item.unitPrice * item.quantity,
@@ -448,9 +411,8 @@ export default function CartPage() {
                                     </div>
                                  </div>
 
-                                 {/* === DESKTOP (xl+): đơn giá | số lượng | tổng | xóa === */}
+                                 {/* Desktop layout */}
                                  <div className="hidden xl:flex items-center gap-4 shrink-0">
-                                    {/* Đơn giá */}
                                     <div className="flex flex-col items-end w-28 shrink-0">
                                        <span className="text-base font-semibold text-promotion whitespace-nowrap">
                                           {formatVND(item.unitPrice)}
@@ -463,8 +425,6 @@ export default function CartPage() {
                                              </span>
                                           )}
                                     </div>
-
-                                    {/* Nút +/- gộp liền */}
                                     <div className="flex items-center border border-neutral rounded w-fit shrink-0">
                                        <button
                                           onClick={() =>
@@ -487,8 +447,6 @@ export default function CartPage() {
                                           <Plus className="h-3 w-3" />
                                        </button>
                                     </div>
-
-                                    {/* Tổng tiền */}
                                     <div className="w-28 text-right shrink-0">
                                        <span className="text-base font-semibold text-promotion whitespace-nowrap">
                                           {formatVND(
@@ -496,8 +454,6 @@ export default function CartPage() {
                                           )}
                                        </span>
                                     </div>
-
-                                    {/* Nút xóa */}
                                     <button
                                        onClick={() => handleRemoveClick(item)}
                                        className="text-neutral-darker transition hover:text-primary cursor-pointer shrink-0"
@@ -535,307 +491,50 @@ export default function CartPage() {
             )}
          </div>
 
-         {/* Floating Panel + Bar - mobile */}
-         <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden shadow-2xl">
-            {/* Panel chi tiết - chỉ hiện khi showSidebar = true */}
-            {showSidebar && (
-               <div className="bg-neutral-light border-t border-neutral rounded-t-2xl">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
-                     <span className="text-sm font-semibold text-primary">
-                        Thông tin đơn hàng
-                     </span>
-                     <button
-                        onClick={() => setShowSidebar(false)}
-                        className="p-1.5 hover:bg-neutral rounded-lg transition-colors"
-                     >
-                        <X className="h-5 w-5 text-neutral-darker" />
-                     </button>
-                  </div>
-                  {/* Voucher */}
-                  <div className="border-b border-neutral">
-                     <button
-                        type="button"
-                        onClick={(e) => {
-                           e.stopPropagation();
-                           setShowVoucherModal(true);
-                        }}
-                        className="flex w-full items-center justify-between p-3 transition hover:bg-accent/5 group"
-                     >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                           <div className="shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                              <span className="text-lg">🏷️</span>
-                           </div>
-                           <div className="flex flex-col items-start min-w-0">
-                              <span className="text-sm font-medium text-primary">
-                                 Chọn hoặc nhập ưu đãi
-                              </span>
-                              {voucherCode ? (
-                                 <span className="text-xs text-accent-dark font-semibold truncate w-full">
-                                    {voucherCode} • -{formatVND(voucherValue)}
-                                 </span>
-                              ) : (
-                                 <span className="text-xs text-neutral-dark">
-                                    Chưa áp dụng
-                                 </span>
-                              )}
-                           </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-accent transition-colors shrink-0" />
-                     </button>
-                  </div>
-                  {/* Chi tiết thanh toán */}
-                  <div className="px-4 py-3 space-y-2 text-sm max-h-[40vh] overflow-y-auto">
-                     <h3 className="font-semibold text-primary">
-                        Chi tiết thanh toán
-                     </h3>
-
-                     <div className="flex justify-between">
-                        <span className="text-neutral-darker">Tổng tiền</span>
-                        <span className="font-medium text-primary">
-                           {formatVND(subtotal)}
-                        </span>
-                     </div>
-                     <div className="flex justify-between">
-                        <span className="text-neutral-darker">
-                           Tổng khuyến mãi
-                        </span>
-                        <span className="font-medium text-primary">
-                           -{formatVND(totalDiscount + voucherValue)}
-                        </span>
-                     </div>
-                     <div className="flex justify-between pl-4">
-                        <span className="text-neutral-dark text-xs">
-                           Giảm giá sản phẩm
-                        </span>
-                        <span className="text-xs">
-                           -{formatVND(totalDiscount)}
-                        </span>
-                     </div>
-                     <div className="flex justify-between pl-4">
-                        <span className="text-neutral-dark text-xs">
-                           Voucher
-                        </span>
-                        <span className="text-xs font-medium">
-                           {voucherValue > 0
-                              ? `-${formatVND(voucherValue)}`
-                              : "0₫"}
-                        </span>
-                     </div>
-
-                     <div className="border-t border-neutral pt-2">
-                        <div className="flex justify-between items-center">
-                           <span className="font-semibold text-primary">
-                              Cần thanh toán
-                           </span>
-                           <span className="text-lg font-bold text-promotion">
-                              {formatVND(finalTotalWithVoucher)}
-                           </span>
-                        </div>
-                     </div>
-
-                     <div className="flex items-center gap-1 pb-1">
-                        <span className="text-xs text-neutral-darker">
-                           Điểm thưởng
-                        </span>
-                        <span className="text-sm">🪙</span>
-                        <span className="text-sm font-medium text-accent-dark">
-                           +{rewardPoints.toLocaleString()}
-                        </span>
-                     </div>
-                  </div>
-               </div>
-            )}
-
-            {/* Floating Panel + Bar - mobile */}
-            <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden shadow-2xl">
-               {/* Backdrop */}
-               {showSidebar && (
-                  <div
-                     className="fixed inset-0 bg-black/40 z-[-1]"
-                     onClick={() => setShowSidebar(false)}
-                  />
-               )}
-
-               {/* Expanded Panel - dùng transition thay vì conditional render */}
-               <div
-                  className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${
-                     showSidebar ? "max-h-[70vh]" : "max-h-0"
-                  }`}
-               >
-                  <div className="overflow-y-auto max-h-[70vh]">
-                     {/* Header */}
-                     <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
-                        <span className="text-sm font-semibold text-primary">
-                           Thông tin đơn hàng
-                        </span>
-                        <button
-                           onClick={() => setShowSidebar(false)}
-                           className="p-1.5 hover:bg-neutral rounded-lg transition-colors"
-                        >
-                           <X className="h-5 w-5 text-neutral-darker" />
-                        </button>
-                     </div>
-
-                     {/* Voucher Button */}
-                     <div className="border-b border-neutral">
-                        <button
-                           type="button"
-                           onClick={() => {
-                              setShowSidebar(false);
-                              setShowVoucherModal(true);
-                           }}
-                           className="flex w-full items-center justify-between p-3 transition hover:bg-accent/5 group"
-                        >
-                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                                 <span className="text-lg">🏷️</span>
-                              </div>
-                              <div className="flex flex-col items-start min-w-0">
-                                 <span className="text-sm font-medium text-primary">
-                                    Chọn hoặc nhập ưu đãi
-                                 </span>
-                                 {voucherCode ? (
-                                    <span className="text-xs text-accent-dark font-semibold truncate w-full">
-                                       {voucherCode} • -
-                                       {formatVND(voucherValue)}
-                                    </span>
-                                 ) : (
-                                    <span className="text-xs text-neutral-dark">
-                                       Chưa áp dụng
-                                    </span>
-                                 )}
-                              </div>
-                           </div>
-                           <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-accent transition-colors shrink-0" />
-                        </button>
-                     </div>
-
-                     {/* Summary Section */}
-                     <div className="px-4 py-4 space-y-2.5">
-                        <h3 className="text-sm font-semibold text-primary mb-3">
-                           Chi tiết thanh toán
-                        </h3>
-                        <div className="space-y-2.5 text-sm">
-                           <div className="flex justify-between">
-                              <span className="text-neutral-darker">
-                                 Tổng tiền
-                              </span>
-                              <span className="font-medium text-primary">
-                                 {formatVND(subtotal)}
-                              </span>
-                           </div>
-                           <div className="flex justify-between">
-                              <span className="text-neutral-darker">
-                                 Tổng khuyến mãi
-                              </span>
-                              <span className="font-medium text-primary">
-                                 -{formatVND(totalDiscount + voucherValue)}
-                              </span>
-                           </div>
-                           <div className="flex justify-between pl-4">
-                              <span className="text-neutral-dark text-xs">
-                                 Giảm giá sản phẩm
-                              </span>
-                              <span className="text-primary text-sm">
-                                 -{formatVND(totalDiscount)}
-                              </span>
-                           </div>
-                           <div className="flex justify-between pl-4">
-                              <span className="text-neutral-dark text-xs">
-                                 Voucher
-                              </span>
-                              <span className="text-primary text-sm font-medium">
-                                 {voucherValue > 0
-                                    ? `-${formatVND(voucherValue)}`
-                                    : "0₫"}
-                              </span>
-                           </div>
-                           <div className="flex justify-between">
-                              <span className="text-neutral-darker">
-                                 Phí vận chuyển
-                              </span>
-                              <span className="font-medium text-accent-dark">
-                                 Miễn phí
-                              </span>
-                           </div>
-                           <div className="border-t border-neutral pt-2.5 mt-2.5">
-                              <div className="flex justify-between items-center">
-                                 <span className="font-semibold text-primary text-sm">
-                                    Cần thanh toán
-                                 </span>
-                                 <span className="text-xl font-bold text-promotion">
-                                    {formatVND(finalTotalWithVoucher)}
-                                 </span>
-                              </div>
-                           </div>
-                           <div className="flex items-center gap-1 pt-1 pb-2">
-                              <span className="text-xs text-neutral-darker">
-                                 Điểm thưởng
-                              </span>
-                              <span className="text-sm">🪙</span>
-                              <span className="text-sm font-medium text-accent-dark">
-                                 +{rewardPoints.toLocaleString()}
-                              </span>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-               {/* Bar luôn hiển thị */}
-               <div className="bg-neutral-light border-t border-neutral flex items-center gap-2 px-3 py-2.5">
-                  <button
-                     onClick={() => setShowSidebar((prev) => !prev)}
-                     className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition"
-                  >
-                     <div className="flex flex-col items-end min-w-0">
-                        <span className="text-base font-bold text-promotion whitespace-nowrap">
-                           {formatVND(finalTotalWithVoucher)}
-                        </span>
-                        {totalDiscount + voucherValue > 0 && (
-                           <span className="text-xs text-neutral-darker whitespace-nowrap">
-                              Tiết kiệm{" "}
-                              {formatVND(totalDiscount + voucherValue)}
-                           </span>
-                        )}
-                     </div>
-                     {showSidebar ? (
-                        <ChevronDown className="h-4 w-4 text-neutral-darker shrink-0" />
-                     ) : (
-                        <ChevronUp className="h-4 w-4 text-neutral-darker shrink-0" />
-                     )}
-                  </button>
-
-                  <button
-                     onClick={handleCheckout}
-                     disabled={selectedItems.length === 0}
-                     className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${
-                        selectedItems.length === 0
-                           ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
-                           : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"
-                     }`}
-                  >
-                     Xác nhận đơn
-                  </button>
-               </div>
-            </div>
-         </div>
-         {/* <CartSidebar
-            isOpen={showSidebar}
-            onClose={() => setShowSidebar(false)}
-            subtotal={subtotal}
-            totalDiscount={totalDiscount}
-            finalTotal={finalTotal}
-            rewardPoints={rewardPoints}
-            selectedItemsCount={selectedItems.length}
-            appliedVoucherCode={voucherCode}
-            appliedVoucherValue={voucherValue}
-            onOpenVoucherModal={() => setShowVoucherModal(true)}
-            onCheckout={handleCheckout}
-            usePoints={usePoints}
-            onTogglePoints={setUsePoints}
-         /> */}
+         {/* Mobile bottom bar — ẩn khi giỏ trống */}
+         {items.length > 0 && (
+            <CartBottomBar
+               finalTotal={finalTotalWithVoucher}
+               totalSaved={totalDiscount + voucherValue}
+               summaryRows={[
+                  {
+                     label: "Tổng tiền",
+                     value: formatVND(subtotal),
+                  },
+                  {
+                     label: "Tổng khuyến mãi",
+                     value: `-${formatVND(totalDiscount + voucherValue)}`,
+                  },
+                  {
+                     label: "Giảm giá sản phẩm",
+                     value: `-${formatVND(totalDiscount)}`,
+                     indent: true,
+                  },
+                  {
+                     label: "Voucher",
+                     value:
+                        voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫",
+                     indent: true,
+                  },
+                  {
+                     label: "Phí vận chuyển",
+                     value: "Miễn phí",
+                  },
+                  {
+                     label: "Cần thanh toán",
+                     value: formatVND(finalTotalWithVoucher),
+                     highlight: true,
+                  },
+               ]}
+               voucherCode={voucherCode}
+               voucherValue={voucherValue}
+               onOpenVoucherModal={() => setShowVoucherModal(true)}
+               rewardPoints={rewardPoints}
+               actionLabel="Xác nhận đơn"
+               actionDisabled={selectedItems.length === 0}
+               onAction={handleCheckout}
+            />
+         )}
 
          <VoucherPromotionModal
             isOpen={showVoucherModal}
@@ -847,7 +546,6 @@ export default function CartPage() {
             cartTotal={subtotal}
          />
 
-         {/* Delete single item confirm sidebar */}
          <DeleteConfirmSidebar
             isOpen={!!deleteTarget}
             onClose={handleCloseDeleteSidebar}
@@ -856,7 +554,6 @@ export default function CartPage() {
             isLoading={isDeleting}
          />
 
-         {/* Delete ALL selected items confirm sidebar */}
          <DeleteConfirmSidebar
             isOpen={showDeleteAllConfirm}
             onClose={handleCloseDeleteAllSidebar}
