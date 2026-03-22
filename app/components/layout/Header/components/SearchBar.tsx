@@ -122,11 +122,10 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
 
     setIsSearching(true);
     try {
-      const res = await apiRequest.get<ApiResponse>("/products", {
-        params: { search: q, limit: 8 },
+      const res = await apiRequest.get<ApiResponse>("/search", {
+        params: { q, limit: 8 },
         noAuth: true,
       });
-
       const items = res?.data ?? [];
       staleResultsRef.current = items;
       startTransition(() => {
