@@ -9,7 +9,6 @@ import CartVariantSelector from "./components/CartVariantSelector";
 import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
-import { useVoucher } from "@/hooks/useVoucher";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
@@ -36,7 +35,6 @@ export default function CartPage() {
       refetchCart,
    } = useCart();
 
-   const [usePoints, setUsePoints] = useState(false);
    const [showVoucherModal, setShowVoucherModal] = useState(false);
    const toast = useToasty();
 
@@ -50,8 +48,6 @@ export default function CartPage() {
    const [isDeleting, setIsDeleting] = useState(false);
    const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
    const [isDeletingAll, setIsDeletingAll] = useState(false);
-
-   const { applied: appliedVoucher } = useVoucher({ cartTotal: subtotal });
 
    const [voucherCode, setVoucherCode] = useState("");
    const [voucherValue, setVoucherValue] = useState(0);
@@ -123,7 +119,6 @@ export default function CartPage() {
          totalDiscount,
          finalTotal,
          rewardPoints,
-         usePoints,
       };
       localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
       router.push("/checkout");
@@ -139,7 +134,6 @@ export default function CartPage() {
       finalTotal,
       rewardPoints,
       router,
-      usePoints,
       toast,
    ]);
 
@@ -474,7 +468,6 @@ export default function CartPage() {
                         subtotal={subtotal}
                         totalDiscount={totalDiscount}
                         finalTotal={finalTotal}
-                        rewardPoints={rewardPoints}
                         selectedItemsCount={selectedItems.length}
                         appliedVoucherCode={voucherCode}
                         appliedVoucherValue={voucherValue}

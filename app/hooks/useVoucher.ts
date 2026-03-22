@@ -30,6 +30,7 @@ export interface Voucher {
    createdAt?: string;
    updatedAt?: string;
    targets?: VoucherTarget[];
+   maxDiscountValue?: number; // ← thêm dòng này
 }
 
 export interface AppliedVoucher {
@@ -148,7 +149,10 @@ export function useVoucher({
       (voucher: Voucher): number => {
          if (voucher.discountType === "DISCOUNT_FIXED")
             return voucher.discountValue;
-         return Math.floor((cartTotal * voucher.discountValue) / 100);
+         const percent = Math.floor((cartTotal * voucher.discountValue) / 100);
+         return voucher.maxDiscountValue
+            ? Math.min(percent, voucher.maxDiscountValue)
+            : percent;
       },
       [cartTotal],
    );
@@ -235,6 +239,7 @@ export function useVoucher({
             `/vouchers/code/${normalized}`,
             { noAuth: true },
          );
+         console.log(res);
          validateAndApply(res.data);
       } catch {
          setError("Mã voucher không tồn tại hoặc không hợp lệ");

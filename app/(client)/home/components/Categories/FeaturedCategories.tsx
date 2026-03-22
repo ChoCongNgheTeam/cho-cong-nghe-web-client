@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
-import { FeaturedCategory } from "../../_libs/getFeaturedCategories";
+import { FeaturedCategory } from "../../_libs";
 
 interface CategoryGridProps {
    featuredCategories: FeaturedCategory[];
