@@ -50,12 +50,14 @@ export interface PromotionsResponse {
   message: string;
 }
 
+// Trong promotion.types.ts (FE):
 export interface GetPromotionsParams {
   page?: number;
   limit?: number;
   search?: string;
   isActive?: boolean;
   isExpired?: boolean;
+  status?: "active" | "inactive" | "expired" | "upcoming"; // ← thêm
   dateFrom?: string;
   dateTo?: string;
   sortBy?: "createdAt" | "name" | "priority" | "startDate" | "endDate";

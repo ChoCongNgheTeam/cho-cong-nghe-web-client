@@ -94,36 +94,8 @@ export default function PromotionsPage() {
 
   // ── Tab → query params mapping ────────────────────────────────────────────────
   const tabToParams = (tab: string) => {
-    const now = new Date().toISOString();
-
-    if (tab === "active") {
-      return {
-        isActive: true,
-        startedBefore: now,
-        notExpiredAfter: now,
-      };
-    }
-
-    if (tab === "upcoming") {
-      return {
-        isActive: true,
-        startsAfter: now,
-      };
-    }
-
-    if (tab === "expired") {
-      return {
-        isExpired: true,
-      };
-    }
-
-    if (tab === "inactive") {
-      return {
-        isActive: false,
-      };
-    }
-
-    return {};
+    if (tab === "ALL") return {};
+    return { status: tab }; // ← gửi đúng param BE đang đọc
   };
 
   // ── Fetch (server-side) ───────────────────────────────────────────────────────
@@ -139,7 +111,7 @@ export default function PromotionsPage() {
         sortOrder,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
-        ...tabToParams(activeTab),
+        status: activeTab === "ALL" ? undefined : activeTab, // ← thay ...tabToParams(activeTab)
       });
       setPromotions(res.data);
       setMeta(res.meta as PromotionMeta);
