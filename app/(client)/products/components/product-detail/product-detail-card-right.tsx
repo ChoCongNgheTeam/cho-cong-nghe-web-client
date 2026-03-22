@@ -124,13 +124,6 @@ export default function ProductDetailRight({
     }
   };
 
-  // const handleInstallment = () => {
-  //   if (!selectedVariant?.id) {
-  //     toasty.warning("Vui lòng chọn phiên bản sản phẩm");
-  //     return;
-  //   }
-  //   toasty.info("Đang chuyển đến trang đăng ký trả góp...");
-  // };
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -139,12 +132,12 @@ export default function ProductDetailRight({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
     }, 1200);
   };
+
   return (
     <div className="w-full">
       <style>{`
@@ -234,8 +227,6 @@ export default function ProductDetailRight({
       <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[100px_1fr] gap-y-4 sm:gap-y-5 mt-6">
         {availableOptions.map((option) => (
           <Fragment key={option.type}>
-            {" "}
-            {/* Fragment với key thay vì <> */}
             <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
               {TYPE_LABELS[option.type] ?? option.type}:
             </span>
@@ -255,7 +246,7 @@ export default function ProductDetailRight({
                                 relative overflow-hidden 
                                 transition-colors duration-300 
                                 flex items-center gap-2
-                                 hover:border-accent
+                                hover:border-accent
              ${
                disabled
                  ? "border-neutral text-primary bg-neutral opacity-40 cursor-not-allowed"
@@ -289,10 +280,10 @@ export default function ProductDetailRight({
           </Fragment>
         ))}
 
-        {/* Quantity */}
+        {/* Quantity — ẩn trên mobile vì sticky footer đã có */}
         {isInStock && (
           <>
-            <span className="font-medium text-primary text-xs sm:text-sm flex items-center ">
+            <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
               Số lượng:
             </span>
             <div className="flex items-center gap-3">
@@ -333,7 +324,7 @@ export default function ProductDetailRight({
       {isInStock ? (
         <>
           {/* Price */}
-          <div className="bg-neutral/40 p-4 sm:py-6 rounded-lg mt-6 ">
+          <div className="bg-neutral/40 p-4 sm:py-6 rounded-lg mt-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex flex-col gap-2 flex-1">
                 <div>
@@ -401,12 +392,10 @@ export default function ProductDetailRight({
               {/* Item 1 */}
               <div className="flex items-start gap-3 my-3">
                 <FaGift className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
-
                 <div className="flex flex-col min-w-0">
                   <span className="break-words text-primary">
                     Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy
                   </span>
-
                   <Link
                     href="#"
                     className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer inline-block w-fit"
@@ -427,7 +416,6 @@ export default function ProductDetailRight({
               {/* Item 2 */}
               <div className="flex items-start gap-3 mb-3">
                 <FaCog className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
-
                 <span className="break-words text-primary">
                   Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
                   <Link
@@ -441,8 +429,8 @@ export default function ProductDetailRight({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          {/* Action Buttons — chỉ hiện trên desktop (lg+), mobile dùng sticky footer */}
+          <div className="hidden lg:flex flex-col sm:flex-row gap-2 sm:gap-3">
             <AddToCartButton
               productVariantId={selectedVariant?.id || ""}
               quantity={quantity}
@@ -492,33 +480,15 @@ export default function ProductDetailRight({
       transition-all duration-200 
       text-sm sm:text-base 
       cursor-pointer
-
       disabled:opacity-50 disabled:cursor-not-allowed
     `}
             >
               Mua ngay
             </button>
-
-            {/* 💳 Installment */}
-            {/* (optional bật lại nếu cần) */}
-            {/* 
-  <button
-    onClick={handleInstallment}
-    className="
-      flex-1 sm:flex-[2] 
-      border border-neutral 
-      bg-neutral-light text-primary 
-      py-3 rounded-lg 
-      hover:bg-neutral 
-      transition-all duration-200 
-      text-sm sm:text-base 
-      cursor-pointer
-    "
-  >
-    Trả góp 0%
-  </button> 
-  */}
           </div>
+
+          {/* Padding bottom trên mobile để nội dung không bị che bởi sticky footer */}
+          <div className="h-20 lg:hidden" />
         </>
       ) : (
         <div
@@ -561,7 +531,7 @@ export default function ProductDetailRight({
                 className="text-sm font-semibold"
                 style={{ color: "rgb(22 163 74)" }}
               >
-                ✅ Đăng ký thành công! Chúng tôi sẽ thông báo cho bạn.
+                 Đăng ký thành công! Chúng tôi sẽ thông báo cho bạn.
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex gap-2">
@@ -607,6 +577,7 @@ export default function ProductDetailRight({
               <span>🔒 Không spam</span>
             </div>
           </div>
+
           {/* ACTION */}
           <div className="border-t border-neutral bg-neutral-light px-5 py-4 space-y-3">
             <a
@@ -638,35 +609,20 @@ export default function ProductDetailRight({
             </div>
           </div>
 
-          {/* KEYFRAMES (giữ trong file) */}
+          {/* Padding bottom trên mobile để nội dung không bị che bởi sticky footer */}
+          <div className="h-20 lg:hidden" />
+
           <style>{`
         @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes bounceSlow {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-5px);
-          }
+          0%, 100% { transform: translateY(0); }
+          50%       { transform: translateY(-5px); }
         }
-
-        .animate-fadeUp {
-          animation: fadeUp 0.5s ease;
-        }
-
-        .animate-bounceSlow {
-          animation: bounceSlow 2s infinite;
-        }
+        .animate-fadeUp    { animation: fadeUp 0.5s ease; }
+        .animate-bounceSlow { animation: bounceSlow 2s infinite; }
       `}</style>
         </div>
       )}
