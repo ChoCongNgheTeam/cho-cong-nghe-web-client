@@ -83,8 +83,8 @@ export default function InstallmentPolicy() {
             <p className="leading-relaxed mb-5 text-primary">
                Khách hàng mang hồ sơ được yêu cầu tới CHOCONGNGHE gần nhất để đăng ký và hoàn tất thủ tục trả góp qua nhà tài chính.
             </p>
-            <div className="rounded-lg overflow-hidden border border-neutral">
-               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary ">
+            <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+               <div className="min-w-[480px] grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary ">
                   <span>Công ty tài chính</span>
                   <span>Độ tuổi</span>
                   <span>Hồ sơ</span>
