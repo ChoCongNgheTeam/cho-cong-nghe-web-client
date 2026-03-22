@@ -219,13 +219,23 @@ export async function getUserAddresses(userId: string): Promise<UserAddress[]> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getProvinces(): Promise<Province[]> {
-  const res = await apiRequest.get<{ data: Province[] }>("/addresses/locations/provinces");
-  return Array.isArray(res.data) ? res.data : [];
+  const res = await apiRequest.get<any>("/addresses/locations/provinces");
+  // Controller: { success, data: Province[] } — handle cả unwrapped và nested
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res.data)) return res.data;
+  if (Array.isArray(res.data?.data)) return res.data.data;
+  return [];
 }
 
 export async function getWards(provinceId: string): Promise<Ward[]> {
-  const res = await apiRequest.get<{ data: Ward[] }>(`/addresses/locations/${provinceId}/wards`);
-  return Array.isArray(res.data) ? res.data : [];
+  const res = await apiRequest.get<any>(`/addresses/locations/${provinceId}/wards`);
+  // Controller: { success, data: Ward[], meta: {...} }
+  // apiRequest có thể unwrap 1 lần → res = { success, data: Ward[], meta }
+  // hoặc không unwrap → res.data = { success, data: Ward[], meta }
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res.data)) return res.data; // data là array trực tiếp
+  if (Array.isArray(res.data?.data)) return res.data.data; // data.data là array (nested)
+  return [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

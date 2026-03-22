@@ -11,7 +11,7 @@ interface ReviewModalProps {
   onClose: () => void;
   orderItemId: string;
   productName?: string;
-  onSuccess?: () => void;
+  onSuccess: (stars: number) => void;
 }
 
 export default function ReviewModal({
@@ -50,12 +50,7 @@ export default function ReviewModal({
     try {
       setLoading(true);
       await apiRequest.post("/reviews", { orderItemId, rating, comment });
-      toasty.success("Đánh giá thành công!", {
-        title: "Cảm ơn bạn!",
-        duration: 3000,
-        showProgress: true,
-      });
-      onSuccess?.();
+      onSuccess?.(rating);
       handleClose();
     } catch (err: any) {
       const message = err?.message || err?.response?.data?.message || "";
@@ -65,7 +60,7 @@ export default function ReviewModal({
           duration: 3000,
           showProgress: true,
         });
-        onSuccess?.(); // cập nhật UI về trạng thái đã review
+        onSuccess?.(rating); // truyền rating thay vì gọi rỗng
         handleClose();
       } else {
         toasty.error(message || "Không thể gửi đánh giá");
@@ -102,12 +97,10 @@ export default function ReviewModal({
             {[1, 2, 3, 4, 5].map((s) => (
               <button
                 key={s}
-                onClick={() => {
-                  setRating(s);
-                }}
+                onClick={() => setRating(s)}
                 onMouseEnter={() => setHover(s)}
                 onMouseLeave={() => setHover(0)}
-                className="transition-transform hover:scale-110 active:scale-95"
+                className="transition-transform hover:scale-110 active:scale-95 cursor-pointer"
               >
                 <Star
                   className={`w-10 h-10 transition-colors duration-150 ${
@@ -119,6 +112,11 @@ export default function ReviewModal({
               </button>
             ))}
           </div>
+
+          {/* Rating label */}
+          <p className="text-center text-sm font-medium text-neutral-darker mb-4 h-5">
+            {labels[active]}
+          </p>
 
           {/* Textarea */}
           <div className="relative mb-2">

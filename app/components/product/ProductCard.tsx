@@ -20,7 +20,6 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
   const hasPromotion = product.price?.hasPromotion ?? false;
   const discountPercentage = product.price?.discountPercentage ?? 0;
   const hasHighlights = (product.highlights ?? []).length > 0;
-
   return (
     <Link href={`/products/${product.slug}`} className="group relative flex flex-col h-full bg-neutral-light border border-neutral rounded-xl py-6 px-3">
       {showWishlist && <WishlistHeart productId={product.id} />}
@@ -50,7 +49,7 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
                 <span className="text-[10px] text-primary text-center leading-tight">
                   {highlight.name}
                   <br />
-                  {highlight.value}
+                  {highlight.value} 
                 </span>
               </div>
             ))}

@@ -22,26 +22,33 @@ export const handleLoginSubmit = async ({
          return;
       }
 
-      // Lưu access token vào memory ngay khi login thành công
       setAccessToken(accessToken);
 
       await onSuccess(user, accessToken);
    } else if (response.error) {
+      const message = response.error.message;
+
       switch (response.error.status) {
+         case 400:
+            onError(message || "Tên đăng nhập hoặc mật khẩu không hợp lệ");
+            break;
          case 401:
-            onError("Tên đăng nhập hoặc mật khẩu không chính xác");
+            onError(message || "Tên đăng nhập hoặc mật khẩu không chính xác");
             break;
          case 429:
-            onError("Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau");
+            onError(
+               message ||
+                  "Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau",
+            );
             break;
          case 404:
-            onError("Tài khoản không tồn tại");
+            onError(message || "Tài khoản không tồn tại");
             break;
          case 403:
-            onError("Tài khoản của bạn đã bị khóa");
+            onError(message || "Tài khoản của bạn đã bị khóa");
             break;
          default:
-            onError(response.error.message || "Đăng nhập thất bại");
+            onError(message || "Đăng nhập thất bại");
       }
    } else {
       onError("Phản hồi từ server không hợp lệ");

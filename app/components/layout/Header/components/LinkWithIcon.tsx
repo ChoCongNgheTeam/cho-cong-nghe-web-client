@@ -17,7 +17,7 @@ const LinkWithIcon: React.FC<LinkWithIconProps> = ({
          className="flex items-center gap-1 hover:text-primary hover:underline whitespace-nowrap"
       >
          {icon}
-         <span className="hidden lg:inline text-[15px]">{text}</span>
+         <span className="hidden lg:inline text-[13px]">{text}</span>
          <span className="lg:hidden">{mobileText}</span>
       </Link>
    );

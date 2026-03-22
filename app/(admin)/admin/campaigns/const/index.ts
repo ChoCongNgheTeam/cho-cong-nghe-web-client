@@ -31,7 +31,9 @@ export const TYPE_OPTIONS = [
   { value: "SPECIAL", label: "Đặc biệt" },
 ];
 
-export const SORT_OPTIONS = [
+type SortField = "createdAt" | "name" | "startDate" | "endDate";
+
+export const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "createdAt", label: "Ngày tạo" },
   { value: "name", label: "Tên" },
   { value: "startDate", label: "Ngày bắt đầu" },

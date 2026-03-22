@@ -14,6 +14,7 @@ import ProductDetailSuggest from "../components/product-detail/product-detail-su
 import ProductReview from "../product-comment/Productreview";
 import Breadcrumb from "../../../components/layout/Breadcrumb/Breadcrumb";
 import ProductStickyFooter from "./ProductStickyFooter";
+import { TrustBadges } from "@/(client)/home/components";
 
 import { ProductDetail } from "@/lib/types/product";
 import apiRequest from "@/lib/api";
@@ -163,9 +164,10 @@ export function ProductDetailContent({
                 className={`
                   relative px-4 py-3 text-sm font-medium whitespace-nowrap
                   transition-colors cursor-pointer flex-shrink-0
-                  ${activeTab === tab.id
-                    ? "text-accent"
-                    : "text-neutral-darker hover:text-primary"
+                  ${
+                    activeTab === tab.id
+                      ? "text-accent"
+                      : "text-neutral-darker hover:text-primary"
                   }
                 `}
               >
@@ -244,6 +246,7 @@ export function ProductDetailContent({
             rating={product.rating}
             slug={product.slug}
             product={product}
+            currentVariant={currentVariant}
           />
         </div>
       </div>
@@ -256,41 +259,8 @@ export function ProductDetailContent({
       </div>
 
       {/* ── Trust Badges ──────────────────────────────────────────────────── */}
-      <div className="p-2 sm:pt-6 bg-gray-400/10">
-        <div className="sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 rounded-lg">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            <div className="flex flex-col gap-2 justify-center items-center">
-              <BsPatchCheckFill size={48} className="text-red-500" />
-              <div className="text-center">
-                <b className="block text-base sm:text-lg">Thương hiệu đảm bảo</b>
-                <p className="text-sm text-gray-500 mt-1">Nhập khẩu, bảo hành chính hãng</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 justify-center items-center">
-              <HiOutlineRefresh size={48} className="text-red-500" />
-              <div className="text-center">
-                <b className="block text-base sm:text-lg">Đổi trả dễ dàng</b>
-                <p className="text-sm text-gray-500 mt-1">Theo chính sách đổi trả tại ChoCongNghe</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 justify-center items-center">
-              <FaTruck size={48} className="text-red-500" />
-              <div className="text-center">
-                <b className="block text-base sm:text-lg">Giao hàng tận nơi</b>
-                <p className="text-sm text-gray-500 mt-1">Trên toàn quốc</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 justify-center items-center">
-              <MdVerified size={48} className="text-red-500" />
-              <div className="text-center">
-                <b className="block text-base sm:text-lg">Sản phẩm chất lượng</b>
-                <p className="text-sm text-gray-500 mt-1">Đảm bảo tương thích và độ bền cao</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <TrustBadges className="!bg-gray-400/10" />
+      
       {/* ── Sticky Footer ─────────────────────────────────────────────────── */}
       <ProductStickyFooter
         product={product}

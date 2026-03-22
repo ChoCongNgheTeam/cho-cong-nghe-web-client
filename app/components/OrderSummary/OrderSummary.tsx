@@ -25,6 +25,7 @@ interface OrderSummaryProps {
    isCheckoutPage?: boolean;
    shippingFee?: number;
    taxAmount?: number;
+   computedTotal?: number; // ← thêm: tổng đã tính sẵn
 }
 
 export default function OrderSummary({
@@ -46,6 +47,7 @@ export default function OrderSummary({
    isCheckoutPage = false,
    shippingFee,
    taxAmount,
+   computedTotal,
 }: OrderSummaryProps) {
    const router = useRouter();
    const { user } = useAuth();
@@ -54,7 +56,8 @@ export default function OrderSummary({
       new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
    const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
-   const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
+   const finalTotalWithVoucher =
+      computedTotal ?? Math.max(0, subtotal - totalDiscountWithVoucher);
 
    const handleCheckoutClick = () => {
       if (isCheckoutPage && !user) {
@@ -121,69 +124,80 @@ export default function OrderSummary({
                      Thông tin đơn hàng
                   </h3>
 
-                     <div className="space-y-2.5 text-sm">
+                  <div className="space-y-2.5 text-sm">
+                     <div className="flex justify-between">
+                        <span className="text-neutral-darker">Tổng tiền</span>
+                        <span className="font-medium text-primary">
+                           {formatPrice(subtotal)}
+                        </span>
+                     </div>
+
+                     <div className="flex justify-between">
+                        <span className="text-neutral-darker">
+                           Tổng khuyến mãi
+                        </span>
+                        <span className="font-medium text-primary">
+                           -{formatPrice(totalDiscountWithVoucher)}
+                        </span>
+                     </div>
+
+                     <div className="flex justify-between pl-4">
+                        <span className="text-neutral-dark text-xs">
+                           Giảm giá sản phẩm
+                        </span>
+                        <span className="text-primary text-sm">
+                           -{formatPrice(totalDiscount)}
+                        </span>
+                     </div>
+
+                     <div className="flex justify-between pl-4">
+                        <span className="text-neutral-dark text-xs">
+                           Voucher
+                        </span>
+                        <span className="text-primary text-sm font-medium">
+                           {appliedVoucherValue > 0
+                              ? `-${formatPrice(appliedVoucherValue)}`
+                              : "0₫"}
+                        </span>
+                     </div>
+
+                     {isCheckoutPage && shippingFee !== undefined && (
                         <div className="flex justify-between">
                            <span className="text-neutral-darker">
-                              Tổng tiền
+                              Phí vận chuyển
                            </span>
-                           <span className="font-medium text-primary">
-                              {formatPrice(subtotal)}
-                           </span>
-                        </div>
-
-                        <div className="flex justify-between">
-                           <span className="text-neutral-darker">
-                              Tổng khuyến mãi
-                           </span>
-                           <span className="font-medium text-primary">
-                              -{formatPrice(totalDiscountWithVoucher)}
+                           <span className="font-medium text-accent-dark">
+                              {shippingFee === 0
+                                 ? "Miễn phí"
+                                 : formatVND(shippingFee)}
                            </span>
                         </div>
+                     )}
 
-                        <div className="flex justify-between pl-4">
-                           <span className="text-neutral-dark text-xs">
-                              Giảm giá sản phẩm
-                           </span>
-                           <span className="text-primary text-sm">
-                              -{formatPrice(totalDiscount)}
-                           </span>
-                        </div>
-
-                        <div className="flex justify-between pl-4">
-                           <span className="text-neutral-dark text-xs">
-                              Voucher
-                           </span>
-                           <span className="text-primary text-sm font-medium">
-                              {appliedVoucherValue > 0
-                                 ? `-${formatPrice(appliedVoucherValue)}`
-                                 : "0₫"}
-                           </span>
-                        </div>
-
-                        {isCheckoutPage && shippingFee !== undefined && (
-                           <div className="flex justify-between">
-                              <span className="text-neutral-darker">
-                                 Phí vận chuyển
+                     {isCheckoutPage &&
+                        taxAmount !== undefined &&
+                        taxAmount > 0 && (
+                           <div className="flex justify-between pl-4">
+                              <span className="text-neutral-dark text-xs">
+                                 Phí VAT (10%)
                               </span>
-                              <span className="font-medium text-accent-dark">
-                                 {shippingFee === 0
-                                    ? "Miễn phí"
-                                    : formatVND(shippingFee)}
+                              <span className="text-primary text-sm font-medium">
+                                 +{formatPrice(taxAmount)}
                               </span>
                            </div>
                         )}
 
-                        <div className="border-t border-neutral pt-2.5 mt-2.5">
-                           <div className="flex justify-between items-center">
-                              <span className="font-semibold text-primary text-sm">
-                                 Cần thanh toán
-                              </span>
-                              <span className="text-xl font-bold text-promotion">
-                                 {formatPrice(finalTotalWithVoucher)}
-                              </span>
-                           </div>
+                     <div className="border-t border-neutral pt-2.5 mt-2.5">
+                        <div className="flex justify-between items-center">
+                           <span className="font-semibold text-primary text-sm">
+                              Cần thanh toán
+                           </span>
+                           <span className="text-xl font-bold text-promotion">
+                              {formatPrice(finalTotalWithVoucher)}
+                           </span>
                         </div>
                      </div>
+                  </div>
                </div>
 
                {/* Checkout Button */}
@@ -234,14 +248,14 @@ export default function OrderSummary({
                         </label>
                      </div>
 
-                     {taxAmount !== undefined && (
+                     {/* {taxAmount !== undefined && (
                         <div className="px-4 pb-4 pt-3 text-xs text-neutral-darker border-t border-neutral rounded-b-lg bg-neutral-light">
                            <div className="flex justify-between">
                               <span>Thuế VAT (10%)</span>
                               <span>{formatVND(taxAmount)}</span>
                            </div>
                         </div>
-                     )}
+                     )} */}
                   </>
                )}
             </div>

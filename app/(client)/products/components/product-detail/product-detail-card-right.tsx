@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react"; // ✅ thêm Fragment
+import { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
 import {
   FaStar,
@@ -131,7 +131,20 @@ export default function ProductDetailRight({
   //   }
   //   toasty.info("Đang chuyển đến trang đăng ký trả góp...");
   // };
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
+  const count = Math.floor(Math.random() * 20) + 10;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    setTimeout(() => {
+      setLoading(false);
+      setSuccess(true);
+    }, 1200);
+  };
   return (
     <div className="w-full">
       <style>{`
@@ -508,57 +521,153 @@ export default function ProductDetailRight({
           </div>
         </>
       ) : (
-        <div className="mt-4 rounded-2xl overflow-hidden border border-neutral shadow-sm">
-          <div className="bg-neutral px-5 py-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-neutral-dark/20 flex items-center justify-center shrink-0 text-xl">
+        <div
+          className="
+        mt-6 rounded-2xl overflow-hidden border border-neutral
+        shadow-sm hover:shadow-lg transition-all duration-300
+        animate-fadeUp
+      "
+        >
+          {/* HEADER */}
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl animate-bounceSlow">
               📦
             </div>
-            <div>
+
+            <div className="flex-1">
               <p className="text-primary font-bold text-sm sm:text-base">
-                Sản phẩm tạm thời hết hàng
+                Tạm hết hàng
               </p>
-              <p className="text-neutral-dark text-xs mt-0.5">
-                Đăng ký để nhận thông báo ngay khi có hàng trở lại
+              <p className="text-neutral-dark text-xs">
+                Sản phẩm sẽ sớm quay lại, bạn có thể đăng ký nhận thông báo
               </p>
             </div>
+
+            {/* SOCIAL PROOF */}
+            <span className="text-[11px] bg-promotion/10 text-promotion px-2 py-1 rounded-full">
+              🔥 {count} người đang chờ
+            </span>
           </div>
+
+          {/* FORM */}
           <div className="bg-neutral-light px-5 py-4 space-y-3">
             <p className="text-xs text-neutral-dark font-medium flex items-center gap-1.5">
-              <span className="text-primary-light text-sm">🔔</span>
+              <span className="text-primary text-sm">🔔</span>
               Nhận thông báo khi có hàng
             </p>
-            <form className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Nhập email hoặc số điện thoại"
-                className="flex-1 border border-neutral rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-neutral-light placeholder:text-neutral-dark text-primary"
-              />
-              <button
-                type="submit"
-                className="bg-primary-dark hover:bg-primary-dark-hover text-neutral-light px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+
+            {success ? (
+              <div
+                className="text-sm font-semibold"
+                style={{ color: "rgb(22 163 74)" }}
               >
-                Đăng ký
-              </button>
-            </form>
+                ✅ Đăng ký thành công! Chúng tôi sẽ thông báo cho bạn.
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark">
+                    📧
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Nhập email hoặc số điện thoại"
+                    className="
+            w-full pl-9 pr-3.5 py-2.5 text-sm
+            border border-neutral rounded-xl
+            bg-neutral-light-active
+            placeholder:text-neutral-dark
+            text-primary
+            focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent
+            transition-all
+          "
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="
+          bg-primary text-neutral-light px-4 py-2.5 rounded-xl text-sm font-semibold
+          hover:bg-primary-hover
+          transition-all duration-200
+          hover:scale-105 active:scale-95
+          shadow-sm hover:shadow-md
+          disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer
+        "
+                >
+                  {loading ? "Đang gửi..." : "Đăng ký"}
+                </button>
+              </form>
+            )}
+
+            <div className="flex flex-wrap gap-3 text-[11px] text-neutral-dark pt-1">
+              <span>⚡ Thông báo sớm nhất</span>
+              <span>🎁 Có thể kèm ưu đãi</span>
+              <span>🔒 Không spam</span>
+            </div>
           </div>
-          <div className="border-t border-neutral bg-neutral-light-active px-5 py-3 flex flex-col items-center gap-3 w-full">
-            <a href="/category/dien-thoai">
-              <button className="w-full bg-primary hover:bg-primary-hover text-neutral-light font-semibold py-2.5 px-4 rounded-xl text-sm cursor-pointer">
-                🔍 Khám phá sản phẩm khác
-              </button>
-            </a>
+          {/* ACTION */}
+          <div className="border-t border-neutral bg-neutral-light px-5 py-4 space-y-3">
             <a
-              href="tel:18006601"
-              className="flex items-center gap-1.5 text-xs text-neutral-dark hover:text-promotion"
+              href="/category/dien-thoai"
+              className="
+            block w-full text-center
+            bg-primary hover:bg-primary-hover text-neutral-light
+            font-semibold py-3 px-4 rounded-xl text-sm
+            transition-all duration-200
+            hover:scale-[1.02]
+            shadow-sm hover:shadow-md
+          "
             >
-              <span className="text-promotion">📞</span>
-              Gọi{" "}
-              <span className="font-bold text-promotion tracking-wide">
-                1800-6601
-              </span>{" "}
-              tư vấn miễn phí
+              🔍 Xem sản phẩm tương tự
             </a>
+
+            <div className="flex justify-between items-center text-xs">
+              <a
+                href="tel:18006601"
+                className="flex items-center gap-1.5 text-neutral-dark hover:text-promotion transition-colors"
+              >
+                <span className="text-promotion">📞</span>
+                1800-6601
+              </a>
+
+              <span className="text-neutral-dark opacity-70">
+                Hỗ trợ miễn phí 24/7
+              </span>
+            </div>
           </div>
+
+          {/* KEYFRAMES (giữ trong file) */}
+          <style>{`
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes bounceSlow {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+
+        .animate-fadeUp {
+          animation: fadeUp 0.5s ease;
+        }
+
+        .animate-bounceSlow {
+          animation: bounceSlow 2s infinite;
+        }
+      `}</style>
         </div>
       )}
     </div>

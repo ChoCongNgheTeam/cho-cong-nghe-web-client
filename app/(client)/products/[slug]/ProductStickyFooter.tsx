@@ -112,7 +112,7 @@ export default function ProductStickyFooter({
   /* ── Render ─────────────────────────────────────────────────────────── */
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50
+      className={`fixed bottom-0 left-0 right-0 z-10
         border-t border-neutral bg-neutral-light
         shadow-[0_-4px_24px_rgba(0,0,0,0.08)]
         transition-transform duration-300 ease-in-out
@@ -157,7 +157,7 @@ export default function ProductStickyFooter({
 
           {/* ── Buttons ──────────────────────────────────────────────── */}
           {isOutOfStock ? (
-            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-neutral-dark text-sm font-medium">
+            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-primary text-sm font-medium">
               Hết hàng
             </span>
           ) : (

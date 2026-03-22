@@ -41,7 +41,7 @@ export default async function HomePage() {
       <FeaturedCategories featuredCategories={featuredCategories} />
 
       {/* Truyền saleSchedule thay vì flashSale */}
-      <HotSaleOnline saleSchedule={saleSchedule} />
+      <HotSaleOnline saleSchedule={saleSchedule ?? { schedule: [] }} />
 
       <FeaturedProducts products={featuredProducts} />
       <BestSellers products={hotProducts} />

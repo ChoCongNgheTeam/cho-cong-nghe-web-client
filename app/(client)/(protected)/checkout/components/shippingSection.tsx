@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, Loader2, Search, X } from "lucide-react";
+import React, { useState, useRef, useEffect, useId } from "react";
+import { Loader2 } from "lucide-react";
 import { useToasty } from "@/components/Toast";
 import { ShippingSectionProps } from "../types";
 import { inputCls } from "../helpers/styles";
+import Select from "react-select";
 
 const PHONE_REGEX = /^(0[3|5|7|8|9])\d{8}$/;
 
@@ -28,7 +29,7 @@ function validateAddress(value: string): string | null {
    return null;
 }
 
-// ─── SearchableSelect ─────────────────────────────────────────────────────────
+// ─── ReactSelect wrapper ──────────────────────────────────────────────────────
 
 interface SelectOption {
    id: string;
@@ -58,237 +59,127 @@ function SearchableSelect({
    onChange,
    onBlur,
 }: SearchableSelectProps) {
-   const [isOpen, setIsOpen] = useState(false);
-   const [search, setSearch] = useState("");
-   const [focusedIdx, setFocusedIdx] = useState(-1);
-   const containerRef = useRef<HTMLDivElement>(null);
-   const searchRef = useRef<HTMLInputElement>(null);
-   const listRef = useRef<HTMLDivElement>(null);
-
-   const selectedLabel = options.find((o) => o.id === value)?.fullName ?? "";
-
-   const filtered = search.trim()
-      ? options.filter((o) =>
-           o.fullName.toLowerCase().includes(search.toLowerCase()),
-        )
-      : options;
-
-   // Đóng khi click ra ngoài
-   useEffect(() => {
-      const handler = (e: MouseEvent) => {
-         if (
-            containerRef.current &&
-            !containerRef.current.contains(e.target as Node)
-         ) {
-            setIsOpen(false);
-            setSearch("");
-            setFocusedIdx(-1);
-            onBlur?.();
-         }
-      };
-      document.addEventListener("mousedown", handler);
-      return () => document.removeEventListener("mousedown", handler);
-   }, [onBlur]);
-
-   // Focus search khi mở
-   useEffect(() => {
-      if (isOpen) {
-         setTimeout(() => searchRef.current?.focus(), 50);
-         setFocusedIdx(-1);
-      }
-   }, [isOpen]);
-
-   // Scroll item focused vào view
-   useEffect(() => {
-      if (focusedIdx < 0 || !listRef.current) return;
-      const item = listRef.current.children[focusedIdx] as HTMLElement;
-      item?.scrollIntoView({ block: "nearest" });
-   }, [focusedIdx]);
-
-   const handleOpen = () => {
-      if (disabled || isLoading) return;
-      setIsOpen((prev) => !prev);
-      if (!isOpen) setSearch("");
-   };
-
-   const handleSelect = (option: SelectOption) => {
-      onChange(option.id);
-      setIsOpen(false);
-      setSearch("");
-      setFocusedIdx(-1);
-      onBlur?.();
-   };
-
-   const handleClear = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onChange("");
-      setSearch("");
-      setFocusedIdx(-1);
-      onBlur?.();
-   };
-
-   // Keyboard navigation trong search input
-   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "ArrowDown") {
-         e.preventDefault();
-         setFocusedIdx((i) => Math.min(i + 1, filtered.length - 1));
-      } else if (e.key === "ArrowUp") {
-         e.preventDefault();
-         setFocusedIdx((i) => Math.max(i - 1, 0));
-      } else if (e.key === "Enter") {
-         e.preventDefault();
-         if (focusedIdx >= 0 && filtered[focusedIdx]) {
-            handleSelect(filtered[focusedIdx]);
-         } else if (filtered.length === 1) {
-            // Nếu chỉ còn 1 kết quả, Enter tự chọn luôn
-            handleSelect(filtered[0]);
-         }
-      } else if (e.key === "Escape") {
-         setIsOpen(false);
-         setSearch("");
-         setFocusedIdx(-1);
-         onBlur?.();
-      }
-   };
-
-   const borderCls = hasError
-      ? "border-red-400"
-      : isValid
-        ? "border-green-400"
-        : isOpen
-          ? "border-accent"
-          : "border-neutral hover:border-neutral-dark";
+   const selectOptions = options.map((o) => ({
+      value: o.id,
+      label: o.fullName,
+   }));
+   const selected = selectOptions.find((o) => o.value === value) ?? null;
 
    return (
-      <div ref={containerRef} className="relative w-full">
-         {/* Trigger */}
-         <button
-            type="button"
-            onClick={handleOpen}
-            disabled={disabled || isLoading}
-            className={`w-full flex items-center gap-2 px-3 py-2.5 border rounded-lg text-sm bg-neutral-light transition-colors
-               ${borderCls} ${disabled ? "opacity-60 cursor-not-allowed bg-neutral" : "cursor-pointer"}`}
-         >
-            {isLoading ? (
-               <>
-                  <Loader2
-                     size={14}
-                     className="animate-spin text-neutral-dark shrink-0"
-                  />
-                  <span className="flex-1 text-left text-neutral-dark truncate">
-                     Đang tải...
-                  </span>
-               </>
-            ) : (
-               <>
-                  <span
-                     className={`flex-1 text-left truncate ${selectedLabel ? "text-primary" : "text-neutral-dark"}`}
-                  >
-                     {selectedLabel || placeholder}
-                  </span>
-                  {value && !disabled && (
-                     <span
-                        onClick={handleClear}
-                        className="shrink-0 text-neutral-dark hover:text-primary transition-colors"
-                     >
-                        <X size={13} />
-                     </span>
-                  )}
-               </>
-            )}
-            <ChevronDown
-               size={14}
-               className={`shrink-0 text-neutral-dark transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-            />
-         </button>
-
-         {/* Dropdown */}
-         {isOpen && (
-            <div className="absolute left-0 top-full mt-1 w-full z-50 bg-neutral-light border border-neutral rounded-lg shadow-xl overflow-hidden">
-               {/* Search */}
-               <div className="p-2 border-b border-neutral">
-                  <div className="flex items-center gap-2 px-2.5 py-1.5 border border-neutral rounded-md bg-white focus-within:border-accent transition-colors">
-                     <Search size={13} className="text-neutral-dark shrink-0" />
-                     <input
-                        ref={searchRef}
-                        type="text"
-                        value={search}
-                        onChange={(e) => {
-                           setSearch(e.target.value);
-                           setFocusedIdx(-1);
-                        }}
-                        onKeyDown={handleSearchKeyDown}
-                        placeholder="Tìm kiếm..."
-                        className="flex-1 text-sm outline-none bg-transparent text-primary placeholder:text-neutral-dark"
-                     />
-                     {search && (
-                        <button
-                           type="button"
-                           onClick={() => {
-                              setSearch("");
-                              setFocusedIdx(-1);
-                           }}
-                        >
-                           <X
-                              size={12}
-                              className="text-neutral-dark hover:text-primary"
-                           />
-                        </button>
-                     )}
-                  </div>
-               </div>
-
-               {/* List */}
-               <div ref={listRef} className="max-h-52 overflow-y-auto">
-                  {filtered.length === 0 ? (
-                     <div className="py-6 text-center text-sm text-neutral-dark">
-                        Không tìm thấy kết quả
-                     </div>
-                  ) : (
-                     filtered.map((option, idx) => {
-                        const isSelected = option.id === value;
-                        const isFocused = idx === focusedIdx;
-                        const label = option.fullName;
-                        const matchIdx = search
-                           ? label.toLowerCase().indexOf(search.toLowerCase())
-                           : -1;
-
-                        return (
-                           <button
-                              key={option.id}
-                              type="button"
-                              onClick={() => handleSelect(option)}
-                              className={`w-full text-left px-3 py-2.5 text-sm transition-colors
-                                 ${
-                                    isSelected
-                                       ? "bg-accent/10 text-accent font-medium"
-                                       : isFocused
-                                         ? "bg-neutral text-primary"
-                                         : "hover:bg-neutral text-primary"
-                                 }`}
-                           >
-                              {matchIdx >= 0 && search ? (
-                                 <>
-                                    {label.slice(0, matchIdx)}
-                                    <mark className="bg-yellow-100 text-primary rounded-sm px-0.5">
-                                       {label.slice(
-                                          matchIdx,
-                                          matchIdx + search.length,
-                                       )}
-                                    </mark>
-                                    {label.slice(matchIdx + search.length)}
-                                 </>
-                              ) : (
-                                 label
-                              )}
-                           </button>
-                        );
-                     })
-                  )}
-               </div>
-            </div>
-         )}
-      </div>
+      <Select
+         options={selectOptions}
+         value={selected}
+         onChange={(opt) => onChange(opt?.value ?? "")}
+         onBlur={onBlur}
+         isLoading={isLoading}
+         isDisabled={disabled}
+         placeholder={placeholder}
+         isClearable
+         isSearchable
+         noOptionsMessage={() => "Không tìm thấy"}
+         loadingMessage={() => "Đang tải..."}
+         classNamePrefix="rs"
+         styles={{
+            control: (base, state) => ({
+               ...base,
+               minHeight: "42px",
+               borderRadius: "0.5rem",
+               borderColor: hasError
+                  ? "#f87171"
+                  : isValid
+                    ? "#4ade80"
+                    : state.isFocused
+                      ? "rgb(var(--accent))"
+                      : "rgb(var(--neutral))",
+               boxShadow: state.isFocused
+                  ? `0 0 0 2px rgb(var(--accent) / 0.2)`
+                  : "none",
+               backgroundColor: "rgb(var(--neutral-light))",
+               "&:hover": {
+                  borderColor: hasError
+                     ? "#f87171"
+                     : isValid
+                       ? "#4ade80"
+                       : "rgb(var(--neutral-dark))",
+               },
+               fontSize: "14px",
+               cursor: disabled ? "not-allowed" : "default",
+            }),
+            valueContainer: (base) => ({
+               ...base,
+               padding: "0 12px",
+            }),
+            input: (base) => ({
+               ...base,
+               margin: 0,
+               padding: 0,
+               color: "rgb(var(--primary))",
+            }),
+            singleValue: (base) => ({
+               ...base,
+               color: "rgb(var(--primary))",
+               fontSize: "14px",
+            }),
+            placeholder: (base) => ({
+               ...base,
+               color: "rgb(var(--neutral-dark))",
+               fontSize: "14px",
+            }),
+            menu: (base) => ({
+               ...base,
+               borderRadius: "0.5rem",
+               marginTop: "4px",
+               boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+               border: "1px solid rgb(var(--neutral))",
+               backgroundColor: "rgb(var(--neutral-light))",
+               zIndex: 9999,
+            }),
+            menuList: (base) => ({
+               ...base,
+               maxHeight: "220px",
+               overflowY: "auto",
+               padding: "4px",
+            }),
+            option: (base, state) => ({
+               ...base,
+               borderRadius: "0.375rem",
+               fontSize: "14px",
+               padding: "8px 12px",
+               backgroundColor: state.isSelected
+                  ? "rgb(var(--accent))"
+                  : state.isFocused
+                    ? "rgb(var(--neutral))"
+                    : "transparent",
+               color: state.isSelected ? "#fff" : "rgb(var(--primary))",
+               cursor: "pointer",
+               "&:active": {
+                  backgroundColor: "rgb(var(--accent) / 0.8)",
+               },
+            }),
+            indicatorSeparator: () => ({ display: "none" }),
+            dropdownIndicator: (base) => ({
+               ...base,
+               color: "rgb(var(--neutral-dark))",
+               padding: "0 8px",
+            }),
+            clearIndicator: (base) => ({
+               ...base,
+               color: "rgb(var(--neutral-dark))",
+               padding: "0 4px",
+               "&:hover": { color: "rgb(var(--primary))" },
+            }),
+            loadingMessage: (base) => ({
+               ...base,
+               fontSize: "13px",
+               color: "rgb(var(--neutral-dark))",
+            }),
+            noOptionsMessage: (base) => ({
+               ...base,
+               fontSize: "13px",
+               color: "rgb(var(--neutral-dark))",
+            }),
+         }}
+      />
    );
 }
 
@@ -323,7 +214,6 @@ export default function ShippingSection({
 }: ShippingSectionProps) {
    const toast = useToasty();
 
-   // dirty: đã từng nhập vào field
    const [dirty, setDirty] = useState({
       contactName: false,
       contactPhone: false,
@@ -332,7 +222,6 @@ export default function ShippingSection({
       wardId: false,
    });
 
-   // touched: đã blur khỏi field
    const [touched, setTouched] = useState({
       contactName: false,
       contactPhone: false,
@@ -341,7 +230,6 @@ export default function ShippingSection({
       wardId: false,
    });
 
-   // Chỉ hiện lỗi khi đã dirty VÀ đã touched
    const shouldShow = (field: keyof typeof touched) =>
       touched[field] && dirty[field];
 
@@ -363,10 +251,8 @@ export default function ShippingSection({
 
    const handleBlur = (field: keyof typeof touched) => {
       setTouched((p) => ({ ...p, [field]: true }));
-      // Không toast khi blur — chỉ inline error
    };
 
-   // Border class cho text input
    const fieldInputCls = (field: keyof typeof errors) => {
       const state = errors[field]
          ? "border-red-400 focus:border-red-400"
@@ -376,7 +262,6 @@ export default function ShippingSection({
       return `${inputCls} ${state}`;
    };
 
-   // Inline error text
    const ErrorMsg = ({ field }: { field: keyof typeof errors }) =>
       errors[field] ? (
          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -385,7 +270,7 @@ export default function ShippingSection({
       ) : null;
 
    return (
-      <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
+      <div className="bg-neutral-light rounded-lg p-2 sm:p-3 border border-neutral">
          <h2 className="text-sm sm:text-base font-semibold text-primary mb-4">
             Thông tin giao hàng
          </h2>
@@ -483,7 +368,7 @@ export default function ShippingSection({
                   <button
                      type="button"
                      onClick={onBackToSaved}
-                     className="flex items-center gap-1.5 text-base text-neutral-darker hover:text-primary transition-colors cursor-pointer mb-4 focus:outline-none underline"
+                     className="flex items-center gap-1.5 text-[14px] text-accent hover:text-primary transition-colors cursor-pointer mb-4 focus:outline-none underline"
                   >
                      ← Chọn từ địa chỉ đã lưu
                   </button>
@@ -492,7 +377,7 @@ export default function ShippingSection({
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   {/* ── Họ tên ── */}
                   <div>
-                     <label className="block text-base font-medium text-neutral-darker mb-1.5">
+                     <label className="block text-[15px] font-medium text-neutral-darker mb-1.5">
                         Họ tên người nhận{" "}
                         <span className="text-promotion">*</span>
                      </label>
@@ -513,7 +398,7 @@ export default function ShippingSection({
 
                   {/* ── Số điện thoại ── */}
                   <div>
-                     <label className="block text-base font-medium text-neutral-darker mb-1.5">
+                     <label className="block text-[15px] font-medium text-neutral-darker mb-1.5">
                         Số điện thoại <span className="text-promotion">*</span>
                      </label>
                      <input
@@ -524,7 +409,10 @@ export default function ShippingSection({
                            const raw = e.target.value.replace(/\D/g, "");
                            onContactPhoneChange(raw);
                            if (raw.length > 0)
-                              setDirty((p) => ({ ...p, contactPhone: true }));
+                              setDirty((p) => ({
+                                 ...p,
+                                 contactPhone: true,
+                              }));
                         }}
                         onBlur={() => handleBlur("contactPhone")}
                         placeholder="0901234567"
@@ -538,7 +426,7 @@ export default function ShippingSection({
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   {/* ── Tỉnh / Thành phố ── */}
                   <div>
-                     <label className="block text-base font-medium text-neutral-darker mb-1.5">
+                     <label className="block text-[15px] font-medium text-neutral-darker mb-1.5">
                         Tỉnh / Thành phố{" "}
                         <span className="text-promotion">*</span>
                      </label>
@@ -564,7 +452,7 @@ export default function ShippingSection({
 
                   {/* ── Phường / Xã ── */}
                   <div>
-                     <label className="block text-base font-medium text-neutral-darker mb-1.5">
+                     <label className="block text-[15px] font-medium text-neutral-darker mb-1.5">
                         Phường / Xã <span className="text-promotion">*</span>
                      </label>
                      <SearchableSelect
@@ -589,7 +477,7 @@ export default function ShippingSection({
 
                {/* ── Địa chỉ chi tiết ── */}
                <div className="mb-3">
-                  <label className="block text-base font-medium text-neutral-darker mb-1.5">
+                  <label className="block text-[15px] font-medium text-neutral-darker mb-1.5">
                      Địa chỉ chi tiết <span className="text-promotion">*</span>
                   </label>
                   <input
@@ -609,10 +497,10 @@ export default function ShippingSection({
 
                {/* ── Hỏi lưu địa chỉ inline ── */}
                <div className="flex items-center gap-4 pt-2 border-t border-neutral mt-1">
-                  <span className="text-base text-neutral-darker">
+                  <span className="text-[14px] text-neutral-darker">
                      Bạn có muốn lưu địa chỉ này không?
                   </span>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-base text-primary">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[14px] text-primary">
                      <input
                         type="radio"
                         name={`saveAddress-${instanceId}`}
@@ -622,7 +510,7 @@ export default function ShippingSection({
                      />
                      Không
                   </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-base text-primary">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[14px] text-primary">
                      <input
                         type="radio"
                         name={`saveAddress-${instanceId}`}

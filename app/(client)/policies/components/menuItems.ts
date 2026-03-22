@@ -1,4 +1,4 @@
-export interface MenuItem {
+﻿export interface MenuItem {
    id: string;
    label: string;
    href: string;
@@ -8,13 +8,18 @@ export const menuItems: MenuItem[] = [
    {
       id: "faq",
       label: "Câu hỏi thường gặp",
-      href: "/policies/cau-hoi-thuong-gap",
+      href: "/policies/faq",
    },
    { id: "about-shop", label: "Giới thiệu về Shop", href: "/policies/about" },
    {
       id: "apple-authorized",
       label: "Tin tức khuyến mãi",
       href: "/policies/news",
+   },
+   {
+      id: "enterprise-projects",
+      label: "Dự án Doanh nghiệp",
+      href: "/policies/enterprise-projects",
    },
    {
       id: "mobile-network-policy",
@@ -30,6 +35,16 @@ export const menuItems: MenuItem[] = [
       id: "telecom-points",
       label: "Quy chế hoạt động",
       href: "/policies/regulations",
+   },
+   {
+      id: "apple-authorized-centers",
+      label: "Đại lý ủy quyền và TTBH ủy quyền của Apple",
+      href: "/policies/apple-authorized-centers",
+   },
+   {
+      id: "warranty-lookup",
+      label: "Tra cứu bảo hành",
+      href: "/policies/warranty-lookup",
    },
    {
       id: "delivery-policy",
@@ -74,7 +89,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "online-purchase",
       label: "Hướng dẫn mua hàng và thanh toán online",
-      href: "/policies/mua-hang-thanh-toan-online",
+      href: "/policies/shoppingGuide",
    },
    {
       id: "return-policy",

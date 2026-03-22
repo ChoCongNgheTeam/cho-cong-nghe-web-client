@@ -11,8 +11,13 @@ import {
 import { Search, ChevronsLeftRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
+import {
+   fetchTrendingKeywords,
+   TrendingKeyword,
+} from "../_libs/getTopKeywords";
 
 interface ApiProduct {
    id: string;
@@ -61,37 +66,26 @@ function SkeletonItem() {
 
 const SKELETON_COUNT = 4;
 
-export const TOP_KEYWORDS = [
-   { label: "iphone 17", href: "/products/iphone-17", showFrom: "md" },
-   { label: "laptop", href: "/products/laptop", showFrom: "md" },
-   { label: "iphone 13", href: "/products/iphone-13", showFrom: "md" },
-   {
-      label: "oppo find x9",
-      href: "/products/oppo-find-x9-pro-5g",
-      showFrom: "lg",
-   },
-   {
-      label: "xiaomi poco",
-      href: "/products/xiaomi-poco-m6-pro",
-      showFrom: "lg",
-   },
-   {
-      label: "samsung",
-      href: "/products/samsung-galaxy-a56-5g",
-      showFrom: "lg",
-   },
-   { label: "oppo reno", href: "/products/oppo-reno14-5g", showFrom: "xl" },
-];
+function getKeywordVisibilityClass(index: number): string {
+   if (index < 3) return "inline";
+   if (index < 6) return "hidden lg:inline";
+   return "hidden xl:inline";
+}
 
 interface SearchBarProps {
    isMobile?: boolean;
 }
 
 export default function SearchBar({ isMobile = false }: SearchBarProps) {
+   const router = useRouter();
+
    const [query, setQuery] = useState("");
    const [results, setResults] = useState<ApiProduct[]>([]);
    const [isOpen, setIsOpen] = useState(false);
    const [isSearching, setIsSearching] = useState(false);
+   const [trendingKeywords, setTrendingKeywords] = useState<TrendingKeyword[]>(
+      [],
+   );
 
    const staleResultsRef = useRef<ApiProduct[]>([]);
    const abortRef = useRef<AbortController | null>(null);
@@ -101,6 +95,10 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
    const [, startTransition] = useTransition();
    const deferredResults = useDeferredValue(results);
    const isStale = results !== deferredResults;
+
+   useEffect(() => {
+      fetchTrendingKeywords().then(setTrendingKeywords);
+   }, []);
 
    useEffect(() => {
       const handler = (e: MouseEvent) => {
@@ -114,6 +112,14 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
    }, []);
+
+   // Chuyển hướng sang trang search — dùng chung cho Enter và click nút
+   const navigateToSearch = useCallback(() => {
+      const q = query.trim();
+      if (!q) return;
+      setIsOpen(false);
+      router.push(`/category?query=${encodeURIComponent(q)}`);
+   }, [query, router]);
 
    const search = useCallback(async (q: string) => {
       abortRef.current?.abort();
@@ -161,6 +167,15 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       debounceRef.current = setTimeout(() => search(val), 300);
    };
 
+   // Enter → navigate, không conflict với dropdown
+   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+         e.preventDefault();
+         navigateToSearch();
+      }
+   };
+
+   // Click sản phẩm gợi ý → tới trang chi tiết, đóng dropdown
    const handleClose = useCallback(() => {
       setQuery("");
       staleResultsRef.current = [];
@@ -182,6 +197,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                placeholder="Tìm kiếm sản phẩm..."
                value={query}
                onChange={handleChange}
+               onKeyDown={handleKeyDown}
                onFocus={() => {
                   if (results.length > 0) setIsOpen(true);
                }}
@@ -195,29 +211,28 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
             />
 
             <div className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
-               {/* Nút danh mục — chỉ hiện trên desktop */}
                {!isMobile && (
                   <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors">
                      <span className="hidden xl:inline">
                         Tất cả các danh mục
                      </span>
-                     <span className="xl:hidden">Danh mục</span>
+                     <span className="xl:hidden cursor-pointer">Danh mục</span>
                      <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
                   </button>
                )}
                <button
-                  onClick={() => query.trim() && setIsOpen(true)}
-                  className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-accent-hover transition-colors cursor-pointer"
+                  onClick={navigateToSearch}
+                  className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-neutral-hover transition-colors cursor-pointer"
                >
                   <Search
-                     className={`w-4 h-4 lg:w-5 lg:h-5 text-primary transition-opacity duration-200 ${
+                     className={`w-4 h-4 lg:w-5 lg:h-5 text-neutral-light-dark transition-opacity duration-200 ${
                         isSearching ? "opacity-40" : "opacity-100"
                      }`}
                   />
                </button>
             </div>
 
-            {/* Dropdown */}
+            {/* Dropdown gợi ý — độc lập với navigate */}
             <div
                className={`
                   absolute top-full left-0 right-0 mt-2
@@ -258,6 +273,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                                  style={{ animationDelay: `${i * 25}ms` }}
                                  className="animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both"
                               >
+                                 {/* onClick = handleClose → trang chi tiết, không navigate to search */}
                                  <Link
                                     href={`/products/${product.slug}`}
                                     onClick={handleClose}
@@ -339,6 +355,28 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                </div>
             </div>
          </div>
+
+         {!isMobile && (
+            <div className="pl-2 hidden md:flex items-center gap-2 mb-1.5 text-xs text-neutral-darker flex-wrap mt-2 h-4">
+               {trendingKeywords.length > 0
+                  ? trendingKeywords.slice(0, 5).map((kw, i) => (
+                       <Link
+                          key={kw.id}
+                          href={`/products/${kw.slug}`}
+                          className={`hover:text-accent-hover transition-colors ${getKeywordVisibilityClass(i)}`}
+                       >
+                          {kw.name}
+                       </Link>
+                    ))
+                  : Array.from({ length: 5 }).map((_, i) => (
+                       <div
+                          key={i}
+                          className={`h-3 rounded-full bg-neutral animate-pulse ${getKeywordVisibilityClass(i)}`}
+                          style={{ width: `${[64, 48, 56, 72, 52][i]}px` }}
+                       />
+                    ))}
+            </div>
+         )}
       </div>
    );
 }
