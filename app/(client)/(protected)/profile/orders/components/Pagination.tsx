@@ -11,10 +11,15 @@ export default function Pagination({
 }: PaginationProps) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
+  const handlePageChange = (page: number) => {
+    onPageChange(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="flex items-center justify-center gap-1 pt-4">
       <button
-        onClick={() => onPageChange(currentPage - 1)}
+        onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="px-3 py-1.5 rounded-lg text-sm border border-neutral text-primary-dark hover:bg-neutral-light-active disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
       >
@@ -24,11 +29,11 @@ export default function Pagination({
       {pages.map((page) => (
         <button
           key={page}
-          onClick={() => onPageChange(page)}
+          onClick={() => handlePageChange(page)}
           className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors cursor-pointer
             ${
               currentPage === page
-                ? "bg-promotion text-white shadow-sm"
+                ? "bg-accent text-neutral-light shadow-sm"
                 : "border border-neutral text-primary-dark hover:bg-neutral-light-active"
             }`}
         >
@@ -37,7 +42,7 @@ export default function Pagination({
       ))}
 
       <button
-        onClick={() => onPageChange(currentPage + 1)}
+        onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="px-3 py-1.5 rounded-lg text-sm border border-neutral text-primary-dark hover:bg-neutral-light-active disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
       >

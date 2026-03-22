@@ -392,7 +392,7 @@ export default function AddressPage() {
                 ← Quay lại thanh toán
               </button>
             )}
-            <h1 className="text-2xl font-semibold text-primary">
+            <h1 className="text-xl font-bold text-primary">
               Sổ địa chỉ nhận hàng
             </h1>
           </div>
@@ -425,7 +425,7 @@ export default function AddressPage() {
             </p>
             <button
               onClick={() => setIsOpen(true)}
-              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg"
+              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-md hover:shadow-lg cursor-pointer"
             >
               Cập nhật ngay
             </button>

@@ -92,8 +92,8 @@ function OptionGrid({
                         onClick={() => onSelect(variant)}
                         disabled={isOutOfStock}
                         title={variant.colorLabel}
-                        className={`relative flex flex-row items-center gap-1.5 rounded-lg border-2 overflow-hidden transition-all w-full
-                           ${isSelected ? "border-primary" : "border-neutral bg-white hover:border-neutral-dark"}
+                        className={`cursor-pointer relative flex flex-row items-center gap-1.5 rounded-lg border-2 overflow-hidden transition-all w-full
+                           ${isSelected ? "border-accent" : "border-neutral bg-neutral-light hover:border-neutral-dark"}
                            ${isOutOfStock ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                      >
                         {/* Product image */}
@@ -124,15 +124,15 @@ function OptionGrid({
                         {isSelected && (
                            <span
                               className="absolute top-0 right-0 w-0 h-0
-                                 border-t-[18px] border-t-primary
+                                 border-t-[18px] border-t-accent
                                  border-l-[18px] border-l-transparent"
                            />
                         )}
 
                         {/* Out of stock overlay */}
                         {isOutOfStock && (
-                           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                              <span className="text-[9px] text-red-500 font-semibold">
+                           <div className="absolute inset-0 bg-neutral-light/80 flex items-center justify-center">
+                              <span className="text-[13px] text-promotion font-semibold">
                                  Hết hàng
                               </span>
                            </div>
@@ -354,7 +354,7 @@ export default function VariantDropdown({
                disabled={isChanging}
                aria-haspopup="listbox"
                aria-expanded={isOpen}
-               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs
+               className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1.5 text-xs
                   border border-neutral rounded bg-neutral-light
                   hover:border-accent transition-colors duration-150
                   disabled:opacity-60 disabled:cursor-not-allowed

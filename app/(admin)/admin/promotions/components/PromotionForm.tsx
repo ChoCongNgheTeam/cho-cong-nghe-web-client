@@ -69,18 +69,24 @@ export const DEFAULT_FORM: PromotionFormData = {
   targets: [{ targetType: "ALL", targetId: "" }],
 };
 
+// Thay promotionToForm:
 export function promotionToForm(p: Promotion): PromotionFormData {
-  const toDateInput = (d?: string) => {
+  const toVNDatetimeLocal = (d?: string) => {
     if (!d) return "";
-    return new Date(d).toISOString().slice(0, 16); // datetime-local format
+    // UTC → VN local (để hiển thị đúng trong datetime-local input)
+    const vnDate = new Date(new Date(d).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+    // Format YYYY-MM-DDTHH:mm
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${vnDate.getFullYear()}-${pad(vnDate.getMonth() + 1)}-${pad(vnDate.getDate())}T${pad(vnDate.getHours())}:${pad(vnDate.getMinutes())}`;
   };
+
   return {
     name: p.name,
     description: p.description ?? "",
     priority: String(p.priority),
     isActive: p.isActive,
-    startDate: toDateInput(p.startDate),
-    endDate: toDateInput(p.endDate),
+    startDate: toVNDatetimeLocal(p.startDate),
+    endDate: toVNDatetimeLocal(p.endDate),
     minOrderValue: p.minOrderValue !== undefined ? String(p.minOrderValue) : "",
     maxDiscountValue: p.maxDiscountValue !== undefined ? String(p.maxDiscountValue) : "",
     usageLimit: p.usageLimit !== undefined ? String(p.usageLimit) : "",
@@ -98,14 +104,22 @@ export function promotionToForm(p: Promotion): PromotionFormData {
   };
 }
 
+// Thay formToPayload:
 export function formToPayload(form: PromotionFormData): CreatePromotionPayload {
+  // VN local datetime-local string → UTC ISO string
+  const fromVNLocal = (localStr: string): string | undefined => {
+    if (!localStr) return undefined;
+    // datetime-local = "2026-03-22T17:00" → treat as VN time
+    return new Date(localStr + ":00+07:00").toISOString();
+  };
+
   return {
     name: form.name.trim(),
     description: form.description.trim() || undefined,
     priority: Number(form.priority) || 0,
     isActive: form.isActive,
-    startDate: form.startDate || undefined,
-    endDate: form.endDate || undefined,
+    startDate: fromVNLocal(form.startDate),
+    endDate: fromVNLocal(form.endDate),
     minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : undefined,
     maxDiscountValue: form.maxDiscountValue ? Number(form.maxDiscountValue) : undefined,
     usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,

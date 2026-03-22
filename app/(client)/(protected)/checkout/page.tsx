@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Loader2, X, ChevronUp, ChevronRight } from "lucide-react";
 import { useToasty } from "@/components/Toast";
 import AddressSidebar, { ApiAddress } from "./components/AddressSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
@@ -21,6 +20,7 @@ import { getWards } from "@/(client)/(protected)/profile/_lib/get-wards";
 import { Popzy } from "@/components/Modal";
 import { Province, Ward, UserProfile, SavedAddress, CartItem, SelectedItem, CheckoutData, PreviewData, ShippingSectionProps } from "./types";
 import ShippingSection from "./components/shippingSection";
+import CartBottomBar from "@/(client)/cart/components/CartBottomMobile";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -82,7 +82,6 @@ export default function CheckoutPage() {
 
   const [showAddressSidebar, setShowAddressSidebar] = useState(false);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -387,9 +386,7 @@ export default function CheckoutPage() {
       if (res?.success) {
         localStorage.removeItem("checkoutData");
         await refetchCart();
-        if (tempAddressId && wantSaveAddress === false) {
-          apiRequest.delete(`/addresses/${tempAddressId}`).catch(() => {});
-        }
+        if (tempAddressId && wantSaveAddress === false) apiRequest.delete(`/addresses/${tempAddressId}`).catch(() => {});
         navigateAfterOrder(res.data.orderCode, res.data.orderId, res.data.paymentMethodCode, res.data.paymentInfo);
       }
     } catch (err: any) {
@@ -426,7 +423,7 @@ export default function CheckoutPage() {
   const amountAfterDiscount = Math.max(0, subtotal - totalDiscount - voucherValue);
   const calculatedTax = amountAfterDiscount * 0.1;
   const confirmTotal = amountAfterDiscount + calculatedTax + (shippingFee ?? 0);
-  const mobileFinalTotal = confirmTotal; // ← dùng chung 1 biến
+
   const shippingProps: ShippingSectionProps = {
     isLoadingAddresses,
     savedAddresses,
@@ -576,120 +573,50 @@ export default function CheckoutPage() {
           </div>
           <PaymentMethods selectedMethod={selectedPaymentMethodId} onSelect={setSelectedPaymentMethodId} />
         </div>
-
-        {/* Floating bottom bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 shadow-2xl">
-          {showSidebar && <div className="fixed inset-0 bg-black/40 z-[-1]" onClick={() => setShowSidebar(false)} />}
-          <div className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${showSidebar ? "max-h-[70vh]" : "max-h-0"}`}>
-            <div className="overflow-y-auto max-h-[70vh]">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
-                <span className="text-sm font-semibold text-primary">Thông tin đơn hàng</span>
-                <button onClick={() => setShowSidebar(false)} className="p-1.5 hover:bg-neutral rounded-lg transition-colors">
-                  <X className="h-5 w-5 text-neutral-darker" />
-                </button>
-              </div>
-              <div className="border-b border-neutral">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSidebar(false);
-                    setShowVoucherModal(true);
-                  }}
-                  className="flex w-full items-center justify-between p-3 transition hover:bg-accent/5 group"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <span className="text-lg">🏷️</span>
-                    </div>
-                    <div className="flex flex-col items-start min-w-0">
-                      <span className="text-sm font-medium text-primary">Chọn hoặc nhập ưu đãi</span>
-                      {voucherCode ? (
-                        <span className="text-base text-accent-dark font-semibold truncate w-full">
-                          {voucherCode} • -{formatVND(voucherValue)}
-                        </span>
-                      ) : (
-                        <span className="text-base text-neutral-dark">Chưa áp dụng</span>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-accent transition-colors shrink-0" />
-                </button>
-              </div>
-              <div className="px-4 py-4 space-y-2.5">
-                <h3 className="text-sm font-semibold text-primary mb-3">Chi tiết thanh toán</h3>
-                <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-neutral-darker">Tổng tiền</span>
-                    <span className="font-medium text-primary">{formatVND(displaySubtotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-darker">Tổng khuyến mãi</span>
-                    <span className="font-medium text-primary">-{formatVND(displayDiscount + voucherValue)}</span>
-                  </div>
-                  <div className="flex justify-between pl-4">
-                    <span className="text-neutral-dark text-base">Giảm giá sản phẩm</span>
-                    <span className="text-primary text-sm">-{formatVND(displayDiscount)}</span>
-                  </div>
-                  <div className="flex justify-between pl-4">
-                    <span className="text-neutral-dark text-base">Voucher</span>
-                    <span className="text-primary text-sm font-medium">{voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-darker">Phí vận chuyển</span>
-                    <span className="font-medium text-accent-dark">{shippingFee != null ? formatVND(shippingFee) : "Miễn phí"}</span>
-                  </div>
-                  <div className="border-t border-neutral pt-2.5 mt-2.5">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-primary text-sm">Cần thanh toán</span>
-                      <span className="text-xl font-bold text-promotion">{formatVND(mobileFinalTotal)}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 pt-1 pb-1">
-                    <span className="text-base text-neutral-darker">Điểm thưởng</span>
-                    <span className="text-sm">🪙</span>
-                    <span className="text-sm font-medium text-accent-dark">+{rewardPoints.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-neutral-light border-t border-neutral flex items-center gap-2 px-3 py-2.5">
-            <label className="flex items-start gap-2 cursor-pointer pt-2 shrink-0 max-w-[45%]">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                style={{ accentColor: "rgb(var(--accent-active))" }}
-                className="w-4 h-4 cursor-pointer rounded mt-0.5 shrink-0"
-              />
-              <span className="text-xs text-neutral-darker leading-relaxed break-words">
-                Tôi đồng ý với{" "}
-                <Link href="/terms" className="text-accent underline">
-                  điều khoản đặt hàng
-                </Link>{" "}
-                của cửa hàng
-              </span>
-            </label>
-            <button onClick={() => setShowSidebar((prev) => !prev)} className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition">
-              <div className="flex flex-col items-end min-w-0">
-                <span className="text-base font-bold text-promotion whitespace-nowrap">{formatVND(mobileFinalTotal)}</span>
-                {displayDiscount + voucherValue > 0 && <span className="text-xs text-neutral-darker whitespace-nowrap">Tiết kiệm {formatVND(displayDiscount + voucherValue)}</span>}
-              </div>
-              {showSidebar ? <ChevronDown className="h-4 w-4 text-neutral-darker shrink-0" /> : <ChevronUp className="h-4 w-4 text-neutral-darker shrink-0" />}
-            </button>
-            <button
-              onClick={handleCheckoutClick}
-              disabled={isSubmitting}
-              className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${isSubmitting ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50" : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"}`}
-            >
-              {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
-            </button>
-          </div>
-        </div>
       </div>
 
-      {/* ── Sidebars & Modals ── */}
+      <CartBottomBar
+        finalTotal={confirmTotal}
+        totalSaved={displayDiscount + voucherValue}
+        summaryRows={[
+          { label: "Tổng tiền", value: formatVND(displaySubtotal) },
+          {
+            label: "Tổng khuyến mãi",
+            value: `-${formatVND(displayDiscount + voucherValue)}`,
+          },
+          {
+            label: "Giảm giá sản phẩm",
+            value: `-${formatVND(displayDiscount)}`,
+            indent: true,
+          },
+          {
+            label: "Voucher",
+            value: voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫",
+            indent: true,
+          },
+          {
+            label: "Phí vận chuyển",
+            value: shippingFee != null ? formatVND(shippingFee) : "Miễn phí",
+          },
+          {
+            label: "Cần thanh toán",
+            value: formatVND(confirmTotal),
+            highlight: true,
+          },
+        ]}
+        voucherCode={voucherCode}
+        voucherValue={voucherValue}
+        onOpenVoucherModal={() => setShowVoucherModal(true)}
+        rewardPoints={rewardPoints}
+        actionLabel={isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
+        actionDisabled={isSubmitting}
+        onAction={handleCheckoutClick}
+        showTerms
+        agreedToTerms={agreedToTerms}
+        onTermsChange={setAgreedToTerms}
+      />
+
+      {/* Sidebars & Modals */}
       <AddressSidebar isOpen={showAddressSidebar} onClose={() => setShowAddressSidebar(false)} selectedAddressId={mobileSelectedAddress?.id} onSelect={setMobileSelectedAddress} />
       <VoucherPromotionModal
         isOpen={showVoucherModal}
@@ -710,7 +637,7 @@ export default function CheckoutPage() {
           <div>
             <h3 className="text-base font-semibold text-primary mb-2">Xác nhận đặt hàng</h3>
             <p className="text-sm text-neutral-darker mb-1">
-              Tổng thanh toán: <span className="font-bold text-primary">{formatVND(confirmTotal)} </span>
+              Tổng thanh toán: <span className="font-bold text-primary">{formatVND(confirmTotal)}</span>
             </p>
             <p className="text-base text-neutral-darker mb-5">Bạn có chắc chắn muốn đặt đơn hàng này không?</p>
             <div className="flex gap-3">

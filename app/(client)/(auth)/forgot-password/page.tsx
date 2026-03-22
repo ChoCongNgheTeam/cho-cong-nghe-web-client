@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
                <h1 className="text-xl font-semibold text-primary tracking-tight mb-1">
                   Quên mật khẩu?
                </h1>
-               <p className="text-sm text-neutral-dark leading-relaxed">
+               <p className="text-sm text-primary leading-relaxed">
                   Nhập email đã đăng ký — chúng tôi sẽ gửi link đặt lại ngay.
                </p>
             </div>
@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
             <div className="mt-5 text-center">
                <Link
                   href="/account?login"
-                  className="inline-flex items-center gap-1.5 text-xs text-neutral-dark hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary transition-colors"
                >
                   <svg
                      className="w-3.5 h-3.5"

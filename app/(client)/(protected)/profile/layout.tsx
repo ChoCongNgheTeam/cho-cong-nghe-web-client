@@ -56,7 +56,7 @@ export default function ProfileLayout({
           />
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar */}
-            <aside className="w-full lg:w-80 shrink-0 space-y-4">
+            <aside className="w-full lg:w-80 shrink-0 space-y-4 sticky top-6 self-start">
               {/* User Profile Card */}
               <div className="bg-neutral-light-active rounded-lg shadow-sm p-4">
                 <div className="flex items-center gap-3 mb-4">

@@ -12,7 +12,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-primary mb-4 mt-2">
+      <h1 className="text-xl font-bold text-primary mb-4 mt-2">
         Thông tin cá nhân
       </h1>
 

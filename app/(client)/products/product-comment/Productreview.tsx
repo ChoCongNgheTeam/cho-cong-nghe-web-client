@@ -70,6 +70,7 @@ interface ProductReviewProps {
   };
   slug: string;
   product: ProductDetail;
+  currentVariant?: { name?: string; [key: string]: any };
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ export default function ProductReview({
   rating,
   slug,
   product,
-  
+  currentVariant
 }: ProductReviewProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -215,7 +216,7 @@ export default function ProductReview({
   return (
     <div className=" ">
       <div className="bg-neutral-light   py-6 sm:py-4 lg:py-6 rounded-lg px-6">
-        <RatingSummary rating={rating} slug={slug} product = {product}/>
+        <RatingSummary rating={rating} slug={slug} product = {product} currentVariant={currentVariant}/>
       </div>
       <div className="bg-neutral-light   py-6 sm:py-4 lg:py-6 rounded-lg px-6 mt-6">
         <CommentSection

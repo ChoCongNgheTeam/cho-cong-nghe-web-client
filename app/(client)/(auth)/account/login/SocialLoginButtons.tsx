@@ -5,6 +5,7 @@ interface SocialLoginButtonsProps {
    onFacebookLogin: () => void;
    onAppleLogin: () => void;
    googleLoading: boolean;
+   // facebookLoading: boolean; ← xóa
    disabled: boolean;
 }
 
@@ -68,7 +69,6 @@ const SpinnerIcon = () => (
 
 const socialButtonClass =
    "w-full flex items-center justify-center gap-2 border border-neutral py-2.5 rounded-lg hover:bg-neutral hover:border-neutral-dark cursor-pointer transition-colors disabled:opacity-50 bg-neutral-light";
-
 export function SocialLoginButtons({
    onGoogleLogin,
    onFacebookLogin,
@@ -99,18 +99,6 @@ export function SocialLoginButtons({
             <FacebookIcon />
             <span className="text-primary font-medium text-base">
                Đăng nhập với Facebook
-            </span>
-         </button>
-
-         <button
-            type="button"
-            onClick={onAppleLogin}
-            className={`${socialButtonClass} py-3`}
-            disabled={disabled}
-         >
-            <AppleIcon />
-            <span className="text-primary font-medium text-base">
-               Đăng nhập với Apple
             </span>
          </button>
       </div>
