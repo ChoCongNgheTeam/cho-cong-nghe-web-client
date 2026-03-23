@@ -17,6 +17,9 @@ import Image from "next/image";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import apiRequest from "@/lib/api";
 
+import { GitCompareArrows } from "lucide-react";
+import { useCompareStore } from "@/(client)/compare/compareStore";
+
 interface GalleryImage {
   id: string;
   imageUrl: string;
@@ -46,6 +49,9 @@ export default function ProductDetailBanner({
   const EXPAND_INDEX = images.length;
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
   const totalVariantSlots = images.length + 1;
+
+  const { toggle, isInCompare } = useCompareStore();
+  const inCompare = isInCompare(product.id);
 
   useEffect(() => {
     if (images && images.length > 0) {
@@ -157,7 +163,10 @@ export default function ProductDetailBanner({
     Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)),
     Math.max(0, totalThumbs - THUMB_WINDOW),
   );
-  const visibleThumbs = allThumbs.slice(windowStart, windowStart + THUMB_WINDOW);
+  const visibleThumbs = allThumbs.slice(
+    windowStart,
+    windowStart + THUMB_WINDOW,
+  );
 
   const highlights = product.highlights || [];
   const iconMap: Record<string, any> = {
@@ -200,6 +209,21 @@ export default function ProductDetailBanner({
             </div>
           )}
           <WishlistHeart productId={product.id} />
+          <button
+    onClick={(e) => {
+      e.stopPropagation();
+      toggle(product); // ⚠️ product ở đây là ProductDetail, cần map sang Product type nếu khác
+    }}
+    className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
+      ${inCompare
+        ? "bg-primary text-white"
+        : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary"
+      }`}
+    aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+    title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+  >
+    <GitCompareArrows className="w-5 h-5" />
+  </button>
         </div>
 
         <button
