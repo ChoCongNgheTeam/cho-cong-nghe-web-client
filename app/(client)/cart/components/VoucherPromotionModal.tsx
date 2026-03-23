@@ -48,7 +48,6 @@ export default function VoucherPromotionModal({
       initialId: appliedVoucherId,
    });
 
-   // Fetch danh sách khi mở modal
    useEffect(() => {
       if (isOpen) fetchVouchers();
    }, [isOpen, fetchVouchers]);

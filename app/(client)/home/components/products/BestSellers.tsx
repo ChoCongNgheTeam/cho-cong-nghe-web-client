@@ -19,7 +19,7 @@ export function BestSellers({ products }: BestSellersProps) {
                   </h2>
                </div>
                <Slidezy
-                  items={{ mobile: 1, tablet: 2, lg: 3, desktop: 4 }}
+                  items={{ mobile: 2, lg: 3, desktop: 4 }}
                   gap={16}
                   speed={300}
                   loop={false}

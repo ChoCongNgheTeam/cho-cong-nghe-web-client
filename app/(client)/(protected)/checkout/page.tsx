@@ -45,8 +45,6 @@ export default function CheckoutPage() {
    const [subtotal, setSubtotal] = useState(0);
    const [totalDiscount, setTotalDiscount] = useState(0);
    const [finalTotal, setFinalTotal] = useState(0);
-   const [rewardPoints, setRewardPoints] = useState(0);
-   const [usePoints, setUsePoints] = useState(false);
 
    const [voucherCode, setVoucherCode] = useState("");
    const [voucherValue, setVoucherValue] = useState(0);
@@ -236,8 +234,6 @@ export default function CheckoutPage() {
          setSubtotal(data.subtotal);
          setTotalDiscount(data.totalDiscount);
          setFinalTotal(data.finalTotal);
-         setRewardPoints(data.rewardPoints);
-         setUsePoints(data.usePoints ?? false);
          setVoucherCode(data.appliedVoucherCode ?? "");
          setVoucherValue(data.appliedVoucherValue ?? 0);
          setVoucherId(data.appliedVoucherId ?? "");
@@ -599,7 +595,6 @@ export default function CheckoutPage() {
                         subtotal={displaySubtotal}
                         totalDiscount={displayDiscount}
                         finalTotal={displayFinalTotal}
-                        rewardPoints={rewardPoints}
                         selectedItemsCount={cartItems.length}
                         appliedVoucherCode={voucherCode}
                         appliedVoucherValue={displayVoucherDiscount}
@@ -708,7 +703,6 @@ export default function CheckoutPage() {
             voucherCode={voucherCode}
             voucherValue={voucherValue}
             onOpenVoucherModal={() => setShowVoucherModal(true)}
-            rewardPoints={rewardPoints}
             actionLabel={isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
             actionDisabled={isSubmitting}
             onAction={handleCheckoutClick}

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
-import { Slider } from "../../_libs/index";
+import { Slider } from "../../_libs";
 interface HomeSliderProps {
   sliders: Slider[];
 }
