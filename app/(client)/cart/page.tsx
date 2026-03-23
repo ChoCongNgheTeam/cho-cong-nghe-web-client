@@ -33,6 +33,7 @@ export default function CartPage() {
     finalTotal,
     rewardPoints,
     refetchCart,
+    rawItems,
   } = useCart();
 
   const [showVoucherModal, setShowVoucherModal] = useState(false);
@@ -386,6 +387,14 @@ export default function CartPage() {
         appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
         cartTotal={finalTotal}
+        cartItems={rawItems.map((item) => ({
+          productId: item.productId,
+          brandId: item.brandId,
+          categoryId: item.categoryId,
+          categoryPath: item.categoryPath,
+          // itemTotal = giá sau promotion × số lượng (dùng để tính eligible subtotal cho voucher)
+          itemTotal: item.price?.final ?? item.totalFinalPrice ?? item.unitPrice ?? 0,
+        }))}
       />
 
       <DeleteConfirmSidebar isOpen={!!deleteTarget} onClose={handleCloseDeleteSidebar} onConfirm={handleConfirmDelete} productName={deleteTarget?.name ?? ""} isLoading={isDeleting} />

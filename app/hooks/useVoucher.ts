@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import apiRequest from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { sortVouchers } from "@/helpers/sortVouchers";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -9,6 +11,15 @@ export interface VoucherTarget {
   id: string;
   targetType: "ALL" | "BRAND" | "CATEGORY" | "PRODUCT";
   targetId: string;
+}
+
+interface CartItem {
+  productId: string;
+  categoryId?: string;
+  brandId?: string;
+  categoryPath?: string[];
+  /** Thành tiền item (unit_price × quantity, sau promotion). Dùng để tính eligible subtotal. */
+  itemTotal?: number;
 }
 
 export interface Voucher {
@@ -31,6 +42,8 @@ export interface Voucher {
   updatedAt?: string;
   targets?: VoucherTarget[];
   maxDiscountValue?: number; // ← thêm dòng này
+  isPrivate?: boolean;
+  remainingUses?: number;
 }
 
 export interface AppliedVoucher {
@@ -54,15 +67,16 @@ interface VoucherDetailResponse {
   data: Voucher;
   message: string;
 }
+interface ValidateResponse {
+  data: { discount: number; voucher: { id: string } } | null;
+  message?: string;
+}
 
 interface UseVoucherOptions {
-  /** Tổng tiền giỏ hàng để tính discount và kiểm tra điều kiện */
   cartTotal?: number;
-  /** Voucher code đang được áp dụng từ bên ngoài (ví dụ: load từ localStorage) */
+  cartItems?: CartItem[];
   initialCode?: string;
-  /** Voucher value đang được áp dụng từ bên ngoài */
   initialValue?: number;
-  /** Voucher id đang được áp dụng từ bên ngoài */
   initialId?: string;
 }
 
@@ -98,7 +112,7 @@ interface UseVoucherReturn {
 
 // ─── Hook ──────────────────────────────────────────────────────────────────
 
-export function useVoucher({ cartTotal = 0, initialCode = "", initialValue = 0, initialId = "" }: UseVoucherOptions = {}): UseVoucherReturn {
+export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", initialValue = 0, initialId = "" }: UseVoucherOptions = {}): UseVoucherReturn {
   // ── List ──────────────────────────────────────────────────────────────────
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
@@ -108,6 +122,8 @@ export function useVoucher({ cartTotal = 0, initialCode = "", initialValue = 0, 
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(!!initialCode);
+
+  const { isAuthenticated } = useAuth();
 
   // ── Applied ───────────────────────────────────────────────────────────────
   const [applied, setApplied] = useState<AppliedVoucher>({
@@ -137,13 +153,48 @@ export function useVoucher({ cartTotal = 0, initialCode = "", initialValue = 0, 
     return new Date(dateString).toLocaleDateString("vi-VN");
   }, []);
 
+  /**
+   * Tính discount của voucher dựa trên eligible subtotal.
+   * - Nếu voucher có targets (không phải ALL) → tính trên subtotal các item match target
+   * - Nếu không → tính trên toàn bộ cartTotal
+   */
   const calculateDiscount = useCallback(
-    (voucher: Voucher): number => {
-      if (voucher.discountType === "DISCOUNT_FIXED") return voucher.discountValue;
-      const percent = Math.floor((cartTotal * voucher.discountValue) / 100);
-      return voucher.maxDiscountValue ? Math.min(percent, voucher.maxDiscountValue) : percent;
+    (voucher: Voucher, items: CartItem[] = cartItems): number => {
+      const targets = voucher.targets ?? [];
+      const hasAll = targets.length === 0 || targets.some((t) => t.targetType === "ALL");
+
+      let base = cartTotal;
+      if (!hasAll) {
+        const hasItemTotals = items.some((item) => (item.itemTotal ?? 0) > 0);
+        if (hasItemTotals) {
+          base = items
+            .filter((item) =>
+              targets.some((t) => {
+                if (!t.targetId) return false;
+                switch (t.targetType) {
+                  case "PRODUCT":
+                    return t.targetId === item.productId;
+                  case "BRAND":
+                    return t.targetId === item.brandId;
+                  case "CATEGORY":
+                    return item.categoryPath?.includes(t.targetId) || item.categoryId === t.targetId;
+                  default:
+                    return false;
+                }
+              }),
+            )
+            .reduce((sum, item) => sum + (item.itemTotal ?? 0), 0);
+        }
+      }
+
+      if (voucher.discountType === "DISCOUNT_FIXED") {
+        return Math.min(voucher.discountValue, base);
+      }
+
+      const raw = Math.floor((base * voucher.discountValue) / 100);
+      return voucher.maxDiscountValue ? Math.min(raw, voucher.maxDiscountValue) : raw;
     },
-    [cartTotal],
+    [cartTotal, cartItems],
   );
 
   const canUseVoucher = useCallback((voucher: Voucher): boolean => voucher.isAvailable && !voucher.isExpired && voucher.isActive && cartTotal >= voucher.minOrderValue, [cartTotal]);
@@ -153,17 +204,55 @@ export function useVoucher({ cartTotal = 0, initialCode = "", initialValue = 0, 
   const fetchVouchers = useCallback(async () => {
     setIsLoadingList(true);
     try {
-      const res = await apiRequest.get<VoucherListResponse>("/vouchers", {
-        params: { cartTotal, limit: 20 }, // ← dùng cartTotal từ props
+      // 1. Luôn fetch public vouchers
+      const publicRes = await apiRequest.get<VoucherListResponse>("/vouchers", {
+        params: { cartTotal, limit: 20 },
         noAuth: true,
       });
-      setVouchers(res.data);
+      let allVouchers: Voucher[] = publicRes.data ?? [];
+
+      // 2. Nếu đã login → fetch thêm private vouchers
+      if (isAuthenticated) {
+        try {
+          const privateRes = await apiRequest.get<{ data: any[] }>("/vouchers/my-vouchers");
+          const privateVouchers: Voucher[] = (privateRes.data ?? []).map((v: any) => ({
+            id: v.id,
+            code: v.code,
+            description: v.description ?? "",
+            discountType: v.discountType,
+            discountValue: Number(v.discountValue),
+            minOrderValue: Number(v.minOrderValue),
+            maxDiscountValue: v.maxDiscountValue ? Number(v.maxDiscountValue) : undefined,
+            maxUses: v.maxUses ?? undefined,
+            maxUsesPerUser: v.maxUsesPerUser ?? undefined,
+            usesCount: v.usedCount ?? v.usesCount ?? 0,
+            remainingUses: v.remainingUses ?? undefined,
+            startDate: v.startDate ?? undefined,
+            endDate: v.endDate ?? undefined,
+            isActive: v.isActive ?? true,
+            isExpired: v.isExpired ?? false,
+            isAvailable: v.canUse ?? v.isAvailable ?? true,
+            isPrivate: true, // ← flag để sort ưu tiên
+          }));
+
+          // Merge: private lên đầu, loại trùng code với public
+          const publicCodes = new Set(allVouchers.map((v) => v.code));
+          const uniquePrivate = privateVouchers.filter((v) => !publicCodes.has(v.code));
+          allVouchers = [...uniquePrivate, ...allVouchers];
+        } catch {
+          // silent — không có private voucher thì dùng public thôi
+        }
+      }
+
+      // 3. Sort theo rule production
+      const sorted = sortVouchers(allVouchers, cartTotal);
+      setVouchers(sorted);
     } catch {
       setVouchers([]);
     } finally {
       setIsLoadingList(false);
     }
-  }, [cartTotal]);
+  }, [cartTotal, isAuthenticated]);
 
   // ── Internal: validate & apply a Voucher object ───────────────────────────
 
@@ -212,34 +301,27 @@ export function useVoucher({ cartTotal = 0, initialCode = "", initialValue = 0, 
       setError("Vui lòng nhập mã voucher");
       return;
     }
+
     setIsApplying(true);
     try {
-      const res = await apiRequest.get<VoucherDetailResponse>(`/vouchers/code/${normalized}`, { noAuth: true });
-      console.log(res);
-      validateAndApply(res.data);
-    } catch {
-      setError("Mã voucher không tồn tại hoặc không hợp lệ");
+      const res = await apiRequest.post<ValidateResponse>("/vouchers/validate", {
+        code: normalized,
+        orderTotal: cartTotal,
+        cartItems,
+      });
+      if (!res.data) {
+        setError(res.message ?? "Mã không hợp lệ");
+        setIsSuccess(false);
+        return;
+      }
+      setApplied({ code: normalized, value: res.data.discount, id: res.data.voucher.id });
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? "Mã voucher không tồn tại hoặc không hợp lệ");
       setIsSuccess(false);
     } finally {
       setIsApplying(false);
     }
-  }, [inputCode, validateAndApply]);
-
-  // ── Public: apply by clicking from list ───────────────────────────────────
-
-  const applyFromList = useCallback(
-    (voucher: Voucher) => {
-      // Toggle off nếu đang chọn cùng voucher
-      if (applied.code === voucher.code) {
-        clearVoucher();
-        return;
-      }
-      if (!canUseVoucher(voucher)) return;
-      validateAndApply(voucher);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [applied.code, canUseVoucher, validateAndApply],
-  );
+  }, [inputCode, cartTotal, cartItems]);
 
   // ── Public: clear ─────────────────────────────────────────────────────────
 
@@ -249,6 +331,40 @@ export function useVoucher({ cartTotal = 0, initialCode = "", initialValue = 0, 
     setIsSuccess(false);
     setApplied({ code: "", value: 0, id: "" });
   }, []);
+
+  // ── Public: apply by clicking from list ───────────────────────────────────
+
+  const applyFromList = useCallback(
+    async (voucher: Voucher) => {
+      if (applied.code === voucher.code) {
+        clearVoucher();
+        return;
+      }
+      if (!canUseVoucher(voucher)) return;
+
+      setIsApplying(true);
+      try {
+        const res = await apiRequest.post<ValidateResponse>("/vouchers/validate", {
+          code: voucher.code,
+          orderTotal: cartTotal,
+          cartItems,
+        });
+        if (!res.data) {
+          setError(res.message ?? "Mã không áp dụng được");
+          return;
+        }
+        setInputCodeRaw(voucher.code);
+        setError("");
+        setIsSuccess(true);
+        setApplied({ code: voucher.code, value: res.data.discount, id: res.data.voucher.id });
+      } catch (err: any) {
+        setError(err?.response?.data?.message ?? "Không thể áp dụng voucher này");
+      } finally {
+        setIsApplying(false);
+      }
+    },
+    [applied.code, canUseVoucher, clearVoucher, cartTotal, cartItems],
+  );
 
   // ── Copy ──────────────────────────────────────────────────────────────────
 

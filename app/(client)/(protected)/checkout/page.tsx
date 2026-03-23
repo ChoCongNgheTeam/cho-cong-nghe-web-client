@@ -21,15 +21,21 @@ import { Popzy } from "@/components/Modal";
 import { Province, Ward, UserProfile, SavedAddress, CartItem, SelectedItem, CheckoutData, PreviewData, ShippingSectionProps } from "./types";
 import ShippingSection from "./components/shippingSection";
 import CartBottomBar from "@/(client)/cart/components/CartBottomMobile";
+// import { ApiCartItem } from "@/(client)/cart/types/cart.types";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToasty();
   const { loading: authLoading } = useAuth();
-  const { refetchCart } = useCart();
+  const { refetchCart, rawItems } = useCart();
+
+  console.log("rawItems", rawItems);
+
+  // const [rawCartItems, setRawCartItems] = useState<ApiCartItem[]>([]);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
   const [promotionValue, setPromotionValue] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
@@ -417,8 +423,8 @@ export default function CheckoutPage() {
   const displayFinalTotal = finalTotal;
   const shippingFee = previewData?.shippingFee;
   const amountAfterDiscount = Math.max(0, subtotal - totalDiscount - voucherValue);
-  const calculatedTax = amountAfterDiscount * 0.1;
-  const confirmTotal = amountAfterDiscount + calculatedTax + (shippingFee ?? 0);
+  // const calculatedTax = amountAfterDiscount * 0.1;
+  const confirmTotal = amountAfterDiscount + (shippingFee ?? 0);
 
   const shippingProps: ShippingSectionProps = {
     isLoadingAddresses,
@@ -524,7 +530,7 @@ export default function CheckoutPage() {
                 onTermsChange={setAgreedToTerms}
                 isCheckoutPage
                 shippingFee={shippingFee}
-                taxAmount={calculatedTax}
+                // taxAmount={calculatedTax}
                 computedTotal={confirmTotal}
               />
             </div>
@@ -620,6 +626,14 @@ export default function CheckoutPage() {
         appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
         cartTotal={finalTotal}
+        cartItems={rawItems.map((item) => ({
+          productId: item.productId,
+          brandId: item.brandId,
+          categoryId: item.categoryId,
+          categoryPath: item.categoryPath,
+          // itemTotal = giá sau promotion × số lượng (dùng để tính eligible subtotal cho voucher)
+          itemTotal: item.price?.final ?? item.totalFinalPrice ?? item.unitPrice ?? 0,
+        }))}
       />
       <Popzy
         isOpen={showConfirmModal}
