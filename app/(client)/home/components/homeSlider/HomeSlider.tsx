@@ -192,7 +192,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         {/* LEFT: text */}
         <div className="flex flex-col">
           {/* Badge */}
-          <span
+          {/* <span
             key={`badge-${current}`}
             className={[
               "inline-flex items-center gap-1.5 w-fit mb-3 md:mb-[clamp(10px,1.8vw,20px)]",
@@ -204,7 +204,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
           >
             <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
             Đang Hot
-          </span>
+          </span> */}
 
           {/* Title */}
           <h2 key={`title-${current}`} className="font-extrabold leading-[1.05] tracking-tight text-white text-[clamp(18px,3.6vw,56px)] mb-2 md:mb-[clamp(8px,1.4vw,16px)]" style={textStyle(1)}>
@@ -213,7 +213,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
 
           {/* Subtitle */}
           <p key={`sub-${current}`} className="text-slate-400 leading-relaxed max-w-[34ch] text-[clamp(10px,1.1vw,17px)] mb-4 md:mb-[clamp(12px,2.2vw,30px)]" style={textStyle(2)}>
-            Khám phá ưu đãi hấp dẫn — số lượng có hạn!
+            {slide.subTitle}
           </p>
 
           {/* CTA */}
@@ -230,7 +230,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
             ].join(" ")}
             style={textStyle(3)}
           >
-            Mua ngay
+            Xem Ngay
             <svg
               className="w-[clamp(12px,1.15vw,16px)] h-[clamp(12px,1.15vw,16px)] transition-transform duration-200 group-hover:translate-x-1"
               viewBox="0 0 24 24"

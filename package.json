@@ -27,7 +27,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
-    "@types/date-fns": "^2.5.3",
     "@types/firebase": "^2.4.32",
     "@types/node": "^20",
     "@types/react": "^19",
