@@ -1,6 +1,8 @@
-"use client";
+﻿"use client";
 import React, { useState } from "react";
-import { Facebook, Twitter, Instagram, Music, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
+import { SiZalo } from "react-icons/si";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -27,7 +29,7 @@ const Footer = () => {
    return (
       <footer className="bg-gray-900 text-white">
          {/* ── Banner toàn quốc ── */}
-         <div className="bg-gray-800 py-8">
+         <div className="bg-gray-800 py-2">
             <div className="container">
                <h2 className="text-xl font-bold mb-2">
                   Hệ thống ChoCongNghe trên toàn quốc
@@ -40,8 +42,8 @@ const Footer = () => {
          </div>
 
          {/* ── Main grid ── */}
-         <div className="container py-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+         <div className="container py-3 md:py-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
                {/* ── Cột 1: Logo + MXH + Hotline ── */}
                <div>
                   <Link href="/">
@@ -50,49 +52,63 @@ const Footer = () => {
                         width={180}
                         height={60}
                         alt="Logo"
-                        className="w-auto hover:opacity-90 transition-opacity -mt-5 mb-5"
+                        sizes="(max-width: 640px) 120px, (max-width: 1024px) 170px, 190px"
+                        className="h-auto w-120px sm:w-170px lg:w-190px hover:opacity-90 transition-opacity -mt-1 sm:-mt-3 mb-4"
                         priority
                      />
                   </Link>
-                  <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                  <p className="text-gray-300 text-s mb-4 leading-relaxed">
                      <span className="font-semibold">ChoCongNghe</span> – Nền
                      tảng mua sắm thiết bị điện tử chính hãng, giao nhanh toàn
                      quốc.
                   </p>
-                  <div className="mb-6">
-                     <h4 className="font-semibold mb-3">
+                  <div className="mb-5">
+                     <h4 className="font-semibold mb-2">
                         KẾT NỐI VỚI ChoCongNghe
                      </h4>
                      <div className="flex gap-3">
                         <Link
-                           href="#"
+                           href="https://www.facebook.com"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Facebook"
                            className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
                         >
-                           <Facebook className="w-5 h-5" />
+                           <FaFacebookF className="w-5 h-5" />
                         </Link>
                         <Link
-                           href="#"
+                           href="https://twitter.com"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Twitter"
                            className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                         >
-                           <Twitter className="w-5 h-5" />
+                           <FaTwitter className="w-5 h-5" />
                         </Link>
                         <Link
-                           href="#"
+                           href="https://www.instagram.com"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Instagram"
                            className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors"
                         >
-                           <Instagram className="w-5 h-5" />
+                           <FaInstagram className="w-5 h-5" />
                         </Link>
                         <Link
-                           href="#"
-                           className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
+                           href="https://zalo.me"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Zalo"
+                           className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
                         >
-                           <Music className="w-5 h-5" />
+                           <SiZalo className="w-5 h-5" />
                         </Link>
+                        
                      </div>
                   </div>
                   <div>
-                     <h4 className="font-semibold mb-3">TỔNG ĐÀI MIỄN PHÍ</h4>
-                     <div className="space-y-2 text-sm">
+                     <h4 className="font-semibold mb-2">TỔNG ĐÀI MIỄN PHÍ</h4>
+                     <div className="space-y-1.5 text-sm">
                         <div>
                            <p className="text-gray-400">
                               Tư vấn mua hàng (Miễn phí)
@@ -126,7 +142,7 @@ const Footer = () => {
                <div>
                   <button
                      onClick={() => toggleSection("about")}
-                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
+                     className="w-full flex items-center justify-between mb-2 md:cursor-default"
                   >
                      <h4 className="font-semibold">VỀ CHÚNG TÔI</h4>
                      <ChevronDown
@@ -134,7 +150,7 @@ const Footer = () => {
                      />
                   </button>
                   <ul
-                     className={`space-y-2 text-sm text-gray-300 ${openSections.about ? "block" : "hidden md:block"}`}
+                     className={`space-y-1 text-sm text-gray-300 ${openSections.about ? "block" : "hidden md:block"}`}
                   >
                      {[
                         {
@@ -188,7 +204,7 @@ const Footer = () => {
                <div>
                   <button
                      onClick={() => toggleSection("policy")}
-                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
+                     className="w-full flex items-center justify-between mb-2 md:cursor-default"
                   >
                      <h4 className="font-semibold">CHÍNH SÁCH</h4>
                      <ChevronDown
@@ -196,7 +212,7 @@ const Footer = () => {
                      />
                   </button>
                   <ul
-                     className={`space-y-2 text-sm text-gray-300 ${openSections.policy ? "block" : "hidden md:block"}`}
+                     className={`space-y-1 text-sm text-gray-300 ${openSections.policy ? "block" : "hidden md:block"}`}
                   >
                      {[
                         {
@@ -217,11 +233,11 @@ const Footer = () => {
                         },
                         {
                            label: "Chính sách khui hộp sản phẩm",
-                           href: "/policies/unbox-policy",
+                           href: "/policies/unboxing",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt",
-                           href: "/policies/DeliveryInstallation",
+                           href: "/policies/Delivery",
                         },
                         {
                            label: "Chính sách mạng di động ChoCongNghe",
@@ -260,7 +276,7 @@ const Footer = () => {
                <div>
                   <button
                      onClick={() => toggleSection("payment")}
-                     className="w-full flex items-center justify-between mb-4 md:cursor-default"
+                     className="w-full flex items-center justify-between mb-2 md:cursor-default"
                   >
                      <h4 className="font-semibold">HỖ TRỢ THANH TOÁN</h4>
                      <ChevronDown
@@ -270,7 +286,7 @@ const Footer = () => {
                   <div
                      className={`${openSections.payment ? "block" : "hidden md:block"}`}
                   >
-                     <div className="grid grid-cols-3 gap-2 mb-6">
+                     <div className="grid grid-cols-3 gap-2 mb-3">
                         {/* VISA */}
                         <div className="bg-white rounded p-2 flex items-center justify-center h-12">
                            <span className="text-blue-700 font-bold text-lg italic">
@@ -315,7 +331,7 @@ const Footer = () => {
                         </div>
                      </div>
 
-                     <h4 className="font-semibold mb-4">CHỨNG NHẬN</h4>
+                     <h4 className="font-semibold mb-2">CHỨNG NHẬN</h4>
                      <div className="flex gap-2">
                         <div className="bg-white rounded p-2 flex items-center justify-center w-16 h-16">
                            <div className="text-center">
@@ -355,7 +371,7 @@ const Footer = () => {
 
          {/* ── Bottom bar ── */}
          <div className="border-t border-gray-700">
-            <div className="container py-6">
+            <div className="container py-4">
                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-sm text-gray-400">
                   <div className="space-y-1">
                      <p>© Bản quyền thuộc về ChoCongNghe</p>
@@ -364,7 +380,7 @@ const Footer = () => {
                         Giấy chứng nhận đăng ký kinh doanh: 0315667679 do Sở Kế
                         hoạch & Đầu tư TP HCM cấp ngày 22/08/2025
                      </p>
-                     <p>Góp ý & khiếu nại: ceo@chocongnghe.com</p>
+                     <p>Góp ý & khiếu nại: chocongnghe.info@gmail.com</p>
                      <p>Hotline: 1800 6060</p>
                      <p>
                         Địa chỉ trụ sở: 50/22 Gò Dầu, Phường Tân Quý, Quận Tân

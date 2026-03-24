@@ -8,7 +8,7 @@ export default function Sidebar() {
    const pathname = usePathname();
 
    return (
-      <aside className="w-60 min-w-70 border-r border-neutral bg-neutral-light flex flex-col sticky top-0 overflow-y-auto scrollbar-thin">
+      <aside className="w-full lg:w-60 lg:min-w-70 border border-neutral lg:border-l-0 lg:border-r bg-neutral-light flex flex-col lg:sticky lg:top-0 overflow-y-auto lg:max-h-[calc(100vh-160px)] scrollbar-thin rounded-lg lg:rounded-none">
          <div className="px-4 py-3.5 text-[14px] font-bold text-primary bg-neutral-light-active border-b border-neutral">
             Danh mục chính sách
          </div>

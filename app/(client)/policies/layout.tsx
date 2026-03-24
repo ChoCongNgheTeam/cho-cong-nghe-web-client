@@ -14,18 +14,20 @@ function getBreadcrumbItems(pathname: string) {
 export default function PoliciesLayout({ children }: { children: React.ReactNode }) {
   return (
     <FontSizeProvider>
-      <div className="min-h-screen bg-neutral-light container mt-10 mb-10">
-        <div className="mb-10">
-          <BreadcrumbServer />
-        </div>
-        <div className="flex mx-auto">
-          <div>
-            <FontSizeToggle />
-            <Sidebar />
+      <div className="min-h-screen bg-neutral-light text-primary">
+        <div className="container mt-6 mb-10 lg:mt-10">
+          <div className="mb-6 lg:mb-10">
+            <BreadcrumbServer />
           </div>
-          <main className="flex-1 pl-8 min-w-0">
-            <PolicyContent>{children}</PolicyContent>
-          </main>
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-8 mx-auto">
+            <div className="lg:w-64 lg:min-w-70">
+              <FontSizeToggle />
+              <Sidebar />
+            </div>
+            <main className="flex-1 min-w-0 lg:pl-2">
+              <PolicyContent>{children}</PolicyContent>
+            </main>
+          </div>
         </div>
       </div>
     </FontSizeProvider>

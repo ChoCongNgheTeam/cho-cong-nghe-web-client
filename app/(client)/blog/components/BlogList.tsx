@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import { Blog } from "../types/blog.type";
 
@@ -10,7 +10,7 @@ export default function BlogList({ blogs }: Props) {
   if (!blogs.length) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {blogs.map((blog, idx) => (
         <Link
           key={`list-${idx}-${blog.id}`}
@@ -36,4 +36,5 @@ export default function BlogList({ blogs }: Props) {
     </div>
   );
 }
+
 
