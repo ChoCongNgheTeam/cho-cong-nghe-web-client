@@ -10,6 +10,7 @@ import { SocialLoginButtons } from "./SocialLoginButtons";
 import type { User as AuthUser } from "./types";
 import { useGoogleLogin } from "@/hooks/useGoogleLogin";
 import { useFacebookLogin } from "@/hooks/useFacebookLogin";
+import { validatePassword, validateUserName } from "../validators";
 
 interface LoginFormProps {
    returnUrl?: string;
@@ -26,8 +27,11 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
    const [rememberMe, setRememberMe] = useState(false);
    const [loading, setLoading] = useState(false);
    const [googleLoading, setGoogleLoading] = useState(false);
-   const [facebookLoading, setFacebookLoading] = useState(false);
-   const [error, setError] = useState("");
+   const [errors, setErrors] = useState<{
+      userName?: string;
+      password?: string;
+      general?: string;
+   }>({});
 
    const handleLoginSuccess = useCallback(
       async (user: AuthUser, accessToken: string) => {
@@ -45,7 +49,7 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
 
    const { prompt: googlePrompt, buttonRef } = useGoogleLogin({
       onSuccess: handleLoginSuccess,
-      onError: (msg) => setError(msg),
+      onError: (msg) => setErrors({ general: msg }),
       onLoadingChange: setGoogleLoading,
    });
 
@@ -53,7 +57,20 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
 
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      setError("");
+      setErrors({});
+
+      const newErrors: typeof errors = {};
+      const userNameError = validateUserName(userName);
+      if (userNameError) newErrors.userName = userNameError;
+
+      const passwordError = validatePassword(password);
+      if (passwordError) newErrors.password = passwordError;
+
+      if (Object.keys(newErrors).length > 0) {
+         setErrors(newErrors);
+         return;
+      }
+
       setLoading(true);
       try {
          await handleLoginSubmit({
@@ -61,7 +78,7 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
             password,
             rememberMe,
             onSuccess: handleLoginSuccess,
-            onError: setError,
+            onError: (msg) => setErrors({ general: msg }),
          });
       } finally {
          setLoading(false);
@@ -78,9 +95,9 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
             phần thưởng hấp dẫn khác
          </p>
 
-         {error && (
+         {errors.general && (
             <div className="mb-4 p-2.5 bg-promotion-light border border-promotion text-promotion-dark rounded-lg text-base">
-               {error}
+               {errors.general}
             </div>
          )}
 
@@ -97,11 +114,15 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
                      onChange={(e) => setUsername(e.target.value)}
                      placeholder="Vui lòng nhập tên đăng nhập hoặc số điện thoại"
                      className="w-full pl-10 pr-3 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
-                     required
                      disabled={isAnyLoading}
                      autoComplete="username"
                   />
                </div>
+               {errors.userName && (
+                  <p className="mt-1 text-sm text-promotion" role="alert">
+                     {errors.userName}
+                  </p>
+               )}
             </div>
 
             <div>
@@ -116,7 +137,6 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
                      onChange={(e) => setPassword(e.target.value)}
                      placeholder="Mật khẩu"
                      className="w-full pl-10 pr-11 py-3 text-base border border-neutral rounded-lg focus:outline-none focus:ring-accent focus:border-accent bg-neutral-light text-primary dark:placeholder:text-neutral-dark"
-                     required
                      disabled={isAnyLoading}
                      autoComplete="current-password"
                   />
@@ -130,6 +150,11 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                </div>
+               {errors.password && (
+                  <p className="mt-1 text-sm text-promotion" role="alert">
+                     {errors.password}
+                  </p>
+               )}
             </div>
 
             <div className="flex sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
@@ -174,9 +199,8 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
             <SocialLoginButtons
                onGoogleLogin={googlePrompt}
                onFacebookLogin={facebookLogin}
-               onAppleLogin={() => console.log("TODO: Apple login")}
+               onAppleLogin={() => {}}
                googleLoading={googleLoading}
-               // facebookLoading={false}
                disabled={isAnyLoading}
             />
          </form>

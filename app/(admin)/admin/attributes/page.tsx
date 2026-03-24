@@ -30,7 +30,7 @@ export default function AttributesPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortBy, setSortBy] = useState<"createdAt" | "name" | "code">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -60,7 +60,7 @@ export default function AttributesPage() {
         sortOrder,
       });
       setAttrs(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as Meta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách thuộc tính");
     } finally {
@@ -200,7 +200,7 @@ export default function AttributesPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Thuộc tính sản phẩm</h1>
-            <p className="text-[12px] text-neutral-dark">Quản lý thuộc tính và danh sách giá trị (options)</p>
+            <p className="text-[12px] text-primary">Quản lý thuộc tính và danh sách giá trị (options)</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -210,7 +210,6 @@ export default function AttributesPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <button onClick={handleOpenCreate} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer">
             <Plus size={15} />
@@ -230,7 +229,7 @@ export default function AttributesPage() {
           valueClassName="text-emerald-600"
           iconClassName="text-emerald-600"
         />
-        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-neutral-dark" iconClassName="text-neutral-dark" />
+        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-primary" iconClassName="text-primary" />
         <StatsCard
           label="Tổng Options"
           value={attrs.reduce((s, a) => s + a.options.length, 0)}
@@ -256,11 +255,11 @@ export default function AttributesPage() {
                   resetPage();
                 }}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
-                  activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                  activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
                 }`}
               >
                 {tab.label}
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                   {count}
                 </span>
               </button>
@@ -271,7 +270,7 @@ export default function AttributesPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -291,7 +290,7 @@ export default function AttributesPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -302,7 +301,7 @@ export default function AttributesPage() {
           <select
             value={sortBy}
             onChange={(e) => {
-              setSortBy(e.target.value);
+              setSortBy(e.target.value as "createdAt" | "name" | "code");
               resetPage();
             }}
             className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
@@ -329,20 +328,20 @@ export default function AttributesPage() {
           {hasActiveFilters && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} thuộc tính</span>
+          <span className="ml-auto text-[12px] text-primary">{meta.total} thuộc tính</span>
         </div>
 
         {/* ── Selection bar ── */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thuộc tính</span>
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer">
               Bỏ chọn
             </button>
           </div>
@@ -352,7 +351,7 @@ export default function AttributesPage() {
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <p className="text-[13px] text-primary">{error}</p>
             <button onClick={fetchAttrs} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thử lại
             </button>
@@ -363,8 +362,8 @@ export default function AttributesPage() {
           </div>
         ) : attrs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Tag size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thuộc tính nào"}</p>
+            <Tag size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thuộc tính nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xoá bộ lọc
@@ -383,7 +382,7 @@ export default function AttributesPage() {
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <span className="text-[12px] text-primary">Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -398,7 +397,7 @@ export default function AttributesPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {meta.total} thuộc tính</span>
+              <span className="text-[12px] text-primary">/ {meta.total} thuộc tính</span>
             </div>
             <AdminPagination
               currentPage={meta.page}
@@ -429,13 +428,13 @@ export default function AttributesPage() {
                 </div>
                 <div>
                   <h2 className="text-[15px] font-bold text-primary">{editTarget ? "Chỉnh sửa thuộc tính" : "Thêm thuộc tính mới"}</h2>
-                  {editTarget && <p className="text-[11px] text-neutral-dark font-mono">{editTarget.code}</p>}
+                  {editTarget && <p className="text-[11px] text-primary font-mono">{editTarget.code}</p>}
                 </div>
               </div>
               <button
                 onClick={() => !formSaving && setFormOpen(false)}
                 disabled={formSaving}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
               >
                 <X size={16} />
               </button>

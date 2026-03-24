@@ -18,7 +18,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 const inputCls =
-  "w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all";
+  "w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary placeholder:text-primary/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all";
 
 // ── Form state ────────────────────────────────────────────────────────────────
 interface MethodForm {
@@ -78,13 +78,13 @@ function MethodFormModal({
 
           {/* Name */}
           <div>
-            <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider block mb-1.5">Tên *</label>
+            <label className="text-[11px] font-semibold text-primary uppercase tracking-wider block mb-1.5">Tên *</label>
             <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="VD: Thanh toán khi nhận hàng" className={inputCls} />
           </div>
 
           {/* Code */}
           <div>
-            <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider block mb-1.5">Mã code *</label>
+            <label className="text-[11px] font-semibold text-primary uppercase tracking-wider block mb-1.5">Mã code *</label>
             <input
               value={form.code}
               onChange={(e) => set("code", e.target.value.toUpperCase().replace(/\s+/g, "_"))}
@@ -92,12 +92,12 @@ function MethodFormModal({
               className={`${inputCls} font-mono`}
               disabled={mode === "edit"} // code không nên đổi sau khi tạo
             />
-            {mode === "edit" && <p className="text-[11px] text-neutral-dark mt-1">Code không thể thay đổi sau khi tạo</p>}
+            {mode === "edit" && <p className="text-[11px] text-primary mt-1">Code không thể thay đổi sau khi tạo</p>}
           </div>
 
           {/* Description */}
           <div>
-            <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider block mb-1.5">Mô tả</label>
+            <label className="text-[11px] font-semibold text-primary uppercase tracking-wider block mb-1.5">Mô tả</label>
             <textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} placeholder="Mô tả ngắn (tùy chọn)" className={`${inputCls} resize-none`} />
           </div>
 
@@ -245,14 +245,14 @@ export default function PaymentMethodsPage() {
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral">
           <div>
             <h2 className="text-[14px] font-bold text-primary">Phương thức thanh toán</h2>
-            <p className="text-[12px] text-neutral-dark mt-0.5">Quản lý các hình thức thanh toán cho đơn hàng</p>
+            <p className="text-[12px] text-primary mt-0.5">Quản lý các hình thức thanh toán cho đơn hàng</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={fetchMethods}
               disabled={loading}
-              title="Làm mới"
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+              title=""
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             </button>
@@ -272,7 +272,7 @@ export default function PaymentMethodsPage() {
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <AlertCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <p className="text-[13px] text-primary">{error}</p>
             <button onClick={fetchMethods} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thử lại
             </button>
@@ -283,8 +283,8 @@ export default function PaymentMethodsPage() {
           </div>
         ) : methods.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <CreditCard size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">Chưa có phương thức thanh toán nào</p>
+            <CreditCard size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">Chưa có phương thức thanh toán nào</p>
             <button onClick={() => setCreateOpen(true)} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thêm phương thức đầu tiên
             </button>
@@ -294,7 +294,7 @@ export default function PaymentMethodsPage() {
             {methods.map((method) => (
               <div key={method.id} className="flex items-center gap-4 px-5 py-4 hover:bg-neutral-light-active/50 transition-colors">
                 {/* Icon */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${method.isActive ? "bg-accent/10 text-accent" : "bg-neutral-light-active text-neutral-dark"}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${method.isActive ? "bg-accent/10 text-accent" : "bg-neutral-light-active text-primary"}`}>
                   <CreditCard size={18} />
                 </div>
 
@@ -302,7 +302,7 @@ export default function PaymentMethodsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[13px] font-semibold text-primary">{method.name}</span>
-                    <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-neutral-light-active text-neutral-dark">{method.code}</span>
+                    <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-neutral-light-active text-primary">{method.code}</span>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                         method.isActive ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-500"
@@ -319,8 +319,8 @@ export default function PaymentMethodsPage() {
                       )}
                     </span>
                   </div>
-                  {method.description && <p className="text-[12px] text-neutral-dark mt-0.5 truncate">{method.description}</p>}
-                  <p className="text-[11px] text-neutral-dark/60 mt-0.5">
+                  {method.description && <p className="text-[12px] text-primary mt-0.5 truncate">{method.description}</p>}
+                  <p className="text-[11px] text-primary/60 mt-0.5">
                     Tạo {formatDate(method.createdAt)} · Cập nhật {formatDate(method.updatedAt)}
                   </p>
                 </div>
@@ -336,7 +336,7 @@ export default function PaymentMethodsPage() {
                       setEditTarget(method);
                     }}
                     title="Chỉnh sửa"
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
                   >
                     <Pencil size={14} />
                   </button>

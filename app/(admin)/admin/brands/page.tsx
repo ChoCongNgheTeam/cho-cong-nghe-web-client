@@ -72,10 +72,10 @@ function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: s
 
       {open && (
         <div className="absolute right-0 top-full mt-2 z-30 bg-neutral-light border border-neutral rounded-xl shadow-lg p-4 w-72 space-y-3">
-          <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Lọc theo ngày tạo</p>
+          <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Lọc theo ngày tạo</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[11px] text-neutral-dark block mb-1">Từ ngày</label>
+              <label className="text-[11px] text-primary block mb-1">Từ ngày</label>
               <input
                 type="date"
                 value={from}
@@ -84,7 +84,7 @@ function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: s
               />
             </div>
             <div>
-              <label className="text-[11px] text-neutral-dark block mb-1">Đến ngày</label>
+              <label className="text-[11px] text-primary block mb-1">Đến ngày</label>
               <input
                 type="date"
                 value={to}
@@ -178,7 +178,7 @@ export default function AdminBrandsPage() {
       };
       const res = await getAllBrands(params);
       setBrands(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as Meta);
     } catch (err: any) {
       setError(err?.message || "Không thể tải danh sách thương hiệu");
     } finally {
@@ -328,7 +328,7 @@ export default function AdminBrandsPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Thương hiệu</h1>
-            <p className="text-[12px] text-neutral-dark">Quản lý thương hiệu sản phẩm</p>
+            <p className="text-[12px] text-primary">Quản lý thương hiệu sản phẩm</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -338,7 +338,6 @@ export default function AdminBrandsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <button onClick={openCreateModal} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer">
             <Plus size={15} />
@@ -351,7 +350,7 @@ export default function AdminBrandsPage() {
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatsCard label="Tổng thương hiệu" value={meta.activeCounts.ALL} sub="Tất cả thương hiệu" icon={<Tag size={16} />} />
         <StatsCard label="Đang hoạt động" value={meta.activeCounts.ACTIVE} sub="Khách hàng có thể xem" icon={<Tag size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
-        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-neutral-dark" iconClassName="text-neutral-dark" />
+        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-primary" iconClassName="text-primary" />
         <StatsCard label="Nổi bật" value={meta.activeCounts.FEATURED} sub="Hiển thị trang chủ" icon={<Star size={16} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
       </div>
 
@@ -368,11 +367,11 @@ export default function AdminBrandsPage() {
                 resetPage();
               }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                 {tab.count}
               </span>
             </button>
@@ -382,7 +381,7 @@ export default function AdminBrandsPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -402,7 +401,7 @@ export default function AdminBrandsPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -454,20 +453,20 @@ export default function AdminBrandsPage() {
           {hasActiveFilters && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} thương hiệu</span>
+          <span className="ml-auto text-[12px] text-primary">{meta.total} thương hiệu</span>
         </div>
 
         {/* ── Selection bar ── */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thương hiệu</span>
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer">
               Bỏ chọn
             </button>
             <button className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-medium text-promotion hover:bg-promotion-light transition-colors cursor-pointer">
@@ -480,7 +479,7 @@ export default function AdminBrandsPage() {
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <p className="text-[13px] text-primary">{error}</p>
             <button onClick={fetchBrands} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thử lại
             </button>
@@ -491,8 +490,8 @@ export default function AdminBrandsPage() {
           </div>
         ) : brands.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Tag size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thương hiệu nào"}</p>
+            <Tag size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thương hiệu nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xoá bộ lọc
@@ -511,7 +510,7 @@ export default function AdminBrandsPage() {
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <span className="text-[12px] text-primary">Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -526,9 +525,9 @@ export default function AdminBrandsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {meta.total} thương hiệu</span>
+              <span className="text-[12px] text-primary">/ {meta.total} thương hiệu</span>
             </div>
-            <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+            {/* <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} /> */}
           </div>
         )}
       </div>

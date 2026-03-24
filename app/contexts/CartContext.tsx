@@ -32,6 +32,7 @@ export interface AddToCartMeta {
 
 export interface CartContextValue {
   items: CartItemWithDetails[];
+  rawItems: CartItemWithDetails[];
   isLoading: boolean;
   totalItemCount: number;
   selectAll: boolean;
@@ -78,6 +79,9 @@ function transformApiItem(raw: any): CartItemWithDetails {
     id: raw.id,
     productVariantId: raw.productVariantId,
     productId: raw.productId ?? "",
+    brandId: raw.brandId ?? "",
+    categoryId: raw.categoryId ?? "",
+    categoryPath: raw.categoryPath ?? [],
     productName: raw.productName ?? "Sản phẩm",
     productSlug: raw.productSlug ?? "",
     brandName: raw.brandName ?? "",
@@ -117,6 +121,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const hasSyncedRef = useRef(false);
+  const [rawItems, setRawItems] = useState<CartItemWithDetails[]>([]);
 
   // ── Fetch ───────────────────────────────────────────────────────────────
 
@@ -135,8 +140,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 selected: prev.find((p) => p.id === raw.id)?.selected ?? true,
               })),
             );
+
+            setRawItems(res.data.items);
           } else {
             setItems([]);
+            setRawItems([]);
           }
         } else {
           setItems(readLocalCart());
@@ -201,6 +209,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (res.success) await refetchCart();
         return;
       }
+      console.log(meta);
 
       // ── Guest ──
       const local = readLocalCart();
@@ -269,7 +278,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const duplicate = prev.find((i) => i.productVariantId === newVariant.id && i.id !== cartItemId);
 
         if (duplicate) {
-          // Merge: cộng quantity vào duplicate, xóa item hiện tại
           return prev
             .filter((i) => i.id !== cartItemId)
             .map((i) =>
@@ -283,7 +291,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             );
         }
 
-        // Replace in-place
+        // Replace in-place — GIỮ NGUYÊN unitPrice/originalPrice cũ
+        // Chỉ update labels + image để UI không bị NaN
         return prev.map((i) =>
           i.id !== cartItemId
             ? i
@@ -295,9 +304,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 storageLabel: newVariant.storageLabel,
                 color: newVariant.colorLabel,
                 colorValue: newVariant.colorValue ?? newVariant.colorLabel.toLowerCase().replace(/\s+/g, "-"),
-                unitPrice: newVariant.price,
-                originalPrice: newVariant.originalPrice ?? newVariant.price,
-                totalPrice: newVariant.price * i.quantity,
+                // ← GIỮ NGUYÊN: unitPrice, originalPrice, totalPrice
+                // Price sẽ được update đúng sau refetchCart
                 updatedAt: new Date().toISOString(),
               },
         );
@@ -306,37 +314,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (isAuthenticated) {
         try {
           const currentItem = items.find((i) => i.id === cartItemId);
-          const res = (await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
+          await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
             newVariantId: newVariant.id,
             quantity: currentItem?.quantity ?? 1,
-          })) as any;
-
-          if (res?.data) {
-            // Sync lại từ server response — đảm bảo giá đúng
-            const serverItem = res.data;
-            setItems((prev) =>
-              prev.map((i) =>
-                i.id === cartItemId || i.id === serverItem.id
-                  ? {
-                      ...i,
-                      ...transformApiItem(serverItem),
-                      // Lấy finalPrice từ price object server trả về
-                      unitPrice: serverItem.price?.final ?? serverItem.unitPrice,
-                      originalPrice: serverItem.price?.base ?? serverItem.unitPrice,
-                      selected: i.selected,
-                    }
-                  : i,
-              ),
-            );
-          } else {
-            await refetchCart(true);
-          }
+          });
+          // ← KHÔNG gọi refetchCart ở đây
+          // onSuccess trong useVariantSelector sẽ gọi refetchCart
         } catch {
-          await refetchCart(true);
+          await refetchCart(true); // chỉ refetch khi lỗi để rollback
         }
         return;
       }
-
       // ── Guest: persist localStorage ──
       // Đọc lại từ state hiện tại (sau optimistic update)
       setItems((prev) => {
@@ -354,11 +342,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const item = items.find((i) => i.id === cartItemId);
       if (!item) return false;
 
-      if (item.quantity + delta > item.availableQuantity) {
-        return false; // ❗ báo cho UI biết
+      // Chỉ check availableQuantity nếu nó hợp lệ (> 0)
+      if (item.availableQuantity > 0 && item.quantity + delta > item.availableQuantity) {
+        return false;
       }
 
-      const newQty = Math.min(item.availableQuantity, Math.max(1, item.quantity + delta));
+      const newQty = item.availableQuantity > 0 ? Math.min(item.availableQuantity, Math.max(1, item.quantity + delta)) : Math.max(1, item.quantity + delta); // guest: không giới hạn trên
 
       setItems((prev) =>
         prev.map((i) =>
@@ -474,6 +463,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value: CartContextValue = {
     items,
     isLoading,
+    rawItems,
     totalItemCount,
     selectAll,
     selectedItems,
@@ -494,10 +484,4 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-}
-
-export function useCart(): CartContextValue {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
-  return ctx;
 }

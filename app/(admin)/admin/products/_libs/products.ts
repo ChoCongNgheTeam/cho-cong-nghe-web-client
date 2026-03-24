@@ -234,3 +234,7 @@ export const compareProducts = async (ids: string[]): Promise<{ data: CompareRes
 export const getAdminProductStats = async (): Promise<{ data: AdminProductStats }> => {
   return apiRequest.get("/products/admin/stats");
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDIA UPLOAD (dùng cho CKEditor image adapter)
+// ─────────────────────────────────────────────────────────────────────────────

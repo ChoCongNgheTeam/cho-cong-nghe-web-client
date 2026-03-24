@@ -6,25 +6,28 @@ type BadgeProps = {
    label?: string;
    discountPercent?: number;
    className?: string;
+   isUpcoming?: boolean; // true → màu cam/vàng thay vì đỏ
 };
 
-const Badge = ({ label, discountPercent, className }: BadgeProps) => {
+const Badge = ({
+   label,
+   discountPercent,
+   className,
+   isUpcoming,
+}: BadgeProps) => {
    const content =
       typeof discountPercent === "number"
          ? `-${discountPercent}%`
          : (label ?? "Sale");
-
+   const isShortContent = content.length <= 4;
    return (
-      <div className={clsx("absolute top-1 left-1 z-20", className)}>
+      <div className={clsx("absolute top-1 left-1 z-2", className)}>
          <div
-            className="
-          w-10 h-10
-          bg-red-400
-          flex items-center justify-center
-          text-white font-bold text-[14px]
-          rotate-[-15deg]
-          select-none
-        "
+            className={clsx(
+               "w-10 h-10 flex items-center justify-center text-white font-bold rotate-[-15deg] select-none",
+               isShortContent ? "text-[14px]" : "text-[10px]", // ← nhỏ hơn cho "-2tr"
+               isUpcoming ? "bg-orange-400" : "bg-red-400",
+            )}
             style={{
                clipPath: `polygon(
             50% 0%, 60% 12%, 75% 5%, 80% 20%, 95% 25%, 88% 40%,

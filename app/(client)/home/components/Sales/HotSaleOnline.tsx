@@ -167,18 +167,23 @@ function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; 
       </div>
 
       {/* Badge rule label (không phải hôm nay) */}
-      {!day.isToday && ruleLabel && (
+      {/* {!day.isToday && ruleLabel && (
         <div className="mt-1">
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-promotion/10 text-promotion font-medium">{ruleLabel}</span>
+        </div>
+      )} */}
+      {!day.isToday && day.hasActiveSale && (
+        <div className="mt-1">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-promotion/10 text-promotion font-medium">Sắp diễn ra</span>
         </div>
       )}
 
       {/* Badge "Nhiều KM" nếu > 1 promotion */}
-      {day.promotions.length > 1 && (
+      {/* {day.promotions.length > 1 && (
         <div className="absolute -top-1 -right-1">
           <span className="text-[9px] px-1 py-0.5 rounded-full bg-promotion text-white font-bold">{day.promotions.length}</span>
         </div>
-      )}
+      )} */}
     </button>
   );
 }
@@ -291,7 +296,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             </div>
 
             {/* ── Promotion info bar (nếu có nhiều promotion trong ngày) ── */}
-            {currentPromotions.length > 1 && (
+            {/* {currentPromotions.length > 1 && (
               <div className="flex gap-2 px-4 py-2 bg-promotion/5 border-b border-promotion/20 overflow-x-auto [scrollbar-width:none]">
                 {currentPromotions.map((promo) => (
                   <span key={promo.id} className="shrink-0 text-[11px] px-2.5 py-1 rounded-full bg-promotion/10 text-promotion font-medium whitespace-nowrap">
@@ -299,47 +304,90 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                   </span>
                 ))}
               </div>
-            )}
+            )} */}
 
             {/* ── Products ── */}
             <div className="px-4 py-3">
               {loadingDate === activeDate ? (
-                // Loading skeleton
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="rounded-xl border border-neutral bg-neutral-light-active animate-pulse h-52" />
                   ))}
                 </div>
               ) : products.length > 0 ? (
-                <Slidezy
-                  items={{ mobile: 1, tablet: 2, lg: 3, desktop: 4 }}
-                  gap={16}
-                  speed={300}
-                  loop={false}
-                  nav={true}
-                  controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
-                  slideBy={1}
-                  draggable={true}
-                >
-                  {products.map((item, index) => {
-                    // BE trả về { card, pricingContext } — normalize card để có price field
-                    // mà HotSaleProductCard cần (price.hasPromotion, price.final...)
-                    const raw = item.card ?? item;
-                    const product = {
-                      ...raw,
-                      price: raw.price ?? {
-                        base: raw.priceOrigin ?? 0,
-                        final: raw.priceOrigin ?? 0,
-                        discountAmount: 0,
-                        discountPercentage: 0,
-                        hasPromotion: false,
-                      },
-                    };
-                    return <HotSaleProductCard key={product.id ?? index} product={product} index={index} />;
-                  })}
-                </Slidezy>
+                products.length <= 4 ? (
+                  // ít card → dùng grid cố định 4 cột, card không bị stretch
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
+                    {products.map((item, index) => {
+                      const raw = item.card ?? item;
+                      const product = {
+                        ...raw,
+                        price: raw.price ?? {
+                          base: raw.priceOrigin ?? 0,
+                          final: raw.priceOrigin ?? 0,
+                          discountAmount: 0,
+                          discountPercentage: 0,
+                          hasPromotion: false,
+                        },
+                      };
+                      const flashPromoRule =
+                        activeDay?.promotions?.flatMap((p) => p.rules).find((r) => (r.actionType === "DISCOUNT_PERCENT" || r.actionType === "DISCOUNT_FIXED") && r.discountValue != null) ?? null;
+
+                      const isUpcoming = !!activeDay && !activeDay.isToday;
+
+                      return (
+                        <HotSaleProductCard
+                          key={`${product.id}-${index}`}
+                          product={product}
+                          index={index}
+                          flashPromoRule={flashPromoRule} // ← đổi prop
+                          isUpcoming={isUpcoming}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // nhiều card → dùng slider
+                  <Slidezy
+                    items={{ mobile: 1, tablet: 2, lg: 3, desktop: 4 }}
+                    gap={16}
+                    speed={300}
+                    loop={false}
+                    nav={true}
+                    controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
+                    slideBy={1}
+                    draggable={true}
+                  >
+                    {products.map((item, index) => {
+                      const raw = item.card ?? item;
+                      const product = {
+                        ...raw,
+                        price: raw.price ?? {
+                          base: raw.priceOrigin ?? 0,
+                          final: raw.priceOrigin ?? 0,
+                          discountAmount: 0,
+                          discountPercentage: 0,
+                          hasPromotion: false,
+                        },
+                      };
+                      const flashPromoRule =
+                        activeDay?.promotions?.flatMap((p) => p.rules).find((r) => (r.actionType === "DISCOUNT_PERCENT" || r.actionType === "DISCOUNT_FIXED") && r.discountValue != null) ?? null;
+
+                      const isUpcoming = !!activeDay && !activeDay.isToday;
+
+                      return (
+                        <HotSaleProductCard
+                          key={`${product.id}-${index}`}
+                          product={product}
+                          index={index}
+                          flashPromoRule={flashPromoRule} // ← đổi prop
+                          isUpcoming={isUpcoming}
+                        />
+                      );
+                    })}
+                  </Slidezy>
+                )
               ) : (
-                // Empty state cho tab ngày chưa có sale / tab "Sắp diễn ra"
                 <div className="flex flex-col items-center justify-center py-10 gap-2">
                   <Flame className="w-10 h-10 text-neutral opacity-30" />
                   <p className="text-[13px] text-neutral-dark">{activeDay?.hasActiveSale ? "Đang tải sản phẩm..." : "Chương trình sale sắp diễn ra"}</p>

@@ -6,7 +6,7 @@ import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
-import type { Campaign } from "./campaign.types";
+import type { Campaign, CampaignType } from "./campaign.types";
 import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_libs/campaigns";
 import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
 import { getCampaignColumns } from "./components/TableCampaigns";
@@ -39,6 +39,7 @@ const STATUS_TABS = [
   { value: "expired", label: "Đã kết thúc" },
   { value: "inactive", label: "Tạm dừng" },
 ];
+type SortField = "createdAt" | "name" | "startDate" | "endDate" | "publishedAt" | undefined;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -55,8 +56,9 @@ export default function CampaignsPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(undefined);
+
+  const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -90,7 +92,7 @@ export default function CampaignsPage() {
     if (tab === "inactive") return { isActive: false };
     if (tab === "upcoming") return { isActive: true }; // BE filter by startDate > now
     if (tab === "expired") return { isActive: undefined };
-    return { isActive: undefined };
+    return {};
   };
 
   // ── Fetch (server-side) ───────────────────────────────────────────────────────
@@ -102,13 +104,13 @@ export default function CampaignsPage() {
         page,
         limit: pageSize,
         search: search || undefined,
-        type: typeFilter || undefined,
+        type: typeFilter,
         sortBy,
         sortOrder,
         ...tabToParams(activeTab),
       });
       setCampaigns(res.data);
-      setMeta(res.meta);
+      setMeta(res.meta as CampaignMeta);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách chiến dịch");
     } finally {
@@ -130,7 +132,7 @@ export default function CampaignsPage() {
     setSearch("");
     setSearchInput("");
     setActiveTab("ALL");
-    setTypeFilter("");
+    setTypeFilter(undefined);
     setSortBy("createdAt");
     setSortOrder("desc");
     resetPage();
@@ -228,7 +230,7 @@ export default function CampaignsPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Chiến dịch</h1>
-            <p className="text-[12px] text-neutral-dark">Quản lý chiến dịch marketing và danh mục nổi bật</p>
+            <p className="text-[12px] text-primary">Quản lý chiến dịch marketing và danh mục nổi bật</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -238,7 +240,6 @@ export default function CampaignsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <Link href="/admin/campaigns/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all">
             <Plus size={15} />
@@ -268,11 +269,11 @@ export default function CampaignsPage() {
                 resetPage();
               }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                 {meta.statusCounts[tab.value as keyof typeof meta.statusCounts] ?? 0}
               </span>
             </button>
@@ -282,7 +283,7 @@ export default function CampaignsPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -302,7 +303,7 @@ export default function CampaignsPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -312,10 +313,7 @@ export default function CampaignsPage() {
           {/* Type filter */}
           <select
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              resetPage();
-            }}
+            onChange={(e) => setTypeFilter(e.target.value === "" ? undefined : (e.target.value as CampaignType))}
             className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
           >
             {TYPE_OPTIONS.map((opt) => (
@@ -352,7 +350,7 @@ export default function CampaignsPage() {
             </button>
             {showSortDropdown && (
               <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -393,20 +391,20 @@ export default function CampaignsPage() {
           {(hasActiveFilters || hasSortFilter) && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} chiến dịch</span>
+          <span className="ml-auto text-[12px] text-primary">{meta.total} chiến dịch</span>
         </div>
 
         {/* ── Selection bar ── */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} chiến dịch</span>
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer">
               Bỏ chọn
             </button>
             <button
@@ -424,7 +422,7 @@ export default function CampaignsPage() {
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <p className="text-[13px] text-primary">{error}</p>
             <button onClick={fetchCampaigns} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thử lại
             </button>
@@ -435,8 +433,8 @@ export default function CampaignsPage() {
           </div>
         ) : campaigns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Megaphone size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có chiến dịch nào"}</p>
+            <Megaphone size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có chiến dịch nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xoá bộ lọc
@@ -455,7 +453,7 @@ export default function CampaignsPage() {
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <span className="text-[12px] text-primary">Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -470,7 +468,7 @@ export default function CampaignsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {meta.total} chiến dịch</span>
+              <span className="text-[12px] text-primary">/ {meta.total} chiến dịch</span>
             </div>
             <AdminPagination
               currentPage={meta.page}

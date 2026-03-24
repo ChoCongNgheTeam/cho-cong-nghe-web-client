@@ -22,6 +22,18 @@ const STATUS_DROPDOWN = [
   { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" },
 ];
 
+const formatDateVN = (dateStr?: string) => {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 export function getPromotionColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick }: GetPromotionColumnsParams): AdminColumn<Promotion>[] {
   return [
     {
@@ -104,8 +116,8 @@ export function getPromotionColumns({ page, pageSize, selected, openStatusId, to
       label: "Thời hạn",
       render: (promotion) => (
         <div className="space-y-0.5">
-          <div className="text-[11px] text-neutral-dark">{promotion.startDate ? <span>Từ {formatDate(promotion.startDate)}</span> : <span className="italic">Không giới hạn bắt đầu</span>}</div>
-          <div className="text-[11px] text-neutral-dark">{promotion.endDate ? <span>Đến {formatDate(promotion.endDate)}</span> : <span className="italic">Không giới hạn kết thúc</span>}</div>
+          <div className="text-[11px] text-neutral-dark">{promotion.startDate ? <span>Từ {formatDateVN(promotion.startDate)}</span> : <span className="italic">Không giới hạn bắt đầu</span>}</div>
+          <div className="text-[11px] text-neutral-dark">{promotion.endDate ? <span>Đến {formatDateVN(promotion.endDate)}</span> : <span className="italic">Không giới hạn kết thúc</span>}</div>
         </div>
       ),
     },

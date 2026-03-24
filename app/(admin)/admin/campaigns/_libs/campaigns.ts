@@ -6,8 +6,13 @@ interface CampaignResponse {
   message: string;
 }
 
+interface CampaignMeta {
+  total: number;
+}
+
 interface CampaignsResponse {
   data: Campaign[];
+  meta: CampaignMeta;
   message: string;
 }
 

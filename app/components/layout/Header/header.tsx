@@ -34,9 +34,6 @@ const Header = () => {
    const lastScrollY = useRef(0);
    const ticking = useRef(false);
    const scrollAccum = useRef(0);
-   // Store the initial height once — never changes after first measure
-   const initialHeightRef = useRef(0);
-   // Track isPastTop in a ref to avoid stale closure issues in scroll handler
    const isPastTopRef = useRef(false);
    const isVisibleRef = useRef(true);
 
@@ -44,33 +41,14 @@ const Header = () => {
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
 
-   // Measure header height ONCE on mount, then never update from ResizeObserver.
-   // The placeholder keeps the document flow stable.
-
-   useEffect(() => {
-      if (!headerRef.current) return;
-      // Đợi transition xong (300ms) mới đo
-      const timer = setTimeout(() => {
-         const h = headerRef.current!.offsetHeight;
-         if (h > 0) {
-            document.documentElement.style.setProperty(
-               "--header-height",
-               `${h}px`,
-            );
-         }
-      }, 310);
-      return () => clearTimeout(timer);
-   }, [isPastTop]);
-
+   // ResizeObserver liên tục cập nhật placeholder height theo header thực tế
+   // Xử lý đúng cả khi resize window (desktop <-> mobile)
    useEffect(() => {
       if (!headerRef.current) return;
 
-      const measureOnce = () => {
-         if (initialHeightRef.current > 0) return; // already measured
-         const h = headerRef.current!.offsetHeight;
-         if (h === 0) return; // not painted yet
-         initialHeightRef.current = h;
-         // Set placeholder height via DOM — no React state, no re-render
+      const updateHeight = () => {
+         const h = headerRef.current?.offsetHeight;
+         if (!h) return;
          if (placeholderRef.current) {
             placeholderRef.current.style.height = `${h}px`;
          }
@@ -80,26 +58,15 @@ const Header = () => {
          );
       };
 
-      // Use ResizeObserver only to catch the first non-zero paint
-      const observer = new ResizeObserver(() => {
-         if (initialHeightRef.current === 0) {
-            measureOnce();
-         }
-         // Once we have an initial height, disconnect — we don't want
-         // ResizeObserver firing during scroll and causing reflows.
-         if (initialHeightRef.current > 0) {
-            observer.disconnect();
-         }
-      });
+      updateHeight();
 
+      const observer = new ResizeObserver(updateHeight);
       observer.observe(headerRef.current);
-      measureOnce(); // try immediately too
 
       return () => observer.disconnect();
    }, []);
 
-   // Keep --header-visible CSS variable in sync without extra renders
-   // We drive visibility purely via transform (no height/max-height changes).
+   // Sync --header-visible CSS variable
    useEffect(() => {
       document.documentElement.style.setProperty(
          "--header-visible",
@@ -121,15 +88,13 @@ const Header = () => {
             const diff = currentScrollY - lastScrollY.current;
             lastScrollY.current = currentScrollY;
 
-            // --- isPastTop ---
-            const nextIsPastTop =
-               currentScrollY > (initialHeightRef.current || 60);
+            const headerH = headerRef.current?.offsetHeight || 60;
+            const nextIsPastTop = currentScrollY > headerH;
             if (nextIsPastTop !== isPastTopRef.current) {
                isPastTopRef.current = nextIsPastTop;
                setIsPastTop(nextIsPastTop);
             }
 
-            // Always show header near the top
             if (currentScrollY < MIN_SCROLL_Y) {
                if (!isVisibleRef.current) {
                   isVisibleRef.current = true;
@@ -157,7 +122,6 @@ const Header = () => {
                scrollAccum.current > HIDE_THRESHOLD ||
                scrollAccum.current < -SHOW_THRESHOLD
             ) {
-               // Reset accumulator even when state didn't change to prevent drift
                scrollAccum.current = 0;
             }
 
@@ -203,11 +167,6 @@ const Header = () => {
                isVisible ? "translate-y-0" : "-translate-y-full",
             ].join(" ")}
          >
-            {/*
-               HeaderTop: hidden via opacity + pointer-events + translateY only.
-               NO max-height / height animation — those trigger layout reflow
-               and cause scroll position jitter via ResizeObserver feedback loops.
-            */}
             <div
                className={[
                   "transition-all duration-300",

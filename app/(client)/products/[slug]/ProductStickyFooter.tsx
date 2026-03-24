@@ -36,7 +36,7 @@ interface ProductStickyFooterProps {
   selectedVariant?: ProductVariant;
   selectedPrice?: Price;
   quantity?: number;
-  /** ref của infoRef (hero section) — khi khuất viewport thì footer hiện */
+  /** ref của infoRef (hero section) — khi khuất viewport thì footer hiện (desktop only) */
   infoRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -50,18 +50,36 @@ export default function ProductStickyFooter({
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
-  const [visible, setVisible] = useState(false);
 
-  /* ── Hiện khi hero section khuất khỏi viewport ─────────────────────── */
+  /**
+   * visible logic:
+   * - mobile (< lg): luôn hiện (visible = true)
+   * - desktop (>= lg): hiện khi hero section khuất khỏi viewport
+   */
+  const [heroHidden, setHeroHidden] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile/desktop
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // IntersectionObserver cho desktop
   useEffect(() => {
     if (!infoRef?.current) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setVisible(!entry.isIntersecting),
+      ([entry]) => setHeroHidden(!entry.isIntersecting),
       { threshold: 0 },
     );
     observer.observe(infoRef.current);
     return () => observer.disconnect();
   }, [infoRef]);
+
+  const visible = isMobile ? true : heroHidden;
 
   /* ── Price ─────────────────────────────────────────────────────────── */
   const activePrice = selectedPrice || product.price;
@@ -112,7 +130,7 @@ export default function ProductStickyFooter({
   /* ── Render ─────────────────────────────────────────────────────────── */
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50
+      className={`fixed bottom-0 left-0 right-0 z-10
         border-t border-neutral bg-neutral-light
         shadow-[0_-4px_24px_rgba(0,0,0,0.08)]
         transition-transform duration-300 ease-in-out

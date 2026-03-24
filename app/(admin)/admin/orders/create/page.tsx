@@ -96,7 +96,7 @@ const rsStyles = (hasError?: boolean) => ({
 
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-neutral-light border border-neutral rounded-2xl shadow-sm">
       <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-neutral bg-neutral-light-active/50">
         <span className="text-accent">{icon}</span>
         <p className="text-[13px] font-semibold text-primary">{title}</p>
@@ -219,28 +219,70 @@ export default function CreateOrderPage() {
   // VD: variants của iPhone 13 → { color: ["black","white","green"], storage: ["128gb","256gb","512gb"] }
   // ─────────────────────────────────────────────────────────────────────────
 
+  /**
+   * attrGroups: build từ TẤT CẢ variants (kể cả unavailable).
+   * Mỗi option có thêm field `enabled` = có ít nhất 1 variant available khi kết hợp với selection hiện tại.
+   *
+   * Logic disable cross-dependency:
+   * - Khi chọn màu X → storage Y disabled nếu không có variant {color=X, storage=Y, available=true}
+   * - Khi chọn storage Y → màu X disabled nếu không có variant {color=X, storage=Y, available=true}
+   */
   const attrGroups = (() => {
     if (!variants.length) return [];
-    const groups: Record<string, { code: string; label: string; values: { value: string; label: string; imageUrl?: string | null }[] }> = {};
+
+    // Thu thập tất cả unique values (kể cả unavailable)
+    const colorMap = new Map<string, { value: string; label: string; imageUrl: string | null }>();
+    const storageMap = new Map<string, { value: string; label: string }>();
 
     for (const v of variants) {
-      if (!v.available) continue;
-      // Color
-      if (v.colorValue) {
-        if (!groups.color) groups.color = { code: "color", label: "Màu sắc", values: [] };
-        if (!groups.color.values.find((x) => x.value === v.colorValue)) {
-          groups.color.values.push({ value: v.colorValue, label: v.colorLabel || v.colorValue, imageUrl: v.imageUrl });
-        }
+      if (v.colorValue && !colorMap.has(v.colorValue)) {
+        colorMap.set(v.colorValue, { value: v.colorValue, label: v.colorLabel || v.colorValue, imageUrl: v.imageUrl });
       }
-      // Storage
-      if (v.storageValue) {
-        if (!groups.storage) groups.storage = { code: "storage", label: "Dung lượng", values: [] };
-        if (!groups.storage.values.find((x) => x.value === v.storageValue)) {
-          groups.storage.values.push({ value: v.storageValue, label: v.storageLabel || v.storageValue });
-        }
+      if (v.storageValue && !storageMap.has(v.storageValue)) {
+        storageMap.set(v.storageValue, { value: v.storageValue, label: v.storageLabel || v.storageValue });
       }
     }
-    return Object.values(groups);
+
+    const groups = [];
+
+    // Color group — enabled nếu có variant available với storage đang chọn
+    if (colorMap.size > 0) {
+      groups.push({
+        code: "color",
+        label: "Màu sắc",
+        values: Array.from(colorMap.values()).map((c) => ({
+          ...c,
+          enabled: variants.some(
+            (v) =>
+              v.colorValue === c.value &&
+              v.available &&
+              // Nếu đang chọn storage rồi → phải match storage đó
+              (!selectedAttrs.storage || v.storageValue === selectedAttrs.storage),
+          ),
+        })),
+      });
+    }
+
+    // Storage group — enabled nếu có variant available với color đang chọn
+    if (storageMap.size > 0) {
+      groups.push({
+        code: "storage",
+        label: "Dung lượng",
+        values: Array.from(storageMap.values()).map((s) => ({
+          ...s,
+          imageUrl: null as string | null,
+          enabled: variants.some(
+            (v) =>
+              v.storageValue === s.value &&
+              v.available &&
+              // Nếu đang chọn màu rồi → phải match màu đó
+              (!selectedAttrs.color || v.colorValue === selectedAttrs.color),
+          ),
+        })),
+      });
+    }
+
+    return groups;
   })();
 
   // Tìm variant khớp với selectedAttrs
@@ -475,7 +517,7 @@ export default function CreateOrderPage() {
         <span className="text-[13px] text-primary font-medium">Tạo đơn mới</span>
       </div>
 
-      <div className="px-6 py-4 max-w-5xl mx-auto">
+      <div className="px-6">
         <div className="mb-5">
           <h1 className="text-[20px] font-bold text-primary">Tạo đơn hàng mới</h1>
           <p className="text-[13px] text-neutral-dark mt-1">Tạo đơn hàng thủ công từ admin panel.</p>
@@ -534,7 +576,7 @@ export default function CreateOrderPage() {
                     {errors.user && <p className="text-[11px] text-promotion mt-1">{errors.user}</p>}
 
                     {userResults.length > 0 && !selectedUser && (
-                      <div className="top-full left-0 right-0 mt-1 z-50 bg-neutral-light border border-neutral rounded-xl shadow-lg py-1 max-h-52 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-neutral-light border border-neutral rounded-xl shadow-lg py-1 max-h-52 overflow-y-auto">
                         {userResults.map((u) => (
                           <button
                             key={u.id}
@@ -671,7 +713,7 @@ export default function CreateOrderPage() {
                 </div>
 
                 {showProductDropdown && productResults.length > 0 && (
-                  <div className=" top-full left-0 right-0 mt-1 z-50 bg-neutral-light border border-neutral rounded-xl shadow-lg py-1 max-h-64 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-neutral-light border border-neutral rounded-xl shadow-lg py-1 max-h-64 overflow-y-auto">
                     {productResults.map((p) => (
                       <button key={p.id} onClick={() => handleSelectProduct(p)} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-light-active cursor-pointer text-left">
                         <div className="w-9 h-9 rounded-lg overflow-hidden border border-neutral bg-neutral-light-active shrink-0">
@@ -724,17 +766,34 @@ export default function CreateOrderPage() {
                           <div className="flex flex-wrap gap-2">
                             {group.values.map((val) => {
                               const isSelected = selectedAttrs[group.code] === val.value;
+                              const isEnabled = (val as any).enabled !== false;
                               return (
                                 <button
                                   key={val.value}
-                                  onClick={() => setSelectedAttrs((p) => ({ ...p, [group.code]: val.value }))}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] transition-all cursor-pointer ${isSelected ? "border-accent bg-accent/10 text-accent font-semibold" : "border-neutral hover:border-accent/50 text-primary"}`}
+                                  onClick={() => isEnabled && setSelectedAttrs((p) => ({ ...p, [group.code]: val.value }))}
+                                  disabled={!isEnabled}
+                                  title={!isEnabled ? "Không có sẵn với lựa chọn hiện tại" : val.label}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] transition-all relative ${
+                                    !isEnabled
+                                      ? "border-neutral/40 text-neutral-dark/40 bg-neutral-light-active/50 cursor-not-allowed line-through"
+                                      : isSelected
+                                        ? "border-accent bg-accent/10 text-accent font-semibold cursor-pointer"
+                                        : "border-neutral hover:border-accent/50 text-primary cursor-pointer"
+                                  }`}
                                 >
-                                  {group.code === "color" && val.imageUrl && <Image src={val.imageUrl} alt="" width={16} height={16} className="rounded object-contain" unoptimized />}
-                                  {group.code === "color" && !val.imageUrl && val.value && (
-                                    <span className="w-3.5 h-3.5 rounded-full border border-neutral/50 shrink-0" style={{ background: val.value }} />
+                                  {group.code === "color" && (val as any).imageUrl && (
+                                    <Image src={(val as any).imageUrl} alt="" width={16} height={16} className={`rounded object-contain ${!isEnabled ? "opacity-40" : ""}`} unoptimized />
+                                  )}
+                                  {group.code === "color" && !(val as any).imageUrl && val.value && (
+                                    <span className={`w-3.5 h-3.5 rounded-full border border-neutral/50 shrink-0 ${!isEnabled ? "opacity-40" : ""}`} style={{ background: val.value }} />
                                   )}
                                   {val.label}
+                                  {/* Gạch chéo overlay khi disabled */}
+                                  {!isEnabled && (
+                                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="w-full h-px bg-neutral-dark/30 rotate-[-20deg] absolute" />
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}

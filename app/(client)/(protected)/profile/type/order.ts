@@ -74,6 +74,10 @@ export interface OrderItem {
   unitPrice: string;
   image: string | null;
   productVariant: ProductVariant | null;
+  // Review fields
+  canReview: boolean;
+  reviewId: string | null;
+  reviewStatus: string | null;
 }
 
 // ========================= VARIANT =========================

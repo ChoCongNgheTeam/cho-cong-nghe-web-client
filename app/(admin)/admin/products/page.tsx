@@ -34,7 +34,8 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS)[number]["order"]}`;
-
+type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+type SortOrder = (typeof SORT_OPTIONS)[number]["order"];
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ export default function ProductsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const [sortBy, sortOrder] = sortKey.split("_") as [string, "asc" | "desc"];
+  const [sortBy, sortOrder] = sortKey.split("_") as [SortValue, SortOrder];
 
   const tabToParams = (tab: string) => {
     if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
@@ -269,7 +270,7 @@ export default function ProductsPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Sản phẩm</h1>
-            <p className="text-[12px] text-neutral-dark">Quản lý toàn bộ sản phẩm trong hệ thống</p>
+            <p className="text-[13px] text-primary">Quản lý toàn bộ sản phẩm trong hệ thống</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -279,7 +280,6 @@ export default function ProductsPage() {
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Làm mới
           </button>
           <Link
             href="/admin/products/create"
@@ -316,11 +316,11 @@ export default function ProductsPage() {
               key={tab.value}
               onClick={() => handleTabChange(tab.value)}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                 {meta.statusCounts[tab.value] ?? 0}
               </span>
             </button>
@@ -330,7 +330,7 @@ export default function ProductsPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -344,7 +344,7 @@ export default function ProductsPage() {
               className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
             />
             {searchInput && (
-              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer">
+              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer">
                 <X size={13} />
               </button>
             )}
@@ -375,7 +375,7 @@ export default function ProductsPage() {
             </button>
             {showSortDropdown && (
               <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
                 {SORT_OPTIONS.map((opt) => {
                   const key = `${opt.value}_${opt.order}` as SortKey;
                   return (
@@ -417,10 +417,10 @@ export default function ProductsPage() {
             </button>
             {showDatePicker && (
               <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
-                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Khoảng thời gian</p>
+                <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Khoảng thời gian</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[11px] text-neutral-dark">Từ ngày</label>
+                    <label className="text-[11px] text-primary">Từ ngày</label>
                     <input
                       type="date"
                       value={dateFrom}
@@ -430,7 +430,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] text-neutral-dark">Đến ngày</label>
+                    <label className="text-[11px] text-primary">Đến ngày</label>
                     <input
                       type="date"
                       value={dateTo}
@@ -462,13 +462,13 @@ export default function ProductsPage() {
           {(hasActiveFilters || hasSortFilter) && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} sản phẩm</span>
+          <span className="ml-auto text-[12px] text-primary">{meta.total} sản phẩm</span>
         </div>
 
         {/* ── Bulk action bar ── */}
@@ -500,7 +500,7 @@ export default function ProductsPage() {
               <button
                 onClick={() => handleBulkAction("unfeature")}
                 disabled={bulkLoading}
-                className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
               >
                 Bỏ nổi bật
               </button>
@@ -513,7 +513,7 @@ export default function ProductsPage() {
               </button>
             </div>
             {bulkLoading && <Loader2 size={13} className="animate-spin text-accent" />}
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer ml-auto">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer ml-auto">
               Bỏ chọn
             </button>
           </div>
@@ -536,8 +536,8 @@ export default function ProductsPage() {
           </div>
         ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Package size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
+            <Package size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xóa bộ lọc
@@ -556,7 +556,7 @@ export default function ProductsPage() {
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <span className="text-[12px] text-primary">Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -571,7 +571,7 @@ export default function ProductsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {meta.total} sản phẩm</span>
+              <span className="text-[12px] text-primary">/ {meta.total} sản phẩm</span>
             </div>
             <AdminPagination
               currentPage={meta.page}
@@ -605,7 +605,7 @@ export default function ProductsPage() {
               <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xóa sản phẩm?</h3>
               <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xóa</p>
               <p className="text-[14px] font-semibold text-primary text-center mb-2">"{deleteTarget.name}"</p>
-              <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau.</p>
+              <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau.</p>
               {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
               <div className="flex gap-2">
                 <button

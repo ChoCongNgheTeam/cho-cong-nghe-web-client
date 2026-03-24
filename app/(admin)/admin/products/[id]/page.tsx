@@ -1,15 +1,72 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Pencil, Trash2, Package, Star, CheckCircle2, EyeOff, Loader2, ArchiveRestore, ShoppingCart, ImageOff, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Package,
+  Star,
+  CheckCircle2,
+  EyeOff,
+  Loader2,
+  ArchiveRestore,
+  ShoppingCart,
+  ImageOff,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown,
+  Clock,
+  User,
+  RefreshCw,
+} from "lucide-react";
 import { getProduct, softDeleteProduct, restoreProduct } from "../_libs/products";
 import { usePopzy } from "@/components/Modal/usePopzy";
 import { Popzy } from "@/components/Modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
 import { formatDate, formatVND } from "@/helpers";
+import apiRequest from "@/lib/api";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Comment {
+  id: string;
+  userId: string;
+  content: string;
+  targetType: string;
+  targetId: string;
+  isApproved: boolean;
+  createdAt: string;
+  user: { id: string; fullName: string; email: string; avatarImage?: string | null };
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string | null;
+  isApproved: "PENDING" | "APPROVED" | "REJECTED";
+  createdAt: string;
+  user: { id: string; fullName: string; avatarImage?: string | null };
+  orderItem: {
+    id: string;
+    quantity: number;
+    unitPrice: string | number;
+    productVariant: { id: string; code: string; product: { name: string } };
+  };
+}
+
+interface ReviewStats {
+  average: number;
+  total: number;
+  distribution: Record<number, number>;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -53,35 +110,32 @@ function VariantsTable({ variants }: { variants: ProductVariant[] }) {
       <table className="w-full text-[12px]">
         <thead>
           <tr className="border-b border-neutral">
-            <th className="text-left py-2 px-3 font-semibold text-neutral-dark">SKU</th>
-            <th className="text-left py-2 px-3 font-semibold text-neutral-dark">Thuộc tính</th>
-            <th className="text-right py-2 px-3 font-semibold text-neutral-dark">Giá</th>
-            <th className="text-right py-2 px-3 font-semibold text-neutral-dark">Tồn</th>
-            <th className="text-right py-2 px-3 font-semibold text-neutral-dark">Bán</th>
-            <th className="text-center py-2 px-3 font-semibold text-neutral-dark">Trạng thái</th>
+            <th className="text-left py-2 px-3 font-semibold text-primary">SKU</th>
+            <th className="text-left py-2 px-3 font-semibold text-primary">Thuộc tính</th>
+            <th className="text-right py-2 px-3 font-semibold text-primary">Giá</th>
+            <th className="text-right py-2 px-3 font-semibold text-primary">Tồn</th>
+            <th className="text-right py-2 px-3 font-semibold text-primary">Bán</th>
+            <th className="text-center py-2 px-3 font-semibold text-primary">Trạng thái</th>
           </tr>
         </thead>
         <tbody>
           {variants.map((v) => {
-            const attrs = v.variantAttributes.map((va) => va.attributeOption.label).join(" / ");
+            const attrs = v.variantAttributes?.map((a) => a.attributeOption.value).join(" · ") ?? "";
             const isDeleted = !!v.deletedAt;
             return (
-              <tr key={v.id} className={`border-b border-neutral/50 ${isDeleted ? "opacity-40" : ""} ${v.isDefault ? "bg-accent/5" : ""}`}>
-                <td className="py-2 px-3 font-mono text-[11px] text-neutral-dark">
-                  {v.code ?? "—"}
-                  {v.isDefault && <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] bg-accent/10 text-accent font-semibold">default</span>}
-                </td>
-                <td className="py-2 px-3 text-primary">{attrs || "—"}</td>
-                <td className="py-2 px-3 text-right font-semibold text-accent">{formatVND(Number(v.price))}</td>
-                <td className="py-2 px-3 text-right text-primary">{v.quantity}</td>
-                <td className="py-2 px-3 text-right text-neutral-dark">{v.soldCount}</td>
+              <tr key={v.id} className={`border-b border-neutral/40 ${isDeleted ? "opacity-40" : "hover:bg-neutral-light-active/50"}`}>
+                <td className="py-2 px-3 font-mono text-[13px] text-accent">{v.code}</td>
+                <td className="py-2 px-3 text-primary">{attrs || <span className="text-primary italic">Default</span>}</td>
+                <td className="py-2 px-3 text-right font-semibold">{formatVND(Number(v.price))}</td>
+                <td className="py-2 px-3 text-right">{v.quantity}</td>
+                <td className="py-2 px-3 text-right">{v.soldCount}</td>
                 <td className="py-2 px-3 text-center">
                   {isDeleted ? (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-red-50 text-red-500">Đã xóa</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-50 text-red-500">Đã xóa</span>
                   ) : v.isActive ? (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-600">Active</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-600">Active</span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-orange-50 text-orange-500">Ẩn</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-orange-50 text-orange-500">Ẩn</span>
                   )}
                 </td>
               </tr>
@@ -93,15 +147,260 @@ function VariantsTable({ variants }: { variants: ProductVariant[] }) {
   );
 }
 
-function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+function Section({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-5 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer">
-        <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">{title}</p>
-        {open ? <ChevronUp size={14} className="text-neutral-dark" /> : <ChevronDown size={14} className="text-neutral-dark" />}
+        <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">{title}</p>
+        {open ? <ChevronUp size={14} className="text-primary" /> : <ChevronDown size={14} className="text-primary" />}
       </button>
       {open && <div className="px-5 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+function StarRow({ rating, count, total }: { rating: number; count: number; total: number }) {
+  const pct = total > 0 ? (count / total) * 100 : 0;
+  return (
+    <div className="flex items-center gap-2 text-[12px]">
+      <span className="w-4 text-right text-primary">{rating}</span>
+      <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />
+      <div className="flex-1 h-1.5 bg-neutral rounded-full overflow-hidden">
+        <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-6 text-right text-primary">{count}</span>
+    </div>
+  );
+}
+
+function ReviewStatusBadge({ status }: { status: string }) {
+  const cfg: Record<string, { label: string; cls: string }> = {
+    APPROVED: { label: "Đã duyệt", cls: "bg-emerald-50 text-emerald-600" },
+    PENDING: { label: "Chờ duyệt", cls: "bg-amber-50 text-amber-600" },
+    REJECTED: { label: "Từ chối", cls: "bg-red-50 text-red-500" },
+  };
+  const c = cfg[status] ?? cfg.PENDING;
+  return <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${c.cls}`}>{c.label}</span>;
+}
+
+function UserAvatar({ user }: { user: { fullName: string; avatarImage?: string | null } }) {
+  return user.avatarImage ? (
+    <Image src={user.avatarImage} alt={user.fullName} width={28} height={28} className="rounded-full object-cover shrink-0" unoptimized />
+  ) : (
+    <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[13px] font-bold shrink-0">{user.fullName?.[0]?.toUpperCase() ?? "U"}</div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABS: Comments + Reviews
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CommentsTab({ productId }: { productId: string }) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiRequest.get<any>("/comments", {
+        params: { targetType: "PRODUCT", targetId: productId, limit: 50, sortOrder: "desc" },
+      });
+      // Response: { data: [...], pagination: { total, ... } }
+      const data = Array.isArray(res) ? res : Array.isArray(res.data) ? res.data : [];
+      const tot = res.pagination?.total ?? data.length;
+      setComments(data);
+      setTotal(tot);
+    } catch {
+      setComments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 size={18} className="animate-spin text-accent" />
+      </div>
+    );
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[12px] text-primary">{total} bình luận</p>
+        <button onClick={load} className="flex items-center gap-1 text-[13px] text-accent hover:underline cursor-pointer">
+          <RefreshCw size={11} /> Làm mới
+        </button>
+      </div>
+
+      {comments.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-8">
+          <MessageSquare size={28} className="text-primary opacity-30" />
+          <p className="text-[13px] text-primary">Chưa có bình luận nào</p>
+        </div>
+      ) : (
+        comments.map((c) => (
+          <div key={c.id} className="flex items-start gap-2.5 py-2.5 border-b border-neutral/50 last:border-0">
+            <UserAvatar user={c.user} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[12px] font-semibold text-primary">{c.user.fullName}</span>
+                <span className="text-[13px] text-primary">{c.user.email}</span>
+                {c.isApproved ? (
+                  <span className="flex items-center gap-0.5 text-[10px] text-emerald-600">
+                    <ThumbsUp size={9} /> Đã duyệt
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-0.5 text-[10px] text-amber-500">
+                    <Clock size={9} /> Chờ duyệt
+                  </span>
+                )}
+              </div>
+              <p className="text-[13px] text-primary mt-0.5 leading-relaxed">{c.content}</p>
+              <p className="text-[13px] text-primary mt-0.5">{formatDate(c.createdAt)}</p>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function ReviewsTab({ productId }: { productId: string }) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiRequest.get<any>(`/reviews/product/${productId}`);
+      // Response: { data: Review[], stats: { average, total, distribution }, total }
+      const data = Array.isArray(res) ? res : Array.isArray(res.data) ? res.data : [];
+      setReviews(data);
+      if (res.stats) setStats(res.stats);
+      else {
+        // Fallback: tính stats từ data
+        const total = data.length;
+        const avg = total > 0 ? data.reduce((s: number, r: Review) => s + r.rating, 0) / total : 0;
+        const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        for (const r of data) if (r.rating >= 1 && r.rating <= 5) dist[r.rating]++;
+        setStats({ average: parseFloat(avg.toFixed(2)), total, distribution: dist });
+      }
+    } catch {
+      setReviews([]);
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 size={18} className="animate-spin text-accent" />
+      </div>
+    );
+
+  return (
+    <div className="space-y-4">
+      {/* Stats summary */}
+      {stats && stats.total > 0 && (
+        <div className="flex items-start gap-6 p-4 rounded-xl bg-neutral-light-active border border-neutral">
+          <div className="text-center shrink-0">
+            <p className="text-[32px] font-black text-amber-500">{stats.average.toFixed(1)}</p>
+            <div className="flex items-center justify-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star key={s} size={12} className={s <= Math.round(stats.average) ? "text-amber-400 fill-amber-400" : "text-neutral"} />
+              ))}
+            </div>
+            <p className="text-[13px] text-primary mt-0.5">{stats.total} đánh giá</p>
+          </div>
+          <div className="flex-1 space-y-1.5">
+            {[5, 4, 3, 2, 1].map((r) => (
+              <StarRow key={r} rating={r} count={stats.distribution[r] ?? 0} total={stats.total} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <p className="text-[12px] text-primary">{stats?.total ?? 0} đánh giá được duyệt</p>
+        <button onClick={load} className="flex items-center gap-1 text-[13px] text-accent hover:underline cursor-pointer">
+          <RefreshCw size={11} /> Làm mới
+        </button>
+      </div>
+
+      {reviews.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-8">
+          <Star size={28} className="text-primary opacity-30" />
+          <p className="text-[13px] text-primary">Chưa có đánh giá nào được duyệt</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {reviews.map((r) => (
+            <div key={r.id} className="flex items-start gap-2.5 py-3 border-b border-neutral/50 last:border-0">
+              <UserAvatar user={r.user} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[12px] font-semibold text-primary">{r.user.fullName}</span>
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} size={10} className={s <= r.rating ? "text-amber-400 fill-amber-400" : "text-neutral"} />
+                    ))}
+                  </div>
+                  <ReviewStatusBadge status={r.isApproved} />
+                </div>
+                <p className="text-[13px] text-primary mt-0.5">
+                  {r.orderItem.productVariant.code} · Số lượng: {r.orderItem.quantity} · {formatVND(Number(r.orderItem.unitPrice))}
+                </p>
+                {r.comment && <p className="text-[13px] text-primary mt-1 leading-relaxed">{r.comment}</p>}
+                <p className="text-[13px] text-primary mt-0.5">{formatDate(r.createdAt)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INFO SECTION — collapsible card dùng trong tab "Thông tin sản phẩm"
+// ─────────────────────────────────────────────────────────────────────────────
+
+function InfoSection({ title, children, defaultOpen = true, action }: { title: string; children: React.ReactNode; defaultOpen?: boolean; action?: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-neutral rounded-xl overflow-hidden bg-neutral-light">
+      {/* Header — click để toggle */}
+      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer">
+        <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">{title}</p>
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {action}
+          <span
+            className="text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen((v) => !v);
+            }}
+          >
+            {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </span>
+        </div>
+      </button>
+      {/* Body */}
+      {open && <div className="px-4 pb-4 pt-2">{children}</div>}
     </div>
   );
 }
@@ -109,6 +408,8 @@ function Section({ title, defaultOpen = true, children }: { title: string; defau
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+
+type MainTab = "info" | "comments" | "reviews";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -119,6 +420,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<MainTab>("info");
+  const [commentCount, setCommentCount] = useState<number | null>(null);
 
   const deleteModal = usePopzy();
   const [deleting, setDeleting] = useState(false);
@@ -128,8 +431,6 @@ export default function ProductDetailPage() {
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
 
-  // ── Load ────────────────────────────────────────────────────────────────────
-
   useEffect(() => {
     if (!id) return;
     setLoading(true);
@@ -138,12 +439,19 @@ export default function ProductDetailPage() {
         setProduct(res.data);
         const colors = [...new Set(res.data.img.map((i) => i.color))];
         if (colors.length) setSelectedColor(colors[0]);
+        // Load comment count song song để hiển thị số lượng trên tab "Bình luận"
+        apiRequest
+          .get<any>("/comments", {
+            params: { targetType: "PRODUCT", targetId: res.data.id, limit: 1 },
+          })
+          .then((cr) => {
+            setCommentCount(cr.pagination?.total ?? (Array.isArray(cr.data) ? cr.data.length : 0));
+          })
+          .catch(() => {});
       })
       .catch((e) => setError(e?.message ?? "Không thể tải sản phẩm"))
       .finally(() => setLoading(false));
   }, [id]);
-
-  // ── Derived ─────────────────────────────────────────────────────────────────
 
   const colorGroups = useMemo(() => (product ? groupImagesByColor(product.img) : []), [product]);
   const specGroups = useMemo(() => (product ? groupSpecs(product.productSpecifications) : []), [product]);
@@ -155,8 +463,6 @@ export default function ProductDetailPage() {
     return colorGroups.find((g) => g.color === selectedColor)?.images ?? colorGroups[0]?.images ?? [];
   }, [selectedColor, colorGroups]);
   const thumbnail = selectedImages[0]?.imageUrl ?? null;
-
-  // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleDeleteConfirm = async () => {
     if (!product) return;
@@ -187,94 +493,79 @@ export default function ProductDetailPage() {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER STATES
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  if (loading) {
+  if (loading)
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="animate-spin text-accent" />
       </div>
     );
-  }
 
-  if (error || !product) {
+  if (error || !product)
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Package size={40} className="text-neutral-dark opacity-40" />
-        <p className="text-sm text-neutral-dark">{error ?? "Không tìm thấy sản phẩm"}</p>
+        <Package size={40} className="text-primary opacity-40" />
+        <p className="text-sm text-primary">{error ?? "Không tìm thấy sản phẩm"}</p>
         <button onClick={() => router.back()} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
           Quay lại
         </button>
       </div>
     );
-  }
 
   const isDeleted = !!product.deletedAt;
   const defaultVariant = product.variants.find((v) => v.isDefault) ?? product.variants[0];
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Breadcrumb ── */}
+      {/* Breadcrumb */}
       <div className="flex items-center gap-3 px-6 pt-5 pb-3">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
-        >
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
           <ArrowLeft size={14} /> Quay lại
         </button>
-        <span className="text-neutral-dark text-[13px]">/</span>
-        <Link href="/admin/products" className="text-[13px] text-neutral-dark hover:text-accent transition-colors">
+        <span className="text-primary">/</span>
+        <Link href="/admin/products" className="text-[13px] text-primary hover:text-accent">
           Sản phẩm
         </Link>
-        <span className="text-neutral-dark text-[13px]">/</span>
+        <span className="text-primary">/</span>
         <span className="text-[13px] text-primary font-medium truncate max-w-xs">{product.name}</span>
       </div>
 
-      {/* ── Deleted banner ── */}
+      {/* Deleted banner */}
       {isDeleted && (
         <div className="mx-6 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
           <Trash2 size={16} className="text-red-500 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold text-red-700">Sản phẩm đã được chuyển vào thùng rác</p>
-            <p className="text-[11px] text-red-500">Xóa lúc: {formatDate(product.deletedAt!)} — Không hiển thị cho khách hàng</p>
+            <p className="text-[13px] text-red-500">Xóa lúc: {formatDate(product.deletedAt!)} — Không hiển thị cho khách hàng</p>
           </div>
           <button
             onClick={() => {
               setRestoreError(null);
               restoreModal.open();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400 text-[12px] font-medium text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400 text-[12px] font-medium text-emerald-700 hover:bg-emerald-50 cursor-pointer shrink-0"
           >
             <ArchiveRestore size={13} /> Khôi phục
           </button>
         </div>
       )}
 
-      {/* ── Main layout ── */}
-      <div className="px-6 py-4 flex justify-center">
-        <div className="w-full max-w-6xl flex gap-6 items-start">
-          {/* ── LEFT SIDEBAR ── */}
+      <div className="px-6 py-4">
+        <div className="flex gap-6 items-start">
+          {/* LEFT SIDEBAR */}
           <div className="w-72 shrink-0 space-y-4">
-            {/* Image gallery */}
+            {/* Image */}
             <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
               <div className="relative w-full h-56 bg-neutral-light-active">
                 {thumbnail ? (
                   <Image src={thumbnail} alt={product.name} fill className="object-contain p-4" unoptimized />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageOff size={36} strokeWidth={1.5} className="text-neutral-dark" />
+                    <ImageOff size={36} strokeWidth={1.5} className="text-primary" />
                   </div>
                 )}
               </div>
-
               {selectedImages.length > 1 && (
-                <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
+                <div className="px-3 py-2 flex gap-1.5 overflow-x-auto scrollbar-thin">
                   {selectedImages.slice(0, 5).map((img) => (
                     <div key={img.id} className="w-10 h-10 rounded-md overflow-hidden border border-neutral shrink-0 bg-neutral-light-active">
                       {img.imageUrl && <Image src={img.imageUrl} alt={img.altText ?? img.color} width={40} height={40} className="object-contain" unoptimized />}
@@ -282,23 +573,20 @@ export default function ProductDetailPage() {
                   ))}
                   {selectedImages.length > 5 && (
                     <div className="w-10 h-10 rounded-md border border-neutral bg-neutral-light-active flex items-center justify-center shrink-0">
-                      <span className="text-[10px] text-neutral-dark">+{selectedImages.length - 5}</span>
+                      <span className="text-[10px] text-primary">+{selectedImages.length - 5}</span>
                     </div>
                   )}
                 </div>
               )}
-
               {colorGroups.length > 1 && (
                 <div className="px-3 pb-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Màu sắc ({colorGroups.length})</p>
+                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Màu sắc ({colorGroups.length})</p>
                   <div className="flex flex-wrap gap-1.5">
                     {colorGroups.map((group) => (
                       <button
                         key={group.color}
                         onClick={() => setSelectedColor(group.color)}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
-                          selectedColor === group.color ? "border-accent bg-accent/10 text-accent" : "border-neutral text-primary hover:border-accent/50"
-                        }`}
+                        className={`px-2 py-0.5 rounded-md text-[13px] font-medium border cursor-pointer transition-colors ${selectedColor === group.color ? "border-accent bg-accent/10 text-accent" : "border-neutral text-primary hover:border-accent/50"}`}
                       >
                         {group.color}
                       </button>
@@ -308,19 +596,19 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Meta card */}
+            {/* Meta */}
             <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-3 text-[13px]">
-              <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thông tin</p>
-
+              <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">Thông tin</p>
               {[
                 { label: "Thương hiệu", value: product.brand.name },
-                { label: "Danh mục", value: <span className="font-mono text-[11px] text-accent">{product.category.slug}</span> },
+                { label: "Danh mục", value: <span className="font-mono text-[13px] text-accent">{product.category.slug}</span> },
                 { label: "Variant display", value: <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-light-active text-primary">{product.variantDisplay}</span> },
                 {
                   label: "Đánh giá",
                   value: (
                     <span className="text-amber-500 font-medium">
-                      ★ {Number(product.ratingAverage).toFixed(1)} <span className="text-neutral-dark">({product.ratingCount})</span>
+                      ★ {Number(product.ratingAverage).toFixed(1)}
+                      <span className="text-primary"> ({product.ratingCount})</span>
                     </span>
                   ),
                 },
@@ -330,25 +618,24 @@ export default function ProductDetailPage() {
                 { label: "Cập nhật", value: <span className="text-[12px]">{formatDate(product.updatedAt)}</span> },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between gap-2">
-                  <span className="text-neutral-dark shrink-0">{label}</span>
+                  <span className="text-primary shrink-0">{label}</span>
                   <span className="text-primary text-right">{value}</span>
                 </div>
               ))}
-
               <div className="flex items-start justify-between gap-2">
-                <span className="text-neutral-dark shrink-0">Slug</span>
-                <span className="text-accent font-mono text-[11px] break-all text-right">{product.slug}</span>
+                <span className="text-primary shrink-0">Slug</span>
+                <span className="text-accent font-mono text-[13px] break-all text-right">{product.slug}</span>
               </div>
             </div>
 
             {/* Highlight specs */}
             {highlightSpecs.length > 0 && (
               <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-2">
-                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-2">Thông số nổi bật ({highlightSpecs.length})</p>
+                <p className="text-[13px] font-semibold text-primary uppercase tracking-wider mb-2">Thông số nổi bật ({highlightSpecs.length})</p>
                 {highlightSpecs.map((s) => (
                   <div key={s.specificationId} className="flex items-center justify-between text-[12px]">
-                    <span className="text-neutral-dark">{s.specification.name}</span>
-                    <span className="font-medium text-primary text-right max-w-[130px] truncate">
+                    <span className="text-primary">{s.specification.name}</span>
+                    <span className="font-medium text-primary">
                       {s.value}
                       {s.specification.unit ? ` ${s.specification.unit}` : ""}
                     </span>
@@ -358,17 +645,15 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* ── RIGHT MAIN ── */}
+          {/* RIGHT MAIN */}
           <div className="flex-1 min-w-0 space-y-4">
-            {/* Header card — actions */}
+            {/* Header */}
             <div className="bg-neutral-light border border-neutral rounded-xl px-5 py-4 flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <h1 className="text-[18px] font-bold text-primary leading-tight">{product.name}</h1>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                      isDeleted ? "bg-red-50 text-red-500" : product.isActive ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-500"
-                    }`}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold ${isDeleted ? "bg-red-50 text-red-500" : product.isActive ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-500"}`}
                   >
                     {isDeleted ? (
                       <>
@@ -384,32 +669,27 @@ export default function ProductDetailPage() {
                       </>
                     )}
                   </span>
-
                   {product.isFeatured && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-500">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold bg-amber-50 text-amber-500">
                       <Star size={10} /> Nổi bật
                     </span>
                   )}
-
                   {defaultVariant && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/10 text-accent">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold bg-accent/10 text-accent">
                       <ShoppingCart size={10} />
                       {priceRange.min === priceRange.max ? formatVND(priceRange.min) : `${formatVND(priceRange.min)} – ${formatVND(priceRange.max)}`}
                     </span>
                   )}
-
-                  <span className="text-[11px] text-neutral-dark">
+                  <span className="text-[13px] text-primary">
                     {product.variants.filter((v) => !v.deletedAt).length} variants · {colorGroups.length} màu
                   </span>
                 </div>
               </div>
-
-              {/* Action buttons — chỉ navigate, không inline edit */}
               {!isDeleted && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Link
                     href={`/admin/products/${product.id}/edit`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer"
                   >
                     <Pencil size={13} /> Chỉnh sửa
                   </Link>
@@ -418,7 +698,7 @@ export default function ProductDetailPage() {
                       setDeleteError(null);
                       deleteModal.open();
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-promotion/30 rounded-lg text-[13px] text-promotion hover:bg-promotion-light transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-promotion/30 rounded-lg text-[13px] text-promotion hover:bg-promotion-light cursor-pointer"
                   >
                     <Trash2 size={13} /> Xoá
                   </button>
@@ -426,95 +706,127 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Description — render HTML từ CKEditor */}
-            <Section title="Mô tả sản phẩm" defaultOpen={false}>
-              {product.description ? (
-                <div
-                  className="mt-3 text-[14px] text-primary leading-relaxed prose prose-sm max-w-none
-                    prose-headings:text-primary prose-headings:font-semibold
-                    prose-p:text-primary/90 prose-p:leading-relaxed
-                    prose-strong:text-primary prose-strong:font-semibold
-                    prose-ul:text-primary/90 prose-ol:text-primary/90
-                    prose-li:leading-relaxed prose-li:my-0.5
-                    prose-a:text-accent prose-a:no-underline hover:prose-a:underline
-                    prose-blockquote:border-accent/40 prose-blockquote:text-primary/70
-                    prose-code:text-accent prose-code:bg-neutral-light-active prose-code:px-1 prose-code:rounded
-                    prose-pre:bg-neutral-light-active prose-pre:border prose-pre:border-neutral prose-pre:rounded-xl
-                    prose-table:text-[13px] prose-th:bg-neutral-light-active prose-th:text-primary
-                    prose-img:rounded-xl prose-img:border prose-img:border-neutral"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              ) : (
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-[13px] italic text-neutral-dark">Chưa có mô tả</p>
-                  <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
-                    <Pencil size={11} /> Thêm mô tả
-                  </Link>
-                </div>
-              )}
-            </Section>
-
-            {/* Variants */}
-            <Section title={`Biến thể (${product.variants.length})`}>
-              <div className="mt-2">
-                <VariantsTable variants={product.variants} />
-                <div className="mt-2 flex items-center gap-4 text-[11px] text-neutral-dark">
-                  <span>
-                    Active: <strong className="text-emerald-600">{activeVariants.length}</strong>
-                  </span>
-                  <span>
-                    Giá từ: <strong className="text-accent">{formatVND(priceRange.min)}</strong>
-                  </span>
-                  {priceRange.min !== priceRange.max && (
-                    <span>
-                      Đến: <strong className="text-accent">{formatVND(priceRange.max)}</strong>
-                    </span>
-                  )}
-                  {!isDeleted && (
-                    <Link href={`/admin/products/${product.id}/edit`} className="ml-auto flex items-center gap-1 text-accent hover:underline cursor-pointer">
-                      <Pencil size={10} /> Sửa variants
-                    </Link>
-                  )}
-                </div>
+            {/* ── TABS ── */}
+            <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
+              <div className="flex border-b border-neutral">
+                {(
+                  [
+                    { key: "info", label: "Thông tin sản phẩm" },
+                    { key: "reviews", label: `Đánh giá (${product.ratingCount})` },
+                    { key: "comments", label: commentCount !== null ? `Bình luận (${commentCount})` : "Bình luận" },
+                  ] as { key: MainTab; label: string }[]
+                ).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-5 py-3 text-[12px] font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab.key ? "border-accent text-accent" : "border-transparent text-primary hover:text-primary"}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
-            </Section>
 
-            {/* Specifications */}
-            {specGroups.length > 0 && (
-              <Section title={`Thông số kỹ thuật (${product.productSpecifications.length})`} defaultOpen={false}>
-                <div className="mt-3 space-y-4">
-                  {specGroups.map((group) => (
-                    <div key={group.groupName}>
-                      <p className="text-[11px] font-semibold text-accent uppercase tracking-wider mb-2">{group.groupName}</p>
-                      <div className="space-y-1">
-                        {group.items.map((s) => (
-                          <div
-                            key={s.specificationId}
-                            className={`flex items-start justify-between gap-3 px-3 py-1.5 rounded-lg text-[12px] ${
-                              s.isHighlight ? "bg-amber-50 border border-amber-200/50" : "bg-neutral-light-active"
-                            }`}
-                          >
-                            <span className="text-neutral-dark shrink-0 max-w-[200px]">
-                              {s.isHighlight && <span className="text-amber-500 mr-1">★</span>}
-                              {s.specification.name}
-                            </span>
-                            <span className="font-medium text-primary text-right">
-                              {s.value}
-                              {s.specification.unit ? ` ${s.specification.unit}` : ""}
-                            </span>
-                          </div>
-                        ))}
+              <div className="p-5">
+                {/* ── TAB: Info ── */}
+                {activeTab === "info" && (
+                  <div className="space-y-3">
+                    {/* Section: Mô tả — defaultOpen */}
+                    <InfoSection
+                      title="Mô tả sản phẩm"
+                      defaultOpen={false}
+                      action={
+                        !isDeleted && !product.description ? (
+                          <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
+                            <Pencil size={11} /> Thêm mô tả
+                          </Link>
+                        ) : undefined
+                      }
+                    >
+                      {product.description ? (
+                        <div
+                          className="text-[14px] text-primary leading-relaxed prose prose-sm max-w-none
+                          prose-headings:text-primary prose-headings:font-semibold
+                          prose-p:text-primary/90 prose-strong:text-primary
+                          prose-a:text-accent prose-code:text-accent prose-code:bg-neutral-light-active prose-code:px-1 prose-code:rounded"
+                          dangerouslySetInnerHTML={{ __html: product.description }}
+                        />
+                      ) : (
+                        <p className="text-[13px] italic text-primary">Chưa có mô tả</p>
+                      )}
+                    </InfoSection>
+
+                    {/* Section: Biến thể — thu gọn mặc định */}
+                    <InfoSection
+                      title={`Biến thể (${product.variants.length})`}
+                      defaultOpen={true}
+                      action={
+                        !isDeleted ? (
+                          <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
+                            <Pencil size={11} /> Sửa
+                          </Link>
+                        ) : undefined
+                      }
+                    >
+                      <VariantsTable variants={product.variants} />
+                      <div className="mt-2 flex items-center gap-4 text-[13px] text-primary">
+                        <span>
+                          Active: <strong className="text-emerald-600">{activeVariants.length}</strong>
+                        </span>
+                        <span>
+                          Giá từ: <strong className="text-accent">{formatVND(priceRange.min)}</strong>
+                        </span>
+                        {priceRange.min !== priceRange.max && (
+                          <span>
+                            Đến: <strong className="text-accent">{formatVND(priceRange.max)}</strong>
+                          </span>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
+                    </InfoSection>
+
+                    {/* Section: Thông số — thu gọn mặc định */}
+                    {specGroups.length > 0 && (
+                      <InfoSection title={`Thông số kỹ thuật (${product.productSpecifications.length})`} defaultOpen={false}>
+                        <div className="space-y-4">
+                          {specGroups.map((group) => (
+                            <div key={group.groupName}>
+                              <p className="text-[13px] font-semibold text-accent uppercase tracking-wider mb-2">{group.groupName}</p>
+                              <div className="space-y-1">
+                                {group.items.map((s) => (
+                                  <div
+                                    key={s.specificationId}
+                                    className={`flex items-start justify-between gap-3 px-3 py-1.5 rounded-lg text-[12px] ${s.isHighlight ? "bg-amber-50 border border-amber-200/50" : "bg-neutral-light-active"}`}
+                                  >
+                                    <span className="text-primary shrink-0 max-w-[200px]">
+                                      {s.isHighlight && <span className="text-amber-500 mr-1">★</span>}
+                                      {s.specification.name}
+                                    </span>
+                                    <span className="font-medium text-primary text-right">
+                                      {s.value}
+                                      {s.specification.unit ? ` ${s.specification.unit}` : ""}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </InfoSection>
+                    )}
+                  </div>
+                )}
+
+                {/* ── TAB: Reviews ── */}
+                {activeTab === "reviews" && <ReviewsTab productId={product.id} />}
+
+                {/* ── TAB: Comments ── */}
+                {activeTab === "comments" && <CommentsTab productId={product.id} />}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Delete Modal ── */}
+      {/* Delete Modal */}
       <Popzy
         isOpen={deleteModal.isOpen}
         onClose={deleteModal.close}
@@ -528,20 +840,20 @@ export default function ProductDetailPage() {
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá sản phẩm?</h3>
             <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
             <p className="text-[14px] font-semibold text-primary text-center mb-2">"{product.name}"</p>
-            <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau.</p>
+            <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác.</p>
             {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
             <div className="flex gap-2">
               <button
                 onClick={deleteModal.close}
                 disabled={deleting}
-                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active cursor-pointer disabled:opacity-50"
               >
                 Huỷ
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 disabled={deleting}
-                className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {deleting && <Loader2 size={13} className="animate-spin" />}
                 {deleting ? "Đang xóa..." : "Xóa sản phẩm"}
@@ -551,7 +863,7 @@ export default function ProductDetailPage() {
         }
       />
 
-      {/* ── Restore Modal ── */}
+      {/* Restore Modal */}
       <Popzy
         isOpen={restoreModal.isOpen}
         onClose={restoreModal.close}
@@ -563,22 +875,21 @@ export default function ProductDetailPage() {
               <ArchiveRestore size={22} strokeWidth={1.5} />
             </div>
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Khôi phục sản phẩm?</h3>
-            <p className="text-[13px] text-primary/60 text-center mb-1">Khôi phục</p>
             <p className="text-[14px] font-semibold text-primary text-center mb-5">"{product.name}"</p>
-            <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được khôi phục nhưng vẫn ở trạng thái ẩn. Bạn cần bật lại để hiển thị cho khách hàng.</p>
+            <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được khôi phục nhưng vẫn ở trạng thái ẩn.</p>
             {restoreError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{restoreError}</div>}
             <div className="flex gap-2">
               <button
                 onClick={restoreModal.close}
                 disabled={restoring}
-                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active cursor-pointer disabled:opacity-50"
               >
                 Huỷ
               </button>
               <button
                 onClick={handleRestoreConfirm}
                 disabled={restoring}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {restoring && <Loader2 size={13} className="animate-spin" />}
                 {restoring ? "Đang khôi phục..." : "Khôi phục"}

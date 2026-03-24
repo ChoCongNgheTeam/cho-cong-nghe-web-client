@@ -1,9 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
-import { useRouter } from "next/navigation";
 import apiRequest, { ApiError } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { useToasty } from "@/components/Toast";
 import {
@@ -12,9 +10,16 @@ import {
    FormErrors,
    RegisterResponse,
 } from "./types";
+import {
+   validateUserName,
+   validatePassword,
+   validateConfirmPassword,
+   validateEmail,
+   validatePhone,
+   VALIDATION_MESSAGES,
+} from "../validators";
 
 const RegisterForm: React.FC = () => {
-   const { login } = useAuth();
    const toast = useToasty();
    const [showPassword, setShowPassword] = useState<boolean>(false);
    const [showConfirmPassword, setShowConfirmPassword] =
@@ -33,11 +38,13 @@ const RegisterForm: React.FC = () => {
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
       const { name, value } = e.target;
-      setFormData((prev) => ({
-         ...prev,
-         [name]: value,
-      }));
-
+      let newValue = value;
+      if (name === "phone") {
+         const cleaned = value.replace(/[^0-9+]/g, "");
+         const maxLen = cleaned.startsWith("+84") ? 12 : 10;
+         newValue = cleaned.slice(0, maxLen);
+      }
+      setFormData((prev) => ({ ...prev, [name]: newValue }));
       if (errors[name as keyof FormErrors]) {
          setErrors((prev) => {
             const newErrors = { ...prev };
@@ -50,50 +57,26 @@ const RegisterForm: React.FC = () => {
    const validateForm = (): boolean => {
       const newErrors: FormErrors = {};
 
-      const trimmedUserName = formData.userName.trim();
-      if (!trimmedUserName) {
-         newErrors.userName = "Tên đăng nhập là bắt buộc";
-      } else if (trimmedUserName.length < 3) {
-         newErrors.userName = "Tên đăng nhập phải có ít nhất 3 ký tự";
-      } else if (!/^[a-zA-Z0-9_]+$/.test(trimmedUserName)) {
-         newErrors.userName = "Tên đăng nhập chỉ chứa chữ, số và dấu gạch dưới";
-      }
+      const userNameError = validateUserName(formData.userName);
+      if (userNameError) newErrors.userName = userNameError;
 
-      const trimmedEmail = formData.email.trim();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!trimmedEmail) {
-         newErrors.email = "Email là bắt buộc";
-      } else if (!emailRegex.test(trimmedEmail)) {
-         newErrors.email = "Email không hợp lệ";
-      }
+      const emailError = validateEmail(formData.email);
+      if (emailError) newErrors.email = emailError;
 
-      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
-      if (!formData.password) {
-         newErrors.password = "Mật khẩu là bắt buộc";
-      } else if (formData.password.length < 6) {
-         newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-      } else if (!passwordRegex.test(formData.password)) {
-         newErrors.password = "Mật khẩu phải có ít nhất 1 chữ hoa và 1 số";
-      }
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) newErrors.password = passwordError;
 
-      if (!formData.confirmPassword) {
-         newErrors.confirmPassword = "Vui lòng nhập lại mật khẩu";
-      } else if (formData.password !== formData.confirmPassword) {
-         newErrors.confirmPassword = "Mật khẩu không khớp";
-      }
+      const confirmPasswordError = validateConfirmPassword(
+         formData.password,
+         formData.confirmPassword,
+      );
+      if (confirmPasswordError)
+         newErrors.confirmPassword = confirmPasswordError;
 
-      const trimmedPhone = formData.phone.trim();
-      if (trimmedPhone) {
-         const phoneRegex = /^(0|\+84)[0-9]{9}$/;
-         const cleanPhone = trimmedPhone.replace(/\s/g, "");
-         if (!phoneRegex.test(cleanPhone)) {
-            newErrors.phone = "Số điện thoại không hợp lệ (VD: 0912345678)";
-         }
-      }
+      const phoneError = validatePhone(formData.phone);
+      if (phoneError) newErrors.phone = phoneError;
 
-      if (!agreeTerms) {
-         newErrors.terms = "Bạn phải đồng ý với điều khoản";
-      }
+      if (!agreeTerms) newErrors.terms = VALIDATION_MESSAGES.terms.required;
 
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
@@ -103,12 +86,9 @@ const RegisterForm: React.FC = () => {
       e?.preventDefault();
       setErrors({});
 
-      if (!validateForm()) {
-         return;
-      }
+      if (!validateForm()) return;
 
       setLoading(true);
-
       try {
          const registerData = {
             userName: formData.userName.trim(),
@@ -124,9 +104,7 @@ const RegisterForm: React.FC = () => {
             { noAuth: true },
          );
 
-         if (!response.data) {
-            throw new Error("Dữ liệu phản hồi không hợp lệ");
-         }
+         if (!response.data) throw new Error("Dữ liệu phản hồi không hợp lệ");
 
          toast.success("Đăng ký thành công!", {
             title: "Chào mừng bạn!",
@@ -136,7 +114,6 @@ const RegisterForm: React.FC = () => {
             pauseOnHover: true,
          });
 
-         // Reset form
          setFormData({
             userName: "",
             email: "",
@@ -149,6 +126,7 @@ const RegisterForm: React.FC = () => {
       } catch (error) {
          if (error instanceof ApiError) {
             const errorData = error.data as BackendErrorResponse | undefined;
+            const message = errorData?.message;
 
             if (error.status === 400) {
                if (errorData?.errors) {
@@ -158,65 +136,45 @@ const RegisterForm: React.FC = () => {
                         backendErrors[key as keyof FormErrors] = value;
                      }
                   });
-
-                  toast.error("Dữ liệu không hợp lệ", {
-                     title: "Lỗi xác thực",
-                     description: "Vui lòng kiểm tra lại thông tin đã nhập",
-                     duration: 4000,
-                     showProgress: true,
-                  });
-               } else {
-                  toast.error(errorData?.message || "Dữ liệu không hợp lệ", {
-                     title: "Lỗi xác thực",
-                     duration: 4000,
-                  });
+                  setErrors(backendErrors);
                }
-            } else if (error.status === 409) {
-               const message =
-                  errorData?.message ||
-                  "Email hoặc tên đăng nhập đã được sử dụng";
-
-               toast.error(message, {
-                  title: "Tài khoản đã tồn tại",
+               toast.error(message || "Dữ liệu không hợp lệ", {
+                  title: "Lỗi xác thực",
                   duration: 4000,
                   showProgress: true,
                });
+            } else if (error.status === 409) {
+               toast.error(
+                  message || "Email hoặc tên đăng nhập đã được sử dụng",
+                  {
+                     title: "Tài khoản đã tồn tại",
+                     duration: 4000,
+                     showProgress: true,
+                  },
+               );
             } else if (error.status >= 500) {
-               toast.error("Lỗi máy chủ. Vui lòng thử lại sau!", {
+               toast.error(message || "Lỗi máy chủ. Vui lòng thử lại sau!", {
                   title: "Lỗi hệ thống",
                   duration: 5000,
                   showProgress: true,
                });
             } else {
-               const message =
-                  errorData?.message || "Đã có lỗi xảy ra. Vui lòng thử lại!";
-               toast.error(message, {
+               toast.error(message || "Đã có lỗi xảy ra. Vui lòng thử lại!", {
                   title: "Có lỗi xảy ra",
                   duration: 4000,
                });
             }
-         } else if (error instanceof Error) {
-            let message =
-               error.message || "Đã có lỗi xảy ra. Vui lòng thử lại!";
-            if (
-               error.message.includes("kết nối") ||
-               error.message.includes("network")
-            ) {
-               message =
-                  "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng!";
-            }
-
-            toast.error(message, {
-               title: "Lỗi kết nối",
-               duration: 5000,
-               showProgress: true,
-            });
          } else {
-            toast.error("Đã có lỗi không xác định", {
-               title: "Lỗi",
-               description: "Vui lòng thử lại sau",
-               duration: 4000,
-            });
+            const msg =
+               error instanceof Error
+                  ? error.message
+                  : "Đã có lỗi không xác định";
+            toast.error(
+               msg.includes("network") || msg.includes("kết nối")
+                  ? "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng!"
+                  : msg,
+               { title: "Lỗi", duration: 5000, showProgress: true },
+            );
          }
       } finally {
          setLoading(false);
@@ -237,8 +195,7 @@ const RegisterForm: React.FC = () => {
             </div>
          )}
 
-         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4">
-            {/* Username */}
+         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4 p-4">
             <div>
                <label
                   htmlFor="userName"
@@ -260,13 +217,12 @@ const RegisterForm: React.FC = () => {
                   />
                </div>
                {errors.userName && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-promotion" role="alert">
                      {errors.userName}
                   </p>
                )}
             </div>
 
-            {/* Full Name */}
             <div>
                <label
                   htmlFor="fullName"
@@ -289,7 +245,6 @@ const RegisterForm: React.FC = () => {
                </div>
             </div>
 
-            {/* Email */}
             <div>
                <label
                   htmlFor="email"
@@ -311,13 +266,12 @@ const RegisterForm: React.FC = () => {
                   />
                </div>
                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-promotion" role="alert">
                      {errors.email}
                   </p>
                )}
             </div>
 
-            {/* Password */}
             <div>
                <label
                   htmlFor="password"
@@ -347,13 +301,12 @@ const RegisterForm: React.FC = () => {
                   </button>
                </div>
                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-promotion" role="alert">
                      {errors.password}
                   </p>
                )}
             </div>
 
-            {/* Confirm Password */}
             <div>
                <label
                   htmlFor="confirmPassword"
@@ -391,13 +344,12 @@ const RegisterForm: React.FC = () => {
                   </button>
                </div>
                {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-promotion" role="alert">
                      {errors.confirmPassword}
                   </p>
                )}
             </div>
 
-            {/* Phone */}
             <div>
                <label
                   htmlFor="phone"
@@ -419,24 +371,20 @@ const RegisterForm: React.FC = () => {
                   />
                </div>
                {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-promotion" role="alert">
                      {errors.phone}
                   </p>
                )}
             </div>
 
-            {/* Terms */}
             <div>
-               <label
-                  htmlFor="agreeTerms"
-                  className="flex items-start cursor-pointer"
-               >
+               <label className="flex items-start cursor-pointer gap-2">
                   <input
                      id="agreeTerms"
                      type="checkbox"
                      checked={agreeTerms}
                      onChange={(e) => setAgreeTerms(e.target.checked)}
-                     className="mt-0.5 mr-2 w-4 h-4 shrink-0 accent-accent"
+                     className="mt-0.5 w-4 h-4 shrink-0 accent-accent"
                   />
                   <span className="text-base text-neutral-darker">
                      Bạn đồng ý với tất cả{" "}
@@ -452,13 +400,12 @@ const RegisterForm: React.FC = () => {
                   </span>
                </label>
                {errors.terms && (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-promotion" role="alert">
                      {errors.terms}
                   </p>
                )}
             </div>
 
-            {/* Submit Button */}
             <button
                type="submit"
                disabled={loading}

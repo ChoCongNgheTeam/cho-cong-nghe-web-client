@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-
-// CKEditor không hỗ trợ SSR — phải dynamic import
-// Wrapper này giúp tái sử dụng ở cả new và edit page
 
 interface CKEditorWrapperProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   minHeight?: number;
+  /** Cloudinary folder nhận ảnh upload — truyền xuống adapter */
+  uploadFolder?: string;
 }
 
-// Dynamic import toàn bộ CKEditor component
 const CKEditorClient = dynamic(() => import("./CKEditorClient"), {
   ssr: false,
   loading: () => (
@@ -28,6 +25,6 @@ const CKEditorClient = dynamic(() => import("./CKEditorClient"), {
   ),
 });
 
-export function CKEditorWrapper({ value, onChange, placeholder, minHeight = 400 }: CKEditorWrapperProps) {
-  return <CKEditorClient value={value} onChange={onChange} placeholder={placeholder} minHeight={minHeight} />;
+export function CKEditorWrapper({ value, onChange, placeholder, minHeight = 400, uploadFolder = "products" }: CKEditorWrapperProps) {
+  return <CKEditorClient value={value} onChange={onChange} placeholder={placeholder} minHeight={minHeight} uploadFolder={uploadFolder} />;
 }

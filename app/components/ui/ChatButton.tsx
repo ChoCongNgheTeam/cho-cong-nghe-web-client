@@ -3,7 +3,6 @@ import apiRequest from "@/lib/api";
 import { MessageCircle, X, Send, Bot, User, RotateCcw } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
    role: "user" | "assistant";
    content: string;
@@ -14,7 +13,6 @@ interface ChatResponse {
    data: { role: "assistant"; content: string };
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = "cho-cong-nghe:chat-history";
 const MAX_STORED = 20;
 
@@ -25,7 +23,6 @@ const QUICK_REPLIES = [
    "Chuột gaming giá rẻ?",
 ];
 
-// ─── Markdown renderer (no external deps) ─────────────────────────────────────
 function renderMarkdown(text: string): string {
    return text
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -36,13 +33,12 @@ function renderMarkdown(text: string): string {
          '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>',
       )
       .replace(/^[\-\*] (.+)$/gm, "<li>$1</li>")
-      .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
+      .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
       .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
       .replace(/\n{2,}/g, "</p><p>")
       .replace(/\n/g, "<br/>");
 }
 
-// ─── Message Bubble ────────────────────────────────────────────────────────────
 function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
    const isUser = msg.role === "user";
    const html = isUser ? msg.content : renderMarkdown(msg.content);
@@ -52,9 +48,7 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
          className={`flex items-end gap-1.5 ${isUser ? "flex-row-reverse" : "flex-row"} ${isNew ? "chat-msg-enter" : ""}`}
       >
          <div
-            className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center transition-transform hover:scale-110 ${
-               isUser ? "bg-accent/20" : "bg-accent/10"
-            }`}
+            className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center transition-transform hover:scale-110 ${isUser ? "bg-accent/20" : "bg-accent/10"}`}
          >
             {isUser ? (
                <User size={12} className="text-accent" />
@@ -62,24 +56,20 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
                <Bot size={12} className="text-accent" />
             )}
          </div>
-
-         <div
-            className={`max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble ${
-               isUser
-                  ? "bg-accent text-white rounded-br-sm"
-                  : "bg-white text-neutral-dark border border-neutral rounded-bl-sm shadow-sm prose-chat"
-            }`}
-            {...(!isUser && {
-               dangerouslySetInnerHTML: { __html: `<p>${html}</p>` },
-            })}
-         >
-            {isUser ? msg.content : null}
-         </div>
+         {isUser ? (
+            <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm">
+               {msg.content}
+            </div>
+         ) : (
+            <div
+               className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-white text-neutral-dark border border-neutral rounded-bl-sm shadow-sm prose-chat"
+               dangerouslySetInnerHTML={{ __html: `<p>${html}</p>` }}
+            />
+         )}
       </div>
    );
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
 export default function ChatButton() {
    const [open, setOpen] = useState(false);
    const [messages, setMessages] = useState<Message[]>([]);
@@ -92,7 +82,6 @@ export default function ChatButton() {
    const messagesEndRef = useRef<HTMLDivElement>(null);
    const inputRef = useRef<HTMLInputElement>(null);
 
-   // Load history
    useEffect(() => {
       try {
          const stored = localStorage.getItem(STORAGE_KEY);
@@ -100,10 +89,9 @@ export default function ChatButton() {
             const parsed: Message[] = JSON.parse(stored);
             if (Array.isArray(parsed)) setMessages(parsed);
          }
-      } catch {}
+      } catch (_) {}
    }, []);
 
-   // Save history
    useEffect(() => {
       if (messages.length === 0) return;
       try {
@@ -111,10 +99,9 @@ export default function ChatButton() {
             STORAGE_KEY,
             JSON.stringify(messages.slice(-MAX_STORED)),
          );
-      } catch {}
+      } catch (_) {}
    }, [messages]);
 
-   // Close on outside click
    useEffect(() => {
       if (!open) return;
       const handler = (e: MouseEvent) => {
@@ -125,12 +112,10 @@ export default function ChatButton() {
       return () => document.removeEventListener("mousedown", handler);
    }, [open]);
 
-   // Scroll to bottom
    useEffect(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
    }, [messages, loading]);
 
-   // Focus + clear unread on open
    useEffect(() => {
       if (open) {
          setHasUnread(false);
@@ -138,7 +123,6 @@ export default function ChatButton() {
       }
    }, [open]);
 
-   // Send message
    const sendMessage = useCallback(
       async (text?: string) => {
          const trimmed = (text ?? input).trim();
@@ -181,13 +165,12 @@ export default function ChatButton() {
             });
 
             if (!open) setHasUnread(true);
-         } catch {
+         } catch (_) {
             setMessages((prev) => [
                ...prev,
                {
                   role: "assistant",
-                  content:
-                     "Xin lỗi, chatbot đang bận quá tải. Vui lòng thử lại sau ít phút nhé! 🙏",
+                  content: "Xin lỗi, không thể kết nối. Vui lòng thử lại sau.",
                },
             ]);
          } finally {
@@ -214,59 +197,65 @@ export default function ChatButton() {
    return (
       <>
          <style>{`
-            @keyframes chatSlideUp {
-               from { opacity: 0; transform: translateY(16px) scale(0.96); }
-               to   { opacity: 1; transform: translateY(0) scale(1); }
-            }
-            @keyframes chatMsgIn {
-               from { opacity: 0; transform: translateY(8px); }
-               to   { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes chatPulse {
-               0%, 100% { transform: scale(1); }
-               50%       { transform: scale(1.2); }
-            }
-            @keyframes dotBounce {
-               0%, 80%, 100% { transform: translateY(0); }
-               40%           { transform: translateY(-5px); }
-            }
-            .chat-panel-enter {
-               animation: chatSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards;
-            }
-            .chat-msg-enter {
-               animation: chatMsgIn 0.22s ease-out forwards;
-            }
-            .chat-bubble { transition: box-shadow 0.15s ease; }
-            .chat-bubble:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-            .dot-1 { animation: dotBounce 1.2s ease-in-out infinite 0ms; }
-            .dot-2 { animation: dotBounce 1.2s ease-in-out infinite 150ms; }
-            .dot-3 { animation: dotBounce 1.2s ease-in-out infinite 300ms; }
-            .unread-pulse { animation: chatPulse 1.8s ease-in-out infinite; }
+        @keyframes chatSlideUp {
+          from { opacity: 0; transform: translateY(16px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes chatMsgIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chatPulse {
+          0%, 100% { transform: scale(1); }
+          50%       { transform: scale(1.2); }
+        }
+        @keyframes dotBounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40%           { transform: translateY(-5px); }
+        }
+        .chat-panel-enter { animation: chatSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .chat-msg-enter   { animation: chatMsgIn 0.22s ease-out forwards; }
+        .chat-bubble { transition: box-shadow 0.15s ease; }
+        .chat-bubble:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .dot-1 { animation: dotBounce 1.2s ease-in-out infinite 0ms; }
+        .dot-2 { animation: dotBounce 1.2s ease-in-out infinite 150ms; }
+        .dot-3 { animation: dotBounce 1.2s ease-in-out infinite 300ms; }
+        .unread-pulse { animation: chatPulse 1.8s ease-in-out infinite; }
+        .prose-chat p  { margin: 0 0 0.3em; }
+        .prose-chat p:last-child { margin-bottom: 0; }
+        .prose-chat ul { margin: 0.3em 0; padding-left: 1.2em; list-style: disc; }
+        .prose-chat li { margin: 0.15em 0; }
+        .prose-chat strong { font-weight: 600; }
+        .prose-chat em { font-style: italic; }
+        .prose-chat code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+        .chat-link { color: var(--color-accent, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
+        .chat-link:hover { opacity: 0.75; }
 
-            .prose-chat p  { margin: 0 0 0.3em; }
-            .prose-chat p:last-child { margin-bottom: 0; }
-            .prose-chat ul { margin: 0.3em 0; padding-left: 1.2em; list-style: disc; }
-            .prose-chat li { margin: 0.15em 0; }
-            .prose-chat strong { font-weight: 600; }
-            .prose-chat em { font-style: italic; }
-            .prose-chat code {
-               font-family: monospace;
-               background: rgba(0,0,0,0.06);
-               padding: 1px 4px;
-               border-radius: 3px;
-               font-size: 11px;
-            }
-            .chat-link { color: var(--color-accent, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
-            .chat-link:hover { opacity: 0.75; }
-         `}</style>
+        /* Mobile: panel không bị che, hiện full trong viewport */
+        @media (max-width: 1023px) {
+          .chat-panel-mobile {
+            position: fixed !important;
+            bottom: 5rem !important; /* đủ cao hơn toggle button */
+            right: 1rem !important;
+            left: 1rem !important;
+            width: auto !important;
+            max-height: calc(100dvh - 8rem) !important;
+          }
+          .chat-panel-mobile .chat-messages-area {
+            flex: 1 1 0% !important;
+            height: auto !important;
+            min-height: 0 !important;
+          }
+        }
+      `}</style>
 
          <div
             ref={ref}
-            className="flex fixed bottom-32 lg:bottom-20 right-4 sm:right-6 z-50 flex-col items-end gap-3"
+            className="flex fixed bottom-20 lg:bottom-20 right-4 sm:right-6 z-50 flex-col items-end gap-3"
          >
             {/* Chat panel */}
             {open && (
-               <div className="chat-panel-enter rounded-2xl border border-neutral bg-neutral-light shadow-2xl overflow-hidden w-80 flex flex-col">
+               <div className="chat-panel-enter chat-panel-mobile rounded-2xl border border-neutral bg-neutral-light shadow-2xl overflow-hidden w-80 flex flex-col">
                   {/* Header */}
                   <div className="bg-accent px-4 py-3 flex items-center justify-between shrink-0">
                      <div className="flex items-center gap-2.5">
@@ -302,7 +291,7 @@ export default function ChatButton() {
                   </div>
 
                   {/* Messages */}
-                  <div className="h-72 overflow-y-auto flex flex-col gap-2.5 px-3 py-3 bg-neutral-light-hover">
+                  <div className="chat-messages-area h-72 overflow-y-auto flex flex-col gap-2.5 px-3 py-3 bg-neutral-light-hover">
                      {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
                            <div className="w-11 h-11 rounded-2xl bg-accent/10 flex items-center justify-center mb-1">
@@ -326,7 +315,6 @@ export default function ChatButton() {
                         />
                      ))}
 
-                     {/* Typing indicator */}
                      {loading && (
                         <div className="flex items-end gap-1.5 chat-msg-enter">
                            <div className="w-6 h-6 rounded-full bg-accent/10 shrink-0 flex items-center justify-center">

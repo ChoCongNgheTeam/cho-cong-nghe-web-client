@@ -81,7 +81,8 @@ export default function EditOrderPage() {
         setOrder(o);
         setShippingFee(String(Number(o.shippingFee)));
         setVoucherDiscount(String(Number(o.voucherDiscount)));
-        setProvinces(pRes.data ?? []);
+        // getProvinces() returns Province[] directly
+        setProvinces(Array.isArray(pRes) ? pRes : ((pRes as any).data ?? []));
         setManual({
           contactName: o.shippingContactName,
           phone: o.shippingPhone,
@@ -93,8 +94,9 @@ export default function EditOrderPage() {
         });
         if (o.userId) {
           try {
+            // getUserAddresses() returns UserAddress[] directly
             const ar = await getUserAddresses(o.userId);
-            setAddresses(ar.data ?? []);
+            setAddresses(Array.isArray(ar) ? ar : ((ar as any).data ?? []));
           } catch {}
         }
       })
@@ -108,7 +110,7 @@ export default function EditOrderPage() {
       return;
     }
     getWards(manual.provinceId)
-      .then((r) => setWards(r.data ?? []))
+      .then((r) => setWards(r))
       .catch(console.error);
   }, [manual.provinceId]);
 
