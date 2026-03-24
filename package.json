@@ -11,7 +11,7 @@
   "dependencies": {
     "@ckeditor/ckeditor5-react": "^11.0.1",
     "@headlessui/react": "^2.2.9",
-    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tabs": "^1.1.13",  
     "@types/react-select": "^5.0.0",
     "ckeditor5": "^47.6.1",
     "clsx": "^2.1.1",

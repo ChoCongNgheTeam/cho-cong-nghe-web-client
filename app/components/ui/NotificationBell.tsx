@@ -19,27 +19,28 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 
+// ─── Type config — chỉ dùng token màu custom, không hardcode ─────────────────
 const TYPE_CONFIG: Record<
    string,
    { icon: React.ElementType; color: string; bg: string; ring: string }
 > = {
    WELCOME_VOUCHER: {
       icon: Gift,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      ring: "ring-emerald-100",
+      color: "text-accent",
+      bg: "bg-accent-light",
+      ring: "ring-accent-light-active",
    },
    VOUCHER_EXPIRING: {
       icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      ring: "ring-amber-100",
+      color: "text-star",
+      bg: "bg-neutral-light-active",
+      ring: "ring-neutral",
    },
    VOUCHER_ASSIGNED: {
       icon: Tag,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-      ring: "ring-violet-100",
+      color: "text-accent-dark",
+      bg: "bg-accent-light",
+      ring: "ring-accent-light-active",
    },
    CAMPAIGN_PROMOTION: {
       icon: Megaphone,
@@ -149,7 +150,6 @@ export default function NotificationBell() {
                className="w-5 h-5 lg:w-6 lg:h-6 text-primary"
                strokeWidth={2.3}
             />
-            {/* Badge */}
             {unreadCount > 0 && (
                <span
                   className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px]
@@ -206,7 +206,6 @@ export default function NotificationBell() {
             {/* List */}
             <div className="max-h-[380px] overflow-y-auto overscroll-contain scroll-smooth scrollbar-thin">
                {notifications.length === 0 && !isLoading ? (
-                  /* Empty state */
                   <div className="py-14 text-center px-6">
                      <div className="w-12 h-12 rounded-2xl bg-neutral-light-active flex items-center justify-center mx-auto mb-3">
                         <Inbox className="w-5 h-5 text-neutral-dark" />
@@ -264,11 +263,7 @@ export default function NotificationBell() {
                               <div className="flex-1 min-w-0 pr-1">
                                  <p
                                     className={`text-[13px] leading-snug line-clamp-2
-                                      ${
-                                         !n.isRead
-                                            ? "font-semibold text-primary"
-                                            : "font-medium text-primary"
-                                      }`}
+                                      ${!n.isRead ? "font-semibold text-primary" : "font-medium text-primary"}`}
                                  >
                                     {n.title}
                                  </p>
