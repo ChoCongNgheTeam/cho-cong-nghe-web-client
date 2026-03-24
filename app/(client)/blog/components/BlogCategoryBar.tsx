@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import clsx from "clsx";
@@ -25,7 +25,7 @@ export default function BlogCategoryBar({
       : BLOG_CATEGORIES;
 
   return (
-    <div className={clsx("flex flex-wrap gap-4 border-b border-neutral pb-3 text-sm", className)}>
+    <div className={clsx("flex flex-wrap gap-2 border-b border-neutral pb-2 text-xs sm:gap-3 sm:pb-3 sm:text-sm md:gap-4", className)}>
       {categoryItems.map((cat) => {
         const isActive = cat.key === activeKey;
         const href = cat.key ? `/blog?category=${cat.key}&page=1` : "/blog";
@@ -49,3 +49,4 @@ export default function BlogCategoryBar({
     </div>
   );
 }
+

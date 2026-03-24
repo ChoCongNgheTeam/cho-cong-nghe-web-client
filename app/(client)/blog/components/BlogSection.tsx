@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import { Blog } from "../types/blog.type";
 
@@ -21,12 +21,12 @@ export default function BlogSection({
   const sideBlogs = rest.slice(0, 4);
 
   return (
-    <section className="mb-8">
-      <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
+    <section className="mb-6 sm:mb-8">
+      <h2 className="mb-3 sm:mb-4 text-sm sm:text-base font-semibold uppercase tracking-wide text-primary">
         {title}
       </h2>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <Link href={`/blog/${hero.slug}`} className="block">
             <div
@@ -40,15 +40,15 @@ export default function BlogSection({
               />
             </div>
             <h3
-              className={`mt-4 font-semibold leading-tight text-primary ${heroTitleClassName}`}
+              className={`mt-3 sm:mt-4 font-semibold leading-tight text-primary ${heroTitleClassName}`}
             >
               {hero.title}
             </h3>
-            <p className="mt-2 text-sm text-primary-light">{hero.excerpt}</p>
+            <p className="mt-2 text-xs sm:text-sm text-primary-light">{hero.excerpt}</p>
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 lg:col-span-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:col-span-5">
           {sideBlogs.map((blog, idx) => (
             <Link
               key={`${title}-${idx}-${blog.id}`}
@@ -64,7 +64,7 @@ export default function BlogSection({
                     className="object-cover"
                   />
                 </div>
-                <div className="p-2">
+                <div className="p-2 sm:p-3">
                   <p className="text-sm font-medium leading-snug text-primary">
                     {blog.title}
                   </p>
@@ -77,3 +77,4 @@ export default function BlogSection({
     </section>
   );
 }
+
