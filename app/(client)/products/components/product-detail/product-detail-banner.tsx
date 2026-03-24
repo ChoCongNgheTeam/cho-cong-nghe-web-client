@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  Gpu,
-  Package,
-  Cpu,
-  Images,
-  Loader2,
-} from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Gpu, Package, Cpu, Images, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ProductDetail, CurrentVariant } from "@/lib/types/product";
 import { MdVerified } from "react-icons/md";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
@@ -22,26 +14,35 @@ interface GalleryImage {
   imageUrl: string;
   altText?: string;
   position?: number;
+  color?: string; // NEW — từ API gallery
+  variantId?: string; // NEW — từ API gallery
+}
+
+// NEW — shape mới của API gallery
+interface GalleryResponse {
+  images: GalleryImage[];
+  colorVariantMap: Record<string, string>; // { "black": "uuid", ... }
 }
 
 interface ProductDetailLeftProps {
   product: ProductDetail;
   selectedVariant?: CurrentVariant;
   images: GalleryImage[];
+  onColorChange?: (variantId: string) => void; // NEW — callback lên Content
 }
 
-export default function ProductDetailBanner({
-  product,
-  images,
-  selectedVariant,
-}: ProductDetailLeftProps) {
+export default function ProductDetailBanner({ product, images, selectedVariant, onColorChange }: ProductDetailLeftProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // ── Gallery state ──────────────────────────────────────────────────────────
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [colorVariantMap, setColorVariantMap] = useState<Record<string, string>>({});
   const [galleryLoaded, setGalleryLoaded] = useState(false);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+
+  // Track variantId đang active để tránh gọi callback lặp
+  const lastSyncedVariantId = useRef<string | null>(null);
 
   const EXPAND_INDEX = images.length;
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
@@ -54,22 +55,27 @@ export default function ProductDetailBanner({
     }
   }, [images]);
 
+  // Khi selectedVariant thay đổi từ bên ngoài (user click option), cập nhật lastSyncedVariantId
+  useEffect(() => {
+    if (selectedVariant?.id) {
+      lastSyncedVariantId.current = selectedVariant.id;
+    }
+  }, [selectedVariant?.id]);
+
   // ── Stock ──────────────────────────────────────────────────────────────────
   const maxStock = selectedVariant?.quantity ?? 0;
-  const isOutOfStock =
-    selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
   const isInStock = !isOutOfStock && maxStock > 0;
 
-  // ── Fetch gallery ──────────────────────────────────────────────────────────
+  // ── Fetch gallery (NEW: parse colorVariantMap) ─────────────────────────────
   const fetchGallery = useCallback(async () => {
     if (galleryLoaded || galleryLoading) return;
     setGalleryLoading(true);
     try {
-      const res = await apiRequest.get<{ data: GalleryImage[] }>(
-        `/products/slug/${product.slug}/gallery`,
-        { noAuth: true },
-      );
-      setGalleryImages(res?.data ?? []);
+      const res = await apiRequest.get<{ data: GalleryResponse }>(`/products/slug/${product.slug}/gallery`, { noAuth: true });
+      const data = res?.data;
+      setGalleryImages(data?.images ?? []);
+      setColorVariantMap(data?.colorVariantMap ?? {});
       setGalleryLoaded(true);
       setGalleryIndex(0);
     } catch (err) {
@@ -79,6 +85,26 @@ export default function ProductDetailBanner({
     }
   }, [product.slug, galleryLoaded, galleryLoading]);
 
+  // ── Sync color khi gallery index thay đổi ─────────────────────────────────
+  // Gọi onColorChange nếu ảnh gallery hiện tại thuộc màu khác variant đang chọn
+  const syncColorFromGalleryIndex = useCallback(
+    (index: number) => {
+      if (!onColorChange || !galleryLoaded) return;
+      const img = galleryImages[index];
+      if (!img?.color) return;
+
+      const variantId = colorVariantMap[img.color];
+      if (!variantId) return;
+
+      // Chỉ sync khi khác variant hiện tại
+      if (variantId !== lastSyncedVariantId.current) {
+        lastSyncedVariantId.current = variantId;
+        onColorChange(variantId);
+      }
+    },
+    [galleryImages, colorVariantMap, galleryLoaded, onColorChange],
+  );
+
   // ── Navigation ─────────────────────────────────────────────────────────────
   const goToPrevious = () => {
     if (isExpandSlot) {
@@ -86,7 +112,9 @@ export default function ProductDetailBanner({
         if (galleryIndex === 0) {
           setCurrentImageIndex(images.length - 1);
         } else {
-          setGalleryIndex((prev) => prev - 1);
+          const newIdx = galleryIndex - 1;
+          setGalleryIndex(newIdx);
+          syncColorFromGalleryIndex(newIdx);
         }
       } else {
         setCurrentImageIndex(images.length - 1);
@@ -95,8 +123,9 @@ export default function ProductDetailBanner({
     }
     if (currentImageIndex === 0) {
       setCurrentImageIndex(EXPAND_INDEX);
-      setGalleryIndex(galleryImages.length > 0 ? galleryImages.length - 1 : 0);
-      fetchGallery();
+      const lastIdx = galleryImages.length > 0 ? galleryImages.length - 1 : 0;
+      setGalleryIndex(lastIdx);
+      fetchGallery().then(() => syncColorFromGalleryIndex(lastIdx));
     } else {
       setCurrentImageIndex((prev) => prev - 1);
     }
@@ -108,7 +137,9 @@ export default function ProductDetailBanner({
         if (galleryIndex === galleryImages.length - 1) {
           setCurrentImageIndex(0);
         } else {
-          setGalleryIndex((prev) => prev + 1);
+          const newIdx = galleryIndex + 1;
+          setGalleryIndex(newIdx);
+          syncColorFromGalleryIndex(newIdx);
         }
       } else {
         setCurrentImageIndex(0);
@@ -134,45 +165,29 @@ export default function ProductDetailBanner({
     fetchGallery();
   };
 
-  // ── Current main image ─────────────────────────────────────────────────────
-  const mainImageUrl = isExpandSlot
-    ? (galleryImages[galleryIndex]?.imageUrl ?? "")
-    : (images[currentImageIndex]?.imageUrl ?? "");
-  const mainImageAlt = isExpandSlot
-    ? (galleryImages[galleryIndex]?.altText ?? "Gallery image")
-    : (images[currentImageIndex]?.altText ?? "Product image");
+  // ── Click thumbnail gallery (NEW) ──────────────────────────────────────────
+  // Khi đang ở expand slot và người dùng click thumbnail gallery
+  const goToGalleryIndex = (index: number) => {
+    setGalleryIndex(index);
+    syncColorFromGalleryIndex(index);
+  };
 
-  const counterCurrent = isExpandSlot
-    ? galleryLoaded && galleryImages.length > 0
-      ? `G${galleryIndex + 1}`
-      : "▶"
-    : currentImageIndex + 1;
-  const counterTotal = isExpandSlot
-    ? galleryLoaded && galleryImages.length > 0
-      ? `G${galleryImages.length}`
-      : totalVariantSlots
-    : totalVariantSlots;
+  // ── Current main image ─────────────────────────────────────────────────────
+  const mainImageUrl = isExpandSlot ? (galleryImages[galleryIndex]?.imageUrl ?? "") : (images[currentImageIndex]?.imageUrl ?? "");
+  const mainImageAlt = isExpandSlot ? (galleryImages[galleryIndex]?.altText ?? "Gallery image") : (images[currentImageIndex]?.altText ?? "Product image");
+
+  const counterCurrent = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryIndex + 1}` : "▶") : currentImageIndex + 1;
+  const counterTotal = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryImages.length}` : totalVariantSlots) : totalVariantSlots;
 
   // ── Thumbnail window (hiện tối đa 6) ─────────────────────────────────────
   const THUMB_WINDOW = 6;
-  const allThumbs = [
-    ...images.map((img, i) => ({ type: "variant" as const, index: i })),
-    { type: "expand" as const, index: EXPAND_INDEX },
-  ];
+  const allThumbs = [...images.map((img, i) => ({ type: "variant" as const, index: i })), { type: "expand" as const, index: EXPAND_INDEX }];
   const totalThumbs = allThumbs.length;
 
-  // activeThumbIndex: vị trí trong allThumbs của slot đang active
   const activeThumbIndex = isExpandSlot ? EXPAND_INDEX : currentImageIndex;
 
-  // windowStart: đảm bảo active luôn nằm trong window
-  const windowStart = Math.min(
-    Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)),
-    Math.max(0, totalThumbs - THUMB_WINDOW),
-  );
-  const visibleThumbs = allThumbs.slice(
-    windowStart,
-    windowStart + THUMB_WINDOW,
-  );
+  const windowStart = Math.min(Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)), Math.max(0, totalThumbs - THUMB_WINDOW));
+  const visibleThumbs = allThumbs.slice(windowStart, windowStart + THUMB_WINDOW);
   const highlights = product.highlights || [];
   const iconMap: Record<string, any> = {
     gpu: Gpu,
@@ -186,28 +201,14 @@ export default function ProductDetailBanner({
         {/* ── MAIN IMAGE ──────────────────────────────────────────────────── */}
         <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
           <div className="relative w-full h-full flex items-center justify-center">
-            {!isExpandSlot && mainImageUrl && (
-              <Image
-                src={mainImageUrl}
-                className="max-w-full max-h-full object-contain transition-opacity duration-500"
-                alt={mainImageAlt}
-                fill
-              />
-            )}
+            {!isExpandSlot && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
             {isExpandSlot && galleryLoading && (
               <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
                 <p className="text-sm opacity-60">Đang tải ảnh...</p>
               </div>
             )}
-            {isExpandSlot && !galleryLoading && mainImageUrl && (
-              <Image
-                src={mainImageUrl}
-                className="max-w-full max-h-full object-contain transition-opacity duration-500"
-                alt={mainImageAlt}
-                fill
-              />
-            )}
+            {isExpandSlot && !galleryLoading && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
             {isExpandSlot && !galleryLoading && !mainImageUrl && (
               <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
                 <Images className="w-10 h-10 opacity-30" />
@@ -246,28 +247,19 @@ export default function ProductDetailBanner({
             {visibleThumbs.map((thumb) => {
               if (thumb.type === "expand") {
                 return (
-                  <ThumbnailCell
-                    key="expand"
-                    isActive={isExpandSlot}
-                    onClick={goToExpand}
-                    isExpand
-                  >
+                  <ThumbnailCell key="expand" isActive={isExpandSlot} onClick={goToExpand} isExpand>
                     <div className="flex flex-col items-center justify-center h-full gap-1">
                       {galleryLoading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-primary" />
                       ) : galleryLoaded ? (
                         <>
                           <Images className="w-5 h-5 text-primary" />
-                          <span className="text-[10px] text-primary font-medium">
-                            +{galleryImages.length}
-                          </span>
+                          <span className="text-[10px] text-primary font-medium">+{galleryImages.length}</span>
                         </>
                       ) : (
                         <>
                           <Images className="w-5 h-5 text-neutral-darker" />
-                          <span className="text-[10px] text-neutral-darker">
-                            Xem thêm
-                          </span>
+                          <span className="text-[10px] text-neutral-darker">Xem thêm</span>
                         </>
                       )}
                     </div>
@@ -278,26 +270,40 @@ export default function ProductDetailBanner({
               const image = images[thumb.index];
               if (!image?.imageUrl) return null;
               return (
-                <ThumbnailCell
-                  key={image.id}
-                  isActive={!isExpandSlot && currentImageIndex === thumb.index}
-                  onClick={() => goToVariantIndex(thumb.index)}
-                >
+                <ThumbnailCell key={image.id} isActive={!isExpandSlot && currentImageIndex === thumb.index} onClick={() => goToVariantIndex(thumb.index)}>
                   <Image
                     src={image.imageUrl}
                     alt={image.altText || `Product image ${thumb.index + 1}`}
                     fill
                     sizes="120px"
                     className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
-                      !isExpandSlot && currentImageIndex === thumb.index
-                        ? "opacity-100 scale-100"
-                        : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                      !isExpandSlot && currentImageIndex === thumb.index ? "opacity-100 scale-100" : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
                     }`}
                   />
                 </ThumbnailCell>
               );
             })}
           </div>
+
+          {/* ── GALLERY THUMBNAILS khi đang ở expand slot ─────────────────── */}
+          {isExpandSlot && galleryLoaded && galleryImages.length > 0 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={img.id}
+                  onClick={() => goToGalleryIndex(idx)}
+                  className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden transition-all duration-200
+                    ${
+                      galleryIndex === idx
+                        ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
+                        : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:scale-105 opacity-60 hover:opacity-100"
+                    }`}
+                >
+                  <Image src={img.imageUrl} alt={img.altText || `Gallery ${idx + 1}`} fill sizes="56px" className="object-contain p-1.5 bg-white" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* PRODUCT HIGHLIGHTS */}
           {isInStock && (
@@ -307,19 +313,13 @@ export default function ProductDetailBanner({
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
                 {highlights.map((highlight, index) => {
-                  const IconComponent = highlight?.icon
-                    ? iconMap[highlight.icon]
-                    : null;
+                  const IconComponent = highlight?.icon ? iconMap[highlight.icon] : null;
                   return (
                     <div className="flex-1" key={index}>
-                      <span className="text-sm">
-                        {highlight?.name || "N/A"}
-                      </span>
+                      <span className="text-sm">{highlight?.name || "N/A"}</span>
                       <div className="flex items-center gap-2 mt-2">
                         {IconComponent && <IconComponent size={28} />}
-                        <span className="text-sm font-semibold text-primary">
-                          {highlight?.value || "N/A"}
-                        </span>
+                        <span className="text-sm font-semibold text-primary">{highlight?.value || "N/A"}</span>
                       </div>
                     </div>
                   );
@@ -332,9 +332,7 @@ export default function ProductDetailBanner({
           {isInStock && (
             <div>
               <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                <h2 className="text-base font-semibold text-primary">
-                  Chính sách sản phẩm
-                </h2>
+                <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
                 <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
                   Tìm hiểu thêm
                 </button>
@@ -342,21 +340,15 @@ export default function ProductDetailBanner({
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
                 <div className="flex items-center gap-2 sm:mr-12">
                   <MdVerified size={28} />
-                  <p className="text-sm text-primary">
-                    Hàng chính hãng - Bảo hành 18 tháng
-                  </p>
+                  <p className="text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaShippingFast size={28} />
-                  <p className="text-sm text-primary">
-                    Miễn phí giao hàng toàn quốc
-                  </p>
+                  <p className="text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaUserCog size={28} />
-                  <p className="text-sm text-primary">
-                    Kỹ thuật viên hỗ trợ trực tuyến
-                  </p>
+                  <p className="text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
                 </div>
               </div>
             </div>
@@ -368,17 +360,7 @@ export default function ProductDetailBanner({
 }
 
 // ── ThumbnailCell ──────────────────────────────────────────────────────────
-function ThumbnailCell({
-  isActive,
-  onClick,
-  isExpand = false,
-  children,
-}: {
-  isActive: boolean;
-  onClick: () => void;
-  isExpand?: boolean;
-  children: React.ReactNode;
-}) {
+function ThumbnailCell({ isActive, onClick, isExpand = false, children }: { isActive: boolean; onClick: () => void; isExpand?: boolean; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
