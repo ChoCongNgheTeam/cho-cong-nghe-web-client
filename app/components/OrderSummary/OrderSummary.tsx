@@ -10,7 +10,6 @@ interface OrderSummaryProps {
    subtotal: number;
    totalDiscount: number;
    finalTotal: number;
-   rewardPoints: number;
    selectedItemsCount: number;
    appliedVoucherCode?: string;
    appliedVoucherValue?: number;
@@ -32,7 +31,6 @@ export default function OrderSummary({
    subtotal,
    totalDiscount,
    finalTotal,
-   rewardPoints,
    selectedItemsCount,
    appliedVoucherCode = "",
    appliedVoucherValue = 0,

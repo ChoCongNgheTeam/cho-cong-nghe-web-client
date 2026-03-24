@@ -196,15 +196,28 @@ class ApiRequest {
          clearTimeout(timeoutId);
 
          if (response.status === 401) {
+            // Đọc body trước
+            let errorData = null;
+            try {
+               errorData = await response.json();
+            } catch {}
+
             if (noAuth) {
-               throw new ApiError("Unauthorized", 401);
+               throw new ApiError(
+                  errorData?.message ?? "Unauthorized",
+                  401,
+                  errorData,
+               );
             }
 
             if (noRedirectOn401) {
-               throw new ApiError("Unauthorized", 401);
+               throw new ApiError(
+                  errorData?.message ?? "Unauthorized",
+                  401,
+                  errorData,
+               );
             }
 
-            // Thử refresh token (singleton - chỉ 1 lần dù nhiều request cùng 401)
             const refreshed = await performRefresh();
 
             if (refreshed) {
@@ -232,9 +245,14 @@ class ApiRequest {
                }
 
                if (!silentAuth) {
+                  let retryErrorData = null;
+                  try {
+                     retryErrorData = await retryResponse.json();
+                  } catch {}
                   throw new ApiError(
-                     "Retry failed after refresh",
+                     retryErrorData?.message ?? "Retry failed after refresh",
                      retryResponse.status,
+                     retryErrorData,
                   );
                }
             }
