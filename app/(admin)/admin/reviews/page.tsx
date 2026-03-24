@@ -146,7 +146,7 @@ export default function ReviewsAdminPage() {
           </div>
           <div>
             <h1 className="text-[18px] font-bold text-primary">Quản lý đánh giá</h1>
-            <p className="text-[12px] text-neutral-dark">Duyệt và quản lý đánh giá sản phẩm</p>
+            <p className="text-[12px] text-primary">Duyệt và quản lý đánh giá sản phẩm</p>
           </div>
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function ReviewsAdminPage() {
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={`px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
-                activeTab === tab.value ? "border-accent text-accent" : "border-transparent text-neutral-dark hover:text-primary"
+                activeTab === tab.value ? "border-accent text-accent" : "border-transparent text-primary hover:text-primary"
               }`}
             >
               {tab.label}
@@ -182,7 +182,7 @@ export default function ReviewsAdminPage() {
         <div className="flex items-center gap-3 flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
@@ -209,7 +209,7 @@ export default function ReviewsAdminPage() {
           <button
             onClick={() => setShowFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[13px] transition-colors cursor-pointer ${
-              showFilters || dateFrom || dateTo ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:border-accent hover:text-accent"
+              showFilters || dateFrom || dateTo ? "border-accent text-accent bg-accent/5" : "border-neutral text-primary hover:border-accent hover:text-accent"
             }`}
           >
             <SlidersHorizontal size={13} />
@@ -220,7 +220,7 @@ export default function ReviewsAdminPage() {
           {/* Sort */}
           <button
             onClick={() => setSortOrder((v) => (v === "desc" ? "asc" : "desc"))}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral text-[13px] text-neutral-dark hover:border-accent hover:text-accent transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral text-[13px] text-primary hover:border-accent hover:text-accent transition-colors cursor-pointer"
           >
             {sortOrder === "desc" ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
             {sortOrder === "desc" ? "Mới nhất" : "Cũ nhất"}
@@ -231,7 +231,7 @@ export default function ReviewsAdminPage() {
         {showFilters && (
           <div className="flex items-center gap-3 flex-wrap bg-white border border-neutral rounded-xl px-4 py-3">
             <div className="flex items-center gap-2">
-              <label className="text-[12px] text-neutral-dark font-medium whitespace-nowrap">Từ ngày</label>
+              <label className="text-[12px] text-primary font-medium whitespace-nowrap">Từ ngày</label>
               <input
                 type="date"
                 value={dateFrom}
@@ -240,7 +240,7 @@ export default function ReviewsAdminPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-[12px] text-neutral-dark font-medium whitespace-nowrap">Đến ngày</label>
+              <label className="text-[12px] text-primary font-medium whitespace-nowrap">Đến ngày</label>
               <input
                 type="date"
                 value={dateTo}
@@ -254,7 +254,7 @@ export default function ReviewsAdminPage() {
                   setDateFrom("");
                   setDateTo("");
                 }}
-                className="flex items-center gap-1 text-[12px] text-neutral-dark hover:text-accent transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer"
               >
                 <X size={12} /> Xóa lọc
               </button>
@@ -284,7 +284,7 @@ export default function ReviewsAdminPage() {
                 {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={12} />}
                 Duyệt tất cả
               </button>
-              <button onClick={() => setSelected(new Set())} className="flex items-center gap-1 text-[12px] text-neutral-dark hover:text-accent transition-colors cursor-pointer">
+              <button onClick={() => setSelected(new Set())} className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer">
                 <X size={12} /> Bỏ chọn
               </button>
             </div>
@@ -296,7 +296,7 @@ export default function ReviewsAdminPage() {
           {data && data.data.length > 0 && (
             <div className="px-4 py-2.5 border-b border-neutral flex items-center gap-2">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-3.5 h-3.5 rounded accent-accent cursor-pointer" />
-              <span className="text-[12px] text-neutral-dark">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} đánh giá trên trang`}</span>
+              <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} đánh giá trên trang`}</span>
             </div>
           )}
           <AdminTable columns={columns} data={data?.data ?? []} loading={loading} emptyMessage="Không có đánh giá nào" onRowClick={(review) => setOpenDrawerId(review.id)} />
@@ -305,7 +305,7 @@ export default function ReviewsAdminPage() {
           {!loading && data && data.pagination.total > 0 && (
             <div className="px-4 py-3 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+                <span className="text-[12px] text-primary">Hiển thị</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -320,7 +320,7 @@ export default function ReviewsAdminPage() {
                     </option>
                   ))}
                 </select>
-                <span className="text-[12px] text-neutral-dark">/ {data.pagination.total} đánh giá</span>
+                <span className="text-[12px] text-primary">/ {data.pagination.total} đánh giá</span>
               </div>
               {/* <AdminPagination page={page} totalPages={data.pagination.totalPages} onPageChange={setPage} /> */}
             </div>
@@ -341,11 +341,11 @@ export default function ReviewsAdminPage() {
               </div>
               <div>
                 <h3 className="text-[15px] font-bold text-primary">Xác nhận xóa</h3>
-                <p className="text-[12px] text-neutral-dark">Hành động này không thể hoàn tác</p>
+                <p className="text-[12px] text-primary">Hành động này không thể hoàn tác</p>
               </div>
             </div>
             <div className="bg-neutral-light rounded-xl px-3 py-2.5 space-y-1">
-              <p className="text-[12px] text-neutral-dark">
+              <p className="text-[12px] text-primary">
                 {deleteTarget.user?.fullName ?? "Ẩn danh"} — {deleteTarget.orderItem?.productVariant?.product?.name ?? "—"}
               </p>
               {deleteTarget.comment && <p className="text-[12px] text-primary line-clamp-2">"{deleteTarget.comment}"</p>}
@@ -353,7 +353,7 @@ export default function ReviewsAdminPage() {
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 text-[13px] border border-neutral rounded-lg text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer"
+                className="px-4 py-2 text-[13px] border border-neutral rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
               >
                 Hủy
               </button>

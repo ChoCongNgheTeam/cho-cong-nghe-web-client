@@ -110,12 +110,12 @@ function VariantsTable({ variants }: { variants: ProductVariant[] }) {
       <table className="w-full text-[12px]">
         <thead>
           <tr className="border-b border-neutral">
-            <th className="text-left py-2 px-3 font-semibold text-neutral-dark">SKU</th>
-            <th className="text-left py-2 px-3 font-semibold text-neutral-dark">Thuộc tính</th>
-            <th className="text-right py-2 px-3 font-semibold text-neutral-dark">Giá</th>
-            <th className="text-right py-2 px-3 font-semibold text-neutral-dark">Tồn</th>
-            <th className="text-right py-2 px-3 font-semibold text-neutral-dark">Bán</th>
-            <th className="text-center py-2 px-3 font-semibold text-neutral-dark">Trạng thái</th>
+            <th className="text-left py-2 px-3 font-semibold text-primary">SKU</th>
+            <th className="text-left py-2 px-3 font-semibold text-primary">Thuộc tính</th>
+            <th className="text-right py-2 px-3 font-semibold text-primary">Giá</th>
+            <th className="text-right py-2 px-3 font-semibold text-primary">Tồn</th>
+            <th className="text-right py-2 px-3 font-semibold text-primary">Bán</th>
+            <th className="text-center py-2 px-3 font-semibold text-primary">Trạng thái</th>
           </tr>
         </thead>
         <tbody>
@@ -124,8 +124,8 @@ function VariantsTable({ variants }: { variants: ProductVariant[] }) {
             const isDeleted = !!v.deletedAt;
             return (
               <tr key={v.id} className={`border-b border-neutral/40 ${isDeleted ? "opacity-40" : "hover:bg-neutral-light-active/50"}`}>
-                <td className="py-2 px-3 font-mono text-[11px] text-accent">{v.code}</td>
-                <td className="py-2 px-3 text-primary">{attrs || <span className="text-neutral-dark italic">Default</span>}</td>
+                <td className="py-2 px-3 font-mono text-[13px] text-accent">{v.code}</td>
+                <td className="py-2 px-3 text-primary">{attrs || <span className="text-primary italic">Default</span>}</td>
                 <td className="py-2 px-3 text-right font-semibold">{formatVND(Number(v.price))}</td>
                 <td className="py-2 px-3 text-right">{v.quantity}</td>
                 <td className="py-2 px-3 text-right">{v.soldCount}</td>
@@ -152,8 +152,8 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
   return (
     <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-5 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer">
-        <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">{title}</p>
-        {open ? <ChevronUp size={14} className="text-neutral-dark" /> : <ChevronDown size={14} className="text-neutral-dark" />}
+        <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">{title}</p>
+        {open ? <ChevronUp size={14} className="text-primary" /> : <ChevronDown size={14} className="text-primary" />}
       </button>
       {open && <div className="px-5 pb-4">{children}</div>}
     </div>
@@ -164,12 +164,12 @@ function StarRow({ rating, count, total }: { rating: number; count: number; tota
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <div className="flex items-center gap-2 text-[12px]">
-      <span className="w-4 text-right text-neutral-dark">{rating}</span>
+      <span className="w-4 text-right text-primary">{rating}</span>
       <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />
       <div className="flex-1 h-1.5 bg-neutral rounded-full overflow-hidden">
         <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <span className="w-6 text-right text-neutral-dark">{count}</span>
+      <span className="w-6 text-right text-primary">{count}</span>
     </div>
   );
 }
@@ -188,7 +188,7 @@ function UserAvatar({ user }: { user: { fullName: string; avatarImage?: string |
   return user.avatarImage ? (
     <Image src={user.avatarImage} alt={user.fullName} width={28} height={28} className="rounded-full object-cover shrink-0" unoptimized />
   ) : (
-    <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[11px] font-bold shrink-0">{user.fullName?.[0]?.toUpperCase() ?? "U"}</div>
+    <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[13px] font-bold shrink-0">{user.fullName?.[0]?.toUpperCase() ?? "U"}</div>
   );
 }
 
@@ -233,16 +233,16 @@ function CommentsTab({ productId }: { productId: string }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[12px] text-neutral-dark">{total} bình luận</p>
-        <button onClick={load} className="flex items-center gap-1 text-[11px] text-accent hover:underline cursor-pointer">
+        <p className="text-[12px] text-primary">{total} bình luận</p>
+        <button onClick={load} className="flex items-center gap-1 text-[13px] text-accent hover:underline cursor-pointer">
           <RefreshCw size={11} /> Làm mới
         </button>
       </div>
 
       {comments.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-8">
-          <MessageSquare size={28} className="text-neutral-dark opacity-30" />
-          <p className="text-[13px] text-neutral-dark">Chưa có bình luận nào</p>
+          <MessageSquare size={28} className="text-primary opacity-30" />
+          <p className="text-[13px] text-primary">Chưa có bình luận nào</p>
         </div>
       ) : (
         comments.map((c) => (
@@ -251,7 +251,7 @@ function CommentsTab({ productId }: { productId: string }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[12px] font-semibold text-primary">{c.user.fullName}</span>
-                <span className="text-[11px] text-neutral-dark">{c.user.email}</span>
+                <span className="text-[13px] text-primary">{c.user.email}</span>
                 {c.isApproved ? (
                   <span className="flex items-center gap-0.5 text-[10px] text-emerald-600">
                     <ThumbsUp size={9} /> Đã duyệt
@@ -263,7 +263,7 @@ function CommentsTab({ productId }: { productId: string }) {
                 )}
               </div>
               <p className="text-[13px] text-primary mt-0.5 leading-relaxed">{c.content}</p>
-              <p className="text-[11px] text-neutral-dark mt-0.5">{formatDate(c.createdAt)}</p>
+              <p className="text-[13px] text-primary mt-0.5">{formatDate(c.createdAt)}</p>
             </div>
           </div>
         ))
@@ -324,7 +324,7 @@ function ReviewsTab({ productId }: { productId: string }) {
                 <Star key={s} size={12} className={s <= Math.round(stats.average) ? "text-amber-400 fill-amber-400" : "text-neutral"} />
               ))}
             </div>
-            <p className="text-[11px] text-neutral-dark mt-0.5">{stats.total} đánh giá</p>
+            <p className="text-[13px] text-primary mt-0.5">{stats.total} đánh giá</p>
           </div>
           <div className="flex-1 space-y-1.5">
             {[5, 4, 3, 2, 1].map((r) => (
@@ -335,16 +335,16 @@ function ReviewsTab({ productId }: { productId: string }) {
       )}
 
       <div className="flex items-center justify-between">
-        <p className="text-[12px] text-neutral-dark">{stats?.total ?? 0} đánh giá được duyệt</p>
-        <button onClick={load} className="flex items-center gap-1 text-[11px] text-accent hover:underline cursor-pointer">
+        <p className="text-[12px] text-primary">{stats?.total ?? 0} đánh giá được duyệt</p>
+        <button onClick={load} className="flex items-center gap-1 text-[13px] text-accent hover:underline cursor-pointer">
           <RefreshCw size={11} /> Làm mới
         </button>
       </div>
 
       {reviews.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-8">
-          <Star size={28} className="text-neutral-dark opacity-30" />
-          <p className="text-[13px] text-neutral-dark">Chưa có đánh giá nào được duyệt</p>
+          <Star size={28} className="text-primary opacity-30" />
+          <p className="text-[13px] text-primary">Chưa có đánh giá nào được duyệt</p>
         </div>
       ) : (
         <div className="space-y-1">
@@ -361,11 +361,11 @@ function ReviewsTab({ productId }: { productId: string }) {
                   </div>
                   <ReviewStatusBadge status={r.isApproved} />
                 </div>
-                <p className="text-[11px] text-neutral-dark mt-0.5">
+                <p className="text-[13px] text-primary mt-0.5">
                   {r.orderItem.productVariant.code} · Số lượng: {r.orderItem.quantity} · {formatVND(Number(r.orderItem.unitPrice))}
                 </p>
                 {r.comment && <p className="text-[13px] text-primary mt-1 leading-relaxed">{r.comment}</p>}
-                <p className="text-[11px] text-neutral-dark mt-0.5">{formatDate(r.createdAt)}</p>
+                <p className="text-[13px] text-primary mt-0.5">{formatDate(r.createdAt)}</p>
               </div>
             </div>
           ))}
@@ -385,11 +385,11 @@ function InfoSection({ title, children, defaultOpen = true, action }: { title: s
     <div className="border border-neutral rounded-xl overflow-hidden bg-neutral-light">
       {/* Header — click để toggle */}
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer">
-        <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">{title}</p>
+        <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">{title}</p>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           {action}
           <span
-            className="text-neutral-dark"
+            className="text-primary"
             onClick={(e) => {
               e.stopPropagation();
               setOpen((v) => !v);
@@ -503,8 +503,8 @@ export default function ProductDetailPage() {
   if (error || !product)
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Package size={40} className="text-neutral-dark opacity-40" />
-        <p className="text-sm text-neutral-dark">{error ?? "Không tìm thấy sản phẩm"}</p>
+        <Package size={40} className="text-primary opacity-40" />
+        <p className="text-sm text-primary">{error ?? "Không tìm thấy sản phẩm"}</p>
         <button onClick={() => router.back()} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
           Quay lại
         </button>
@@ -521,11 +521,11 @@ export default function ProductDetailPage() {
         <button onClick={() => router.back()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
           <ArrowLeft size={14} /> Quay lại
         </button>
-        <span className="text-neutral-dark">/</span>
-        <Link href="/admin/products" className="text-[13px] text-neutral-dark hover:text-accent">
+        <span className="text-primary">/</span>
+        <Link href="/admin/products" className="text-[13px] text-primary hover:text-accent">
           Sản phẩm
         </Link>
-        <span className="text-neutral-dark">/</span>
+        <span className="text-primary">/</span>
         <span className="text-[13px] text-primary font-medium truncate max-w-xs">{product.name}</span>
       </div>
 
@@ -535,7 +535,7 @@ export default function ProductDetailPage() {
           <Trash2 size={16} className="text-red-500 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold text-red-700">Sản phẩm đã được chuyển vào thùng rác</p>
-            <p className="text-[11px] text-red-500">Xóa lúc: {formatDate(product.deletedAt!)} — Không hiển thị cho khách hàng</p>
+            <p className="text-[13px] text-red-500">Xóa lúc: {formatDate(product.deletedAt!)} — Không hiển thị cho khách hàng</p>
           </div>
           <button
             onClick={() => {
@@ -560,12 +560,12 @@ export default function ProductDetailPage() {
                   <Image src={thumbnail} alt={product.name} fill className="object-contain p-4" unoptimized />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageOff size={36} strokeWidth={1.5} className="text-neutral-dark" />
+                    <ImageOff size={36} strokeWidth={1.5} className="text-primary" />
                   </div>
                 )}
               </div>
               {selectedImages.length > 1 && (
-                <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
+                <div className="px-3 py-2 flex gap-1.5 overflow-x-auto scrollbar-thin">
                   {selectedImages.slice(0, 5).map((img) => (
                     <div key={img.id} className="w-10 h-10 rounded-md overflow-hidden border border-neutral shrink-0 bg-neutral-light-active">
                       {img.imageUrl && <Image src={img.imageUrl} alt={img.altText ?? img.color} width={40} height={40} className="object-contain" unoptimized />}
@@ -573,20 +573,20 @@ export default function ProductDetailPage() {
                   ))}
                   {selectedImages.length > 5 && (
                     <div className="w-10 h-10 rounded-md border border-neutral bg-neutral-light-active flex items-center justify-center shrink-0">
-                      <span className="text-[10px] text-neutral-dark">+{selectedImages.length - 5}</span>
+                      <span className="text-[10px] text-primary">+{selectedImages.length - 5}</span>
                     </div>
                   )}
                 </div>
               )}
               {colorGroups.length > 1 && (
                 <div className="px-3 pb-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Màu sắc ({colorGroups.length})</p>
+                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Màu sắc ({colorGroups.length})</p>
                   <div className="flex flex-wrap gap-1.5">
                     {colorGroups.map((group) => (
                       <button
                         key={group.color}
                         onClick={() => setSelectedColor(group.color)}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-medium border cursor-pointer transition-colors ${selectedColor === group.color ? "border-accent bg-accent/10 text-accent" : "border-neutral text-primary hover:border-accent/50"}`}
+                        className={`px-2 py-0.5 rounded-md text-[13px] font-medium border cursor-pointer transition-colors ${selectedColor === group.color ? "border-accent bg-accent/10 text-accent" : "border-neutral text-primary hover:border-accent/50"}`}
                       >
                         {group.color}
                       </button>
@@ -598,17 +598,17 @@ export default function ProductDetailPage() {
 
             {/* Meta */}
             <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-3 text-[13px]">
-              <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Thông tin</p>
+              <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">Thông tin</p>
               {[
                 { label: "Thương hiệu", value: product.brand.name },
-                { label: "Danh mục", value: <span className="font-mono text-[11px] text-accent">{product.category.slug}</span> },
+                { label: "Danh mục", value: <span className="font-mono text-[13px] text-accent">{product.category.slug}</span> },
                 { label: "Variant display", value: <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-light-active text-primary">{product.variantDisplay}</span> },
                 {
                   label: "Đánh giá",
                   value: (
                     <span className="text-amber-500 font-medium">
                       ★ {Number(product.ratingAverage).toFixed(1)}
-                      <span className="text-neutral-dark"> ({product.ratingCount})</span>
+                      <span className="text-primary"> ({product.ratingCount})</span>
                     </span>
                   ),
                 },
@@ -618,23 +618,23 @@ export default function ProductDetailPage() {
                 { label: "Cập nhật", value: <span className="text-[12px]">{formatDate(product.updatedAt)}</span> },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between gap-2">
-                  <span className="text-neutral-dark shrink-0">{label}</span>
+                  <span className="text-primary shrink-0">{label}</span>
                   <span className="text-primary text-right">{value}</span>
                 </div>
               ))}
               <div className="flex items-start justify-between gap-2">
-                <span className="text-neutral-dark shrink-0">Slug</span>
-                <span className="text-accent font-mono text-[11px] break-all text-right">{product.slug}</span>
+                <span className="text-primary shrink-0">Slug</span>
+                <span className="text-accent font-mono text-[13px] break-all text-right">{product.slug}</span>
               </div>
             </div>
 
             {/* Highlight specs */}
             {highlightSpecs.length > 0 && (
               <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-2">
-                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-2">Thông số nổi bật ({highlightSpecs.length})</p>
+                <p className="text-[13px] font-semibold text-primary uppercase tracking-wider mb-2">Thông số nổi bật ({highlightSpecs.length})</p>
                 {highlightSpecs.map((s) => (
                   <div key={s.specificationId} className="flex items-center justify-between text-[12px]">
-                    <span className="text-neutral-dark">{s.specification.name}</span>
+                    <span className="text-primary">{s.specification.name}</span>
                     <span className="font-medium text-primary">
                       {s.value}
                       {s.specification.unit ? ` ${s.specification.unit}` : ""}
@@ -653,7 +653,7 @@ export default function ProductDetailPage() {
                 <h1 className="text-[18px] font-bold text-primary leading-tight">{product.name}</h1>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${isDeleted ? "bg-red-50 text-red-500" : product.isActive ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-500"}`}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold ${isDeleted ? "bg-red-50 text-red-500" : product.isActive ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-500"}`}
                   >
                     {isDeleted ? (
                       <>
@@ -670,17 +670,17 @@ export default function ProductDetailPage() {
                     )}
                   </span>
                   {product.isFeatured && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-500">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold bg-amber-50 text-amber-500">
                       <Star size={10} /> Nổi bật
                     </span>
                   )}
                   {defaultVariant && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/10 text-accent">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold bg-accent/10 text-accent">
                       <ShoppingCart size={10} />
                       {priceRange.min === priceRange.max ? formatVND(priceRange.min) : `${formatVND(priceRange.min)} – ${formatVND(priceRange.max)}`}
                     </span>
                   )}
-                  <span className="text-[11px] text-neutral-dark">
+                  <span className="text-[13px] text-primary">
                     {product.variants.filter((v) => !v.deletedAt).length} variants · {colorGroups.length} màu
                   </span>
                 </div>
@@ -719,7 +719,7 @@ export default function ProductDetailPage() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`px-5 py-3 text-[12px] font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab.key ? "border-accent text-accent" : "border-transparent text-neutral-dark hover:text-primary"}`}
+                    className={`px-5 py-3 text-[12px] font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab.key ? "border-accent text-accent" : "border-transparent text-primary hover:text-primary"}`}
                   >
                     {tab.label}
                   </button>
@@ -751,7 +751,7 @@ export default function ProductDetailPage() {
                           dangerouslySetInnerHTML={{ __html: product.description }}
                         />
                       ) : (
-                        <p className="text-[13px] italic text-neutral-dark">Chưa có mô tả</p>
+                        <p className="text-[13px] italic text-primary">Chưa có mô tả</p>
                       )}
                     </InfoSection>
 
@@ -768,7 +768,7 @@ export default function ProductDetailPage() {
                       }
                     >
                       <VariantsTable variants={product.variants} />
-                      <div className="mt-2 flex items-center gap-4 text-[11px] text-neutral-dark">
+                      <div className="mt-2 flex items-center gap-4 text-[13px] text-primary">
                         <span>
                           Active: <strong className="text-emerald-600">{activeVariants.length}</strong>
                         </span>
@@ -789,14 +789,14 @@ export default function ProductDetailPage() {
                         <div className="space-y-4">
                           {specGroups.map((group) => (
                             <div key={group.groupName}>
-                              <p className="text-[11px] font-semibold text-accent uppercase tracking-wider mb-2">{group.groupName}</p>
+                              <p className="text-[13px] font-semibold text-accent uppercase tracking-wider mb-2">{group.groupName}</p>
                               <div className="space-y-1">
                                 {group.items.map((s) => (
                                   <div
                                     key={s.specificationId}
                                     className={`flex items-start justify-between gap-3 px-3 py-1.5 rounded-lg text-[12px] ${s.isHighlight ? "bg-amber-50 border border-amber-200/50" : "bg-neutral-light-active"}`}
                                   >
-                                    <span className="text-neutral-dark shrink-0 max-w-[200px]">
+                                    <span className="text-primary shrink-0 max-w-[200px]">
                                       {s.isHighlight && <span className="text-amber-500 mr-1">★</span>}
                                       {s.specification.name}
                                     </span>
@@ -840,7 +840,7 @@ export default function ProductDetailPage() {
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá sản phẩm?</h3>
             <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
             <p className="text-[14px] font-semibold text-primary text-center mb-2">"{product.name}"</p>
-            <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác.</p>
+            <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác.</p>
             {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
             <div className="flex gap-2">
               <button
@@ -876,7 +876,7 @@ export default function ProductDetailPage() {
             </div>
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Khôi phục sản phẩm?</h3>
             <p className="text-[14px] font-semibold text-primary text-center mb-5">"{product.name}"</p>
-            <p className="text-[12px] text-neutral-dark text-center mb-6">Sản phẩm sẽ được khôi phục nhưng vẫn ở trạng thái ẩn.</p>
+            <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được khôi phục nhưng vẫn ở trạng thái ẩn.</p>
             {restoreError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{restoreError}</div>}
             <div className="flex gap-2">
               <button

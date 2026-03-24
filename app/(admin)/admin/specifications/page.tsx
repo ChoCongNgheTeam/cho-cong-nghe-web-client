@@ -190,7 +190,7 @@ export default function SpecificationsPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Thông số kỹ thuật</h1>
-            <p className="text-[12px] text-neutral-dark">Quản lý các thuộc tính và bộ lọc sản phẩm</p>
+            <p className="text-[13px] text-primary">Quản lý các thuộc tính và bộ lọc sản phẩm</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ export default function SpecificationsPage() {
           valueClassName="text-emerald-600"
           iconClassName="text-emerald-600"
         />
-        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-neutral-dark" iconClassName="text-neutral-dark" />
+        <StatsCard label="Không hoạt động" value={meta.activeCounts.INACTIVE} sub="Đang bị ẩn" icon={<XCircle size={16} />} valueClassName="text-primary" iconClassName="text-primary" />
         <StatsCard label="Có thể lọc" value={meta.activeCounts.FILTERABLE} sub="Hiển thị trong bộ lọc" icon={<Filter size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
       </div>
 
@@ -236,11 +236,11 @@ export default function SpecificationsPage() {
                 resetPage();
               }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                 {tab.count}
               </span>
             </button>
@@ -250,7 +250,7 @@ export default function SpecificationsPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -270,7 +270,7 @@ export default function SpecificationsPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -308,20 +308,20 @@ export default function SpecificationsPage() {
           {hasActiveFilters && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} thông số</span>
+          <span className="ml-auto text-[12px] text-primary">{meta.total} thông số</span>
         </div>
 
         {/* ── Selection bar ── */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thông số</span>
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer">
               Bỏ chọn
             </button>
           </div>
@@ -331,7 +331,7 @@ export default function SpecificationsPage() {
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <p className="text-[13px] text-primary">{error}</p>
             <button onClick={fetchSpecs} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thử lại
             </button>
@@ -342,8 +342,8 @@ export default function SpecificationsPage() {
           </div>
         ) : specs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <SlidersHorizontal size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thông số nào"}</p>
+            <SlidersHorizontal size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có thông số nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xoá bộ lọc
@@ -362,7 +362,7 @@ export default function SpecificationsPage() {
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <span className="text-[12px] text-primary">Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -377,7 +377,7 @@ export default function SpecificationsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {meta.total} thông số</span>
+              <span className="text-[12px] text-primary">/ {meta.total} thông số</span>
             </div>
             <AdminPagination
               currentPage={meta.page}
@@ -408,13 +408,13 @@ export default function SpecificationsPage() {
                 </div>
                 <div>
                   <h2 className="text-[15px] font-bold text-primary">{editTarget ? "Chỉnh sửa thông số" : "Thêm thông số mới"}</h2>
-                  {editTarget && <p className="text-[11px] text-neutral-dark font-mono">{editTarget.key}</p>}
+                  {editTarget && <p className="text-[12px] text-primary font-mono">{editTarget.key}</p>}
                 </div>
               </div>
               <button
                 onClick={() => !formSaving && setFormOpen(false)}
                 disabled={formSaving}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
               >
                 <X size={16} />
               </button>

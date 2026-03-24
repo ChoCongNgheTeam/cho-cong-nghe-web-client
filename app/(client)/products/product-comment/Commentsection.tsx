@@ -132,29 +132,28 @@ function CommentNode({
   const hasChildren = (node._repliesCount ?? node.replies?.length ?? 0) > 0;
   const isExpanded = expandedIds[node.id];
   const isLoading = loadingIds[node.id];
-  const effectiveReplyTarget = node.id;
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2 sm:gap-3">
       <Avatar user={node.user} size={avatarSize} />
       <div className="flex-1 min-w-0">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="font-semibold text-sm text-primary">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+          <span className="font-semibold text-xs sm:text-sm text-primary">
             {node.user?.fullName}
           </span>
-          <span className="text-xs text-neutral-darker">
+          <span className="text-[11px] sm:text-xs text-neutral-darker">
             • {formatRelativeDate(node.createdAt)}
           </span>
         </div>
 
         {/* Content */}
-        <p className="text-neutral-darker mb-2 text-sm wrap-break-word whitespace-pre-wrap">
+        <p className="text-neutral-darker mb-2 text-xs sm:text-sm wrap-break-word whitespace-pre-wrap">
           {node.content}
         </p>
 
         {/* Actions */}
-        <div className="flex items-center gap-4 text-xs sm:text-sm text-neutral-darker">
+        <div className="flex items-center gap-3 sm:gap-4 text-xs text-neutral-darker">
           <button className="flex items-center gap-1 hover:text-primary transition-colors">
             <AiOutlineLike />
             <span>Thích</span>
@@ -162,9 +161,7 @@ function CommentNode({
 
           <button
             onClick={() =>
-              onSetReplyTarget(
-                replyTargetId === node.id ? null : effectiveReplyTarget,
-              )
+              onSetReplyTarget(replyTargetId === node.id ? null : node.id)
             }
             className="hover:text-primary transition-colors cursor-pointer"
           >
@@ -209,14 +206,14 @@ function CommentNode({
               onKeyPress={(e) => onKeyPress(e, node.id)}
               maxLength={3000}
               autoFocus
-              className="flex-1 px-3 py-2 border border-neutral-dark rounded-lg text-sm focus:outline-none focus:border-neutral-darker bg-neutral-light text-primary"
+              className="flex-1 min-w-0 px-3 py-2 border border-neutral-dark rounded-lg text-xs sm:text-sm focus:outline-none focus:border-neutral-darker bg-neutral-light text-primary"
             />
             <button
               onClick={() => onSubmitReply(node.id)}
               disabled={
                 !replyContents[node.id]?.trim() || replySubmitting === node.id
               }
-              className="px-4 py-2 bg-primary text-white rounded-full text-xs font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              className="shrink-0 px-3 sm:px-4 py-2 bg-primary text-white rounded-full text-xs font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               {replySubmitting === node.id ? "Đang gửi..." : "Gửi"}
             </button>
@@ -226,7 +223,9 @@ function CommentNode({
         {/* Children */}
         {isExpanded && (node.replies?.length ?? 0) > 0 && (
           <div
-            className={`mt-4 space-y-4 ${depth < MAX_DEPTH ? "pl-4 border-l-2 border-neutral" : ""}`}
+            className={`mt-3 sm:mt-4 space-y-3 sm:space-y-4 ${
+              depth < MAX_DEPTH ? "pl-3 sm:pl-4 border-l-2 border-neutral" : ""
+            }`}
           >
             {node.replies!.map((child) => (
               <CommentNode
@@ -262,12 +261,10 @@ export default function CommentSection({
   onFetchReplies,
   onFetchNestedReplies,
 }: CommentSectionProps) {
-  // ── Auth ────────────────────────────────────────────────────────
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const toast = useToasty();
 
-  // ── State ───────────────────────────────────────────────────────
   const [selectedRating, setSelectedRating] = useState("all");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -281,7 +278,6 @@ export default function CommentSection({
   const [localComments, setLocalComments] =
     useState<Comment[]>(initialComments);
 
-  // ── Pagination ──────────────────────────────────────────────────
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const commentListRef = useRef<HTMLDivElement>(null);
 
@@ -295,12 +291,10 @@ export default function CommentSection({
     }, 0);
   };
 
-  // Reset về trang đầu khi đổi filter
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [selectedRating]);
 
-  // Sync khi parent fetch xong
   useEffect(() => {
     setLocalComments((prev) => {
       const optimisticNodes = prev.filter((c) =>
@@ -314,17 +308,13 @@ export default function CommentSection({
     });
   }, [initialComments]);
 
-  // ── Filtered + paginated ────────────────────────────────────────
-  const filteredComments = localComments; // mở rộng filter rating ở đây nếu cần
+  const filteredComments = localComments;
   const visibleComments = filteredComments.slice(0, visibleCount);
   const hasMore = visibleCount < filteredComments.length;
   const remaining = filteredComments.length - visibleCount;
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + PAGE_SIZE);
-  };
+  const handleLoadMore = () => setVisibleCount((prev) => prev + PAGE_SIZE);
 
-  // ── Submit top-level comment ────────────────────────────────────
   const handleSubmitComment = async () => {
     if (!isAuthenticated) {
       toast.warning("Vui lòng đăng nhập để đặt câu hỏi", {
@@ -354,7 +344,6 @@ export default function CommentSection({
       _repliesCount: 0,
     };
 
-    // Thêm vào đầu list và đảm bảo nó visible
     setLocalComments((prev) => [optimistic, ...prev]);
     setVisibleCount((prev) => Math.max(prev, PAGE_SIZE));
 
@@ -377,7 +366,6 @@ export default function CommentSection({
     }
   };
 
-  // ── Submit reply ────────────────────────────────────────────────
   const handleSubmitReply = useCallback(
     async (parentId: string) => {
       if (!isAuthenticated) {
@@ -465,17 +453,14 @@ export default function CommentSection({
     ],
   );
 
-  // ── Toggle expand / fetch replies ──────────────────────────────
   const handleToggleExpand = useCallback(
     async (id: string, node: Reply | Comment) => {
       if (expandedIds[id]) {
         setExpandedIds((prev) => ({ ...prev, [id]: false }));
         return;
       }
-
       if (!node.replies || node.replies.length === 0) {
         setLoadingIds((prev) => ({ ...prev, [id]: true }));
-
         const isTopLevel = localComments.some((c) => c.id === id);
         if (isTopLevel) {
           await onFetchReplies(id);
@@ -483,10 +468,8 @@ export default function CommentSection({
           const parentId = findTopLevelParent(localComments, id);
           if (parentId) await onFetchNestedReplies(id, parentId);
         }
-
         setLoadingIds((prev) => ({ ...prev, [id]: false }));
       }
-
       setExpandedIds((prev) => ({ ...prev, [id]: true }));
     },
     [expandedIds, localComments, onFetchReplies, onFetchNestedReplies],
@@ -509,65 +492,66 @@ export default function CommentSection({
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────
   return (
     <div ref={commentListRef}>
-      <h4 className="text-lg sm:text-2xl font-semibold text-primary flex-2 mb-8">
-        Bình luận{" "}
+      {/* ── Title ─────────────────────────────────────────────────── */}
+      <h4 className="text-lg sm:text-2xl font-semibold text-primary mb-6 sm:mb-8">
+        Bình luận
       </h4>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 pb-6">
-        <Image
-          src="https://cdn2.cellphones.com.vn/insecure/rs:fill:160:0/q:90/plain/https://cellphones.com.vn/media/wysiwyg/ant-hello-2025.png"
-          alt="Sản phẩm"
-          width={160}
-          height={160}
-        />
+      {/* ── Ask question block ────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 pb-6 border-b border-neutral">
+        {/* Ảnh — ẩn trên mobile rất nhỏ, thu nhỏ trên sm */}
+        <div className="hidden xs:flex shrink-0 items-start justify-center sm:justify-start">
+          <Image
+            src="https://cdn2.cellphones.com.vn/insecure/rs:fill:160:0/q:90/plain/https://cellphones.com.vn/media/wysiwyg/ant-hello-2025.png"
+            alt="Sản phẩm"
+            width={100}
+            height={100}
+            className="sm:w-[120px] lg:w-[160px] h-auto object-contain"
+          />
+        </div>
 
-        {/* Input */}
-        <div className="flex-10">
-          <div className="mb-2">
-            <h4 className="text-lg sm:text-xl font-semibold text-primary mb-2 opacity-[80%]">
-              Hãy đặt câu hỏi cho chúng tôi
-            </h4>
-            <p className="text-base text-primary mb-2 opacity-[60%]">
-              ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu
-              hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau. Thông tin có
-              thể thay đổi theo thời gian, vui lòng đặt câu hỏi để nhận được cập
-              nhật mới nhất!
-            </p>
-          </div>
-          <div className="relative mt-4">
-            <input
-              type="text"
-              placeholder={
-                isAuthenticated
-                  ? "Viết câu hỏi của bạn tại đây..."
-                  : "Đăng nhập để đặt câu hỏi..."
-              }
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              onKeyPress={handleCommentKeyPress}
-              disabled={submitting || !isAuthenticated}
-              maxLength={3000}
-              className="w-full px-3 sm:px-4 py-3 border border-neutral-dark rounded-lg pr-3 sm:pr-36 focus:outline-none focus:border-neutral-darker text-sm sm:text-base bg-neutral-light text-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:absolute sm:right-3 sm:top-1/2 sm:-translate-y-1/2">
-              <span className="text-xs text-neutral-darker">
+        {/* Input area */}
+        <div className="flex-1 min-w-0">
+          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">
+            Hãy đặt câu hỏi cho chúng tôi
+          </h4>
+          <p className="text-xs sm:text-sm text-primary opacity-60 leading-relaxed">
+            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi
+            sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
+          </p>
+
+          {/* Input + button */}
+          <div className="mt-3 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder={
+                  isAuthenticated
+                    ? "Viết câu hỏi của bạn tại đây..."
+                    : "Đăng nhập để đặt câu hỏi..."
+                }
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                onKeyPress={handleCommentKeyPress}
+                disabled={submitting || !isAuthenticated}
+                maxLength={3000}
+                className="w-full px-3 py-2.5 border border-neutral-dark rounded-lg text-sm focus:outline-none focus:border-neutral-darker bg-neutral-light text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-darker pointer-events-none">
                 {comment.length}/3000
               </span>
-              <button
-                onClick={handleSubmitComment}
-                disabled={!comment.trim() || submitting || !isAuthenticated}
-                className="px-4 cursor-pointer sm:px-6 py-2 bg-neutral text-primary rounded-full text-xs sm:text-sm font-medium hover:bg-neutral-hover ml-auto disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {submitting ? "Đang gửi..." : "Gửi bình luận"}
-              </button>
             </div>
+            <button
+              onClick={handleSubmitComment}
+              disabled={!comment.trim() || submitting || !isAuthenticated}
+              className="shrink-0 px-5 py-2.5 bg-neutral text-primary rounded-full text-xs sm:text-sm font-medium hover:bg-neutral-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              {submitting ? "Đang gửi..." : "Gửi bình luận"}
+            </button>
           </div>
 
-          {/* Thông báo chưa đăng nhập */}
           {!isAuthenticated && (
             <p className="text-xs text-neutral-darker mt-2">
               Bạn cần{" "}
@@ -583,28 +567,28 @@ export default function CommentSection({
         </div>
       </div>
 
-      {/* Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 justify-between items-center">
-        <h4 className="text-base text-primary flex-2">
+      {/* ── Filter bar ───────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h4 className="text-sm sm:text-base text-primary shrink-0">
           Có {filteredComments.length} bình luận
         </h4>
-        <div className="flex gap-1 flex-wrap">
+        {/* scroll ngang trên mobile */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
           {filterOptions.map((option) => (
             <button
               key={option.value}
               onClick={() => setSelectedRating(option.value)}
               className={`
-    relative px-4 sm:px-5 py-1.5 sm:py-2
-    rounded-full text-xs sm:text-sm font-medium
-    whitespace-nowrap cursor-pointer
-    border transition-all duration-200
-    select-none
-    ${
-      selectedRating === option.value
-        ? "border-accent text-accent bg-accent/10 shadow-sm shadow-accent/20"
-        : "border-neutral-dark text-neutral-darker bg-transparent hover:border-neutral-darker hover:bg-neutral-dark/10"
-    }
-  `}
+                shrink-0 px-3 sm:px-4 py-1 sm:py-1.5
+                rounded-full text-xs sm:text-sm font-medium
+                whitespace-nowrap cursor-pointer
+                border transition-all duration-200
+                ${
+                  selectedRating === option.value
+                    ? "border-accent text-accent bg-accent/10 shadow-sm shadow-accent/20"
+                    : "border-neutral-dark text-neutral-darker bg-transparent hover:border-neutral-darker hover:bg-neutral-dark/10"
+                }
+              `}
             >
               {option.label}
             </button>
@@ -612,24 +596,26 @@ export default function CommentSection({
         </div>
       </div>
 
-      {/* List */}
-      <div className="space-y-6 mt-6">
+      {/* ── Comment list ──────────────────────────────────────────── */}
+      <div className="space-y-5 sm:space-y-6 mt-5 sm:mt-6">
         {loading ? (
           <div className="text-center py-8 text-neutral-darker">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            <p className="mt-2">Đang tải bình luận...</p>
+            <p className="mt-2 text-sm">Đang tải bình luận...</p>
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8 text-neutral-darker">
-            <p className="text-lg">Chưa có bình luận nào</p>
-            <p className="text-sm mt-1">Hãy là người đầu tiên bình luận!</p>
+            <p className="text-base sm:text-lg">Chưa có bình luận nào</p>
+            <p className="text-xs sm:text-sm mt-1">
+              Hãy là người đầu tiên bình luận!
+            </p>
           </div>
         ) : (
           <>
             {visibleComments.map((c) => (
               <div
                 key={c.id}
-                className="pb-5 border-b border-neutral last:border-0"
+                className="pb-4 sm:pb-5 border-b border-neutral last:border-0"
               >
                 <CommentNode
                   node={c}
@@ -650,23 +636,23 @@ export default function CommentSection({
               </div>
             ))}
 
-            {/* Load more / Collapse buttons */}
-            <div className="flex justify-center gap-3 pt-2">
+            {/* Load more / Collapse */}
+            <div className="flex justify-center gap-2 sm:gap-3 pt-2">
               {hasMore && (
                 <button
                   onClick={handleLoadMore}
-                  className="flex items-center gap-2 px-6 py-2.5 border border-neutral-dark rounded-full text-sm text-primary hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 sm:px-6 py-2 sm:py-2.5 border border-neutral-dark rounded-full text-xs sm:text-sm text-primary hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
                 >
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Xem thêm {Math.min(remaining, PAGE_SIZE)} bình luận
                 </button>
               )}
               {visibleCount > PAGE_SIZE && (
                 <button
                   onClick={handleCollapse}
-                  className="flex items-center gap-2 px-6 py-2.5 border border-neutral-dark rounded-full text-sm text-primary hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 sm:px-6 py-2 sm:py-2.5 border border-neutral-dark rounded-full text-xs sm:text-sm text-primary hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
                 >
-                  <ChevronUp className="w-4 h-4" />
+                  <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Thu gọn
                 </button>
               )}

@@ -15,9 +15,11 @@ import { DesktopHeaderProps } from "../types";
 import UserAvatar from "@/components/ui/UserAvatar";
 import CartIcon from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
-import SearchBar from "./SearchBar"; // ✅ bỏ TOP_KEYWORDS
+import SearchBar from "./SearchBar";
 import WishlistIcon from "@/components/ui/HeartIcons";
 import NotificationBell from "@/components/ui/NotificationBell";
+import { useRouter } from "next/navigation";
+import { useCompareStore } from "@/(client)/compare/compareStore";
 
 const DesktopHeader = memo(
    ({
@@ -31,6 +33,9 @@ const DesktopHeader = memo(
       onLogout,
    }: Omit<DesktopHeaderProps, "searchQuery" | "onSearchChange">) => {
       const userMenuRef = useRef<HTMLDivElement>(null);
+
+      const router = useRouter();
+      const { items } = useCompareStore();
 
       useEffect(() => {
          if (!showUserMenu) return;
@@ -69,12 +74,18 @@ const DesktopHeader = memo(
             </div>
 
             <div className="flex items-center gap-2">
-               {/* <button
+               <button
+                  onClick={() => router.push("/compare")}
                   className="hidden lg:flex p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors"
                   title="So sánh"
                >
                   <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
-               </button> */}
+                  {items.length > 0 && (
+                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {items.length}
+                     </span>
+                  )}
+               </button>
                <NotificationBell />
                <WishlistIcon />
                <CartIcon />
@@ -97,7 +108,9 @@ const DesktopHeader = memo(
                            size={30}
                         />
                         <ChevronDown
-                           className={`w-4 h-4 text-primary transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`}
+                           className={`w-4 h-4 text-primary transition-transform duration-200 ${
+                              showUserMenu ? "rotate-180" : ""
+                           }`}
                         />
                      </button>
 

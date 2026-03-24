@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useAuth } from "@/hooks/useAuth";
+import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 
 const TYPE_CONFIG: Record<
    string,
@@ -58,23 +59,6 @@ const TYPE_CONFIG: Record<
       bg: "bg-neutral-light-active",
       ring: "ring-neutral",
    },
-};
-
-const timeAgo = (dateStr: string): string => {
-   const diff = Date.now() - new Date(dateStr).getTime();
-   const mins = Math.floor(diff / 60000);
-   const hours = Math.floor(diff / 3600000);
-   const days = Math.floor(diff / 86400000);
-
-   if (mins < 1) return "vừa xong";
-   if (mins < 60) return `${mins} phút trước`;
-   if (hours < 24) return `${hours} giờ trước`;
-   if (days < 7) return `${days} ngày trước`;
-   return new Date(dateStr).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-   });
 };
 
 export default function NotificationBell() {
@@ -244,7 +228,7 @@ export default function NotificationBell() {
                            ring: "ring-neutral",
                         };
                         const IconComp = cfg.icon;
-                        const ago = timeAgo(n.createdAt);
+                        const ago = formatRelativeDate(n.createdAt);
 
                         return (
                            <div
