@@ -77,7 +77,7 @@ export interface PreviewData {
   subtotalAmount: number;
   shippingFee: number;
   voucherDiscount: number;
-  taxAmount: number;
+  // taxAmount: number;
   totalAmount: number;
 }
 

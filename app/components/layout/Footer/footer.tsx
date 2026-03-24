@@ -217,7 +217,7 @@ const Footer = () => {
                         },
                         {
                            label: "Chính sách khui hộp sản phẩm",
-                           href: "/policies/unbox-policy",
+                           href: "/policies/unboxing",
                         },
                         {
                            label: "Chính sách giao hàng & lắp đặt",

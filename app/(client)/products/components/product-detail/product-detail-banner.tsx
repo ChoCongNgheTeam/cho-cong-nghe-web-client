@@ -17,6 +17,9 @@ import Image from "next/image";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import apiRequest from "@/lib/api";
 
+import { GitCompareArrows } from "lucide-react";
+import { useCompareStore } from "@/(client)/compare/compareStore";
+
 interface GalleryImage {
   id: string;
   imageUrl: string;
@@ -46,6 +49,9 @@ export default function ProductDetailBanner({
   const EXPAND_INDEX = images.length;
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
   const totalVariantSlots = images.length + 1;
+
+  const { toggle, isInCompare } = useCompareStore();
+  const inCompare = isInCompare(product.id);
 
   useEffect(() => {
     if (images && images.length > 0) {
@@ -83,11 +89,8 @@ export default function ProductDetailBanner({
   const goToPrevious = () => {
     if (isExpandSlot) {
       if (galleryLoaded && galleryImages.length > 0) {
-        if (galleryIndex === 0) {
-          setCurrentImageIndex(images.length - 1);
-        } else {
-          setGalleryIndex((prev) => prev - 1);
-        }
+        if (galleryIndex === 0) setCurrentImageIndex(images.length - 1);
+        else setGalleryIndex((prev) => prev - 1);
       } else {
         setCurrentImageIndex(images.length - 1);
       }
@@ -105,11 +108,8 @@ export default function ProductDetailBanner({
   const goToNext = () => {
     if (isExpandSlot) {
       if (galleryLoaded && galleryImages.length > 0) {
-        if (galleryIndex === galleryImages.length - 1) {
-          setCurrentImageIndex(0);
-        } else {
-          setGalleryIndex((prev) => prev + 1);
-        }
+        if (galleryIndex === galleryImages.length - 1) setCurrentImageIndex(0);
+        else setGalleryIndex((prev) => prev + 1);
       } else {
         setCurrentImageIndex(0);
       }
@@ -124,9 +124,7 @@ export default function ProductDetailBanner({
     }
   };
 
-  const goToVariantIndex = (index: number) => {
-    setCurrentImageIndex(index);
-  };
+  const goToVariantIndex = (index: number) => setCurrentImageIndex(index);
 
   const goToExpand = () => {
     setCurrentImageIndex(EXPAND_INDEX);
@@ -153,18 +151,14 @@ export default function ProductDetailBanner({
       : totalVariantSlots
     : totalVariantSlots;
 
-  // ── Thumbnail window (hiện tối đa 6) ─────────────────────────────────────
+  // ── Thumbnail window ───────────────────────────────────────────────────────
   const THUMB_WINDOW = 6;
   const allThumbs = [
     ...images.map((img, i) => ({ type: "variant" as const, index: i })),
     { type: "expand" as const, index: EXPAND_INDEX },
   ];
   const totalThumbs = allThumbs.length;
-
-  // activeThumbIndex: vị trí trong allThumbs của slot đang active
   const activeThumbIndex = isExpandSlot ? EXPAND_INDEX : currentImageIndex;
-
-  // windowStart: đảm bảo active luôn nằm trong window
   const windowStart = Math.min(
     Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)),
     Math.max(0, totalThumbs - THUMB_WINDOW),
@@ -173,6 +167,7 @@ export default function ProductDetailBanner({
     windowStart,
     windowStart + THUMB_WINDOW,
   );
+
   const highlights = product.highlights || [];
   const iconMap: Record<string, any> = {
     gpu: Gpu,
@@ -181,155 +176,171 @@ export default function ProductDetailBanner({
   };
 
   return (
-    <>
-      <div>
-        {/* ── MAIN IMAGE ──────────────────────────────────────────────────── */}
-        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
-          <div className="relative w-full h-full flex items-center justify-center">
-            {!isExpandSlot && mainImageUrl && (
-              <Image
-                src={mainImageUrl}
-                className="max-w-full max-h-full object-contain transition-opacity duration-500"
-                alt={mainImageAlt}
-                fill
-              />
-            )}
-            {isExpandSlot && galleryLoading && (
-              <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                <p className="text-sm opacity-60">Đang tải ảnh...</p>
-              </div>
-            )}
-            {isExpandSlot && !galleryLoading && mainImageUrl && (
-              <Image
-                src={mainImageUrl}
-                className="max-w-full max-h-full object-contain transition-opacity duration-500"
-                alt={mainImageAlt}
-                fill
-              />
-            )}
-            {isExpandSlot && !galleryLoading && !mainImageUrl && (
-              <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
-                <Images className="w-10 h-10 opacity-30" />
-                <p className="text-sm opacity-50">Chưa có ảnh</p>
-              </div>
-            )}
-            <WishlistHeart productId={product.id} />
-          </div>
-
-          <button
-            onClick={goToPrevious}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-            aria-label="Ảnh trước"
-          >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-
-          <button
-            onClick={goToNext}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-            aria-label="Ảnh sau"
-          >
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-
-          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
-            <div className="text-xs text-neutral mt-1">
-              {counterCurrent}/{counterTotal}
-            </div>
-          </div>
-        </div>
-
-        {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
-        <div className="mt-4">
-          <div className="grid grid-cols-6 gap-3 sm:gap-4">
-            {visibleThumbs.map((thumb) => {
-              if (thumb.type === "expand") {
-                return (
-                  <ThumbnailCell
-                    key="expand"
-                    isActive={isExpandSlot}
-                    onClick={goToExpand}
-                    isExpand
-                  >
-                    <div className="flex flex-col items-center justify-center h-full gap-1">
-                      {galleryLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                      ) : galleryLoaded ? (
-                        <>
-                          <Images className="w-5 h-5 text-primary" />
-                          <span className="text-[10px] text-primary font-medium">
-                            +{galleryImages.length}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Images className="w-5 h-5 text-neutral-darker" />
-                          <span className="text-[10px] text-neutral-darker">
-                            Xem thêm
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </ThumbnailCell>
-                );
-              }
-
-              const image = images[thumb.index];
-              if (!image?.imageUrl) return null;
-              return (
-                <ThumbnailCell
-                  key={image.id}
-                  isActive={!isExpandSlot && currentImageIndex === thumb.index}
-                  onClick={() => goToVariantIndex(thumb.index)}
-                >
-                  <Image
-                    src={image.imageUrl}
-                    alt={image.altText || `Product image ${thumb.index + 1}`}
-                    fill
-                    sizes="120px"
-                    className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
-                      !isExpandSlot && currentImageIndex === thumb.index
-                        ? "opacity-100 scale-100"
-                        : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
-                    }`}
-                  />
-                </ThumbnailCell>
-              );
-            })}
-          </div>
-
-          {/* PRODUCT HIGHLIGHTS */}
-          {isInStock && (
-            <div className="mt-8 space-y-8">
-              <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                <h2 className="font-semibold text-primary">Thông số nổi bật</h2>
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
-                {highlights.map((highlight, index) => {
-                  const IconComponent = highlight?.icon
-                    ? iconMap[highlight.icon]
-                    : null;
-                  return (
-                    <div className="flex-1" key={index}>
-                      <span className="text-sm">
-                        {highlight?.name || "N/A"}
-                      </span>
-                      <div className="flex items-center gap-2 mt-2">
-                        {IconComponent && <IconComponent size={28} />}
-                        <span className="text-sm font-semibold text-primary">
-                          {highlight?.value || "N/A"}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+    <div>
+      {/* ── MAIN IMAGE ──────────────────────────────────────────────────── */}
+      <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {!isExpandSlot && mainImageUrl && (
+            <Image
+              src={mainImageUrl}
+              className="max-w-full max-h-full object-contain transition-opacity duration-500"
+              alt={mainImageAlt}
+              fill
+            />
+          )}
+          {isExpandSlot && galleryLoading && (
+            <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              <p className="text-sm opacity-60">Đang tải ảnh...</p>
             </div>
           )}
+          {isExpandSlot && !galleryLoading && mainImageUrl && (
+            <Image
+              src={mainImageUrl}
+              className="max-w-full max-h-full object-contain transition-opacity duration-500"
+              alt={mainImageAlt}
+              fill
+            />
+          )}
+          {isExpandSlot && !galleryLoading && !mainImageUrl && (
+            <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
+              <Images className="w-10 h-10 opacity-30" />
+              <p className="text-sm opacity-50">Chưa có ảnh</p>
+            </div>
+          )}
+          <WishlistHeart productId={product.id} />
+          <button
+    onClick={(e) => {
+      e.stopPropagation();
+      toggle(product); // ⚠️ product ở đây là ProductDetail, cần map sang Product type nếu khác
+    }}
+    className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
+      ${inCompare
+        ? "bg-primary text-white"
+        : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary"
+      }`}
+    aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+    title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+  >
+    <GitCompareArrows className="w-5 h-5" />
+  </button>
+        </div>
 
-          {/* PRODUCT POLICIES */}
-          {isInStock && (
+        <button
+          onClick={goToPrevious}
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+          aria-label="Ảnh trước"
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+
+        <button
+          onClick={goToNext}
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+          aria-label="Ảnh sau"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+
+        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
+          <div className="text-xs text-neutral mt-1">
+            {counterCurrent}/{counterTotal}
+          </div>
+        </div>
+      </div>
+
+      {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
+      <div className="mt-4">
+        <div className="grid grid-cols-6 gap-3 sm:gap-4">
+          {visibleThumbs.map((thumb) => {
+            if (thumb.type === "expand") {
+              return (
+                <ThumbnailCell
+                  key="expand"
+                  isActive={isExpandSlot}
+                  onClick={goToExpand}
+                  isExpand
+                >
+                  <div className="flex flex-col items-center justify-center h-full gap-1">
+                    {galleryLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    ) : galleryLoaded ? (
+                      <>
+                        <Images className="w-5 h-5 text-primary" />
+                        <span className="text-[10px] text-primary font-medium">
+                          +{galleryImages.length}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Images className="w-5 h-5 text-neutral-darker" />
+                        <span className="text-[10px] text-neutral-darker">
+                          Xem thêm
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </ThumbnailCell>
+              );
+            }
+
+            const image = images[thumb.index];
+            if (!image?.imageUrl) return null;
+            return (
+              <ThumbnailCell
+                key={image.id}
+                isActive={!isExpandSlot && currentImageIndex === thumb.index}
+                onClick={() => goToVariantIndex(thumb.index)}
+              >
+                <Image
+                  src={image.imageUrl}
+                  alt={image.altText || `Product image ${thumb.index + 1}`}
+                  fill
+                  sizes="120px"
+                  className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
+                    !isExpandSlot && currentImageIndex === thumb.index
+                      ? "opacity-100 scale-100"
+                      : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                  }`}
+                />
+              </ThumbnailCell>
+            );
+          })}
+        </div>
+
+        {/* ── HIGHLIGHTS + POLICIES: chỉ hiện trên desktop (lg+) ─────────── */}
+        {isInStock && (
+          <div className="hidden lg:block">
+            {/* Highlights */}
+            {highlights.length > 0 && (
+              <div className="mt-8">
+                <h2 className="font-semibold text-primary mb-4">
+                  Thông số nổi bật
+                </h2>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
+                  {highlights.map((highlight, index) => {
+                    const IconComponent = highlight?.icon
+                      ? iconMap[highlight.icon]
+                      : null;
+                    return (
+                      <div className="flex-1" key={index}>
+                        <span className="text-sm">
+                          {highlight?.name || "N/A"}
+                        </span>
+                        <div className="flex items-center gap-2 mt-2">
+                          {IconComponent && <IconComponent size={28} />}
+                          <span className="text-sm font-semibold text-primary">
+                            {highlight?.value || "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Policies */}
             <div>
               <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
                 <h2 className="text-base font-semibold text-primary">
@@ -360,10 +371,10 @@ export default function ProductDetailBanner({
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -386,7 +397,7 @@ function ThumbnailCell({
         isActive
           ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105 cursor-pointer"
           : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105 cursor-pointer"
-      } `}
+      }`}
     >
       <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
         {children}

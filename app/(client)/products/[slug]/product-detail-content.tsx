@@ -91,7 +91,6 @@ export function ProductDetailContent({
     });
     return init;
   });
-
   const [availableOptions, setAvailableOptions] = useState(
     product.availableOptions || [],
   );
@@ -101,7 +100,6 @@ export function ProductDetailContent({
   );
   const [price, setPrice] = useState(product.price);
   const [quantity, setQuantity] = useState(1);
-
   /* ============================================================================
    * HANDLERS
    * ========================================================================== */
@@ -208,7 +206,7 @@ export function ProductDetailContent({
             />
           </div>
           <div className="w-full lg:w-[40%]">
-            <div className="lg:sticky lg:top-16 lg:h-fit pl-6">
+            <div className="lg:sticky lg:top-16 lg:h-fit ">
               <ProductDetailRight
                 product={product}
                 selectedVariant={currentVariant}
@@ -260,7 +258,7 @@ export function ProductDetailContent({
 
       {/* ── Trust Badges ──────────────────────────────────────────────────── */}
       <TrustBadges className="!bg-gray-400/10" />
-      
+
       {/* ── Sticky Footer ─────────────────────────────────────────────────── */}
       <ProductStickyFooter
         product={product}
