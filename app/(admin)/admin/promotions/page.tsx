@@ -222,7 +222,7 @@ export default function PromotionsPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Khuyến mãi</h1>
-            <p className="text-[12px] text-neutral-dark">Quản lý các chương trình khuyến mãi và giảm giá</p>
+            <p className="text-[13px] text-primary">Quản lý các chương trình khuyến mãi và giảm giá</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -250,8 +250,8 @@ export default function PromotionsPage() {
           value={meta.statusCounts.expired}
           sub="Vượt quá ngày kết thúc"
           icon={<XCircle size={18} />}
-          valueClassName="text-neutral-dark"
-          iconClassName="text-neutral-dark"
+          valueClassName="text-primary"
+          iconClassName="text-primary"
         />
       </div>
 
@@ -268,11 +268,11 @@ export default function PromotionsPage() {
                 resetPage();
               }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                 {meta.statusCounts[tab.value as keyof typeof meta.statusCounts] ?? 0}
               </span>
             </button>
@@ -282,7 +282,7 @@ export default function PromotionsPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -302,7 +302,7 @@ export default function PromotionsPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -336,7 +336,7 @@ export default function PromotionsPage() {
             </button>
             {showSortDropdown && (
               <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -398,10 +398,10 @@ export default function PromotionsPage() {
             </button>
             {showDatePicker && (
               <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
-                <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Khoảng thời gian</p>
+                <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Khoảng thời gian</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[11px] text-neutral-dark">Từ ngày</label>
+                    <label className="text-[11px] text-primary">Từ ngày</label>
                     <input
                       type="date"
                       value={dateFrom}
@@ -411,7 +411,7 @@ export default function PromotionsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] text-neutral-dark">Đến ngày</label>
+                    <label className="text-[11px] text-primary">Đến ngày</label>
                     <input
                       type="date"
                       value={dateTo}
@@ -451,20 +451,20 @@ export default function PromotionsPage() {
           {(hasActiveFilters || hasSortFilter) && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-neutral-dark">{meta.total} khuyến mãi</span>
+          <span className="ml-auto text-[12px] text-primary">{meta.total} khuyến mãi</span>
         </div>
 
         {/* ── Selection bar ── */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} khuyến mãi</span>
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-neutral-dark hover:text-primary cursor-pointer">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer">
               Bỏ chọn
             </button>
           </div>
@@ -474,7 +474,7 @@ export default function PromotionsPage() {
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
-            <p className="text-[13px] text-neutral-dark">{error}</p>
+            <p className="text-[13px] text-primary">{error}</p>
             <button onClick={fetchPromotions} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
               Thử lại
             </button>
@@ -485,8 +485,8 @@ export default function PromotionsPage() {
           </div>
         ) : promotions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Zap size={36} className="text-neutral-dark opacity-30" />
-            <p className="text-[13px] text-neutral-dark">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có khuyến mãi nào"}</p>
+            <Zap size={36} className="text-primary opacity-30" />
+            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có khuyến mãi nào"}</p>
             {hasActiveFilters ? (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xoá bộ lọc
@@ -505,7 +505,7 @@ export default function PromotionsPage() {
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-neutral-dark">Hiển thị</span>
+              <span className="text-[12px] text-primary">Hiển thị</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -520,7 +520,7 @@ export default function PromotionsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-neutral-dark">/ {meta.total} khuyến mãi</span>
+              <span className="text-[12px] text-primary">/ {meta.total} khuyến mãi</span>
             </div>
             <AdminPagination
               currentPage={meta.page}

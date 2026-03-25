@@ -9,6 +9,9 @@ import Image from "next/image";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import apiRequest from "@/lib/api";
 
+import { GitCompareArrows } from "lucide-react";
+import { useCompareStore } from "@/(client)/compare/compareStore";
+
 interface GalleryImage {
   id: string;
   imageUrl: string;
@@ -47,6 +50,9 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
   const EXPAND_INDEX = images.length;
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
   const totalVariantSlots = images.length + 1;
+
+  const { toggle, isInCompare } = useCompareStore();
+  const inCompare = isInCompare(product.id);
 
   useEffect(() => {
     if (images && images.length > 0) {
@@ -155,9 +161,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
     }
   };
 
-  const goToVariantIndex = (index: number) => {
-    setCurrentImageIndex(index);
-  };
+  const goToVariantIndex = (index: number) => setCurrentImageIndex(index);
 
   const goToExpand = () => {
     setCurrentImageIndex(EXPAND_INDEX);
@@ -179,7 +183,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
   const counterCurrent = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryIndex + 1}` : "▶") : currentImageIndex + 1;
   const counterTotal = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryImages.length}` : totalVariantSlots) : totalVariantSlots;
 
-  // ── Thumbnail window (hiện tối đa 6) ─────────────────────────────────────
+  // ── Thumbnail window ───────────────────────────────────────────────────────
   const THUMB_WINDOW = 6;
   const allThumbs = [...images.map((img, i) => ({ type: "variant" as const, index: i })), { type: "expand" as const, index: EXPAND_INDEX }];
   const totalThumbs = allThumbs.length;
@@ -218,28 +222,28 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             <WishlistHeart productId={product.id} />
           </div>
 
-          <button
-            onClick={goToPrevious}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-            aria-label="Ảnh trước"
-          >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
+        <button
+          onClick={goToPrevious}
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+          aria-label="Ảnh trước"
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
 
-          <button
-            onClick={goToNext}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-            aria-label="Ảnh sau"
-          >
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
+        <button
+          onClick={goToNext}
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+          aria-label="Ảnh sau"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
 
-          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
-            <div className="text-xs text-neutral mt-1">
-              {counterCurrent}/{counterTotal}
-            </div>
+        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
+          <div className="text-xs text-neutral mt-1">
+            {counterCurrent}/{counterTotal}
           </div>
         </div>
+      </div>
 
         {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
         <div className="mt-4">
@@ -328,8 +332,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             </div>
           )}
 
-          {/* PRODUCT POLICIES */}
-          {isInStock && (
+            {/* Policies */}
             <div>
               <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
                 <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
@@ -368,7 +371,7 @@ function ThumbnailCell({ isActive, onClick, isExpand = false, children }: { isAc
         isActive
           ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105 cursor-pointer"
           : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105 cursor-pointer"
-      } `}
+      }`}
     >
       <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
         {children}

@@ -262,7 +262,7 @@ export default function OrdersPage() {
               </button>
               {showFilterDropdown && (
                 <div className="absolute top-full left-0 mt-1.5 w-48 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                  <p className="px-3 py-2 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">Trạng thái thanh toán</p>
+                  <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Trạng thái thanh toán</p>
                   {PAYMENT_STATUS_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
@@ -301,10 +301,10 @@ export default function OrdersPage() {
               </button>
               {showDatePicker && (
                 <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
-                  <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Khoảng thời gian</p>
+                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Khoảng thời gian</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] text-neutral-dark">Từ ngày</label>
+                      <label className="text-[11px] text-primary">Từ ngày</label>
                       <input
                         type="date"
                         value={dateFrom}
@@ -314,7 +314,7 @@ export default function OrdersPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] text-neutral-dark">Đến ngày</label>
+                      <label className="text-[11px] text-primary">Đến ngày</label>
                       <input
                         type="date"
                         value={dateTo}
@@ -348,7 +348,7 @@ export default function OrdersPage() {
         {/* Active filter chips */}
         {(hasPaymentFilter || hasDateFilter) && (
           <div className="flex items-center gap-2 px-5 py-2.5 border-b border-neutral bg-neutral-light-active/50 flex-wrap">
-            <span className="text-[11px] text-neutral-dark">Đang lọc:</span>
+            <span className="text-[11px] text-primary">Đang lọc:</span>
             {hasPaymentFilter && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent-light border border-accent text-[11px] text-accent font-medium">
                 Thanh toán: {PAYMENT_STATUS_OPTIONS.find((o) => o.value === paymentFilter)?.label}
@@ -490,7 +490,7 @@ export default function OrdersPage() {
             </div>
             <div>
               <h3 className="text-[15px] font-bold text-primary mb-1">Hủy đơn hàng?</h3>
-              <p className="text-[13px] text-neutral-dark leading-relaxed">Đơn hàng sẽ bị hủy và tồn kho sẽ được hoàn lại. Bạn có chắc chắn muốn tiếp tục không?</p>
+              <p className="text-[13px] text-primary leading-relaxed">Đơn hàng sẽ bị hủy và tồn kho sẽ được hoàn lại. Bạn có chắc chắn muốn tiếp tục không?</p>
             </div>
           </div>
         }
