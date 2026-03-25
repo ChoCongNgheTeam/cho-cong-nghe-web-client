@@ -17,12 +17,42 @@ import { useAuth } from "@/hooks/useAuth";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
 const menuItems = [
-  { icon: Package, label: "Đơn hàng của tôi", shortLabel: "Đơn hàng", href: "/profile/orders" },
-  { icon: Bell, label: "Thông báo của tôi", shortLabel: "Thông báo", href: "/profile/notifications" },
-  { icon: Heart, label: "Sản phẩm yêu thích", shortLabel: "Yêu thích", href: "/profile/wishlist" },
-  { icon: MapPin, label: "Địa chỉ nhận hàng", shortLabel: "Địa chỉ", href: "/profile/addresses" },
-  { icon: Shield, label: "Thông tin bảo hành", shortLabel: "Bảo hành", href: "/profile/warranty" },
-  { icon: Key, label: "Đổi mật khẩu", shortLabel: "Mật khẩu", href: "/profile/change-password" },
+  {
+    icon: Package,
+    label: "Đơn hàng của tôi",
+    shortLabel: "Đơn hàng",
+    href: "/profile/orders",
+  },
+  {
+    icon: Bell,
+    label: "Thông báo của tôi",
+    shortLabel: "Thông báo",
+    href: "/profile/notifications",
+  },
+  {
+    icon: Heart,
+    label: "Sản phẩm yêu thích",
+    shortLabel: "Yêu thích",
+    href: "/profile/wishlist",
+  },
+  {
+    icon: MapPin,
+    label: "Địa chỉ nhận hàng",
+    shortLabel: "Địa chỉ",
+    href: "/profile/addresses",
+  },
+  {
+    icon: Shield,
+    label: "Thông tin bảo hành",
+    shortLabel: "Bảo hành",
+    href: "/profile/warranty",
+  },
+  {
+    icon: Key,
+    label: "Đổi mật khẩu",
+    shortLabel: "Mật khẩu",
+    href: "/profile/change-password",
+  },
 ];
 
 // Only show 4 most important items in bottom nav
@@ -95,7 +125,9 @@ export default function ProfileLayout({
                   <h3 className="font-semibold text-primary">
                     {user?.fullName || "Người dùng"}
                   </h3>
-                  <p className="text-sm text-primary opacity-80">{user?.phone}</p>
+                  <p className="text-sm text-primary opacity-80">
+                    {user?.phone}
+                  </p>
                 </div>
                 <Link
                   href="/profile"
@@ -134,7 +166,8 @@ export default function ProfileLayout({
                 {menuItems.map((item, index) => {
                   const Icon = item.icon;
                   const isActive =
-                    pathname === item.href || pathname.startsWith(item.href + "/");
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
                   return (
                     <Link
                       key={index}
@@ -152,7 +185,7 @@ export default function ProfileLayout({
                 })}
                 <button
                   onClick={logout}
-                  className="w-full flex items-center gap-3 px-4 py-3 transition-all border-l-4 border-transparent hover:bg-neutral-light text-primary hover:text-promotion cursor-pointer"
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-all border-l-4 border-transparent hover:bg-neutral-light text-primary cursor-pointer"
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="text-sm">Đăng xuất</span>
@@ -177,7 +210,9 @@ export default function ProfileLayout({
                   <h3 className="font-semibold text-primary truncate">
                     {user?.fullName || "Người dùng"}
                   </h3>
-                  <p className="text-sm text-primary opacity-70">{user?.phone}</p>
+                  <p className="text-sm text-primary opacity-70">
+                    {user?.phone}
+                  </p>
                 </div>
                 <Link
                   href="/profile/editProfile"
@@ -194,7 +229,10 @@ export default function ProfileLayout({
                 </div>
                 <p className="text-xs mb-0.5 opacity-90">Quý khách chưa là</p>
                 <p className="font-bold text-sm">thành viên tại ChoCongNghe</p>
-                <Link href="/membership" className="text-white text-xs mt-2 inline-flex items-center gap-1 underline underline-offset-2">
+                <Link
+                  href="/membership"
+                  className="text-white text-xs mt-2 inline-flex items-center gap-1 underline underline-offset-2"
+                >
                   Xem thể lệ ›
                 </Link>
               </div>
@@ -219,7 +257,7 @@ export default function ProfileLayout({
                   onClick={logout}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-primary hover:text-promotion hover:bg-neutral-light transition-colors"
                 >
-                  <LogOut className="w-5 h-5 shrink-0" />
+                  <LogOut className="w-5 h-5 shrink-0 text-accent" />
                   <span className="text-sm flex-1 text-left">Đăng xuất</span>
                 </button>
               </div>
@@ -252,8 +290,12 @@ export default function ProfileLayout({
                     isActive ? "text-accent" : "text-primary opacity-60"
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
-                  <span className="text-[10px] font-medium leading-tight">{item.shortLabel}</span>
+                  <Icon
+                    className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`}
+                  />
+                  <span className="text-[10px] font-medium leading-tight">
+                    {item.shortLabel}
+                  </span>
                 </Link>
               );
             })}
@@ -262,7 +304,9 @@ export default function ProfileLayout({
               className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg flex-1 text-primary opacity-60 hover:text-promotion transition-colors"
             >
               <LogOut className="w-5 h-5" />
-              <span className="text-[10px] font-medium leading-tight">Đăng xuất</span>
+              <span className="text-[10px] font-medium leading-tight">
+                Đăng xuất
+              </span>
             </button>
           </div>
         </nav>
