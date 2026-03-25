@@ -34,7 +34,7 @@ export default function DeliveryPolicy() {
                   { range: "Đơn từ 50 triệu trở lên", desc: "Quý khách phải thanh toán trước 100% giá trị đơn hàng nếu muốn giao hàng tại nhà." },
                   { range: "Đơn dưới 50 triệu", desc: "Quý khách có thể nhận hàng và thanh toán tại nhà khi đồng ý mua hàng." },
                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
+                  <div key={i} className="flex flex-wrap items-start gap-2 rounded-lg px-4 py-3 bg-neutral-light-active border border-neutral">
                      <span className="font-bold px-2.5 py-1 rounded-full shrink-0 bg-accent-light text-accent">
                         {item.range}
                      </span>

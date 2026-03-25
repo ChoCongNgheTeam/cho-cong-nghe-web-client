@@ -1864,7 +1864,7 @@ export default function ProductForm({ product }: ProductFormProps) {
             />
          )}
 
-         <div className="max-w-4xl space-y-3 pb-24">
+         <div className="space-y-3 pb-24">
             <Section icon={<FileText size={13} />} title="Thông tin cơ bản">
                <div>
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
