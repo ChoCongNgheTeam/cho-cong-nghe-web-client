@@ -180,7 +180,7 @@ export function promotionToForm(p: Promotion): PromotionFormData {
          grouped[key].entities.push({
             id: t.targetId,
             // `targetCode` / `targetValue` are available in admin select; use as name
-            name: (t as any).targetCode ?? (t as any).targetValue ?? t.targetId,
+            name: t.targetName ?? t.targetId,
          });
       }
    }
@@ -567,7 +567,6 @@ export function PromotionForm({
    const [brandOptions, setBrandOptions] = useState<EntityOption[]>([]);
    const [loadingCategories, setLoadingCategories] = useState(false);
    const [loadingBrands, setLoadingBrands] = useState(false);
-
    // Load once on mount
    useEffect(() => {
       setLoadingCategories(true);

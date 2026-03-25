@@ -22,16 +22,6 @@ export const menuItems: MenuItem[] = [
       href: "/policies/enterprise-projects",
    },
    {
-      id: "mobile-network-policy",
-      label: "Chính sách mạng di động",
-      href: "/policies/mang-di-dong",
-   },
-   {
-      id: "mobile-plan-policy",
-      label: "Chính sách gói cước di động",
-      href: "/policies/goi-cuoc-di-dong",
-   },
-   {
       id: "telecom-points",
       label: "Quy chế hoạt động",
       href: "/policies/regulations",
