@@ -77,7 +77,7 @@ export default function ReviewModal({
       isOpen={isOpen}
       onClose={handleClose}
       closeMethods={["button", "overlay", "escape"]}
-      cssClass="mx-3 sm:mx-auto"
+      cssClass=" mx-3 sm:mx-auto"
       content={
         <div className="py-1.5 sm:py-2 px-0.5 sm:px-1">
           {/* Title */}
