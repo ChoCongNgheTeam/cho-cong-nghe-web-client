@@ -145,7 +145,6 @@ function NotificationRow({
 
         {/* Footer: badge + time */}
         <div className="flex items-center gap-2 mt-1.5 sm:mt-2">
-          
           <span className="text-[10px] sm:text-[11px] text-neutral-darker/40 tabular-nums">
             {timeAgo}
           </span>

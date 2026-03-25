@@ -17,7 +17,9 @@ import {
 import Link from "next/link";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useAuth } from "@/hooks/useAuth";
+import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 
+// ─── Type config — chỉ dùng token màu custom, không hardcode ─────────────────
 const TYPE_CONFIG: Record<
    string,
    { icon: React.ElementType; color: string; bg: string; ring: string }
@@ -30,15 +32,15 @@ const TYPE_CONFIG: Record<
    },
    VOUCHER_EXPIRING: {
       icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      ring: "ring-amber-100",
+      color: "text-star",
+      bg: "bg-neutral-light-active",
+      ring: "ring-neutral",
    },
    VOUCHER_ASSIGNED: {
       icon: Tag,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-      ring: "ring-violet-100",
+      color: "text-accent-dark",
+      bg: "bg-accent-light",
+      ring: "ring-accent-light-active",
    },
    CAMPAIGN_PROMOTION: {
       icon: Megaphone,
@@ -58,23 +60,6 @@ const TYPE_CONFIG: Record<
       bg: "bg-neutral-light-active",
       ring: "ring-neutral",
    },
-};
-
-const timeAgo = (dateStr: string): string => {
-   const diff = Date.now() - new Date(dateStr).getTime();
-   const mins = Math.floor(diff / 60000);
-   const hours = Math.floor(diff / 3600000);
-   const days = Math.floor(diff / 86400000);
-
-   if (mins < 1) return "vừa xong";
-   if (mins < 60) return `${mins} phút trước`;
-   if (hours < 24) return `${hours} giờ trước`;
-   if (days < 7) return `${days} ngày trước`;
-   return new Date(dateStr).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-   });
 };
 
 export default function NotificationBell() {
@@ -165,7 +150,6 @@ export default function NotificationBell() {
                className="w-5 h-5 lg:w-6 lg:h-6 text-primary"
                strokeWidth={2.3}
             />
-            {/* Badge */}
             {unreadCount > 0 && (
                <span
                   className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px]
@@ -222,7 +206,6 @@ export default function NotificationBell() {
             {/* List */}
             <div className="max-h-[380px] overflow-y-auto overscroll-contain scroll-smooth scrollbar-thin">
                {notifications.length === 0 && !isLoading ? (
-                  /* Empty state */
                   <div className="py-14 text-center px-6">
                      <div className="w-12 h-12 rounded-2xl bg-neutral-light-active flex items-center justify-center mx-auto mb-3">
                         <Inbox className="w-5 h-5 text-neutral-dark" />
@@ -244,7 +227,7 @@ export default function NotificationBell() {
                            ring: "ring-neutral",
                         };
                         const IconComp = cfg.icon;
-                        const ago = timeAgo(n.createdAt);
+                        const ago = formatRelativeDate(n.createdAt);
 
                         return (
                            <div
@@ -280,11 +263,7 @@ export default function NotificationBell() {
                               <div className="flex-1 min-w-0 pr-1">
                                  <p
                                     className={`text-[13px] leading-snug line-clamp-2
-                                      ${
-                                         !n.isRead
-                                            ? "font-semibold text-primary"
-                                            : "font-medium text-primary"
-                                      }`}
+                                      ${!n.isRead ? "font-semibold text-primary" : "font-medium text-primary"}`}
                                  >
                                     {n.title}
                                  </p>

@@ -78,7 +78,7 @@ export default function OrdersPage() {
       <div className="bg-neutral-light rounded-xl shadow-sm overflow-hidden border border-neutral">
         {/* ── Tabs ── */}
         <div className="border-b border-neutral">
-          <div className="flex overflow-x-auto scrollbar-hide">
+          <div className="flex overflow-x-auto scrollbar-hide justify-between">
             {tabs.map((tab) => {
               const count = countByStatus(tab.id);
               return (

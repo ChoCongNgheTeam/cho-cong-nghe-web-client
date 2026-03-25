@@ -18,23 +18,9 @@ interface CommentSectionProps {
   onCommentSubmit: (content: string) => Promise<void>;
   onReplySubmit: (parentId: string, content: string) => Promise<void>;
   onFetchReplies: (commentId: string) => Promise<void>;
-  onFetchNestedReplies: (
-    replyId: string,
-    parentCommentId: string,
-  ) => Promise<void>;
 }
 
-const filterOptions = [
-  { label: "Tất cả", value: "all" },
-  { label: "5 ⭐", value: "5" },
-  { label: "4 ⭐", value: "4" },
-  { label: "3 ⭐", value: "3" },
-  { label: "2 ⭐", value: "2" },
-  { label: "1 ⭐", value: "1" },
-];
-
-const AVATAR_SIZES = [36, 32, 28];
-const MAX_DEPTH = 2;
+const AVATAR_SIZES = [36, 32];
 
 function Avatar({ user, size }: { user: CommentUser; size: number }) {
   const validAvatar =
@@ -50,48 +36,39 @@ function Avatar({ user, size }: { user: CommentUser; size: number }) {
   );
 }
 
-function insertReplyRecursive(
-  nodes: Reply[],
-  parentId: string,
+function insertReplyToComment(
+  comments: Comment[],
+  parentCommentId: string,
   newReply: Reply,
-): Reply[] {
-  return nodes.map((node) => {
-    if (node.id === parentId) {
+): Comment[] {
+  return comments.map((c) => {
+    if (c.id === parentCommentId) {
       return {
-        ...node,
-        replies: [...(node.replies ?? []), newReply],
-        _repliesCount: (node._repliesCount ?? 0) + 1,
+        ...c,
+        replies: [...(c.replies ?? []), newReply],
+        _repliesCount: (c._repliesCount ?? 0) + 1,
       };
     }
-    if (node.replies?.length) {
-      return {
-        ...node,
-        replies: insertReplyRecursive(node.replies, parentId, newReply),
-      };
-    }
-    return node;
+    return c;
   });
 }
 
-function removeNodeRecursive(nodes: Reply[], targetId: string): Reply[] {
-  return nodes
-    .filter((n) => n.id !== targetId)
-    .map((n) => ({
-      ...n,
-      replies: n.replies ? removeNodeRecursive(n.replies, targetId) : [],
-    }));
+function removeOptimisticReply(
+  comments: Comment[],
+  optimisticId: string,
+): Comment[] {
+  return comments.map((c) => ({
+    ...c,
+    replies: (c.replies ?? []).filter((r) => r.id !== optimisticId),
+  }));
 }
 
 function findTopLevelParent(
   comments: Comment[],
   replyId: string,
 ): string | undefined {
-  function searchInReplies(replies: Reply[]): boolean {
-    return replies.some(
-      (r) => r.id === replyId || searchInReplies(r.replies ?? []),
-    );
-  }
-  return comments.find((c) => searchInReplies(c.replies ?? []))?.id;
+  return comments.find((c) => (c.replies ?? []).some((r) => r.id === replyId))
+    ?.id;
 }
 
 // ── CommentNode ───────────────────────────────────────────────────
@@ -132,9 +109,13 @@ function CommentNode({
   const hasChildren = (node._repliesCount ?? node.replies?.length ?? 0) > 0;
   const isExpanded = expandedIds[node.id];
   const isLoading = loadingIds[node.id];
+  const isOptimistic = node.id.startsWith("optimistic-");
+
+  // Chỉ cho phép reply ở depth 0
+  const canReply = depth === 0;
 
   return (
-    <div className="flex gap-2 sm:gap-3">
+    <div className={`flex gap-2 sm:gap-3 ${isOptimistic ? "opacity-60" : ""}`}>
       <Avatar user={node.user} size={avatarSize} />
       <div className="flex-1 min-w-0">
         {/* Header */}
@@ -142,9 +123,15 @@ function CommentNode({
           <span className="font-semibold text-xs sm:text-sm text-primary">
             {node.user?.fullName}
           </span>
-          <span className="text-[11px] sm:text-xs text-neutral-darker">
-            • {formatRelativeDate(node.createdAt)}
-          </span>
+          {isOptimistic ? (
+            <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">
+              Đang gửi...
+            </span>
+          ) : (
+            <span className="text-[11px] sm:text-xs text-neutral-darker">
+              • {formatRelativeDate(node.createdAt)}
+            </span>
+          )}
         </div>
 
         {/* Content */}
@@ -152,51 +139,55 @@ function CommentNode({
           {node.content}
         </p>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3 sm:gap-4 text-xs text-neutral-darker">
-          <button className="flex items-center gap-1 hover:text-primary transition-colors">
-            <AiOutlineLike />
-            <span>Thích</span>
-          </button>
-
-          <button
-            onClick={() =>
-              onSetReplyTarget(replyTargetId === node.id ? null : node.id)
-            }
-            className="hover:text-primary transition-colors cursor-pointer"
-          >
-            Trả lời
-          </button>
-
-          {hasChildren && (
-            <button
-              onClick={() => onToggleExpand(node.id, node)}
-              disabled={isLoading}
-              className="flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span>Đang tải...</span>
-                </>
-              ) : (
-                <>
-                  {isExpanded ? (
-                    <ChevronUp className="w-3 h-3" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3" />
-                  )}
-                  <span>
-                    {node._repliesCount ?? node.replies?.length ?? 0} phản hồi
-                  </span>
-                </>
-              )}
+        {/* Actions — ẩn khi đang optimistic */}
+        {!isOptimistic && (
+          <div className="flex items-center gap-3 sm:gap-4 text-xs text-neutral-darker">
+            <button className="flex items-center gap-1 hover:text-primary transition-colors">
+              <AiOutlineLike />
+              <span>Thích</span>
             </button>
-          )}
-        </div>
 
-        {/* Reply input */}
-        {replyTargetId === node.id && (
+            {canReply && (
+              <button
+                onClick={() =>
+                  onSetReplyTarget(replyTargetId === node.id ? null : node.id)
+                }
+                className="hover:text-primary transition-colors cursor-pointer"
+              >
+                Trả lời
+              </button>
+            )}
+
+            {canReply && hasChildren && (
+              <button
+                onClick={() => onToggleExpand(node.id, node)}
+                disabled={isLoading}
+                className="flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span>Đang tải...</span>
+                  </>
+                ) : (
+                  <>
+                    {isExpanded ? (
+                      <ChevronUp className="w-3 h-3" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3" />
+                    )}
+                    <span>
+                      {node._repliesCount ?? node.replies?.length ?? 0} phản hồi
+                    </span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Reply input — chỉ ở depth 0 */}
+        {canReply && replyTargetId === node.id && (
           <div className="mt-3 flex gap-2">
             <input
               type="text"
@@ -220,18 +211,14 @@ function CommentNode({
           </div>
         )}
 
-        {/* Children */}
-        {isExpanded && (node.replies?.length ?? 0) > 0 && (
-          <div
-            className={`mt-3 sm:mt-4 space-y-3 sm:space-y-4 ${
-              depth < MAX_DEPTH ? "pl-3 sm:pl-4 border-l-2 border-neutral" : ""
-            }`}
-          >
+        {/* Children — chỉ 1 cấp */}
+        {depth === 0 && isExpanded && (node.replies?.length ?? 0) > 0 && (
+          <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4 pl-3 sm:pl-4 border-l-2 border-neutral">
             {node.replies!.map((child) => (
               <CommentNode
                 key={child.id}
                 node={child}
-                depth={Math.min(depth + 1, MAX_DEPTH)}
+                depth={1}
                 replyTargetId={replyTargetId}
                 replyContents={replyContents}
                 replySubmitting={replySubmitting}
@@ -259,13 +246,11 @@ export default function CommentSection({
   onCommentSubmit,
   onReplySubmit,
   onFetchReplies,
-  onFetchNestedReplies,
 }: CommentSectionProps) {
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const toast = useToasty();
 
-  const [selectedRating, setSelectedRating] = useState("all");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
@@ -277,9 +262,38 @@ export default function CommentSection({
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
   const [localComments, setLocalComments] =
     useState<Comment[]>(initialComments);
-
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
   const commentListRef = useRef<HTMLDivElement>(null);
+
+  // Khi true → bỏ qua 1 lần sync từ initialComments
+  // Dùng để tránh giật sau khi submit (ta đã tự xóa optimistic thủ công)
+  const skipNextSyncRef = useRef(false);
+
+  // Sync server data → localComments
+  useEffect(() => {
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      return;
+    }
+    setLocalComments((prev) => {
+      const optimisticNodes = prev.filter((c) =>
+        c.id.startsWith("optimistic-"),
+      );
+      if (optimisticNodes.length === 0) return initialComments;
+      const pendingOptimistics = optimisticNodes.filter(
+        (opt: any) =>
+          !initialComments.some((s: any) => s.clientId === opt.clientId),
+      );
+      return [...pendingOptimistics, ...initialComments];
+    });
+  }, [initialComments]);
+
+  const visibleComments = localComments.slice(0, visibleCount);
+  const hasMore = visibleCount < localComments.length;
+  const remaining = localComments.length - visibleCount;
+
+  const handleLoadMore = () => setVisibleCount((prev) => prev + PAGE_SIZE);
 
   const handleCollapse = () => {
     setVisibleCount(PAGE_SIZE);
@@ -290,30 +304,6 @@ export default function CommentSection({
       });
     }, 0);
   };
-
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [selectedRating]);
-
-  useEffect(() => {
-    setLocalComments((prev) => {
-      const optimisticNodes = prev.filter((c) =>
-        c.id.startsWith("optimistic-"),
-      );
-      const merged = [...initialComments];
-      optimisticNodes.forEach((opt) => {
-        if (!merged.find((c) => c.id === opt.id)) merged.unshift(opt);
-      });
-      return merged;
-    });
-  }, [initialComments]);
-
-  const filteredComments = localComments;
-  const visibleComments = filteredComments.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredComments.length;
-  const remaining = filteredComments.length - visibleCount;
-
-  const handleLoadMore = () => setVisibleCount((prev) => prev + PAGE_SIZE);
 
   const handleSubmitComment = async () => {
     if (!isAuthenticated) {
@@ -327,10 +317,11 @@ export default function CommentSection({
     if (!comment.trim() || submitting) return;
 
     const content = comment;
+    const optimisticId = `optimistic-${Date.now()}`;
+
     setComment("");
     setSubmitting(true);
 
-    const optimisticId = `optimistic-${Date.now()}`;
     const optimistic: Comment = {
       id: optimisticId,
       userId: "",
@@ -345,10 +336,11 @@ export default function CommentSection({
     };
 
     setLocalComments((prev) => [optimistic, ...prev]);
-    setVisibleCount((prev) => Math.max(prev, PAGE_SIZE));
 
     try {
       await onCommentSubmit(content);
+      skipNextSyncRef.current = true;
+      setLocalComments((prev) => prev.filter((c) => c.id !== optimisticId));
       toast.success("Câu hỏi của bạn đã được gửi thành công!", {
         title: "Gửi thành công",
         duration: 3000,
@@ -380,9 +372,15 @@ export default function CommentSection({
       const content = replyContents[parentId];
       if (!content?.trim() || replySubmitting === parentId) return;
 
+      // Luôn resolve về top-level comment
+      const isTopLevel = localComments.some((c) => c.id === parentId);
+      const actualParentId = isTopLevel
+        ? parentId
+        : (findTopLevelParent(localComments, parentId) ?? parentId);
+
       setReplyContents((prev) => ({ ...prev, [parentId]: "" }));
       setReplyTargetId(null);
-      setReplySubmitting(parentId);
+      setReplySubmitting(actualParentId);
 
       const optimisticId = `optimistic-${Date.now()}`;
       const optimistic: Reply = {
@@ -399,41 +397,21 @@ export default function CommentSection({
       } as any;
 
       setLocalComments((prev) =>
-        prev.map((c) => {
-          if (c.id === parentId) {
-            return {
-              ...c,
-              replies: [...(c.replies ?? []), optimistic],
-              _repliesCount: (c._repliesCount ?? 0) + 1,
-            };
-          }
-          return {
-            ...c,
-            replies: insertReplyRecursive(
-              c.replies ?? [],
-              parentId,
-              optimistic,
-            ),
-          };
-        }),
+        insertReplyToComment(prev, actualParentId, optimistic),
       );
-
-      setExpandedIds((prev) => ({ ...prev, [parentId]: true }));
+      setExpandedIds((prev) => ({ ...prev, [actualParentId]: true }));
 
       try {
-        await onReplySubmit(parentId, content);
+        await onReplySubmit(actualParentId, content);
+        skipNextSyncRef.current = true;
+        setLocalComments((prev) => removeOptimisticReply(prev, optimisticId));
         toast.success("Phản hồi của bạn đã được gửi!", {
           title: "Gửi thành công",
           duration: 3000,
           showProgress: true,
         });
       } catch {
-        setLocalComments((prev) =>
-          prev.map((c) => ({
-            ...c,
-            replies: removeNodeRecursive(c.replies ?? [], optimisticId),
-          })),
-        );
+        setLocalComments((prev) => removeOptimisticReply(prev, optimisticId));
         toast.error("Gửi phản hồi thất bại, vui lòng thử lại.", {
           title: "Lỗi",
           duration: 3000,
@@ -447,6 +425,7 @@ export default function CommentSection({
       replyContents,
       replySubmitting,
       productId,
+      localComments,
       onReplySubmit,
       isAuthenticated,
       toast,
@@ -461,18 +440,12 @@ export default function CommentSection({
       }
       if (!node.replies || node.replies.length === 0) {
         setLoadingIds((prev) => ({ ...prev, [id]: true }));
-        const isTopLevel = localComments.some((c) => c.id === id);
-        if (isTopLevel) {
-          await onFetchReplies(id);
-        } else {
-          const parentId = findTopLevelParent(localComments, id);
-          if (parentId) await onFetchNestedReplies(id, parentId);
-        }
+        await onFetchReplies(id);
         setLoadingIds((prev) => ({ ...prev, [id]: false }));
       }
       setExpandedIds((prev) => ({ ...prev, [id]: true }));
     },
-    [expandedIds, localComments, onFetchReplies, onFetchNestedReplies],
+    [expandedIds, onFetchReplies],
   );
 
   const handleKeyPress = useCallback(
@@ -501,7 +474,6 @@ export default function CommentSection({
 
       {/* ── Ask question block ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 pb-6 border-b border-neutral">
-        {/* Ảnh — ẩn trên mobile rất nhỏ, thu nhỏ trên sm */}
         <div className="hidden xs:flex shrink-0 items-start justify-center sm:justify-start">
           <Image
             src="https://cdn2.cellphones.com.vn/insecure/rs:fill:160:0/q:90/plain/https://cellphones.com.vn/media/wysiwyg/ant-hello-2025.png"
@@ -512,7 +484,6 @@ export default function CommentSection({
           />
         </div>
 
-        {/* Input area */}
         <div className="flex-1 min-w-0">
           <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">
             Hãy đặt câu hỏi cho chúng tôi
@@ -522,7 +493,6 @@ export default function CommentSection({
             sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
           </p>
 
-          {/* Input + button */}
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 min-w-0">
               <input
@@ -567,34 +537,10 @@ export default function CommentSection({
         </div>
       </div>
 
-      {/* ── Filter bar ───────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h4 className="text-sm sm:text-base text-primary shrink-0">
-          Có {filteredComments.length} bình luận
-        </h4>
-        {/* scroll ngang trên mobile */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-          {filterOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setSelectedRating(option.value)}
-              className={`
-                shrink-0 px-3 sm:px-4 py-1 sm:py-1.5
-                rounded-full text-xs sm:text-sm font-medium
-                whitespace-nowrap cursor-pointer
-                border transition-all duration-200
-                ${
-                  selectedRating === option.value
-                    ? "border-accent text-accent bg-accent/10 shadow-sm shadow-accent/20"
-                    : "border-neutral-dark text-neutral-darker bg-transparent hover:border-neutral-darker hover:bg-neutral-dark/10"
-                }
-              `}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* ── Comment count ────────────────────────────────────────── */}
+      <h4 className="text-sm sm:text-base text-primary">
+        Có {localComments.length} bình luận
+      </h4>
 
       {/* ── Comment list ──────────────────────────────────────────── */}
       <div className="space-y-5 sm:space-y-6 mt-5 sm:mt-6">
@@ -603,7 +549,7 @@ export default function CommentSection({
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             <p className="mt-2 text-sm">Đang tải bình luận...</p>
           </div>
-        ) : filteredComments.length === 0 ? (
+        ) : localComments.length === 0 ? (
           <div className="text-center py-8 text-neutral-darker">
             <p className="text-base sm:text-lg">Chưa có bình luận nào</p>
             <p className="text-xs sm:text-sm mt-1">

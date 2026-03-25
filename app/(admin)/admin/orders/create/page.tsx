@@ -517,7 +517,7 @@ export default function CreateOrderPage() {
         <span className="text-[13px] text-primary font-medium">Tạo đơn mới</span>
       </div>
 
-      <div className="px-6 py-4 max-w-5xl mx-auto">
+      <div className="px-6">
         <div className="mb-5">
           <h1 className="text-[20px] font-bold text-primary">Tạo đơn hàng mới</h1>
           <p className="text-[13px] text-neutral-dark mt-1">Tạo đơn hàng thủ công từ admin panel.</p>
