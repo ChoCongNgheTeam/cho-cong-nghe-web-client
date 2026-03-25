@@ -19,6 +19,7 @@ import apiRequest from "@/lib/api";
 
 import { GitCompareArrows } from "lucide-react";
 import { useCompareStore } from "@/(client)/compare/compareStore";
+import { useToasty } from "@/components/Toast";
 
 interface GalleryImage {
   id: string;
@@ -50,8 +51,34 @@ export default function ProductDetailBanner({
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
   const totalVariantSlots = images.length + 1;
 
-  const { toggle, isInCompare } = useCompareStore();
+  const { add, remove, isInCompare } = useCompareStore();
+  const { success, error, warning, info } = useToasty();
   const inCompare = isInCompare(product.id);
+
+  const handleToggleCompare = () => {
+    if (inCompare) {
+      remove(product.id);
+      info("Đã bỏ khỏi danh sách so sánh");
+      return;
+    }
+
+    const result = add(product);
+    if (!result.success) {
+      switch (result.reason) {
+        case "full":
+          warning("Chỉ được so sánh tối đa 3 sản phẩm");
+          break;
+        case "duplicate":
+          info("Sản phẩm đã có trong danh sách");
+          break;
+        case "wrong_category":
+          error("Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh !!");
+          break;
+      }
+    } else {
+      success("Đã thêm vào so sánh");
+    }
+  };
 
   useEffect(() => {
     if (images && images.length > 0) {
@@ -210,20 +237,21 @@ export default function ProductDetailBanner({
           )}
           <WishlistHeart productId={product.id} />
           <button
-    onClick={(e) => {
-      e.stopPropagation();
-      toggle(product); // ⚠️ product ở đây là ProductDetail, cần map sang Product type nếu khác
-    }}
-    className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
-      ${inCompare
-        ? "bg-primary text-white"
-        : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleCompare(); //  product ở đây là ProductDetail, cần map sang Product type nếu khác
+            }}
+            className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
+      ${
+        inCompare
+          ? "bg-primary text-white"
+          : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer"
       }`}
-    aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
-    title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
-  >
-    <GitCompareArrows className="w-5 h-5" />
-  </button>
+            aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+            title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+          >
+            <GitCompareArrows className="w-5 h-5" />
+          </button>
         </div>
 
         <button
