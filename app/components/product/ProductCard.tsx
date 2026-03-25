@@ -84,12 +84,8 @@ export default function ProductCard({
                            <HighlightIcon icon={highlight.icon} />
                         </div>
                         {/* Label + value below */}
-                        <span className="text-[9px] xs:text-[10px] sm:text-[11px] text-primary leading-tight">
-                           {highlight.name}
-                           <br />
-                           <span className="font-semibold">
-                              {highlight.value}
-                           </span>
+                        <span className="text-[10px] sm:text-[11px] text-primary leading-tight">
+                           {highlight.name} {highlight.value}
                         </span>
                      </div>
                   ))}

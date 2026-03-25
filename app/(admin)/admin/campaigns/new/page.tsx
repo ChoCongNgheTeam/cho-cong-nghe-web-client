@@ -46,7 +46,7 @@ export default function NewCampaignPage() {
 
       {/* Content */}
       <div className="px-6 py-4 flex justify-center">
-        <div className="w-full max-w-2xl">
+        <div className="w-full">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
               <Megaphone size={18} />

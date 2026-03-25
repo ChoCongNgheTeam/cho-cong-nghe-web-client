@@ -1,44 +1,42 @@
 import apiRequest from "@/lib/api";
 
-export type FilterType = "ENUM" | "RANGE" | "BOOLEAN";
-
 export interface FilterOption {
    value: string;
    label: string;
    count?: number;
 }
 
-export interface FilterGroup {
+type FilterGroupBase = {
    key: string;
-   label: string; // FE dùng "label", nhưng API trả về "name" — cần map
-   type: FilterType;
-   options?: FilterOption[]; // ENUM
-   min?: number; // RANGE — được map từ range.min
-   max?: number; // RANGE — được map từ range.max
-   unit?: string; // RANGE — được map từ range.unit
-}
+   name: string; // ← BE dùng "name", không phải "label"
+   source: "specification" | "attribute" | "built-in";
+   sortOrder?: number;
+};
 
-// ─── Raw API types ────────────────────────────────────────────────────────────
+export type FilterGroup =
+   | (FilterGroupBase & {
+        type: "RANGE";
+        range: { min: number; max: number; unit?: string };
+        options?: never;
+     })
+   | (FilterGroupBase & {
+        type: "ENUM";
+        options: FilterOption[];
+        range?: never;
+     })
+   | (FilterGroupBase & {
+        type: "BOOLEAN";
+        options: FilterOption[];
+        range?: never;
+     });
 
-interface RawFilterGroup {
-   key: string;
-   name: string; // API dùng "name", không phải "label"
-   type: FilterType;
-   source: string;
-   sortOrder: number;
-   options?: FilterOption[];
-   range?: {
-      min: number;
-      max: number;
-      unit?: string;
-   };
-}
+// ─── Raw API response shape ───────────────────────────────────────────────────
 
 interface FilterResponseData {
    categoryId: string;
    categorySlug: string;
    categoryName: string;
-   filters: RawFilterGroup[];
+   filters: FilterGroup[]; // BE shape khớp trực tiếp với FilterGroup
 }
 
 interface FilterResponse {
@@ -46,21 +44,7 @@ interface FilterResponse {
    message: string;
 }
 
-// ─── Map raw → FilterGroup ────────────────────────────────────────────────────
-
-function mapFilter(raw: RawFilterGroup): FilterGroup {
-   return {
-      key: raw.key,
-      label: raw.name, // map name → label
-      type: raw.type,
-      options: raw.options,
-      min: raw.range?.min,
-      max: raw.range?.max,
-      unit: raw.range?.unit,
-   };
-}
-
-// ─── Fetch ────────────────────────────────────────────────────────────────────
+// ─── Fetch — không cần map, BE shape === FilterGroup shape ───────────────────
 
 export async function fetchFilters(
    categorySlug: string,
@@ -70,8 +54,7 @@ export async function fetchFilters(
          params: { category: categorySlug },
          noAuth: true,
       });
-      const raw = res?.data?.filters ?? [];
-      return raw.map(mapFilter);
+      return res?.data?.filters ?? [];
    } catch (err) {
       console.error("[fetchFilters] failed:", err);
       return [];

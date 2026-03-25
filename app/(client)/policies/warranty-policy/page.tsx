@@ -1,6 +1,6 @@
 "use client";
 
-export default function ChinhSachBaoHanhPage() {
+export default function WarrantyPolicy() {
    return (
       <>
          <h1 className="font-bold mb-5 text-primary text-center ">

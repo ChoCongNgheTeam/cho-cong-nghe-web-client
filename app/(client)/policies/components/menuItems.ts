@@ -84,7 +84,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "data-privacy",
       label: "Chính sách bảo mật dữ liệu cá nhân khách hàng",
-      href: "/policies/Data-privacy",
+      href: "/policies/DataPrivacy",
    },
    {
       id: "online-purchase",
@@ -109,8 +109,8 @@ export const menuItems: MenuItem[] = [
   
    {
       id: "Mobile-Network-Policy",
-      label: "Chính sách mạng di động",
-      href: "/policies/Mobile-network",
+      label: "Chính sách mạng di động ChoCongNghe",
+      href: "/policies/MobileNetwork",
    }
 
 ];

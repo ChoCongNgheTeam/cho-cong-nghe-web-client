@@ -496,7 +496,7 @@ export default function CheckoutPage() {
                 />
                 <div className="text-base text-neutral-dark mt-1 text-right">{notes.length}/1000</div>
               </div>
-              <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
+              {/* <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -509,7 +509,7 @@ export default function CheckoutPage() {
                   />
                   <span className="text-sm text-primary">Yêu cầu hỗ trợ xuất hóa đơn điện tử</span>
                 </label>
-              </div>
+              </div> */}
               <PaymentMethods selectedMethod={selectedPaymentMethodId} onSelect={setSelectedPaymentMethodId} />
             </div>
             <div className="lg:col-span-1">
@@ -560,7 +560,7 @@ export default function CheckoutPage() {
             />
             <div className="text-base text-neutral-dark mt-1 text-right">{notes.length}/1000</div>
           </div>
-          <div className="bg-neutral-light rounded-lg p-4 border border-neutral">
+          {/* <div className="bg-neutral-light rounded-lg p-4 border border-neutral">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -571,7 +571,7 @@ export default function CheckoutPage() {
               />
               <span className="text-sm text-primary">Yêu cầu hỗ trợ xuất hóa đơn điện tử</span>
             </label>
-          </div>
+          </div> */}
           <PaymentMethods selectedMethod={selectedPaymentMethodId} onSelect={setSelectedPaymentMethodId} />
         </div>
       </div>
