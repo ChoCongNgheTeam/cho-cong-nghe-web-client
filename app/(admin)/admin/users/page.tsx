@@ -7,18 +7,19 @@ import {
   User as UserIcon, ArrowUpDown, Calendar, ChevronDown,
   LogIn, ShoppingCart,
 } from "lucide-react";
-import { getAllUsers} from "./_libs/getAllUsers";
+import { getAllUsers, type GetUsersQuery } from "./_libs/getAllUsers";
 import { updateActiveUser } from "./_libs/updateActiveUser";
 import { deleteUser } from "./_libs/deleteUser";
-import { User, UserRole } from "./user.types";
+import type { User, UserRole } from "./user.types";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import { StatsCard } from "@/components/admin/StatsCard";
-import AdminTable, { AdminColumn } from "@/components/admin/AdminTables";
+import AdminTable, { type AdminColumn } from "@/components/admin/AdminTables";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 type FilterTab = "ALL" | "ACTIVE" | "BLOCKED" | "ADMIN";
 type SortField = "createdAt" | "fullName" | "email" | "role";
 type SortDir = "asc" | "desc";
+type StatsMap = Record<FilterTab, number>;
 
 const roleColor: Record<UserRole, string> = {
   ADMIN: "bg-purple-100 text-purple-800 border-purple-200",
@@ -40,7 +41,7 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "role", label: "Vai trò" },
 ];
 
-// ── TODO: thay bằng giá trị thực từ auth context ─────────────────────────────
+// ── TODO: thay bằng giá trị thực từ auth context ──────────────────────────────
 const MOCK_CURRENT_USER_ID = "current-admin-id";
 const MOCK_ONLINE_IDS = new Set<string>([]);
 const MOCK_ORDERING_IDS = new Set<string>([]);
@@ -75,9 +76,6 @@ function ToastContainer({ toasts }: { toasts: ToastMsg[] }) {
     </div>
   );
 }
-
-// ── Stats type ────────────────────────────────────────────────────────────────
-type StatsMap = Record<FilterTab, number>;
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function UserPage() {
@@ -390,11 +388,14 @@ export default function UserPage() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral gap-3 flex-wrap">
           <div className="flex items-center gap-1 flex-wrap">
             {STATUS_TABS.map((tab) => (
-              <button key={tab.value} onClick={() => handleTabChange(tab.value)}
+              <button
+                key={tab.value}
+                onClick={() => handleTabChange(tab.value)}
                 className={[
                   "px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer",
                   activeTab === tab.value ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active",
-                ].join(" ")}>
+                ].join(" ")}
+              >
                 {tab.label}
                 <span className={[
                   "ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold",
@@ -407,29 +408,41 @@ export default function UserPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Search — Enter để gọi API */}
             <form onSubmit={handleSearch} className="relative">
-              <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Tìm tên, email, username..."
-                className="w-52 pl-9 pr-3 py-2 text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all" />
+                className="w-52 pl-9 pr-3 py-2 text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+              />
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
             </form>
 
+            {/* Sort */}
             <div className="relative">
-              <button onClick={() => setShowSortMenu((v) => !v)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-primary text-[12px] font-medium hover:bg-neutral-light-active transition-all cursor-pointer">
+              <button
+                onClick={() => setShowSortMenu((v) => !v)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-primary text-[12px] font-medium hover:bg-neutral-light-active transition-all cursor-pointer"
+              >
                 <ArrowUpDown size={13} /> Sắp xếp
                 <ChevronDown size={12} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
               </button>
               {showSortMenu && (
                 <div className="absolute right-0 top-full mt-1 w-44 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
                   {SORT_OPTIONS.map((opt) => (
-                    <button key={opt.value} onClick={() => handleSortChange(opt.value)}
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSortChange(opt.value)}
                       className={[
                         "w-full flex items-center justify-between px-3 py-2 text-[12px] transition-colors cursor-pointer",
                         sortField === opt.value ? "bg-accent-light text-accent font-medium" : "text-primary hover:bg-neutral-light-active",
-                      ].join(" ")}>
+                      ].join(" ")}
+                    >
                       {opt.label}
-                      {sortField === opt.value && <span className="text-[10px]">{sortDir === "asc" ? "↑" : "↓"}</span>}
+                      {sortField === opt.value && (
+                        <span className="text-[10px]">{sortDir === "asc" ? "↑" : "↓"}</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -438,14 +451,19 @@ export default function UserPage() {
 
             {/* Date filter — client-side; backend cần bổ sung createdFrom/createdTo để server-side */}
             <div className="relative">
-              <input type="date" value={dateFilter}
+              <input
+                type="date"
+                value={dateFilter}
                 onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
-                className="pl-9 pr-3 py-2 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent transition-all cursor-pointer" />
+                className="pl-9 pr-3 py-2 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent transition-all cursor-pointer"
+              />
               <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
             </div>
 
-            <button onClick={() => router.push("/admin/users/create")}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer">
+            <button
+              onClick={() => router.push("/admin/users/create")}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer"
+            >
               <Plus size={14} /> Thêm người dùng
             </button>
           </div>
@@ -458,7 +476,8 @@ export default function UserPage() {
             {hasFilter && (
               <button
                 onClick={() => { setSearch(""); setSearchInput(""); setDateFilter(""); setActiveTab("ALL"); setPage(1); }}
-                className="text-[11px] text-accent hover:underline cursor-pointer font-medium">
+                className="text-[11px] text-accent hover:underline cursor-pointer font-medium"
+              >
                 Xóa bộ lọc
               </button>
             )}
@@ -495,15 +514,21 @@ export default function UserPage() {
 
         <div className="px-5 py-3 border-t border-neutral">
           <AdminPagination
-            currentPage={page} totalPages={totalPages} total={total} pageSize={pageSize}
+            currentPage={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
-            pageSizeOptions={[10, 20, 50]} siblingCount={1}
+            pageSizeOptions={[10, 20, 50]}
+            siblingCount={1}
           />
         </div>
       </div>
 
-      {showSortMenu && <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />}
+      {showSortMenu && (
+        <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+      )}
     </div>
   );
 }
