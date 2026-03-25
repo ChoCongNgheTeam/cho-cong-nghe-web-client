@@ -9,7 +9,7 @@ import {
   Images,
   Loader2,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ProductDetail, CurrentVariant } from "@/lib/types/product";
 import { MdVerified } from "react-icons/md";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
@@ -26,31 +26,46 @@ interface GalleryImage {
   imageUrl: string;
   altText?: string;
   position?: number;
+  color?: string;
+  variantId?: string;
+}
+
+interface GalleryResponse {
+  images: GalleryImage[];
+  colorVariantMap: Record<string, string>;
 }
 
 interface ProductDetailLeftProps {
   product: ProductDetail;
   selectedVariant?: CurrentVariant;
   images: GalleryImage[];
+  onColorChange?: (variantId: string) => void;
 }
 
 export default function ProductDetailBanner({
   product,
   images,
   selectedVariant,
+  onColorChange,
 }: ProductDetailLeftProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // ── Gallery state ──────────────────────────────────────────────────────────
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [colorVariantMap, setColorVariantMap] = useState<
+    Record<string, string>
+  >({});
   const [galleryLoaded, setGalleryLoaded] = useState(false);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+
+  const lastSyncedVariantId = useRef<string | null>(null);
 
   const EXPAND_INDEX = images.length;
   const isExpandSlot = currentImageIndex === EXPAND_INDEX;
   const totalVariantSlots = images.length + 1;
 
+  // ── Compare ────────────────────────────────────────────────────────────────
   const { add, remove, isInCompare } = useCompareStore();
   const { success, error, warning, info } = useToasty();
   const inCompare = isInCompare(product.id);
@@ -72,7 +87,7 @@ export default function ProductDetailBanner({
           info("Sản phẩm đã có trong danh sách");
           break;
         case "wrong_category":
-          error("Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh !!");
+          error("Chỉ có thể so sánh các sản phẩm cùng danh mục");
           break;
       }
     } else {
@@ -87,6 +102,12 @@ export default function ProductDetailBanner({
     }
   }, [images]);
 
+  useEffect(() => {
+    if (selectedVariant?.id) {
+      lastSyncedVariantId.current = selectedVariant.id;
+    }
+  }, [selectedVariant?.id]);
+
   // ── Stock ──────────────────────────────────────────────────────────────────
   const maxStock = selectedVariant?.quantity ?? 0;
   const isOutOfStock =
@@ -98,11 +119,13 @@ export default function ProductDetailBanner({
     if (galleryLoaded || galleryLoading) return;
     setGalleryLoading(true);
     try {
-      const res = await apiRequest.get<{ data: GalleryImage[] }>(
+      const res = await apiRequest.get<{ data: GalleryResponse }>(
         `/products/slug/${product.slug}/gallery`,
         { noAuth: true },
       );
-      setGalleryImages(res?.data ?? []);
+      const data = res?.data;
+      setGalleryImages(data?.images ?? []);
+      setColorVariantMap(data?.colorVariantMap ?? {});
       setGalleryLoaded(true);
       setGalleryIndex(0);
     } catch (err) {
@@ -112,12 +135,35 @@ export default function ProductDetailBanner({
     }
   }, [product.slug, galleryLoaded, galleryLoading]);
 
+  // ── Sync color khi gallery index thay đổi ─────────────────────────────────
+  const syncColorFromGalleryIndex = useCallback(
+    (index: number) => {
+      if (!onColorChange || !galleryLoaded) return;
+      const img = galleryImages[index];
+      if (!img?.color) return;
+
+      const variantId = colorVariantMap[img.color];
+      if (!variantId) return;
+
+      if (variantId !== lastSyncedVariantId.current) {
+        lastSyncedVariantId.current = variantId;
+        onColorChange(variantId);
+      }
+    },
+    [galleryImages, colorVariantMap, galleryLoaded, onColorChange],
+  );
+
   // ── Navigation ─────────────────────────────────────────────────────────────
   const goToPrevious = () => {
     if (isExpandSlot) {
       if (galleryLoaded && galleryImages.length > 0) {
-        if (galleryIndex === 0) setCurrentImageIndex(images.length - 1);
-        else setGalleryIndex((prev) => prev - 1);
+        if (galleryIndex === 0) {
+          setCurrentImageIndex(images.length - 1);
+        } else {
+          const newIdx = galleryIndex - 1;
+          setGalleryIndex(newIdx);
+          syncColorFromGalleryIndex(newIdx);
+        }
       } else {
         setCurrentImageIndex(images.length - 1);
       }
@@ -125,8 +171,9 @@ export default function ProductDetailBanner({
     }
     if (currentImageIndex === 0) {
       setCurrentImageIndex(EXPAND_INDEX);
-      setGalleryIndex(galleryImages.length > 0 ? galleryImages.length - 1 : 0);
-      fetchGallery();
+      const lastIdx = galleryImages.length > 0 ? galleryImages.length - 1 : 0;
+      setGalleryIndex(lastIdx);
+      fetchGallery().then(() => syncColorFromGalleryIndex(lastIdx));
     } else {
       setCurrentImageIndex((prev) => prev - 1);
     }
@@ -135,8 +182,13 @@ export default function ProductDetailBanner({
   const goToNext = () => {
     if (isExpandSlot) {
       if (galleryLoaded && galleryImages.length > 0) {
-        if (galleryIndex === galleryImages.length - 1) setCurrentImageIndex(0);
-        else setGalleryIndex((prev) => prev + 1);
+        if (galleryIndex === galleryImages.length - 1) {
+          setCurrentImageIndex(0);
+        } else {
+          const newIdx = galleryIndex + 1;
+          setGalleryIndex(newIdx);
+          syncColorFromGalleryIndex(newIdx);
+        }
       } else {
         setCurrentImageIndex(0);
       }
@@ -157,6 +209,11 @@ export default function ProductDetailBanner({
     setCurrentImageIndex(EXPAND_INDEX);
     setGalleryIndex(0);
     fetchGallery();
+  };
+
+  const goToGalleryIndex = (index: number) => {
+    setGalleryIndex(index);
+    syncColorFromGalleryIndex(index);
   };
 
   // ── Current main image ─────────────────────────────────────────────────────
@@ -203,206 +260,261 @@ export default function ProductDetailBanner({
   };
 
   return (
-    <div>
-      {/* ── MAIN IMAGE ──────────────────────────────────────────────────── */}
-      <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
-        <div className="relative w-full h-full flex items-center justify-center">
-          {!isExpandSlot && mainImageUrl && (
-            <Image
-              src={mainImageUrl}
-              className="max-w-full max-h-full object-contain transition-opacity duration-500"
-              alt={mainImageAlt}
-              fill
-            />
-          )}
-          {isExpandSlot && galleryLoading && (
-            <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
-              <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <p className="text-sm opacity-60">Đang tải ảnh...</p>
-            </div>
-          )}
-          {isExpandSlot && !galleryLoading && mainImageUrl && (
-            <Image
-              src={mainImageUrl}
-              className="max-w-full max-h-full object-contain transition-opacity duration-500"
-              alt={mainImageAlt}
-              fill
-            />
-          )}
-          {isExpandSlot && !galleryLoading && !mainImageUrl && (
-            <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
-              <Images className="w-10 h-10 opacity-30" />
-              <p className="text-sm opacity-50">Chưa có ảnh</p>
-            </div>
-          )}
-          <WishlistHeart productId={product.id} />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleCompare(); //  product ở đây là ProductDetail, cần map sang Product type nếu khác
-            }}
-            className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
-      ${
-        inCompare
-          ? "bg-primary text-white"
-          : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer"
-      }`}
-            aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
-            title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
-          >
-            <GitCompareArrows className="w-5 h-5" />
-          </button>
-        </div>
-
-        <button
-          onClick={goToPrevious}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-          aria-label="Ảnh trước"
-        >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
-
-        <button
-          onClick={goToNext}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-          aria-label="Ảnh sau"
-        >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
-
-        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
-          <div className="text-xs text-neutral mt-1">
-            {counterCurrent}/{counterTotal}
-          </div>
-        </div>
-      </div>
-
-      {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
-      <div className="mt-4">
-        <div className="grid grid-cols-6 gap-3 sm:gap-4">
-          {visibleThumbs.map((thumb) => {
-            if (thumb.type === "expand") {
-              return (
-                <ThumbnailCell
-                  key="expand"
-                  isActive={isExpandSlot}
-                  onClick={goToExpand}
-                  isExpand
-                >
-                  <div className="flex flex-col items-center justify-center h-full gap-1">
-                    {galleryLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                    ) : galleryLoaded ? (
-                      <>
-                        <Images className="w-5 h-5 text-primary" />
-                        <span className="text-[10px] text-primary font-medium">
-                          +{galleryImages.length}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Images className="w-5 h-5 text-neutral-darker" />
-                        <span className="text-[10px] text-neutral-darker">
-                          Xem thêm
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </ThumbnailCell>
-              );
-            }
-
-            const image = images[thumb.index];
-            if (!image?.imageUrl) return null;
-            return (
-              <ThumbnailCell
-                key={image.id}
-                isActive={!isExpandSlot && currentImageIndex === thumb.index}
-                onClick={() => goToVariantIndex(thumb.index)}
-              >
-                <Image
-                  src={image.imageUrl}
-                  alt={image.altText || `Product image ${thumb.index + 1}`}
-                  fill
-                  sizes="120px"
-                  className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
-                    !isExpandSlot && currentImageIndex === thumb.index
-                      ? "opacity-100 scale-100"
-                      : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
-                  }`}
-                />
-              </ThumbnailCell>
-            );
-          })}
-        </div>
-
-        {/* ── HIGHLIGHTS + POLICIES: chỉ hiện trên desktop (lg+) ─────────── */}
-        {isInStock && (
-          <div className="hidden lg:block">
-            {/* Highlights */}
-            {highlights.length > 0 && (
-              <div className="mt-8">
-                <h2 className="font-semibold text-primary mb-4">
-                  Thông số nổi bật
-                </h2>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
-                  {highlights.map((highlight, index) => {
-                    const IconComponent = highlight?.icon
-                      ? iconMap[highlight.icon]
-                      : null;
-                    return (
-                      <div className="flex-1" key={index}>
-                        <span className="text-sm">
-                          {highlight?.name || "N/A"}
-                        </span>
-                        <div className="flex items-center gap-2 mt-2">
-                          {IconComponent && <IconComponent size={28} />}
-                          <span className="text-sm font-semibold text-primary">
-                            {highlight?.value || "N/A"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+    <>
+      <div>
+        {/* ── MAIN IMAGE ──────────────────────────────────────────────────── */}
+        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
+          <div className="relative w-full h-full flex items-center justify-center">
+            {!isExpandSlot && mainImageUrl && (
+              <Image
+                src={mainImageUrl}
+                className="max-w-full max-h-full object-contain transition-opacity duration-500"
+                alt={mainImageAlt}
+                fill
+              />
+            )}
+            {isExpandSlot && galleryLoading && (
+              <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="text-sm opacity-60">Đang tải ảnh...</p>
               </div>
             )}
-
-            {/* Policies */}
-            <div>
-              <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                <h2 className="text-base font-semibold text-primary">
-                  Chính sách sản phẩm
-                </h2>
-                <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
-                  Tìm hiểu thêm
-                </button>
+            {isExpandSlot && !galleryLoading && mainImageUrl && (
+              <Image
+                src={mainImageUrl}
+                className="max-w-full max-h-full object-contain transition-opacity duration-500"
+                alt={mainImageAlt}
+                fill
+              />
+            )}
+            {isExpandSlot && !galleryLoading && !mainImageUrl && (
+              <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
+                <Images className="w-10 h-10 opacity-30" />
+                <p className="text-sm opacity-50">Chưa có ảnh</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
-                <div className="flex items-center gap-2 sm:mr-12">
-                  <MdVerified size={28} />
-                  <p className="text-sm text-primary">
-                    Hàng chính hãng - Bảo hành 18 tháng
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaShippingFast size={28} />
-                  <p className="text-sm text-primary">
-                    Miễn phí giao hàng toàn quốc
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaUserCog size={28} />
-                  <p className="text-sm text-primary">
-                    Kỹ thuật viên hỗ trợ trực tuyến
-                  </p>
-                </div>
+            )}
+            <WishlistHeart productId={product.id} />
+
+            {/* ── NÚT SO SÁNH ─────────────────────────────────────────────── */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleCompare();
+              }}
+              className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
+                ${
+                  inCompare
+                    ? "bg-primary text-white"
+                    : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer"
+                }`}
+              aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+              title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
+            >
+              <GitCompareArrows className="w-5 h-5" />
+            </button>
+          </div>
+
+          <button
+            onClick={goToPrevious}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+            aria-label="Ảnh trước"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+
+          <button
+            onClick={goToNext}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+            aria-label="Ảnh sau"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+
+          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
+            <div className="text-xs text-neutral mt-1">
+              {counterCurrent}/{counterTotal}
+            </div>
+          </div>
+        </div>
+
+        {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
+        <div className="mt-4">
+          <div className="grid grid-cols-6 gap-3 sm:gap-4">
+            {visibleThumbs.map((thumb) => {
+              if (thumb.type === "expand") {
+                return (
+                  <ThumbnailCell
+                    key="expand"
+                    isActive={isExpandSlot}
+                    onClick={goToExpand}
+                    isExpand
+                  >
+                    <div className="flex flex-col items-center justify-center h-full gap-1">
+                      {galleryLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      ) : galleryLoaded ? (
+                        <>
+                          <Images className="w-5 h-5 text-primary" />
+                          <span className="text-[10px] text-primary font-medium">
+                            +{galleryImages.length}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Images className="w-5 h-5 text-neutral-darker" />
+                          <span className="text-[10px] text-neutral-darker">
+                            Xem thêm
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </ThumbnailCell>
+                );
+              }
+
+              const image = images[thumb.index];
+              if (!image?.imageUrl) return null;
+              return (
+                <ThumbnailCell
+                  key={image.id}
+                  isActive={!isExpandSlot && currentImageIndex === thumb.index}
+                  onClick={() => goToVariantIndex(thumb.index)}
+                >
+                  <Image
+                    src={image.imageUrl}
+                    alt={image.altText || `Product image ${thumb.index + 1}`}
+                    fill
+                    sizes="120px"
+                    className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
+                      !isExpandSlot && currentImageIndex === thumb.index
+                        ? "opacity-100 scale-100"
+                        : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                    }`}
+                  />
+                </ThumbnailCell>
+              );
+            })}
+          </div>
+
+         {/* ── GALLERY THUMBNAILS khi đang ở expand slot ─────────────────── */}
+{isExpandSlot && galleryLoaded && galleryImages.length > 0 && (
+  <div
+    className="mt-3 flex gap-2 overflow-x-auto pb-6 px-1 py-1 
+      scrollbar-hide md:scrollbar-thin 
+      md:scrollbar-thumb-gray-300 md:hover:scrollbar-thumb-gray-400
+      dark:md:scrollbar-thumb-zinc-700 dark:md:hover:scrollbar-thumb-zinc-600 
+      scroll-smooth"
+  >
+    {galleryImages.map((img, idx) => (
+      <button
+        key={img.id}
+        onClick={() => goToGalleryIndex(idx)}
+        className={`relative group flex-shrink-0 w-14 h-14 rounded-xl transition-all duration-200 ease-out cursor-pointer
+          ${
+            galleryIndex === idx
+              ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
+              : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105"
+          }`}
+      >
+        <div className="relative w-full h-full bg-white rounded-xl overflow-hidden">
+          
+          {/* ── FALLBACK (luôn render phía dưới) ── */}
+          {!img.imageUrl && (
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral text-neutral-darker">
+              <Images className="w-4 h-4 opacity-40" />
+            </div>
+          )}
+
+          {/* ── IMAGE ── */}
+          {img.imageUrl && (
+            <Image
+              src={img.imageUrl}
+              alt={img.altText || `Gallery ${idx + 1}`}
+              fill
+              sizes="56px"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+              className={`object-contain p-1.5 transition-all duration-300
+                ${
+                  galleryIndex === idx
+                    ? "opacity-100 scale-100"
+                    : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                }`}
+            />
+          )}
+
+          {/* ── overlay ── */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+        </div>
+      </button>
+    ))}
+  </div>
+)}
+
+          {/* ── HIGHLIGHTS + POLICIES ─────────────────────────────────────── */}
+          {isInStock && (
+            <div className="mt-8 space-y-8">
+              <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h2 className="font-semibold text-primary">Thông số nổi bật</h2>
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
+                {highlights.map((highlight, index) => {
+                  const IconComponent = highlight?.icon
+                    ? iconMap[highlight.icon]
+                    : null;
+                  return (
+                    <div className="flex-1" key={index}>
+                      <span className="text-sm">
+                        {highlight?.name || "N/A"}
+                      </span>
+                      <div className="flex items-center gap-2 mt-2">
+                        {IconComponent && <IconComponent size={28} />}
+                        <span className="text-sm font-semibold text-primary">
+                          {highlight?.value || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Policies */}
+          <div>
+            <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
+              <h2 className="text-base font-semibold text-primary">
+                Chính sách sản phẩm
+              </h2>
+              <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
+                Tìm hiểu thêm
+              </button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
+              <div className="flex items-center gap-2 sm:mr-12">
+                <MdVerified size={28} />
+                <p className="text-sm text-primary">
+                  Hàng chính hãng - Bảo hành 18 tháng
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaShippingFast size={28} />
+                <p className="text-sm text-primary">
+                  Miễn phí giao hàng toàn quốc
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaUserCog size={28} />
+                <p className="text-sm text-primary">
+                  Kỹ thuật viên hỗ trợ trực tuyến
+                </p>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -22,16 +22,6 @@ export const menuItems: MenuItem[] = [
       href: "/policies/enterprise-projects",
    },
    {
-      id: "mobile-network-policy",
-      label: "Chính sách mạng di động",
-      href: "/policies/mang-di-dong",
-   },
-   {
-      id: "mobile-plan-policy",
-      label: "Chính sách gói cước di động",
-      href: "/policies/goi-cuoc-di-dong",
-   },
-   {
       id: "telecom-points",
       label: "Quy chế hoạt động",
       href: "/policies/regulations",
@@ -84,7 +74,7 @@ export const menuItems: MenuItem[] = [
    {
       id: "data-privacy",
       label: "Chính sách bảo mật dữ liệu cá nhân khách hàng",
-      href: "/policies/Data-privacy",
+      href: "/policies/DataPrivacy",
    },
    {
       id: "online-purchase",
@@ -109,8 +99,8 @@ export const menuItems: MenuItem[] = [
   
    {
       id: "Mobile-Network-Policy",
-      label: "Chính sách mạng di động",
-      href: "/policies/Mobile-network",
+      label: "Chính sách mạng di động ChoCongNghe",
+      href: "/policies/MobileNetwork",
    }
 
 ];

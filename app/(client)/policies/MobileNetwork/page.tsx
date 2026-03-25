@@ -56,8 +56,9 @@ export default function MobileNetworkPolicy() {
                <p className="font-semibold mb-2 text-primary">2. Giá cước thông tin</p>
                <p className="font-semibold mb-2 text-primary">2.1. Giá cước Thoại và SMS</p>
 
-               <div className="rounded-lg overflow-hidden border border-neutral mb-4">
-                  <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
+               <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+                  <div className="min-w-[520px]">
+               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                      <span>Nội dung</span>
                      <span>InZone</span>
                      <span>OutZone</span>
@@ -84,6 +85,7 @@ export default function MobileNetworkPolicy() {
                         <span className="text-neutral-darker">{row.note}</span>
                      </div>
                   ))}
+                  </div>
                </div>
 
                <div className="rounded-lg p-4 bg-neutral-light-active border border-neutral mb-4">
@@ -103,8 +105,9 @@ export default function MobileNetworkPolicy() {
                </div>
 
                <p className="font-semibold mb-2 text-primary">Cú pháp đăng ký / kiểm tra / thay đổi vùng Zone:</p>
-               <div className="rounded-lg overflow-hidden border border-neutral mb-4">
-                  <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
+               <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+                  <div className="min-w-[520px]">
+               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                      <span>Nghiệp vụ</span>
                      <span>Cú pháp</span>
                      <span>Đầu số</span>
@@ -123,6 +126,7 @@ export default function MobileNetworkPolicy() {
                         <span className="text-primary">{row.fee}</span>
                      </div>
                   ))}
+                  </div>
                </div>
 
                <p className="font-semibold mb-2 text-primary">2.2. Giá cước Data</p>
@@ -188,8 +192,9 @@ export default function MobileNetworkPolicy() {
                <p className="leading-relaxed mb-3 text-primary">
                   FunRing là dịch vụ nhạc chờ dành cho thuê bao ChoCongNghe. Khi thuê bao khác gọi đến, thuê bao gọi đến sẽ được nghe những bản nhạc chờ do khách hàng lựa chọn.
                </p>
-               <div className="rounded-lg overflow-hidden border border-neutral mb-5">
-                  <div className="grid grid-cols-3 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
+               <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+                  <div className="min-w-[520px]">
+               <div className="grid grid-cols-3 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                      <span>Thực hiện</span>
                      <span>Cách đăng ký</span>
                      <span>Lưu ý</span>
@@ -205,14 +210,16 @@ export default function MobileNetworkPolicy() {
                         <span className="text-neutral-darker">{row.note}</span>
                      </div>
                   ))}
+                  </div>
                </div>
 
                <p className="font-semibold mb-2 text-primary">2. Dịch vụ Thông báo cuộc gọi nhỡ – MCA</p>
                <p className="leading-relaxed mb-3 text-primary">
                   Dịch vụ MCA giúp khách hàng biết thông tin về các cuộc gọi nhỡ khi điện thoại đang tắt máy, hết pin hoặc ngoài vùng phủ sóng.
                </p>
-               <div className="rounded-lg overflow-hidden border border-neutral mb-5">
-                  <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
+               <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+                  <div className="min-w-[520px]">
+               <div className="grid grid-cols-4 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                      <span>Cách đăng ký</span>
                      <span>Mức cước</span>
                      <span>Thời gian</span>
@@ -229,6 +236,7 @@ export default function MobileNetworkPolicy() {
                         <span className="font-semibold text-accent">{row.cancel}</span>
                      </div>
                   ))}
+                  </div>
                </div>
             </SubSection>
 
@@ -277,8 +285,9 @@ export default function MobileNetworkPolicy() {
          {/* C */}
          <Section title="C. CÔNG BỐ CHẤT LƯỢNG DỊCH VỤ">
             <SubSection title="I. Dịch vụ được cung cấp">
-               <div className="rounded-lg overflow-hidden border border-neutral mb-4">
-                  <div className="grid grid-cols-3 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
+               <div className="rounded-lg overflow-hidden border border-neutral overflow-x-auto">
+                  <div className="min-w-[520px]">
+               <div className="grid grid-cols-3 font-semibold px-4 py-2.5 bg-neutral-light-active border-b border-neutral text-primary">
                      <span>STT</span>
                      <span>Dịch vụ</span>
                      <span>Địa bàn</span>
@@ -294,6 +303,7 @@ export default function MobileNetworkPolicy() {
                         <span className="text-primary">Toàn Quốc</span>
                      </div>
                   ))}
+                  </div>
                </div>
             </SubSection>
 

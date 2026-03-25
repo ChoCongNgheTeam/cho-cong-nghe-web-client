@@ -1,4 +1,4 @@
-import { BLOG_CATEGORIES, isBlogInCategory } from "./_lib/blog-category";
+﻿import { BLOG_CATEGORIES, isBlogInCategory } from "./_lib/blog-category";
 import { getBlogs } from "./_lib/blog.api";
 import BlogCategoryBar from "./components/BlogCategoryBar";
 import BlogList from "./components/BlogList";
@@ -105,9 +105,6 @@ export default async function BlogPage({ searchParams }: Props) {
 
     return (
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-4 text-sm text-primary-light">
-          Trang chủ / Tin tức / {breadcrumbLabel}
-        </div>
 
         <section className="mb-6">
           <BlogCategoryBar active={category} />
@@ -135,10 +132,6 @@ export default async function BlogPage({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-4 text-sm text-primary-light">
-        Trang chủ / Tin tức
-      </div>
-
       <section className="mb-6">
         <BlogCategoryBar active={category} />
       </section>
@@ -180,3 +173,5 @@ export default async function BlogPage({ searchParams }: Props) {
     </main>
   );
 }
+
+

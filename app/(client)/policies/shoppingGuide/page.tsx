@@ -12,7 +12,7 @@ export default function ShoppingGuide() {
   const [activeTab, setActiveTab] = useState("steps");
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-neutral-light">
         <Hero />
       <div className="">
         <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />

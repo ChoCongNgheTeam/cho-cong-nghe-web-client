@@ -11,7 +11,6 @@ import { slugToTitle } from "../components/SlugToTitle";
 import { BANNERS, BRANDS, SUB_CATEGORIES } from "../MockData";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { fetchFilters } from "../_libs/fetchFilter";
-import ScrollToFilterButton from "../components/ScrollToFilterButton";
 import { buildCategoryMetadata } from "./buildMetaData";
 
 export async function generateMetadata({
@@ -74,13 +73,6 @@ export default async function CategoryPage({
                   {categoryTitle}
                </h1>
 
-               <div className="flex items-center gap-3 mb-5">
-                  <span className="text-base text-primary">
-                     Tìm sản phẩm theo nhu cầu
-                  </span>
-                  <ScrollToFilterButton />
-               </div>
-
                <div className="border-b border-neutral mb-4">
                   <nav className="flex items-center gap-6 overflow-x-auto py-3 text-sm font-medium">
                      {SUB_CATEGORIES.map(({ href, label }) => (
@@ -94,55 +86,49 @@ export default async function CategoryPage({
                      ))}
                   </nav>
                </div>
-
                <Slidezy
-                  items={1}
-                  speed={500}
-                  autoplay
-                  autoplayTimeout={5000}
+                  items={{ mobile: 3, tablet: 4, desktop: 5 }}
+                  speed={400}
                   loop
                   nav
-                  controls
-                  className="rounded-xl overflow-hidden mb-6"
+                  controls={false}
+                  gap={12}
+                  slideBy="page"
+                  className="mb-6 pb-6 border-b border-neutral"
                >
-                  {BANNERS.map((img, idx) => (
-                     <div key={idx} className="h-35 sm:h-45 md:h-55">
-                        <img
-                           src={img}
-                           alt={`Banner ${idx + 1}`}
-                           className="w-full h-full object-cover"
-                        />
-                     </div>
+                  {BRANDS.map(({ href, label, color }) => (
+                     <Link
+                        key={href}
+                        href={href}
+                        className="flex items-center justify-center px-3 py-3 bg-neutral-light border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all text-center"
+                     >
+                        <span
+                           className="text-sm font-bold leading-tight"
+                           style={{ color }}
+                        >
+                           {label}
+                        </span>
+                     </Link>
                   ))}
                </Slidezy>
-
-               <div className="mb-6 pb-6 border-b border-neutral">
-                  <h2 className="text-sm font-semibold text-primary-light mb-4">
-                     Thương hiệu ưa chuộng
-                  </h2>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-3">
-                     {BRANDS.map(({ href, label, color }) => (
-                        <Link
-                           key={href}
-                           href={href}
-                           className="flex items-center justify-center px-3 py-3 bg-neutral-light border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all text-center"
-                        >
-                           <span
-                              className="text-sm font-bold leading-tight"
-                              style={{ color }}
-                           >
-                              {label}
-                           </span>
-                        </Link>
-                     ))}
-                  </div>
-               </div>
             </div>
          </div>
 
          {/* Main content */}
          <div className="container py-6">
+            {/*
+          Mobile only: horizontal sort chips + "Lọc" button + bottom sheet.
+          ProductFilter tự detect isMobile và render đúng UI.
+          Desktop sidebar được render riêng bên dưới với hidden lg:block.
+        */}
+            <div className="lg:hidden mb-4 rounded-xl overflow-hidden">
+               <Suspense fallback={null}>
+                  <ProductFilter filters={resolvedFilters} />
+               </Suspense>
+            </div>
+
             <div className="flex gap-6 items-start">
+               {/* Desktop sidebar */}
                <aside
                   id="product-filter"
                   className="w-72 shrink-0 hidden lg:block sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin"

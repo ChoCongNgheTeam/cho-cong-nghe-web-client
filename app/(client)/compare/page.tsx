@@ -165,6 +165,8 @@ function SearchProductModal({
     }
   };
 
+  
+
   const showSkeleton = isSearching && staleResultsRef.current.length === 0;
   const displayResults = deferredResults;
 
@@ -675,7 +677,7 @@ export default function ComparePage() {
                         <div className="flex flex-col items-center justify-center py-2">
                           <button
                             onClick={() => setModalOpen(true)}
-                            className="flex flex-col items-center gap-1.5 sm:gap-2 w-full py-5 sm:py-7 rounded-xl sm:rounded-2xl transition-all duration-200 group border border-dashed border-neutral/80 hover:border-primary/40 hover:bg-neutral/30"
+                            className="flex flex-col items-center gap-1.5 sm:gap-2 w-full py-5 sm:py-7 rounded-xl sm:rounded-2xl transition-all duration-200 group border border-dashed border-neutral/80 hover:border-primary/40 hover:bg-neutral/30 cursor-pointer"
                             style={{ background: "rgba(0,0,0,0.01)" }}
                           >
                             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200 border border-neutral/80 group-hover:border-primary/30 group-hover:bg-primary/5">

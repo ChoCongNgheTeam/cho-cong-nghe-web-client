@@ -1,4 +1,4 @@
-import { BlogCategory } from "../types/blog.type";
+﻿import { BlogCategory } from "../types/blog.type";
 
 type CategoryConfig = {
   key: string;
@@ -9,16 +9,7 @@ type CategoryConfig = {
 export const BLOG_CATEGORIES: CategoryConfig[] = [
   { key: "featured", title: "Nổi bật" },
   { key: "tin-moi", title: "Tin mới", keywords: ["mới", "ra mắt", "update", "xu hướng"] },
-  { key: "dien-may-gia-dung", title: "Điện máy - Gia dụng", keywords: ["gia dụng", "máy giặt", "tủ lạnh", "điều hòa"] },
-  { key: "khuyen-mai", title: "Khuyến mãi", keywords: ["khuyến mãi", "giảm giá", "ưu đãi", "flash sale"] },
   { key: "danh-gia-tu-van", title: "Đánh giá - Tư vấn", keywords: ["đánh giá", "review", "tư vấn", "so sánh"] },
-  { key: "thu-thuat", title: "Thủ thuật", keywords: ["thủ thuật", "mẹo", "hướng dẫn", "tips"] },
-  { key: "video-hot", title: "Video hot", keywords: ["video", "clip"] },
-  { key: "giai-tri", title: "Giải trí", keywords: ["giải trí", "trailer", "event"] },
-  { key: "kien-thuc-doi-song", title: "Kiến thức - Đời sống", keywords: ["kiến thức", "đời sống", "sức khỏe"] },
-  { key: "hoi-dap", title: "Hỏi đáp", keywords: ["hỏi đáp", "faq", "câu hỏi"] },
-  { key: "app-game", title: "App - Game", keywords: ["app", "game", "ứng dụng"] },
-  { key: "tin-trao-thuong", title: "Tin trao thưởng", keywords: ["trao thưởng", "giveaway"] },
 ];
 
 const FALLBACK_CATEGORY = "tin-moi";
@@ -77,3 +68,4 @@ export function isBlogInCategory(categoryKey: string | undefined, blogCategorySl
   if (categoryKey === "featured") return true;
   return categoryKey === blogCategorySlug;
 }
+
