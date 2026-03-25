@@ -22,7 +22,7 @@ export default function About() {
                Nhận diện thương hiệu
             </h2>
             <div className="grid gap-4 sm:grid-cols-3">
-               <div className="rounded-lg border border-neutral-light bg-white p-4 flex items-center justify-center">
+               <div className="rounded-lg border border-neutral-light bg-neutral-light p-4 flex items-center justify-center">
                   <Image
                      src="/logo.png"
                      alt="Logo ChoCongNghe"
@@ -32,7 +32,7 @@ export default function About() {
                      priority
                   />
                </div>
-               <div className="rounded-lg border border-neutral-light bg-white p-4">
+               <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
                   <Image
                      src="/welcome.png"
                      alt="Hình ảnh mẫu 1"
@@ -41,7 +41,7 @@ export default function About() {
                      className="h-auto w-full rounded-md"
                   />
                </div>
-               <div className="rounded-lg border border-neutral-light bg-white p-4">
+               <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
                   <Image
                      src="/images/avatar.png"
                      alt="Hình ảnh mẫu 2"
@@ -71,32 +71,34 @@ export default function About() {
          <section className="mb-8">
             <h2 className="font-bold text-primary mb-4">2. Điểm nổi bật</h2>
             <div className="grid gap-4 md:grid-cols-2">
-               {[
-                  {
-                     title: "Danh mục thông minh",
-                     desc: "Hệ thống quản lý danh mục sản phẩm linh hoạt, giúp phân loại và hiển thị chính xác theo nhu cầu.",
-                  },
-                  {
-                     title: "Tìm kiếm tối ưu",
-                     desc: "Bộ lọc nhanh và chính xác giúp người dùng tìm được thiết bị phù hợp chỉ trong vài thao tác.",
-                  },
-                  {
-                     title: "Thanh toán đa phương thức",
-                     desc: "Tích hợp nhiều lựa chọn thanh toán an toàn, tối giản hóa quy trình mua sắm.",
-                  },
-                  {
-                     title: "Theo dõi đơn hàng thời gian thực",
-                     desc: "Cập nhật trạng thái đơn hàng minh bạch, giúp khách hàng chủ động trong mọi bước.",
-                  },
-               ].map((item) => (
-                  <div
-                     key={item.title}
-                     className="rounded-lg border border-neutral-light bg-neutral-light/20 p-4"
-                  >
-                     <p className="font-semibold text-primary mb-1">{item.title}</p>
-                     <p className="text-primary">{item.desc}</p>
-                  </div>
-               ))}
+               {
+                  [
+                     {
+                        title: "Danh mục thông minh",
+                        desc: "Hệ thống quản lý danh mục sản phẩm linh hoạt, giúp phân loại và hiển thị chính xác theo nhu cầu.",
+                     },
+                     {
+                        title: "Tìm kiếm tối ưu",
+                        desc: "Bộ lọc nhanh và chính xác giúp người dùng tìm được thiết bị phù hợp chỉ trong vài thao tác.",
+                     },
+                     {
+                        title: "Thanh toán đa phương thức",
+                        desc: "Tích hợp nhiều lựa chọn thanh toán an toàn, tối giản hóa quy trình mua sắm.",
+                     },
+                     {
+                        title: "Theo dõi đơn hàng thời gian thực",
+                        desc: "Cập nhật trạng thái đơn hàng minh bạch, giúp khách hàng chủ động trong mọi bước.",
+                     },
+                  ].map((item) => (
+                     <div
+                        key={item.title}
+                        className="rounded-lg border border-neutral-light bg-neutral-light/20 p-4"
+                     >
+                        <p className="font-semibold text-primary mb-1">{item.title}</p>
+                        <p className="text-primary">{item.desc}</p>
+                     </div>
+                  ))
+               }
             </div>
          </section>
 
@@ -105,34 +107,38 @@ export default function About() {
                3. Dành cho khách hàng & quản trị viên
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
-               <div className="rounded-lg border border-neutral-light bg-white p-4">
+               <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
                   <p className="font-semibold text-primary mb-2">Khách hàng</p>
                   <ul className="space-y-2">
-                     {[
-                        "Khám phá nhanh các thiết bị công nghệ thông minh.",
-                        "So sánh lựa chọn rõ ràng với thông tin minh bạch.",
-                        "Trải nghiệm thanh toán gọn gàng và bảo mật.",
-                     ].map((item) => (
-                        <li key={item} className="flex gap-2">
-                           <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                           <p className="text-primary">{item}</p>
-                        </li>
-                     ))}
+                     {
+                        [
+                           "Khám phá nhanh các thiết bị công nghệ thông minh.",
+                           "So sánh lựa chọn rõ ràng với thông tin minh bạch.",
+                           "Trải nghiệm thanh toán gọn gàng và bảo mật.",
+                        ].map((item) => (
+                           <li key={item} className="flex gap-2">
+                              <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                              <p className="text-primary">{item}</p>
+                           </li>
+                        ))
+                     }
                   </ul>
                </div>
-               <div className="rounded-lg border border-neutral-light bg-white p-4">
+               <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
                   <p className="font-semibold text-primary mb-2">Quản trị viên</p>
                   <ul className="space-y-2">
-                     {[
-                        "Quản lý kho hàng và danh mục hiệu quả.",
-                        "Theo dõi doanh thu và dữ liệu khách hàng khoa học.",
-                        "Vận hành linh hoạt với hệ thống báo cáo rõ ràng.",
-                     ].map((item) => (
-                        <li key={item} className="flex gap-2">
-                           <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                           <p className="text-primary">{item}</p>
-                        </li>
-                     ))}
+                     {
+                        [
+                           "Quản lý kho hàng và danh mục hiệu quả.",
+                           "Theo dõi doanh thu và dữ liệu khách hàng khoa học.",
+                           "Vận hành linh hoạt với hệ thống báo cáo rõ ràng.",
+                        ].map((item) => (
+                           <li key={item} className="flex gap-2">
+                              <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                              <p className="text-primary">{item}</p>
+                           </li>
+                        ))
+                     }
                   </ul>
                </div>
             </div>
@@ -141,34 +147,36 @@ export default function About() {
          <section className="mb-8">
             <h2 className="font-bold text-primary mb-3">4. Cam kết vận hành</h2>
             <ul className="space-y-3">
-               {[
-                  {
-                     title: "Bảo mật",
-                     desc: "Ưu tiên an toàn dữ liệu khách hàng và tuân thủ các tiêu chuẩn bảo mật.",
-                  },
-                  {
-                     title: "Hiệu năng",
-                     desc: "Tối ưu tốc độ tải trang, bảo đảm trải nghiệm mượt mà khi truy cập.",
-                  },
-                  {
-                     title: "Mở rộng",
-                     desc: "Kiến trúc linh hoạt giúp nền tảng sẵn sàng phục vụ lượng truy cập lớn.",
-                  },
-                  {
-                     title: "Chuẩn SEO",
-                     desc: "Cấu trúc thân thiện tìm kiếm giúp nội dung dễ tiếp cận và phát triển bền vững.",
-                  },
-               ].map((item) => (
-                  <li key={item.title} className="flex gap-2.5">
-                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                     <p className="text-primary">
-                        <span className="font-semibold text-primary">
-                           {item.title}:
-                        </span>{" "}
-                        {item.desc}
-                     </p>
-                  </li>
-               ))}
+               {
+                  [
+                     {
+                        title: "Bảo mật",
+                        desc: "Ưu tiên an toàn dữ liệu khách hàng và tuân thủ các tiêu chuẩn bảo mật.",
+                     },
+                     {
+                        title: "Hiệu năng",
+                        desc: "Tối ưu tốc độ tải trang, bảo đảm trải nghiệm mượt mà khi truy cập.",
+                     },
+                     {
+                        title: "Mở rộng",
+                        desc: "Kiến trúc linh hoạt giúp nền tảng sẵn sàng phục vụ lượng truy cập lớn.",
+                     },
+                     {
+                        title: "Chuẩn SEO",
+                        desc: "Cấu trúc thân thiện tìm kiếm giúp nội dung dễ tiếp cận và phát triển bền vững.",
+                     },
+                  ].map((item) => (
+                     <li key={item.title} className="flex gap-2.5">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                        <p className="text-primary">
+                           <span className="font-semibold text-primary">
+                              {item.title}:
+                           </span>{" "}
+                           {item.desc}
+                        </p>
+                     </li>
+                  ))
+               }
             </ul>
          </section>
 

@@ -1,6 +1,10 @@
-﻿import Image from "next/image";
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
+import { Slidezy } from "@/components/Slider";
 import { Blog } from "../types/blog.type";
+import BlogCard from "./BlogCard";
 
 type Props = {
   title: string;
@@ -26,7 +30,24 @@ export default function BlogSection({
         {title}
       </h2>
 
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
+      <div className="md:hidden">
+        <Slidezy
+          items={{ mobile: 1, tablet: 2, desktop: 3 }}
+          gap={16}
+          speed={400}
+          loop={false}
+          nav={false}
+          controls={true}
+          slideBy={1}
+          draggable={true}
+        >
+          {blogs.map((blog) => (
+            <BlogCard key={blog.id} blog={blog} />
+          ))}
+        </Slidezy>
+      </div>
+
+      <div className="hidden md:grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <Link href={`/blog/${hero.slug}`} className="block">
             <div
