@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState, useTransition, useDeferredValue } from "react";
+import { useRef, useEffect, useCallback, useState, useTransition, useDeferredValue, useLayoutEffect } from "react";
 import { Search, ChevronsLeftRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +9,8 @@ import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
 import { fetchTrendingKeywords, TrendingKeyword } from "../_libs/getTopKeywords";
 
+// ─── types & helpers ───────────────────────────────────────────────────────────
+
 interface ApiProduct {
   id: string;
   name: string;
@@ -16,24 +18,13 @@ interface ApiProduct {
   thumbnail: string;
   priceOrigin: number;
   inStock: boolean;
-  price: {
-    base: number;
-    hasPromotion: boolean;
-  };
-  rating: {
-    average: number;
-    count: number;
-  };
+  price: { base: number; hasPromotion: boolean };
+  rating: { average: number; count: number };
 }
 
 interface ApiResponse {
   data: ApiProduct[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
   message: string;
 }
 
@@ -56,11 +47,96 @@ function SkeletonItem() {
 
 const SKELETON_COUNT = 4;
 
-function getKeywordVisibilityClass(index: number): string {
-  if (index < 3) return "inline";
-  if (index < 6) return "hidden lg:inline";
-  return "hidden xl:inline";
+// ─── TrendingMarquee ────────────────────────────────────────────────────────────
+
+function TrendingMarquee({ keywords }: { keywords: TrendingKeyword[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [needsScroll, setNeedsScroll] = useState(false);
+  const [duration, setDuration] = useState(20); // seconds
+  // const [isPaused, setIsPaused] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!trackRef.current || keywords.length === 0) return;
+
+    const measure = () => {
+      const track = trackRef.current!;
+      const container = track.parentElement!;
+      // Lấy width của 1 set (không nhân đôi)
+      const children = Array.from(track.children) as HTMLElement[];
+      const halfCount = children.length / 2;
+      let oneSetWidth = 0;
+      for (let i = 0; i < halfCount; i++) {
+        oneSetWidth += children[i].offsetWidth + 8; // gap-2 = 8px
+      }
+      const containerWidth = container.offsetWidth;
+
+      if (oneSetWidth > containerWidth) {
+        setNeedsScroll(true);
+        // Tốc độ: ~80px/s → tự nhiên, không quá nhanh/chậm
+        setDuration(Math.max(10, oneSetWidth / 80));
+      } else {
+        setNeedsScroll(false);
+      }
+    };
+
+    // Đợi font/layout settle
+    const id = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(trackRef.current.parentElement!);
+    return () => {
+      cancelAnimationFrame(id);
+      ro.disconnect();
+    };
+  }, [keywords]);
+
+  if (keywords.length === 0) {
+    return (
+      <div className="pl-2 hidden md:flex items-center gap-2 mt-2 h-4 overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-3 rounded-full bg-neutral animate-pulse shrink-0" style={{ width: `${[64, 48, 56, 72, 52][i]}px` }} />
+        ))}
+      </div>
+    );
+  }
+
+  // Nhân đôi list để tạo vòng lặp liền mạch
+  const doubled = [...keywords, ...keywords];
+
+  return (
+    <div
+      className="pl-2 hidden md:block mt-2 h-4 overflow-hidden"
+      // Mask: fade 2 đầu khi đang scroll
+      style={needsScroll ? { maskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)" } : undefined}
+    >
+      <div ref={trackRef} className="flex items-center gap-2 w-max marquee-track" style={needsScroll ? { animation: `marquee-scroll ${duration}s linear infinite` } : undefined}>
+        {doubled.map((kw, i) => (
+          <Link
+            key={`${kw.id}-${i}`}
+            href={`/products/${kw.slug}`}
+            className="text-xs text-neutral-darker hover:text-accent-hover hover:underline transition-colors whitespace-nowrap shrink-0"
+            aria-hidden={needsScroll ? undefined : i >= keywords.length ? "true" : undefined}
+          >
+            {kw.name}
+          </Link>
+        ))}
+      </div>
+
+      {/* Keyframe inject — chỉ 1 lần, không cần thư viện */}
+      <style>{`
+  @keyframes marquee-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  /* Pause khi hover bất kỳ chỗ nào trong track */
+  .marquee-track:hover {
+    animation-play-state: paused !important;
+  }
+`}</style>
+    </div>
+  );
 }
+
+// ─── SearchBar ──────────────────────────────────────────────────────────────────
 
 interface SearchBarProps {
   isMobile?: boolean;
@@ -98,12 +174,10 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Chuyển hướng sang trang search — dùng chung cho Enter và click nút
   const navigateToSearch = useCallback(async () => {
     const q = query.trim();
     if (!q) return;
     setIsOpen(false);
-
     try {
       const res = await apiRequest.get<{ data: { slug: string } | null }>("/categories/resolve", { params: { q }, noAuth: true });
       if (res?.data?.slug) {
@@ -111,21 +185,15 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
         return;
       }
     } catch {}
-
-    // Fallback: trang search chung
     router.push(`/search?q=${encodeURIComponent(q)}`);
   }, [query, router]);
 
   const search = useCallback(async (q: string) => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
-
     setIsSearching(true);
     try {
-      const res = await apiRequest.get<ApiResponse>("/search", {
-        params: { q, limit: 8 },
-        noAuth: true,
-      });
+      const res = await apiRequest.get<ApiResponse>("/search", { params: { q, limit: 8 }, noAuth: true });
       const items = res?.data ?? [];
       staleResultsRef.current = items;
       startTransition(() => {
@@ -136,9 +204,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       if (abortRef.current?.signal.aborted) return;
       startTransition(() => setResults([]));
     } finally {
-      if (!abortRef.current?.signal.aborted) {
-        setIsSearching(false);
-      }
+      if (!abortRef.current?.signal.aborted) setIsSearching(false);
     }
   }, []);
 
@@ -146,7 +212,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     const val = e.target.value;
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
     if (!val.trim()) {
       abortRef.current?.abort();
       staleResultsRef.current = [];
@@ -157,11 +222,9 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       setIsSearching(false);
       return;
     }
-
     debounceRef.current = setTimeout(() => search(val), 300);
   };
 
-  // Enter → navigate, không conflict với dropdown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -169,7 +232,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     }
   };
 
-  // Click sản phẩm gợi ý → tới trang chi tiết, đóng dropdown
   const handleClose = useCallback(() => {
     setQuery("");
     staleResultsRef.current = [];
@@ -196,37 +258,36 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
             if (results.length > 0) setIsOpen(true);
           }}
           className={`w-full pl-4 py-2.5 lg:py-3
-                  border border-neutral rounded-full
-                  focus:outline-none focus:border-accent-hover
-                  text-sm lg:text-base
-                  bg-neutral-light text-primary placeholder:text-neutral-dark
-                  ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
-               `}
+            border border-neutral rounded-full
+            focus:outline-none focus:border-accent-hover
+            text-sm lg:text-base
+            bg-neutral-light text-primary placeholder:text-neutral-dark
+            ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
+          `}
         />
 
         <div className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
           {!isMobile && (
-            <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors">
+            <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors whitespace-nowrap">
               <span className="hidden xl:inline">Tất cả các danh mục</span>
               <span className="xl:hidden cursor-pointer">Danh mục</span>
               <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
             </button>
           )}
-          {/* Click nút → navigate thay vì chỉ mở dropdown */}
           <button onClick={navigateToSearch} className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-neutral-hover transition-colors cursor-pointer">
             <Search className={`w-4 h-4 lg:w-5 lg:h-5 text-neutral-light-dark transition-opacity duration-200 ${isSearching ? "opacity-40" : "opacity-100"}`} />
           </button>
         </div>
 
-        {/* Dropdown gợi ý — độc lập với navigate */}
+        {/* Dropdown */}
         <div
           className={`
-                  absolute top-full left-0 right-0 mt-2
-                  bg-neutral-light border border-neutral rounded-xl shadow-xl z-50
-                  overflow-hidden
-                  transition-[opacity,transform] duration-200 ease-out
-                  ${showDropdown ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"}
-               `}
+          absolute top-full left-0 right-0 mt-2
+          bg-neutral-light border border-neutral rounded-xl shadow-xl z-50
+          overflow-hidden
+          transition-[opacity,transform] duration-200 ease-out
+          ${showDropdown ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"}
+        `}
         >
           <div className={`transition-opacity duration-150 ${isStale ? "opacity-50" : "opacity-100"}`}>
             {showSkeleton ? (
@@ -241,10 +302,8 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                   const salePrice = product.price.base;
                   const originPrice = product.priceOrigin;
                   const discount = calcDiscount(originPrice, salePrice);
-
                   return (
                     <li key={`${product.id}-${i}`} style={{ animationDelay: `${i * 25}ms` }} className="animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both">
-                      {/* onClick = handleClose → trang chi tiết, không navigate to search */}
                       <Link href={`/products/${product.slug}`} onClick={handleClose} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group">
                         <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
                           {product.thumbnail ? (
@@ -258,7 +317,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                             </div>
                           )}
                         </div>
-
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-primary font-medium truncate group-hover:text-accent-hover transition-colors duration-150">{product.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
@@ -286,19 +344,8 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
         </div>
       </div>
 
-      {!isMobile && (
-        <div className="pl-2 hidden md:flex items-center gap-2 mb-1.5 text-xs text-neutral-darker flex-wrap mt-2 h-4">
-          {trendingKeywords.length > 0
-            ? trendingKeywords.slice(0, 5).map((kw, i) => (
-                <Link key={kw.id} href={`/products/${kw.slug}`} className={`hover:text-accent-hover transition-colors ${getKeywordVisibilityClass(i)}`}>
-                  {kw.name}
-                </Link>
-              ))
-            : Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className={`h-3 rounded-full bg-neutral animate-pulse ${getKeywordVisibilityClass(i)}`} style={{ width: `${[64, 48, 56, 72, 52][i]}px` }} />
-              ))}
-        </div>
-      )}
+      {/* ── Trending marquee ── */}
+      {!isMobile && <TrendingMarquee keywords={trendingKeywords} />}
     </div>
   );
 }

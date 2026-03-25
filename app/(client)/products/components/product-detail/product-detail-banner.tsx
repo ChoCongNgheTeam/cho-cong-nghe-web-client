@@ -222,28 +222,28 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             <WishlistHeart productId={product.id} />
           </div>
 
-        <button
-          onClick={goToPrevious}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-          aria-label="Ảnh trước"
-        >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+          <button
+            onClick={goToPrevious}
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+            aria-label="Ảnh trước"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
 
-        <button
-          onClick={goToNext}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
-          aria-label="Ảnh sau"
-        >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+          <button
+            onClick={goToNext}
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+            aria-label="Ảnh sau"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
 
-        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
-          <div className="text-xs text-neutral mt-1">
-            {counterCurrent}/{counterTotal}
+          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
+            <div className="text-xs text-neutral mt-1">
+              {counterCurrent}/{counterTotal}
+            </div>
           </div>
         </div>
-      </div>
 
         {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
         <div className="mt-4">
@@ -332,30 +332,29 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             </div>
           )}
 
-            {/* Policies */}
-            <div>
-              <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-                <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
-                  Tìm hiểu thêm
-                </button>
+          {/* Policies */}
+          <div>
+            <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
+              <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
+              <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
+                Tìm hiểu thêm
+              </button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
+              <div className="flex items-center gap-2 sm:mr-12">
+                <MdVerified size={28} />
+                <p className="text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
-                <div className="flex items-center gap-2 sm:mr-12">
-                  <MdVerified size={28} />
-                  <p className="text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaShippingFast size={28} />
-                  <p className="text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaUserCog size={28} />
-                  <p className="text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
-                </div>
+              <div className="flex items-center gap-2">
+                <FaShippingFast size={28} />
+                <p className="text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaUserCog size={28} />
+                <p className="text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>
