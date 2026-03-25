@@ -37,6 +37,7 @@ export default function VoucherPromotionModal({
   const {
     vouchers,
     isLoadingList,
+    isValidatingTargets,
     fetchVouchers,
     inputCode,
     setInputCode,
@@ -50,6 +51,7 @@ export default function VoucherPromotionModal({
     copiedCode,
     copyCode,
     canUseVoucher,
+    getDisabledReason,
     formatPrice,
     formatDate,
   } = useVoucher({
@@ -64,7 +66,7 @@ export default function VoucherPromotionModal({
     if (isOpen) fetchVouchers();
   }, [isOpen, fetchVouchers]);
 
-  // Mỗi khi applied thay đổi → đẩy lên parent ngay lập tức
+  // Đẩy applied lên parent mỗi khi thay đổi
   useEffect(() => {
     if (!isOpen) return;
     onApplyVoucher(applied.code, applied.value, applied.id);
@@ -163,10 +165,21 @@ export default function VoucherPromotionModal({
                 <p className="text-sm text-neutral-dark text-center py-10">Không có mã nào khả dụng</p>
               ) : (
                 <>
-                  <p className="text-xs text-neutral-darker mb-3 font-medium">Mã khả dụng ({vouchers.length}):</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-neutral-darker font-medium">Mã khả dụng ({vouchers.length}):</p>
+                    {/* Indicator nhỏ khi đang batch-validate targets */}
+                    {isValidatingTargets && (
+                      <div className="flex items-center gap-1 text-xs text-neutral-dark">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Đang kiểm tra điều kiện...</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     {vouchers.map((voucher) => {
                       const canUse = canUseVoucher(voucher);
+                      const disabledReason = getDisabledReason(voucher);
                       const isApplied = applied.code === voucher.code;
 
                       return (
@@ -216,16 +229,6 @@ export default function VoucherPromotionModal({
                                   <span>HSD: {formatDate(voucher.endDate)}</span>
                                 </div>
                               )}
-                              {/* {voucher.maxUses && (
-                                                <div className="flex items-center gap-1">
-                                                   <Users className="h-3 w-3" />
-                                                   <span>
-                                                      {voucher.maxUses -
-                                                         voucher.usesCount}{" "}
-                                                      lượt còn lại
-                                                   </span>
-                                                </div>
-                                             )} */}
                               {(() => {
                                 const remaining = (voucher as any).remainingUses ?? (voucher.maxUses != null ? voucher.maxUses - (voucher.usesCount ?? 0) : null);
                                 return remaining != null ? (
@@ -237,17 +240,8 @@ export default function VoucherPromotionModal({
                               })()}
                             </div>
 
-                            {!canUse && (
-                              <p className="text-xs text-red-500 mt-1">
-                                {voucher.isExpired
-                                  ? "Mã đã hết hạn"
-                                  : !voucher.isAvailable
-                                    ? "Mã đã hết lượt"
-                                    : cartTotal < voucher.minOrderValue
-                                      ? `Cần thêm ${formatPrice(voucher.minOrderValue - cartTotal)} để dùng mã`
-                                      : "Không đủ điều kiện"}
-                              </p>
-                            )}
+                            {/* Disabled reason — thay thế hoàn toàn logic cũ */}
+                            {disabledReason && <p className="text-xs text-red-500 mt-1">{disabledReason}</p>}
                           </div>
                         </div>
                       );
