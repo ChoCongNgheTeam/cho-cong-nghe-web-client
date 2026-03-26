@@ -4205,16 +4205,6 @@ snapshots:
       ckeditor5: 47.6.1
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-alignment@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-alignment@47.6.1':
     dependencies:
@@ -4319,15 +4309,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-cloud-services@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-cloud-services@47.6.1':
     dependencies:
@@ -4359,17 +4340,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-easy-image@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-cloud-services': 44.3.0
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-upload': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-easy-image@47.6.1':
     dependencies:
@@ -4391,18 +4361,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-editor-classic@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-      lodash-es: 4.17.21
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-editor-classic@47.6.1':
     dependencies:
@@ -4414,18 +4372,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-editor-decoupled@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-      lodash-es: 4.17.21
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-editor-decoupled@47.6.1':
     dependencies:
@@ -4437,18 +4383,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-editor-inline@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-      lodash-es: 4.17.21
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-editor-inline@47.6.1':
     dependencies:
@@ -4492,15 +4426,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-enter@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-enter@47.6.1':
     dependencies:
@@ -4509,20 +4434,6 @@ snapshots:
       '@ckeditor/ckeditor5-utils': 47.6.1
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-essentials@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-clipboard': 44.3.0
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-enter': 44.3.0
-      '@ckeditor/ckeditor5-select-all': 44.3.0
-      '@ckeditor/ckeditor5-typing': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-undo': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-essentials@47.6.1':
     dependencies:
@@ -4547,17 +4458,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-font@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-font@47.6.1':
     dependencies:
@@ -4615,17 +4515,6 @@ snapshots:
       ckeditor5: 47.6.1
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-html-embed@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      '@ckeditor/ckeditor5-widget': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-html-embed@47.6.1':
     dependencies:
@@ -4671,19 +4560,8 @@ snapshots:
       '@ckeditor/ckeditor5-widget': 47.6.1
       ckeditor5: 47.6.1
       es-toolkit: 1.39.5
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-indent@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-heading': 44.3.0
-      '@ckeditor/ckeditor5-list': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
+    transitivePeerDependencies:
+      - supports-color
 
   '@ckeditor/ckeditor5-indent@47.6.1':
     dependencies:
@@ -4741,21 +4619,8 @@ snapshots:
       '@ckeditor/ckeditor5-utils': 47.6.1
       ckeditor5: 47.6.1
       es-toolkit: 1.39.5
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-markdown-gfm@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-clipboard': 44.3.0
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@types/marked': 4.3.2
-      '@types/turndown': 5.0.5
-      ckeditor5: 44.3.0
-      marked: 4.0.12
-      turndown: 7.2.0
-      turndown-plugin-gfm: 1.0.2
-=======
->>>>>>> dev
+    transitivePeerDependencies:
+      - supports-color
 
   '@ckeditor/ckeditor5-markdown-gfm@47.6.1':
     dependencies:
@@ -4835,16 +4700,6 @@ snapshots:
       '@ckeditor/ckeditor5-utils': 47.6.1
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-paste-from-office@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-clipboard': 44.3.0
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-paste-from-office@47.6.1':
     dependencies:
@@ -4866,17 +4721,6 @@ snapshots:
       '@ckeditor/ckeditor5-ui': 47.6.1
       '@ckeditor/ckeditor5-utils': 47.6.1
       ckeditor5: 47.6.1
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-restricted-editing@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-restricted-editing@47.6.1':
     dependencies:
@@ -4902,17 +4746,6 @@ snapshots:
       '@ckeditor/ckeditor5-ui': 47.6.1
       '@ckeditor/ckeditor5-utils': 47.6.1
       ckeditor5: 47.6.1
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-source-editing@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-theme-lark': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      ckeditor5: 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-source-editing@47.6.1':
     dependencies:
@@ -4943,20 +4776,6 @@ snapshots:
       '@ckeditor/ckeditor5-utils': 47.6.1
       ckeditor5: 47.6.1
       es-toolkit: 1.39.5
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-table@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-clipboard': 44.3.0
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      '@ckeditor/ckeditor5-widget': 44.3.0
-      ckeditor5: 44.3.0
-      lodash-es: 4.17.21
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-table@47.6.1':
     dependencies:
@@ -4969,13 +4788,6 @@ snapshots:
       '@ckeditor/ckeditor5-widget': 47.6.1
       ckeditor5: 47.6.1
       es-toolkit: 1.39.5
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-theme-lark@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-ui': 44.3.0
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-theme-lark@47.6.1':
     dependencies:
@@ -5032,19 +4844,6 @@ snapshots:
       es-toolkit: 1.39.5
     transitivePeerDependencies:
       - supports-color
-<<<<<<< HEAD
-
-  '@ckeditor/ckeditor5-widget@44.3.0':
-    dependencies:
-      '@ckeditor/ckeditor5-core': 44.3.0
-      '@ckeditor/ckeditor5-engine': 44.3.0
-      '@ckeditor/ckeditor5-enter': 44.3.0
-      '@ckeditor/ckeditor5-typing': 44.3.0
-      '@ckeditor/ckeditor5-ui': 44.3.0
-      '@ckeditor/ckeditor5-utils': 44.3.0
-      lodash-es: 4.17.21
-=======
->>>>>>> dev
 
   '@ckeditor/ckeditor5-widget@47.6.1':
     dependencies:
