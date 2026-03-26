@@ -84,19 +84,19 @@ export function RecentOrdersTable({ orders, title = "Đơn hàng gần đây", e
                         </Link>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-3 py-2.5">
                       <div>
                         <p className="font-medium text-slate-800 text-xs leading-tight">{order.customerName}</p>
                         <p className="text-slate-400 text-xs mt-0.5 truncate max-w-[160px]">{order.customerEmail}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-3 py-2.5">
                       <OrderStatusBadge status={order.orderStatus} />
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-3 py-2.5 text-right">
                       <span className={`text-xs ${payment.cls}`}>{payment.label}</span>
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-3 py-2.5 text-right">
                       <span className="font-semibold text-slate-900 text-xs">{formatVND(order.totalAmount)}</span>
                     </td>
                     <td className="px-5 py-3.5 text-right text-xs text-slate-400">{formatDate(order.orderDate)}</td>

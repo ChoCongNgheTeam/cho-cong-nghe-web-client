@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Select from "react-select";
 import { sendCampaign } from "./libs/notification.api";
 import {
    Bell,
@@ -12,31 +13,206 @@ import {
    CheckCircle2,
    Megaphone,
 } from "lucide-react";
+import { getAllUsers } from "../users/_libs/getAllUsers";
+
+interface UserOption {
+   value: string;
+   label: string;
+   sub: string;
+   isActive: boolean;
+}
+
+// ─── Styles — same pattern as ProductForm (any) ───────────────────────────────
+
+const rsStyles = {
+   control: (b: any, s: any) => ({
+      ...b,
+      minHeight: "42px",
+      borderRadius: "0.75rem",
+      borderColor: s.isFocused
+         ? "var(--color-accent-hover, #0369a1)"
+         : "var(--color-neutral, #e5e7eb)",
+      boxShadow: s.isFocused
+         ? "0 0 0 2px color-mix(in srgb, var(--color-accent, #0ea5e9) 20%, transparent)"
+         : "none",
+      backgroundColor: "var(--color-neutral-light, #fff)",
+      "&:hover": { borderColor: "var(--color-accent-hover, #0369a1)" },
+      transition: "border-color 0.15s, box-shadow 0.15s",
+      cursor: "text",
+      flexWrap: "wrap",
+   }),
+   valueContainer: (b: any) => ({
+      ...b,
+      padding: "4px 8px",
+      gap: "4px",
+      flexWrap: "wrap",
+   }),
+   multiValue: (b: any) => ({
+      ...b,
+      backgroundColor:
+         "color-mix(in srgb, var(--color-accent, #0ea5e9) 12%, transparent)",
+      borderRadius: "0.5rem",
+      padding: "0 2px",
+      margin: 0,
+   }),
+   multiValueLabel: (b: any) => ({
+      ...b,
+      color: "var(--color-accent-hover, #0369a1)",
+      fontSize: "12px",
+      fontWeight: 500,
+      padding: "2px 4px",
+   }),
+   multiValueRemove: (b: any) => ({
+      ...b,
+      color: "var(--color-accent-hover, #0369a1)",
+      borderRadius: "0 0.5rem 0.5rem 0",
+      cursor: "pointer",
+      "&:hover": {
+         backgroundColor: "var(--color-accent-hover, #0369a1)",
+         color: "#fff",
+      },
+   }),
+   input: (b: any) => ({
+      ...b,
+      color: "var(--color-primary, #111827)",
+      fontSize: "13px",
+      margin: 0,
+      padding: "2px 0",
+   }),
+   placeholder: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-dark, #9ca3af)",
+      fontSize: "13px",
+   }),
+   menu: (b: any) => ({
+      ...b,
+      borderRadius: "0.75rem",
+      border: "1px solid var(--color-neutral, #e5e7eb)",
+      boxShadow:
+         "0 10px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06)",
+      overflow: "hidden",
+      zIndex: 9999,
+      backgroundColor: "var(--color-neutral-light, #fff)",
+      marginTop: "6px",
+   }),
+   menuList: (b: any) => ({
+      ...b,
+      padding: "4px",
+      maxHeight: "260px",
+   }),
+   option: (b: any, s: any) => ({
+      ...b,
+      borderRadius: "0.5rem",
+      padding: "6px 10px",
+      backgroundColor: s.isSelected
+         ? "color-mix(in srgb, var(--color-accent, #0ea5e9) 15%, transparent)"
+         : s.isFocused
+           ? "var(--color-neutral, #f3f4f6)"
+           : "transparent",
+      color: s.isSelected
+         ? "var(--color-accent-hover, #0369a1)"
+         : "var(--color-primary, #111827)",
+      cursor: "pointer",
+      fontSize: "13px",
+      fontWeight: s.isSelected ? 500 : 400,
+      "&:active": { backgroundColor: "var(--color-neutral-hover, #e5e7eb)" },
+   }),
+   loadingMessage: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-darker, #6b7280)",
+      fontSize: "13px",
+      padding: "12px 16px",
+   }),
+   noOptionsMessage: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-darker, #6b7280)",
+      fontSize: "13px",
+      padding: "12px 16px",
+   }),
+   indicatorSeparator: () => ({ display: "none" }),
+   dropdownIndicator: (b: any, s: any) => ({
+      ...b,
+      color: s.isFocused
+         ? "var(--color-accent-hover, #0369a1)"
+         : "var(--color-neutral-darker, #9ca3af)",
+      padding: "0 8px",
+      transition: "color 0.15s, transform 0.2s",
+      transform: s.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
+   }),
+   clearIndicator: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-darker, #9ca3af)",
+      padding: "0 4px",
+      cursor: "pointer",
+      "&:hover": { color: "var(--color-primary, #111827)" },
+   }),
+};
+
+// ─── Custom option label ───────────────────────────────────────────────────────
+
+function UserOptionLabel({ data }: { data: UserOption }) {
+   return (
+      <div className="flex items-center gap-2.5 py-0.5">
+         <div className="shrink-0 w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-[11px] font-semibold text-accent uppercase">
+            {data.label.charAt(0)}
+         </div>
+         <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-medium text-primary truncate leading-tight">
+               {data.label}
+            </p>
+            <p className="text-[11px] text-neutral-darker truncate leading-tight">
+               {data.sub}
+            </p>
+         </div>
+         {!data.isActive && (
+            <span className="shrink-0 text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+               Inactive
+            </span>
+         )}
+      </div>
+   );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function NotificationAdmin() {
    const [title, setTitle] = useState("");
    const [body, setBody] = useState("");
    const [targetAll, setTargetAll] = useState(true);
-   const [userIdsRaw, setUserIdsRaw] = useState("");
+   const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+
+   const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+   const [usersLoading, setUsersLoading] = useState(false);
+
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState<string | null>(null);
    const [success, setSuccess] = useState<string | null>(null);
+
+   // Load CUSTOMER list khi switch sang "Chọn theo người dùng"
+   useEffect(() => {
+      if (targetAll || userOptions.length > 0) return;
+      setUsersLoading(true);
+      getAllUsers({ role: "CUSTOMER", limit: 100 })
+         .then((res) =>
+            setUserOptions(
+               res.data.map((u) => ({
+                  value: u.id,
+                  label: u.fullName || u.userName,
+                  sub: u.email,
+                  isActive: u.isActive,
+               })),
+            ),
+         )
+         .finally(() => setUsersLoading(false));
+   }, [targetAll]);
 
    const handleSubmit = async () => {
       if (!title.trim() || !body.trim()) {
          setError("Tiêu đề và nội dung không được để trống.");
          return;
       }
-
-      const userIds = targetAll
-         ? []
-         : userIdsRaw
-              .split(/[\n,]+/)
-              .map((s) => s.trim())
-              .filter(Boolean);
-
-      if (!targetAll && userIds.length === 0) {
-         setError("Vui lòng nhập ít nhất 1 user ID hoặc chọn gửi tất cả.");
+      if (!targetAll && selectedUsers.length === 0) {
+         setError("Vui lòng chọn ít nhất 1 người dùng hoặc chọn gửi tất cả.");
          return;
       }
 
@@ -45,11 +221,16 @@ export default function NotificationAdmin() {
       setSuccess(null);
 
       try {
-         const res = await sendCampaign({ title, body, targetAll, userIds });
+         const res = await sendCampaign({
+            title,
+            body,
+            targetAll,
+            userIds: targetAll ? [] : selectedUsers.map((u) => u.value),
+         });
          setSuccess(res.message);
          setTitle("");
          setBody("");
-         setUserIdsRaw("");
+         setSelectedUsers([]);
       } catch (e: any) {
          setError(e?.message ?? "Gửi thất bại, vui lòng thử lại.");
       } finally {
@@ -135,26 +316,42 @@ export default function NotificationAdmin() {
                         }`}
                      >
                         <Target size={13} />
-                        Chọn theo ID
+                        Chọn theo người dùng
                      </button>
                   </div>
                </div>
 
-               {/* User IDs */}
+               {/* User select */}
                {!targetAll && (
                   <div>
-                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-primary/60">
-                        User IDs{" "}
-                        <span className="font-normal normal-case text-primary/40">
-                           (mỗi ID trên 1 dòng hoặc cách nhau bằng dấu phẩy)
-                        </span>
+                     <label className="mb-1.5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-primary/60">
+                        <span>Người dùng</span>
+                        {selectedUsers.length > 0 && (
+                           <span className="normal-case font-normal text-accent">
+                              Đã chọn {selectedUsers.length} người
+                           </span>
+                        )}
                      </label>
-                     <textarea
-                        value={userIdsRaw}
-                        onChange={(e) => setUserIdsRaw(e.target.value)}
-                        rows={4}
-                        placeholder={"uuid-1\nuuid-2\nuuid-3"}
-                        className="w-full resize-none rounded-xl border border-neutral px-3.5 py-2 font-mono text-[12px] text-primary bg-neutral-light placeholder-primary/30 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+                     <Select
+                        isMulti
+                        options={userOptions}
+                        value={selectedUsers}
+                        onChange={(val: any) =>
+                           setSelectedUsers(val ? [...val] : [])
+                        }
+                        isLoading={usersLoading}
+                        placeholder="Tìm tên, email người dùng..."
+                        styles={rsStyles}
+                        formatOptionLabel={(opt: any) => (
+                           <UserOptionLabel data={opt} />
+                        )}
+                        loadingMessage={() => "Đang tải..."}
+                        noOptionsMessage={() => "Không có người dùng"}
+                        isClearable
+                        isSearchable
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        classNamePrefix="rs-user"
                      />
                   </div>
                )}
