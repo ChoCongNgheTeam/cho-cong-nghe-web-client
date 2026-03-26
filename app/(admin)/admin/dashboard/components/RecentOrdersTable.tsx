@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { Bot, ArrowUpRight } from "lucide-react";
 import type { RecentOrder } from "../dashboard.types";
+import { formatDate, formatVND } from "@/helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatVND = (v: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v);
-
-const formatDate = (iso: string) => new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
@@ -99,7 +97,9 @@ export function RecentOrdersTable({ orders, title = "Đơn hàng gần đây", e
                     <td className="px-4 py-3.5 text-right">
                       <span className="font-semibold text-slate-900 text-xs">{formatVND(order.totalAmount)}</span>
                     </td>
-                    <td className="px-5 py-3.5 text-right text-xs text-slate-400">{formatDate(order.orderDate)}</td>
+                    <td className="px-5 py-3.5 text-right text-xs text-slate-400">
+                      {formatDate(order.orderDate, { withTime: true })}
+                    </td>
                   </tr>
                 );
               })}

@@ -1,21 +1,16 @@
 import { getAdminLocale, getAdminTimeZone } from "./adminIntl";
 
-export const formatDate = (
+export const formatTime = (
   date: string,
-  options?: { withTime?: boolean; locale?: string; timeZone?: string },
+  options?: { locale?: string; timeZone?: string },
 ) => {
-  const { withTime = false, locale, timeZone } = options || {};
+  const { locale, timeZone } = options || {};
   const resolvedLocale = locale ?? getAdminLocale();
   const resolvedTimeZone = timeZone ?? getAdminTimeZone();
 
   return new Intl.DateTimeFormat(resolvedLocale, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    ...(withTime && {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
+    hour: "2-digit",
+    minute: "2-digit",
     ...(resolvedTimeZone ? { timeZone: resolvedTimeZone } : {}),
   }).format(new Date(date));
 };

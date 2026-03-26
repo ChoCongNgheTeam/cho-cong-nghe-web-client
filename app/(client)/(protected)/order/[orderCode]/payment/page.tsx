@@ -15,7 +15,7 @@ import {
    ChevronUp,
 } from "lucide-react";
 import apiRequest from "@/lib/api";
-import { formatVND } from "@/helpers";
+import { formatDate, formatVND } from "@/helpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -300,9 +300,9 @@ export default function OrderPaymentPage() {
                         <p className="text-xs text-neutral-darker text-center">
                            Hết hạn lúc:{" "}
                            <span className="font-medium text-primary">
-                              {new Date(
-                                 data.bankTransferExpiredAt,
-                              ).toLocaleString("vi-VN")}
+                              {formatDate(data.bankTransferExpiredAt, {
+                                 withTime: true,
+                              })}
                            </span>
                         </p>
                      )}

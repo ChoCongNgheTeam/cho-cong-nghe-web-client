@@ -157,12 +157,12 @@ export default function ProductStickyFooter({
               </p>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-sm sm:text-base font-bold text-promotion">
-                  {displayPrice.toLocaleString("vi-VN")}₫
+                  {formatVND(displayPrice)}
                 </span>
                 {activePrice?.hasPromotion && (
                   <>
                     <span className="text-xs line-through text-neutral-dark hidden sm:inline">
-                      {basePrice.toLocaleString("vi-VN")}₫
+                      {formatVND(basePrice)}
                     </span>
                     <span className="text-[10px] font-bold text-neutral-light bg-promotion px-1.5 py-0.5 rounded">
                       -{activePrice.discountPercentage}%

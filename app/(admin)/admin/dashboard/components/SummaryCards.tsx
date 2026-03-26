@@ -2,12 +2,11 @@
 
 import { TrendingUp, TrendingDown, ShoppingCart, Users, Package, Bot } from "lucide-react";
 import type { DashboardSummary } from "../dashboard.types";
+import { formatNumber, formatVND } from "@/helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatVND = (value: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
 
-const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
 interface ChangeBadgeProps {
   change: number;

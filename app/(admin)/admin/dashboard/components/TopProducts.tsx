@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { formatNumber } from "@/helpers";
 import Link from "next/link";
 import { ArrowUpRight, Package } from "lucide-react";
 import type { TopProduct } from "../dashboard.types";
@@ -58,7 +59,9 @@ export function TopProducts({ products }: TopProductsProps) {
 
               {/* Stats */}
               <div className="text-right shrink-0">
-                <p className="text-xs font-bold text-slate-900">{product.totalSold.toLocaleString("vi-VN")}</p>
+                <p className="text-xs font-bold text-slate-900">
+                  {formatNumber(product.totalSold)}
+                </p>
                 <p className="text-xs text-slate-400 mt-0.5">{formatVND(product.totalRevenue)}</p>
               </div>
             </div>
