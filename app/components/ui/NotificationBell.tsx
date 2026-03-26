@@ -75,16 +75,20 @@ export default function NotificationBell() {
     document.head.appendChild(style);
   }, []);
 
-  // Click outside → đóng
+  // Click/touch outside → đóng
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
   }, [open]);
 
   // Infinite scroll
@@ -134,7 +138,8 @@ export default function NotificationBell() {
 
       {/* ── Dropdown ── */}
       <div
-        className={`absolute right-0 mt-2.5 w-[340px]
+        className={`absolute right-0 mt-2.5
+              w-[calc(100vw-16px)] sm:w-[340px] max-w-[340px]
               bg-neutral-light border border-neutral
               rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.10),0_2px_8px_-2px_rgba(0,0,0,0.06)]
               z-50 overflow-hidden
@@ -145,7 +150,11 @@ export default function NotificationBell() {
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-neutral">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-[14px] text-primary tracking-tight">Thông báo</span>
-            {unreadCount > 0 && <span className="text-[11px] font-semibold text-accent bg-accent-light px-2 py-0.5 rounded-full leading-none">{unreadCount} mới</span>}
+            {unreadCount > 0 && (
+              <span className="text-[11px] font-semibold text-accent bg-accent-light px-2 py-0.5 rounded-full leading-none">
+                {unreadCount} mới
+              </span>
+            )}
           </div>
 
           {unreadCount > 0 && (
@@ -161,7 +170,7 @@ export default function NotificationBell() {
         </div>
 
         {/* List */}
-        <div className="max-h-[380px] overflow-y-auto overscroll-contain scroll-smooth scrollbar-thin">
+        <div className="max-h-[60vh] sm:max-h-[380px] overflow-y-auto overscroll-contain scroll-smooth scrollbar-thin">
           {notifications.length === 0 && !isLoading ? (
             <div className="py-14 text-center px-6">
               <div className="w-12 h-12 rounded-2xl bg-neutral-light-active flex items-center justify-center mx-auto mb-3">
@@ -194,7 +203,9 @@ export default function NotificationBell() {
                     style={{ animationDelay: `${idx * 25}ms` }}
                   >
                     {/* Unread bar */}
-                    {!n.isRead && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-r-full bg-accent" />}
+                    {!n.isRead && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-r-full bg-accent" />
+                    )}
 
                     {/* Icon */}
                     <div
