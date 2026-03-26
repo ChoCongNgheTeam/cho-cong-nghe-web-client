@@ -50,7 +50,7 @@ const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: 
 export default function NotificationBell() {
   const { isAuthenticated } = useAuth();
   const { notifications, unreadCount, isLoading, hasMore, fetchNextPage, markAsRead, markAllAsRead } = useNotifications();
-
+  console.log(notifications);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);

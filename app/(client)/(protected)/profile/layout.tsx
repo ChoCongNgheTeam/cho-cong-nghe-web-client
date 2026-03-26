@@ -287,7 +287,6 @@ export default function ProfileLayout({
                 </Link>
               );
             })}
-           
           </div>
         </nav>
       )}

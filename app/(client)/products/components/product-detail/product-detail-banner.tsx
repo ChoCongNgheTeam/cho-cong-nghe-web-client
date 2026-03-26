@@ -16,6 +16,7 @@ import { FaUserCog, FaShippingFast } from "react-icons/fa";
 import Image from "next/image";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import apiRequest from "@/lib/api";
+import clsx from "clsx";
 
 import { GitCompareArrows } from "lucide-react";
 import { useCompareStore } from "@/(client)/compare/compareStore";
@@ -26,21 +27,30 @@ interface GalleryImage {
    imageUrl: string;
    altText?: string;
    position?: number;
-   color?: string; // NEW — từ API gallery
-   variantId?: string; // NEW — từ API gallery
+   // ── Từ File 2: hỗ trợ color sync ──────────────────────────────────────────
+   color?: string;
+   variantId?: string;
 }
 
-// NEW — shape mới của API gallery
+// ── Từ File 2: response bao gồm colorVariantMap ────────────────────────────
 interface GalleryResponse {
    images: GalleryImage[];
-   colorVariantMap: Record<string, string>; // { "black": "uuid", ... }
+   colorVariantMap: Record<string, string>;
 }
 
 interface ProductDetailLeftProps {
    product: ProductDetail;
    selectedVariant?: CurrentVariant;
    images: GalleryImage[];
-   onColorChange?: (variantId: string) => void; // NEW — callback lên Content
+   // ── Từ File 2: callback khi gallery đổi màu ───────────────────────────────
+   onColorChange?: (variantId: string) => void;
+}
+
+interface ThumbnailCellProps {
+   isActive: boolean;
+   onClick: () => void;
+   children: React.ReactNode;
+   isExpand?: boolean;
 }
 
 export default function ProductDetailBanner({
@@ -53,6 +63,7 @@ export default function ProductDetailBanner({
 
    // ── Gallery state ──────────────────────────────────────────────────────────
    const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+   // ── Từ File 2: lưu map màu → variantId ────────────────────────────────────
    const [colorVariantMap, setColorVariantMap] = useState<
       Record<string, string>
    >({});
@@ -60,13 +71,14 @@ export default function ProductDetailBanner({
    const [galleryLoading, setGalleryLoading] = useState(false);
    const [galleryIndex, setGalleryIndex] = useState(0);
 
-   // Track variantId đang active để tránh gọi callback lặp
+   // ── Từ File 2: tránh sync loop khi variantId không đổi ────────────────────
    const lastSyncedVariantId = useRef<string | null>(null);
 
    const EXPAND_INDEX = images.length;
    const isExpandSlot = currentImageIndex === EXPAND_INDEX;
    const totalVariantSlots = images.length + 1;
 
+   // ── Compare ────────────────────────────────────────────────────────────────
    const { add, remove, isInCompare } = useCompareStore();
    const { success, error, warning, info } = useToasty();
    const inCompare = isInCompare(product.id);
@@ -88,6 +100,7 @@ export default function ProductDetailBanner({
                info("Sản phẩm đã có trong danh sách");
                break;
             case "wrong_category":
+               // ── Từ File 1: message đầy đủ hơn ─────────────────────────────
                error(
                   "Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh !!",
                );
@@ -105,7 +118,7 @@ export default function ProductDetailBanner({
       }
    }, [images]);
 
-   // Khi selectedVariant thay đổi từ bên ngoài (user click option), cập nhật lastSyncedVariantId
+   // ── Từ File 2: sync lastSyncedVariantId khi selectedVariant thay đổi ──────
    useEffect(() => {
       if (selectedVariant?.id) {
          lastSyncedVariantId.current = selectedVariant.id;
@@ -118,11 +131,12 @@ export default function ProductDetailBanner({
       selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
    const isInStock = !isOutOfStock && maxStock > 0;
 
-   // ── Fetch gallery (NEW: parse colorVariantMap) ─────────────────────────────
+   // ── Fetch gallery ──────────────────────────────────────────────────────────
    const fetchGallery = useCallback(async () => {
       if (galleryLoaded || galleryLoading) return;
       setGalleryLoading(true);
       try {
+         // ── Từ File 2: parse GalleryResponse thay vì GalleryImage[] ──────────
          const res = await apiRequest.get<{ data: GalleryResponse }>(
             `/products/slug/${product.slug}/gallery`,
             { noAuth: true },
@@ -139,8 +153,7 @@ export default function ProductDetailBanner({
       }
    }, [product.slug, galleryLoaded, galleryLoading]);
 
-   // ── Sync color khi gallery index thay đổi ─────────────────────────────────
-   // Gọi onColorChange nếu ảnh gallery hiện tại thuộc màu khác variant đang chọn
+   // ── Từ File 2: sync màu sản phẩm theo gallery index ───────────────────────
    const syncColorFromGalleryIndex = useCallback(
       (index: number) => {
          if (!onColorChange || !galleryLoaded) return;
@@ -150,7 +163,6 @@ export default function ProductDetailBanner({
          const variantId = colorVariantMap[img.color];
          if (!variantId) return;
 
-         // Chỉ sync khi khác variant hiện tại
          if (variantId !== lastSyncedVariantId.current) {
             lastSyncedVariantId.current = variantId;
             onColorChange(variantId);
@@ -218,8 +230,7 @@ export default function ProductDetailBanner({
       fetchGallery();
    };
 
-   // ── Click thumbnail gallery (NEW) ──────────────────────────────────────────
-   // Khi đang ở expand slot và người dùng click thumbnail gallery
+   // ── Từ File 2: navigate gallery thumbnails row ─────────────────────────────
    const goToGalleryIndex = (index: number) => {
       setGalleryIndex(index);
       syncColorFromGalleryIndex(index);
@@ -251,9 +262,7 @@ export default function ProductDetailBanner({
       { type: "expand" as const, index: EXPAND_INDEX },
    ];
    const totalThumbs = allThumbs.length;
-
    const activeThumbIndex = isExpandSlot ? EXPAND_INDEX : currentImageIndex;
-
    const windowStart = Math.min(
       Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)),
       Math.max(0, totalThumbs - THUMB_WINDOW),
@@ -262,8 +271,9 @@ export default function ProductDetailBanner({
       windowStart,
       windowStart + THUMB_WINDOW,
    );
+
    const highlights = product.highlights || [];
-   const iconMap: Record<string, any> = {
+   const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
       gpu: Gpu,
       storage: Package,
       cpu: Cpu,
@@ -303,17 +313,20 @@ export default function ProductDetailBanner({
                   </div>
                )}
                <WishlistHeart productId={product.id} />
+
+               {/* ── NÚT SO SÁNH ─────────────────────────────────────────────── */}
                <button
+                  type="button"
                   onClick={(e) => {
                      e.stopPropagation();
-                     handleToggleCompare(); //  product ở đây là ProductDetail, cần map sang Product type nếu khác
+                     handleToggleCompare();
                   }}
-                  className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200
-      ${
-         inCompare
-            ? "bg-primary text-white"
-            : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer"
-      }`}
+                  className={clsx(
+                     "absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200",
+                     inCompare
+                        ? "bg-primary text-white"
+                        : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer",
+                  )}
                   aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
                   title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
                >
@@ -322,6 +335,7 @@ export default function ProductDetailBanner({
             </div>
 
             <button
+               type="button"
                onClick={goToPrevious}
                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
                aria-label="Ảnh trước"
@@ -330,12 +344,14 @@ export default function ProductDetailBanner({
             </button>
 
             <button
+               type="button"
                onClick={goToNext}
                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-neutral-light/90 hover:bg-neutral-light text-primary rounded-full p-1.5 sm:p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
                aria-label="Ảnh sau"
             >
                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
+
             <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 bg-primary-dark/80 text-neutral-light px-2 sm:px-3 py-1 sm:py-2 rounded-lg backdrop-blur-sm z-10 transition-colors duration-300">
                <div className="text-xs text-neutral mt-1">
                   {counterCurrent}/{counterTotal}
@@ -396,105 +412,141 @@ export default function ProductDetailBanner({
                            }
                            fill
                            sizes="120px"
-                           className={`object-contain transition-all duration-300 p-2.5 sm:p-3 ${
+                           className={clsx(
+                              "object-contain transition-all duration-300 p-2.5 sm:p-3",
                               !isExpandSlot && currentImageIndex === thumb.index
                                  ? "opacity-100 scale-100"
-                                 : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100"
-                           }`}
+                                 : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
+                           )}
                         />
                      </ThumbnailCell>
                   );
                })}
             </div>
 
-            {/* ── GALLERY THUMBNAILS khi đang ở expand slot ─────────────────── */}
+            {/* ── Từ File 2: gallery thumbnails row (scroll ngang) ──────────── */}
             {isExpandSlot && galleryLoaded && galleryImages.length > 0 && (
-               <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+               <div
+                  className="mt-3 flex gap-2 overflow-x-auto pb-6 px-1 py-1
+                  scrollbar-hide md:scrollbar-thin
+                  md:scrollbar-thumb-gray-300 md:hover:scrollbar-thumb-gray-400
+                  dark:md:scrollbar-thumb-zinc-700 dark:md:hover:scrollbar-thumb-zinc-600
+                  scroll-smooth"
+               >
                   {galleryImages.map((img, idx) => (
                      <button
                         key={img.id}
+                        type="button"
                         onClick={() => goToGalleryIndex(idx)}
-                        className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden transition-all duration-200
-                    ${
-                       galleryIndex === idx
-                          ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
-                          : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:scale-105 opacity-60 hover:opacity-100"
-                    }`}
+                        className={clsx(
+                           "relative group flex-shrink-0 w-14 h-14 rounded-xl transition-all duration-200 ease-out cursor-pointer",
+                           galleryIndex === idx
+                              ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
+                              : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105",
+                        )}
                      >
-                        <Image
-                           src={img.imageUrl}
-                           alt={img.altText || `Gallery ${idx + 1}`}
-                           fill
-                           sizes="56px"
-                           className="object-contain p-1.5 bg-white"
-                        />
+                        <div className="relative w-full h-full bg-white rounded-xl overflow-hidden">
+                           {!img.imageUrl && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-neutral text-neutral-darker">
+                                 <Images className="w-4 h-4 opacity-40" />
+                              </div>
+                           )}
+                           {img.imageUrl && (
+                              <Image
+                                 src={img.imageUrl}
+                                 alt={img.altText || `Gallery ${idx + 1}`}
+                                 fill
+                                 sizes="56px"
+                                 onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                 }}
+                                 className={clsx(
+                                    "object-contain p-1.5 transition-all duration-300",
+                                    galleryIndex === idx
+                                       ? "opacity-100 scale-100"
+                                       : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
+                                 )}
+                              />
+                           )}
+                           <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                        </div>
                      </button>
                   ))}
                </div>
             )}
 
-            {/* PRODUCT HIGHLIGHTS */}
+            {/* ── HIGHLIGHTS + POLICIES ─────────────────────────────────────── */}
+            {/* Từ File 1: wrapper hidden lg:block để chỉ hiện trên desktop */}
             {isInStock && (
-               <div className="mt-8 space-y-8">
-                  <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                     <h2 className="font-semibold text-primary">
-                        Thông số nổi bật
-                     </h2>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
-                     {highlights.map((highlight, index) => {
-                        const IconComponent = highlight?.icon
-                           ? iconMap[highlight.icon]
-                           : null;
-                        return (
-                           <div className="flex-1" key={index}>
-                              <span className="text-sm">
-                                 {highlight?.name || "N/A"}
-                              </span>
-                              <div className="flex items-center gap-2 mt-2">
-                                 {IconComponent && <IconComponent size={28} />}
-                                 <span className="text-sm font-semibold text-primary">
-                                    {highlight?.value || "N/A"}
-                                 </span>
-                              </div>
-                           </div>
-                        );
-                     })}
+               <div className="hidden lg:block">
+                  {highlights.length > 0 && (
+                     <div className="mt-8">
+                        <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                           <h2 className="font-semibold text-primary">
+                              Thông số nổi bật
+                           </h2>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
+                           {highlights.map((highlight, index) => {
+                              const IconComponent = highlight?.icon
+                                 ? iconMap[highlight.icon]
+                                 : null;
+                              return (
+                                 <div className="flex-1" key={index}>
+                                    <span className="text-sm">
+                                       {highlight?.name || "N/A"}
+                                    </span>
+                                    <div className="flex items-center gap-2 mt-2">
+                                       {IconComponent && (
+                                          <IconComponent size={28} />
+                                       )}
+                                       <span className="text-sm font-semibold text-primary">
+                                          {highlight?.value || "N/A"}
+                                       </span>
+                                    </div>
+                                 </div>
+                              );
+                           })}
+                        </div>
+                     </div>
+                  )}
+
+                  {/* ── Policies ─────────────────────────────────────────────── */}
+                  <div>
+                     <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
+                        <h2 className="text-base font-semibold text-primary">
+                           Chính sách sản phẩm
+                        </h2>
+                        <button
+                           type="button"
+                           className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer"
+                        >
+                           Tìm hiểu thêm
+                        </button>
+                     </div>
+                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
+                        <div className="flex items-center gap-2 sm:mr-12">
+                           <MdVerified size={28} />
+                           <p className="text-sm text-primary">
+                              Hàng chính hãng - Bảo hành 18 tháng
+                           </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <FaShippingFast size={28} />
+                           <p className="text-sm text-primary">
+                              Miễn phí giao hàng toàn quốc
+                           </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <FaUserCog size={28} />
+                           <p className="text-sm text-primary">
+                              Kỹ thuật viên hỗ trợ trực tuyến
+                           </p>
+                        </div>
+                     </div>
                   </div>
                </div>
             )}
-
-            {/* Policies */}
-            <div>
-               <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                  <h2 className="text-base font-semibold text-primary">
-                     Chính sách sản phẩm
-                  </h2>
-                  <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
-                     Tìm hiểu thêm
-                  </button>
-               </div>
-               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
-                  <div className="flex items-center gap-2 sm:mr-12">
-                     <MdVerified size={28} />
-                     <p className="text-sm text-primary">
-                        Hàng chính hãng - Bảo hành 18 tháng
-                     </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <FaShippingFast size={28} />
-                     <p className="text-sm text-primary">
-                        Miễn phí giao hàng toàn quốc
-                     </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <FaUserCog size={28} />
-                     <p className="text-sm text-primary">
-                        Kỹ thuật viên hỗ trợ trực tuyến
-                     </p>
-                  </div>
-               </div>
-            </div>
          </div>
       </div>
    );
@@ -504,22 +556,19 @@ export default function ProductDetailBanner({
 function ThumbnailCell({
    isActive,
    onClick,
-   isExpand = false,
    children,
-}: {
-   isActive: boolean;
-   onClick: () => void;
-   isExpand?: boolean;
-   children: React.ReactNode;
-}) {
+   isExpand,
+}: ThumbnailCellProps) {
    return (
       <button
+         type="button"
          onClick={onClick}
-         className={`relative group rounded-xl overflow-hidden transition-all duration-200 ease-out ${
+         className={clsx(
+            "relative group rounded-xl overflow-hidden transition-all duration-200 ease-out cursor-pointer",
             isActive
-               ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105 cursor-pointer"
-               : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105 cursor-pointer"
-         }`}
+               ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
+               : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105",
+         )}
       >
          <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
             {children}
