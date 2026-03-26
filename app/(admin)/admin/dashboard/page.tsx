@@ -16,22 +16,20 @@ import { ChatbotPendingBanner } from "./components/ChatbotPendingBanner";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function DashboardSkeleton() {
+function Skeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div className="space-y-2.5 animate-pulse">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-100 p-5 h-36" />
+          <div key={i} className="bg-white rounded-xl border border-slate-100 h-20" />
         ))}
       </div>
-      {/* Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-100 h-72" />
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 h-72" />
+      <div className="bg-white rounded-xl border border-slate-100 h-32" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
+        <div className="bg-white rounded-xl border border-slate-100 h-56" />
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-100 h-56" />
       </div>
-      {/* Row 3 */}
-      <div className="bg-white rounded-2xl border border-slate-100 h-64" />
+      <div className="bg-white rounded-xl border border-slate-100 h-52" />
     </div>
   );
 }
@@ -44,70 +42,72 @@ export default function DashboardPage() {
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["admin-dashboard", period],
     queryFn: () => getDashboard({ period }),
-    staleTime: 1000 * 60 * 2, // cache 2 phút
+    staleTime: 1000 * 60 * 2,
   });
 
   const dashboard = data?.data;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 space-y-2.5">
         {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center">
-              <LayoutDashboard className="w-4.5 h-4.5 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+              <LayoutDashboard className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 leading-tight">Dashboard</h1>
-              <p className="text-xs text-slate-400 mt-0.5">Tổng quan hoạt động kinh doanh</p>
+              <h1 className="text-sm font-bold text-slate-900 leading-tight">Dashboard</h1>
+              <p className="text-[10px] text-slate-400">Tổng quan hoạt động kinh doanh</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <PeriodSelector value={period} onChange={setPeriod} />
             <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-accent hover:border-accent/30 transition-colors disabled:opacity-50"
+              className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-accent hover:border-accent/30 transition-colors disabled:opacity-50"
               title="Làm mới"
             >
-              <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
 
         {/* ── Loading ── */}
-        {isLoading && <DashboardSkeleton />}
+        {isLoading && <Skeleton />}
 
         {/* ── Content ── */}
         {dashboard && (
-          <div className="space-y-5">
-            {/* Chatbot pending alert — chỉ hiện khi có đơn chờ */}
+          <div className="space-y-2.5">
+            {/* Chatbot banner */}
             {dashboard.chatbotPendingOrders.length > 0 && <ChatbotPendingBanner orders={dashboard.chatbotPendingOrders} />}
 
-            {/* Row 1: Summary Cards */}
+            {/* Row 1: 4 stat cards */}
             <SummaryCards summary={dashboard.summary} />
 
-            {/* Row 2: Order Status Donut + Top Products */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Row 2: Revenue chart (full width) */}
+            {/* <RevenueChart data={revenueChartData} period={period} /> */}
+
+            {/* Row 3: Donut (1/3) + Top Products (2/3) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
               <OrderStatusChart data={dashboard.orderStatusBreakdown} />
               <div className="lg:col-span-2">
                 <TopProducts products={dashboard.topProducts} />
               </div>
             </div>
 
-            {/* Row 3: Recent Orders */}
+            {/* Row 4: Recent Orders table */}
             <RecentOrdersTable orders={dashboard.recentOrders} title="Đơn hàng mới nhất" />
           </div>
         )}
 
-        {/* ── Error state ── */}
+        {/* ── Error ── */}
         {!isLoading && !dashboard && (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <LayoutDashboard className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">Không thể tải dữ liệu. Vui lòng thử lại.</p>
-            <button onClick={() => refetch()} className="mt-4 text-sm text-accent hover:underline">
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <LayoutDashboard className="w-8 h-8 mb-2 opacity-30" />
+            <p className="text-xs">Không thể tải dữ liệu.</p>
+            <button onClick={() => refetch()} className="mt-3 text-xs text-accent hover:underline">
               Thử lại
             </button>
           </div>

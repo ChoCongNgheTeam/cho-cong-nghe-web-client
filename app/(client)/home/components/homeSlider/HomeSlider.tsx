@@ -194,7 +194,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
          />
 
          {/* ── Grid ── */}
-         <div className="relative z-10 grid grid-cols-2 items-center h-full pl-[12%] px-[8%] gap-[3%]">
+         <div className="container relative z-10 grid grid-cols-2 items-center h-full gap-[3%]">
             {/* LEFT: text */}
             <div className="flex flex-col">
                {/* Badge */}

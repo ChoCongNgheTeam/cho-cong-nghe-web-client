@@ -59,7 +59,7 @@ export function EmptyState() {
         Cùng khám phá hàng ngàn sản phẩm tại ChoCongNghe Shop nhé!
       </p>
       <Link
-        href="/products"
+        href="/"
         className="bg-accent hover:bg-accent-hover text-neutral-light
           px-6 sm:px-8 py-2.5 sm:py-3
           text-sm sm:text-base
