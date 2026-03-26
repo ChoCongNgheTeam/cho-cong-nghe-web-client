@@ -198,6 +198,7 @@ interface HotSaleOnlineProps {
 
 export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
   const { schedule, todayProducts } = saleSchedule;
+  const safeTodayProducts = todayProducts ?? { products: [], total: 0, promotions: [], endDate: null, startDate: null, date: "" };
 
   // Tab đang được chọn — default là ngày hôm nay (index 0)
   const [activeDate, setActiveDate] = useState<string>(schedule.find((d) => d.isToday)?.date ?? schedule[0]?.date ?? "");
@@ -215,15 +216,15 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
       }
     >
   >(() => {
-    // Seed cache với today products
     const todayKey = schedule.find((d) => d.isToday)?.date ?? "";
-    if (!todayKey || !todayProducts.products.length) return {};
+    const tp = todayProducts; // có thể undefined
+    if (!todayKey || !tp?.products?.length) return {}; // ← optional chaining
     return {
       [todayKey]: {
-        products: todayProducts.products,
-        total: todayProducts.total,
-        promotions: todayProducts.promotions,
-        endDate: todayProducts.endDate,
+        products: tp.products,
+        total: tp.total,
+        promotions: tp.promotions ?? [],
+        endDate: tp.endDate,
       },
     };
   });

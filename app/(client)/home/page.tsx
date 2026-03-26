@@ -3,7 +3,7 @@ import { BannersTop, HomeSlider, FeaturedCategories, FeaturedProducts, BannersSe
 
 export default async function HomePage() {
   const { sliders, featuredCategories, bannersTop, saleSchedule, featuredProducts, bestSellingProducts, activeCampaigns, bannersSection1, blogs } = await getHomePageData();
-  console.log("categories:", featuredCategories);
+  //   console.log("categories:", featuredCategories);
   return (
     <main className="min-h-screen bg-neutral-light">
       <HomeSlider sliders={sliders} />
