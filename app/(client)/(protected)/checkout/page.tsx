@@ -21,22 +21,26 @@ import { Popzy } from "@/components/Modal";
 import { Province, Ward, UserProfile, SavedAddress, CartItem, SelectedItem, CheckoutData, PreviewData, ShippingSectionProps } from "./types";
 import ShippingSection from "./components/shippingSection";
 import CartBottomBar from "@/(client)/cart/components/CartBottomMobile";
+// import { ApiCartItem } from "@/(client)/cart/types/cart.types";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToasty();
   const { loading: authLoading } = useAuth();
-  const { refetchCart } = useCart();
+  const { refetchCart, rawItems } = useCart();
+
+  console.log("rawItems", rawItems);
+
+  // const [rawCartItems, setRawCartItems] = useState<ApiCartItem[]>([]);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
   const [promotionValue, setPromotionValue] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
-  const [rewardPoints, setRewardPoints] = useState(0);
-  const [usePoints, setUsePoints] = useState(false);
 
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherValue, setVoucherValue] = useState(0);
@@ -206,8 +210,6 @@ export default function CheckoutPage() {
       setSubtotal(data.subtotal);
       setTotalDiscount(data.totalDiscount);
       setFinalTotal(data.finalTotal);
-      setRewardPoints(data.rewardPoints);
-      setUsePoints(data.usePoints ?? false);
       setVoucherCode(data.appliedVoucherCode ?? "");
       setVoucherValue(data.appliedVoucherValue ?? 0);
       setVoucherId(data.appliedVoucherId ?? "");
@@ -421,8 +423,8 @@ export default function CheckoutPage() {
   const displayFinalTotal = finalTotal;
   const shippingFee = previewData?.shippingFee;
   const amountAfterDiscount = Math.max(0, subtotal - totalDiscount - voucherValue);
-  const calculatedTax = amountAfterDiscount * 0.1;
-  const confirmTotal = amountAfterDiscount + calculatedTax + (shippingFee ?? 0);
+  // const calculatedTax = amountAfterDiscount * 0.1;
+  const confirmTotal = amountAfterDiscount + (shippingFee ?? 0);
 
   const shippingProps: ShippingSectionProps = {
     isLoadingAddresses,
@@ -494,7 +496,7 @@ export default function CheckoutPage() {
                 />
                 <div className="text-base text-neutral-dark mt-1 text-right">{notes.length}/1000</div>
               </div>
-              <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
+              {/* <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -507,7 +509,7 @@ export default function CheckoutPage() {
                   />
                   <span className="text-sm text-primary">Yêu cầu hỗ trợ xuất hóa đơn điện tử</span>
                 </label>
-              </div>
+              </div> */}
               <PaymentMethods selectedMethod={selectedPaymentMethodId} onSelect={setSelectedPaymentMethodId} />
             </div>
             <div className="lg:col-span-1">
@@ -515,7 +517,6 @@ export default function CheckoutPage() {
                 subtotal={displaySubtotal}
                 totalDiscount={displayDiscount}
                 finalTotal={displayFinalTotal}
-                rewardPoints={rewardPoints}
                 selectedItemsCount={cartItems.length}
                 appliedVoucherCode={voucherCode}
                 appliedVoucherValue={displayVoucherDiscount}
@@ -529,7 +530,7 @@ export default function CheckoutPage() {
                 onTermsChange={setAgreedToTerms}
                 isCheckoutPage
                 shippingFee={shippingFee}
-                taxAmount={calculatedTax}
+                // taxAmount={calculatedTax}
                 computedTotal={confirmTotal}
               />
             </div>
@@ -559,7 +560,7 @@ export default function CheckoutPage() {
             />
             <div className="text-base text-neutral-dark mt-1 text-right">{notes.length}/1000</div>
           </div>
-          <div className="bg-neutral-light rounded-lg p-4 border border-neutral">
+          {/* <div className="bg-neutral-light rounded-lg p-4 border border-neutral">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -570,7 +571,7 @@ export default function CheckoutPage() {
               />
               <span className="text-sm text-primary">Yêu cầu hỗ trợ xuất hóa đơn điện tử</span>
             </label>
-          </div>
+          </div> */}
           <PaymentMethods selectedMethod={selectedPaymentMethodId} onSelect={setSelectedPaymentMethodId} />
         </div>
       </div>
@@ -607,7 +608,6 @@ export default function CheckoutPage() {
         voucherCode={voucherCode}
         voucherValue={voucherValue}
         onOpenVoucherModal={() => setShowVoucherModal(true)}
-        rewardPoints={rewardPoints}
         actionLabel={isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
         actionDisabled={isSubmitting}
         onAction={handleCheckoutClick}
@@ -625,7 +625,15 @@ export default function CheckoutPage() {
         appliedVoucherValue={voucherValue}
         appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
-        cartTotal={subtotal}
+        cartTotal={finalTotal}
+        cartItems={rawItems.map((item) => ({
+          productId: item.productId,
+          brandId: item.brandId,
+          categoryId: item.categoryId,
+          categoryPath: item.categoryPath,
+          // itemTotal = giá sau promotion × số lượng (dùng để tính eligible subtotal cho voucher)
+          itemTotal: item.price?.final ?? item.totalFinalPrice ?? item.unitPrice ?? 0,
+        }))}
       />
       <Popzy
         isOpen={showConfirmModal}

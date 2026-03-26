@@ -295,7 +295,7 @@ export default function RatingSummary({
         content={
           <div className="py-2 px-1 flex flex-col items-center text-center gap-4">
             <div className="w-14 h-14 rounded-full bg-accent-light flex items-center justify-center">
-              <Star className="w-7 h-7 text-accent fill-accent" />
+              <Star className="w-7 h-7 text-yellow-400 fill-yellow-400 " />
             </div>
             <div>
               <h3 className="text-base font-semibold text-primary mb-1">

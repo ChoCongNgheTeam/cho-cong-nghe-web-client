@@ -1,25 +1,26 @@
 "use client";
 import { useState } from "react";
+import type { FaqEntry } from "../data";
 
 type Props = {
-  faq: any;
+  faq: FaqEntry;
 };
 
 export default function FaqItem({ faq }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border border-stone-200 rounded-xl overflow-hidden">
+    <div className="border border-neutral rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-4 px-5 py-4 bg-white hover:bg-stone-50 transition-colors text-left"
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 bg-neutral-light hover:bg-neutral-light-hover transition-colors text-left"
       >
-        <span className="font-medium text-stone-800 text-sm">
+        <span className="font-medium text-primary text-sm">
           {faq.q}
         </span>
 
         <span
-          className={`shrink-0 w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 transition-transform duration-300 ${
+          className={`shrink-0 w-6 h-6 rounded-full bg-neutral flex items-center justify-center text-neutral-dark transition-transform duration-300 ${
             open ? "rotate-45" : ""
           }`}
         >
@@ -28,8 +29,8 @@ export default function FaqItem({ faq }: Props) {
       </button>
 
       {open && (
-        <div className="px-5 py-4 bg-stone-50 border-t border-stone-200">
-          <p className="text-stone-600 text-sm leading-relaxed">
+        <div className="px-5 py-4 bg-neutral-light-hover border-t border-neutral">
+          <p className="text-neutral-darker text-sm leading-relaxed">
             {faq.a}
           </p>
         </div>

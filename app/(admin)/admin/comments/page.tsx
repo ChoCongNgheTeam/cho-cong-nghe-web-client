@@ -163,7 +163,7 @@ export default function CommentsAdminPage() {
           </div>
           <div>
             <h1 className="text-[18px] font-bold text-primary">Quản lý bình luận</h1>
-            <p className="text-[12px] text-neutral-dark">Duyệt và quản lý bình luận của người dùng</p>
+            <p className="text-[12px] text-primary">Duyệt và quản lý bình luận của người dùng</p>
           </div>
         </div>
       </div>
@@ -186,7 +186,7 @@ export default function CommentsAdminPage() {
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={`px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
-                activeTab === tab.value ? "border-accent text-accent" : "border-transparent text-neutral-dark hover:text-primary"
+                activeTab === tab.value ? "border-accent text-accent" : "border-transparent text-primary hover:text-primary"
               }`}
             >
               {tab.label}
@@ -198,7 +198,7 @@ export default function CommentsAdminPage() {
         <div className="flex items-center gap-3 flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
@@ -225,7 +225,7 @@ export default function CommentsAdminPage() {
           <button
             onClick={() => setShowFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[13px] transition-colors cursor-pointer ${
-              showFilters || dateFrom || dateTo ? "border-accent text-accent bg-accent/5" : "border-neutral text-neutral-dark hover:border-accent hover:text-accent"
+              showFilters || dateFrom || dateTo ? "border-accent text-accent bg-accent/5" : "border-neutral text-primary hover:border-accent hover:text-accent"
             }`}
           >
             <SlidersHorizontal size={13} />
@@ -236,7 +236,7 @@ export default function CommentsAdminPage() {
           {/* Sort */}
           <button
             onClick={() => setSortOrder((v) => (v === "desc" ? "asc" : "desc"))}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral text-[13px] text-neutral-dark hover:border-accent hover:text-accent transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral text-[13px] text-primary hover:border-accent hover:text-accent transition-colors cursor-pointer"
           >
             {sortOrder === "desc" ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
             {sortOrder === "desc" ? "Mới nhất" : "Cũ nhất"}
@@ -247,7 +247,7 @@ export default function CommentsAdminPage() {
         {showFilters && (
           <div className="flex items-center gap-3 flex-wrap bg-white border border-neutral rounded-xl px-4 py-3">
             <div className="flex items-center gap-2">
-              <label className="text-[12px] text-neutral-dark font-medium whitespace-nowrap">Từ ngày</label>
+              <label className="text-[12px] text-primary font-medium whitespace-nowrap">Từ ngày</label>
               <input
                 type="date"
                 value={dateFrom}
@@ -256,7 +256,7 @@ export default function CommentsAdminPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-[12px] text-neutral-dark font-medium whitespace-nowrap">Đến ngày</label>
+              <label className="text-[12px] text-primary font-medium whitespace-nowrap">Đến ngày</label>
               <input
                 type="date"
                 value={dateTo}
@@ -270,7 +270,7 @@ export default function CommentsAdminPage() {
                   setDateFrom("");
                   setDateTo("");
                 }}
-                className="flex items-center gap-1 text-[12px] text-neutral-dark hover:text-accent transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer"
               >
                 <X size={12} /> Xóa lọc
               </button>
@@ -291,7 +291,7 @@ export default function CommentsAdminPage() {
                 {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={12} />}
                 Duyệt tất cả
               </button>
-              <button onClick={() => setSelected(new Set())} className="flex items-center gap-1 text-[12px] text-neutral-dark hover:text-accent transition-colors cursor-pointer">
+              <button onClick={() => setSelected(new Set())} className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer">
                 <X size={12} /> Bỏ chọn
               </button>
             </div>
@@ -304,7 +304,7 @@ export default function CommentsAdminPage() {
           {data && data.data.length > 0 && (
             <div className="px-4 py-2.5 border-b border-neutral flex items-center gap-2">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-3.5 h-3.5 rounded accent-accent cursor-pointer" />
-              <span className="text-[12px] text-neutral-dark">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} bình luận trên trang`}</span>
+              <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} bình luận trên trang`}</span>
             </div>
           )}
 
@@ -314,14 +314,14 @@ export default function CommentsAdminPage() {
         {/* Pagination */}
         {data && data.pagination.total > 1 && (
           <div className="flex items-center justify-between">
-            <p className="text-[12px] text-neutral-dark">
+            <p className="text-[12px] text-primary">
               Trang {data.pagination.page} / {data.pagination.totalPages} · {data.pagination.total} bình luận
             </p>
             <div className="flex items-center gap-1.5">
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="px-3 py-1.5 text-[13px] border border-neutral rounded-lg text-neutral-dark hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-[13px] border border-neutral rounded-lg text-primary hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Trước
               </button>
@@ -332,7 +332,7 @@ export default function CommentsAdminPage() {
                     key={pg}
                     onClick={() => setPage(pg)}
                     className={`w-8 h-8 text-[13px] rounded-lg border transition-colors cursor-pointer ${
-                      page === pg ? "border-accent bg-accent text-white" : "border-neutral text-neutral-dark hover:border-accent hover:text-accent"
+                      page === pg ? "border-accent bg-accent text-white" : "border-neutral text-primary hover:border-accent hover:text-accent"
                     }`}
                   >
                     {pg}
@@ -342,7 +342,7 @@ export default function CommentsAdminPage() {
               <button
                 disabled={page >= data.pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 text-[13px] border border-neutral rounded-lg text-neutral-dark hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-[13px] border border-neutral rounded-lg text-primary hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Sau
               </button>
@@ -364,14 +364,14 @@ export default function CommentsAdminPage() {
               </div>
               <div>
                 <h3 className="text-[15px] font-bold text-primary">Xác nhận xóa</h3>
-                <p className="text-[12px] text-neutral-dark">Hành động này không thể hoàn tác</p>
+                <p className="text-[12px] text-primary">Hành động này không thể hoàn tác</p>
               </div>
             </div>
-            <p className="text-[13px] text-neutral-dark bg-neutral-light rounded-xl px-3 py-2.5 line-clamp-3">"{deleteTarget.content}"</p>
+            <p className="text-[13px] text-primary bg-neutral-light rounded-xl px-3 py-2.5 line-clamp-3">"{deleteTarget.content}"</p>
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 text-[13px] border border-neutral rounded-lg text-neutral-dark hover:bg-neutral-light-active transition-colors cursor-pointer"
+                className="px-4 py-2 text-[13px] border border-neutral rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
               >
                 Hủy
               </button>

@@ -11,18 +11,52 @@ import {
   Shield,
   LogOut,
   Key,
+  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
 const menuItems = [
-  { icon: Package, label: "Đơn hàng của tôi", href: "/profile/orders" },
-  { icon: Bell, label: "Thông báo của tôi", href: "/profile/notifications" },
-  { icon: Heart, label: "Sản phẩm yêu thích", href: "/profile/wishlist" },
-  { icon: MapPin, label: "Địa chỉ nhận hàng", href: "/profile/addresses" },
-  { icon: Shield, label: "Thông tin bảo hành", href: "/profile/warranty" },
-  { icon: Key, label: "Đổi mật khẩu", href: "/profile/change-password" },
+  {
+    icon: Package,
+    label: "Đơn hàng của tôi",
+    shortLabel: "Đơn hàng",
+    href: "/profile/orders",
+  },
+  {
+    icon: Bell,
+    label: "Thông báo của tôi",
+    shortLabel: "Thông báo",
+    href: "/profile/notifications",
+  },
+  {
+    icon: Heart,
+    label: "Sản phẩm yêu thích",
+    shortLabel: "Yêu thích",
+    href: "/profile/wishlist",
+  },
+  {
+    icon: MapPin,
+    label: "Địa chỉ nhận hàng",
+    shortLabel: "Địa chỉ",
+    href: "/profile/addresses",
+  },
+  {
+    icon: Shield,
+    label: "Thông tin bảo hành",
+    shortLabel: "Bảo hành",
+    href: "/profile/warranty",
+  },
+  {
+    icon: Key,
+    label: "Đổi mật khẩu",
+    shortLabel: "Mật khẩu",
+    href: "/profile/change-password",
+  },
 ];
+
+// Only show 4 most important items in bottom nav
+const bottomNavItems = menuItems.slice(0, 4);
 
 export default function ProfileLayout({
   children,
@@ -43,115 +77,220 @@ export default function ProfileLayout({
   const breadcrumbLabel =
     menuItems.find((item) => pathname === item.href)?.label || "Tài khoản";
 
+  const isProfileHome = pathname === "/profile";
+
   return (
-    <>
-      <div className="min-h-screen bg-neutral-light">
-        <div className="container py-6">
+    <div className=" bg-neutral-light">
+      {/* ── Desktop layout ─────────────────────────────────────── */}
+      <div className="container py-4 sm:py-6 pb-20 lg:pb-6">
+        {/* Breadcrumb: hidden on mobile */}
+        <div className="hidden sm:block">
           <Breadcrumb
             items={[
               { label: "Trang chủ", href: "/" },
-              { label: "Hồ sơ cá nhân", href: "/profile" },
+              { label: "Thông tin cá nhân", href: "/profile" },
               { label: breadcrumbLabel },
             ]}
           />
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Sidebar */}
-            <aside className="w-full lg:w-80 shrink-0 space-y-4 sticky top-6 self-start">
-              {/* User Profile Card */}
-              <div className="bg-neutral-light-active rounded-lg shadow-sm p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 rounded-full blur-xl" />
-                    <div className="relative w-12 h-12 rounded-full bg-neutral-light p-1 shadow-lg">
-                      <img
-                        src={user?.avatarImage || "/images/avatar.png"}
-                        alt="Avatar"
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+          {/* ── Sidebar (desktop only) ───────────────────────── */}
+          <aside className="hidden lg:block w-80 shrink-0 space-y-4 sticky top-6 self-start">
+            {/* User Profile Card */}
+            <div className="bg-neutral-light-active rounded-lg shadow-sm p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full bg-neutral-light p-1 shadow-lg">
+                    <img
+                      src={user?.avatarImage || "/images/avatar.png"}
+                      alt="Avatar"
+                      className="w-full h-full rounded-full object-cover"
+                    />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-primary">
-                      {user?.fullName || "Người dùng"}
-                    </h3>
-                    <p className="text-sm text-primary opacity-80">
-                      {user?.phone}
-                    </p>
-                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-primary">
+                    {user?.fullName || "Người dùng"}
+                  </h3>
+                  <p className="text-sm text-primary opacity-80">
+                    {user?.phone}
+                  </p>
+                </div>
+                <Link
+                  href="/profile"
+                  className="text-sm text-accent hover:text-accent-hover font-medium transition-colors"
+                >
+                  Xem hồ sơ
+                </Link>
+              </div>
+
+              {/* Membership Card */}
+              <div className="bg-accent rounded-lg p-4 text-white relative overflow-hidden">
+                <div className="absolute right-0 bottom-0 opacity-20">
+                  <div className="w-24 h-24 bg-white/30 rounded-full" />
+                </div>
+                <div className="relative z-10">
+                  <p className="text-sm mb-0.5">Quý khách chưa là</p>
+                  <p className="font-bold text-base mb-0.5">
+                    thành viên tại ChoCongNghe
+                  </p>
+                  <p className="text-xs mb-3 opacity-90">
+                    Quét mã Zalo ChoCongNghe Shop để kích hoạt điểm thưởng
+                  </p>
                   <Link
-                    href="/profile"
-                    className="text-sm text-accent hover:text-accent-hover font-medium transition-colors"
+                    href="/membership"
+                    className="text-white text-sm hover:underline flex items-center gap-1"
                   >
-                    Xem hồ sơ
+                    Xem thể lệ <span className="text-xs">›</span>
                   </Link>
                 </div>
+              </div>
+            </div>
 
-                {/* Membership Card */}
-                <div className="bg-accent  rounded-lg p-4 text-white relative overflow-hidden">
-                  <div className="absolute right-0 bottom-0 opacity-20">
-                    <div className="w-24 h-24 bg-white/30 rounded-full" />
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-sm mb-0.5">Quý khách chưa là</p>
-                    <p className="font-bold text-base mb-0.5">
-                      thành viên tại ChoCongNghe
-                    </p>
-                    <p className="text-xs mb-3 opacity-90">
-                      Quét tầm Zalo ChoCongNghe Shop để kích hoạt điểm thưởng
-                    </p>
+            {/* Menu Navigation */}
+            <div className="bg-neutral-light-active rounded-lg shadow-sm overflow-hidden py-3">
+              <nav>
+                {menuItems.map((item, index) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
+                  return (
                     <Link
-                      href="/membership"
-                      className="text-white text-sm hover:underline flex items-center gap-1"
+                      key={index}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 transition-all border-l-4 ${
+                        isActive
+                          ? "bg-accent-light border-accent text-primary font-medium"
+                          : "hover:bg-neutral-light border-transparent text-primary"
+                      }`}
                     >
-                      Xem thể lệ
-                      <span className="text-xs">›</span>
+                      <Icon className="w-5 h-5" />
+                      <span className="text-sm">{item.label}</span>
                     </Link>
-                  </div>
+                  );
+                })}
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-all border-l-4 border-transparent hover:bg-neutral-light text-primary cursor-pointer"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-sm">Đăng xuất</span>
+                </button>
+              </nav>
+            </div>
+          </aside>
+
+          {/* ── Mobile: User card (compact) ──────────────────── */}
+          {isProfileHome && (
+            <div className="lg:hidden space-y-3">
+              {/* Compact user info */}
+              <div className="bg-neutral-light-active rounded-xl shadow-sm p-4 flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-neutral-light p-1 shadow">
+                  <img
+                    src={user?.avatarImage || "/images/avatar.png"}
+                    alt="Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-primary truncate">
+                    {user?.fullName || "Người dùng"}
+                  </h3>
+                  <p className="text-sm text-primary opacity-70">
+                    {user?.phone}
+                  </p>
+                </div>
+                <Link
+                  href="/profile/info"
+                  className="text-xs text-accent font-medium shrink-0"
+                >
+                  Xem hồ sơ
+                </Link>
               </div>
 
-              {/* Menu Navigation */}
-              <div className="bg-neutral-light-active rounded-lg shadow-sm overflow-hidden py-3">
-                <nav>
-                  {menuItems.map((item, index) => {
-                    const Icon = item.icon;
-                    const isActive =
-                      pathname === item.href ||
-                      pathname.startsWith(item.href + "/");
-
-                    return (
-                      <Link
-                        key={index}
-                        href={item.href}
-                        className={`flex items-center gap-3 px-4 py-3 transition-all border-l-4 ${
-                          isActive
-                            ? "bg-accent-light border-accent text-primary font-medium"
-                            : "hover:bg-neutral-light border-transparent text-primary"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="text-sm">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-
-                  {/* Đăng xuất*/}
-                  <button
-                    onClick={logout}
-                    className="w-full flex items-center gap-3 px-4 py-3 transition-all border-l-4 border-transparent hover:bg-neutral-light text-primary hover:text-promotion cursor-pointer"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="text-sm">Đăng xuất</span>
-                  </button>
-                </nav>
+              {/* Membership card */}
+              <div className="bg-accent rounded-xl p-4 text-white relative overflow-hidden">
+                <div className="absolute right-2 bottom-2 opacity-10">
+                  <div className="w-20 h-20 bg-white rounded-full" />
+                </div>
+                <p className="text-xs mb-0.5 opacity-90">Quý khách chưa là</p>
+                <p className="font-bold text-sm">thành viên tại ChoCongNghe</p>
+                <Link
+                  href="/membership"
+                  className="text-white text-xs mt-2 inline-flex items-center gap-1 underline underline-offset-2"
+                >
+                  Xem thể lệ ›
+                </Link>
               </div>
-            </aside>
 
-            {/* Main Content */}
-            <main className="flex-1">{children}</main>
-          </div>
+              {/* Menu list on profile home */}
+              <div className="bg-neutral-light-active rounded-xl shadow-sm overflow-hidden">
+                {menuItems.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="flex items-center gap-3 px-4 py-3.5 border-b border-neutral last:border-0 text-primary hover:bg-neutral-light transition-colors"
+                    >
+                      <Icon className="w-5 h-5 text-accent shrink-0" />
+                      <span className="text-sm flex-1">{item.label}</span>
+                      <ChevronRight className="w-4 h-4 opacity-40" />
+                    </Link>
+                  );
+                })}
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-primary hover:text-promotion hover:bg-neutral-light transition-colors"
+                >
+                  <LogOut className="w-5 h-5 shrink-0 text-accent" />
+                  <span className="text-sm flex-1 text-left">Đăng xuất</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+            {/* Don't show children on mobile profile home (menu list is shown instead) */}
+            <div className={isProfileHome ? "hidden lg:block" : "block"}>
+              {children}
+            </div>
+          </main>
         </div>
       </div>
-    </>
+
+      {/* ── Mobile bottom tab bar (sub-pages only) ─────────────── */}
+      {!isProfileHome && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-neutral-light-active border-t border-neutral shadow-lg">
+          <div className="flex items-center justify-around px-1 py-1">
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg flex-1 transition-colors ${
+                    isActive ? "text-accent" : "text-primary opacity-60"
+                  }`}
+                >
+                  <Icon
+                    className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`}
+                  />
+                  <span className="text-[10px] font-medium leading-tight">
+                    {item.shortLabel}
+                  </span>
+                </Link>
+              );
+            })}
+           
+          </div>
+        </nav>
+      )}
+    </div>
   );
 }

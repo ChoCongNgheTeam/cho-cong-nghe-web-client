@@ -64,7 +64,7 @@ function CategoryImage({ category }: { category: Category }) {
   }
   return (
     <div className="w-9 h-9 rounded-lg bg-neutral-light-active flex items-center justify-center shrink-0 border border-neutral/30">
-      <ImageOff size={15} className="text-neutral-dark/50" />
+      <ImageOff size={15} className="text-primary/50" />
     </div>
   );
 }
@@ -110,7 +110,7 @@ function StatusDropdown({ category, onUpdated }: { category: Category; onUpdated
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-white border border-neutral rounded-xl shadow-lg py-1 overflow-hidden">
-            <p className="px-3 py-1.5 text-[10px] font-bold text-neutral-dark uppercase tracking-wider border-b border-neutral mb-1">Trạng thái hiển thị</p>
+            <p className="px-3 py-1.5 text-[10px] font-bold text-primary uppercase tracking-wider border-b border-neutral mb-1">Trạng thái hiển thị</p>
             {(
               [
                 { label: "Hoạt động", value: true, dot: "bg-emerald-500" },
@@ -122,7 +122,7 @@ function StatusDropdown({ category, onUpdated }: { category: Category; onUpdated
                 onClick={() => toggle("isActive", opt.value)}
                 disabled={category.isActive === opt.value}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors cursor-pointer ${
-                  category.isActive === opt.value ? "bg-neutral-light-active text-neutral-dark font-medium cursor-default" : "text-primary hover:bg-neutral-light-active"
+                  category.isActive === opt.value ? "bg-neutral-light-active text-primary font-medium cursor-default" : "text-primary hover:bg-neutral-light-active"
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full shrink-0 ${opt.dot}`} />
@@ -132,7 +132,7 @@ function StatusDropdown({ category, onUpdated }: { category: Category; onUpdated
             ))}
 
             <div className="border-t border-neutral mt-1 pt-1">
-              <p className="px-3 py-1.5 text-[10px] font-bold text-neutral-dark uppercase tracking-wider">Nổi bật</p>
+              <p className="px-3 py-1.5 text-[10px] font-bold text-primary uppercase tracking-wider">Nổi bật</p>
               {(
                 [
                   { label: "Nổi bật", value: true, icon: "⭐" },
@@ -144,7 +144,7 @@ function StatusDropdown({ category, onUpdated }: { category: Category; onUpdated
                   onClick={() => toggle("isFeatured", opt.value)}
                   disabled={category.isFeatured === opt.value}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors cursor-pointer ${
-                    category.isFeatured === opt.value ? "bg-neutral-light-active text-neutral-dark font-medium cursor-default" : "text-primary hover:bg-neutral-light-active"
+                    category.isFeatured === opt.value ? "bg-neutral-light-active text-primary font-medium cursor-default" : "text-primary hover:bg-neutral-light-active"
                   }`}
                 >
                   <span className="w-2 shrink-0 text-center">{opt.icon}</span>
@@ -174,7 +174,7 @@ function DeleteConfirmModal({ category, onConfirm, onCancel, loading }: { catego
           </div>
           <div>
             <p className="text-[14px] font-semibold text-primary">Xóa danh mục?</p>
-            <p className="text-[12px] text-neutral-dark mt-0.5">Hành động này có thể hoàn tác</p>
+            <p className="text-[12px] text-primary mt-0.5">Hành động này có thể hoàn tác</p>
           </div>
         </div>
         <p className="text-[13px] text-primary bg-neutral-light-active px-3 py-2 rounded-xl border border-neutral">
@@ -334,11 +334,11 @@ export default function AdminCategoriesPage() {
                 key={tab.value}
                 onClick={() => handleTabChange(tab.value)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
-                  activeTab === tab.value ? "bg-accent text-white" : "text-neutral-dark hover:bg-neutral-light-active"
+                  activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
                 }`}
               >
                 {tab.label}
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-neutral-dark"}`}>
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
                   {count}
                 </span>
               </button>
@@ -349,7 +349,7 @@ export default function AdminCategoriesPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -366,7 +366,7 @@ export default function AdminCategoriesPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -376,14 +376,14 @@ export default function AdminCategoriesPage() {
           {hasActiveFilters && (
             <button
               onClick={handleClearAll}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-[12px] text-neutral-dark">{meta.total} danh mục</span>
+            <span className="text-[12px] text-primary">{meta.total} danh mục</span>
             <Link href="/admin/categories/create" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all shadow-sm">
               <Plus size={14} /> Thêm mới
             </Link>
@@ -392,8 +392,8 @@ export default function AdminCategoriesPage() {
 
         {/* ── Toolbar row 2: advanced filters ── */}
         <div className="px-5 py-2.5 border-b border-neutral bg-neutral-light-active/40 flex items-center gap-2 flex-wrap">
-          <SlidersHorizontal size={13} className="text-neutral-dark shrink-0" />
-          <span className="text-[11px] text-neutral-dark font-medium mr-1">Lọc thêm:</span>
+          <SlidersHorizontal size={13} className="text-primary shrink-0" />
+          <span className="text-[11px] text-primary font-medium mr-1">Lọc thêm:</span>
 
           {/* Cấp */}
           <select
@@ -433,7 +433,7 @@ export default function AdminCategoriesPage() {
 
           {/* Sort */}
           <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-[11px] text-neutral-dark">Sắp xếp:</span>
+            <span className="text-[11px] text-primary">Sắp xếp:</span>
             <select
               value={sortBy}
               onChange={(e) => {
@@ -465,7 +465,7 @@ export default function AdminCategoriesPage() {
         {/* Active filter chips */}
         {hasActiveFilters && (
           <div className="px-5 py-2 border-b border-neutral flex items-center gap-2 flex-wrap bg-accent/5">
-            <span className="text-[11px] text-neutral-dark">Đang lọc:</span>
+            <span className="text-[11px] text-primary">Đang lọc:</span>
             {activeTab !== "ALL" && (
               <Chip
                 label={`Trạng thái: ${activeTab === "active" ? "Hoạt động" : "Ẩn"}`}
@@ -534,7 +534,7 @@ export default function AdminCategoriesPage() {
             <thead>
               <tr className="bg-neutral-light-active border-b border-neutral">
                 {["STT", "Danh mục", "Cấp", "Danh mục con", "Vị trí", "Trạng thái", "Hành động"].map((col) => (
-                  <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-dark uppercase tracking-wider whitespace-nowrap">
+                  <th key={col} className="px-4 py-3 text-left text-[11px] font-semibold text-primary uppercase tracking-wider whitespace-nowrap">
                     {col}
                   </th>
                 ))}
@@ -544,7 +544,7 @@ export default function AdminCategoriesPage() {
               {loading ? (
                 <tr>
                   <td colSpan={7} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 text-neutral-dark">
+                    <div className="flex flex-col items-center gap-3 text-primary">
                       <Loader2 size={28} className="animate-spin opacity-40" />
                       <span className="text-[13px]">Đang tải...</span>
                     </div>
@@ -553,7 +553,7 @@ export default function AdminCategoriesPage() {
               ) : categories.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 text-neutral-dark">
+                    <div className="flex flex-col items-center gap-3 text-primary">
                       <FolderTree size={32} className="opacity-30" />
                       <span className="text-[13px]">Không có danh mục nào</span>
                       {hasActiveFilters && (
@@ -570,15 +570,15 @@ export default function AdminCategoriesPage() {
                   const isChild = !!cat.parentId;
                   return (
                     <tr key={cat.id} className={`border-b border-neutral hover:bg-neutral-light-active/50 transition-colors duration-100 ${isChild ? "bg-neutral-light-active/20" : ""}`}>
-                      <td className="px-4 py-3.5 text-[12px] text-neutral-dark w-12">{rowNum}</td>
+                      <td className="px-4 py-3.5 text-[12px] text-primary w-12">{rowNum}</td>
 
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          {isChild && <ChevronRight size={13} className="text-neutral-dark/40 shrink-0" />}
+                          {isChild && <ChevronRight size={13} className="text-primary/40 shrink-0" />}
                           <CategoryImage category={cat} />
                           <div className="min-w-0">
                             <div className="text-[13px] font-medium text-primary truncate max-w-[200px]">{cat.name}</div>
-                            <div className="text-[11px] text-neutral-dark font-mono truncate max-w-[200px]">/{cat.slug}</div>
+                            <div className="text-[11px] text-primary font-mono truncate max-w-[200px]">/{cat.slug}</div>
                           </div>
                         </div>
                       </td>
@@ -596,11 +596,11 @@ export default function AdminCategoriesPage() {
                             {cat._count.children}
                           </span>
                         ) : (
-                          <span className="text-neutral-dark/40">—</span>
+                          <span className="text-primary/40">—</span>
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-[12px] text-neutral-dark">#{cat.position ?? "—"}</td>
+                      <td className="px-4 py-3.5 text-[12px] text-primary">#{cat.position ?? "—"}</td>
 
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
@@ -617,21 +617,21 @@ export default function AdminCategoriesPage() {
                         <div className="flex items-center gap-1">
                           <Link
                             href={`/admin/categories/${cat.id}`}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-all"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent/10 hover:text-accent transition-all"
                             title="Xem chi tiết"
                           >
                             <Eye size={14} />
                           </Link>
                           <Link
                             href={`/admin/categories/${cat.id}/edit`}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-all"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent/10 hover:text-accent transition-all"
                             title="Chỉnh sửa"
                           >
                             <Pencil size={14} />
                           </Link>
                           <button
                             onClick={() => setDeleteTarget(cat)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-all cursor-pointer"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-promotion-light hover:text-promotion transition-all cursor-pointer"
                             title="Xóa"
                           >
                             <Trash2 size={14} />

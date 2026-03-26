@@ -9,7 +9,6 @@ import VariantDropdown from "./components/CartVariantSelector";
 import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
-import { useVoucher } from "@/hooks/useVoucher";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
@@ -35,9 +34,15 @@ export default function CartPage() {
     finalTotal,
     rewardPoints,
     refetchCart,
+<<<<<<< HEAD
   } = useCart();
 
   const [usePoints, setUsePoints] = useState(false);
+=======
+    rawItems,
+  } = useCart();
+
+>>>>>>> dev
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const toast = useToasty();
 
@@ -52,6 +57,7 @@ export default function CartPage() {
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
 
+<<<<<<< HEAD
   const { applied: appliedVoucher } = useVoucher({ cartTotal: subtotal });
 
   const [voucherCode, setVoucherCode] = useState("");
@@ -105,6 +111,59 @@ export default function CartPage() {
     if (!isDeletingAll) setShowDeleteAllConfirm(false);
   }, [isDeletingAll]);
 
+=======
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherValue, setVoucherValue] = useState(0);
+  const [voucherId, setVoucherId] = useState("");
+
+  const handleIncrease = async (itemId: string) => {
+    const success = await updateQuantity(itemId, 1);
+    if (!success) toast.error("Số lượng vượt quá tồn kho");
+  };
+
+  const handleDecrease = async (itemId: string) => {
+    await updateQuantity(itemId, -1);
+  };
+
+  const handleApplyVoucher = useCallback((code: string, value: number, id: string) => {
+    setVoucherCode(code);
+    setVoucherValue(value);
+    setVoucherId(id);
+  }, []);
+
+  const handleRemoveClick = useCallback((item: CartItemWithDetails) => {
+    setDeleteTarget({ id: item.id, name: item.productName });
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    await removeItem(deleteTarget.id);
+    setIsDeleting(false);
+    setDeleteTarget(null);
+  }, [deleteTarget, removeItem]);
+
+  const handleCloseDeleteSidebar = useCallback(() => {
+    if (!isDeleting) setDeleteTarget(null);
+  }, [isDeleting]);
+
+  const handleRemoveAllClick = useCallback(() => {
+    if (selectedItems.length === 0) return;
+    setShowDeleteAllConfirm(true);
+  }, [selectedItems.length]);
+
+  const handleConfirmDeleteAll = useCallback(async () => {
+    setIsDeletingAll(true);
+    await removeSelectedItems();
+    setIsDeletingAll(false);
+    setShowDeleteAllConfirm(false);
+  }, [removeSelectedItems]);
+
+  const handleCloseDeleteAllSidebar = useCallback(() => {
+    if (!isDeletingAll) setShowDeleteAllConfirm(false);
+  }, [isDeletingAll]);
+
+>>>>>>> dev
   const handleCheckout = useCallback(() => {
     if (selectedItems.length === 0) {
       toast.error("Vui lòng chọn ít nhất một sản phẩm");
@@ -121,11 +180,18 @@ export default function CartPage() {
       totalDiscount,
       finalTotal,
       rewardPoints,
+<<<<<<< HEAD
       usePoints,
     };
     localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
     router.push("/checkout");
   }, [selectedItems, selectedPromotions, promotionValue, voucherCode, voucherValue, voucherId, subtotal, totalDiscount, finalTotal, rewardPoints, router, usePoints, toast]);
+=======
+    };
+    localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+    router.push("/checkout");
+  }, [selectedItems, selectedPromotions, promotionValue, voucherCode, voucherValue, voucherId, subtotal, totalDiscount, finalTotal, rewardPoints, router, toast]);
+>>>>>>> dev
 
   const finalTotalWithVoucher = Math.max(0, finalTotal - voucherValue);
 
@@ -324,7 +390,10 @@ export default function CartPage() {
                 subtotal={subtotal}
                 totalDiscount={totalDiscount}
                 finalTotal={finalTotal}
+<<<<<<< HEAD
                 rewardPoints={rewardPoints}
+=======
+>>>>>>> dev
                 selectedItemsCount={selectedItems.length}
                 appliedVoucherCode={voucherCode}
                 appliedVoucherValue={voucherValue}
@@ -392,7 +461,19 @@ export default function CartPage() {
         appliedVoucherValue={voucherValue}
         appliedVoucherId={voucherId}
         onApplyVoucher={handleApplyVoucher}
+<<<<<<< HEAD
         cartTotal={subtotal}
+=======
+        cartTotal={finalTotal}
+        cartItems={rawItems.map((item) => ({
+          productId: item.productId,
+          brandId: item.brandId,
+          categoryId: item.categoryId,
+          categoryPath: item.categoryPath,
+          // itemTotal = giá sau promotion × số lượng (dùng để tính eligible subtotal cho voucher)
+          itemTotal: item.price?.final ?? item.totalFinalPrice ?? item.unitPrice ?? 0,
+        }))}
+>>>>>>> dev
       />
 
       <DeleteConfirmSidebar isOpen={!!deleteTarget} onClose={handleCloseDeleteSidebar} onConfirm={handleConfirmDelete} productName={deleteTarget?.name ?? ""} isLoading={isDeleting} />

@@ -10,7 +10,6 @@ interface OrderSummaryProps {
    subtotal: number;
    totalDiscount: number;
    finalTotal: number;
-   rewardPoints: number;
    selectedItemsCount: number;
    appliedVoucherCode?: string;
    appliedVoucherValue?: number;
@@ -24,7 +23,7 @@ interface OrderSummaryProps {
    onTermsChange?: (checked: boolean) => void;
    isCheckoutPage?: boolean;
    shippingFee?: number;
-   taxAmount?: number;
+   // taxAmount?: number;
    computedTotal?: number; // ← thêm: tổng đã tính sẵn
 }
 
@@ -32,7 +31,6 @@ export default function OrderSummary({
    subtotal,
    totalDiscount,
    finalTotal,
-   rewardPoints,
    selectedItemsCount,
    appliedVoucherCode = "",
    appliedVoucherValue = 0,
@@ -46,7 +44,7 @@ export default function OrderSummary({
    onTermsChange,
    isCheckoutPage = false,
    shippingFee,
-   taxAmount,
+   //   taxAmount,
    computedTotal,
 }: OrderSummaryProps) {
    const router = useRouter();
@@ -174,18 +172,12 @@ export default function OrderSummary({
                         </div>
                      )}
 
-                     {isCheckoutPage &&
-                        taxAmount !== undefined &&
-                        taxAmount > 0 && (
-                           <div className="flex justify-between pl-4">
-                              <span className="text-neutral-dark text-xs">
-                                 Phí VAT (10%)
-                              </span>
-                              <span className="text-primary text-sm font-medium">
-                                 +{formatPrice(taxAmount)}
-                              </span>
-                           </div>
-                        )}
+                     {/* {isCheckoutPage && taxAmount !== undefined && taxAmount > 0 && (
+                <div className="flex justify-between pl-4">
+                  <span className="text-neutral-dark text-xs">Phí VAT (10%)</span>
+                  <span className="text-primary text-sm font-medium">+{formatPrice(taxAmount)}</span>
+                </div>
+              )} */}
 
                      <div className="border-t border-neutral pt-2.5 mt-2.5">
                         <div className="flex justify-between items-center">
