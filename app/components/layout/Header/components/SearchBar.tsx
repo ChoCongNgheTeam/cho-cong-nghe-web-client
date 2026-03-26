@@ -269,7 +269,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
         <div className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
           {!isMobile && (
             <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors whitespace-nowrap">
-              <span className="hidden xl:inline">Tất cả các danh mục</span>
+              {/* <span className="hidden xl:inline">Tất cả các danh mục</span> */}
               <span className="xl:hidden cursor-pointer">Danh mục</span>
               <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
             </button>
