@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { useFcmToken } from "@/hooks/useFcmToken";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 function FcmInitializer() {
   useFcmToken();
@@ -15,19 +16,21 @@ function FcmInitializer() {
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ToastyProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <WishlistProvider>
-            <ThemeProvider>
-              <CartProvider>
-                <FcmInitializer />
-                {children}
-              </CartProvider>
-            </ThemeProvider>
-          </WishlistProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </ToastyProvider>
+    <ReactQueryProvider>
+      <ToastyProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <WishlistProvider>
+              <ThemeProvider>
+                <CartProvider>
+                  <FcmInitializer />
+                  {children}
+                </CartProvider>
+              </ThemeProvider>
+            </WishlistProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </ToastyProvider>
+    </ReactQueryProvider>
   );
 }
