@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { formatNumber } from "@/helpers";
 import Link from "next/link";
 import { ArrowUpRight, Package, AlertTriangle } from "lucide-react";
 import type { TopProduct } from "../dashboard.types";

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MapPin, CreditCard, Package, ExternalLink, Landmark, Clock } from "lucide-react";
 import { Order } from "../../type/order";
 import { orderStatusConfig, paymentStatusConfig, REDIRECT_PAYMENT_METHODS, BANK_TRANSFER_METHODS } from "./Constants";
+import { formatDate, formatVND } from "@/helpers";
 
 function getFirstValidImage(imgs: { imageUrl: string | null }[] | undefined): string {
   if (!imgs) return "";
@@ -73,7 +74,7 @@ export default function OrderDetailModal({ order }: { order: Order }) {
                 </p>
                 {order.paymentExpiredAt && (
                   <p className="text-[11px] sm:text-xs mt-0.5" style={{ color: "rgb(180 83 9 / 0.8)" }}>
-                    Hết hạn: {new Date(order.paymentExpiredAt).toLocaleString("vi-VN")}
+                    Hết hạn: {formatDate(order.paymentExpiredAt, { withTime: true })}
                   </p>
                 )}
               </div>
@@ -104,7 +105,7 @@ export default function OrderDetailModal({ order }: { order: Order }) {
           <div className="bg-neutral-light-active rounded-xl p-2.5 sm:p-3.5">
             <p className="text-[10px] sm:text-xs text-neutral-darker mb-0.5 sm:mb-1">Ngày đặt hàng</p>
             <p className="font-semibold text-primary text-[10px] sm:text-xs leading-relaxed">
-              {new Date(order.orderDate).toLocaleString("vi-VN")}
+              {formatDate(order.orderDate, { withTime: true })}
             </p>
           </div>
           <div className="bg-neutral-light-active rounded-xl p-2.5 sm:p-3.5">
@@ -169,9 +170,9 @@ export default function OrderDetailModal({ order }: { order: Order }) {
                     </div>
                   </div>
 
-                  {/* Price — right aligned, shrink-0 */}
+                  {/* Price - right aligned, shrink-0 */}
                   <p className="text-xs sm:text-sm font-semibold text-primary shrink-0 self-start pt-0.5">
-                    {Number(item.unitPrice).toLocaleString("vi-VN")}₫
+                    {formatVND(Number(item.unitPrice))}
                   </p>
                 </div>
               );
@@ -179,42 +180,43 @@ export default function OrderDetailModal({ order }: { order: Order }) {
           </div>
         </div>
 
-        {/* ── Price Breakdown ── */}
+        {/* Price Breakdown */}
         <div>
           <p className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 mb-1.5 sm:mb-2">
             <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-promotion shrink-0" />
-            Thanh toán
+            Thanh to�n
           </p>
           <div className="bg-neutral-light-active rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 space-y-1.5 sm:space-y-2">
             <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
-              <span>Tạm tính</span>
-              <span>{subtotal.toLocaleString("vi-VN")}₫</span>
+              <span>Tam tinh</span>
+              <span>{formatVND(subtotal)}</span>
             </div>
             <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
-              <span>Phí vận chuyển</span>
+              <span>Phi van chuyen</span>
               <span>
-                {shipping === 0
-                  ? <span className="text-green-600">Miễn phí</span>
-                  : `${shipping.toLocaleString("vi-VN")}₫`
-                }
+                {shipping === 0 ? (
+                  <span className="text-green-600">Mien phi</span>
+                ) : (
+                  formatVND(shipping)
+                )}
               </span>
             </div>
             {voucher > 0 && (
               <div className="flex justify-between text-[11px] sm:text-sm text-green-700">
-                <span>Giảm giá voucher</span>
-                <span>-{voucher.toLocaleString("vi-VN")}₫</span>
+                <span>Giam gia voucher</span>
+                <span>-{formatVND(voucher)}</span>
               </div>
             )}
             {tax > 0 && (
               <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
-                <span>Thuế VAT (10%)</span>
-                <span>{tax.toLocaleString("vi-VN")}₫</span>
+                <span>Thue VAT (10%)</span>
+                <span>{formatVND(tax)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-primary border-t border-neutral pt-2 mt-1">
-              <span className="text-xs sm:text-sm">Tổng cộng</span>
+              <span className="text-xs sm:text-sm">Tong cong</span>
               <span className="text-sm sm:text-base text-promotion">
-                {total.toLocaleString("vi-VN")}₫
+                {formatVND(total)}
               </span>
             </div>
           </div>

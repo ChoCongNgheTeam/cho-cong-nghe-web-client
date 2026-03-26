@@ -33,6 +33,7 @@ import {
    MultiSelectDropdown,
    type EntityOption,
 } from "./MultiSelectDropdown";
+import { getAdminTimeZoneOrDefault } from "@/helpers";
 
 // ── You must provide these API helpers from your _libs layer ───────────────────
 // The form accepts them as props so it stays decoupled from fetch internals.
@@ -145,18 +146,63 @@ export const DEFAULT_FORM: PromotionFormData = {
 
 // ── Helpers: date conversion ───────────────────────────────────────────────────
 
+const getTimeZoneOffset = (date: Date, timeZone: string) => {
+   const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+   });
+   const parts = formatter.formatToParts(date);
+   const values: Record<string, number> = {};
+   for (const part of parts) {
+      if (part.type !== "literal") values[part.type] = Number(part.value);
+   }
+   const asUTC = Date.UTC(
+      values.year,
+      (values.month ?? 1) - 1,
+      values.day ?? 1,
+      values.hour ?? 0,
+      values.minute ?? 0,
+      values.second ?? 0,
+   );
+   return asUTC - date.getTime();
+};
+
 const toVNDatetimeLocal = (d?: string): string => {
    if (!d) return "";
-   const vnDate = new Date(
-      new Date(d).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
-   );
-   const pad = (n: number) => String(n).padStart(2, "0");
-   return `${vnDate.getFullYear()}-${pad(vnDate.getMonth() + 1)}-${pad(vnDate.getDate())}T${pad(vnDate.getHours())}:${pad(vnDate.getMinutes())}`;
+   const timeZone = getAdminTimeZoneOrDefault();
+   const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+   });
+   const parts = formatter.formatToParts(new Date(d));
+   const values: Record<string, string> = {};
+   for (const part of parts) {
+      if (part.type !== "literal") values[part.type] = part.value;
+   }
+   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
 };
 
 const fromVNLocal = (localStr: string): string | undefined => {
    if (!localStr) return undefined;
-   return new Date(localStr + ":00+07:00").toISOString();
+   const timeZone = getAdminTimeZoneOrDefault();
+   const [datePart, timePart] = localStr.split("T");
+   if (!datePart || !timePart) return undefined;
+   const [year, month, day] = datePart.split("-").map(Number);
+   const [hour, minute] = timePart.split(":").map(Number);
+   const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+   const offset = getTimeZoneOffset(utcGuess, timeZone);
+   return new Date(utcGuess.getTime() - offset).toISOString();
 };
 
 // ── promotionToForm ────────────────────────────────────────────────────────────

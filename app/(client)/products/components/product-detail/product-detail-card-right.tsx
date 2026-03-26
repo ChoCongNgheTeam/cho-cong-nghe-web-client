@@ -404,12 +404,12 @@ export default function ProductDetailRight({
                <div className="bg-neutral/40 p-4 sm:py-6 rounded-lg mt-6">
                   <div>
                      <h3 className="text-2xl sm:text-3xl font-bold text-promotion">
-                        {displayPrice.toLocaleString("vi-VN")}₫
+                        {formatVND(displayPrice)}
                      </h3>
                      {activePrice?.hasPromotion && (
                         <div className="flex gap-2 items-center mt-1">
                            <span className="text-xs sm:text-sm line-through text-neutral-500">
-                              {basePrice.toLocaleString("vi-VN")}₫
+                              {formatVND(basePrice)}
                            </span>
                            <span className="text-xs font-bold text-white bg-promotion px-2 py-0.5 rounded">
                               -{activePrice.discountPercentage}%

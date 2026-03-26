@@ -446,7 +446,7 @@ export default function ProductFilter({ filters }: ProductFilterProps) {
       const unit = group.type === "RANGE" ? group.range?.unit : undefined;
       const fmt = (v: number) =>
          isPrice
-            ? v.toLocaleString("vi-VN") + "đ"
+            ? formatNumber(v) + "đ"
             : `${v}${unit ? " " + unit : ""}`;
       const setLocal = (min: number, max: number) =>
          setSliderValues((prev) => ({ ...prev, [group.key]: { min, max } }));
@@ -614,7 +614,7 @@ export default function ProductFilter({ filters }: ProductFilterProps) {
       const unit = group.type === "RANGE" ? group.range?.unit : undefined;
       const fmt = (v: number) =>
          isPrice
-            ? v.toLocaleString("vi-VN") + "đ"
+            ? formatNumber(v) + "đ"
             : `${v}${unit ? " " + unit : ""}`;
 
       return (

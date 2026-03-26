@@ -4,7 +4,7 @@ import { AdminColumn } from "@/components/admin/AdminTables";
 import { BlogCard } from "../blog.types";
 import { BlogStatusBadge } from "./BlogStatusBadge";
 import { BLOG_STATUS_LABELS } from "../const";
-import { formatDate } from "@/helpers";
+import { formatDate, formatNumber } from "@/helpers";
 
 interface GetBlogColumnsParams {
   page: number;
@@ -87,7 +87,11 @@ export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleO
       key: "viewCount",
       label: "Lượt xem",
       align: "center",
-      render: (blog) => <span className="text-[13px] font-semibold text-primary">{blog.viewCount.toLocaleString("vi-VN")}</span>,
+      render: (blog) => (
+        <span className="text-[13px] font-semibold text-primary">
+          {formatNumber(blog.viewCount)}
+        </span>
+      ),
     },
     {
       key: "publishedAt",

@@ -23,6 +23,7 @@ import ReviewModal from "./ReviewModal";
 import ReviewSuccessModal from "@/(client)/products/product-comment/ReviewSuccessModal ";
 import Link from "next/link";
 import { useToasty } from "@/components/Toast";
+import { formatDate, formatVND } from "@/helpers";
 
 interface OrderCardProps {
   order: Order;
@@ -143,11 +144,7 @@ export default function OrderCard({
           {/* Meta info */}
           <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-0.5 text-[10px] sm:text-xs text-neutral-darker">
             <span>
-              {new Date(order.orderDate).toLocaleDateString("vi-VN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })}
+              {formatDate(order.orderDate)}
             </span>
             <span className="text-neutral">•</span>
             {/* Hide payment method on very small screens */}
@@ -180,7 +177,7 @@ export default function OrderCard({
                 <span className="truncate">
                   Hết hạn TT:{" "}
                   <span className="font-semibold">
-                    {new Date(order.paymentExpiredAt).toLocaleString("vi-VN")}
+                    {formatDate(order.paymentExpiredAt, { withTime: true })}
                   </span>
                 </span>
               </div>
@@ -241,15 +238,12 @@ export default function OrderCard({
                   {/* Price */}
                   <div className="text-right shrink-0">
                     <p className="text-xs sm:text-sm font-semibold text-primary">
-                      {Number(item.unitPrice).toLocaleString("vi-VN")}₫
+                      {formatVND(Number(item.unitPrice))}
                     </p>
                     {Number(item.productVariant?.price) >
                       Number(item.unitPrice) && (
                       <p className="text-[10px] sm:text-xs line-through text-neutral-darker">
-                        {Number(item.productVariant?.price).toLocaleString(
-                          "vi-VN",
-                        )}
-                        ₫
+                        {formatVND(Number(item.productVariant?.price))}
                       </p>
                     )}
                   </div>
@@ -306,7 +300,7 @@ export default function OrderCard({
           <div className="flex items-center justify-between mb-2.5 sm:hidden">
             <span className="text-xs text-neutral-darker">Tổng cộng:</span>
             <span className="text-sm font-bold text-primary">
-              {Number(order.totalAmount).toLocaleString("vi-VN")}₫
+              {formatVND(Number(order.totalAmount))}
             </span>
           </div>
 
@@ -368,7 +362,7 @@ export default function OrderCard({
             <div className="hidden sm:block text-right shrink-0">
               <span className="text-xs text-neutral-darker">Tổng: </span>
               <span className="text-base font-bold text-primary">
-                {Number(order.totalAmount).toLocaleString("vi-VN")}₫
+                {formatVND(Number(order.totalAmount))}
               </span>
             </div>
           </div>

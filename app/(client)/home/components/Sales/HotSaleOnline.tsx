@@ -20,6 +20,7 @@ import { Slidezy } from "@/components/Slider";
 import { Flame, ChevronRight, Calendar } from "lucide-react";
 import HotSaleProductCard from "./HotSaleProductCard";
 import apiRequest from "@/lib/api";
+import { formatTime as formatLocaleTime } from "@/helpers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -82,7 +83,7 @@ function formatDateTab(dateStr: string): string {
 /** Format "HH:MM" từ ISO date string */
 function formatTime(dateStr: string | null): string {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  return formatLocaleTime(dateStr);
 }
 
 /** Label rút gọn của rule discount */

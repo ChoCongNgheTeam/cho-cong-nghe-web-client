@@ -160,7 +160,7 @@ export default function CartBottomBar({
                         </span>
                         <span className="text-sm">🪙</span>
                         <span className="text-sm font-medium text-accent-dark">
-                           +{rewardPoints.toLocaleString()}
+                           +{formatNumber(rewardPoints)}
                         </span>
                      </div>
                   )}
