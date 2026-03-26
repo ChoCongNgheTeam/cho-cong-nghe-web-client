@@ -1,36 +1,15 @@
-// ─── Query Params ─────────────────────────────────────────────────────────────
-
 export type DashboardPeriod = "today" | "week" | "month" | "year";
 
 export interface DashboardQuery {
   period?: DashboardPeriod;
 }
 
-// ─── Summary ──────────────────────────────────────────────────────────────────
-
 export interface DashboardSummary {
-  revenue: {
-    total: number;
-    change: number;
-  };
-  orders: {
-    total: number;
-    change: number;
-    pendingChatbot: number;
-  };
-  customers: {
-    total: number;
-    newThisPeriod: number;
-    change: number;
-  };
-  products: {
-    totalActive: number;
-    lowStock: number;
-    outOfStock: number;
-  };
+  revenue: { total: number; change: number; sparkline?: number[] };
+  orders: { total: number; change: number; pendingChatbot: number; sparkline?: number[] };
+  customers: { total: number; newThisPeriod: number; change: number; sparkline?: number[] };
+  products: { totalActive: number; lowStock: number; outOfStock: number };
 }
-
-// ─── Order Status Breakdown ───────────────────────────────────────────────────
 
 export interface OrderStatusBreakdown {
   status: string;
@@ -38,21 +17,27 @@ export interface OrderStatusBreakdown {
   percentage: number;
 }
 
-// ─── Recent Order ─────────────────────────────────────────────────────────────
+export interface OrderItem {
+  productName: string;
+  variantCode: string;
+  quantity: number;
+  unitPrice: number;
+}
 
 export interface RecentOrder {
   id: string;
   orderCode: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
+  customerAddress?: string;
   totalAmount: number;
   orderStatus: string;
   paymentStatus: string;
   orderDate: string;
   isChatbotRequest: boolean;
+  items?: OrderItem[];
 }
-
-// ─── Top Product ──────────────────────────────────────────────────────────────
 
 export interface TopProduct {
   productId: string;
@@ -62,9 +47,9 @@ export interface TopProduct {
   totalSold: number;
   totalRevenue: number;
   imageUrl: string | null;
+  currentStock?: number;
+  daysUntilStockout?: number;
 }
-
-// ─── Dashboard Response ───────────────────────────────────────────────────────
 
 export interface DashboardData {
   summary: DashboardSummary;
