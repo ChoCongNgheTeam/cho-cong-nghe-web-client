@@ -96,6 +96,7 @@ export default function PromotionDetailPage() {
       setLoading(true);
       getPromotion(id)
          .then((res) => {
+            console.log(res);
             setPromotion(res.data);
             setEditForm(promotionToForm(res.data));
          })
@@ -460,8 +461,9 @@ export default function PromotionDetailPage() {
                                           ] ?? target.targetType}
                                        </span>
                                        {target.targetId && (
-                                          <span className="font-mono text-[11px] text-neutral-dark truncate">
-                                             {target.targetId}
+                                          <span className="text-[13px] text-neutral-dark truncate">
+                                             {target.targetName ??
+                                                target.targetId}
                                           </span>
                                        )}
                                     </div>

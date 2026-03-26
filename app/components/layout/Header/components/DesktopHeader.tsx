@@ -7,7 +7,7 @@ import UserAvatar from "@/components/ui/UserAvatar";
 import CartIcon from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
-import WishlistIcon from "@/components/ui/HeartIcons";
+// import WishlistIcon from "@/components/ui/HeartIcons";
 import NotificationBell from "@/components/ui/NotificationBell";
 import { useRouter } from "next/navigation";
 import { useCompareStore } from "@/(client)/compare/compareStore";
@@ -55,7 +55,7 @@ const DesktopHeader = memo(
             {items.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">{items.length}</span>}
           </button>
           <NotificationBell />
-          <WishlistIcon />
+          {/* <WishlistIcon /> */}
           <CartIcon />
 
           {isLoading ? (

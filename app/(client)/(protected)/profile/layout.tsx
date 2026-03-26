@@ -80,7 +80,7 @@ export default function ProfileLayout({
   const isProfileHome = pathname === "/profile";
 
   return (
-    <div className="min-h-screen bg-neutral-light">
+    <div className=" bg-neutral-light">
       {/* ── Desktop layout ─────────────────────────────────────── */}
       <div className="container py-4 sm:py-6 pb-20 lg:pb-6">
         {/* Breadcrumb: hidden on mobile */}
@@ -88,22 +88,10 @@ export default function ProfileLayout({
           <Breadcrumb
             items={[
               { label: "Trang chủ", href: "/" },
-              { label: "Hồ sơ cá nhân", href: "/profile" },
+              { label: "Thông tin cá nhân", href: "/profile" },
               { label: breadcrumbLabel },
             ]}
           />
-        </div>
-
-        {/* Mobile header: back + title */}
-        <div className="flex sm:hidden items-center gap-2 mb-4">
-          {!isProfileHome && (
-            <Link href="/profile" className="text-primary p-1 -ml-1">
-              <ChevronRight className="w-5 h-5 rotate-180" />
-            </Link>
-          )}
-          <h1 className="text-base font-semibold text-primary">
-            {isProfileHome ? "Hồ sơ cá nhân" : breadcrumbLabel}
-          </h1>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
@@ -215,10 +203,10 @@ export default function ProfileLayout({
                   </p>
                 </div>
                 <Link
-                  href="/profile/editProfile"
+                  href="/profile/info"
                   className="text-xs text-accent font-medium shrink-0"
                 >
-                  Chỉnh sửa
+                  Xem hồ sơ
                 </Link>
               </div>
 
@@ -299,15 +287,7 @@ export default function ProfileLayout({
                 </Link>
               );
             })}
-            <button
-              onClick={logout}
-              className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg flex-1 text-primary opacity-60 hover:text-promotion transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-[10px] font-medium leading-tight">
-                Đăng xuất
-              </span>
-            </button>
+           
           </div>
         </nav>
       )}

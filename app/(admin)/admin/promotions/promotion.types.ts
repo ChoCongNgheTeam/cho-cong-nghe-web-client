@@ -19,6 +19,7 @@ export interface PromotionTarget {
    id: string;
    targetType: TargetType;
    targetId?: string;
+   targetName?: string;
 }
 
 export interface Promotion {
@@ -91,6 +92,7 @@ export interface CreatePromotionPayload {
    targets: Array<{
       targetType: TargetType;
       targetId?: string;
+      targetName?: string;
    }>;
 }
 

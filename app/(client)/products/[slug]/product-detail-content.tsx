@@ -32,6 +32,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
    * SCROLL TO TOP ON MOUNT
    * ========================================================================== */
   useLayoutEffect(() => {
+    window.history.scrollRestoration = "manual";
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     const timer = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
