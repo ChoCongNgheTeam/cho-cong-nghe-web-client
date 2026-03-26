@@ -102,9 +102,17 @@ export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
 
 // ─── Category Chart (Horizontal Bar) ─────────────────────────────────────────
 
-function CategoryTooltip({ active, payload }: TooltipProps<number, string>) {
+function CategoryTooltip(props: TooltipProps<ValueType, NameType>) {
+  const { active, payload } = props as TooltipProps<ValueType, NameType> & {
+    payload?: any[];
+  };
+
   if (!active || !payload?.length) return null;
-  const d = payload[0].payload as RevenueByCategory;
+
+  const d = payload[0]?.payload as RevenueByCategory;
+
+  if (!d) return null;
+
   return (
     <div className="bg-slate-900 text-white rounded-xl px-3 py-2 shadow-xl text-xs">
       <p className="font-semibold">{d.categoryName}</p>
@@ -141,7 +149,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
               {chartData.map((entry, i) => (
                 <Cell key={i} fill={entry.fill} />
               ))}
-              <LabelList dataKey="percentage" position="right" formatter={(v: number) => `${v.toFixed(1)}%`} style={{ fontSize: 10, fill: "#94a3b8" }} />
+              <LabelList dataKey="percentage" position="right" formatter={(v) => (typeof v === "number" ? `${v.toFixed(1)}%` : "")} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>

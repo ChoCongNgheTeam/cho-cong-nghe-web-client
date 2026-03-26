@@ -18,29 +18,17 @@ interface CommentSectionProps {
   onCommentSubmit: (content: string) => Promise<void>;
   onReplySubmit: (parentId: string, content: string) => Promise<void>;
   onFetchReplies: (commentId: string) => Promise<void>;
+  onFetchNestedReplies: (replyId: string, parentCommentId: string) => Promise<void>;
 }
 
 const AVATAR_SIZES = [36, 32];
 
 function Avatar({ user, size }: { user: CommentUser; size: number }) {
-  const validAvatar =
-    user?.avatarImage && !user.avatarImage.startsWith("./")
-      ? user.avatarImage
-      : undefined;
-  return (
-    <UserAvatar
-      avatarImage={validAvatar}
-      fullName={user?.fullName ?? ""}
-      size={size}
-    />
-  );
+  const validAvatar = user?.avatarImage && !user.avatarImage.startsWith("./") ? user.avatarImage : undefined;
+  return <UserAvatar avatarImage={validAvatar} fullName={user?.fullName ?? ""} size={size} />;
 }
 
-function insertReplyToComment(
-  comments: Comment[],
-  parentCommentId: string,
-  newReply: Reply,
-): Comment[] {
+function insertReplyToComment(comments: Comment[], parentCommentId: string, newReply: Reply): Comment[] {
   return comments.map((c) => {
     if (c.id === parentCommentId) {
       return {
@@ -53,22 +41,15 @@ function insertReplyToComment(
   });
 }
 
-function removeOptimisticReply(
-  comments: Comment[],
-  optimisticId: string,
-): Comment[] {
+function removeOptimisticReply(comments: Comment[], optimisticId: string): Comment[] {
   return comments.map((c) => ({
     ...c,
     replies: (c.replies ?? []).filter((r) => r.id !== optimisticId),
   }));
 }
 
-function findTopLevelParent(
-  comments: Comment[],
-  replyId: string,
-): string | undefined {
-  return comments.find((c) => (c.replies ?? []).some((r) => r.id === replyId))
-    ?.id;
+function findTopLevelParent(comments: Comment[], replyId: string): string | undefined {
+  return comments.find((c) => (c.replies ?? []).some((r) => r.id === replyId))?.id;
 }
 
 // ── CommentNode ───────────────────────────────────────────────────
@@ -85,10 +66,7 @@ interface CommentNodeProps {
   onSetReplyTarget: (id: string | null) => void;
   onReplyContentChange: (id: string, val: string) => void;
   onSubmitReply: (parentId: string) => void;
-  onKeyPress: (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    parentId: string,
-  ) => void;
+  onKeyPress: (e: React.KeyboardEvent<HTMLInputElement>, parentId: string) => void;
 }
 
 function CommentNode({
@@ -120,24 +98,16 @@ function CommentNode({
       <div className="flex-1 min-w-0">
         {/* Header */}
         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-          <span className="font-semibold text-xs sm:text-sm text-primary">
-            {node.user?.fullName}
-          </span>
+          <span className="font-semibold text-xs sm:text-sm text-primary">{node.user?.fullName}</span>
           {isOptimistic ? (
-            <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">
-              Đang gửi...
-            </span>
+            <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">Đang gửi...</span>
           ) : (
-            <span className="text-[11px] sm:text-xs text-neutral-darker">
-              • {formatRelativeDate(node.createdAt)}
-            </span>
+            <span className="text-[11px] sm:text-xs text-neutral-darker">• {formatRelativeDate(node.createdAt)}</span>
           )}
         </div>
 
         {/* Content */}
-        <p className="text-neutral-darker mb-2 text-xs sm:text-sm wrap-break-word whitespace-pre-wrap">
-          {node.content}
-        </p>
+        <p className="text-neutral-darker mb-2 text-xs sm:text-sm wrap-break-word whitespace-pre-wrap">{node.content}</p>
 
         {/* Actions — ẩn khi đang optimistic */}
         {!isOptimistic && (
@@ -148,22 +118,13 @@ function CommentNode({
             </button>
 
             {canReply && (
-              <button
-                onClick={() =>
-                  onSetReplyTarget(replyTargetId === node.id ? null : node.id)
-                }
-                className="hover:text-primary transition-colors cursor-pointer"
-              >
+              <button onClick={() => onSetReplyTarget(replyTargetId === node.id ? null : node.id)} className="hover:text-primary transition-colors cursor-pointer">
                 Trả lời
               </button>
             )}
 
             {canReply && hasChildren && (
-              <button
-                onClick={() => onToggleExpand(node.id, node)}
-                disabled={isLoading}
-                className="flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50 cursor-pointer"
-              >
+              <button onClick={() => onToggleExpand(node.id, node)} disabled={isLoading} className="flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50 cursor-pointer">
                 {isLoading ? (
                   <>
                     <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -171,14 +132,8 @@ function CommentNode({
                   </>
                 ) : (
                   <>
-                    {isExpanded ? (
-                      <ChevronUp className="w-3 h-3" />
-                    ) : (
-                      <ChevronDown className="w-3 h-3" />
-                    )}
-                    <span>
-                      {node._repliesCount ?? node.replies?.length ?? 0} phản hồi
-                    </span>
+                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    <span>{node._repliesCount ?? node.replies?.length ?? 0} phản hồi</span>
                   </>
                 )}
               </button>
@@ -201,9 +156,7 @@ function CommentNode({
             />
             <button
               onClick={() => onSubmitReply(node.id)}
-              disabled={
-                !replyContents[node.id]?.trim() || replySubmitting === node.id
-              }
+              disabled={!replyContents[node.id]?.trim() || replySubmitting === node.id}
               className="shrink-0 px-3 sm:px-4 py-2 bg-primary text-white rounded-full text-xs font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               {replySubmitting === node.id ? "Đang gửi..." : "Gửi"}
@@ -239,14 +192,7 @@ function CommentNode({
 }
 
 // ── Main ──────────────────────────────────────────────────────────
-export default function CommentSection({
-  productId,
-  comments: initialComments,
-  loading,
-  onCommentSubmit,
-  onReplySubmit,
-  onFetchReplies,
-}: CommentSectionProps) {
+export default function CommentSection({ productId, comments: initialComments, loading, onCommentSubmit, onReplySubmit, onFetchReplies }: CommentSectionProps) {
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const toast = useToasty();
@@ -254,14 +200,11 @@ export default function CommentSection({
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
-  const [replyContents, setReplyContents] = useState<Record<string, string>>(
-    {},
-  );
+  const [replyContents, setReplyContents] = useState<Record<string, string>>({});
   const [replySubmitting, setReplySubmitting] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
-  const [localComments, setLocalComments] =
-    useState<Comment[]>(initialComments);
+  const [localComments, setLocalComments] = useState<Comment[]>(initialComments);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const commentListRef = useRef<HTMLDivElement>(null);
@@ -277,14 +220,9 @@ export default function CommentSection({
       return;
     }
     setLocalComments((prev) => {
-      const optimisticNodes = prev.filter((c) =>
-        c.id.startsWith("optimistic-"),
-      );
+      const optimisticNodes = prev.filter((c) => c.id.startsWith("optimistic-"));
       if (optimisticNodes.length === 0) return initialComments;
-      const pendingOptimistics = optimisticNodes.filter(
-        (opt: any) =>
-          !initialComments.some((s: any) => s.clientId === opt.clientId),
-      );
+      const pendingOptimistics = optimisticNodes.filter((opt: any) => !initialComments.some((s: any) => s.clientId === opt.clientId));
       return [...pendingOptimistics, ...initialComments];
     });
   }, [initialComments]);
@@ -374,9 +312,7 @@ export default function CommentSection({
 
       // Luôn resolve về top-level comment
       const isTopLevel = localComments.some((c) => c.id === parentId);
-      const actualParentId = isTopLevel
-        ? parentId
-        : (findTopLevelParent(localComments, parentId) ?? parentId);
+      const actualParentId = isTopLevel ? parentId : (findTopLevelParent(localComments, parentId) ?? parentId);
 
       setReplyContents((prev) => ({ ...prev, [parentId]: "" }));
       setReplyTargetId(null);
@@ -396,9 +332,7 @@ export default function CommentSection({
         _repliesCount: 0,
       } as any;
 
-      setLocalComments((prev) =>
-        insertReplyToComment(prev, actualParentId, optimistic),
-      );
+      setLocalComments((prev) => insertReplyToComment(prev, actualParentId, optimistic));
       setExpandedIds((prev) => ({ ...prev, [actualParentId]: true }));
 
       try {
@@ -421,15 +355,7 @@ export default function CommentSection({
         setReplySubmitting(null);
       }
     },
-    [
-      replyContents,
-      replySubmitting,
-      productId,
-      localComments,
-      onReplySubmit,
-      isAuthenticated,
-      toast,
-    ],
+    [replyContents, replySubmitting, productId, localComments, onReplySubmit, isAuthenticated, toast],
   );
 
   const handleToggleExpand = useCallback(
@@ -468,9 +394,7 @@ export default function CommentSection({
   return (
     <div ref={commentListRef}>
       {/* ── Title ─────────────────────────────────────────────────── */}
-      <h4 className="text-lg sm:text-2xl font-semibold text-primary mb-6 sm:mb-8">
-        Bình luận
-      </h4>
+      <h4 className="text-lg sm:text-2xl font-semibold text-primary mb-6 sm:mb-8">Bình luận</h4>
 
       {/* ── Ask question block ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 pb-6 border-b border-neutral">
@@ -485,23 +409,16 @@ export default function CommentSection({
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">
-            Hãy đặt câu hỏi cho chúng tôi
-          </h4>
+          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">Hãy đặt câu hỏi cho chúng tôi</h4>
           <p className="text-xs sm:text-sm text-primary opacity-60 leading-relaxed">
-            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi
-            sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
+            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
           </p>
 
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 min-w-0">
               <input
                 type="text"
-                placeholder={
-                  isAuthenticated
-                    ? "Viết câu hỏi của bạn tại đây..."
-                    : "Đăng nhập để đặt câu hỏi..."
-                }
+                placeholder={isAuthenticated ? "Viết câu hỏi của bạn tại đây..." : "Đăng nhập để đặt câu hỏi..."}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onKeyPress={handleCommentKeyPress}
@@ -509,9 +426,7 @@ export default function CommentSection({
                 maxLength={3000}
                 className="w-full px-3 py-2.5 border border-neutral-dark rounded-lg text-sm focus:outline-none focus:border-neutral-darker bg-neutral-light text-primary disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-darker pointer-events-none">
-                {comment.length}/3000
-              </span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-darker pointer-events-none">{comment.length}/3000</span>
             </div>
             <button
               onClick={handleSubmitComment}
@@ -525,10 +440,7 @@ export default function CommentSection({
           {!isAuthenticated && (
             <p className="text-xs text-neutral-darker mt-2">
               Bạn cần{" "}
-              <a
-                href="/account?login"
-                className="text-primary underline hover:opacity-80 transition-opacity"
-              >
+              <a href="/account?login" className="text-primary underline hover:opacity-80 transition-opacity">
                 đăng nhập
               </a>{" "}
               để đặt câu hỏi hoặc trả lời bình luận.
@@ -538,9 +450,7 @@ export default function CommentSection({
       </div>
 
       {/* ── Comment count ────────────────────────────────────────── */}
-      <h4 className="text-sm sm:text-base text-primary">
-        Có {localComments.length} bình luận
-      </h4>
+      <h4 className="text-sm sm:text-base text-primary">Có {localComments.length} bình luận</h4>
 
       {/* ── Comment list ──────────────────────────────────────────── */}
       <div className="space-y-5 sm:space-y-6 mt-5 sm:mt-6">
@@ -552,17 +462,12 @@ export default function CommentSection({
         ) : localComments.length === 0 ? (
           <div className="text-center py-8 text-neutral-darker">
             <p className="text-base sm:text-lg">Chưa có bình luận nào</p>
-            <p className="text-xs sm:text-sm mt-1">
-              Hãy là người đầu tiên bình luận!
-            </p>
+            <p className="text-xs sm:text-sm mt-1">Hãy là người đầu tiên bình luận!</p>
           </div>
         ) : (
           <>
             {visibleComments.map((c) => (
-              <div
-                key={c.id}
-                className="pb-4 sm:pb-5 border-b border-neutral last:border-0"
-              >
+              <div key={c.id} className="pb-4 sm:pb-5 border-b border-neutral last:border-0">
                 <CommentNode
                   node={c}
                   depth={0}
@@ -573,9 +478,7 @@ export default function CommentSection({
                   loadingIds={loadingIds}
                   onToggleExpand={handleToggleExpand}
                   onSetReplyTarget={setReplyTargetId}
-                  onReplyContentChange={(id, val) =>
-                    setReplyContents((prev) => ({ ...prev, [id]: val }))
-                  }
+                  onReplyContentChange={(id, val) => setReplyContents((prev) => ({ ...prev, [id]: val }))}
                   onSubmitReply={handleSubmitReply}
                   onKeyPress={handleKeyPress}
                 />

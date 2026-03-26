@@ -39,6 +39,10 @@ interface ConversionFunnelProps {
 
 export function ConversionFunnelChart({ data }: ConversionFunnelProps) {
   const total = Math.max(data.requested + data.pending, 1);
+  const formatNumber = (v: unknown) => {
+    if (typeof v !== "number") return "";
+    return v.toLocaleString("vi-VN");
+  };
 
   const chartData = STEPS.map((s) => ({
     label: s.label,
@@ -60,7 +64,7 @@ export function ConversionFunnelChart({ data }: ConversionFunnelProps) {
             {chartData.map((entry, i) => (
               <Cell key={i} fill={entry.color} />
             ))}
-            <LabelList dataKey="value" position="right" formatter={(v: number) => v.toLocaleString("vi-VN")} style={{ fontSize: 10, fill: "#94a3b8" }} />
+            <LabelList dataKey="value" position="right" formatter={formatNumber} style={{ fontSize: 10, fill: "#94a3b8" }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
