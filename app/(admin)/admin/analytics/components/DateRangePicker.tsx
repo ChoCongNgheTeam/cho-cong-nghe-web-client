@@ -2,27 +2,22 @@
 
 import type { TimeGranularity } from "../analytics.types";
 
-// ─── Granularity Selector ─────────────────────────────────────────────────────
+// ─── Granularity ──────────────────────────────────────────────────────────────
 
 const GRANULARITIES: { value: TimeGranularity; label: string }[] = [
-  { value: "day", label: "Theo ngày" },
-  { value: "week", label: "Theo tuần" },
-  { value: "month", label: "Theo tháng" },
+  { value: "day", label: "Ngày" },
+  { value: "week", label: "Tuần" },
+  { value: "month", label: "Tháng" },
 ];
 
-interface GranularitySelectorProps {
-  value: TimeGranularity;
-  onChange: (g: TimeGranularity) => void;
-}
-
-export function GranularitySelector({ value, onChange }: GranularitySelectorProps) {
+export function GranularitySelector({ value, onChange }: { value: TimeGranularity; onChange: (g: TimeGranularity) => void }) {
   return (
-    <div className="inline-flex items-center bg-slate-100 rounded-xl p-1 gap-0.5">
+    <div className="inline-flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
       {GRANULARITIES.map((g) => (
         <button
           key={g.value}
           onClick={() => onChange(g.value)}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${value === g.value ? "bg-accent text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${value === g.value ? "bg-accent text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
         >
           {g.label}
         </button>
@@ -31,46 +26,40 @@ export function GranularitySelector({ value, onChange }: GranularitySelectorProp
   );
 }
 
-// ─── Quick Range Presets ──────────────────────────────────────────────────────
+// ─── Quick Range ──────────────────────────────────────────────────────────────
 
 export type QuickRange = "7d" | "30d" | "90d" | "ytd" | "custom";
 
 const PRESETS: { value: QuickRange; label: string }[] = [
-  { value: "7d", label: "7 ngày" },
-  { value: "30d", label: "30 ngày" },
-  { value: "90d", label: "90 ngày" },
-  { value: "ytd", label: "Năm nay" },
-  { value: "custom", label: "Tuỳ chọn" },
+  { value: "7d", label: "7N" },
+  { value: "30d", label: "30N" },
+  { value: "90d", label: "90N" },
+  { value: "ytd", label: "Năm" },
 ];
 
-/** Format Date → "YYYY-MM-DD" */
-const toDateStr = (d: Date) => d.toISOString().split("T")[0];
+const toStr = (d: Date) => d.toISOString().split("T")[0];
 
-/** Resolve preset → { from, to } */
 export const resolvePreset = (preset: QuickRange, customFrom?: string, customTo?: string): { from: string; to: string } => {
   const now = new Date();
-  const today = toDateStr(now);
-
+  const today = toStr(now);
   switch (preset) {
     case "7d": {
-      const from = new Date(now);
-      from.setDate(from.getDate() - 6);
-      return { from: toDateStr(from), to: today };
+      const f = new Date(now);
+      f.setDate(f.getDate() - 6);
+      return { from: toStr(f), to: today };
     }
     case "30d": {
-      const from = new Date(now);
-      from.setDate(from.getDate() - 29);
-      return { from: toDateStr(from), to: today };
+      const f = new Date(now);
+      f.setDate(f.getDate() - 29);
+      return { from: toStr(f), to: today };
     }
     case "90d": {
-      const from = new Date(now);
-      from.setDate(from.getDate() - 89);
-      return { from: toDateStr(from), to: today };
+      const f = new Date(now);
+      f.setDate(f.getDate() - 89);
+      return { from: toStr(f), to: today };
     }
-    case "ytd": {
-      const from = new Date(now.getFullYear(), 0, 1);
-      return { from: toDateStr(from), to: today };
-    }
+    case "ytd":
+      return { from: toStr(new Date(now.getFullYear(), 0, 1)), to: today };
     case "custom":
       return { from: customFrom ?? today, to: customTo ?? today };
   }
@@ -80,28 +69,28 @@ interface DateRangePickerProps {
   preset: QuickRange;
   from: string;
   to: string;
-  onPresetChange: (preset: QuickRange) => void;
+  onPresetChange: (p: QuickRange) => void;
   onCustomChange: (from: string, to: string) => void;
 }
 
 export function DateRangePicker({ preset, from, to, onPresetChange, onCustomChange }: DateRangePickerProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center gap-1.5">
       {/* Preset buttons */}
-      <div className="inline-flex items-center bg-slate-100 rounded-xl p-1 gap-0.5">
-        {PRESETS.filter((p) => p.value !== "custom").map((p) => (
+      <div className="inline-flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
+        {PRESETS.map((p) => (
           <button
             key={p.value}
             onClick={() => onPresetChange(p.value)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${preset === p.value ? "bg-accent text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${preset === p.value ? "bg-accent text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
           >
             {p.label}
           </button>
         ))}
       </div>
 
-      {/* Custom date inputs */}
-      <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
+      {/* Custom date range */}
+      <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1">
         <input
           type="date"
           value={from}
@@ -110,9 +99,9 @@ export function DateRangePicker({ preset, from, to, onPresetChange, onCustomChan
             onPresetChange("custom");
             onCustomChange(e.target.value, to);
           }}
-          className="text-xs text-slate-700 bg-transparent outline-none cursor-pointer"
+          className="text-[11px] text-slate-700 bg-transparent outline-none cursor-pointer w-[90px]"
         />
-        <span className="text-slate-300 text-xs">→</span>
+        <span className="text-slate-300 text-[11px]">→</span>
         <input
           type="date"
           value={to}
@@ -122,7 +111,7 @@ export function DateRangePicker({ preset, from, to, onPresetChange, onCustomChan
             onPresetChange("custom");
             onCustomChange(from, e.target.value);
           }}
-          className="text-xs text-slate-700 bg-transparent outline-none cursor-pointer"
+          className="text-[11px] text-slate-700 bg-transparent outline-none cursor-pointer w-[90px]"
         />
       </div>
     </div>

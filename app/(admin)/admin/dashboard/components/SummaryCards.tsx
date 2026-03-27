@@ -2,7 +2,6 @@
 
 import { TrendingUp, TrendingDown, ShoppingCart, Users, Package, Bot } from "lucide-react";
 import type { DashboardSummary } from "../dashboard.types";
-import { formatNumber, formatVND } from "@/helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
