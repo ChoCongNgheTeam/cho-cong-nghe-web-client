@@ -15,29 +15,25 @@ import { TopCustomersTable } from "./components/TopCustomersTable";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function AnalyticsSkeleton() {
+function Skeleton() {
   return (
-    <div className="animate-pulse space-y-4">
-      {/* Main grid skeleton */}
-      <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-4">
-        {/* KPI column */}
-        <div className="space-y-3">
+    <div className="animate-pulse space-y-2.5">
+      <div className="grid grid-cols-[180px_1fr] gap-2.5">
+        <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 h-24" />
+            <div key={i} className="bg-white rounded-xl border border-slate-100 h-12" />
           ))}
         </div>
-        {/* Charts area */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-100 h-56" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="bg-white rounded-2xl border border-slate-100 h-64" />
-            <div className="bg-white rounded-2xl border border-slate-100 h-64" />
-            <div className="bg-white rounded-2xl border border-slate-100 h-64" />
+        <div className="space-y-2.5">
+          <div className="bg-white rounded-xl border border-slate-100 h-44" />
+          <div className="grid grid-cols-3 gap-2.5">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl border border-slate-100 h-48" />
+            ))}
           </div>
         </div>
       </div>
-      {/* Table skeleton */}
-      <div className="bg-white rounded-2xl border border-slate-100 h-48" />
+      <div className="bg-white rounded-xl border border-slate-100 h-32" />
     </div>
   );
 }
@@ -63,27 +59,25 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 space-y-2.5">
         {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
-              <BarChart3 className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center shrink-0">
+              <BarChart3 className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 leading-tight">Thống kê doanh thu</h1>
-              <p className="text-xs text-slate-400 mt-0.5">{from === to ? from : `${from} → ${to}`}</p>
+              <h1 className="text-sm font-bold text-slate-900 leading-tight">Thống kê doanh thu</h1>
+              <p className="text-[10px] text-slate-400">{from === to ? from : `${from} → ${to}`}</p>
             </div>
           </div>
 
-          {/* Controls row */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <DateRangePicker
               preset={preset}
               from={from}
               to={to}
-              onPresetChange={(p) => setPreset(p)}
+              onPresetChange={setPreset}
               onCustomChange={(f, t) => {
                 setCustomFrom(f);
                 setCustomTo(t);
@@ -93,32 +87,32 @@ export default function AnalyticsPage() {
             <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-accent hover:border-accent/30 transition-colors disabled:opacity-50"
+              className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-accent hover:border-accent/30 transition-colors disabled:opacity-50"
               title="Làm mới"
             >
-              <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
 
         {/* ── Loading ── */}
-        {isLoading && <AnalyticsSkeleton />}
+        {isLoading && <Skeleton />}
 
         {/* ── Content ── */}
         {analytics && (
-          <div className="space-y-4">
-            {/* ── Main grid: KPI sidebar + Charts ── */}
-            <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-4 items-start">
-              {/* Col 1 — KPI cards stacked vertically */}
+          <div className="space-y-2.5">
+            {/* ── Main grid: KPI sidebar (fixed 180px) + charts ── */}
+            <div className="grid grid-cols-1 xl:grid-cols-[180px_1fr] gap-2.5 items-start">
+              {/* Col 1: KPI stack */}
               <SummaryKPIs summary={analytics.summary} />
 
-              {/* Col 2-4 — Charts stacked */}
-              <div className="space-y-4">
-                {/* Row A: Revenue chart — full width of right area */}
-                <RevenueChart data={analytics.revenueOverTime} />
+              {/* Col 2: Charts */}
+              <div className="space-y-2.5">
+                {/* Revenue line chart — full width of right col */}
+                <RevenueChart data={analytics.revenueOverTime} comparison={analytics.comparisonOverTime} />
 
-                {/* Row B: 3 equal columns — Payment | Category | Funnel */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 3-col breakdown row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                   <PaymentMethodChart data={analytics.revenueByPaymentMethod} />
                   <CategoryChart data={analytics.revenueByCategory} />
                   <ConversionFunnelChart data={analytics.conversionFunnel} />
@@ -126,17 +120,17 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* ── Row 2: Top customers — full 4 cols ── */}
+            {/* ── Top customers full-width ── */}
             <TopCustomersTable customers={analytics.topCustomers} />
           </div>
         )}
 
-        {/* ── Error state ── */}
+        {/* ── Error ── */}
         {!isLoading && !analytics && (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <BarChart3 className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">Không thể tải dữ liệu. Vui lòng thử lại.</p>
-            <button onClick={() => refetch()} className="mt-4 text-sm text-accent hover:underline">
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <BarChart3 className="w-8 h-8 mb-2 opacity-30" />
+            <p className="text-xs">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+            <button onClick={() => refetch()} className="mt-3 text-xs text-accent hover:underline">
               Thử lại
             </button>
           </div>
