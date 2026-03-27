@@ -156,14 +156,10 @@ function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; 
 
       {/* Thời gian hoặc rule label */}
       <div className="text-[11px] mt-0.5 leading-tight">
-        {day.isToday && mainPromotion?.endDate ? (
+        {day.isToday && mainPromotion?.endDate && (
           <span className="text-primary">
             Kết thúc: <Countdown endDate={mainPromotion.endDate} />
           </span>
-        ) : day.hasActiveSale ? (
-          <span className="text-neutral-dark">{startTime && endTime ? `${startTime} – ${endTime}` : ruleLabel || "Có sale"}</span>
-        ) : (
-          <span className="text-neutral-dark/50">Không có sale</span>
         )}
       </div>
 
@@ -237,6 +233,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
       setLoadingDate(date);
       try {
         const res = await apiRequest.get<any>("/home/sale-by-date", { params: { date, limit: 20 } });
+        console.log(res);
         const result = res.data;
         setProductsCache((prev) => ({
           ...prev,
@@ -349,7 +346,6 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                     })}
                   </div>
                 ) : (
-                  // nhiều card → dùng slider
                   <Slidezy
                     items={{ mobile: 1, tablet: 2, lg: 3, desktop: 4 }}
                     gap={16}
