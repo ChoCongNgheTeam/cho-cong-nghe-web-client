@@ -11,13 +11,6 @@
 
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
-import type {
-   MultiValue,
-   StylesConfig,
-   GroupBase,
-   components as RSComponents,
-} from "react-select";
-import { components } from "react-select";
 import apiRequest from "@/lib/api";
 
 // ── Shared type ────────────────────────────────────────────────────────────────
@@ -33,8 +26,8 @@ export interface EntityOption {
 // ── Internal react-select option shape ────────────────────────────────────────
 
 interface RsOption {
-   value: string; // entity id
-   label: string; // entity name
+   value: string;
+   label: string;
    meta?: string;
    thumbnail?: string;
    price?: number;
@@ -60,139 +53,131 @@ function fromRs(o: RsOption): EntityOption {
    };
 }
 
-// ── Shared styles (matches design system CSS variables) ────────────────────────
+// ── Shared styles (matches Notification rsStyles pattern) ──────────────────────
 
-function makeStyles<IsMulti extends boolean = true>(): StylesConfig<
-   RsOption,
-   IsMulti,
-   GroupBase<RsOption>
-> {
-   return {
-      control: (base, state) => ({
-         ...base,
-         minHeight: "42px",
-         borderRadius: "0.75rem",
-         borderColor: state.isFocused
-            ? "var(--color-accent-hover, #0369a1)"
-            : "var(--color-neutral, #e5e7eb)",
-         boxShadow: state.isFocused
-            ? "0 0 0 2px color-mix(in srgb, var(--color-accent, #0ea5e9) 20%, transparent)"
-            : "none",
-         backgroundColor: "var(--color-neutral-light, #fff)",
-         "&:hover": { borderColor: "var(--color-accent-hover, #0369a1)" },
-         transition: "border-color 0.15s, box-shadow 0.15s",
-         cursor: "text",
-         flexWrap: "wrap",
-      }),
-      valueContainer: (base) => ({
-         ...base,
-         padding: "4px 8px",
-         gap: "4px",
-         flexWrap: "wrap",
-      }),
-      multiValue: (base) => ({
-         ...base,
-         backgroundColor:
-            "color-mix(in srgb, var(--color-accent, #0ea5e9) 12%, transparent)",
-         borderRadius: "0.5rem",
-         padding: "0 2px",
-         margin: 0,
-      }),
-      multiValueLabel: (base) => ({
-         ...base,
-         color: "var(--color-accent-hover, #0369a1)",
-         fontSize: "12px",
-         fontWeight: 500,
-         padding: "2px 4px",
-      }),
-      multiValueRemove: (base) => ({
-         ...base,
-         color: "var(--color-accent-hover, #0369a1)",
-         borderRadius: "0 0.5rem 0.5rem 0",
-         cursor: "pointer",
-         "&:hover": {
-            backgroundColor: "var(--color-accent-hover, #0369a1)",
-            color: "#fff",
-         },
-      }),
-      input: (base) => ({
-         ...base,
-         color: "var(--color-primary, #111827)",
-         fontSize: "13px",
-         margin: 0,
-         padding: "2px 0",
-      }),
-      placeholder: (base) => ({
-         ...base,
-         color: "var(--color-neutral-dark, #9ca3af)",
-         fontSize: "13px",
-      }),
-      menu: (base) => ({
-         ...base,
-         borderRadius: "0.75rem",
-         border: "1px solid var(--color-neutral, #e5e7eb)",
-         boxShadow:
-            "0 10px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06)",
-         overflow: "hidden",
-         zIndex: 9999,
-         backgroundColor: "var(--color-neutral-light, #fff)",
-         marginTop: "6px",
-      }),
-      menuList: (base) => ({
-         ...base,
-         padding: "4px",
-         maxHeight: "260px",
-      }),
-      option: (base, state) => ({
-         ...base,
-         borderRadius: "0.5rem",
-         padding: "6px 10px",
-         backgroundColor: state.isSelected
-            ? "color-mix(in srgb, var(--color-accent, #0ea5e9) 15%, transparent)"
-            : state.isFocused
-              ? "var(--color-neutral, #f3f4f6)"
-              : "transparent",
-         color: state.isSelected
-            ? "var(--color-accent-hover, #0369a1)"
-            : "var(--color-primary, #111827)",
-         cursor: "pointer",
-         fontSize: "13px",
-         fontWeight: state.isSelected ? 500 : 400,
-         "&:active": { backgroundColor: "var(--color-neutral-hover, #e5e7eb)" },
-      }),
-      loadingMessage: (base) => ({
-         ...base,
-         color: "var(--color-neutral-darker, #6b7280)",
-         fontSize: "13px",
-         padding: "12px 16px",
-      }),
-      noOptionsMessage: (base) => ({
-         ...base,
-         color: "var(--color-neutral-darker, #6b7280)",
-         fontSize: "13px",
-         padding: "12px 16px",
-      }),
-      indicatorSeparator: () => ({ display: "none" }),
-      dropdownIndicator: (base, state) => ({
-         ...base,
-         color: state.isFocused
-            ? "var(--color-accent-hover, #0369a1)"
-            : "var(--color-neutral-darker, #9ca3af)",
-         padding: "0 8px",
-         transition: "color 0.15s, transform 0.2s",
-         transform: state.selectProps.menuIsOpen
-            ? "rotate(180deg)"
-            : "rotate(0deg)",
-      }),
-      clearIndicator: (base) => ({
-         ...base,
-         color: "var(--color-neutral-darker, #9ca3af)",
-         padding: "0 4px",
-         cursor: "pointer",
-         "&:hover": { color: "var(--color-primary, #111827)" },
-      }),
-   };
-}
+const rsStyles = {
+   control: (b: any, s: any) => ({
+      ...b,
+      minHeight: "42px",
+      borderRadius: "0.75rem",
+      borderColor: s.isFocused
+         ? "var(--color-accent-hover, #0369a1)"
+         : "var(--color-neutral, #e5e7eb)",
+      boxShadow: s.isFocused
+         ? "0 0 0 2px color-mix(in srgb, var(--color-accent, #0ea5e9) 20%, transparent)"
+         : "none",
+      backgroundColor: "var(--color-neutral-light, #fff)",
+      "&:hover": { borderColor: "var(--color-accent-hover, #0369a1)" },
+      transition: "border-color 0.15s, box-shadow 0.15s",
+      cursor: "text",
+      flexWrap: "wrap",
+   }),
+   valueContainer: (b: any) => ({
+      ...b,
+      padding: "4px 8px",
+      gap: "4px",
+      flexWrap: "wrap",
+   }),
+   multiValue: (b: any) => ({
+      ...b,
+      backgroundColor:
+         "color-mix(in srgb, var(--color-accent, #0ea5e9) 12%, transparent)",
+      borderRadius: "0.5rem",
+      padding: "0 2px",
+      margin: 0,
+   }),
+   multiValueLabel: (b: any) => ({
+      ...b,
+      color: "var(--color-accent-hover, #0369a1)",
+      fontSize: "12px",
+      fontWeight: 500,
+      padding: "2px 4px",
+   }),
+   multiValueRemove: (b: any) => ({
+      ...b,
+      color: "var(--color-accent-hover, #0369a1)",
+      borderRadius: "0 0.5rem 0.5rem 0",
+      cursor: "pointer",
+      "&:hover": {
+         backgroundColor: "var(--color-accent-hover, #0369a1)",
+         color: "#fff",
+      },
+   }),
+   input: (b: any) => ({
+      ...b,
+      color: "var(--color-primary, #111827)",
+      fontSize: "13px",
+      margin: 0,
+      padding: "2px 0",
+   }),
+   placeholder: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-dark, #9ca3af)",
+      fontSize: "13px",
+   }),
+   menu: (b: any) => ({
+      ...b,
+      borderRadius: "0.75rem",
+      border: "1px solid var(--color-neutral, #e5e7eb)",
+      boxShadow:
+         "0 10px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06)",
+      overflow: "hidden",
+      zIndex: 9999,
+      backgroundColor: "var(--color-neutral-light, #fff)",
+      marginTop: "6px",
+   }),
+   menuList: (b: any) => ({
+      ...b,
+      padding: "4px",
+      maxHeight: "260px",
+   }),
+   option: (b: any, s: any) => ({
+      ...b,
+      borderRadius: "0.5rem",
+      padding: "6px 10px",
+      backgroundColor: s.isSelected
+         ? "color-mix(in srgb, var(--color-accent, #0ea5e9) 15%, transparent)"
+         : s.isFocused
+           ? "var(--color-neutral, #f3f4f6)"
+           : "transparent",
+      color: s.isSelected
+         ? "var(--color-accent-hover, #0369a1)"
+         : "var(--color-primary, #111827)",
+      cursor: "pointer",
+      fontSize: "13px",
+      fontWeight: s.isSelected ? 500 : 400,
+      "&:active": { backgroundColor: "var(--color-neutral-hover, #e5e7eb)" },
+   }),
+   loadingMessage: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-darker, #6b7280)",
+      fontSize: "13px",
+      padding: "12px 16px",
+   }),
+   noOptionsMessage: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-darker, #6b7280)",
+      fontSize: "13px",
+      padding: "12px 16px",
+   }),
+   indicatorSeparator: () => ({ display: "none" }),
+   dropdownIndicator: (b: any, s: any) => ({
+      ...b,
+      color: s.isFocused
+         ? "var(--color-accent-hover, #0369a1)"
+         : "var(--color-neutral-darker, #9ca3af)",
+      padding: "0 8px",
+      transition: "color 0.15s, transform 0.2s",
+      transform: s.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
+   }),
+   clearIndicator: (b: any) => ({
+      ...b,
+      color: "var(--color-neutral-darker, #9ca3af)",
+      padding: "0 4px",
+      cursor: "pointer",
+      "&:hover": { color: "var(--color-primary, #111827)" },
+   }),
+};
 
 // ── Custom Option: thumbnail + name + meta + price ─────────────────────────────
 
@@ -200,7 +185,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
    const price = data.price;
    return (
       <div className="flex items-center gap-2.5 py-0.5">
-         {/* Thumbnail */}
          <div className="shrink-0 w-8 h-8 rounded-md overflow-hidden border border-neutral bg-white flex items-center justify-center">
             {data.thumbnail ? (
                // eslint-disable-next-line @next/next/no-img-element
@@ -227,7 +211,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
             )}
          </div>
 
-         {/* Name + meta */}
          <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-primary truncate leading-tight">
                {data.label}
@@ -239,7 +222,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
             )}
          </div>
 
-         {/* Price */}
          {price != null && (
             <span className="shrink-0 text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                {new Intl.NumberFormat("vi-VN", {
@@ -251,13 +233,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
       </div>
    );
 }
-
-// Custom MultiValue: hiển thị tên ngắn gọn trong tag
-const MultiValueLabelProduct = (props: any) => (
-   <components.MultiValueLabel {...props}>
-      <span className="text-[12px]">{props.data.label}</span>
-   </components.MultiValueLabel>
-);
 
 // ── API loader ─────────────────────────────────────────────────────────────────
 
@@ -275,6 +250,8 @@ async function defaultSearchProducts(term: string): Promise<RsOption[]> {
       price: p.price?.base,
    }));
 }
+
+// ── SingleProductSearch ────────────────────────────────────────────────────────
 
 interface SingleProductSearchProps {
    value: EntityOption | null;
@@ -296,21 +273,19 @@ export function SingleProductSearch({
       return defaultSearchProducts(inputValue);
    };
 
-   const styles = makeStyles<false>();
-
    return (
-      <AsyncSelect<RsOption, false>
+      <AsyncSelect
          cacheOptions
          defaultOptions={false}
          loadOptions={loadOptions}
          value={value ? toRs(value) : null}
-         onChange={(opt) => onChange(opt ? fromRs(opt) : null)}
+         onChange={(opt: any) => onChange(opt ? fromRs(opt) : null)}
          placeholder={placeholder}
          isDisabled={isDisabled}
-         styles={styles}
-         formatOptionLabel={(opt) => <ProductOptionLabel data={opt} />}
+         styles={rsStyles}
+         formatOptionLabel={(opt: any) => <ProductOptionLabel data={opt} />}
          loadingMessage={() => "Đang tìm kiếm..."}
-         noOptionsMessage={({ inputValue }) =>
+         noOptionsMessage={({ inputValue }: any) =>
             inputValue
                ? `Không tìm thấy "${inputValue}"`
                : "Nhập để tìm sản phẩm"
@@ -321,7 +296,7 @@ export function SingleProductSearch({
    );
 }
 
-// ── SingleSelectDropdown (preloaded, single) ──────────────────────────────────
+// ── SingleSelectDropdown ───────────────────────────────────────────────────────
 
 interface SingleSelectDropdownProps {
    value: EntityOption | null;
@@ -340,17 +315,15 @@ export function SingleSelectDropdown({
    placeholder = "Chọn...",
    isDisabled = false,
 }: SingleSelectDropdownProps) {
-   const styles = makeStyles<false>();
-
    return (
-      <Select<RsOption, false>
+      <Select
          options={options.map(toRs)}
          value={value ? toRs(value) : null}
-         onChange={(opt) => onChange(opt ? fromRs(opt) : null)}
+         onChange={(opt: any) => onChange(opt ? fromRs(opt) : null)}
          placeholder={loading ? "Đang tải..." : placeholder}
          isDisabled={isDisabled || loading}
          isLoading={loading}
-         styles={styles}
+         styles={rsStyles}
          noOptionsMessage={() => "Không có lựa chọn"}
          isClearable
          classNamePrefix="rs-single"

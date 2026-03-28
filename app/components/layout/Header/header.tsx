@@ -22,6 +22,7 @@ import DesktopHeader from "./components/DesktopHeader";
 import { useUserMenu } from "@/hooks/useUserMenu";
 import { useTheme } from "@/hooks/useTheme";
 import UserAvatar from "@/components/ui/UserAvatar";
+import TrendingBar from "./components/TrendingBar";
 
 const Header = () => {
    const [searchQuery, setSearchQuery] = useState("");
@@ -217,6 +218,7 @@ const Header = () => {
                      onUserMenuClose={() => setShowUserMenu(false)}
                      onLogout={logout}
                   />
+                  <TrendingBar />
                </div>
             </div>
          </div>
@@ -274,8 +276,13 @@ const Header = () => {
                   ) : isAuthenticated && user ? (
                      <>
                         {/* User info card */}
-                        <Link href="/profile" className="block" onClick={() => setMobileMenuOpen(false)}>
-                           <div className="
+                        <Link
+                           href="/profile"
+                           className="block"
+                           onClick={() => setMobileMenuOpen(false)}
+                        >
+                           <div
+                              className="
                               mx-1 mb-2 px-3 py-3 
                               bg-accent/10 rounded-xl
 
@@ -286,10 +293,13 @@ const Header = () => {
                               hover:shadow-md
 
                               active:scale-95
-                           ">
+                           "
+                           >
                               <div className="flex items-center gap-3">
                                  <UserAvatar
-                                    avatarImage={user.avatarImage || "/images/avatar.png"}
+                                    avatarImage={
+                                       user.avatarImage || "/images/avatar.png"
+                                    }
                                     fullName={user.fullName}
                                     size={48}
                                  />
@@ -303,7 +313,7 @@ const Header = () => {
                                  </div>
                               </div>
                            </div>
-                     </Link>
+                        </Link>
 
                         <MenuItem
                            href="/profile/info"
@@ -337,7 +347,6 @@ const Header = () => {
                         />
 
                         <div className="mx-1 my-1 border-t border-neutral" />
-
                      </>
                   ) : (
                      <>
@@ -375,16 +384,16 @@ const Header = () => {
                      label="So sánh sản phẩm"
                      onClick={() => setMobileMenuOpen(false)}
                   />
-                       <button
-                           onClick={() => {
-                              logout();
-                              setMobileMenuOpen(false);
-                           }}
-                           className="flex items-center gap-3 py-2.5 px-3 mx-1 rounded-xl text-promotion hover:bg-promotion/10 transition-colors cursor-pointer"
-                        >
-                           <LogOut className="h-5 w-5" />
-                           <span className="text-sm font-medium">Đăng xuất</span>
-                        </button>
+                  <button
+                     onClick={() => {
+                        logout();
+                        setMobileMenuOpen(false);
+                     }}
+                     className="flex items-center gap-3 py-2.5 px-3 mx-1 rounded-xl text-promotion hover:bg-promotion/10 transition-colors cursor-pointer"
+                  >
+                     <LogOut className="h-5 w-5" />
+                     <span className="text-sm font-medium">Đăng xuất</span>
+                  </button>
                </nav>
             </div>
          </div>

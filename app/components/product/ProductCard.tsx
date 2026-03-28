@@ -58,7 +58,7 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
                 <div className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center text-neutral-dark">
                   <HighlightIcon icon={highlight.icon} />
                 </div>
-                <span className="text-[8px] xs:text-[9px] w-full text-center text-primary leading-tight break-words hyphens-auto">
+                <span className="text-[8px] xs:text-[9px] w-full text-center text-primary leading-tight break-words hyphens-auto" style={{ textWrap: "balance" }}>
                   {highlight.name}
                   <br />
                   <span className="font-semibold text-balance">{highlight.value}</span>
