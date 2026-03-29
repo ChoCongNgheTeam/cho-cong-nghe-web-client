@@ -1,14 +1,16 @@
+import type { PaymentMethod } from "../data";
+
 type Props = {
-  method: any;
+  method: PaymentMethod;
 };
 
 export default function PaymentCard({ method }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+    <div className="bg-neutral-light rounded-2xl border border-neutral p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <span className="text-3xl">{method.icon}</span>
-          <h3 className="font-semibold text-stone-800 text-sm leading-tight">
+          <h3 className="font-semibold text-primary text-sm leading-tight">
             {method.name}
           </h3>
         </div>
@@ -20,7 +22,7 @@ export default function PaymentCard({ method }: Props) {
         </span>
       </div>
 
-      <p className="text-stone-500 text-sm leading-relaxed mb-4">
+      <p className="text-neutral-dark text-sm leading-relaxed mb-4">
         {method.desc}
       </p>
 
@@ -28,9 +30,9 @@ export default function PaymentCard({ method }: Props) {
         {method.pros.map((pro: string, i: number) => (
           <li
             key={i}
-            className="flex items-center gap-2 text-sm text-stone-600"
+            className="flex items-center gap-2 text-sm text-neutral-darker"
           >
-            <span className="w-4 h-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs shrink-0">
+            <span className="w-4 h-4 rounded-full bg-accent-light text-accent flex items-center justify-center text-xs shrink-0">
               ✓
             </span>
             {pro}
@@ -39,9 +41,9 @@ export default function PaymentCard({ method }: Props) {
       </ul>
 
       {method.note && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
-          <span className="text-amber-500 text-xs mt-0.5 shrink-0">⚠</span>
-          <p className="text-amber-700 text-xs">{method.note}</p>
+        <div className="flex items-start gap-2 bg-accent-light border border-accent-light-active rounded-lg px-3 py-2 mt-3">
+          <span className="text-accent text-xs mt-0.5 shrink-0">⚠</span>
+          <p className="text-accent-dark text-xs">{method.note}</p>
         </div>
       )}
     </div>

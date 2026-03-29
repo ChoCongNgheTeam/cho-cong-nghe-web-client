@@ -45,13 +45,15 @@ export const steps = [
   },
 ];
 
+export type StepItem = (typeof steps)[number];
+
 export const paymentMethods = [
   {
     icon: "💵",
     name: "Thanh toán khi nhận hàng (COD)",
     desc: "Thanh toán trực tiếp cho nhân viên giao hàng khi nhận sản phẩm.",
     badge: "Phổ biến",
-    badgeColor: "bg-green-100 text-green-700",
+    badgeColor: "bg-accent-light text-accent-dark",
     pros: [
       "Không cần thanh toán trước",
       "An toàn, dễ sử dụng",
@@ -63,7 +65,7 @@ export const paymentMethods = [
     name: "Chuyển khoản ngân hàng",
     desc: "Chuyển khoản trực tiếp qua tài khoản ngân hàng của cửa hàng.",
     badge: "Tiết kiệm",
-    badgeColor: "bg-blue-100 text-blue-700",
+    badgeColor: "bg-accent-light text-accent-dark",
     pros: [
       "Không cần tiền mặt",
       "Xử lý nhanh",
@@ -75,7 +77,7 @@ export const paymentMethods = [
     name: "Ví điện tử",
     desc: "Thanh toán qua Momo, ZaloPay, VNPay...",
     badge: "Tiện lợi",
-    badgeColor: "bg-purple-100 text-purple-700",
+    badgeColor: "bg-accent-light text-accent-dark",
     pros: [
       "Thanh toán nhanh chóng",
       "Nhiều ưu đãi",
@@ -83,6 +85,8 @@ export const paymentMethods = [
     note: "Đảm bảo ví đủ số dư",
   },
 ];
+
+export type PaymentMethod = (typeof paymentMethods)[number];
 
 export const faqs = [
   {
@@ -102,3 +106,5 @@ export const faqs = [
     a: "Bạn có thể vào mục 'Đơn hàng của tôi' để theo dõi trạng thái.",
   },
 ];
+
+export type FaqEntry = (typeof faqs)[number];

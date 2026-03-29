@@ -6,6 +6,7 @@ import { X, Plus } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ProductDetail } from "@/lib/types/product";
 import apiRequest from "@/lib/api";
+import { useToasty } from "@/components/Toast";
 
 // ── Search Slot ────────────────────────────────────────────────────────────
 function AddSlot() {
@@ -16,6 +17,8 @@ function AddSlot() {
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { success, error, warning, info } = useToasty();
 
   // Click ngoài thì đóng
   useEffect(() => {
@@ -56,11 +59,32 @@ function AddSlot() {
   };
 
   const handleSelect = (product: ProductDetail) => {
-    add(product);
+    const result = add(product);
+
+    if (!result.success) {
+      switch (result.reason) {
+        case "full":
+          warning("Chỉ được so sánh tối đa 3 sản phẩm");
+          break;
+
+        case "duplicate":
+          info("Sản phẩm đã có trong danh sách");
+          break;
+
+        case "wrong_category":
+          error("Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh!!");
+          break;
+      }
+      return;
+    }
+
+    success("Đã thêm vào so sánh");
+
     setOpen(false);
     setQuery("");
     setResults([]);
   };
+  
 
   return (
     <div ref={ref} className="relative flex-shrink-0">

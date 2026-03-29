@@ -7,76 +7,79 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatVND } from "@/helpers";
 
 interface OrderSummaryProps {
-  subtotal: number;
-  totalDiscount: number;
-  finalTotal: number;
-  selectedItemsCount: number;
-  appliedVoucherCode?: string;
-  appliedVoucherValue?: number;
-  selectedPromotions?: string[];
-  promotionValue?: number;
-  onOpenVoucherModal?: () => void;
-  onCheckout: () => void;
-  buttonText?: string;
-  showTerms?: boolean;
-  agreedToTerms?: boolean;
-  onTermsChange?: (checked: boolean) => void;
-  isCheckoutPage?: boolean;
-  shippingFee?: number;
-  // taxAmount?: number;
-  computedTotal?: number; // ← thêm: tổng đã tính sẵn
+   subtotal: number;
+   totalDiscount: number;
+   finalTotal: number;
+   selectedItemsCount: number;
+   appliedVoucherCode?: string;
+   appliedVoucherValue?: number;
+   selectedPromotions?: string[];
+   promotionValue?: number;
+   onOpenVoucherModal?: () => void;
+   onCheckout: () => void;
+   buttonText?: string;
+   showTerms?: boolean;
+   agreedToTerms?: boolean;
+   onTermsChange?: (checked: boolean) => void;
+   isCheckoutPage?: boolean;
+   shippingFee?: number;
+   // taxAmount?: number;
+   computedTotal?: number; // ← thêm: tổng đã tính sẵn
 }
 
 export default function OrderSummary({
-  subtotal,
-  totalDiscount,
-  finalTotal,
-  selectedItemsCount,
-  appliedVoucherCode = "",
-  appliedVoucherValue = 0,
-  selectedPromotions = [],
-  promotionValue = 0,
-  onOpenVoucherModal,
-  onCheckout,
-  buttonText = "Xác nhận đơn",
-  showTerms = false,
-  agreedToTerms = false,
-  onTermsChange,
-  isCheckoutPage = false,
-  shippingFee,
-  //   taxAmount,
-  computedTotal,
+   subtotal,
+   totalDiscount,
+   finalTotal,
+   selectedItemsCount,
+   appliedVoucherCode = "",
+   appliedVoucherValue = 0,
+   selectedPromotions = [],
+   promotionValue = 0,
+   onOpenVoucherModal,
+   onCheckout,
+   buttonText = "Xác nhận đơn",
+   showTerms = false,
+   agreedToTerms = false,
+   onTermsChange,
+   isCheckoutPage = false,
+   shippingFee,
+   //   taxAmount,
+   computedTotal,
 }: OrderSummaryProps) {
-  const router = useRouter();
-  const { user } = useAuth();
+   const router = useRouter();
+   const { user } = useAuth();
 
-  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
+   const formatPrice = (price: number) =>
+      new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-  const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
-  const finalTotalWithVoucher = computedTotal ?? Math.max(0, subtotal - totalDiscountWithVoucher);
+   const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
+   const finalTotalWithVoucher =
+      computedTotal ?? Math.max(0, subtotal - totalDiscountWithVoucher);
 
-  const handleCheckoutClick = () => {
-    if (isCheckoutPage && !user) {
-      router.push("/account?returnUrl=/cart");
-      return;
-    }
+   const handleCheckoutClick = () => {
+      if (isCheckoutPage && !user) {
+         router.push("/account?returnUrl=/cart");
+         return;
+      }
 
-    if (showTerms && !agreedToTerms) {
-      const toastDiv = document.createElement("div");
-      toastDiv.className = "fixed top-5 right-5 bg-promotion text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium ";
-      toastDiv.textContent = "⚠️ Vui lòng đồng ý với điều khoản dịch vụ";
-      document.body.appendChild(toastDiv);
-      setTimeout(() => toastDiv.remove(), 3000);
-      return;
-    }
-    onCheckout();
-  };
+      if (showTerms && !agreedToTerms) {
+         const toastDiv = document.createElement("div");
+         toastDiv.className =
+            "fixed top-5 right-5 bg-promotion text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium ";
+         toastDiv.textContent = "⚠️ Vui lòng đồng ý với điều khoản dịch vụ";
+         document.body.appendChild(toastDiv);
+         setTimeout(() => toastDiv.remove(), 3000);
+         return;
+      }
+      onCheckout();
+   };
 
-  return (
-    <div className="rounded-lg bg-neutral-light sticky top-4 ">
-      <div className="pt-0 space-y-3">
-        {/* Gifts Box */}
-        {/* <div className="rounded-lg bg-neutral-light shadow-sm overflow-hidden">
+   return (
+      <div className="rounded-lg bg-neutral-light sticky top-4 ">
+         <div className="pt-0 space-y-3">
+            {/* Gifts Box */}
+            {/* <div className="rounded-lg bg-neutral-light shadow-sm overflow-hidden">
           <button className="flex w-full items-center justify-between p-3 transition hover:bg-accent-light border-b border-neutral cursor-pointer">
             <div className="flex items-center gap-3">
               <span className="text-lg">🎁</span>
@@ -169,18 +172,12 @@ export default function OrderSummary({
                         </div>
                      )}
 
-                     {isCheckoutPage &&
-                        taxAmount !== undefined &&
-                        taxAmount > 0 && (
-                           <div className="flex justify-between pl-4">
-                              <span className="text-neutral-dark text-xs">
-                                 Phí VAT (10%)
-                              </span>
-                              <span className="text-primary text-sm font-medium">
-                                 +{formatPrice(taxAmount)}
-                              </span>
-                           </div>
-                        )}
+                     {/* {isCheckoutPage && taxAmount !== undefined && taxAmount > 0 && (
+                <div className="flex justify-between pl-4">
+                  <span className="text-neutral-dark text-xs">Phí VAT (10%)</span>
+                  <span className="text-primary text-sm font-medium">+{formatPrice(taxAmount)}</span>
+                </div>
+              )} */}
 
                      <div className="border-t border-neutral pt-2.5 mt-2.5">
                         <div className="flex justify-between items-center">
@@ -210,42 +207,51 @@ export default function OrderSummary({
                   {buttonText}
                </button>
 
-         {/* Terms + VAT/Shipping info (Checkout only) - Below button */}
-         {showTerms && (
-            <>
-               <div className="px-3 pb-3 pt-3 bg-accent-light">
-                  <label className="flex gap-2 text-xs cursor-pointer items-start">
-                     <input
-                        type="checkbox"
-                        checked={agreedToTerms}
-                        onChange={(e) =>
-                           onTermsChange?.(e.target.checked)
-                        }
-                        className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent"
-                     />
-                     <p className="text-neutral-darker leading-relaxed">
-                        Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
-                        <a
-                           className="underline font-medium hover:text-promotion cursor-pointer text-primary"
-                           href="policies/TermsOfService"
-                        >
-                           Điều khoản dịch vụ
-                        </a>{" "}
-                        và{" "}
-                        <a
-                           className="underline font-medium hover:text-promotion cursor-pointer text-primary"
-                           href="policies/DataPrivacy"
-                        >
-                           Chính sách xử lý dữ liệu cá nhân
-                        </a>{" "}
-                        của ChoCongNghe.
-                     </p>
-                  </label>
-               </div>
-            </>
-         )}
-        </div>
+               {/* Terms + VAT/Shipping info (Checkout only) - Below button */}
+               {showTerms && (
+                  <>
+                     <div className="px-3 pb-3 pt-3 bg-accent-light">
+                        <label className="flex gap-2 text-xs cursor-pointer items-start">
+                           <input
+                              type="checkbox"
+                              checked={agreedToTerms}
+                              onChange={(e) =>
+                                 onTermsChange?.(e.target.checked)
+                              }
+                              className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent"
+                           />
+                           <p className="text-neutral-darker leading-relaxed">
+                              Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
+                              <a
+                                 className="underline font-medium hover:text-promotion cursor-pointer text-primary"
+                                 href="/policies/TermsOfService"
+                              >
+                                 Điều khoản dịch vụ
+                              </a>{" "}
+                              và{" "}
+                              <a
+                                 className="underline font-medium hover:text-promotion cursor-pointer text-primary"
+                                 href="/policies/DataPrivacy"
+                              >
+                                 Chính sách xử lý dữ liệu cá nhân
+                              </a>{" "}
+                              của ChoCongNghe.
+                           </p>
+                        </label>
+                     </div>
+
+                     {/* {taxAmount !== undefined && (
+                        <div className="px-4 pb-4 pt-3 text-xs text-neutral-darker border-t border-neutral rounded-b-lg bg-neutral-light">
+                           <div className="flex justify-between">
+                              <span>Thuế VAT (10%)</span>
+                              <span>{formatVND(taxAmount)}</span>
+                           </div>
+                        </div>
+                     )} */}
+                  </>
+               )}
+            </div>
+         </div>
       </div>
-    </div>
-  );
+   );
 }

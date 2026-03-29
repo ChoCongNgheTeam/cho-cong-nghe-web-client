@@ -195,11 +195,7 @@ const CategoryList = ({
                   <div
                      key={category.id}
                      onMouseEnter={() => onHover(category)}
-                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all mb-1 ${
-                        isActive
-                           ? "bg-accent-light text-accent"
-                           : "hover:bg-neutral text-primary"
-                     }`}
+                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all mb-1 ${isActive ? "bg-accent-light text-accent" : "hover:bg-neutral text-primary"}`}
                   >
                      <Icon className="w-4 h-4" />
                      <span className="text-sm font-medium">
@@ -358,7 +354,7 @@ export default function CategoryMegaMenu() {
          {/* Trigger Button */}
          <button
             className={[
-               "p-2 rounded-lg flex items-center gap-2 transition-colors duration-150",
+               "p-2 px-3 rounded-lg flex items-center gap-2 transition-colors duration-150",
                isOpen ? "bg-neutral" : "hover:bg-neutral",
             ].join(" ")}
          >
@@ -368,7 +364,9 @@ export default function CategoryMegaMenu() {
                   isOpen ? "rotate-90" : "rotate-0",
                ].join(" ")}
             />
-            <span className="text-sm font-medium cursor-pointer">Danh mục</span>
+            <span className="text-sm font-medium cursor-pointer whitespace-nowrap">
+               Danh mục
+            </span>
          </button>
 
          <div

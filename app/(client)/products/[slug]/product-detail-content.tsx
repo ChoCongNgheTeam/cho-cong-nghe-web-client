@@ -25,16 +25,14 @@ interface ProductDetailContentProps {
   slug: string;
 }
 
-export function ProductDetailContent({
-  product,
-  slug,
-}: ProductDetailContentProps) {
+export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
   const searchParams = useSearchParams();
 
   /* ============================================================================
    * SCROLL TO TOP ON MOUNT
    * ========================================================================== */
   useLayoutEffect(() => {
+    window.history.scrollRestoration = "manual";
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     const timer = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -45,19 +43,7 @@ export function ProductDetailContent({
   /* ============================================================================
    * SECTIONS HOOK
    * ========================================================================== */
-  const {
-    breadcrumbRef,
-    infoRef,
-    specificationsRef,
-    articleRef,
-    reviewsRef,
-    suggestRef,
-    headerHeight,
-    effectiveHeaderHeight,
-    showStickyHeader,
-    activeTab,
-    scrollToSection,
-  } = useProductSections();
+  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, headerHeight, effectiveHeaderHeight, showStickyHeader, activeTab, scrollToSection } = useProductSections();
 
   /* ============================================================================
    * AUTO SCROLL KHI CÓ ?review=true
@@ -67,8 +53,7 @@ export function ProductDetailContent({
 
     const timer = setTimeout(() => {
       const TAB_BAR_HEIGHT = 48;
-      const top =
-        (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
+      const top = (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
       window.scrollTo({ top, behavior: "smooth" });
     }, 600);
 
@@ -79,67 +64,106 @@ export function ProductDetailContent({
    * STATE
    * ========================================================================== */
   const isInitialLoad = useRef(true);
+  // Guard để tránh fetch variant lặp khi sync từ gallery
+  const isSyncingFromGallery = useRef(false);
 
-  const [selectedOptions, setSelectedOptions] = useState<
-    Record<string, string>
-  >(() => {
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     product.availableOptions?.forEach((opt) => {
-      const defaultVal =
-        opt.values?.find((v: any) => v.selected) ?? opt.values?.[0];
+      const defaultVal = opt.values?.find((v: any) => v.selected) ?? opt.values?.[0];
       if (defaultVal) init[opt.type] = defaultVal.value;
     });
     return init;
   });
-  const [availableOptions, setAvailableOptions] = useState(
-    product.availableOptions || [],
-  );
+  const [availableOptions, setAvailableOptions] = useState(product.availableOptions || []);
   const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
-  const [variantImages, setVariantImages] = useState(
-    product.currentVariant?.images || [],
-  );
+  const [variantImages, setVariantImages] = useState(product.currentVariant?.images || []);
   const [price, setPrice] = useState(product.price);
   const [quantity, setQuantity] = useState(1);
+
   /* ============================================================================
    * HANDLERS
    * ========================================================================== */
-  const handleOptionChange = (type: string, value: string) => {
-    setSelectedOptions((prev) => ({ ...prev, [type]: value }));
+  const handleOptionChange = async (type: string, value: string) => {
+    const newOptions = { ...selectedOptions, [type]: value };
+
+    setSelectedOptions(newOptions);
+
+    await fetchVariantByParams(newOptions);
   };
 
   const scrollToReviews = () => scrollToSection("reviews");
   const scrollToSpecifications = () => scrollToSection("specs");
 
   /* ============================================================================
-   * FETCH VARIANT ON OPTION CHANGE
+   * FETCH VARIANT — dùng chung cho cả option change và gallery sync
    * ========================================================================== */
-  useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      return;
-    }
-    if (!Object.keys(selectedOptions).length) return;
+  const fetchVariantByParams = async (params: Record<string, string>) => {
+    try {
+      const json = await apiRequest.get<{ data: any }>(`/products/slug/${product.slug}/variant`, { noAuth: true, params });
 
-    const fetchVariant = async () => {
-      try {
-        const json = await apiRequest.get<{ data: any }>(
-          `/products/slug/${product.slug}/variant`,
-          { noAuth: true, params: selectedOptions },
-        );
-        if (json) {
-          setAvailableOptions(json.data.availableOptions);
-          setCurrentVariant(json.data.currentVariant);
-          setVariantImages(json.data.currentVariant.images);
-          setPrice(json.data.price);
-          setQuantity(1); // reset quantity khi đổi variant
+      if (json) {
+        const data = json.data;
+
+        setAvailableOptions(data.availableOptions);
+        setCurrentVariant(data.currentVariant);
+        setVariantImages(data.currentVariant.images);
+        setPrice(data.price);
+        setQuantity(1);
+
+        // Sync selectedOptions từ currentVariant (không dùng v.selected vì API không trả về field đó)
+        const newOptions: Record<string, string> = {};
+
+        // Ưu tiên lấy từ currentVariant — đây là nguồn dữ liệu chính xác nhất
+        const variant = data.currentVariant;
+        if (variant?.color) newOptions["color"] = variant.color;
+        if (variant?.storage) newOptions["storage"] = variant.storage;
+        if (variant?.ram) newOptions["ram"] = variant.ram;
+
+        // Fallback: parse từ variant code nếu API không có field riêng
+        // VD: "IPHONE-13-128GB-BLACK" → storage=128gb, color=black
+        if (!newOptions["storage"] && variant?.code) {
+          const storageMatch = variant.code.match(/(\d+GB)/i);
+          if (storageMatch) newOptions["storage"] = storageMatch[1].toLowerCase();
         }
-      } catch (error) {
-        console.error("Error fetching variant:", error);
-      }
-    };
 
-    fetchVariant();
-  }, [selectedOptions, product.slug]);
+        // Merge với selectedOptions hiện tại để giữ các option không liên quan
+        if (Object.keys(newOptions).length) {
+          setSelectedOptions((prev) => ({ ...prev, ...newOptions }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching variant:", error);
+    }
+  };
+
+  /* ============================================================================
+   * FETCH VARIANT ON OPTION CHANGE (user tự chọn)
+   * ========================================================================== */
+  //   useEffect(() => {
+  //     // Bỏ qua lần mount đầu
+  //     if (isInitialLoad.current) {
+  //       isInitialLoad.current = false;
+  //       return;
+  //     }
+  //     // Bỏ qua nếu đang sync từ gallery (tránh vòng lặp)
+  //     if (isSyncingFromGallery.current) {
+  //       isSyncingFromGallery.current = false;
+  //       return;
+  //     }
+  //     if (!Object.keys(selectedOptions).length) return;
+
+  //     fetchVariantByParams(selectedOptions);
+  //   }, [selectedOptions, product.slug]);
+
+  /* ============================================================================
+   * GALLERY COLOR SYNC — gọi khi Banner phát hiện user scroll/click màu mới
+   * ========================================================================== */
+  const handleColorChangeFromGallery = async (variantId: string) => {
+    if (variantId === currentVariant?.id) return;
+
+    await fetchVariantByParams({ bundle: variantId });
+  };
 
   /* ============================================================================
    * RENDER
@@ -162,11 +186,7 @@ export function ProductDetailContent({
                 className={`
                   relative px-4 py-3 text-sm font-medium whitespace-nowrap
                   transition-colors cursor-pointer flex-shrink-0
-                  ${
-                    activeTab === tab.id
-                      ? "text-accent"
-                      : "text-neutral-darker hover:text-primary"
-                  }
+                  ${activeTab === tab.id ? "text-accent" : "text-neutral-darker hover:text-primary"}
                 `}
               >
                 {tab.label}
@@ -199,14 +219,10 @@ export function ProductDetailContent({
       <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container" ref={infoRef}>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit pr-6">
-            <ProductDetailBanner
-              product={product}
-              selectedVariant={currentVariant}
-              images={variantImages}
-            />
+            <ProductDetailBanner product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
           </div>
           <div className="w-full lg:w-[40%]">
-            <div className="lg:sticky lg:top-16 lg:h-fit ">
+            <div className="lg:sticky lg:top-16 lg:h-fit pl-6">
               <ProductDetailRight
                 product={product}
                 selectedVariant={currentVariant}
@@ -239,13 +255,7 @@ export function ProductDetailContent({
       {/* ── Đánh giá & Hỏi đáp ───────────────────────────────────────────── */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={reviewsRef}>
         <div className="container !px-0">
-          <ProductReview
-            productId={product.id}
-            rating={product.rating}
-            slug={product.slug}
-            product={product}
-            currentVariant={currentVariant}
-          />
+          <ProductReview productId={product.id} rating={product.rating} slug={product.slug} product={product} currentVariant={currentVariant} />
         </div>
       </div>
 
@@ -260,13 +270,7 @@ export function ProductDetailContent({
       <TrustBadges className="!bg-gray-400/10" />
 
       {/* ── Sticky Footer ─────────────────────────────────────────────────── */}
-      <ProductStickyFooter
-        product={product}
-        selectedVariant={currentVariant}
-        selectedPrice={price}
-        quantity={quantity}
-        infoRef={infoRef}
-      />
+      <ProductStickyFooter product={product} selectedVariant={currentVariant} selectedPrice={price} quantity={quantity} infoRef={infoRef} />
     </div>
   );
 }

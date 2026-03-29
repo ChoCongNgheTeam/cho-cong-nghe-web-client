@@ -41,6 +41,7 @@ import {
    Heart,
    BookOpen,
    Boxes,
+   Bell,
 } from "lucide-react";
 import UserAvatar from "../ui/UserAvatar";
 
@@ -136,6 +137,11 @@ const navGroups: NavGroup[] = [
             title: "Lịch sử dùng voucher",
             href: "/admin/vouchers/usages",
             icon: FileText,
+         },
+         {
+            title: "Thông báo",
+            href: "/admin/notifications",
+            icon: Bell,
          },
       ],
    },

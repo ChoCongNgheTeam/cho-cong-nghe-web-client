@@ -389,7 +389,7 @@ const RegisterForm: React.FC = () => {
                   <span className="text-base text-neutral-darker">
                      Bạn đồng ý với tất cả{" "}
                      <Link
-                        href="/terms"
+                        href="/policies/DataPrivacy/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-accent hover:text-accent-hover hover:underline"

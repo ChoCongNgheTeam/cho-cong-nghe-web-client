@@ -12,6 +12,7 @@ import {
    Package,
    MapPin,
    Shield,
+   X,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,7 @@ import DesktopHeader from "./components/DesktopHeader";
 import { useUserMenu } from "@/hooks/useUserMenu";
 import { useTheme } from "@/hooks/useTheme";
 import UserAvatar from "@/components/ui/UserAvatar";
+import TrendingBar from "./components/TrendingBar";
 
 const Header = () => {
    const [searchQuery, setSearchQuery] = useState("");
@@ -41,8 +43,19 @@ const Header = () => {
    const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
    const { isDark } = useTheme();
 
-   // ResizeObserver liên tục cập nhật placeholder height theo header thực tế
-   // Xử lý đúng cả khi resize window (desktop <-> mobile)
+   // Khoá scroll body khi menu mobile mở
+   useEffect(() => {
+      if (mobileMenuOpen) {
+         document.body.style.overflow = "hidden";
+      } else {
+         document.body.style.overflow = "";
+      }
+      return () => {
+         document.body.style.overflow = "";
+      };
+   }, [mobileMenuOpen]);
+
+   // ResizeObserver cập nhật placeholder height
    useEffect(() => {
       if (!headerRef.current) return;
 
@@ -157,6 +170,7 @@ const Header = () => {
       <>
          <div ref={placeholderRef} aria-hidden="true" />
 
+         {/* ── Fixed Header ─────────────────────────────────────── */}
          <div
             ref={headerRef}
             className={[
@@ -180,7 +194,6 @@ const Header = () => {
                <HeaderTop isAuthenticated={isAuthenticated} />
             </div>
 
-            {/* Main Header */}
             <div>
                <div className="container py-1 md:py-2">
                   <MobileHeader
@@ -205,149 +218,211 @@ const Header = () => {
                      onUserMenuClose={() => setShowUserMenu(false)}
                      onLogout={logout}
                   />
+                  <TrendingBar />
                </div>
             </div>
+         </div>
 
-            {/* Mobile Menu Dropdown */}
-            {mobileMenuOpen && (
-               <div className="md:hidden bg-neutral-light border-b border-neutral-dark shadow-lg">
-                  <div className="container py-4">
-                     <nav className="flex flex-col gap-3">
-                        {loading ? (
-                           <div className="px-3 py-3 bg-neutral/50 rounded-lg animate-pulse">
+         {/* ── Mobile Menu Overlay ───────────────────────────────── */}
+         {/* Backdrop */}
+         <div
+            className={[
+               "md:hidden fixed inset-0 z-[60] bg-black/50",
+               "transition-opacity duration-300",
+               mobileMenuOpen
+                  ? "opacity-100 pointer-events-auto"
+                  : "opacity-0 pointer-events-none",
+            ].join(" ")}
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+         />
+
+         {/* Drawer — slide in từ trái */}
+         <div
+            className={[
+               "md:hidden fixed top-0 left-0 bottom-0 z-[70]",
+               "w-[80%] max-w-sm bg-neutral-light ",
+               "transition-transform duration-300 ease-in-out",
+               "flex flex-col overflow-hidden",
+               mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+            ].join(" ")}
+         >
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral shrink-0">
+               <span className="font-semibold text-primary text-base">
+                  Menu
+               </span>
+               <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-neutral transition-colors text-primary cursor-pointer"
+               >
+                  <X className="w-5 h-5" />
+               </button>
+            </div>
+
+            {/* Drawer content — scrollable */}
+            <div className="flex-1 overflow-y-auto py-3 px-2">
+               <nav className="flex flex-col gap-1">
+                  {loading ? (
+                     <div className="px-3 py-3 bg-neutral/50 rounded-lg animate-pulse mx-1">
+                        <div className="flex items-center gap-3">
+                           <div className="w-12 h-12 rounded-full bg-neutral-dark/20" />
+                           <div className="flex-1 space-y-2">
+                              <div className="h-3 bg-neutral-dark/20 rounded w-3/4" />
+                              <div className="h-3 bg-neutral-dark/20 rounded w-1/2" />
+                           </div>
+                        </div>
+                     </div>
+                  ) : isAuthenticated && user ? (
+                     <>
+                        {/* User info card */}
+                        <Link
+                           href="/profile"
+                           className="block"
+                           onClick={() => setMobileMenuOpen(false)}
+                        >
+                           <div
+                              className="
+                              mx-1 mb-2 px-3 py-3 
+                              bg-accent/10 rounded-xl
+
+                              cursor-pointer
+                              transition-all duration-200
+
+                              hover:bg-accent/20
+                              hover:shadow-md
+
+                              active:scale-95
+                           "
+                           >
                               <div className="flex items-center gap-3">
-                                 <div className="w-12 h-12 rounded-full bg-neutral-dark/20" />
-                                 <div className="flex-1 space-y-2">
-                                    <div className="h-3 bg-neutral-dark/20 rounded w-3/4" />
-                                    <div className="h-3 bg-neutral-dark/20 rounded w-1/2" />
+                                 <UserAvatar
+                                    avatarImage={
+                                       user.avatarImage || "/images/avatar.png"
+                                    }
+                                    fullName={user.fullName}
+                                    size={48}
+                                 />
+                                 <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-primary truncate">
+                                       {user.fullName}
+                                    </p>
+                                    <p className="text-xs text-neutral-darker truncate">
+                                       {user.email}
+                                    </p>
                                  </div>
                               </div>
                            </div>
-                        ) : isAuthenticated && user ? (
-                           <>
-                              <div className="px-3 py-3 bg-accent/10 rounded-lg">
-                                 <div className="flex items-center gap-3">
-                                    <UserAvatar
-                                       avatarImage={
-                                          user.avatarImage ||
-                                          "/images/avatar.png"
-                                       }
-                                       fullName={user.fullName}
-                                       size={48}
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                       <p className="text-sm font-semibold text-primary truncate">
-                                          {user.fullName}
-                                       </p>
-                                       <p className="text-xs text-neutral-darker truncate">
-                                          {user.email}
-                                       </p>
-                                    </div>
-                                 </div>
-                              </div>
-                              <Link
-                                 href="/profile"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <User className="h-5 w-5" />
-                                 <span>Thông tin cá nhân</span>
-                              </Link>
-                              <Link
-                                 href="/profile/orders"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <Package className="h-5 w-5" />
-                                 <span>Đơn hàng của tôi</span>
-                              </Link>
-                              <Link
-                                 href="/wishlist"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <Heart className="h-5 w-5" />
-                                 <span>Khách hàng thân thiết</span>
-                              </Link>
-                              <Link
-                                 href="/addresses"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <MapPin className="h-5 w-5" />
-                                 <span>Sổ địa chỉ nhận hàng</span>
-                              </Link>
-                              <Link
-                                 href="/warranty"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <Shield className="h-5 w-5" />
-                                 <span>Thông tin bảo hành</span>
-                              </Link>
-                              <button
-                                 onClick={() => {
-                                    logout();
-                                    setMobileMenuOpen(false);
-                                 }}
-                                 className="flex items-center gap-2 py-2 text-promotion hover:text-promotion-hover hover:bg-promotion-light rounded-lg px-3 border-t border-neutral-dark transition-colors cursor-pointer"
-                              >
-                                 <LogOut className="h-5 w-5" />
-                                 <span>Đăng xuất</span>
-                              </button>
-                           </>
-                        ) : (
-                           <>
-                              <Link
-                                 href="/account?tab=login"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <User className="h-5 w-5" />
-                                 <span>Đăng nhập</span>
-                              </Link>
-                              <Link
-                                 href="/account?tab=register"
-                                 className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                                 onClick={() => setMobileMenuOpen(false)}
-                              >
-                                 <UserPlus className="h-5 w-5" />
-                                 <span>Đăng ký</span>
-                              </Link>
-                              <div className="border-t border-neutral-dark my-2"></div>
-                           </>
-                        )}
-                        <Link
-                           href="#"
-                           className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
-                           onClick={() => setMobileMenuOpen(false)}
-                        >
-                           <Truck className="h-5 w-5" />
-                           <span>Theo dõi đơn hàng</span>
                         </Link>
-                        <Link
-                           href="/cart"
-                           className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+
+                        <MenuItem
+                           href="/profile/info"
+                           icon={<User className="h-5 w-5" />}
+                           label="Thông tin cá nhân"
                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                           <ShoppingBag className="h-5 w-5" />
-                           <span>Cửa hàng</span>
-                        </Link>
-                        <Link
-                           href="#"
-                           className="flex items-center gap-2 py-2 text-primary hover:text-primary-hover hover:bg-neutral rounded-lg px-3 transition-colors"
+                        />
+                        <MenuItem
+                           href="/profile/orders"
+                           icon={<Package className="h-5 w-5" />}
+                           label="Đơn hàng của tôi"
                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                           <GitCompareArrows className="h-5 w-5" />
-                           <span>So sánh sản phẩm</span>
-                        </Link>
-                     </nav>
-                  </div>
-               </div>
-            )}
+                        />
+                        <MenuItem
+                           href="/wishlist"
+                           icon={<Heart className="h-5 w-5" />}
+                           label="Khách hàng thân thiết"
+                           onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <MenuItem
+                           href="/profile/addresses"
+                           icon={<MapPin className="h-5 w-5" />}
+                           label="Sổ địa chỉ nhận hàng"
+                           onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <MenuItem
+                           href="/profile/warranty"
+                           icon={<Shield className="h-5 w-5" />}
+                           label="Thông tin bảo hành"
+                           onClick={() => setMobileMenuOpen(false)}
+                        />
+
+                        <div className="mx-1 my-1 border-t border-neutral" />
+                     </>
+                  ) : (
+                     <>
+                        <MenuItem
+                           href="/account?tab=login"
+                           icon={<User className="h-5 w-5" />}
+                           label="Đăng nhập"
+                           onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <MenuItem
+                           href="/account?tab=register"
+                           icon={<UserPlus className="h-5 w-5" />}
+                           label="Đăng ký"
+                           onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <div className="mx-1 my-1 border-t border-neutral" />
+                     </>
+                  )}
+
+                  <MenuItem
+                     href="#"
+                     icon={<Truck className="h-5 w-5" />}
+                     label="Theo dõi đơn hàng"
+                     onClick={() => setMobileMenuOpen(false)}
+                  />
+                  <MenuItem
+                     href="/cart"
+                     icon={<ShoppingBag className="h-5 w-5" />}
+                     label="Cửa hàng"
+                     onClick={() => setMobileMenuOpen(false)}
+                  />
+                  <MenuItem
+                     href="#"
+                     icon={<GitCompareArrows className="h-5 w-5" />}
+                     label="So sánh sản phẩm"
+                     onClick={() => setMobileMenuOpen(false)}
+                  />
+                  <button
+                     onClick={() => {
+                        logout();
+                        setMobileMenuOpen(false);
+                     }}
+                     className="flex items-center gap-3 py-2.5 px-3 mx-1 rounded-xl text-promotion hover:bg-promotion/10 transition-colors cursor-pointer"
+                  >
+                     <LogOut className="h-5 w-5" />
+                     <span className="text-sm font-medium">Đăng xuất</span>
+                  </button>
+               </nav>
+            </div>
          </div>
       </>
    );
 };
+
+// ── Helper component ──────────────────────────────────────────────
+function MenuItem({
+   href,
+   icon,
+   label,
+   onClick,
+}: {
+   href: string;
+   icon: React.ReactNode;
+   label: string;
+   onClick: () => void;
+}) {
+   return (
+      <Link
+         href={href}
+         onClick={onClick}
+         className="flex items-center gap-3 py-2.5 px-3 mx-1 rounded-xl text-primary hover:bg-neutral transition-colors"
+      >
+         <span className="text-accent shrink-0">{icon}</span>
+         <span className="text-sm font-medium">{label}</span>
+      </Link>
+   );
+}
 
 export default Header;

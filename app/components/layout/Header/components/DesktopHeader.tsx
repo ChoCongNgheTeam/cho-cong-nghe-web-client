@@ -1,3 +1,5 @@
+"use client";
+
 import {
    GitCompareArrows,
    Heart,
@@ -16,7 +18,6 @@ import UserAvatar from "@/components/ui/UserAvatar";
 import CartIcon from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
-import WishlistIcon from "@/components/ui/HeartIcons";
 import NotificationBell from "@/components/ui/NotificationBell";
 import { useRouter } from "next/navigation";
 import { useCompareStore } from "@/(client)/compare/compareStore";
@@ -33,7 +34,6 @@ const DesktopHeader = memo(
       onLogout,
    }: Omit<DesktopHeaderProps, "searchQuery" | "onSearchChange">) => {
       const userMenuRef = useRef<HTMLDivElement>(null);
-
       const router = useRouter();
       const { items } = useCompareStore();
 
@@ -52,7 +52,8 @@ const DesktopHeader = memo(
       }, [showUserMenu, onUserMenuClose]);
 
       return (
-         <div className="hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
+         // ← class "desktop-header-row" để TrendingBar đo được children
+         <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
             {/* Logo */}
             <Link href="/" className="shrink-0 pr-10">
                <Image
@@ -68,11 +69,12 @@ const DesktopHeader = memo(
             {/* Mega menu */}
             <CategoryMegaMenu />
 
-            {/* Search + Keywords */}
+            {/* Search */}
             <div className="flex-1 max-w-2xl relative">
                <SearchBar />
             </div>
 
+            {/* Icons */}
             <div className="flex items-center gap-2">
                <button
                   onClick={() => router.push("/compare")}
@@ -81,13 +83,12 @@ const DesktopHeader = memo(
                >
                   <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                   {items.length > 0 && (
-                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                     <span className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px] flex items-center justify-center rounded-full bg-accent text-[10px] font-bold text-neutral-light shadow-sm ring-2 ring-neutral-light">
                         {items.length}
                      </span>
                   )}
                </button>
                <NotificationBell />
-               <WishlistIcon />
                <CartIcon />
 
                {isLoading ? (
@@ -108,9 +109,7 @@ const DesktopHeader = memo(
                            size={30}
                         />
                         <ChevronDown
-                           className={`w-4 h-4 text-primary transition-transform duration-200 ${
-                              showUserMenu ? "rotate-180" : ""
-                           }`}
+                           className={`w-4 h-4 text-primary transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`}
                         />
                      </button>
 

@@ -14,13 +14,7 @@ interface ReviewModalProps {
   onSuccess: (stars: number) => void;
 }
 
-export default function ReviewModal({
-  isOpen,
-  onClose,
-  orderItemId,
-  productName,
-  onSuccess,
-}: ReviewModalProps) {
+export default function ReviewModal({ isOpen, onClose, orderItemId, productName, onSuccess }: ReviewModalProps) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
@@ -77,24 +71,16 @@ export default function ReviewModal({
       isOpen={isOpen}
       onClose={handleClose}
       closeMethods={["button", "overlay", "escape"]}
-      cssClass="mx-3 sm:mx-auto"
+      cssClass=" mx-3 sm:mx-auto"
       content={
         <div className="py-1.5 sm:py-2 px-0.5 sm:px-1">
           {/* Title */}
-          <h3 className="text-sm sm:text-base font-semibold text-primary mb-0.5 sm:mb-1">
-            Đánh giá sản phẩm
-          </h3>
+          <h3 className="text-sm sm:text-base font-semibold text-primary mb-0.5 sm:mb-1">Đánh giá sản phẩm</h3>
 
           {/* Product name */}
-          {productName && (
-            <p className="text-xs sm:text-sm text-neutral-darker mb-0.5 sm:mb-1 line-clamp-1 font-medium">
-              {productName}
-            </p>
-          )}
+          {productName && <p className="text-xs sm:text-sm text-neutral-darker mb-0.5 sm:mb-1 line-clamp-1 font-medium">{productName}</p>}
 
-          <p className="text-xs sm:text-sm text-neutral-darker mb-4 sm:mb-5">
-            Chia sẻ trải nghiệm của bạn về sản phẩm
-          </p>
+          <p className="text-xs sm:text-sm text-neutral-darker mb-4 sm:mb-5">Chia sẻ trải nghiệm của bạn về sản phẩm</p>
 
           {/* Stars — smaller on mobile */}
           <div className="flex justify-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
@@ -108,9 +94,7 @@ export default function ReviewModal({
               >
                 <Star
                   className={`w-8 h-8 sm:w-10 sm:h-10 transition-colors duration-150 ${
-                    s <= active
-                      ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.6)]"
-                      : "fill-neutral text-neutral-dark"
+                    s <= active ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.6)]" : "fill-neutral text-neutral-dark"
                   }`}
                 />
               </button>
@@ -118,9 +102,7 @@ export default function ReviewModal({
           </div>
 
           {/* Rating label */}
-          <p className="text-center text-xs sm:text-sm font-medium text-neutral-darker mb-3 sm:mb-4 h-4 sm:h-5">
-            {labels[active]}
-          </p>
+          <p className="text-center text-xs sm:text-sm font-medium text-neutral-darker mb-3 sm:mb-4 h-4 sm:h-5">{labels[active]}</p>
 
           {/* Textarea */}
           <div className="relative mb-1.5 sm:mb-2">
@@ -138,16 +120,10 @@ export default function ReviewModal({
                 transition-colors duration-150 leading-relaxed
                 ${commentError ? "border-red-400 focus:border-red-400" : "border-neutral focus:border-neutral-darker"}`}
             />
-            <span className="absolute bottom-2.5 right-3 text-[10px] sm:text-[11px] text-neutral-darker tabular-nums">
-              {comment.length}/1000
-            </span>
+            <span className="absolute bottom-2.5 right-3 text-[10px] sm:text-[11px] text-neutral-darker tabular-nums">{comment.length}/1000</span>
           </div>
 
-          {commentError && (
-            <p className="text-[11px] sm:text-xs text-red-500 mt-0.5 mb-1.5 sm:mb-2">
-              {commentError}
-            </p>
-          )}
+          {commentError && <p className="text-[11px] sm:text-xs text-red-500 mt-0.5 mb-1.5 sm:mb-2">{commentError}</p>}
 
           {/* Action buttons */}
           <div className="flex gap-2 sm:gap-2.5 mt-4 sm:mt-5">

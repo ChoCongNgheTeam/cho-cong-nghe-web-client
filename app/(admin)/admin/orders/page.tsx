@@ -403,19 +403,19 @@ export default function OrdersPage() {
                   const rowNum = (meta.page - 1) * meta.limit + idx + 1;
                   return (
                     <tr key={order.id} className="border-b border-neutral hover:bg-neutral-light-active/60 transition-colors duration-100">
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <span className="text-[12px] text-primary">{rowNum}</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <span className="text-[12px] font-semibold text-accent">#{order.orderCode}</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[12px] font-medium text-primary">{order.user.fullName}</span>
                           <span className="text-[12px] text-primary/60">{order.user.phone}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <div className="flex flex-col gap-0.5 max-w-[190px]">
                           <span className="text-[12px] text-primary line-clamp-1">{order.shippingContactName}</span>
                           <span className="text-[12px] text-primary/60 line-clamp-1">
@@ -423,26 +423,26 @@ export default function OrdersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <span className="text-[12px] font-semibold text-primary">{formatVND(order.totalAmount)}</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <span className="text-[12px] text-primary">{order.paymentMethod.name}</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <OrderStatusCell orderId={order.id} status={order.orderStatus} onStatusChange={handleStatusChange} onCancelRequest={handleCancelRequest} />
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         {order.orderStatus === "DELIVERED" ? (
                           <PaymentStatusCell orderId={order.id} status={order.paymentStatus} onStatusChange={(newStatus) => handlePaymentStatusChange(order.id, newStatus)} />
                         ) : (
                           <PaymentBadge status={order.paymentStatus} />
                         )}
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <span className="text-[12px] text-primary">{formatDate(order.orderDate)}</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-2.5">
                         <Link
                           href={`/admin/orders/${order.id}`}
                           title="Xem chi tiết"

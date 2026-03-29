@@ -12,7 +12,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
    const { user } = useAuth();
 
    return (
-      <div className="bg-neutral-light border-b border-neutral px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
+      <div className="bg-neutral-light border-b border-neutral px-6 py-3 flex items-center justify-between sticky top-0 z-30">
          {/* Page title */}
          <h1 className="text-2xl font-bold text-primary tracking-tight">
             {title}

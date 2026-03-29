@@ -2,8 +2,21 @@
 
 import { ListFilter } from "lucide-react";
 
-export default function ScrollToFilterButton() {
+interface ScrollToFilterButtonProps {
+   /** Callback để mở mobile drawer — chỉ dùng trên mobile */
+   onOpenMobileFilter?: () => void;
+}
+
+export default function ScrollToFilterButton({
+   onOpenMobileFilter,
+}: ScrollToFilterButtonProps) {
    const handleClick = () => {
+      // Trên mobile (lg:hidden): mở drawer
+      if (onOpenMobileFilter && window.innerWidth < 1024) {
+         onOpenMobileFilter();
+         return;
+      }
+      // Trên desktop: scroll đến sidebar filter
       const el = document.getElementById("product-filter");
       if (el) {
          el.scrollIntoView({ behavior: "smooth", block: "start" });

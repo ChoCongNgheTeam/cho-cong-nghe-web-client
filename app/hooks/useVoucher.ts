@@ -41,7 +41,7 @@ export interface Voucher {
   createdAt?: string;
   updatedAt?: string;
   targets?: VoucherTarget[];
-  maxDiscountValue?: number; // ← thêm dòng này
+  maxDiscountValue?: number;
   isPrivate?: boolean;
   remainingUses?: number;
 }
@@ -50,6 +50,16 @@ export interface AppliedVoucher {
   code: string;
   value: number;
   id: string;
+}
+
+/**
+ * Kết quả validate target của 1 voucher.
+ * - ok: true  → voucher áp dụng được cho giỏ hàng hiện tại
+ * - ok: false → bị disable, reason chứa message hiển thị cho user
+ */
+interface EligibleResult {
+  ok: boolean;
+  reason?: string;
 }
 
 interface VoucherListResponse {
@@ -63,10 +73,6 @@ interface VoucherListResponse {
   message: string;
 }
 
-interface VoucherDetailResponse {
-  data: Voucher;
-  message: string;
-}
 interface ValidateResponse {
   data: { discount: number; voucher: { id: string } } | null;
   message?: string;
@@ -84,6 +90,8 @@ interface UseVoucherReturn {
   // ── List state ────────────────────────────────────────────────────────────
   vouchers: Voucher[];
   isLoadingList: boolean;
+  /** true khi đang chạy batch-validate targets sau khi fetch list */
+  isValidatingTargets: boolean;
   fetchVouchers: () => Promise<void>;
 
   // ── Input state ───────────────────────────────────────────────────────────
@@ -106,6 +114,8 @@ interface UseVoucherReturn {
   // ── Helpers ───────────────────────────────────────────────────────────────
   calculateDiscount: (voucher: Voucher) => number;
   canUseVoucher: (voucher: Voucher) => boolean;
+  /** Lý do tại sao voucher bị disable (bao gồm cả "không hợp sản phẩm") */
+  getDisabledReason: (voucher: Voucher) => string | null;
   formatPrice: (price: number) => string;
   formatDate: (dateString?: string) => string | null;
 }
@@ -116,6 +126,15 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
   // ── List ──────────────────────────────────────────────────────────────────
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
+  const [isValidatingTargets, setIsValidatingTargets] = useState(false);
+
+  /**
+   * Map voucherId → kết quả validate target từ server.
+   * Chỉ được set sau khi fetchVouchers() chạy xong batch-validate.
+   * Voucher chưa có trong map → chưa validate xong → coi như ok (lạc quan)
+   * để tránh flash disable ngay khi đang load.
+   */
+  const [eligibleMap, setEligibleMap] = useState<Record<string, EligibleResult>>({});
 
   // ── Input ─────────────────────────────────────────────────────────────────
   const [inputCode, setInputCodeRaw] = useState(initialCode);
@@ -135,7 +154,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
   // ── Copy ──────────────────────────────────────────────────────────────────
   const [copiedCode, setCopiedCode] = useState("");
 
-  // ── Sync initial values (ví dụ khi load từ localStorage) ─────────────────
+  // ── Sync initial values ───────────────────────────────────────────────────
   useEffect(() => {
     if (initialCode) {
       setInputCodeRaw(initialCode);
@@ -154,9 +173,8 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
   }, []);
 
   /**
-   * Tính discount của voucher dựa trên eligible subtotal.
-   * - Nếu voucher có targets (không phải ALL) → tính trên subtotal các item match target
-   * - Nếu không → tính trên toàn bộ cartTotal
+   * Tính discount client-side (chỉ dùng cho hiển thị preview trong list).
+   * Discount thực tế luôn lấy từ server khi apply.
    */
   const calculateDiscount = useCallback(
     (voucher: Voucher, items: CartItem[] = cartItems): number => {
@@ -197,14 +215,54 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
     [cartTotal, cartItems],
   );
 
-  const canUseVoucher = useCallback((voucher: Voucher): boolean => voucher.isAvailable && !voucher.isExpired && voucher.isActive && cartTotal >= voucher.minOrderValue, [cartTotal]);
+  /**
+   * Check xem voucher có thể dùng không, bao gồm:
+   * 1. Các điều kiện cơ bản (isAvailable, isExpired, isActive, minOrderValue)
+   * 2. Kết quả validate target từ server (eligibleMap)
+   */
+  const canUseVoucher = useCallback(
+    (voucher: Voucher): boolean => {
+      const basicOk = voucher.isAvailable && !voucher.isExpired && voucher.isActive && cartTotal >= voucher.minOrderValue;
 
-  // ── Fetch list ────────────────────────────────────────────────────────────
+      if (!basicOk) return false;
+
+      // Nếu chưa có kết quả validate → lạc quan (true) để tránh flash
+      const eligible = eligibleMap[voucher.id];
+      if (eligible === undefined) return true;
+
+      return eligible.ok;
+    },
+    [cartTotal, eligibleMap],
+  );
+
+  /**
+   * Trả về lý do tại sao voucher bị disable, hoặc null nếu có thể dùng.
+   * Dùng để hiển thị message dưới card voucher.
+   */
+  const getDisabledReason = useCallback(
+    (voucher: Voucher): string | null => {
+      if (voucher.isExpired) return "Mã đã hết hạn";
+      if (!voucher.isActive) return "Mã không còn hiệu lực";
+      if (!voucher.isAvailable) return "Mã đã hết lượt";
+      if (cartTotal < voucher.minOrderValue) return `Cần thêm ${formatPrice(voucher.minOrderValue - cartTotal)} để dùng mã`;
+
+      // Check target eligibility từ server
+      const eligible = eligibleMap[voucher.id];
+      if (eligible !== undefined && !eligible.ok) {
+        return eligible.reason ?? "Voucher không áp dụng cho sản phẩm trong giỏ hàng";
+      }
+
+      return null;
+    },
+    [cartTotal, eligibleMap, formatPrice],
+  );
+
+  // ── Fetch list + batch-validate targets ───────────────────────────────────
 
   const fetchVouchers = useCallback(async () => {
     setIsLoadingList(true);
     try {
-      // 1. Luôn fetch public vouchers
+      // 1. Fetch public vouchers
       const publicRes = await apiRequest.get<VoucherListResponse>("/vouchers", {
         params: { cartTotal, limit: 20 },
         noAuth: true,
@@ -232,68 +290,76 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
             isActive: v.isActive ?? true,
             isExpired: v.isExpired ?? false,
             isAvailable: v.canUse ?? v.isAvailable ?? true,
-            isPrivate: true, // ← flag để sort ưu tiên
+            isPrivate: true,
           }));
 
-          // Merge: private lên đầu, loại trùng code với public
           const publicCodes = new Set(allVouchers.map((v) => v.code));
           const uniquePrivate = privateVouchers.filter((v) => !publicCodes.has(v.code));
           allVouchers = [...uniquePrivate, ...allVouchers];
         } catch {
-          // silent — không có private voucher thì dùng public thôi
+          // silent
         }
       }
 
-      // 3. Sort theo rule production
+      // 3. Sort
       const sorted = sortVouchers(allVouchers, cartTotal);
       setVouchers(sorted);
+
+      // 4. Batch-validate targets — chỉ validate các voucher "cơ bản" ok
+      //    (tránh gọi API cho voucher đã expired/hết lượt rõ ràng)
+      const toValidate = sorted.filter((v) => v.isActive && !v.isExpired && v.isAvailable && cartTotal >= v.minOrderValue);
+
+      if (toValidate.length > 0 && cartItems.length > 0) {
+        setIsValidatingTargets(true);
+
+        const results = await Promise.allSettled(
+          toValidate.map((v) =>
+            apiRequest.post<ValidateResponse>("/vouchers/validate", {
+              code: v.code,
+              orderTotal: cartTotal,
+              cartItems,
+            }),
+          ),
+        );
+
+        const newMap: Record<string, EligibleResult> = {};
+
+        toValidate.forEach((v, idx) => {
+          const result = results[idx];
+
+          if (result.status === "fulfilled") {
+            const res = result.value;
+            // Server trả data: null nghĩa là validate fail
+            if (res.data === null) {
+              newMap[v.id] = {
+                ok: false,
+                reason: res.message ?? "Voucher không áp dụng cho sản phẩm trong giỏ hàng",
+              };
+            } else {
+              newMap[v.id] = { ok: true };
+            }
+          } else {
+            // Network error hoặc 4xx từ server
+            const errMsg = (result.reason as any)?.response?.data?.message ?? "Voucher không áp dụng cho sản phẩm trong giỏ hàng";
+            newMap[v.id] = { ok: false, reason: errMsg };
+          }
+        });
+
+        setEligibleMap(newMap);
+        setIsValidatingTargets(false);
+      } else {
+        // Không có gì để validate → reset map
+        setEligibleMap({});
+      }
     } catch {
       setVouchers([]);
+      setEligibleMap({});
     } finally {
       setIsLoadingList(false);
     }
-  }, [cartTotal, isAuthenticated]);
+  }, [cartTotal, cartItems, isAuthenticated]);
 
-  // ── Internal: validate & apply a Voucher object ───────────────────────────
-
-  const validateAndApply = useCallback(
-    (voucher: Voucher) => {
-      if (voucher.isExpired) {
-        setError("Mã voucher đã hết hạn");
-        setIsSuccess(false);
-        return false;
-      }
-      if (!voucher.isActive) {
-        setError("Mã voucher không còn hiệu lực");
-        setIsSuccess(false);
-        return false;
-      }
-      if (cartTotal < voucher.minOrderValue) {
-        setError(`Đơn tối thiểu ${formatPrice(voucher.minOrderValue)} để dùng mã này`);
-        setIsSuccess(false);
-        return false;
-      }
-      if (!voucher.isAvailable) {
-        setError("Mã voucher đã hết lượt sử dụng");
-        setIsSuccess(false);
-        return false;
-      }
-
-      const discountValue = calculateDiscount(voucher);
-      setInputCodeRaw(voucher.code);
-      setError("");
-      setIsSuccess(true);
-      setApplied({
-        code: voucher.code,
-        value: discountValue,
-        id: voucher.id,
-      });
-      return true;
-    },
-    [cartTotal, calculateDiscount, formatPrice],
-  );
-
-  // ── Public: apply from text input (gọi API /vouchers/code/:code) ──────────
+  // ── Public: apply from text input ────────────────────────────────────────
 
   const applyByInput = useCallback(async () => {
     const normalized = inputCode.trim().toUpperCase();
@@ -315,6 +381,8 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
         return;
       }
       setApplied({ code: normalized, value: res.data.discount, id: res.data.voucher.id });
+      setError("");
+      setIsSuccess(true);
     } catch (err: any) {
       setError(err?.response?.data?.message ?? "Mã voucher không tồn tại hoặc không hợp lệ");
       setIsSuccess(false);
@@ -385,6 +453,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
   return {
     vouchers,
     isLoadingList,
+    isValidatingTargets,
     fetchVouchers,
 
     inputCode,
@@ -403,6 +472,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
 
     calculateDiscount,
     canUseVoucher,
+    getDisabledReason,
     formatPrice,
     formatDate,
   };

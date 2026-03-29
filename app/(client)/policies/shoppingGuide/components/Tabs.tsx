@@ -11,7 +11,7 @@ const tabs = [
 
 export default function Tabs({ activeTab, setActiveTab }: Props) {
   return (
-    <div className="sticky top-0 z-10 bg-white border-b border-stone-200 shadow-sm">
+    <div className="sticky top-0 z-10 bg-neutral-light border-b border-neutral shadow-sm">
       <div className="container mx-auto px-6">
         <div className="flex gap-0">
           {tabs.map((tab) => (
@@ -20,14 +20,14 @@ export default function Tabs({ activeTab, setActiveTab }: Props) {
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-5 py-4 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? "text-amber-700"
-                  : "text-stone-500 hover:text-stone-700"
+                  ? "text-accent"
+                  : "text-neutral-dark hover:text-primary"
               }`}
             >
               {tab.label}
 
               {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full" />
               )}
             </button>
           ))}
