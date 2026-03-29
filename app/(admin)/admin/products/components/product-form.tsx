@@ -54,7 +54,6 @@ interface AttrOption {
    id: string;
    value: string;
    label: string;
-   /** Giá cộng thêm so với basePrice (có thể âm để giảm giá) */
    priceAdjustment: number;
 }
 
@@ -91,7 +90,6 @@ interface VariantForm {
    _key: string;
    id?: string;
    code: string;
-   /** Computed: basePrice + sum(priceAdjustment) — NOT edited directly */
    computedPrice: number;
    quantity: string;
    isDefault: boolean;
@@ -190,14 +188,10 @@ function sortedOptIds(attr: TemplateAttribute, ids: Set<string>): string[] {
       const optB = attr.options.find((o) => o.id === b);
       const labelA = optA?.label ?? "";
       const labelB = optB?.label ?? "";
-
       const isSize =
          /storage|memory|ram|ssd|hdd|bộ nhớ/i.test(attr.name + attr.code) ||
          /\d+\s*(TB|GB|MB|KB)/i.test(labelA + labelB);
-
       if (isSize) return parseSizeBytes(labelA) - parseSizeBytes(labelB);
-
-      // Fallback: sort theo template order
       const orderMap = new Map(attr.options.map((o, i) => [o.id, i]));
       return (orderMap.get(a) ?? 999) - (orderMap.get(b) ?? 999);
    });
@@ -253,7 +247,6 @@ function getCategoryPath(
    return path;
 }
 
-/** Tính giá cuối cho 1 variant: basePrice + tổng priceAdjustment */
 function computeVariantPrice(
    basePrice: number,
    attrMap: Record<string, string>,
@@ -269,7 +262,6 @@ function computeVariantPrice(
    return basePrice + adj;
 }
 
-/** Format gọn: 20000000 → "20tr", 2500000 → "2,5tr", 500000 → "500k" */
 function fmtVND(n: number): string {
    if (Math.abs(n) >= 1_000_000) {
       const m = n / 1_000_000;
@@ -284,34 +276,48 @@ function fmtFull(n: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STYLE HELPERS
+// STYLE HELPERS  — dùng bảng màu custom
 // ─────────────────────────────────────────────────────────────────────────────
 
 const inp = (err?: boolean) =>
-   `w-full px-3 py-2 text-[13px] bg-gray-50 border rounded-lg text-gray-900 placeholder:text-gray-400
-   focus:outline-none focus:bg-white focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 transition-all
-   ${err ? "border-red-400 bg-red-50/30" : "border-gray-200"}`;
+   `w-full px-3 py-2 text-[13px] bg-neutral-light-active border rounded-lg text-primary placeholder:text-neutral-dark
+   focus:outline-none focus:bg-neutral-light focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all
+   ${err ? "border-promotion bg-promotion-light/30" : "border-neutral"}`;
 
+// react-select styles dùng CSS variables thông qua Tailwind tokens
 const rsStyles = (err?: boolean) => ({
    control: (b: any, s: any) => ({
       ...b,
       borderRadius: "0.5rem",
-      borderColor: err ? "#f87171" : s.isFocused ? "#111827" : "#e5e7eb",
-      boxShadow: s.isFocused ? "0 0 0 4px rgba(17,24,39,0.05)" : "none",
-      background: s.isFocused ? "#fff" : "#f9fafb",
-      "&:hover": { borderColor: "#d1d5db" },
+      borderColor: err
+         ? "rgb(var(--promotion))"
+         : s.isFocused
+           ? "rgb(var(--primary))"
+           : "rgb(var(--neutral))",
+      boxShadow: s.isFocused ? "0 0 0 4px rgba(var(--primary),0.05)" : "none",
+      background: s.isFocused
+         ? "rgb(var(--neutral-light))"
+         : "rgb(var(--neutral-light-active))",
+      "&:hover": { borderColor: "rgb(var(--neutral-active))" },
       minHeight: "38px",
       transition: "all 0.15s",
    }),
    valueContainer: (b: any) => ({ ...b, padding: "0.25rem 0.75rem" }),
-   input: (b: any) => ({ ...b, margin: 0, padding: 0, fontSize: "13px" }),
+   input: (b: any) => ({
+      ...b,
+      margin: 0,
+      padding: 0,
+      fontSize: "13px",
+      color: "rgb(var(--primary))",
+   }),
    menu: (b: any) => ({
       ...b,
       borderRadius: "0.5rem",
       marginTop: 4,
       boxShadow: "0 8px 24px rgba(0,0,0,.12)",
       zIndex: 9999,
-      border: "1px solid #e5e7eb",
+      border: "1px solid rgb(var(--neutral))",
+      background: "rgb(var(--neutral-light))",
    }),
    menuList: (b: any) => ({ ...b, padding: "4px" }),
    option: (b: any, s: any) => ({
@@ -319,22 +325,34 @@ const rsStyles = (err?: boolean) => ({
       borderRadius: "6px",
       margin: "1px 0",
       background: s.isSelected
-         ? "#111827"
+         ? "rgb(var(--primary))"
          : s.isFocused
-           ? "#f3f4f6"
+           ? "rgb(var(--neutral-light-active))"
            : "transparent",
-      color: s.isSelected ? "white" : "#374151",
+      color: s.isSelected ? "rgb(var(--neutral-light))" : "rgb(var(--primary))",
       fontSize: "13px",
       padding: "7px 10px",
    }),
-   singleValue: (b: any) => ({ ...b, fontSize: "13px", color: "#111827" }),
-   placeholder: (b: any) => ({ ...b, fontSize: "13px", color: "#9ca3af" }),
+   singleValue: (b: any) => ({
+      ...b,
+      fontSize: "13px",
+      color: "rgb(var(--primary))",
+   }),
+   placeholder: (b: any) => ({
+      ...b,
+      fontSize: "13px",
+      color: "rgb(var(--neutral-dark))",
+   }),
    dropdownIndicator: (b: any) => ({
       ...b,
       padding: "0 8px",
-      color: "#9ca3af",
+      color: "rgb(var(--neutral-dark))",
    }),
-   clearIndicator: (b: any) => ({ ...b, padding: "0 8px", color: "#9ca3af" }),
+   clearIndicator: (b: any) => ({
+      ...b,
+      padding: "0 8px",
+      color: "rgb(var(--neutral-dark))",
+   }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -356,13 +374,13 @@ function Toggle({
          type="button"
          onClick={() => onChange(!value)}
          className={`relative rounded-full transition-all cursor-pointer flex-shrink-0
-        ${sm ? "w-8 h-[17px]" : "w-10 h-[22px]"}
-        ${value ? "bg-gray-900" : "bg-gray-200"}`}
+            ${sm ? "w-8 h-[17px]" : "w-10 h-[22px]"}
+            ${value ? "bg-primary" : "bg-neutral"}`}
       >
          <span
-            className={`absolute top-[2px] rounded-full bg-white shadow-sm transition-all
-        ${sm ? "w-[13px] h-[13px]" : "w-[18px] h-[18px]"}
-        ${value ? (sm ? "left-[17px]" : "left-[20px]") : "left-[2px]"}`}
+            className={`absolute top-[2px] rounded-full bg-neutral-light shadow-sm transition-all
+               ${sm ? "w-[13px] h-[13px]" : "w-[18px] h-[18px]"}
+               ${value ? (sm ? "left-[17px]" : "left-[20px]") : "left-[2px]"}`}
          />
       </button>
    );
@@ -387,32 +405,32 @@ function Section({
 }) {
    const [open, setOpen] = useState(defaultOpen);
    return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-neutral-light rounded-xl border border-neutral overflow-hidden">
          <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/60 transition-colors group"
+            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-neutral-light-active transition-colors group"
          >
             <div className="flex items-center gap-2.5">
-               <span className="w-6 h-6 rounded-md bg-gray-100 group-hover:bg-gray-900 group-hover:text-white flex items-center justify-center text-gray-500 transition-all">
+               <span className="w-6 h-6 rounded-md bg-neutral-light-active group-hover:bg-primary group-hover:text-neutral-light flex items-center justify-center text-neutral-dark transition-all">
                   {icon}
                </span>
-               <span className="text-[13px] font-semibold text-gray-900">
+               <span className="text-[13px] font-semibold text-primary">
                   {title}
                </span>
                {badge !== undefined && badge !== null && badge !== "" && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-light-active text-neutral-dark">
                      {badge}
                   </span>
                )}
             </div>
             <ChevronDown
                size={14}
-               className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+               className={`text-neutral-dark transition-transform duration-200 ${open ? "rotate-180" : ""}`}
             />
          </button>
          {open && (
-            <div className="border-t border-gray-100 px-5 py-4 space-y-4">
+            <div className="border-t border-neutral px-5 py-4 space-y-4">
                {children}
             </div>
          )}
@@ -456,12 +474,12 @@ function CategoryTree({
                <div
                   onClick={() => (isLeaf ? onSelect(node.id) : toggle(node.id))}
                   className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
-                     ${isLeaf && isSel ? "bg-gray-900 text-white" : isLeaf ? "hover:bg-gray-100 text-gray-700" : "hover:bg-gray-50 text-gray-600 font-medium"}`}
+                     ${isLeaf && isSel ? "bg-primary text-neutral-light" : isLeaf ? "hover:bg-neutral-light-active text-primary" : "hover:bg-neutral-light-active text-primary-light font-medium"}`}
                >
                   {!isLeaf && (
                      <ChevronRight
                         size={12}
-                        className={`flex-shrink-0 text-gray-400 transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
+                        className={`flex-shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
                      />
                   )}
                   {isLeaf && <span className="w-3 flex-shrink-0" />}
@@ -469,11 +487,14 @@ function CategoryTree({
                      {node.name}
                   </span>
                   {isSel && isLeaf && (
-                     <Check size={12} className="flex-shrink-0 text-white" />
+                     <Check
+                        size={12}
+                        className="flex-shrink-0 text-neutral-light"
+                     />
                   )}
                </div>
                {!isLeaf && isOpen && (
-                  <div className="ml-4 pl-3 border-l border-gray-100 mt-0.5 mb-0.5">
+                  <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
                      {renderNodes(node.children)}
                   </div>
                )}
@@ -497,17 +518,17 @@ function CategoryChangeModal({
    onCancel: () => void;
 }) {
    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-         <div className="bg-white rounded-2xl border border-gray-200 shadow-xl w-full max-w-sm p-6">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/40">
+         <div className="bg-neutral-light rounded-2xl border border-neutral shadow-xl w-full max-w-sm p-6">
             <div className="flex items-start gap-3 mb-4">
-               <div className="w-9 h-9 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <AlertCircle size={16} className="text-amber-500" />
+               <div className="w-9 h-9 rounded-full bg-promotion-light border border-promotion-light-active flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <AlertCircle size={16} className="text-promotion" />
                </div>
                <div>
-                  <p className="text-[14px] font-semibold text-gray-900 mb-1">
+                  <p className="text-[14px] font-semibold text-primary mb-1">
                      Thay đổi danh mục
                   </p>
-                  <p className="text-[13px] text-gray-500 leading-relaxed">
+                  <p className="text-[13px] text-neutral-dark leading-relaxed">
                      Danh mục mới có cấu hình thuộc tính khác. Toàn bộ biến thể
                      hiện tại sẽ bị xóa và tạo lại từ đầu.
                   </p>
@@ -517,14 +538,14 @@ function CategoryChangeModal({
                <button
                   type="button"
                   onClick={onCancel}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="flex-1 px-4 py-2.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
                >
                   Hủy bỏ
                </button>
                <button
                   type="button"
                   onClick={onConfirm}
-                  className="flex-1 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 rounded-lg text-[13px] font-semibold text-white transition-colors cursor-pointer"
+                  className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary-hover rounded-lg text-[13px] font-semibold text-neutral-light transition-colors cursor-pointer"
                >
                   Xác nhận
                </button>
@@ -561,8 +582,8 @@ function BasePriceInput({
 
    return (
       <div>
-         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-            Giá gốc (VNĐ) <span className="text-red-400">*</span>
+         <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
+            Giá gốc (VNĐ) <span className="text-promotion">*</span>
          </p>
          <div className="relative">
             <input
@@ -573,22 +594,22 @@ function BasePriceInput({
                placeholder="20000000"
                className={`${inp(!!error)} pr-12 tabular-nums`}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-gray-400 pointer-events-none">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-neutral-dark pointer-events-none">
                VNĐ
             </span>
          </div>
          {value > 0 && (
-            <p className="text-[11px] text-gray-400 mt-1">
+            <p className="text-[11px] text-neutral-dark mt-1">
                ≈ {fmtVND(value)} · {fmtFull(value)}
             </p>
          )}
-         {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
+         {error && <p className="text-[11px] text-promotion mt-1">{error}</p>}
       </div>
    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRICE ADJUSTMENT INPUT (inline, compact)
+// PRICE ADJUSTMENT INPUT
 // ─────────────────────────────────────────────────────────────────────────────
 
 function PriceAdjInput({
@@ -605,7 +626,6 @@ function PriceAdjInput({
    }, [value]);
 
    const commit = () => {
-      // Allow negative: keep leading "-" then parse digits
       const isNeg = raw.trim().startsWith("-");
       const digits = Number(raw.replace(/[^\d]/g, "")) || 0;
       const n = isNeg ? -digits : digits;
@@ -613,16 +633,17 @@ function PriceAdjInput({
       setRaw(n === 0 ? "" : String(n));
    };
 
+   // emerald → accent, red → promotion
    const colorCls =
       value > 0
-         ? "border-emerald-300 text-emerald-700 bg-emerald-50/40"
+         ? "border-accent text-accent-dark bg-accent-light/40"
          : value < 0
-           ? "border-red-300 text-red-600 bg-red-50/40"
-           : "border-gray-200 text-gray-500 bg-white";
+           ? "border-promotion text-promotion bg-promotion-light/40"
+           : "border-neutral text-neutral-dark bg-neutral-light";
 
    return (
       <div className="flex items-center gap-1 mt-1.5">
-         <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">
+         <span className="text-[10px] text-neutral-dark whitespace-nowrap flex-shrink-0">
             ±giá
          </span>
          <div className="relative flex-1">
@@ -633,12 +654,12 @@ function PriceAdjInput({
                onKeyDown={(e) => e.key === "Enter" && commit()}
                placeholder="0"
                className={`w-full px-2 py-1 text-[11px] border rounded-md tabular-nums
-                  focus:outline-none focus:border-gray-700 transition-all ${colorCls}`}
+                  focus:outline-none focus:border-primary transition-all ${colorCls}`}
             />
             {value !== 0 && (
                <span
                   className={`absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] font-bold pointer-events-none
-                  ${value > 0 ? "text-emerald-500" : "text-red-400"}`}
+                  ${value > 0 ? "text-accent" : "text-promotion"}`}
                >
                   {value > 0 ? "+" : ""}
                   {fmtVND(value)}
@@ -650,7 +671,7 @@ function PriceAdjInput({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CHIP ATTRIBUTE SELECTOR — priceAdjustment per selected option
+// CHIP ATTRIBUTE SELECTOR
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ChipAttributeSelector({
@@ -701,14 +722,14 @@ function ChipAttributeSelector({
             return (
                <div key={attr.id}>
                   <div className="flex items-center gap-2 mb-2.5">
-                     <span className="text-[12px] font-semibold text-gray-700">
+                     <span className="text-[12px] font-semibold text-primary">
                         {attr.name}
                         {attr.isRequired && (
-                           <span className="text-red-400 ml-0.5">*</span>
+                           <span className="text-promotion ml-0.5">*</span>
                         )}
                      </span>
                      {selCount > 0 && (
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-semibold text-accent-dark bg-accent-light border border-accent-light-active px-2 py-0.5 rounded-full">
                            {selCount} đã chọn
                         </span>
                      )}
@@ -729,13 +750,13 @@ function ChipAttributeSelector({
                                     cursor-pointer transition-all select-none w-full
                                     ${
                                        isOn
-                                          ? "bg-gray-900 border-gray-900 text-white"
-                                          : "bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                                          ? "bg-primary border-primary text-neutral-light"
+                                          : "bg-neutral-light border-neutral text-primary hover:border-neutral-dark hover:bg-neutral-light-active"
                                     }`}
                               >
                                  {isColor && (
                                     <span
-                                       className={`w-3 h-3 rounded-full flex-shrink-0 ${isOn ? "ring-2 ring-white ring-offset-1 ring-offset-gray-900" : "ring-1 ring-gray-300"}`}
+                                       className={`w-3 h-3 rounded-full flex-shrink-0 ${isOn ? "ring-2 ring-neutral-light ring-offset-1 ring-offset-primary" : "ring-1 ring-neutral"}`}
                                        style={{ background: opt.value }}
                                     />
                                  )}
@@ -745,7 +766,7 @@ function ChipAttributeSelector({
                                  {isOn && opt.priceAdjustment !== 0 && (
                                     <span
                                        className={`text-[10px] font-semibold opacity-80 whitespace-nowrap
-                                       ${opt.priceAdjustment > 0 ? "text-emerald-300" : "text-red-300"}`}
+                                       ${opt.priceAdjustment > 0 ? "text-accent-light-active" : "text-promotion-light-active"}`}
                                     >
                                        {opt.priceAdjustment > 0 ? "+" : ""}
                                        {fmtVND(opt.priceAdjustment)}
@@ -758,7 +779,6 @@ function ChipAttributeSelector({
                                     />
                                  )}
                               </button>
-                              {/* Show price adjustment input + final price preview when selected */}
                               {isOn && (
                                  <div className="mt-1.5 px-1">
                                     <PriceAdjInput
@@ -771,7 +791,7 @@ function ChipAttributeSelector({
                                           )
                                        }
                                     />
-                                    <p className="text-[10px] text-gray-400 mt-1 tabular-nums">
+                                    <p className="text-[10px] text-neutral-dark mt-1 tabular-nums">
                                        → {fmtVND(finalPrice)}
                                     </p>
                                  </div>
@@ -780,7 +800,7 @@ function ChipAttributeSelector({
                         );
                      })}
                      {adding[attr.id] ? (
-                        <div className="inline-flex items-center gap-1.5 border border-gray-300 bg-white rounded-lg px-2.5 py-1.5">
+                        <div className="inline-flex items-center gap-1.5 border border-neutral bg-neutral-light rounded-lg px-2.5 py-1.5">
                            <input
                               autoFocus
                               value={newLabel[attr.id] ?? ""}
@@ -799,12 +819,12 @@ function ChipAttributeSelector({
                                     }));
                               }}
                               placeholder="Tên option..."
-                              className="w-24 text-[12px] bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                              className="w-24 text-[12px] bg-transparent focus:outline-none text-primary placeholder:text-neutral-dark"
                            />
                            <button
                               type="button"
                               onClick={() => submit(attr.id)}
-                              className="text-[11px] font-semibold text-gray-900 cursor-pointer hover:opacity-70"
+                              className="text-[11px] font-semibold text-primary cursor-pointer hover:opacity-70"
                            >
                               OK
                            </button>
@@ -813,7 +833,7 @@ function ChipAttributeSelector({
                               onClick={() =>
                                  setAdding((p) => ({ ...p, [attr.id]: false }))
                               }
-                              className="text-gray-400 cursor-pointer hover:text-gray-600"
+                              className="text-neutral-dark cursor-pointer hover:text-primary"
                            >
                               <X size={11} />
                            </button>
@@ -824,7 +844,7 @@ function ChipAttributeSelector({
                            onClick={() =>
                               setAdding((p) => ({ ...p, [attr.id]: true }))
                            }
-                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-[11px] text-gray-400 hover:border-gray-500 hover:text-gray-600 hover:bg-gray-50 transition-all cursor-pointer"
+                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-neutral text-[11px] text-neutral-dark hover:border-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
                         >
                            <Plus size={10} /> Thêm
                         </button>
@@ -838,7 +858,7 @@ function ChipAttributeSelector({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VARIANT TABLE — price column is computed/read-only
+// VARIANT TABLE
 // ─────────────────────────────────────────────────────────────────────────────
 
 function VariantTable({
@@ -899,31 +919,33 @@ function VariantTable({
    return (
       <div className="space-y-2">
          {/* Price range banner */}
-         <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg">
-            <div className="flex items-center gap-2 text-[12px] text-gray-500">
-               <BadgeDollarSign size={13} className="text-gray-400" />
+         <div className="flex items-center justify-between px-3 py-2 bg-neutral-light-active border border-neutral rounded-lg">
+            <div className="flex items-center gap-2 text-[12px] text-neutral-dark">
+               <BadgeDollarSign size={13} className="text-neutral-dark" />
                Khoảng giá:
-               <span className="font-semibold text-gray-900">{priceRange}</span>
+               <span className="font-semibold text-primary">{priceRange}</span>
             </div>
-            <span className="text-[11px] text-gray-400 italic">
+            <span className="text-[11px] text-neutral-dark italic">
                = giá gốc ({fmtVND(basePrice)}) + điều chỉnh option
             </span>
          </div>
 
          {/* Bulk toolbar */}
          {someChecked && (
-            <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-900 rounded-lg flex-wrap">
-               <span className="text-[12px] font-semibold text-white">
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-primary rounded-lg flex-wrap">
+               <span className="text-[12px] font-semibold text-neutral-light">
                   {selectedKeys.size} dòng
                </span>
-               <div className="w-px h-4 bg-white/20" />
-               <span className="text-[11px] text-white/50">Tồn kho</span>
+               <div className="w-px h-4 bg-neutral-light/20" />
+               <span className="text-[11px] text-neutral-light/50">
+                  Tồn kho
+               </span>
                <input
                   value={bulkQty}
                   onChange={(e) => setBulkQty(e.target.value)}
                   type="number"
                   placeholder="0"
-                  className="w-[70px] px-2.5 py-1 text-[12px] border border-white/15 rounded-md bg-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/40"
+                  className="w-[70px] px-2.5 py-1 text-[12px] border border-neutral-light/15 rounded-md bg-neutral-light/10 text-neutral-light placeholder:text-neutral-light/30 focus:outline-none focus:border-neutral-light/40"
                />
                <button
                   type="button"
@@ -933,13 +955,13 @@ function VariantTable({
                      );
                      setBulkQty("");
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-white text-gray-900 hover:bg-gray-100 cursor-pointer transition-colors"
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-neutral-light text-primary hover:bg-neutral-light-active cursor-pointer transition-colors"
                >
                   Áp dụng
                </button>
                {template && productName.trim() && (
                   <>
-                     <div className="w-px h-4 bg-white/20" />
+                     <div className="w-px h-4 bg-neutral-light/20" />
                      <button
                         type="button"
                         onClick={() =>
@@ -947,7 +969,7 @@ function VariantTable({
                               .filter((v) => selectedKeys.has(v._key))
                               .forEach((v) => autoSKU(v))
                         }
-                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md bg-white/15 hover:bg-white/25 text-white cursor-pointer transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md bg-neutral-light/15 hover:bg-neutral-light/25 text-neutral-light cursor-pointer transition-colors"
                      >
                         <Sparkles size={11} /> SKU tự động
                      </button>
@@ -956,48 +978,48 @@ function VariantTable({
             </div>
          )}
 
-         <div className="overflow-x-auto rounded-lg border border-gray-200">
+         <div className="overflow-x-auto rounded-lg border border-neutral">
             <table className="w-full border-collapse" style={{ minWidth: 560 }}>
                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
+                  <tr className="bg-neutral-light-active border-b border-neutral">
                      <th className="px-3 py-2.5 text-left w-9">
                         <input
                            type="checkbox"
                            checked={allChecked}
                            onChange={(e) => onToggleAll(e.target.checked)}
-                           className="w-[13px] h-[13px] accent-gray-900 cursor-pointer"
+                           className="w-[13px] h-[13px] accent-primary cursor-pointer"
                         />
                      </th>
-                     <th className="px-2 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider w-7">
+                     <th className="px-2 py-2.5 text-left text-[10px] font-bold text-neutral-dark uppercase tracking-wider w-7">
                         #
                      </th>
-                     <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider min-w-[120px]">
+                     <th className="px-3 py-2.5 text-left text-[10px] font-bold text-neutral-dark uppercase tracking-wider min-w-[120px]">
                         SKU
                      </th>
                      {attrCols.map((a) => (
                         <th
                            key={a.id}
-                           className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider"
+                           className="px-3 py-2.5 text-left text-[10px] font-bold text-neutral-dark uppercase tracking-wider"
                         >
                            {a.name}
                         </th>
                      ))}
-                     <th className="px-3 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider min-w-[130px]">
+                     <th className="px-3 py-2.5 text-right text-[10px] font-bold text-neutral-dark uppercase tracking-wider min-w-[130px]">
                         Giá cuối
                      </th>
-                     <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider w-[75px]">
+                     <th className="px-3 py-2.5 text-left text-[10px] font-bold text-neutral-dark uppercase tracking-wider w-[75px]">
                         Tồn kho
                      </th>
-                     <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider w-[72px]">
+                     <th className="px-3 py-2.5 text-center text-[10px] font-bold text-neutral-dark uppercase tracking-wider w-[72px]">
                         Default
                      </th>
-                     <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider w-[60px]">
+                     <th className="px-3 py-2.5 text-center text-[10px] font-bold text-neutral-dark uppercase tracking-wider w-[60px]">
                         Active
                      </th>
                      <th className="px-2 py-2.5 w-8" />
                   </tr>
                </thead>
-               <tbody className="divide-y divide-gray-100">
+               <tbody className="divide-y divide-neutral">
                   {variants.map((v, idx) => {
                      const isSel = selectedKeys.has(v._key);
                      const codeErr = errors[`variant_${v._key}_code`];
@@ -1006,17 +1028,17 @@ function VariantTable({
                      return (
                         <tr
                            key={v._key}
-                           className={`transition-colors ${isSel ? "bg-gray-50" : "hover:bg-gray-50/40"}`}
+                           className={`transition-colors ${isSel ? "bg-neutral-light-active" : "hover:bg-neutral-light-active/50"}`}
                         >
                            <td className="px-3 py-2">
                               <input
                                  type="checkbox"
                                  checked={isSel}
                                  onChange={() => onToggleSelect(v._key)}
-                                 className="w-[13px] h-[13px] accent-gray-900 cursor-pointer"
+                                 className="w-[13px] h-[13px] accent-primary cursor-pointer"
                               />
                            </td>
-                           <td className="px-2 py-2 text-[11px] text-gray-400 tabular-nums">
+                           <td className="px-2 py-2 text-[11px] text-neutral-dark tabular-nums">
                               {idx + 1}
                            </td>
                            <td className="px-3 py-2">
@@ -1032,22 +1054,22 @@ function VariantTable({
                                     }
                                     placeholder="PRO-P-WH-A3F"
                                     className={`w-full min-w-[100px] px-2 py-1.5 text-[11px] font-mono border rounded-md
-                                       bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-900 transition-all
-                                       ${codeErr ? "border-red-300 bg-red-50/30" : "border-gray-200"}`}
+                                       bg-neutral-light-active focus:bg-neutral-light focus:outline-none focus:border-primary transition-all
+                                       ${codeErr ? "border-promotion bg-promotion-light/30" : "border-neutral"}`}
                                  />
                                  {template && productName.trim() && (
                                     <button
                                        type="button"
                                        onClick={() => autoSKU(v)}
                                        title="Tạo SKU tự động"
-                                       className="p-1 text-gray-300 hover:text-gray-900 cursor-pointer flex-shrink-0 transition-colors"
+                                       className="p-1 text-neutral hover:text-primary cursor-pointer flex-shrink-0 transition-colors"
                                     >
                                        <Sparkles size={12} />
                                     </button>
                                  )}
                               </div>
                               {codeErr && (
-                                 <p className="text-[10px] text-red-500 mt-0.5">
+                                 <p className="text-[10px] text-promotion mt-0.5">
                                     {codeErr}
                                  </p>
                               )}
@@ -1061,13 +1083,13 @@ function VariantTable({
                                     <div className="flex items-center gap-1.5">
                                        {attr.code === "color" && opt && (
                                           <span
-                                             className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-gray-300"
+                                             className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-neutral"
                                              style={{ background: opt.value }}
                                           />
                                        )}
-                                       <span className="text-[12px] text-gray-700">
+                                       <span className="text-[12px] text-primary">
                                           {opt?.label ?? (
-                                             <span className="text-gray-300">
+                                             <span className="text-neutral">
                                                 —
                                              </span>
                                           )}
@@ -1076,14 +1098,14 @@ function VariantTable({
                                  </td>
                               );
                            })}
-                           {/* Giá cuối — read-only computed */}
+                           {/* Giá cuối — read-only */}
                            <td className="px-3 py-2 text-right">
-                              <span className="text-[13px] font-semibold text-gray-900 tabular-nums">
+                              <span className="text-[13px] font-semibold text-primary tabular-nums">
                                  {fmtVND(v.computedPrice)}
                               </span>
                               {adj !== 0 && (
                                  <div
-                                    className={`text-[10px] tabular-nums mt-0.5 ${adj > 0 ? "text-emerald-600" : "text-red-500"}`}
+                                    className={`text-[10px] tabular-nums mt-0.5 ${adj > 0 ? "text-accent" : "text-promotion"}`}
                                  >
                                     {adj > 0 ? "+" : ""}
                                     {fmtVND(adj)}
@@ -1099,7 +1121,7 @@ function VariantTable({
                                  onChange={(e) =>
                                     onUpdate(v._key, "quantity", e.target.value)
                                  }
-                                 className="w-full px-2 py-1.5 text-[12px] text-center border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-900 transition-all"
+                                 className="w-full px-2 py-1.5 text-[12px] text-center border border-neutral rounded-md bg-neutral-light-active focus:bg-neutral-light focus:outline-none focus:border-primary transition-all"
                               />
                            </td>
                            <td className="px-3 py-2 text-center">
@@ -1107,10 +1129,10 @@ function VariantTable({
                                  type="button"
                                  onClick={() => onSetDefault(v._key)}
                                  className={`inline-flex items-center justify-center w-[18px] h-[18px] rounded-full border-2 transition-all cursor-pointer mx-auto
-                                    ${v.isDefault ? "border-gray-900 bg-gray-900" : "border-gray-300 hover:border-gray-600"}`}
+                                    ${v.isDefault ? "border-primary bg-primary" : "border-neutral hover:border-neutral-dark"}`}
                               >
                                  {v.isDefault && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-light" />
                                  )}
                               </button>
                            </td>
@@ -1130,7 +1152,7 @@ function VariantTable({
                                  <button
                                     type="button"
                                     onClick={() => onRemove(v._key)}
-                                    className="w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                                    className="w-6 h-6 flex items-center justify-center rounded text-neutral hover:text-promotion hover:bg-promotion-light transition-colors cursor-pointer"
                                  >
                                     <X size={12} />
                                  </button>
@@ -1180,7 +1202,7 @@ function ColorImages({
    return (
       <div className="space-y-3">
          {errors.colorImages && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[12px] font-medium">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-promotion-light border border-promotion-light-active text-promotion text-[12px] font-medium">
                <AlertCircle size={13} /> {errors.colorImages}
             </div>
          )}
@@ -1198,33 +1220,33 @@ function ColorImages({
                return (
                   <div
                      key={ci._key}
-                     className="border border-gray-200 rounded-lg overflow-hidden"
+                     className="border border-neutral rounded-lg overflow-hidden"
                   >
-                     <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+                     <div className="flex items-center justify-between px-3 py-2 bg-neutral-light-active border-b border-neutral">
                         <div className="flex items-center gap-2">
                            {ci.color ? (
                               <span
-                                 className="w-3.5 h-3.5 rounded-full ring-1 ring-gray-300 flex-shrink-0"
+                                 className="w-3.5 h-3.5 rounded-full ring-1 ring-neutral flex-shrink-0"
                                  style={{ background: ci.color }}
                               />
                            ) : (
-                              <span className="w-3.5 h-3.5 rounded-full bg-gray-200 flex-shrink-0" />
+                              <span className="w-3.5 h-3.5 rounded-full bg-neutral flex-shrink-0" />
                            )}
-                           <span className="text-[12px] font-semibold text-gray-800">
+                           <span className="text-[12px] font-semibold text-primary">
                               {(label ?? ci.color) || "Chưa chọn màu"}
                            </span>
                            {ci.color && label && (
-                              <span className="text-[10px] text-gray-400 font-mono">
+                              <span className="text-[10px] text-neutral-dark font-mono">
                                  {ci.color}
                               </span>
                            )}
                            {toDeleteCount > 0 && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 font-semibold">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-promotion-light text-promotion font-semibold">
                                  −{toDeleteCount}
                               </span>
                            )}
                            {newCount > 0 && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-900 text-white font-semibold">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary text-neutral-light font-semibold">
                                  +{newCount}
                               </span>
                            )}
@@ -1233,7 +1255,7 @@ function ColorImages({
                            <button
                               type="button"
                               onClick={() => onRemoveColor(ci._key)}
-                              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                              className="w-5 h-5 flex items-center justify-center text-neutral-dark hover:text-promotion hover:bg-promotion-light rounded transition-colors cursor-pointer"
                            >
                               <Trash2 size={11} />
                            </button>
@@ -1243,9 +1265,9 @@ function ColorImages({
                         {!ci.color && (
                            <div className="grid grid-cols-2 gap-2">
                               <div>
-                                 <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                 <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mb-1">
                                     Màu sắc{" "}
-                                    <span className="text-red-400">*</span>
+                                    <span className="text-promotion">*</span>
                                  </p>
                                  {colorOptions.length > 0 ? (
                                     <select
@@ -1289,7 +1311,7 @@ function ColorImages({
                                  )}
                               </div>
                               <div>
-                                 <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                                 <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mb-1">
                                     Alt text
                                  </p>
                                  <input
@@ -1311,10 +1333,10 @@ function ColorImages({
                            ci.existingImages &&
                            ci.existingImages.length > 0 && (
                               <div>
-                                 <p className="text-[10px] text-gray-400 mb-1.5">
+                                 <p className="text-[10px] text-neutral-dark mb-1.5">
                                     Ảnh hiện tại ({activeExisting.length}/
                                     {ci.existingImages.length})
-                                    <span className="text-gray-300 ml-1">
+                                    <span className="text-neutral ml-1">
                                        — click để xóa
                                     </span>
                                  </p>
@@ -1326,7 +1348,7 @@ function ColorImages({
                                              onToggleDeleteImg(ci._key, img.id)
                                           }
                                           className={`relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer transition-all group
-                                          ${img.toDelete ? "opacity-40 ring-2 ring-red-400" : "ring-1 ring-gray-200 hover:ring-red-300"}`}
+                                          ${img.toDelete ? "opacity-40 ring-2 ring-promotion" : "ring-1 ring-neutral hover:ring-promotion-light-active"}`}
                                        >
                                           <Image
                                              src={img.url}
@@ -1337,10 +1359,10 @@ function ColorImages({
                                              unoptimized
                                           />
                                           {img.toDelete && (
-                                             <div className="absolute inset-0 bg-red-100/60 flex items-center justify-center">
+                                             <div className="absolute inset-0 bg-promotion-light/60 flex items-center justify-center">
                                                 <X
                                                    size={12}
-                                                   className="text-red-500"
+                                                   className="text-promotion"
                                                 />
                                              </div>
                                           )}
@@ -1353,7 +1375,7 @@ function ColorImages({
                            {ci.previews.map((url, i) => (
                               <div
                                  key={i}
-                                 className="aspect-square relative rounded-lg overflow-hidden ring-1 ring-gray-200 group bg-gray-50"
+                                 className="aspect-square relative rounded-lg overflow-hidden ring-1 ring-neutral group bg-neutral-light-active"
                               >
                                  <Image
                                     src={url}
@@ -1365,12 +1387,12 @@ function ColorImages({
                                  <button
                                     type="button"
                                     onClick={() => onRemoveNewFile(ci._key, i)}
-                                    className="absolute top-0.5 right-0.5 w-4 h-4 bg-gray-900/80 text-white rounded-full items-center justify-center hidden group-hover:flex cursor-pointer"
+                                    className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary/80 text-neutral-light rounded-full items-center justify-center hidden group-hover:flex cursor-pointer"
                                  >
                                     <X size={9} />
                                  </button>
-                                 <div className="absolute bottom-0 left-0 right-0 bg-black/20 py-0.5 text-center">
-                                    <span className="text-[8px] text-white/90">
+                                 <div className="absolute bottom-0 left-0 right-0 bg-primary-dark/20 py-0.5 text-center">
+                                    <span className="text-[8px] text-neutral-light/90">
                                        Main
                                     </span>
                                  </div>
@@ -1381,7 +1403,7 @@ function ColorImages({
                            }).map((_, i) => (
                               <label
                                  key={`s${i}`}
-                                 className="aspect-square flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition-all group"
+                                 className="aspect-square flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral hover:border-neutral-dark hover:bg-neutral-light-active cursor-pointer transition-all group"
                               >
                                  <input
                                     type="file"
@@ -1394,14 +1416,14 @@ function ColorImages({
                                  />
                                  <ImagePlus
                                     size={12}
-                                    className="text-gray-300 group-hover:text-gray-500 mb-0.5 transition-colors"
+                                    className="text-neutral group-hover:text-neutral-dark mb-0.5 transition-colors"
                                  />
-                                 <span className="text-[8px] text-gray-300 group-hover:text-gray-400 font-mono">
+                                 <span className="text-[8px] text-neutral group-hover:text-neutral-dark font-mono">
                                     #{String(newCount + i + 1).padStart(2, "0")}
                                  </span>
                               </label>
                            ))}
-                           <label className="aspect-square flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition-all group">
+                           <label className="aspect-square flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral hover:border-neutral-dark hover:bg-neutral-light-active cursor-pointer transition-all group">
                               <input
                                  type="file"
                                  accept="image/*"
@@ -1413,9 +1435,9 @@ function ColorImages({
                               />
                               <Plus
                                  size={14}
-                                 className="text-gray-300 group-hover:text-gray-500 transition-colors"
+                                 className="text-neutral group-hover:text-neutral-dark transition-colors"
                               />
-                              <span className="text-[8px] text-gray-300 group-hover:text-gray-400">
+                              <span className="text-[8px] text-neutral group-hover:text-neutral-dark">
                                  Thêm
                               </span>
                            </label>
@@ -1428,7 +1450,7 @@ function ColorImages({
          <button
             type="button"
             onClick={onAddColor}
-            className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-primary transition-colors cursor-pointer"
          >
             <Plus size={12} /> Thêm màu thủ công
          </button>
@@ -1437,7 +1459,7 @@ function ColorImages({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN FORM
+// MAIN FORM  — logic giữ nguyên 100%, chỉ thay className
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_BASE_PRICE = 20_000_000;
@@ -1472,7 +1494,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       (product as any)?.variantDisplay ?? "SELECTOR",
    );
 
-   // basePrice: khi edit lấy giá default variant làm heuristic; khi tạo mới = 20tr
    const [basePrice, setBasePrice] = useState<number>(() => {
       if (product?.variants?.length) {
          const def = product.variants.find((v) => v.isDefault && !v.deletedAt);
@@ -1570,7 +1591,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       nameRef.current = name;
    }, [name]);
 
-   // Close category tree on outside click
    useEffect(() => {
       const handler = (e: MouseEvent) => {
          if (
@@ -1583,7 +1603,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       return () => document.removeEventListener("mousedown", handler);
    }, [showCategoryTree]);
 
-   // Load brands + categories
    useEffect(() => {
       Promise.allSettled([
          apiRequest.get<any>("/brands/admin/all", { params: { limit: 100 } }),
@@ -1604,7 +1623,6 @@ export default function ProductForm({ product }: ProductFormProps) {
          .finally(() => setLoadingOptions(false));
    }, []);
 
-   // Load category template
    const loadTemplate = useCallback(async (id: string) => {
       if (!id) {
          setTemplate(null);
@@ -1614,7 +1632,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       try {
          const res = await apiRequest.get<any>(`/categories/${id}/template`);
          const t = res.data?.template ?? res.data;
-         // Normalise: ensure priceAdjustment on every option
          const attrs: TemplateAttribute[] = (t?.attributes ?? []).map(
             (a: any) => ({
                ...a,
@@ -1640,7 +1657,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       else setTemplate(null);
    }, [categoryId, loadTemplate]);
 
-   // Sync specs when template loads
    useEffect(() => {
       if (!template) return;
       const all = template.specifications.flatMap((g) => g.items);
@@ -1658,7 +1674,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       });
    }, [template]);
 
-   // Helper: recompute all variant prices
    const recomputeAll = useCallback(
       (vars: VariantForm[], tmpl: CategoryTemplate | null, bp: number) =>
          vars.map((v) => ({
@@ -1668,7 +1683,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       [],
    );
 
-   // Auto-generate variants when checked changes
    useEffect(() => {
       if (!template || !template.attributes.length) return;
       const combos = cartesian(template.attributes, checked);
@@ -1685,7 +1699,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                return [key, v];
             }),
          );
-         const newVariants = combos.map((attrMap, i) => {
+         const newVariants = combos.map((attrMap) => {
             const key = template.attributes
                .map((a) => attrMap[a.id] ?? "")
                .join("|");
@@ -1709,24 +1723,19 @@ export default function ProductForm({ product }: ProductFormProps) {
                attributes: attrMap,
             };
          });
-
-         // Đảm bảo đúng 1 default: giữ default cũ nếu còn tồn tại, không thì set index 0
          const hasDefault = newVariants.some((v) => v.isDefault);
          if (!hasDefault && newVariants.length > 0)
             newVariants[0].isDefault = true;
-
          return newVariants;
       });
       setSelectedKeys(new Set());
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [checked, template]);
 
-   // Recompute prices when basePrice changes
    useEffect(() => {
       setVariants((prev) => recomputeAll(prev, template, basePrice));
    }, [basePrice, template, recomputeAll]);
 
-   // Auto-regen SKU when name changes
    useEffect(() => {
       if (!template || !name.trim()) return;
       setVariants((prev) =>
@@ -1747,7 +1756,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [name]);
 
-   // Sync color image groups when color selection changes
    useEffect(() => {
       if (isEdit || !template) return;
       const colorAttr = template.attributes.find((a) => a.code === "color");
@@ -1773,7 +1781,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       });
    }, [checked, template, isEdit]);
 
-   // Category select
    const handleCategorySelect = useCallback(
       async (newId: string) => {
          setShowCategoryTree(false);
@@ -1835,7 +1842,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       setPendingCategoryId(null);
    }, []);
 
-   // Attribute toggle
    const handleToggle = (attrId: string, optId: string) =>
       setChecked((prev) => {
          const next = { ...prev, [attrId]: new Set(prev[attrId] ?? []) };
@@ -1870,10 +1876,8 @@ export default function ProductForm({ product }: ProductFormProps) {
             : prev,
       );
 
-   // Update priceAdjustment for an option → recompute affected variants immediately
    const handleUpdatePriceAdjustment = useCallback(
       (attrId: string, optId: string, adj: number) => {
-         // Update template state
          setTemplate((prev) => {
             if (!prev) return prev;
             const updated = {
@@ -1891,7 +1895,6 @@ export default function ProductForm({ product }: ProductFormProps) {
                        },
                ),
             };
-            // Recompute variants with the updated template inline (avoid stale closure)
             setVariants((prevV) =>
                prevV.map((v) => ({
                   ...v,
@@ -1908,7 +1911,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       [basePrice],
    );
 
-   // Variant helpers
    const updateVariant = (key: string, field: keyof VariantForm, value: any) =>
       setVariants((p) =>
          p.map((v) => (v._key === key ? { ...v, [field]: value } : v)),
@@ -1932,7 +1934,6 @@ export default function ProductForm({ product }: ProductFormProps) {
    const toggleAll = (v: boolean) =>
       setSelectedKeys(v ? new Set(variants.map((v) => v._key)) : new Set());
 
-   // Color image helpers
    const addColor = () =>
       setColorImages((p) => [
          ...p,
@@ -1989,7 +1990,6 @@ export default function ProductForm({ product }: ProductFormProps) {
          }),
       );
 
-   // Spec helpers
    const toggleSpec = (id: string) =>
       setSpecs((p) =>
          p.map((s) =>
@@ -2011,7 +2011,6 @@ export default function ProductForm({ product }: ProductFormProps) {
          ),
       );
 
-   // Validate
    const validate = () => {
       const errs: Record<string, string> = {};
       if (!name.trim() || name.trim().length < 3)
@@ -2037,14 +2036,12 @@ export default function ProductForm({ product }: ProductFormProps) {
       return !Object.keys(errs).length;
    };
 
-   // Submit
    const handleSubmit = async () => {
       if (!validate()) return;
       setSubmitting(true);
       setSubmitError(null);
       createdIdRef.current = null;
       try {
-         // Collect option price adjustments (non-zero only)
          const optionAdjustments =
             template?.attributes.flatMap((a) =>
                a.options
@@ -2054,11 +2051,10 @@ export default function ProductForm({ product }: ProductFormProps) {
                      priceAdjustment: o.priceAdjustment,
                   })),
             ) ?? [];
-
          const variantsPayload = variants.map((v) => ({
             ...(v.id ? { id: v.id } : {}),
             code: v.code.trim(),
-            price: v.computedPrice, // final price = basePrice + adjustments
+            price: v.computedPrice,
             quantity: Number(v.quantity) || 0,
             isDefault: v.isDefault,
             isActive: v.isActive,
@@ -2066,7 +2062,6 @@ export default function ProductForm({ product }: ProductFormProps) {
                .filter(([, optId]) => optId)
                .map(([, attributeOptionId]) => ({ attributeOptionId })),
          }));
-
          const colorImagesPayload = colorImages
             .filter((c) => {
                if (!c.color.trim()) return false;
@@ -2087,7 +2082,6 @@ export default function ProductForm({ product }: ProductFormProps) {
                     }
                   : {}),
             }));
-
          const specificationsPayload = specs
             .filter((s) => s.enabled && s.value.trim())
             .map((s) => ({
@@ -2095,7 +2089,6 @@ export default function ProductForm({ product }: ProductFormProps) {
                value: s.value.trim(),
                isHighlight: s.isHighlight,
             }));
-
          const payload = {
             name: name.trim(),
             brandId,
@@ -2110,12 +2103,10 @@ export default function ProductForm({ product }: ProductFormProps) {
             colorImages: colorImagesPayload,
             specifications: specificationsPayload,
          };
-
          const fd = buildFormData(
             { ...payload, colorImages: colorImagesPayload },
             colorImages.filter((c) => c.color.trim() && c.files.length > 0),
          );
-
          if (isEdit && product) {
             createdIdRef.current = product.id;
             await updateProduct(product.id, fd);
@@ -2148,8 +2139,8 @@ export default function ProductForm({ product }: ProductFormProps) {
    if (loadingOptions) {
       return (
          <div className="flex items-center justify-center py-24 gap-3">
-            <Loader2 size={18} className="animate-spin text-gray-400" />
-            <span className="text-[13px] text-gray-400">
+            <Loader2 size={18} className="animate-spin text-neutral-dark" />
+            <span className="text-[13px] text-neutral-dark">
                Đang tải dữ liệu...
             </span>
          </div>
@@ -2178,8 +2169,8 @@ export default function ProductForm({ product }: ProductFormProps) {
             {/* ── BASIC INFO ─────────────────────────────────────────────── */}
             <Section icon={<FileText size={13} />} title="Thông tin cơ bản">
                <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                     Tên sản phẩm <span className="text-red-400">*</span>
+                  <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
+                     Tên sản phẩm <span className="text-promotion">*</span>
                   </p>
                   <input
                      value={name}
@@ -2188,15 +2179,15 @@ export default function ProductForm({ product }: ProductFormProps) {
                      className={`${inp(!!errors.name)} text-[14px] font-medium`}
                   />
                   {errors.name && (
-                     <p className="text-[11px] text-red-500 mt-1">
+                     <p className="text-[11px] text-promotion mt-1">
                         {errors.name}
                      </p>
                   )}
                </div>
 
                <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                     Thương hiệu <span className="text-red-400">*</span>
+                  <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
+                     Thương hiệu <span className="text-promotion">*</span>
                   </p>
                   <Select
                      options={brands.map((b) => ({
@@ -2223,23 +2214,23 @@ export default function ProductForm({ product }: ProductFormProps) {
                      noOptionsMessage={() => "Không tìm thấy"}
                   />
                   {errors.brandId && (
-                     <p className="text-[11px] text-red-500 mt-1">
+                     <p className="text-[11px] text-promotion mt-1">
                         {errors.brandId}
                      </p>
                   )}
                </div>
 
                <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                     Danh mục <span className="text-red-400">*</span>
+                  <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
+                     Danh mục <span className="text-promotion">*</span>
                   </p>
                   <div className="relative" ref={categoryTreeRef}>
                      <button
                         type="button"
                         onClick={() => setShowCategoryTree((v) => !v)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-[13px] bg-gray-50 border rounded-lg
-                           hover:bg-white focus:outline-none focus:bg-white focus:ring-4 focus:ring-gray-900/5 transition-all cursor-pointer
-                           ${errors.categoryId ? "border-red-400" : "border-gray-200"}`}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-[13px] bg-neutral-light-active border rounded-lg
+                           hover:bg-neutral-light focus:outline-none focus:bg-neutral-light focus:ring-4 focus:ring-primary/5 transition-all cursor-pointer
+                           ${errors.categoryId ? "border-promotion" : "border-neutral"}`}
                      >
                         {categoryPath.length > 0 ? (
                            <div className="flex items-center gap-1 flex-wrap">
@@ -2251,14 +2242,14 @@ export default function ProductForm({ product }: ProductFormProps) {
                                     {i > 0 && (
                                        <ChevronRight
                                           size={11}
-                                          className="text-gray-400"
+                                          className="text-neutral-dark"
                                        />
                                     )}
                                     <span
                                        className={
                                           i === categoryPath.length - 1
-                                             ? "text-gray-900 font-medium"
-                                             : "text-gray-500"
+                                             ? "text-primary font-medium"
+                                             : "text-neutral-dark"
                                        }
                                     >
                                        {c.name}
@@ -2267,17 +2258,17 @@ export default function ProductForm({ product }: ProductFormProps) {
                               ))}
                            </div>
                         ) : (
-                           <span className="text-gray-400">
+                           <span className="text-neutral-dark">
                               Chọn danh mục...
                            </span>
                         )}
                         <ChevronDown
                            size={14}
-                           className={`text-gray-400 flex-shrink-0 ml-2 transition-transform ${showCategoryTree ? "rotate-180" : ""}`}
+                           className={`text-neutral-dark flex-shrink-0 ml-2 transition-transform ${showCategoryTree ? "rotate-180" : ""}`}
                         />
                      </button>
                      {showCategoryTree && (
-                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 max-h-72 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-neutral-light border border-neutral rounded-xl shadow-lg p-2 max-h-72 overflow-y-auto">
                            <CategoryTree
                               nodes={categoryTree}
                               selectedId={categoryId}
@@ -2287,13 +2278,12 @@ export default function ProductForm({ product }: ProductFormProps) {
                      )}
                   </div>
                   {errors.categoryId && (
-                     <p className="text-[11px] text-red-500 mt-1">
+                     <p className="text-[11px] text-promotion mt-1">
                         {errors.categoryId}
                      </p>
                   )}
                </div>
 
-               {/* ── BASE PRICE ── */}
                <BasePriceInput
                   value={basePrice}
                   onChange={setBasePrice}
@@ -2317,9 +2307,9 @@ export default function ProductForm({ product }: ProductFormProps) {
                   ).map((item) => (
                      <div
                         key={item.label}
-                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50"
+                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg border border-neutral bg-neutral-light-active/50"
                      >
-                        <span className="text-[13px] text-gray-700">
+                        <span className="text-[13px] text-primary">
                            {item.label}
                         </span>
                         <Toggle
@@ -2329,8 +2319,8 @@ export default function ProductForm({ product }: ProductFormProps) {
                         />
                      </div>
                   ))}
-                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50/50">
-                     <span className="text-[13px] text-gray-700">
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border border-neutral bg-neutral-light-active/50">
+                     <span className="text-[13px] text-primary">
                         Kiểu biến thể
                      </span>
                      <select
@@ -2340,7 +2330,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                               e.target.value as "SELECTOR" | "CARD",
                            )
                         }
-                        className="text-[12px] border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none cursor-pointer text-gray-700"
+                        className="text-[12px] border border-neutral rounded-md px-2 py-1 bg-neutral-light focus:outline-none cursor-pointer text-primary"
                      >
                         <option value="SELECTOR">SELECTOR</option>
                         <option value="CARD">CARD</option>
@@ -2349,7 +2339,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                </div>
 
                <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                  <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
                      Mô tả sản phẩm
                   </p>
                   <CKEditorWrapper
@@ -2368,37 +2358,37 @@ export default function ProductForm({ product }: ProductFormProps) {
                badge={variants.length > 0 ? variants.length : undefined}
             >
                {!categoryId ? (
-                  <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-amber-50 border border-amber-100 text-[12px] text-amber-700">
+                  <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-promotion-light/50 border border-promotion-light-active text-[12px] text-promotion-dark">
                      <Info size={13} className="flex-shrink-0" />
                      Chọn danh mục để hiển thị thuộc tính biến thể
                   </div>
                ) : loadingTemplate ? (
-                  <div className="flex items-center gap-2 py-4 text-[13px] text-gray-400">
+                  <div className="flex items-center gap-2 py-4 text-[13px] text-neutral-dark">
                      <Loader2 size={14} className="animate-spin" /> Đang tải
                      template...
                   </div>
                ) : !template || template.attributes.length === 0 ? (
-                  <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-blue-50 border border-blue-100 text-[12px] text-blue-700">
+                  <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-accent-light border border-accent-light-active text-[12px] text-accent-dark">
                      <Info size={13} className="flex-shrink-0" />
                      Danh mục này không có cấu hình thuộc tính — sản phẩm đơn
                      giản (không có biến thể).
                   </div>
                ) : (
                   <div className="space-y-4">
-                     <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                     <div className="p-4 rounded-xl bg-neutral-light-active border border-neutral">
                         <div className="flex items-center justify-between mb-3">
                            <div>
-                              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                              <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
                                  Chọn thuộc tính & điều chỉnh giá
                               </p>
-                              <p className="text-[10px] text-gray-400 mt-0.5">
+                              <p className="text-[10px] text-neutral-dark mt-0.5">
                                  Click option để chọn → nhập ±giá so với giá gốc
                                  ({fmtVND(basePrice)})
                               </p>
                            </div>
                            {variants.length > 0 && (
-                              <div className="flex items-center gap-1.5 text-[11px] text-emerald-600">
-                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <div className="flex items-center gap-1.5 text-[11px] text-accent">
+                                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                                  Tự động · <strong>{variants.length}</strong>{" "}
                                  biến thể
                               </div>
@@ -2415,9 +2405,9 @@ export default function ProductForm({ product }: ProductFormProps) {
                      </div>
 
                      {variants.length > 0 && name.trim() && (
-                        <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-                           <div className="flex items-center gap-2 text-[12px] text-gray-600">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <div className="flex items-center justify-between px-3 py-2 bg-neutral-light-active border border-neutral rounded-lg">
+                           <div className="flex items-center gap-2 text-[12px] text-primary">
+                              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                               {totalSelectedOptions} options đã chọn
                            </div>
                            <button
@@ -2437,7 +2427,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                                     if (sku) updateVariant(v._key, "code", sku);
                                  })
                               }
-                              className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+                              className="flex items-center gap-1 text-[11px] text-neutral-dark hover:text-primary transition-colors cursor-pointer"
                            >
                               <Sparkles size={11} /> Tạo lại tất cả SKU
                            </button>
@@ -2445,7 +2435,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                      )}
 
                      {errors.variants && (
-                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[12px]">
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-promotion-light border border-promotion-light-active text-promotion text-[12px]">
                            <AlertCircle size={13} /> {errors.variants}
                         </div>
                      )}
@@ -2465,7 +2455,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                            productName={name}
                         />
                      ) : (
-                        <div className="flex items-center justify-center py-8 text-[13px] text-gray-400 rounded-lg border-2 border-dashed border-gray-200">
+                        <div className="flex items-center justify-center py-8 text-[13px] text-neutral-dark rounded-lg border-2 border-dashed border-neutral">
                            Click vào chip option để tự động sinh biến thể
                         </div>
                      )}
@@ -2480,17 +2470,17 @@ export default function ProductForm({ product }: ProductFormProps) {
                badge={colorImages.filter((c) => c.color).length || undefined}
             >
                {colorImages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3 rounded-lg border-2 border-dashed border-gray-200 text-center">
-                     <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
-                        <ImagePlus size={16} className="text-gray-400" />
+                  <div className="flex flex-col items-center justify-center py-10 gap-3 rounded-lg border-2 border-dashed border-neutral text-center">
+                     <div className="w-9 h-9 rounded-lg bg-neutral-light-active flex items-center justify-center">
+                        <ImagePlus size={16} className="text-neutral-dark" />
                      </div>
-                     <p className="text-[13px] text-gray-500">
+                     <p className="text-[13px] text-neutral-dark">
                         Chọn màu sắc ở biến thể để tự động tạo nhóm ảnh
                      </p>
                      <button
                         type="button"
                         onClick={addColor}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-gray-200 rounded-lg text-[12px] text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-neutral-light border border-neutral rounded-lg text-[12px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
                      >
                         <Plus size={12} /> Thêm màu thủ công
                      </button>
@@ -2526,10 +2516,10 @@ export default function ProductForm({ product }: ProductFormProps) {
                         {template.specifications.map((group) => (
                            <div key={group.groupName}>
                               <div className="flex items-center gap-3 mb-3">
-                                 <p className="text-[11px] font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                                 <p className="text-[11px] font-bold text-primary uppercase tracking-wider whitespace-nowrap">
                                     {group.groupName}
                                  </p>
-                                 <div className="flex-1 h-px bg-gray-200" />
+                                 <div className="flex-1 h-px bg-neutral" />
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                  {group.items.map((spec) => {
@@ -2540,25 +2530,25 @@ export default function ProductForm({ product }: ProductFormProps) {
                                     return (
                                        <div
                                           key={spec.id}
-                                          className={`flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${enabled ? "border-gray-200 bg-white" : "border-transparent bg-gray-50/40 opacity-40"}`}
+                                          className={`flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${enabled ? "border-neutral bg-neutral-light" : "border-transparent bg-neutral-light-active/40 opacity-40"}`}
                                        >
                                           <div className="min-w-0 flex-1 space-y-1.5">
                                              <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="text-[12px] font-semibold text-gray-700">
+                                                <span className="text-[12px] font-semibold text-primary">
                                                    {spec.name}
                                                 </span>
                                                 {spec.isRequired && (
-                                                   <span className="text-red-400 text-[11px]">
+                                                   <span className="text-promotion text-[11px]">
                                                       *
                                                    </span>
                                                 )}
                                                 {spec.unit && (
-                                                   <span className="text-[10px] text-gray-400">
+                                                   <span className="text-[10px] text-neutral-dark">
                                                       ({spec.unit})
                                                    </span>
                                                 )}
                                                 {spec.isFilterable && (
-                                                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-semibold border border-blue-100">
+                                                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent-light text-accent font-semibold border border-accent-light-active">
                                                       filter
                                                    </span>
                                                 )}
@@ -2578,9 +2568,9 @@ export default function ProductForm({ product }: ProductFormProps) {
                                                             ? `Nhập (${spec.unit})`
                                                             : "Nhập giá trị..."
                                                       }
-                                                      className={`flex-1 px-2.5 py-1.5 text-[12px] border rounded-md bg-gray-50 text-gray-900
-                                                      placeholder:text-gray-300 focus:outline-none focus:bg-white focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 transition-all
-                                                      ${!s?.value && spec.isRequired ? "border-red-200" : "border-gray-200"}`}
+                                                      className={`flex-1 px-2.5 py-1.5 text-[12px] border rounded-md bg-neutral-light-active text-primary
+                                                      placeholder:text-neutral focus:outline-none focus:bg-neutral-light focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all
+                                                      ${!s?.value && spec.isRequired ? "border-promotion-light-active" : "border-neutral"}`}
                                                    />
                                                    <button
                                                       type="button"
@@ -2589,7 +2579,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                                                             spec.id,
                                                          )
                                                       }
-                                                      className={`p-1.5 rounded-md transition-all cursor-pointer flex-shrink-0 ${s?.isHighlight ? "text-amber-500 bg-amber-50" : "text-gray-300 hover:text-amber-400 hover:bg-amber-50"}`}
+                                                      className={`p-1.5 rounded-md transition-all cursor-pointer flex-shrink-0 ${s?.isHighlight ? "text-star bg-promotion-light/30" : "text-neutral hover:text-star hover:bg-promotion-light/20"}`}
                                                    >
                                                       <Star
                                                          size={12}
@@ -2623,45 +2613,45 @@ export default function ProductForm({ product }: ProductFormProps) {
                )}
 
             {submitError && (
-               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[13px]">
+               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-promotion-light border border-promotion-light-active text-promotion text-[13px]">
                   <AlertCircle size={14} /> {submitError}
                </div>
             )}
 
             {/* ── FOOTER BAR ─────────────────────────────────────────────── */}
-            <div className="sticky bottom-0 -mx-1 bg-white border-t border-gray-200 px-5 py-3 flex items-center justify-between z-20">
-               <div className="flex items-center gap-5 text-[12px] text-gray-500">
+            <div className="sticky bottom-0 -mx-1 bg-neutral-light border-t border-neutral px-5 py-3 flex items-center justify-between z-20">
+               <div className="flex items-center gap-5 text-[12px] text-neutral-dark">
                   <div className="flex items-center gap-1.5">
-                     <BadgeDollarSign size={12} className="text-gray-400" />
+                     <BadgeDollarSign size={12} className="text-neutral-dark" />
                      <span>
                         Giá gốc:{" "}
-                        <strong className="text-gray-900">
+                        <strong className="text-primary">
                            {fmtVND(basePrice)}
                         </strong>
                      </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                     <Layers size={12} className="text-gray-400" />
+                     <Layers size={12} className="text-neutral-dark" />
                      <span>
-                        <strong className="text-gray-900">
+                        <strong className="text-primary">
                            {variants.length}
                         </strong>{" "}
                         biến thể
                      </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                     <Palette size={12} className="text-gray-400" />
+                     <Palette size={12} className="text-neutral-dark" />
                      <span>
-                        <strong className="text-gray-900">
+                        <strong className="text-primary">
                            {colorImages.filter((c) => c.color).length}
                         </strong>{" "}
                         màu
                      </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                     <Package size={12} className="text-gray-400" />
+                     <Package size={12} className="text-neutral-dark" />
                      <span>
-                        <strong className="text-gray-900">
+                        <strong className="text-primary">
                            {filledSpecsCount}
                         </strong>{" "}
                         thông số
@@ -2673,7 +2663,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                      type="button"
                      onClick={() => router.back()}
                      disabled={submitting}
-                     className="px-4 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-700 hover:bg-gray-50 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+                     className="px-4 py-2.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                   >
                      Hủy bỏ
                   </button>
@@ -2681,7 +2671,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                      type="button"
                      onClick={handleSubmit}
                      disabled={submitting}
-                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 rounded-lg text-[13px] font-semibold text-white transition-all cursor-pointer disabled:opacity-60 active:scale-[0.98]"
+                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover rounded-lg text-[13px] font-semibold text-neutral-light transition-all cursor-pointer disabled:opacity-60 active:scale-[0.98]"
                   >
                      {submitting && (
                         <Loader2 size={13} className="animate-spin" />
