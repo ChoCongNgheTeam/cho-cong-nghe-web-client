@@ -30,7 +30,7 @@ export default function CheckoutPage() {
   const { loading: authLoading } = useAuth();
   const { refetchCart, rawItems } = useCart();
 
-  console.log("rawItems", rawItems);
+  // console.log("rawItems", rawItems);
 
   // const [rawCartItems, setRawCartItems] = useState<ApiCartItem[]>([]);
 

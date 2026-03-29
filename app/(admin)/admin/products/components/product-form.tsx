@@ -20,6 +20,7 @@ import {
    FileText,
    Sparkles,
    Check,
+   BadgeDollarSign,
 } from "lucide-react";
 import apiRequest from "@/lib/api";
 import Select from "react-select";
@@ -53,6 +54,8 @@ interface AttrOption {
    id: string;
    value: string;
    label: string;
+   /** Giá cộng thêm so với basePrice (có thể âm để giảm giá) */
+   priceAdjustment: number;
 }
 
 interface TemplateAttribute {
@@ -88,7 +91,8 @@ interface VariantForm {
    _key: string;
    id?: string;
    code: string;
-   price: string;
+   /** Computed: basePrice + sum(priceAdjustment) — NOT edited directly */
+   computedPrice: number;
    quantity: string;
    isDefault: boolean;
    isActive: boolean;
@@ -154,7 +158,10 @@ function cartesian(
    const active = attrs.filter((a) => (checked[a.id]?.size ?? 0) > 0);
    if (!active.length) return [];
    const pools = active.map((a) =>
-      [...(checked[a.id] ?? [])].map((optId) => ({ attrId: a.id, optId })),
+      sortedOptIds(a, checked[a.id] ?? new Set()).map((optId) => ({
+         attrId: a.id,
+         optId,
+      })),
    );
    return pools.reduce<Array<Record<string, string>>>(
       (acc, pool) =>
@@ -163,6 +170,37 @@ function cartesian(
          ),
       [{}],
    );
+}
+
+function parseSizeBytes(label: string): number {
+   const m = label.match(/([\d.]+)\s*(TB|GB|MB|KB)?/i);
+   if (!m) return 0;
+   const n = parseFloat(m[1]);
+   const unit = (m[2] ?? "").toUpperCase();
+   if (unit === "TB") return n * 1024 ** 4;
+   if (unit === "GB") return n * 1024 ** 3;
+   if (unit === "MB") return n * 1024 ** 2;
+   if (unit === "KB") return n * 1024;
+   return n;
+}
+
+function sortedOptIds(attr: TemplateAttribute, ids: Set<string>): string[] {
+   return [...ids].sort((a, b) => {
+      const optA = attr.options.find((o) => o.id === a);
+      const optB = attr.options.find((o) => o.id === b);
+      const labelA = optA?.label ?? "";
+      const labelB = optB?.label ?? "";
+
+      const isSize =
+         /storage|memory|ram|ssd|hdd|bộ nhớ/i.test(attr.name + attr.code) ||
+         /\d+\s*(TB|GB|MB|KB)/i.test(labelA + labelB);
+
+      if (isSize) return parseSizeBytes(labelA) - parseSizeBytes(labelB);
+
+      // Fallback: sort theo template order
+      const orderMap = new Map(attr.options.map((o, i) => [o.id, i]));
+      return (orderMap.get(a) ?? 999) - (orderMap.get(b) ?? 999);
+   });
 }
 
 function buildFormData(
@@ -213,6 +251,36 @@ function getCategoryPath(
       cur = cur.parentId ? map.get(cur.parentId) : undefined;
    }
    return path;
+}
+
+/** Tính giá cuối cho 1 variant: basePrice + tổng priceAdjustment */
+function computeVariantPrice(
+   basePrice: number,
+   attrMap: Record<string, string>,
+   template: CategoryTemplate | null,
+): number {
+   if (!template) return basePrice;
+   const adj = template.attributes.reduce((sum, attr) => {
+      const optId = attrMap[attr.id];
+      if (!optId) return sum;
+      const opt = attr.options.find((o) => o.id === optId);
+      return sum + (opt?.priceAdjustment ?? 0);
+   }, 0);
+   return basePrice + adj;
+}
+
+/** Format gọn: 20000000 → "20tr", 2500000 → "2,5tr", 500000 → "500k" */
+function fmtVND(n: number): string {
+   if (Math.abs(n) >= 1_000_000) {
+      const m = n / 1_000_000;
+      return (Number.isInteger(m) ? m : m.toFixed(1)) + "tr";
+   }
+   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(0) + "k";
+   return n.toLocaleString("vi-VN");
+}
+
+function fmtFull(n: number): string {
+   return n.toLocaleString("vi-VN") + "đ";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -353,7 +421,7 @@ function Section({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CATEGORY TREE — original logic from doc13 (leaf-only selectable)
+// CATEGORY TREE
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CategoryTree({
@@ -371,32 +439,24 @@ function CategoryTree({
       return s;
    });
 
-   const toggle = (id: string) => {
+   const toggle = (id: string) =>
       setExpanded((prev) => {
          const n = new Set(prev);
          n.has(id) ? n.delete(id) : n.add(id);
          return n;
       });
-   };
 
    function renderNodes(list: CategoryNode[]) {
       return list.map((node) => {
          const isLeaf = node.children.length === 0;
          const isOpen = expanded.has(node.id);
          const isSel = node.id === selectedId;
-
          return (
             <div key={node.id}>
                <div
                   onClick={() => (isLeaf ? onSelect(node.id) : toggle(node.id))}
                   className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
-                     ${
-                        isLeaf && isSel
-                           ? "bg-gray-900 text-white"
-                           : isLeaf
-                             ? "hover:bg-gray-100 text-gray-700"
-                             : "hover:bg-gray-50 text-gray-600 font-medium"
-                     }`}
+                     ${isLeaf && isSel ? "bg-gray-900 text-white" : isLeaf ? "hover:bg-gray-100 text-gray-700" : "hover:bg-gray-50 text-gray-600 font-medium"}`}
                >
                   {!isLeaf && (
                      <ChevronRight
@@ -475,19 +535,142 @@ function CategoryChangeModal({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CHIP ATTRIBUTE SELECTOR
+// BASE PRICE INPUT
+// ─────────────────────────────────────────────────────────────────────────────
+
+function BasePriceInput({
+   value,
+   onChange,
+   error,
+}: {
+   value: number;
+   onChange: (v: number) => void;
+   error?: string;
+}) {
+   const [raw, setRaw] = useState(value === 0 ? "" : String(value));
+
+   useEffect(() => {
+      setRaw(value === 0 ? "" : String(value));
+   }, [value]);
+
+   const commit = () => {
+      const n = Number(raw.replace(/\D/g, "")) || 0;
+      onChange(n);
+      setRaw(n === 0 ? "" : String(n));
+   };
+
+   return (
+      <div>
+         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+            Giá gốc (VNĐ) <span className="text-red-400">*</span>
+         </p>
+         <div className="relative">
+            <input
+               value={raw}
+               onChange={(e) => setRaw(e.target.value.replace(/\D/g, ""))}
+               onBlur={commit}
+               onKeyDown={(e) => e.key === "Enter" && commit()}
+               placeholder="20000000"
+               className={`${inp(!!error)} pr-12 tabular-nums`}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-gray-400 pointer-events-none">
+               VNĐ
+            </span>
+         </div>
+         {value > 0 && (
+            <p className="text-[11px] text-gray-400 mt-1">
+               ≈ {fmtVND(value)} · {fmtFull(value)}
+            </p>
+         )}
+         {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
+      </div>
+   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICE ADJUSTMENT INPUT (inline, compact)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PriceAdjInput({
+   value,
+   onChange,
+}: {
+   value: number;
+   onChange: (v: number) => void;
+}) {
+   const [raw, setRaw] = useState(value === 0 ? "" : String(value));
+
+   useEffect(() => {
+      setRaw(value === 0 ? "" : String(value));
+   }, [value]);
+
+   const commit = () => {
+      // Allow negative: keep leading "-" then parse digits
+      const isNeg = raw.trim().startsWith("-");
+      const digits = Number(raw.replace(/[^\d]/g, "")) || 0;
+      const n = isNeg ? -digits : digits;
+      onChange(n);
+      setRaw(n === 0 ? "" : String(n));
+   };
+
+   const colorCls =
+      value > 0
+         ? "border-emerald-300 text-emerald-700 bg-emerald-50/40"
+         : value < 0
+           ? "border-red-300 text-red-600 bg-red-50/40"
+           : "border-gray-200 text-gray-500 bg-white";
+
+   return (
+      <div className="flex items-center gap-1 mt-1.5">
+         <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">
+            ±giá
+         </span>
+         <div className="relative flex-1">
+            <input
+               value={raw}
+               onChange={(e) => setRaw(e.target.value)}
+               onBlur={commit}
+               onKeyDown={(e) => e.key === "Enter" && commit()}
+               placeholder="0"
+               className={`w-full px-2 py-1 text-[11px] border rounded-md tabular-nums
+                  focus:outline-none focus:border-gray-700 transition-all ${colorCls}`}
+            />
+            {value !== 0 && (
+               <span
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] font-bold pointer-events-none
+                  ${value > 0 ? "text-emerald-500" : "text-red-400"}`}
+               >
+                  {value > 0 ? "+" : ""}
+                  {fmtVND(value)}
+               </span>
+            )}
+         </div>
+      </div>
+   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHIP ATTRIBUTE SELECTOR — priceAdjustment per selected option
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ChipAttributeSelector({
    template,
    checked,
+   basePrice,
    onToggle,
    onAddOption,
+   onUpdatePriceAdjustment,
 }: {
    template: CategoryTemplate;
    checked: Record<string, Set<string>>;
+   basePrice: number;
    onToggle: (attrId: string, optId: string) => void;
    onAddOption: (attrId: string, label: string, value: string) => void;
+   onUpdatePriceAdjustment: (
+      attrId: string,
+      optId: string,
+      adj: number,
+   ) => void;
 }) {
    const [adding, setAdding] = useState<Record<string, boolean>>({});
    const [newLabel, setNewLabel] = useState<Record<string, string>>({});
@@ -530,36 +713,70 @@ function ChipAttributeSelector({
                         </span>
                      )}
                   </div>
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex flex-wrap gap-2 items-start">
                      {attr.options.map((opt) => {
                         const isOn = checked[attr.id]?.has(opt.id) ?? false;
+                        const finalPrice = basePrice + opt.priceAdjustment;
                         return (
-                           <button
+                           <div
                               key={opt.id}
-                              type="button"
-                              onClick={() => onToggle(attr.id, opt.id)}
-                              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[12px] font-medium
-                      cursor-pointer transition-all select-none
-                      ${
-                         isOn
-                            ? "bg-gray-900 border-gray-900 text-white"
-                            : "bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50"
-                      }`}
+                              className="flex flex-col min-w-[80px]"
                            >
-                              {isColor && (
-                                 <span
-                                    className={`w-3 h-3 rounded-full flex-shrink-0 ${isOn ? "ring-2 ring-white ring-offset-1 ring-offset-gray-900" : "ring-1 ring-gray-300"}`}
-                                    style={{ background: opt.value }}
-                                 />
-                              )}
-                              <span>{opt.label}</span>
+                              <button
+                                 type="button"
+                                 onClick={() => onToggle(attr.id, opt.id)}
+                                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[12px] font-medium
+                                    cursor-pointer transition-all select-none w-full
+                                    ${
+                                       isOn
+                                          ? "bg-gray-900 border-gray-900 text-white"
+                                          : "bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                                    }`}
+                              >
+                                 {isColor && (
+                                    <span
+                                       className={`w-3 h-3 rounded-full flex-shrink-0 ${isOn ? "ring-2 ring-white ring-offset-1 ring-offset-gray-900" : "ring-1 ring-gray-300"}`}
+                                       style={{ background: opt.value }}
+                                    />
+                                 )}
+                                 <span className="flex-1 text-left">
+                                    {opt.label}
+                                 </span>
+                                 {isOn && opt.priceAdjustment !== 0 && (
+                                    <span
+                                       className={`text-[10px] font-semibold opacity-80 whitespace-nowrap
+                                       ${opt.priceAdjustment > 0 ? "text-emerald-300" : "text-red-300"}`}
+                                    >
+                                       {opt.priceAdjustment > 0 ? "+" : ""}
+                                       {fmtVND(opt.priceAdjustment)}
+                                    </span>
+                                 )}
+                                 {isOn && (
+                                    <Check
+                                       size={11}
+                                       className="flex-shrink-0 opacity-80"
+                                    />
+                                 )}
+                              </button>
+                              {/* Show price adjustment input + final price preview when selected */}
                               {isOn && (
-                                 <Check
-                                    size={11}
-                                    className="flex-shrink-0 opacity-80"
-                                 />
+                                 <div className="mt-1.5 px-1">
+                                    <PriceAdjInput
+                                       value={opt.priceAdjustment}
+                                       onChange={(adj) =>
+                                          onUpdatePriceAdjustment(
+                                             attr.id,
+                                             opt.id,
+                                             adj,
+                                          )
+                                       }
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1 tabular-nums">
+                                       → {fmtVND(finalPrice)}
+                                    </p>
+                                 </div>
                               )}
-                           </button>
+                           </div>
                         );
                      })}
                      {adding[attr.id] ? (
@@ -621,12 +838,13 @@ function ChipAttributeSelector({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VARIANT TABLE
+// VARIANT TABLE — price column is computed/read-only
 // ─────────────────────────────────────────────────────────────────────────────
 
 function VariantTable({
    variants,
    template,
+   basePrice,
    selectedKeys,
    onToggleSelect,
    onToggleAll,
@@ -638,6 +856,7 @@ function VariantTable({
 }: {
    variants: VariantForm[];
    template: CategoryTemplate | null;
+   basePrice: number;
    selectedKeys: Set<string>;
    onToggleSelect: (key: string) => void;
    onToggleAll: (v: boolean) => void;
@@ -647,7 +866,6 @@ function VariantTable({
    errors: Record<string, string>;
    productName: string;
 }) {
-   const [bulkPrice, setBulkPrice] = useState("");
    const [bulkQty, setBulkQty] = useState("");
    const allChecked =
       variants.length > 0 && selectedKeys.size === variants.length;
@@ -672,34 +890,32 @@ function VariantTable({
 
    if (!variants.length) return null;
 
+   const prices = variants.map((v) => v.computedPrice);
+   const minP = Math.min(...prices);
+   const maxP = Math.max(...prices);
+   const priceRange =
+      minP === maxP ? fmtFull(minP) : `${fmtVND(minP)} – ${fmtVND(maxP)}`;
+
    return (
       <div className="space-y-2">
+         {/* Price range banner */}
+         <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg">
+            <div className="flex items-center gap-2 text-[12px] text-gray-500">
+               <BadgeDollarSign size={13} className="text-gray-400" />
+               Khoảng giá:
+               <span className="font-semibold text-gray-900">{priceRange}</span>
+            </div>
+            <span className="text-[11px] text-gray-400 italic">
+               = giá gốc ({fmtVND(basePrice)}) + điều chỉnh option
+            </span>
+         </div>
+
+         {/* Bulk toolbar */}
          {someChecked && (
             <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-900 rounded-lg flex-wrap">
                <span className="text-[12px] font-semibold text-white">
                   {selectedKeys.size} dòng
                </span>
-               <div className="w-px h-4 bg-white/20" />
-               <span className="text-[11px] text-white/50">Giá</span>
-               <input
-                  value={bulkPrice}
-                  onChange={(e) => setBulkPrice(e.target.value)}
-                  type="number"
-                  placeholder="0"
-                  className="w-[100px] px-2.5 py-1 text-[12px] border border-white/15 rounded-md bg-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/40"
-               />
-               <button
-                  type="button"
-                  onClick={() => {
-                     selectedKeys.forEach((k) =>
-                        onUpdate(k, "price", bulkPrice),
-                     );
-                     setBulkPrice("");
-                  }}
-                  className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-white text-gray-900 hover:bg-gray-100 cursor-pointer transition-colors"
-               >
-                  Áp dụng
-               </button>
                <div className="w-px h-4 bg-white/20" />
                <span className="text-[11px] text-white/50">Tồn kho</span>
                <input
@@ -741,7 +957,7 @@ function VariantTable({
          )}
 
          <div className="overflow-x-auto rounded-lg border border-gray-200">
-            <table className="w-full border-collapse" style={{ minWidth: 640 }}>
+            <table className="w-full border-collapse" style={{ minWidth: 560 }}>
                <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                      <th className="px-3 py-2.5 text-left w-9">
@@ -766,8 +982,8 @@ function VariantTable({
                            {a.name}
                         </th>
                      ))}
-                     <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider min-w-[120px]">
-                        Giá (VNĐ)
+                     <th className="px-3 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider min-w-[130px]">
+                        Giá cuối
                      </th>
                      <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider w-[75px]">
                         Tồn kho
@@ -784,8 +1000,9 @@ function VariantTable({
                <tbody className="divide-y divide-gray-100">
                   {variants.map((v, idx) => {
                      const isSel = selectedKeys.has(v._key);
-                     const priceErr = errors[`variant_${v._key}_price`];
                      const codeErr = errors[`variant_${v._key}_code`];
+                     const adj = v.computedPrice - basePrice;
+
                      return (
                         <tr
                            key={v._key}
@@ -815,8 +1032,8 @@ function VariantTable({
                                     }
                                     placeholder="PRO-P-WH-A3F"
                                     className={`w-full min-w-[100px] px-2 py-1.5 text-[11px] font-mono border rounded-md
-                          bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-900 transition-all
-                          ${codeErr ? "border-red-300 bg-red-50/30" : "border-gray-200"}`}
+                                       bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-900 transition-all
+                                       ${codeErr ? "border-red-300 bg-red-50/30" : "border-gray-200"}`}
                                  />
                                  {template && productName.trim() && (
                                     <button
@@ -859,22 +1076,18 @@ function VariantTable({
                                  </td>
                               );
                            })}
-                           <td className="px-3 py-2">
-                              <input
-                                 type="number"
-                                 value={v.price}
-                                 placeholder="0"
-                                 onChange={(e) =>
-                                    onUpdate(v._key, "price", e.target.value)
-                                 }
-                                 className={`w-full px-2 py-1.5 text-[12px] border rounded-md bg-gray-50 focus:bg-white
-                        focus:outline-none focus:border-gray-900 transition-all
-                        ${priceErr ? "border-red-300 bg-red-50/30" : "border-gray-200"}`}
-                              />
-                              {priceErr && (
-                                 <p className="text-[10px] text-red-500 mt-0.5">
-                                    {priceErr}
-                                 </p>
+                           {/* Giá cuối — read-only computed */}
+                           <td className="px-3 py-2 text-right">
+                              <span className="text-[13px] font-semibold text-gray-900 tabular-nums">
+                                 {fmtVND(v.computedPrice)}
+                              </span>
+                              {adj !== 0 && (
+                                 <div
+                                    className={`text-[10px] tabular-nums mt-0.5 ${adj > 0 ? "text-emerald-600" : "text-red-500"}`}
+                                 >
+                                    {adj > 0 ? "+" : ""}
+                                    {fmtVND(adj)}
+                                 </div>
                               )}
                            </td>
                            <td className="px-3 py-2">
@@ -894,7 +1107,7 @@ function VariantTable({
                                  type="button"
                                  onClick={() => onSetDefault(v._key)}
                                  className={`inline-flex items-center justify-center w-[18px] h-[18px] rounded-full border-2 transition-all cursor-pointer mx-auto
-                        ${v.isDefault ? "border-gray-900 bg-gray-900" : "border-gray-300 hover:border-gray-600"}`}
+                                    ${v.isDefault ? "border-gray-900 bg-gray-900" : "border-gray-300 hover:border-gray-600"}`}
                               >
                                  {v.isDefault && (
                                     <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -1113,7 +1326,7 @@ function ColorImages({
                                              onToggleDeleteImg(ci._key, img.id)
                                           }
                                           className={`relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer transition-all group
-                            ${img.toDelete ? "opacity-40 ring-2 ring-red-400" : "ring-1 ring-gray-200 hover:ring-red-300"}`}
+                                          ${img.toDelete ? "opacity-40 ring-2 ring-red-400" : "ring-1 ring-gray-200 hover:ring-red-300"}`}
                                        >
                                           <Image
                                              src={img.url}
@@ -1227,6 +1440,8 @@ function ColorImages({
 // MAIN FORM
 // ─────────────────────────────────────────────────────────────────────────────
 
+const DEFAULT_BASE_PRICE = 20_000_000;
+
 interface ProductFormProps {
    product?: ProductDetail;
 }
@@ -1257,6 +1472,15 @@ export default function ProductForm({ product }: ProductFormProps) {
       (product as any)?.variantDisplay ?? "SELECTOR",
    );
 
+   // basePrice: khi edit lấy giá default variant làm heuristic; khi tạo mới = 20tr
+   const [basePrice, setBasePrice] = useState<number>(() => {
+      if (product?.variants?.length) {
+         const def = product.variants.find((v) => v.isDefault && !v.deletedAt);
+         if (def) return def.price;
+      }
+      return DEFAULT_BASE_PRICE;
+   });
+
    const [checked, setChecked] = useState<Record<string, Set<string>>>(() => {
       if (product?.variants?.length) {
          const map: Record<string, Set<string>> = {};
@@ -1280,7 +1504,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                _key: uid(),
                id: v.id,
                code: v.code ?? "",
-               price: String(v.price),
+               computedPrice: v.price,
                quantity: String(v.quantity),
                isDefault: v.isDefault,
                isActive: v.isActive,
@@ -1334,8 +1558,6 @@ export default function ProductForm({ product }: ProductFormProps) {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [submitting, setSubmitting] = useState(false);
    const [submitError, setSubmitError] = useState<string | null>(null);
-
-   // ref để track created id khi timeout xảy ra
    const createdIdRef = useRef<string | null>(null);
 
    const colorOptions =
@@ -1343,25 +1565,25 @@ export default function ProductForm({ product }: ProductFormProps) {
    const categoryTree = buildCategoryTree(categories);
    const categoryPath = getCategoryPath(categoryId, categories);
 
-   // ref để đọc name mới nhất trong effect mà không re-trigger
    const nameRef = useRef(name);
    useEffect(() => {
       nameRef.current = name;
    }, [name]);
 
+   // Close category tree on outside click
    useEffect(() => {
       const handler = (e: MouseEvent) => {
          if (
             categoryTreeRef.current &&
             !categoryTreeRef.current.contains(e.target as Node)
-         ) {
+         )
             setShowCategoryTree(false);
-         }
       };
       if (showCategoryTree) document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
    }, [showCategoryTree]);
 
+   // Load brands + categories
    useEffect(() => {
       Promise.allSettled([
          apiRequest.get<any>("/brands/admin/all", { params: { limit: 100 } }),
@@ -1382,6 +1604,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          .finally(() => setLoadingOptions(false));
    }, []);
 
+   // Load category template
    const loadTemplate = useCallback(async (id: string) => {
       if (!id) {
          setTemplate(null);
@@ -1391,8 +1614,18 @@ export default function ProductForm({ product }: ProductFormProps) {
       try {
          const res = await apiRequest.get<any>(`/categories/${id}/template`);
          const t = res.data?.template ?? res.data;
+         // Normalise: ensure priceAdjustment on every option
+         const attrs: TemplateAttribute[] = (t?.attributes ?? []).map(
+            (a: any) => ({
+               ...a,
+               options: (a.options ?? []).map((o: any) => ({
+                  ...o,
+                  priceAdjustment: o.priceAdjustment ?? 0,
+               })),
+            }),
+         );
          setTemplate({
-            attributes: t?.attributes ?? [],
+            attributes: attrs,
             specifications: t?.specifications ?? [],
          });
       } catch {
@@ -1407,6 +1640,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       else setTemplate(null);
    }, [categoryId, loadTemplate]);
 
+   // Sync specs when template loads
    useEffect(() => {
       if (!template) return;
       const all = template.specifications.flatMap((g) => g.items);
@@ -1424,9 +1658,17 @@ export default function ProductForm({ product }: ProductFormProps) {
       });
    }, [template]);
 
-   // ── FIX 1: Auto-generate variants + SKU ngay khi checkbox thay đổi ────────
-   // Variant mới → SKU được tạo tự động, không để trống.
-   // Variant cũ (cùng combo attrs) → giữ nguyên price/qty/sku.
+   // Helper: recompute all variant prices
+   const recomputeAll = useCallback(
+      (vars: VariantForm[], tmpl: CategoryTemplate | null, bp: number) =>
+         vars.map((v) => ({
+            ...v,
+            computedPrice: computeVariantPrice(bp, v.attributes, tmpl),
+         })),
+      [],
+   );
+
+   // Auto-generate variants when checked changes
    useEffect(() => {
       if (!template || !template.attributes.length) return;
       const combos = cartesian(template.attributes, checked);
@@ -1443,35 +1685,48 @@ export default function ProductForm({ product }: ProductFormProps) {
                return [key, v];
             }),
          );
-         return combos.map((attrMap, i) => {
+         const newVariants = combos.map((attrMap, i) => {
             const key = template.attributes
                .map((a) => attrMap[a.id] ?? "")
                .join("|");
             const existing = existingMap.get(key);
-            if (existing) return { ...existing, attributes: attrMap };
-            // Brand-new variant: auto-generate SKU immediately
+            const cp = computeVariantPrice(basePrice, attrMap, template);
+            if (existing)
+               return { ...existing, attributes: attrMap, computedPrice: cp };
             const labels = template.attributes
                .map(
                   (a) =>
                      a.options.find((o) => o.id === attrMap[a.id])?.label ?? "",
                )
                .filter(Boolean);
-            const sku = generateSKU(nameRef.current, labels);
             return {
                _key: uid(),
-               code: sku,
-               price: "",
+               code: generateSKU(nameRef.current, labels),
+               computedPrice: cp,
                quantity: "0",
-               isDefault: i === 0,
+               isDefault: false,
                isActive: true,
                attributes: attrMap,
             };
          });
+
+         // Đảm bảo đúng 1 default: giữ default cũ nếu còn tồn tại, không thì set index 0
+         const hasDefault = newVariants.some((v) => v.isDefault);
+         if (!hasDefault && newVariants.length > 0)
+            newVariants[0].isDefault = true;
+
+         return newVariants;
       });
       setSelectedKeys(new Set());
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [checked, template]);
 
-   // Khi tên sản phẩm thay đổi: regenerate SKU cho các dòng dùng auto-SKU
+   // Recompute prices when basePrice changes
+   useEffect(() => {
+      setVariants((prev) => recomputeAll(prev, template, basePrice));
+   }, [basePrice, template, recomputeAll]);
+
+   // Auto-regen SKU when name changes
    useEffect(() => {
       if (!template || !name.trim()) return;
       setVariants((prev) =>
@@ -1484,14 +1739,15 @@ export default function ProductForm({ product }: ProductFormProps) {
                )
                .filter(Boolean);
             const prefix = normalizeStr(name.trim());
-            const isAutoSku = !v.code.trim() || v.code.startsWith(prefix + "-");
-            if (!isAutoSku) return v;
-            return { ...v, code: generateSKU(name, labels) };
+            if (!v.code.trim() || v.code.startsWith(prefix + "-"))
+               return { ...v, code: generateSKU(name, labels) };
+            return v;
          }),
       );
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [name]);
 
+   // Sync color image groups when color selection changes
    useEffect(() => {
       if (isEdit || !template) return;
       const colorAttr = template.attributes.find((a) => a.code === "color");
@@ -1517,11 +1773,11 @@ export default function ProductForm({ product }: ProductFormProps) {
       });
    }, [checked, template, isEdit]);
 
+   // Category select
    const handleCategorySelect = useCallback(
       async (newId: string) => {
          setShowCategoryTree(false);
          if (newId === categoryId) return;
-
          const hasSelection =
             variants.length > 0 ||
             Object.values(checked).some((s) => s.size > 0);
@@ -1530,7 +1786,6 @@ export default function ProductForm({ product }: ProductFormProps) {
             setChecked({});
             return;
          }
-
          try {
             const res = await apiRequest.get<any>(
                `/categories/${newId}/template`,
@@ -1555,9 +1810,8 @@ export default function ProductForm({ product }: ProductFormProps) {
                return;
             }
          } catch {
-            // proceed anyway
+            /* proceed */
          }
-
          setCategoryId(newId);
          setChecked({});
       },
@@ -1581,6 +1835,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       setPendingCategoryId(null);
    }, []);
 
+   // Attribute toggle
    const handleToggle = (attrId: string, optId: string) =>
       setChecked((prev) => {
          const next = { ...prev, [attrId]: new Set(prev[attrId] ?? []) };
@@ -1602,7 +1857,12 @@ export default function ProductForm({ product }: ProductFormProps) {
                             ...a,
                             options: [
                                ...a.options,
-                               { id: "new-" + uid(), value, label },
+                               {
+                                  id: "new-" + uid(),
+                                  value,
+                                  label,
+                                  priceAdjustment: 0,
+                               },
                             ],
                          },
                  ),
@@ -1610,6 +1870,45 @@ export default function ProductForm({ product }: ProductFormProps) {
             : prev,
       );
 
+   // Update priceAdjustment for an option → recompute affected variants immediately
+   const handleUpdatePriceAdjustment = useCallback(
+      (attrId: string, optId: string, adj: number) => {
+         // Update template state
+         setTemplate((prev) => {
+            if (!prev) return prev;
+            const updated = {
+               ...prev,
+               attributes: prev.attributes.map((a) =>
+                  a.id !== attrId
+                     ? a
+                     : {
+                          ...a,
+                          options: a.options.map((o) =>
+                             o.id === optId
+                                ? { ...o, priceAdjustment: adj }
+                                : o,
+                          ),
+                       },
+               ),
+            };
+            // Recompute variants with the updated template inline (avoid stale closure)
+            setVariants((prevV) =>
+               prevV.map((v) => ({
+                  ...v,
+                  computedPrice: computeVariantPrice(
+                     basePrice,
+                     v.attributes,
+                     updated,
+                  ),
+               })),
+            );
+            return updated;
+         });
+      },
+      [basePrice],
+   );
+
+   // Variant helpers
    const updateVariant = (key: string, field: keyof VariantForm, value: any) =>
       setVariants((p) =>
          p.map((v) => (v._key === key ? { ...v, [field]: value } : v)),
@@ -1633,6 +1932,7 @@ export default function ProductForm({ product }: ProductFormProps) {
    const toggleAll = (v: boolean) =>
       setSelectedKeys(v ? new Set(variants.map((v) => v._key)) : new Set());
 
+   // Color image helpers
    const addColor = () =>
       setColorImages((p) => [
          ...p,
@@ -1689,6 +1989,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          }),
       );
 
+   // Spec helpers
    const toggleSpec = (id: string) =>
       setSpecs((p) =>
          p.map((s) =>
@@ -1710,14 +2011,14 @@ export default function ProductForm({ product }: ProductFormProps) {
          ),
       );
 
+   // Validate
    const validate = () => {
       const errs: Record<string, string> = {};
       if (!name.trim() || name.trim().length < 3)
          errs.name = "Tên sản phẩm phải có ít nhất 3 ký tự";
       if (!brandId) errs.brandId = "Vui lòng chọn thương hiệu";
       if (!categoryId) errs.categoryId = "Vui lòng chọn danh mục";
-
-      // Chỉ validate biến thể/ảnh nếu category có cấu hình thuộc tính
+      if (!basePrice || basePrice <= 0) errs.basePrice = "Giá gốc phải > 0";
       const hasAttributes = template && template.attributes.length > 0;
       if (hasAttributes) {
          if (!variants.length) errs.variants = "Phải có ít nhất 1 biến thể";
@@ -1725,8 +2026,6 @@ export default function ProductForm({ product }: ProductFormProps) {
             errs.variants = "Phải có đúng 1 biến thể mặc định";
          variants.forEach((v) => {
             if (!v.code.trim()) errs[`variant_${v._key}_code`] = "SKU bắt buộc";
-            if (!v.price || Number(v.price) <= 0)
-               errs[`variant_${v._key}_price`] = "Giá phải > 0";
          });
          if (
             !isEdit &&
@@ -1734,23 +2033,32 @@ export default function ProductForm({ product }: ProductFormProps) {
          )
             errs.colorImages = "Cần ít nhất 1 màu có ảnh";
       }
-      // Sản phẩm đơn giản (không có attributes) -> không cần variant/ảnh
-
       setErrors(errs);
       return !Object.keys(errs).length;
    };
 
-   // ── FIX 2: Submit — timeout/abort không show error, navigate về đúng trang ─
+   // Submit
    const handleSubmit = async () => {
       if (!validate()) return;
       setSubmitting(true);
       setSubmitError(null);
       createdIdRef.current = null;
       try {
+         // Collect option price adjustments (non-zero only)
+         const optionAdjustments =
+            template?.attributes.flatMap((a) =>
+               a.options
+                  .filter((o) => o.priceAdjustment !== 0)
+                  .map((o) => ({
+                     attributeOptionId: o.id,
+                     priceAdjustment: o.priceAdjustment,
+                  })),
+            ) ?? [];
+
          const variantsPayload = variants.map((v) => ({
             ...(v.id ? { id: v.id } : {}),
             code: v.code.trim(),
-            price: Number(v.price),
+            price: v.computedPrice, // final price = basePrice + adjustments
             quantity: Number(v.quantity) || 0,
             isDefault: v.isDefault,
             isActive: v.isActive,
@@ -1758,6 +2066,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                .filter(([, optId]) => optId)
                .map(([, attributeOptionId]) => ({ attributeOptionId })),
          }));
+
          const colorImagesPayload = colorImages
             .filter((c) => {
                if (!c.color.trim()) return false;
@@ -1778,6 +2087,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                     }
                   : {}),
             }));
+
          const specificationsPayload = specs
             .filter((s) => s.enabled && s.value.trim())
             .map((s) => ({
@@ -1785,6 +2095,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                value: s.value.trim(),
                isHighlight: s.isHighlight,
             }));
+
          const payload = {
             name: name.trim(),
             brandId,
@@ -1793,10 +2104,13 @@ export default function ProductForm({ product }: ProductFormProps) {
             isActive,
             isFeatured,
             variantDisplay,
+            basePrice,
+            optionPriceAdjustments: optionAdjustments,
             variants: variantsPayload,
             colorImages: colorImagesPayload,
             specifications: specificationsPayload,
          };
+
          const fd = buildFormData(
             { ...payload, colorImages: colorImagesPayload },
             colorImages.filter((c) => c.color.trim() && c.files.length > 0),
@@ -1812,21 +2126,17 @@ export default function ProductForm({ product }: ProductFormProps) {
             router.push(`/admin/products/${res.data.id}`);
          }
       } catch (e: any) {
-         // Timeout/AbortError: BE đã xử lý xong nhưng response về chậm hơn client timeout.
-         // Không show error — navigate về đúng trang thay vì để user hoang mang.
          const isTimeout =
             e?.name === "AbortError" ||
             e?.message?.includes("quá thời gian") ||
             e?.message?.includes("timeout") ||
             e?.message?.includes("Timeout");
          if (isTimeout) {
-            if (createdIdRef.current) {
+            if (createdIdRef.current)
                router.push(`/admin/products/${createdIdRef.current}`);
-            } else if (isEdit && product) {
+            else if (isEdit && product)
                router.push(`/admin/products/${product.id}`);
-            } else {
-               router.push("/admin/products");
-            }
+            else router.push("/admin/products");
             return;
          }
          setSubmitError(e?.message ?? "Đã xảy ra lỗi, vui lòng thử lại");
@@ -1865,6 +2175,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          )}
 
          <div className="space-y-3 pb-24">
+            {/* ── BASIC INFO ─────────────────────────────────────────────── */}
             <Section icon={<FileText size={13} />} title="Thông tin cơ bản">
                <div>
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -1927,8 +2238,8 @@ export default function ProductForm({ product }: ProductFormProps) {
                         type="button"
                         onClick={() => setShowCategoryTree((v) => !v)}
                         className={`w-full flex items-center justify-between px-3 py-2 text-[13px] bg-gray-50 border rounded-lg
-                  hover:bg-white focus:outline-none focus:bg-white focus:ring-4 focus:ring-gray-900/5 transition-all cursor-pointer
-                  ${errors.categoryId ? "border-red-400" : "border-gray-200"}`}
+                           hover:bg-white focus:outline-none focus:bg-white focus:ring-4 focus:ring-gray-900/5 transition-all cursor-pointer
+                           ${errors.categoryId ? "border-red-400" : "border-gray-200"}`}
                      >
                         {categoryPath.length > 0 ? (
                            <div className="flex items-center gap-1 flex-wrap">
@@ -1981,6 +2292,13 @@ export default function ProductForm({ product }: ProductFormProps) {
                      </p>
                   )}
                </div>
+
+               {/* ── BASE PRICE ── */}
+               <BasePriceInput
+                  value={basePrice}
+                  onChange={setBasePrice}
+                  error={errors.basePrice}
+               />
 
                <div className="flex gap-2 flex-wrap">
                   {(
@@ -2043,6 +2361,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                </div>
             </Section>
 
+            {/* ── VARIANTS ───────────────────────────────────────────────── */}
             <Section
                icon={<Layers size={13} />}
                title="Thuộc tính & Biến thể"
@@ -2067,10 +2386,16 @@ export default function ProductForm({ product }: ProductFormProps) {
                ) : (
                   <div className="space-y-4">
                      <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                        <div className="flex items-center justify-between mb-4">
-                           <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                              Chọn thuộc tính
-                           </p>
+                        <div className="flex items-center justify-between mb-3">
+                           <div>
+                              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                                 Chọn thuộc tính & điều chỉnh giá
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">
+                                 Click option để chọn → nhập ±giá so với giá gốc
+                                 ({fmtVND(basePrice)})
+                              </p>
+                           </div>
                            {variants.length > 0 && (
                               <div className="flex items-center gap-1.5 text-[11px] text-emerald-600">
                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -2082,8 +2407,10 @@ export default function ProductForm({ product }: ProductFormProps) {
                         <ChipAttributeSelector
                            template={template}
                            checked={checked}
+                           basePrice={basePrice}
                            onToggle={handleToggle}
                            onAddOption={handleAddOption}
+                           onUpdatePriceAdjustment={handleUpdatePriceAdjustment}
                         />
                      </div>
 
@@ -2127,6 +2454,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                         <VariantTable
                            variants={variants}
                            template={template}
+                           basePrice={basePrice}
                            selectedKeys={selectedKeys}
                            onToggleSelect={toggleSelect}
                            onToggleAll={toggleAll}
@@ -2145,6 +2473,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                )}
             </Section>
 
+            {/* ── COLOR IMAGES ───────────────────────────────────────────── */}
             <Section
                icon={<Palette size={13} />}
                title="Hình ảnh biến thể"
@@ -2182,6 +2511,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                )}
             </Section>
 
+            {/* ── SPECIFICATIONS ─────────────────────────────────────────── */}
             {categoryId &&
                !loadingTemplate &&
                template &&
@@ -2249,8 +2579,8 @@ export default function ProductForm({ product }: ProductFormProps) {
                                                             : "Nhập giá trị..."
                                                       }
                                                       className={`flex-1 px-2.5 py-1.5 text-[12px] border rounded-md bg-gray-50 text-gray-900
-                                    placeholder:text-gray-300 focus:outline-none focus:bg-white focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 transition-all
-                                    ${!s?.value && spec.isRequired ? "border-red-200" : "border-gray-200"}`}
+                                                      placeholder:text-gray-300 focus:outline-none focus:bg-white focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 transition-all
+                                                      ${!s?.value && spec.isRequired ? "border-red-200" : "border-gray-200"}`}
                                                    />
                                                    <button
                                                       type="button"
@@ -2298,8 +2628,18 @@ export default function ProductForm({ product }: ProductFormProps) {
                </div>
             )}
 
+            {/* ── FOOTER BAR ─────────────────────────────────────────────── */}
             <div className="sticky bottom-0 -mx-1 bg-white border-t border-gray-200 px-5 py-3 flex items-center justify-between z-20">
                <div className="flex items-center gap-5 text-[12px] text-gray-500">
+                  <div className="flex items-center gap-1.5">
+                     <BadgeDollarSign size={12} className="text-gray-400" />
+                     <span>
+                        Giá gốc:{" "}
+                        <strong className="text-gray-900">
+                           {fmtVND(basePrice)}
+                        </strong>
+                     </span>
+                  </div>
                   <div className="flex items-center gap-1.5">
                      <Layers size={12} className="text-gray-400" />
                      <span>

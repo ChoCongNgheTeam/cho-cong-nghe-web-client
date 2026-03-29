@@ -2,12 +2,11 @@
 
 import { TrendingUp, TrendingDown, ShoppingCart, Users, Package, Bot } from "lucide-react";
 import type { DashboardSummary } from "../dashboard.types";
-import { formatNumber, formatVND } from "@/helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-=======
+<<<<<<<<< Temporary merge branch 1
+=========
 export const formatVNDShort = (value: number) => {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}T`;
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -16,8 +15,9 @@ export const formatVNDShort = (value: number) => {
 };
 
 export const formatVNDFull = (value: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
->>>>>>> 73fbbfb585ffa4b22b08301cb70f3d38f64486b5
+>>>>>>>>> Temporary merge branch 2
 
+const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
 

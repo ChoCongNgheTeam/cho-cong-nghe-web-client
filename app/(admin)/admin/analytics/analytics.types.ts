@@ -1,14 +1,10 @@
-// ─── Query ────────────────────────────────────────────────────────────────────
-
 export type TimeGranularity = "day" | "week" | "month";
 
 export interface AnalyticsQuery {
-  from: string; // "YYYY-MM-DD"
-  to: string; // "YYYY-MM-DD"
+  from: string;
+  to: string;
   granularity?: TimeGranularity;
 }
-
-// ─── Data shapes ──────────────────────────────────────────────────────────────
 
 export interface RevenueDataPoint {
   period: string;
@@ -52,6 +48,12 @@ export interface ConversionFunnel {
   cancelled: number;
 }
 
+export interface HeatmapPoint {
+  day: number; // 0=Sun … 6=Sat
+  hour: number; // 0-23
+  count: number;
+}
+
 export interface AnalyticsSummary {
   totalRevenue: number;
   totalOrders: number;
@@ -59,16 +61,19 @@ export interface AnalyticsSummary {
   averageOrderValue: number;
   cancellationRate: number;
   deliveryRate: number;
+  revenueChange?: number;
+  ordersChange?: number;
 }
-
-// ─── Response ─────────────────────────────────────────────────────────────────
 
 export interface AnalyticsData {
   revenueOverTime: RevenueDataPoint[];
+  comparisonOverTime?: RevenueDataPoint[];
+  forecast?: RevenueDataPoint[];
   revenueByPaymentMethod: RevenueByPaymentMethod[];
   revenueByCategory: RevenueByCategory[];
   topCustomers: TopCustomer[];
   conversionFunnel: ConversionFunnel;
+  heatmap?: HeatmapPoint[];
   summary: AnalyticsSummary;
 }
 

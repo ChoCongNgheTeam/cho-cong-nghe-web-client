@@ -7,9 +7,12 @@ import { formatDate, formatVND } from "@/helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatVND = (v: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v);
+<<<<<<<<< Temporary merge branch 1
+=========
+const fmtVND = (v: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v);
 
-const formatDate = (iso: string) => new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+const fmtDate = (iso: string) => new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+>>>>>>>>> Temporary merge branch 2
 
 // ─── Status configs ───────────────────────────────────────────────────────────
 
@@ -133,7 +136,10 @@ export function RecentOrdersTable({ orders, title = "Đơn hàng gần đây", e
                     <td className="px-3 py-2.5 text-right">
                       <span className="font-semibold text-slate-900 text-[11px]">{fmtVND(order.totalAmount)}</span>
                     </td>
-                    <td className="px-5 py-3.5 text-right text-xs text-slate-400">{formatDate(order.orderDate)}</td>
+
+                    {/* Date */}
+                    <td className="px-4 py-2.5 text-right text-[10px] text-slate-400 whitespace-nowrap">{fmtDate(order.orderDate)}</td>
+>>>>>>>>> Temporary merge branch 2
                   </tr>
                 );
               })}
