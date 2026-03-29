@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Ticket, Pencil, Loader2, XCircle, Trash2, Check, X, Clock, Target, BarChart2 } from "lucide-react";
+import { ArrowLeft, Ticket, Pencil, Loader2, XCircle, Trash2, Check, X, Clock, Target, BarChart2, CheckCircle2 } from "lucide-react";
 import { Popzy } from "@/components/Modal";
 import { getVoucher, updateVoucher, deleteVoucher } from "../_libs/vouchers";
 import { VoucherForm, voucherToForm, formToUpdatePayload, type VoucherFormData } from "../components/VoucherForm";
@@ -294,6 +294,14 @@ export default function VoucherDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Toast thông báo ── */}
+      {saveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-emerald-600 text-white text-[13px] font-medium rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+          <CheckCircle2 size={16} />
+          Cập nhật voucher thành công!
+        </div>
+      )}
 
       {/* Delete Modal */}
       {deleteOpen && (

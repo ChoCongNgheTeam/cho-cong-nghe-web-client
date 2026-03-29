@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Ticket } from "lucide-react";
+import { ArrowLeft, Ticket, CheckCircle2 } from "lucide-react";
 import { createVoucher } from "../_libs/vouchers";
 import { VoucherForm, DEFAULT_FORM, formToCreatePayload, type VoucherFormData } from "../components/VoucherForm";
 
@@ -11,6 +11,7 @@ export default function NewVoucherPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSubmit = async (form: VoucherFormData) => {
     setSaving(true);
@@ -18,7 +19,10 @@ export default function NewVoucherPage() {
     try {
       const payload = formToCreatePayload(form);
       const res = await createVoucher(payload);
-      router.push(`/admin/vouchers/${res.data.id}`);
+      setSaveSuccess(true);
+      setTimeout(() => {
+        router.push(`/admin/vouchers/${res.data.id}`);
+      }, 1200);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tạo voucher");
     } finally {
@@ -54,6 +58,14 @@ export default function NewVoucherPage() {
           <VoucherForm initialData={DEFAULT_FORM} onSubmit={handleSubmit} saving={saving} error={error} submitLabel="Tạo voucher" onCancel={() => router.push("/admin/vouchers")} />
         </div>
       </div>
+
+      {/* ── Toast thông báo ── */}
+      {saveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-emerald-600 text-white text-[13px] font-medium rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+          <CheckCircle2 size={16} />
+          Tạo voucher thành công!
+        </div>
+      )}
     </div>
   );
 }

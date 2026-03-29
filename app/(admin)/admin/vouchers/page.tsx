@@ -52,7 +52,7 @@ export default function VouchersPage() {
   const [error, setError] = useState<string | null>(null);
 
   // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState<TabType>("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [discountTypeFilter, setDiscountTypeFilter] = useState("");
@@ -84,13 +84,13 @@ export default function VouchersPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  type VoucherStatus = "active" | "inactive" | "expired" | "upcoming" | "ALL";
+  type TabType = VoucherStatus | "ALL";
+
   // ── Tab → query params ────────────────────────────────────────────────────────
-  const tabToParams = (tab: string) => {
-    if (tab === "active") return { isActive: true, isExpired: false };
-    if (tab === "inactive") return { isActive: false, isExpired: undefined };
-    if (tab === "expired") return { isActive: undefined, isExpired: true };
-    if (tab === "upcoming") return { isActive: true, isExpired: false };
-    return { isActive: undefined, isExpired: undefined };
+  const tabToParams = (tab: VoucherStatus) => {
+    if (tab === "ALL") return {};
+    return { status: tab };
   };
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
