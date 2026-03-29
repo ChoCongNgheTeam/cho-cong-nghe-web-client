@@ -1,4 +1,4 @@
-export type CampaignType = "FLASH_SALE" | "SEASONAL" | "BRAND" | "CATEGORY" | "SPECIAL";
+export type CampaignType = "RANKING" | "CAMPAIGN" | "SEASONAL" | "EVENT" | "FLASH_SALE";
 
 export interface CampaignCategory {
   id: string;
@@ -31,6 +31,7 @@ export interface Campaign {
   updatedAt: string;
   deletedAt?: string;
   deletedBy?: string;
+  // categories có thể undefined khi BE trả list (chỉ có _count), nên default []
   categories: CampaignCategory[];
   _count: { categories: number };
 }

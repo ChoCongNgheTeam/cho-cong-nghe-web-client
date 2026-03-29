@@ -1,5 +1,6 @@
 "use client";
 import { Promotion } from "../promotion.types";
+import { parseAPIDate } from "@/helpers/timezoneHelpers";
 
 export function getPromotionStatus(promotion: Promotion): {
   label: string;
@@ -7,18 +8,12 @@ export function getPromotionStatus(promotion: Promotion): {
   value: string;
 } {
   const now = new Date();
-  const start = promotion.startDate ? new Date(promotion.startDate) : null;
-  const end = promotion.endDate ? new Date(promotion.endDate) : null;
+  const start = parseAPIDate(promotion.startDate);
+  const end = parseAPIDate(promotion.endDate);
 
-  if (!promotion.isActive) {
-    return { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" };
-  }
-  if (end && end < now) {
-    return { value: "expired", label: "Hết hạn", color: "text-neutral-dark bg-neutral-light-active" };
-  }
-  if (start && start > now) {
-    return { value: "upcoming", label: "Sắp diễn ra", color: "text-blue-600 bg-blue-50" };
-  }
+  if (!promotion.isActive) return { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" };
+  if (end && end < now) return { value: "expired", label: "Hết hạn", color: "text-neutral-dark bg-neutral-light-active" };
+  if (start && start > now) return { value: "upcoming", label: "Sắp diễn ra", color: "text-blue-600 bg-blue-50" };
   return { value: "active", label: "Đang hoạt động", color: "text-emerald-600 bg-emerald-50" };
 }
 

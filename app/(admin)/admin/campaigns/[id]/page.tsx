@@ -60,7 +60,8 @@ export default function CampaignDetailPage() {
       const res = await updateCampaign(id, payload);
       setCampaign(res.data);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
+      // Đổi từ 2500 → 3000
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (e: any) {
       setSaveError(e?.message ?? "Không thể cập nhật chiến dịch");
     } finally {
@@ -121,7 +122,6 @@ export default function CampaignDetailPage() {
         <span className="text-neutral-dark text-[13px]">/</span>
         <span className="text-[13px] text-primary font-medium line-clamp-1 max-w-xs">{campaign.name}</span>
       </div>
-
       <div className="px-6 py-4 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl">
         {/* ── Left: Info card ── */}
         <div className="lg:col-span-1 space-y-4">
@@ -299,7 +299,6 @@ export default function CampaignDetailPage() {
           </div>
         </div>
       </div>
-
       {/* ── Delete Modal ── */}
       {deleteOpen && (
         <Popzy
@@ -337,6 +336,13 @@ export default function CampaignDetailPage() {
             </div>
           }
         />
+      )}
+      tsx{/* ── Toast thông báo ── */}
+      {saveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-emerald-600 text-white text-[13px] font-medium rounded-xl shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+          <CheckCircle2 size={16} />
+          Cập nhật chiến dịch thành công!
+        </div>
       )}
     </div>
   );

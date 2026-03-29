@@ -21,7 +21,7 @@ export const STATUS_TABS = [
   { value: "inactive", label: "Tạm dừng" },
   { value: "expired", label: "Đã hết hạn" },
   { value: "upcoming", label: "Sắp diễn ra" },
-];
+] as const;
 
 export const SORT_OPTIONS = [
   { value: "createdAt", label: "Ngày tạo" },

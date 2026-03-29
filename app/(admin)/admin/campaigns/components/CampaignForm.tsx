@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, AlertCircle, Info } from "lucide-react";
 import type { Campaign, CreateCampaignPayload, UpdateCampaignPayload, CampaignType } from "../campaign.types";
 import { CAMPAIGN_TYPE_LABELS } from "../const";
+import { utcToVNLocal, vnLocalToUtc } from "@/helpers/timezoneHelpers";
 
 export interface CampaignFormData {
   name: string;
   type: CampaignType | "";
   description: string;
   startDate: string;
-  endDate: string;
+  endDate: string; // "YYYY-MM-DDTHH:mm" giờ VN
   isActive: boolean;
 }
 
@@ -28,9 +29,9 @@ export function campaignToForm(c: Campaign): CampaignFormData {
     name: c.name,
     type: c.type,
     description: c.description ?? "",
-    startDate: c.startDate ? c.startDate.slice(0, 16) : "",
-    endDate: c.endDate ? c.endDate.slice(0, 16) : "",
     isActive: c.isActive,
+    startDate: utcToVNLocal(c.startDate), // UTC → VN (+7h)
+    endDate: utcToVNLocal(c.endDate),
   };
 }
 
@@ -39,9 +40,9 @@ export function formToCreatePayload(form: CampaignFormData): CreateCampaignPaylo
     name: form.name.trim(),
     type: form.type as CampaignType,
     description: form.description.trim() || undefined,
-    startDate: form.startDate || undefined,
-    endDate: form.endDate || undefined,
     isActive: form.isActive,
+    startDate: vnLocalToUtc(form.startDate), // VN → UTC (-7h)
+    endDate: vnLocalToUtc(form.endDate),
   };
 }
 
@@ -50,9 +51,9 @@ export function formToUpdatePayload(form: CampaignFormData): UpdateCampaignPaylo
     name: form.name.trim(),
     type: form.type as CampaignType,
     description: form.description.trim() || undefined,
-    startDate: form.startDate || undefined,
-    endDate: form.endDate || undefined,
     isActive: form.isActive,
+    startDate: vnLocalToUtc(form.startDate),
+    endDate: vnLocalToUtc(form.endDate),
   };
 }
 
@@ -82,16 +83,20 @@ interface CampaignFormProps {
 
 export function CampaignForm({ initialData, onSubmit, saving, error, submitLabel = "Lưu", onCancel }: CampaignFormProps) {
   const [form, setForm] = useState<CampaignFormData>(initialData);
+  useEffect(() => {
+    setForm(initialData);
+  }, [initialData]);
 
   const set = (key: keyof CampaignFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(form);
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(form);
+      }}
+      className="space-y-5"
+    >
       {error && (
         <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-promotion-light border border-promotion/30 text-promotion text-[13px]">
           <AlertCircle size={15} className="mt-0.5 shrink-0" />
@@ -102,11 +107,9 @@ export function CampaignForm({ initialData, onSubmit, saving, error, submitLabel
       {/* Thông tin cơ bản */}
       <div className="bg-neutral-light border border-neutral rounded-2xl p-5 space-y-4">
         <p className="text-[11px] font-bold text-neutral-dark uppercase tracking-widest">Thông tin cơ bản</p>
-
         <FormRow label="Tên chiến dịch" required>
           <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Flash Sale 12.12" className={inputCls} required />
         </FormRow>
-
         <FormRow label="Loại chiến dịch" required>
           <select value={form.type} onChange={(e) => set("type", e.target.value)} className={`${inputCls} cursor-pointer`} required>
             <option value="">-- Chọn loại --</option>
@@ -117,7 +120,6 @@ export function CampaignForm({ initialData, onSubmit, saving, error, submitLabel
             ))}
           </select>
         </FormRow>
-
         <FormRow label="Mô tả">
           <textarea value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Mô tả ngắn về chiến dịch..." rows={3} className={`${inputCls} resize-none`} />
         </FormRow>
@@ -126,13 +128,17 @@ export function CampaignForm({ initialData, onSubmit, saving, error, submitLabel
       {/* Thời gian */}
       <div className="bg-neutral-light border border-neutral rounded-2xl p-5 space-y-4">
         <p className="text-[11px] font-bold text-neutral-dark uppercase tracking-widest">Thời gian</p>
-
+        <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-lg">
+          <Info size={13} className="text-accent shrink-0" />
+          <p className="text-[11px] text-accent">
+            Thời gian nhập theo <strong>giờ Việt Nam (GMT+7)</strong>. Hệ thống tự chuyển đổi khi lưu.
+          </p>
+        </div>
         <div className="grid grid-cols-2 gap-4">
-          <FormRow label="Ngày bắt đầu" hint="Để trống = không giới hạn">
+          <FormRow label="Ngày bắt đầu (giờ VN)" hint="Để trống = không giới hạn">
             <input type="datetime-local" value={form.startDate} onChange={(e) => set("startDate", e.target.value)} className={inputCls} />
           </FormRow>
-
-          <FormRow label="Ngày kết thúc" hint="Để trống = không giới hạn">
+          <FormRow label="Ngày kết thúc (giờ VN)" hint="Để trống = không giới hạn">
             <input type="datetime-local" value={form.endDate} onChange={(e) => set("endDate", e.target.value)} className={inputCls} />
           </FormRow>
         </div>
@@ -163,7 +169,7 @@ export function CampaignForm({ initialData, onSubmit, saving, error, submitLabel
         )}
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !form.name.trim() || !form.type}
           className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer"
         >
           {saving && <Loader2 size={14} className="animate-spin" />}

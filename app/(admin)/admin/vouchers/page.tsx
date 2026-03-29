@@ -8,7 +8,7 @@ import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
 import type { VoucherCard } from "./voucher.types";
 import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_libs/vouchers";
-import { SORT_OPTIONS } from "./const";
+import { SORT_OPTIONS, STATUS_TABS } from "./const";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";
 
@@ -32,13 +32,8 @@ const DEFAULT_META: VoucherMeta = {
   statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
 };
 
-const STATUS_TABS = [
-  { value: "ALL", label: "Tất cả" },
-  { value: "active", label: "Đang hoạt động" },
-  { value: "upcoming", label: "Sắp diễn ra" },
-  { value: "expired", label: "Đã hết hạn" },
-  { value: "inactive", label: "Tạm dừng" },
-];
+type VoucherStatus = "active" | "inactive" | "expired" | "upcoming" | "ALL";
+type TabType = VoucherStatus | "ALL";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -52,7 +47,7 @@ export default function VouchersPage() {
   const [error, setError] = useState<string | null>(null);
 
   // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState<TabType>("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [discountTypeFilter, setDiscountTypeFilter] = useState("");
@@ -85,12 +80,9 @@ export default function VouchersPage() {
   }, []);
 
   // ── Tab → query params ────────────────────────────────────────────────────────
-  const tabToParams = (tab: string) => {
-    if (tab === "active") return { isActive: true, isExpired: false };
-    if (tab === "inactive") return { isActive: false, isExpired: undefined };
-    if (tab === "expired") return { isActive: undefined, isExpired: true };
-    if (tab === "upcoming") return { isActive: true, isExpired: false };
-    return { isActive: undefined, isExpired: undefined };
+  const tabToParams = (tab: VoucherStatus) => {
+    if (tab === "ALL") return {};
+    return { status: tab };
   };
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
