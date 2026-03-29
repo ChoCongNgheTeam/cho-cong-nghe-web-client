@@ -8,7 +8,7 @@ import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
 import type { VoucherCard } from "./voucher.types";
 import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_libs/vouchers";
-import { SORT_OPTIONS } from "./const";
+import { SORT_OPTIONS, STATUS_TABS } from "./const";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";
 
@@ -32,13 +32,8 @@ const DEFAULT_META: VoucherMeta = {
   statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
 };
 
-const STATUS_TABS = [
-  { value: "ALL", label: "Tất cả" },
-  { value: "active", label: "Đang hoạt động" },
-  { value: "upcoming", label: "Sắp diễn ra" },
-  { value: "expired", label: "Đã hết hạn" },
-  { value: "inactive", label: "Tạm dừng" },
-];
+type VoucherStatus = "active" | "inactive" | "expired" | "upcoming" | "ALL";
+type TabType = VoucherStatus | "ALL";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -83,9 +78,6 @@ export default function VouchersPage() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  type VoucherStatus = "active" | "inactive" | "expired" | "upcoming" | "ALL";
-  type TabType = VoucherStatus | "ALL";
 
   // ── Tab → query params ────────────────────────────────────────────────────────
   const tabToParams = (tab: VoucherStatus) => {
