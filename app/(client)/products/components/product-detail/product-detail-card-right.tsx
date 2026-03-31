@@ -450,12 +450,12 @@ export default function ProductDetailRight({
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl animate-bounceSlow">📦</div>
             <div className="flex-1">
               <p className="text-primary font-bold text-sm sm:text-base">Tạm hết hàng</p>
-              <p className="text-neutral-dark text-xs">Sản phẩm sẽ sớm quay lại, bạn có thể đăng ký nhận thông báo</p>
+              <p className="text-neutral-dark text-xs">Sản phẩm sẽ sớm quay lại, bạn vui lòng quay lại sau</p>
             </div>
-            <span className="text-[11px] bg-promotion/10 text-promotion px-2 py-1 rounded-full">🔥 {count} người đang chờ</span>
+            {/* <span className="text-[11px] bg-promotion/10 text-promotion px-2 py-1 rounded-full">🔥 {count} người đang chờ</span> */}
           </div>
 
-          <div className="bg-neutral-light px-5 py-4 space-y-3">
+          {/* <div className="bg-neutral-light px-5 py-4 space-y-3">
             <p className="text-xs text-neutral-dark font-medium flex items-center gap-1.5">
               <span className="text-primary text-sm">🔔</span>
               Nhận thông báo khi có hàng
@@ -488,7 +488,7 @@ export default function ProductDetailRight({
               <span>🎁 Có thể kèm ưu đãi</span>
               <span>🔒 Không spam</span>
             </div>
-          </div>
+          </div> */}
 
           <div className="border-t border-neutral bg-neutral-light px-5 py-4 space-y-3">
             <a
