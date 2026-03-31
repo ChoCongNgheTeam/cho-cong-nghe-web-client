@@ -25,12 +25,7 @@ export const BlogCard = ({ blog }: BlogCardProps) => {
         />
 
         {/* overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-
-        {/* badge - góc trái */}
-        <div className="absolute top-3 left-3 bg-promotion text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
-          Review
-        </div>
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent" />
 
         {/* views - góc phải */}
         <div className="absolute top-3 right-3 bg-black/40 backdrop-blur px-2 py-1 rounded-full flex items-center gap-1 text-white text-xs shadow">
