@@ -1,16 +1,5 @@
 "use client";
 
-/**
- * PromotionForm.tsx  (refactored)
- *
- * Changes vs original:
- * 1. TargetCard no longer shows raw UUID inputs.
- *    - Product → ProductSearch (debounced search, tag-based selection)
- *    - Category / Brand → MultiSelectDropdown (preloaded list)
- * 2. TargetForm now holds EntityOption[] instead of a single targetId string.
- * 3. formToPayload flattens multi-select targets into one entry per entity.
- */
-
 import { useState, useCallback, useEffect } from "react";
 import {
    Plus,
@@ -33,34 +22,27 @@ import {
    MultiSelectDropdown,
    type EntityOption,
 } from "./MultiSelectDropdown";
-import { getAdminTimeZoneOrDefault } from "@/helpers";
+import { utcToVNLocal, vnLocalToUtc } from "@/helpers/timezoneHelpers";
+import { useToasty } from "@/components/Toast";
 
-// ── You must provide these API helpers from your _libs layer ───────────────────
-// The form accepts them as props so it stays decoupled from fetch internals.
 export interface TargetSearchAPIs {
-   /** Debounced product search — receives search term, returns EntityOption[] */
    searchProducts: (term: string) => Promise<EntityOption[]>;
-   /** Load all categories once */
    loadCategories: () => Promise<EntityOption[]>;
-   /** Load all brands once */
    loadBrands: () => Promise<EntityOption[]>;
 }
 
-// ── Toggle ─────────────────────────────────────────────────────────────────────
 function Toggle({
    value,
    onChange,
-   color = "bg-accent",
 }: {
    value: boolean;
    onChange: (v: boolean) => void;
-   color?: string;
 }) {
    return (
       <button
          type="button"
          onClick={() => onChange(!value)}
-         className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${value ? color : "bg-neutral"}`}
+         className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${value ? "bg-accent" : "bg-neutral"}`}
       >
          <span
             className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${value ? "left-5" : "left-0.5"}`}
@@ -69,26 +51,44 @@ function Toggle({
    );
 }
 
-// ── Label ──────────────────────────────────────────────────────────────────────
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function FieldLabel({
+   children,
+   required,
+}: {
+   children: React.ReactNode;
+   required?: boolean;
+}) {
    return (
       <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider block mb-1.5">
          {children}
+         {required && <span className="text-promotion ml-0.5">*</span>}
       </label>
    );
 }
 
-// ── Input / Select cls ─────────────────────────────────────────────────────────
-const inputCls =
-   "w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary " +
-   "placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 " +
-   "focus:border-accent transition-all";
+function FieldError({ message }: { message?: string }) {
+   if (!message) return null;
+   return (
+      <p className="flex items-center gap-1 text-[11px] text-promotion mt-1">
+         <AlertCircle size={10} className="shrink-0" />
+         {message}
+      </p>
+   );
+}
 
-const selectCls =
-   "w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary " +
-   "focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer";
+const inputCls = (hasError?: boolean) =>
+   `w-full px-3 py-2 text-[13px] bg-neutral-light border rounded-xl text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 transition-all ${
+      hasError
+         ? "border-promotion/60 focus:ring-promotion/20 focus:border-promotion"
+         : "border-neutral focus:ring-accent/30 focus:border-accent"
+   }`;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+const selectCls = (hasError?: boolean) =>
+   `w-full px-3 py-2 text-[13px] bg-neutral-light border rounded-xl text-primary focus:outline-none focus:ring-2 transition-all cursor-pointer ${
+      hasError
+         ? "border-promotion/60 focus:ring-promotion/20 focus:border-promotion"
+         : "border-neutral focus:ring-accent/30 focus:border-accent"
+   }`;
 
 export interface RuleForm {
    actionType: PromotionActionType;
@@ -98,14 +98,9 @@ export interface RuleForm {
    giftProductVariantId: string;
 }
 
-/**
- * One target row in the form.
- * `entities` holds the selected items (products / categories / brands).
- * For targetType "ALL", entities is always empty.
- */
 export interface TargetForm {
    targetType: TargetType;
-   entities: EntityOption[]; // empty for ALL
+   entities: EntityOption[];
 }
 
 export interface PromotionFormData {
@@ -120,6 +115,184 @@ export interface PromotionFormData {
    usageLimit: string;
    rules: RuleForm[];
    targets: TargetForm[];
+}
+
+// ── Validation types ───────────────────────────────────────────────────────────
+export interface FormErrors {
+   name?: string;
+   startDate?: string;
+   endDate?: string;
+   dateRange?: string;
+   minOrderValue?: string;
+   maxDiscountValue?: string;
+   usageLimit?: string;
+   priority?: string;
+   rules?: Record<number, Partial<Record<keyof RuleForm, string>>>;
+   targets?: Record<number, string>;
+}
+
+// ── Validation logic ───────────────────────────────────────────────────────────
+function validateForm(form: PromotionFormData): FormErrors {
+   const errors: FormErrors = {};
+   const now = new Date();
+
+   // Name
+   if (!form.name.trim()) {
+      errors.name = "Tên khuyến mãi không được để trống";
+   } else if (form.name.trim().length < 3) {
+      errors.name = "Tên khuyến mãi phải có ít nhất 3 ký tự";
+   } else if (form.name.trim().length > 200) {
+      errors.name = "Tên khuyến mãi không được vượt quá 200 ký tự";
+   }
+
+   // Priority
+   const priority = Number(form.priority);
+   if (form.priority !== "" && (isNaN(priority) || priority < 0)) {
+      errors.priority = "Độ ưu tiên phải là số không âm";
+   }
+
+   // Dates
+   const startDate = form.startDate ? new Date(form.startDate) : null;
+   const endDate = form.endDate ? new Date(form.endDate) : null;
+
+   if (endDate && endDate <= now) {
+      errors.endDate = "Ngày kết thúc phải ở tương lai";
+   }
+
+   if (startDate && endDate) {
+      if (endDate <= startDate) {
+         errors.dateRange = "Ngày kết thúc phải sau ngày bắt đầu";
+      } else {
+         const diffMs = endDate.getTime() - startDate.getTime();
+         const diffMinutes = diffMs / 1000 / 60;
+         if (diffMinutes < 5) {
+            errors.dateRange =
+               "Khoảng thời gian khuyến mãi phải ít nhất 5 phút";
+         }
+      }
+   }
+
+   // minOrderValue
+   if (form.minOrderValue !== "") {
+      const val = Number(form.minOrderValue);
+      if (isNaN(val) || val < 0) {
+         errors.minOrderValue = "Giá trị đơn tối thiểu phải là số không âm";
+      } else if (val > 100_000_000) {
+         errors.minOrderValue =
+            "Giá trị đơn tối thiểu không được vượt quá 100,000,000đ";
+      }
+   }
+
+   // maxDiscountValue
+   if (form.maxDiscountValue !== "") {
+      const val = Number(form.maxDiscountValue);
+      if (isNaN(val) || val < 0) {
+         errors.maxDiscountValue = "Giảm tối đa phải là số không âm";
+      } else if (val > 100_000_000) {
+         errors.maxDiscountValue =
+            "Giảm tối đa không được vượt quá 100,000,000đ";
+      }
+   }
+
+   // usageLimit
+   if (form.usageLimit !== "") {
+      const val = Number(form.usageLimit);
+      if (isNaN(val) || !Number.isInteger(val) || val < 1) {
+         errors.usageLimit = "Giới hạn lượt sử dụng phải là số nguyên dương";
+      }
+   }
+
+   // Rules
+   const ruleErrors: Record<
+      number,
+      Partial<Record<keyof RuleForm, string>>
+   > = {};
+   form.rules.forEach((rule, i) => {
+      const re: Partial<Record<keyof RuleForm, string>> = {};
+
+      if (rule.actionType === "DISCOUNT_PERCENT") {
+         if (!rule.discountValue) {
+            re.discountValue = "Vui lòng nhập % giảm";
+         } else {
+            const v = Number(rule.discountValue);
+            if (isNaN(v) || v <= 0) re.discountValue = "% giảm phải lớn hơn 0";
+            else if (v > 100)
+               re.discountValue = "% giảm không được vượt quá 100%";
+         }
+      }
+
+      if (rule.actionType === "DISCOUNT_FIXED") {
+         if (!rule.discountValue) {
+            re.discountValue = "Vui lòng nhập số tiền giảm";
+         } else {
+            const v = Number(rule.discountValue);
+            if (isNaN(v) || v <= 0)
+               re.discountValue = "Số tiền giảm phải lớn hơn 0";
+            else if (v > 100_000_000)
+               re.discountValue =
+                  "Số tiền giảm không được vượt quá 100,000,000đ";
+         }
+      }
+
+      if (rule.actionType === "BUY_X_GET_Y") {
+         if (!rule.buyQuantity || Number(rule.buyQuantity) < 1) {
+            re.buyQuantity = "Số lượng mua phải ít nhất là 1";
+         }
+         if (!rule.getQuantity || Number(rule.getQuantity) < 1) {
+            re.getQuantity = "Số lượng tặng phải ít nhất là 1";
+         }
+      }
+
+      if (rule.actionType === "GIFT_PRODUCT") {
+         if (!rule.giftProductVariantId.trim()) {
+            re.giftProductVariantId = "Vui lòng nhập ID variant quà tặng";
+         }
+      }
+
+      if (Object.keys(re).length > 0) ruleErrors[i] = re;
+   });
+   if (Object.keys(ruleErrors).length > 0) errors.rules = ruleErrors;
+
+   // Targets
+   const targetErrors: Record<number, string> = {};
+   form.targets.forEach((t, i) => {
+      if (t.targetType !== "ALL" && t.entities.length === 0) {
+         const label = TARGET_TYPE_LABELS[t.targetType] ?? t.targetType;
+         targetErrors[i] = `Vui lòng chọn ít nhất 1 ${label.toLowerCase()}`;
+      }
+   });
+   if (Object.keys(targetErrors).length > 0) errors.targets = targetErrors;
+
+   return errors;
+}
+
+function hasErrors(errors: FormErrors): boolean {
+   return Object.keys(errors).length > 0;
+}
+
+// ── Toast summary ──────────────────────────────────────────────────────────────
+function buildToastMessages(errors: FormErrors): string[] {
+   const msgs: string[] = [];
+   if (errors.name) msgs.push(errors.name);
+   if (errors.priority) msgs.push(errors.priority);
+   if (errors.endDate) msgs.push(errors.endDate);
+   if (errors.dateRange) msgs.push(errors.dateRange);
+   if (errors.minOrderValue) msgs.push(errors.minOrderValue);
+   if (errors.maxDiscountValue) msgs.push(errors.maxDiscountValue);
+   if (errors.usageLimit) msgs.push(errors.usageLimit);
+   if (errors.rules) {
+      Object.entries(errors.rules).forEach(([i, re]) => {
+         Object.values(re).forEach((msg) =>
+            msgs.push(`Rule #${Number(i) + 1}: ${msg}`),
+         );
+      });
+   }
+   if (errors.targets) {
+      Object.entries(errors.targets).forEach(([i, msg]) =>
+         msgs.push(`Target #${Number(i) + 1}: ${msg}`),
+      );
+   }
+   return msgs;
 }
 
 export const DEFAULT_FORM: PromotionFormData = {
@@ -144,100 +317,28 @@ export const DEFAULT_FORM: PromotionFormData = {
    targets: [{ targetType: "ALL", entities: [] }],
 };
 
-// ── Helpers: date conversion ───────────────────────────────────────────────────
-
-const getTimeZoneOffset = (date: Date, timeZone: string) => {
-   const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-   });
-   const parts = formatter.formatToParts(date);
-   const values: Record<string, number> = {};
-   for (const part of parts) {
-      if (part.type !== "literal") values[part.type] = Number(part.value);
-   }
-   const asUTC = Date.UTC(
-      values.year,
-      (values.month ?? 1) - 1,
-      values.day ?? 1,
-      values.hour ?? 0,
-      values.minute ?? 0,
-      values.second ?? 0,
-   );
-   return asUTC - date.getTime();
-};
-
-const toVNDatetimeLocal = (d?: string): string => {
-   if (!d) return "";
-   const timeZone = getAdminTimeZoneOrDefault();
-   const formatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-   });
-   const parts = formatter.formatToParts(new Date(d));
-   const values: Record<string, string> = {};
-   for (const part of parts) {
-      if (part.type !== "literal") values[part.type] = part.value;
-   }
-   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
-};
-
-const fromVNLocal = (localStr: string): string | undefined => {
-   if (!localStr) return undefined;
-   const timeZone = getAdminTimeZoneOrDefault();
-   const [datePart, timePart] = localStr.split("T");
-   if (!datePart || !timePart) return undefined;
-   const [year, month, day] = datePart.split("-").map(Number);
-   const [hour, minute] = timePart.split(":").map(Number);
-   const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
-   const offset = getTimeZoneOffset(utcGuess, timeZone);
-   return new Date(utcGuess.getTime() - offset).toISOString();
-};
-
-// ── promotionToForm ────────────────────────────────────────────────────────────
-// When editing an existing promotion, the API returns targets with UUIDs.
-// We reconstruct EntityOption from { targetId, name } if the API returns name,
-// or fall back to showing the id as name (edge case — edit flow should enrich).
-
 export function promotionToForm(p: Promotion): PromotionFormData {
-   // Group targets by targetType
    const grouped: Record<string, TargetForm> = {};
-
    for (const t of p.targets) {
       const key = t.targetType;
-      if (!grouped[key]) {
+      if (!grouped[key])
          grouped[key] = {
             targetType: t.targetType as TargetType,
             entities: [],
          };
-      }
-      if (t.targetType !== "ALL" && t.targetId) {
+      if (t.targetType !== "ALL" && t.targetId)
          grouped[key].entities.push({
             id: t.targetId,
-            // `targetCode` / `targetValue` are available in admin select; use as name
             name: t.targetName ?? t.targetId,
          });
-      }
    }
-
    return {
       name: p.name,
       description: p.description ?? "",
       priority: String(p.priority),
       isActive: p.isActive,
-      startDate: toVNDatetimeLocal(p.startDate),
-      endDate: toVNDatetimeLocal(p.endDate),
+      startDate: utcToVNLocal(p.startDate),
+      endDate: utcToVNLocal(p.endDate),
       minOrderValue:
          p.minOrderValue !== undefined ? String(p.minOrderValue) : "",
       maxDiscountValue:
@@ -258,29 +359,21 @@ export function promotionToForm(p: Promotion): PromotionFormData {
    };
 }
 
-// ── formToPayload ──────────────────────────────────────────────────────────────
-// Flatten multi-select targets: each EntityOption → one target entry with uuid
-
 export function formToPayload(form: PromotionFormData): CreatePromotionPayload {
    const flatTargets: { targetType: string; targetId?: string }[] = [];
-
    for (const t of form.targets) {
-      if (t.targetType === "ALL") {
-         flatTargets.push({ targetType: "ALL" });
-      } else {
-         for (const entity of t.entities) {
-            flatTargets.push({ targetType: t.targetType, targetId: entity.id });
-         }
-      }
+      if (t.targetType === "ALL") flatTargets.push({ targetType: "ALL" });
+      else
+         for (const e of t.entities)
+            flatTargets.push({ targetType: t.targetType, targetId: e.id });
    }
-
    return {
       name: form.name.trim(),
       description: form.description.trim() || undefined,
       priority: Number(form.priority) || 0,
       isActive: form.isActive,
-      startDate: fromVNLocal(form.startDate),
-      endDate: fromVNLocal(form.endDate),
+      startDate: vnLocalToUtc(form.startDate),
+      endDate: vnLocalToUtc(form.endDate),
       minOrderValue: form.minOrderValue
          ? Number(form.minOrderValue)
          : undefined,
@@ -299,29 +392,33 @@ export function formToPayload(form: PromotionFormData): CreatePromotionPayload {
    };
 }
 
-// ── RuleCard (unchanged logic, same as original) ───────────────────────────────
-
+// ── RuleCard ───────────────────────────────────────────────────────────────────
 function RuleCard({
    rule,
    index,
    onChange,
    onRemove,
    canRemove,
+   errors,
 }: {
    rule: RuleForm;
    index: number;
    onChange: (i: number, field: keyof RuleForm, value: string) => void;
    onRemove: (i: number) => void;
    canRemove: boolean;
+   errors?: Partial<Record<keyof RuleForm, string>>;
 }) {
    const showDiscount =
       rule.actionType === "DISCOUNT_PERCENT" ||
       rule.actionType === "DISCOUNT_FIXED";
    const showBuyXGetY = rule.actionType === "BUY_X_GET_Y";
    const showGift = rule.actionType === "GIFT_PRODUCT";
+   const hasRuleError = errors && Object.keys(errors).length > 0;
 
    return (
-      <div className="border border-neutral rounded-xl p-4 space-y-3 bg-neutral-light">
+      <div
+         className={`border rounded-xl p-4 space-y-3 bg-neutral-light transition-colors ${hasRuleError ? "border-promotion/40" : "border-neutral"}`}
+      >
          <div className="flex items-center justify-between">
             <span className="text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
                Rule #{index + 1}
@@ -342,7 +439,7 @@ function RuleCard({
             <select
                value={rule.actionType}
                onChange={(e) => onChange(index, "actionType", e.target.value)}
-               className={selectCls}
+               className={selectCls()}
             >
                {(Object.keys(ACTION_TYPE_LABELS) as PromotionActionType[]).map(
                   (k) => (
@@ -356,7 +453,7 @@ function RuleCard({
 
          {showDiscount && (
             <div>
-               <FieldLabel>
+               <FieldLabel required>
                   Giá trị giảm
                   {rule.actionType === "DISCOUNT_PERCENT" ? " (%)" : " (VNĐ)"}
                </FieldLabel>
@@ -373,15 +470,16 @@ function RuleCard({
                         ? "VD: 20"
                         : "VD: 50000"
                   }
-                  className={inputCls}
+                  className={inputCls(!!errors?.discountValue)}
                />
+               <FieldError message={errors?.discountValue} />
             </div>
          )}
 
          {showBuyXGetY && (
             <div className="grid grid-cols-2 gap-3">
                <div>
-                  <FieldLabel>Mua số lượng (X)</FieldLabel>
+                  <FieldLabel required>Mua (X)</FieldLabel>
                   <input
                      type="number"
                      min={1}
@@ -390,11 +488,12 @@ function RuleCard({
                         onChange(index, "buyQuantity", e.target.value)
                      }
                      placeholder="VD: 2"
-                     className={inputCls}
+                     className={inputCls(!!errors?.buyQuantity)}
                   />
+                  <FieldError message={errors?.buyQuantity} />
                </div>
                <div>
-                  <FieldLabel>Tặng số lượng (Y)</FieldLabel>
+                  <FieldLabel required>Tặng (Y)</FieldLabel>
                   <input
                      type="number"
                      min={1}
@@ -403,15 +502,16 @@ function RuleCard({
                         onChange(index, "getQuantity", e.target.value)
                      }
                      placeholder="VD: 1"
-                     className={inputCls}
+                     className={inputCls(!!errors?.getQuantity)}
                   />
+                  <FieldError message={errors?.getQuantity} />
                </div>
             </div>
          )}
 
          {showGift && (
             <div>
-               <FieldLabel>ID variant sản phẩm quà tặng</FieldLabel>
+               <FieldLabel required>ID variant quà tặng</FieldLabel>
                <input
                   type="text"
                   value={rule.giftProductVariantId}
@@ -419,17 +519,16 @@ function RuleCard({
                      onChange(index, "giftProductVariantId", e.target.value)
                   }
                   placeholder="UUID của product variant"
-                  className={inputCls}
+                  className={inputCls(!!errors?.giftProductVariantId)}
                />
-               {/* TODO: replace with ProductSearch when gift-product lookup API is ready */}
+               <FieldError message={errors?.giftProductVariantId} />
             </div>
          )}
       </div>
    );
 }
 
-// ── TargetCard (REFACTORED) ───────────────────────────────────────────────────
-
+// ── TargetCard ─────────────────────────────────────────────────────────────────
 function TargetCard({
    target,
    index,
@@ -442,6 +541,7 @@ function TargetCard({
    brandOptions,
    loadingCategories,
    loadingBrands,
+   error,
 }: {
    target: TargetForm;
    index: number;
@@ -454,10 +554,12 @@ function TargetCard({
    brandOptions: EntityOption[];
    loadingCategories: boolean;
    loadingBrands: boolean;
+   error?: string;
 }) {
    return (
-      <div className="border border-neutral rounded-xl p-4 space-y-3 bg-neutral-light">
-         {/* Header */}
+      <div
+         className={`border rounded-xl p-4 space-y-3 bg-neutral-light transition-colors ${error ? "border-promotion/40" : "border-neutral"}`}
+      >
          <div className="flex items-center justify-between">
             <span className="text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
                Target #{index + 1}
@@ -473,15 +575,14 @@ function TargetCard({
             )}
          </div>
 
-         {/* Target type selector */}
          <div>
             <FieldLabel>Áp dụng cho</FieldLabel>
             <select
                value={target.targetType}
-               onChange={(e) => {
-                  onChangeType(index, e.target.value as TargetType);
-               }}
-               className={selectCls}
+               onChange={(e) =>
+                  onChangeType(index, e.target.value as TargetType)
+               }
+               className={selectCls()}
             >
                {(Object.keys(TARGET_TYPE_LABELS) as TargetType[]).map((k) => (
                   <option key={k} value={k}>
@@ -491,27 +592,21 @@ function TargetCard({
             </select>
          </div>
 
-         {/* Entity picker — only shown for non-ALL types */}
          {target.targetType === "PRODUCT" && (
-            <div className="relative">
-               <FieldLabel>Chọn sản phẩm</FieldLabel>
+            <div>
+               <FieldLabel required>Chọn sản phẩm</FieldLabel>
                <ProductSearch
                   selected={target.entities}
                   onChange={(items) => onChangeEntities(index, items)}
                   onSearch={apis.searchProducts}
                   placeholder="Tìm tên sản phẩm..."
                />
-               {target.entities.length === 0 && (
-                  <p className="text-[11px] text-neutral-dark mt-1.5">
-                     Tìm và chọn ít nhất 1 sản phẩm
-                  </p>
-               )}
+               <FieldError message={error} />
             </div>
          )}
-
          {target.targetType === "CATEGORY" && (
             <div>
-               <FieldLabel>Chọn danh mục</FieldLabel>
+               <FieldLabel required>Chọn danh mục</FieldLabel>
                <MultiSelectDropdown
                   selected={target.entities}
                   onChange={(items) => onChangeEntities(index, items)}
@@ -519,17 +614,12 @@ function TargetCard({
                   loading={loadingCategories}
                   placeholder="Chọn danh mục..."
                />
-               {target.entities.length === 0 && (
-                  <p className="text-[11px] text-neutral-dark mt-1.5">
-                     Chọn ít nhất 1 danh mục
-                  </p>
-               )}
+               <FieldError message={error} />
             </div>
          )}
-
          {target.targetType === "BRAND" && (
             <div>
-               <FieldLabel>Chọn thương hiệu</FieldLabel>
+               <FieldLabel required>Chọn thương hiệu</FieldLabel>
                <MultiSelectDropdown
                   selected={target.entities}
                   onChange={(items) => onChangeEntities(index, items)}
@@ -537,14 +627,9 @@ function TargetCard({
                   loading={loadingBrands}
                   placeholder="Chọn thương hiệu..."
                />
-               {target.entities.length === 0 && (
-                  <p className="text-[11px] text-neutral-dark mt-1.5">
-                     Chọn ít nhất 1 thương hiệu
-                  </p>
-               )}
+               <FieldError message={error} />
             </div>
          )}
-
          {target.targetType === "ALL" && (
             <p className="text-[12px] text-neutral-dark bg-neutral/30 px-3 py-2 rounded-lg">
                Khuyến mãi sẽ áp dụng cho tất cả sản phẩm
@@ -554,27 +639,33 @@ function TargetCard({
    );
 }
 
-// ── Section wrapper ────────────────────────────────────────────────────────────
-
+// ── Section ────────────────────────────────────────────────────────────────────
 function Section({
    title,
    children,
    collapsible = false,
+   hasError = false,
 }: {
    title: string;
    children: React.ReactNode;
    collapsible?: boolean;
+   hasError?: boolean;
 }) {
    const [open, setOpen] = useState(true);
    return (
-      <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
+      <div
+         className={`bg-neutral-light border rounded-xl overflow-hidden transition-colors ${hasError ? "border-promotion/40" : "border-neutral"}`}
+      >
          <button
             type="button"
             onClick={() => collapsible && setOpen((v) => !v)}
-            className={`w-full flex items-center justify-between px-5 py-3.5 border-b border-neutral ${collapsible ? "cursor-pointer hover:bg-neutral-light-active" : "cursor-default"}`}
+            className={`w-full flex items-center justify-between px-5 py-3.5 border-b ${hasError ? "border-promotion/30" : "border-neutral"} ${collapsible ? "cursor-pointer hover:bg-neutral-light-active" : "cursor-default"}`}
          >
-            <span className="text-[12px] font-semibold text-neutral-dark uppercase tracking-wider">
+            <span className="text-[12px] font-semibold text-neutral-dark uppercase tracking-wider flex items-center gap-2">
                {title}
+               {hasError && (
+                  <AlertCircle size={12} className="text-promotion" />
+               )}
             </span>
             {collapsible &&
                (open ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
@@ -585,7 +676,6 @@ function Section({
 }
 
 // ── Main PromotionForm ─────────────────────────────────────────────────────────
-
 interface PromotionFormProps {
    initialData?: PromotionFormData;
    onSubmit: (data: PromotionFormData) => Promise<void>;
@@ -593,7 +683,6 @@ interface PromotionFormProps {
    error: string | null;
    submitLabel: string;
    onCancel?: () => void;
-   /** Provide API helpers for entity search/load */
    searchAPIs: TargetSearchAPIs;
 }
 
@@ -606,21 +695,29 @@ export function PromotionForm({
    onCancel,
    searchAPIs,
 }: PromotionFormProps) {
-   const [form, setForm] = useState<PromotionFormData>(initialData);
+   const { error: toastError } = useToasty();
 
-   // Preloaded options for category / brand dropdowns
+   const [form, setForm] = useState<PromotionFormData>(initialData);
+   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+   const [submitted, setSubmitted] = useState(false); // track nếu đã submit 1 lần → validate realtime
+
+   useEffect(() => {
+      setForm(initialData);
+      setFieldErrors({});
+      setSubmitted(false);
+   }, [initialData]);
+
    const [categoryOptions, setCategoryOptions] = useState<EntityOption[]>([]);
    const [brandOptions, setBrandOptions] = useState<EntityOption[]>([]);
    const [loadingCategories, setLoadingCategories] = useState(false);
    const [loadingBrands, setLoadingBrands] = useState(false);
-   // Load once on mount
+
    useEffect(() => {
       setLoadingCategories(true);
       searchAPIs
          .loadCategories()
          .then(setCategoryOptions)
          .finally(() => setLoadingCategories(false));
-
       setLoadingBrands(true);
       searchAPIs
          .loadBrands()
@@ -633,17 +730,20 @@ export function PromotionForm({
          field: K,
          value: PromotionFormData[K],
       ) => {
-         setForm((prev) => ({ ...prev, [field]: value }));
+         setForm((p) => {
+            const next = { ...p, [field]: value };
+            if (submitted) setFieldErrors(validateForm(next)); // realtime sau lần submit đầu
+            return next;
+         });
       },
-      [],
+      [submitted],
    );
 
-   // ── Rules ──────────────────────────────────────────────────────────────────
    const addRule = () =>
-      setForm((prev) => ({
-         ...prev,
+      setForm((p) => ({
+         ...p,
          rules: [
-            ...prev.rules,
+            ...p.rules,
             {
                actionType: "DISCOUNT_PERCENT",
                discountValue: "",
@@ -653,70 +753,97 @@ export function PromotionForm({
             },
          ],
       }));
-
    const removeRule = (i: number) =>
-      setForm((prev) => ({
-         ...prev,
-         rules: prev.rules.filter((_, idx) => idx !== i),
-      }));
-
-   const updateRule = (i: number, field: keyof RuleForm, value: string) =>
-      setForm((prev) => {
-         const rules = [...prev.rules];
-         rules[i] = { ...rules[i], [field]: value };
-         return { ...prev, rules };
+      setForm((p) => ({ ...p, rules: p.rules.filter((_, idx) => idx !== i) }));
+   const updateRule = (i: number, f: keyof RuleForm, v: string) =>
+      setForm((p) => {
+         const r = [...p.rules];
+         r[i] = { ...r[i], [f]: v };
+         const next = { ...p, rules: r };
+         if (submitted) setFieldErrors(validateForm(next));
+         return next;
       });
 
-   // ── Targets ────────────────────────────────────────────────────────────────
    const addTarget = () =>
-      setForm((prev) => ({
-         ...prev,
-         targets: [...prev.targets, { targetType: "ALL", entities: [] }],
+      setForm((p) => ({
+         ...p,
+         targets: [...p.targets, { targetType: "ALL", entities: [] }],
       }));
-
    const removeTarget = (i: number) =>
-      setForm((prev) => ({
-         ...prev,
-         targets: prev.targets.filter((_, idx) => idx !== i),
+      setForm((p) => ({
+         ...p,
+         targets: p.targets.filter((_, idx) => idx !== i),
       }));
-
    const updateTargetType = (i: number, type: TargetType) =>
-      setForm((prev) => {
-         const targets = [...prev.targets];
-         // Reset entities when type changes
-         targets[i] = { targetType: type, entities: [] };
-         return { ...prev, targets };
+      setForm((p) => {
+         const t = [...p.targets];
+         t[i] = { targetType: type, entities: [] };
+         const next = { ...p, targets: t };
+         if (submitted) setFieldErrors(validateForm(next));
+         return next;
       });
-
    const updateTargetEntities = (i: number, entities: EntityOption[]) =>
-      setForm((prev) => {
-         const targets = [...prev.targets];
-         targets[i] = { ...targets[i], entities };
-         return { ...prev, targets };
+      setForm((p) => {
+         const t = [...p.targets];
+         t[i] = { ...t[i], entities };
+         const next = { ...p, targets: t };
+         if (submitted) setFieldErrors(validateForm(next));
+         return next;
       });
 
-   // ── Validation hint ────────────────────────────────────────────────────────
-   const hasInvalidTargets = form.targets.some(
-      (t) => t.targetType !== "ALL" && t.entities.length === 0,
-   );
+   const handleSubmit = useCallback(async () => {
+      setSubmitted(true);
+      const errors = validateForm(form);
+      setFieldErrors(errors);
 
-   const handleSubmit = async () => {
+      if (hasErrors(errors)) {
+         const msgs = buildToastMessages(errors);
+         // Toast lỗi đầu tiên + tổng số lỗi
+         const first = msgs[0];
+         const extra = msgs.length > 1 ? ` (+${msgs.length - 1} lỗi khác)` : "";
+         toastError(`${first}${extra}`, {
+            title: "Dữ liệu không hợp lệ",
+            duration: 5000,
+         });
+         return;
+      }
+
       await onSubmit(form);
-   };
+   }, [form, onSubmit, toastError]);
+
+   // Derived error flags for Section highlight
+   const hasTimeErrors = !!(
+      fieldErrors.startDate ||
+      fieldErrors.endDate ||
+      fieldErrors.dateRange ||
+      fieldErrors.minOrderValue ||
+      fieldErrors.maxDiscountValue ||
+      fieldErrors.usageLimit
+   );
+   const hasRuleErrors = !!(
+      fieldErrors.rules && Object.keys(fieldErrors.rules).length > 0
+   );
+   const hasTargetErrors = !!(
+      fieldErrors.targets && Object.keys(fieldErrors.targets).length > 0
+   );
 
    return (
       <div className="space-y-4">
-         {/* Basic info */}
-         <Section title="Thông tin cơ bản">
+         {/* ── Thông tin cơ bản ── */}
+         <Section
+            title="Thông tin cơ bản"
+            hasError={!!(fieldErrors.name || fieldErrors.priority)}
+         >
             <div className="space-y-4">
                <div>
-                  <FieldLabel>Tên khuyến mãi *</FieldLabel>
+                  <FieldLabel required>Tên khuyến mãi</FieldLabel>
                   <input
                      value={form.name}
                      onChange={(e) => set("name", e.target.value)}
                      placeholder="VD: Giảm 20% mùa hè"
-                     className={inputCls}
+                     className={inputCls(!!fieldErrors.name)}
                   />
+                  <FieldError message={fieldErrors.name} />
                </div>
 
                <div>
@@ -726,7 +853,7 @@ export function PromotionForm({
                      onChange={(e) => set("description", e.target.value)}
                      rows={3}
                      placeholder="Mô tả ngắn về chương trình khuyến mãi"
-                     className={`${inputCls} resize-none`}
+                     className={`${inputCls()} resize-none`}
                   />
                </div>
 
@@ -738,11 +865,14 @@ export function PromotionForm({
                         value={form.priority}
                         onChange={(e) => set("priority", e.target.value)}
                         placeholder="0 = cao nhất"
-                        className={inputCls}
+                        className={inputCls(!!fieldErrors.priority)}
                      />
-                     <p className="text-[11px] text-neutral-dark mt-1 flex items-center gap-1">
-                        <Info size={11} /> Số càng nhỏ, ưu tiên càng cao
-                     </p>
+                     <FieldError message={fieldErrors.priority} />
+                     {!fieldErrors.priority && (
+                        <p className="text-[11px] text-neutral-dark mt-1 flex items-center gap-1">
+                           <Info size={11} /> Số càng nhỏ, ưu tiên càng cao
+                        </p>
+                     )}
                   </div>
                   <div>
                      <FieldLabel>Trạng thái</FieldLabel>
@@ -760,41 +890,64 @@ export function PromotionForm({
             </div>
          </Section>
 
-         {/* Time + Limits */}
-         <Section title="Thời gian & Giới hạn" collapsible>
+         {/* ── Thời gian & Giới hạn ── */}
+         <Section
+            title="Thời gian & Giới hạn"
+            collapsible
+            hasError={hasTimeErrors}
+         >
             <div className="space-y-4">
-               <div className="grid grid-cols-2 gap-4">
-                  <div>
-                     <FieldLabel>Ngày bắt đầu</FieldLabel>
-                     <input
-                        type="datetime-local"
-                        value={form.startDate}
-                        onChange={(e) => set("startDate", e.target.value)}
-                        className={inputCls}
-                     />
-                  </div>
-                  <div>
-                     <FieldLabel>Ngày kết thúc</FieldLabel>
-                     <input
-                        type="datetime-local"
-                        value={form.endDate}
-                        onChange={(e) => set("endDate", e.target.value)}
-                        className={inputCls}
-                     />
-                  </div>
+               <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-lg">
+                  <Info size={13} className="text-accent shrink-0" />
+                  <p className="text-[11px] text-accent">
+                     Thời gian nhập theo <strong>giờ Việt Nam (GMT+7)</strong>.
+                     Hệ thống tự chuyển đổi khi lưu.
+                  </p>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                   <div>
-                     <FieldLabel>Giá trị đơn hàng tối thiểu (VNĐ)</FieldLabel>
+                     <FieldLabel>Ngày bắt đầu (giờ VN)</FieldLabel>
+                     <input
+                        type="datetime-local"
+                        value={form.startDate}
+                        onChange={(e) => set("startDate", e.target.value)}
+                        className={inputCls(!!fieldErrors.startDate)}
+                     />
+                     <FieldError message={fieldErrors.startDate} />
+                  </div>
+                  <div>
+                     <FieldLabel>Ngày kết thúc (giờ VN)</FieldLabel>
+                     <input
+                        type="datetime-local"
+                        value={form.endDate}
+                        onChange={(e) => set("endDate", e.target.value)}
+                        className={inputCls(!!fieldErrors.endDate)}
+                     />
+                     <FieldError message={fieldErrors.endDate} />
+                  </div>
+               </div>
+
+               {/* Date range error spans both columns */}
+               {fieldErrors.dateRange && (
+                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px]">
+                     <AlertCircle size={12} className="shrink-0" />
+                     {fieldErrors.dateRange}
+                  </div>
+               )}
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                     <FieldLabel>Giá trị đơn tối thiểu (VNĐ)</FieldLabel>
                      <input
                         type="number"
                         min={0}
                         value={form.minOrderValue}
                         onChange={(e) => set("minOrderValue", e.target.value)}
                         placeholder="Để trống = không giới hạn"
-                        className={inputCls}
+                        className={inputCls(!!fieldErrors.minOrderValue)}
                      />
+                     <FieldError message={fieldErrors.minOrderValue} />
                   </div>
                   <div>
                      <FieldLabel>Giảm tối đa (VNĐ)</FieldLabel>
@@ -806,8 +959,9 @@ export function PromotionForm({
                            set("maxDiscountValue", e.target.value)
                         }
                         placeholder="Để trống = không giới hạn"
-                        className={inputCls}
+                        className={inputCls(!!fieldErrors.maxDiscountValue)}
                      />
+                     <FieldError message={fieldErrors.maxDiscountValue} />
                   </div>
                </div>
 
@@ -819,14 +973,18 @@ export function PromotionForm({
                      value={form.usageLimit}
                      onChange={(e) => set("usageLimit", e.target.value)}
                      placeholder="Để trống = không giới hạn"
-                     className={inputCls}
+                     className={inputCls(!!fieldErrors.usageLimit)}
                   />
+                  <FieldError message={fieldErrors.usageLimit} />
                </div>
             </div>
          </Section>
 
-         {/* Rules */}
-         <Section title={`Quy tắc ưu đãi (${form.rules.length})`}>
+         {/* ── Rules ── */}
+         <Section
+            title={`Quy tắc ưu đãi (${form.rules.length})`}
+            hasError={hasRuleErrors}
+         >
             <div className="space-y-3">
                {form.rules.map((rule, i) => (
                   <RuleCard
@@ -836,6 +994,7 @@ export function PromotionForm({
                      onChange={updateRule}
                      onRemove={removeRule}
                      canRemove={form.rules.length > 1}
+                     errors={fieldErrors.rules?.[i]}
                   />
                ))}
                <button
@@ -848,8 +1007,11 @@ export function PromotionForm({
             </div>
          </Section>
 
-         {/* Targets */}
-         <Section title={`Đối tượng áp dụng (${form.targets.length})`}>
+         {/* ── Targets ── */}
+         <Section
+            title={`Đối tượng áp dụng (${form.targets.length})`}
+            hasError={hasTargetErrors}
+         >
             <div className="space-y-3">
                {form.targets.map((target, i) => (
                   <TargetCard
@@ -865,6 +1027,7 @@ export function PromotionForm({
                      brandOptions={brandOptions}
                      loadingCategories={loadingCategories}
                      loadingBrands={loadingBrands}
+                     error={fieldErrors.targets?.[i]}
                   />
                ))}
                <button
@@ -877,7 +1040,7 @@ export function PromotionForm({
             </div>
          </Section>
 
-         {/* Error */}
+         {/* API error */}
          {error && (
             <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-promotion-light border border-promotion/30 text-promotion text-[13px]">
                <AlertCircle size={15} className="shrink-0 mt-0.5" />
@@ -885,7 +1048,6 @@ export function PromotionForm({
             </div>
          )}
 
-         {/* Actions */}
          <div className="flex items-center justify-end gap-2 pt-1">
             {onCancel && (
                <button
@@ -900,7 +1062,7 @@ export function PromotionForm({
             <button
                type="button"
                onClick={handleSubmit}
-               disabled={saving || !form.name.trim() || hasInvalidTargets}
+               disabled={saving}
                className="flex items-center gap-1.5 px-5 py-2 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer"
             >
                {saving && <Loader2 size={13} className="animate-spin" />}

@@ -22,7 +22,6 @@ interface UserOption {
    isActive: boolean;
 }
 
-// ─── Styles — same pattern as ProductForm (any) ───────────────────────────────
 
 const rsStyles = {
    control: (b: any, s: any) => ({
@@ -91,7 +90,7 @@ const rsStyles = {
       boxShadow:
          "0 10px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06)",
       overflow: "hidden",
-      zIndex: 9999,
+      // bỏ zIndex: 9999
       backgroundColor: "var(--color-neutral-light, #fff)",
       marginTop: "6px",
    }),
@@ -352,6 +351,12 @@ export default function NotificationAdmin() {
                         closeMenuOnSelect={false}
                         hideSelectedOptions={false}
                         classNamePrefix="rs-user"
+                        menuPortalTarget={
+                           typeof document !== "undefined"
+                              ? document.body
+                              : null
+                        }
+                        menuPosition="fixed"
                      />
                   </div>
                )}

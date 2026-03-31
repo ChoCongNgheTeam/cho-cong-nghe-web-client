@@ -12,6 +12,8 @@
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import apiRequest from "@/lib/api";
+import { useCallback, useRef } from "react";
+import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 
 // ── Shared type ────────────────────────────────────────────────────────────────
 
@@ -234,8 +236,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
    );
 }
 
-// ── API loader ─────────────────────────────────────────────────────────────────
-
 async function defaultSearchProducts(term: string): Promise<RsOption[]> {
    if (!term.trim()) return [];
    const res = await apiRequest.get<{ data: any[] }>("/products", {
@@ -268,10 +268,23 @@ export function SingleProductSearch({
    placeholder = "Tìm tên sản phẩm, SKU...",
    isDisabled = false,
 }: SingleProductSearchProps) {
-   const loadOptions = async (inputValue: string): Promise<RsOption[]> => {
-      if (onSearch) return (await onSearch(inputValue)).map(toRs);
-      return defaultSearchProducts(inputValue);
-   };
+   const searchFn = onSearch ?? defaultSearchProducts;
+   const debouncedSearch = useDebouncedCallback(searchFn, 350);
+
+   const loadOptions = useCallback(
+      async (inputValue: string): Promise<RsOption[]> => {
+         if (!inputValue.trim()) return [];
+         try {
+            const results = await debouncedSearch(inputValue);
+            return onSearch
+               ? (results as EntityOption[]).map(toRs)
+               : (results as RsOption[]);
+         } catch {
+            return [];
+         }
+      },
+      [debouncedSearch, onSearch],
+   );
 
    return (
       <AsyncSelect
@@ -295,7 +308,6 @@ export function SingleProductSearch({
       />
    );
 }
-
 // ── SingleSelectDropdown ───────────────────────────────────────────────────────
 
 interface SingleSelectDropdownProps {

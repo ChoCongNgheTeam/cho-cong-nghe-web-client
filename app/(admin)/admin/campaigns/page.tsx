@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown, CalendarDays } from "lucide-react";
+import { Search, Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
@@ -12,9 +12,7 @@ import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
 import { getCampaignColumns } from "./components/TableCampaigns";
 import { StatsCard } from "@/components/admin/StatsCard";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface CampaignMeta {
   page: number;
@@ -39,45 +37,37 @@ const STATUS_TABS = [
   { value: "expired", label: "Đã kết thúc" },
   { value: "inactive", label: "Tạm dừng" },
 ];
-type SortField = "createdAt" | "name" | "startDate" | "endDate" | "publishedAt" | undefined;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAGE
-// ─────────────────────────────────────────────────────────────────────────────
+type SortField = "createdAt" | "name" | "startDate" | "endDate";
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CampaignsPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────────
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [meta, setMeta] = useState<CampaignMeta>(DEFAULT_META);
+  // ALL count riêng — không thay đổi khi filter tab
+  const [cachedCounts, setCachedCounts] = useState<CampaignMeta["statusCounts"]>(DEFAULT_META.statusCounts);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Filters ───────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(undefined);
-
   const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-
-  // Sort dropdown
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
-
-  // ── Delete modal ──────────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  // ── Close dropdown on outside click ──────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
@@ -86,16 +76,7 @@ export default function CampaignsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Tab → query params ────────────────────────────────────────────────────────
-  const tabToParams = (tab: string) => {
-    if (tab === "active") return { isActive: true };
-    if (tab === "inactive") return { isActive: false };
-    if (tab === "upcoming") return { isActive: true }; // BE filter by startDate > now
-    if (tab === "expired") return { isActive: undefined };
-    return {};
-  };
-
-  // ── Fetch (server-side) ───────────────────────────────────────────────────────
+  // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -107,10 +88,27 @@ export default function CampaignsPage() {
         type: typeFilter,
         sortBy,
         sortOrder,
-        ...tabToParams(activeTab),
+        // Gửi status param lên BE — BE sẽ filter đúng active/upcoming/expired/inactive
+        // ALL → không gửi status (BE trả tất cả)
+        ...(activeTab !== "ALL" ? { status: activeTab as any } : {}),
       });
       setCampaigns(res.data);
       setMeta(res.meta as CampaignMeta);
+
+      // cachedCounts: ALL luôn giữ tổng thực
+      const counts = (res.meta as CampaignMeta).statusCounts;
+      if (activeTab === "ALL") {
+        setCachedCounts(counts);
+      } else {
+        // Giữ ALL từ lần fetch trước, update các count con
+        setCachedCounts((prev) => ({
+          ...prev,
+          active: counts.active,
+          inactive: counts.inactive,
+          expired: counts.expired,
+          upcoming: counts.upcoming,
+        }));
+      }
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải danh sách chiến dịch");
     } finally {
@@ -122,9 +120,7 @@ export default function CampaignsPage() {
     fetchCampaigns();
   }, [fetchCampaigns]);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
   const resetPage = useCallback(() => setPage(1), []);
-
   const hasSortFilter = sortBy !== "createdAt" || sortOrder !== "desc";
   const hasActiveFilters = !!(search || activeTab !== "ALL" || typeFilter);
 
@@ -138,12 +134,20 @@ export default function CampaignsPage() {
     resetPage();
   }, [resetPage]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
+  // Single-select: bấm lại tab đang active → reset về ALL
+  const handleSelectTab = useCallback(
+    (tab: string) => {
+      setActiveTab((prev) => (prev === tab ? "ALL" : tab));
+      resetPage();
+    },
+    [resetPage],
+  );
+
   const toggleOne = useCallback((id: string) => {
     setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
     });
   }, []);
 
@@ -151,7 +155,6 @@ export default function CampaignsPage() {
     setSelected((prev) => (prev.size === campaigns.length ? new Set() : new Set(campaigns.map((c) => c.id))));
   }, [campaigns]);
 
-  // ── Toggle active ─────────────────────────────────────────────────────────────
   const handleToggleActive = useCallback(
     async (campaign: Campaign) => {
       try {
@@ -165,7 +168,6 @@ export default function CampaignsPage() {
     [fetchCampaigns],
   );
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -174,9 +176,9 @@ export default function CampaignsPage() {
       await deleteCampaign(deleteTarget.id);
       setDeleteTarget(null);
       setSelected((prev) => {
-        const next = new Set(prev);
-        next.delete(deleteTarget.id);
-        return next;
+        const n = new Set(prev);
+        n.delete(deleteTarget.id);
+        return n;
       });
       fetchCampaigns();
     } catch (e: any) {
@@ -200,7 +202,6 @@ export default function CampaignsPage() {
     }
   }, [selected, fetchCampaigns]);
 
-  // ── Columns ───────────────────────────────────────────────────────────────────
   const columns = useCallback(
     () =>
       getCampaignColumns({
@@ -216,13 +217,9 @@ export default function CampaignsPage() {
     [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive],
   );
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -242,42 +239,38 @@ export default function CampaignsPage() {
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
           <Link href="/admin/campaigns/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all">
-            <Plus size={15} />
-            Tạo chiến dịch
+            <Plus size={15} /> Tạo chiến dịch
           </Link>
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats — dùng cachedCounts */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatsCard label="Tổng chiến dịch" value={meta.statusCounts.ALL} sub="Tất cả chiến dịch" icon={<Megaphone size={16} />} />
-        <StatsCard label="Đang hoạt động" value={meta.statusCounts.active} sub="Đang chạy" icon={<CheckCircle2 size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
-        <StatsCard label="Sắp diễn ra" value={meta.statusCounts.upcoming} sub="Chưa bắt đầu" icon={<Clock size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
-        <StatsCard label="Tạm dừng" value={meta.statusCounts.inactive} sub="Đang bị tắt" icon={<Zap size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
+        <StatsCard label="Tổng chiến dịch" value={cachedCounts.ALL} sub="Tất cả chiến dịch" icon={<Megaphone size={16} />} />
+        <StatsCard label="Đang hoạt động" value={cachedCounts.active} sub="Đang chạy" icon={<CheckCircle2 size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+        <StatsCard label="Sắp diễn ra" value={cachedCounts.upcoming} sub="Chưa bắt đầu" icon={<Clock size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
+        <StatsCard label="Tạm dừng" value={cachedCounts.inactive} sub="Đang bị tắt" icon={<Zap size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
       </div>
 
-      {/* ── Main card ── */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar: 1 row ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
-          {/* Status tabs */}
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => {
-                setActiveTab(tab.value);
-                resetPage();
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
-              }`}
-            >
-              {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                {meta.statusCounts[tab.value as keyof typeof meta.statusCounts] ?? 0}
-              </span>
-            </button>
-          ))}
+          {STATUS_TABS.map((tab) => {
+            const isActive = activeTab === tab.value;
+            const count = cachedCounts[tab.value as keyof typeof cachedCounts] ?? 0;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => handleSelectTab(tab.value)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  isActive ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
+                }`}
+              >
+                {tab.label}
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${isActive ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>{count}</span>
+              </button>
+            );
+          })}
 
           <div className="w-px h-5 bg-neutral mx-1" />
 
@@ -303,7 +296,7 @@ export default function CampaignsPage() {
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -312,9 +305,12 @@ export default function CampaignsPage() {
 
           {/* Type filter */}
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value === "" ? undefined : (e.target.value as CampaignType))}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
+            value={typeFilter ?? ""}
+            onChange={(e) => {
+              setTypeFilter(e.target.value === "" ? undefined : (e.target.value as CampaignType));
+              resetPage();
+            }}
+            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent cursor-pointer"
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -323,7 +319,7 @@ export default function CampaignsPage() {
             ))}
           </select>
 
-          {/* Sort dropdown */}
+          {/* Sort */}
           <div ref={sortRef} className="relative">
             <button
               onClick={() => setShowSortDropdown((v) => !v)}
@@ -387,30 +383,78 @@ export default function CampaignsPage() {
             )}
           </div>
 
-          {/* Clear filters */}
           {(hasActiveFilters || hasSortFilter) && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
-
           <span className="ml-auto text-[12px] text-primary">{meta.total} chiến dịch</span>
         </div>
 
-        {/* ── Selection bar ── */}
+        {/* Active filter summary */}
+        {hasActiveFilters && (
+          <div className="px-5 py-2 border-b border-neutral flex items-center gap-2 flex-wrap text-[11px] text-neutral-dark">
+            <span className="font-medium text-primary">Đang lọc:</span>
+            {activeTab !== "ALL" && (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded-md font-medium">
+                {STATUS_TABS.find((t) => t.value === activeTab)?.label}
+                <button
+                  onClick={() => {
+                    setActiveTab("ALL");
+                    resetPage();
+                  }}
+                  className="hover:text-promotion cursor-pointer"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            {search && (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded-md font-medium">
+                "{search}"
+                <button
+                  onClick={() => {
+                    setSearch("");
+                    setSearchInput("");
+                    resetPage();
+                  }}
+                  className="hover:text-promotion cursor-pointer"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            {typeFilter && (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded-md font-medium">
+                {typeFilter}
+                <button
+                  onClick={() => {
+                    setTypeFilter(undefined);
+                    resetPage();
+                  }}
+                  className="hover:text-promotion cursor-pointer"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Selection bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} chiến dịch</span>
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary cursor-pointer">
               Bỏ chọn
             </button>
             <button
               onClick={handleBulkDelete}
               disabled={bulkDeleting}
-              className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[12px] font-medium rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[12px] font-medium rounded-lg cursor-pointer"
             >
               {bulkDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
               Xoá {selected.size} chiến dịch
@@ -418,7 +462,7 @@ export default function CampaignsPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
@@ -449,7 +493,7 @@ export default function CampaignsPage() {
           <AdminTable columns={columns()} data={campaigns} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -487,7 +531,7 @@ export default function CampaignsPage() {
         )}
       </div>
 
-      {/* ── Delete Confirm Modal ── */}
+      {/* Delete Modal */}
       {deleteTarget && (
         <Popzy
           isOpen={!!deleteTarget}
@@ -508,14 +552,14 @@ export default function CampaignsPage() {
                 <button
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleting}
-                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active cursor-pointer disabled:opacity-50"
                 >
                   Huỷ
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={deleting}
-                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {deleting && <Loader2 size={13} className="animate-spin" />}
                   {deleting ? "Đang xoá..." : "Xoá chiến dịch"}

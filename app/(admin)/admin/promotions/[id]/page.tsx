@@ -9,10 +9,6 @@ import {
    Trash2,
    Tag,
    Loader2,
-   CheckCircle2,
-   EyeOff,
-   Clock,
-   XCircle,
    CalendarDays,
    Zap,
    Target,
@@ -46,32 +42,15 @@ import {
    fetchAllCategories,
    fetchProductSearch,
 } from "../new/page";
-
-// ── Info row ───────────────────────────────────────────────────────────────────
-function InfoRow({
-   label,
-   children,
-}: {
-   label: string;
-   children: React.ReactNode;
-}) {
-   return (
-      <div className="flex items-start justify-between gap-4 py-2.5 border-b border-neutral last:border-0">
-         <span className="text-[12px] text-neutral-dark shrink-0 w-40">
-            {label}
-         </span>
-         <span className="text-[13px] text-primary font-medium text-right">
-            {children}
-         </span>
-      </div>
-   );
-}
+import { useToasty } from "@/components/Toast";
 
 export default function PromotionDetailPage() {
    const params = useParams();
    const router = useRouter();
    const searchParams = useSearchParams();
    const id = params?.id as string;
+
+   const { success, error: toastError } = useToasty();
 
    const [promotion, setPromotion] = useState<Promotion | null>(null);
    const [loading, setLoading] = useState(true);
@@ -96,7 +75,6 @@ export default function PromotionDetailPage() {
       setLoading(true);
       getPromotion(id)
          .then((res) => {
-            console.log(res);
             setPromotion(res.data);
             setEditForm(promotionToForm(res.data));
          })
@@ -116,14 +94,17 @@ export default function PromotionDetailPage() {
             setPromotion(res.data);
             setEditForm(promotionToForm(res.data));
             setEditMode(false);
+            success("Cập nhật khuyến mãi thành công!"); // 👈 dùng toast
          } catch (e: any) {
-            setSaveError(e?.message ?? "Không thể cập nhật khuyến mãi");
-            throw e; // re-throw để PromotionForm nhận error
+            const msg = e?.message ?? "Không thể cập nhật khuyến mãi";
+            setSaveError(msg);
+            toastError(msg); // 👈 dùng toast
+            throw e;
          } finally {
             setSaving(false);
          }
       },
-      [promotion],
+      [promotion, success, toastError],
    );
 
    const handleCancelEdit = useCallback(() => {
@@ -139,13 +120,16 @@ export default function PromotionDetailPage() {
       setDeleteError(null);
       try {
          await deletePromotion(promotion.id);
+         success("Đã xoá khuyến mãi thành công!"); // 👈 dùng toast
          router.push("/admin/promotions");
       } catch (e: any) {
-         setDeleteError(e?.message ?? "Không thể xoá khuyến mãi");
+         const msg = e?.message ?? "Không thể xoá khuyến mãi";
+         setDeleteError(msg);
+         toastError(msg); // 👈 dùng toast
       } finally {
          setDeleting(false);
       }
-   }, [promotion, router]);
+   }, [promotion, router, success, toastError]);
 
    // ── Render states ──────────────────────────────────────────────────────────────
    if (loading) {
@@ -209,7 +193,6 @@ export default function PromotionDetailPage() {
                         Trạng thái
                      </p>
                      <PromotionStatusBadge promotion={promotion} />
-
                      <div className="space-y-0 divide-y divide-neutral text-[12px]">
                         <div className="py-2 flex items-center justify-between">
                            <span className="text-neutral-dark">Ưu tiên</span>
@@ -329,8 +312,6 @@ export default function PromotionDetailPage() {
                            <PromotionStatusBadge promotion={promotion} />
                         </div>
                      </div>
-
-                     {/* Actions */}
                      <div className="flex items-center gap-2 shrink-0">
                         {!editMode && (
                            <>
@@ -476,6 +457,8 @@ export default function PromotionDetailPage() {
                </div>
             </div>
          </div>
+
+         {/* ── TOAST THUẦN ĐÃ BỊ XOÁ ── không còn fixed bottom-6 nữa */}
 
          {/* Delete modal */}
          <Popzy
