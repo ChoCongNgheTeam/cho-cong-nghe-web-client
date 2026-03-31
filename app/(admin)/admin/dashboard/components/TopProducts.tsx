@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { formatNumber } from "@/helpers";
+import { formatNumber, formatVND } from "@/helpers";
 import Link from "next/link";
 import { ArrowUpRight, Package, AlertTriangle } from "lucide-react";
 import type { TopProduct } from "../dashboard.types";
@@ -73,15 +73,10 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
               </div>
 
               <div className="text-right shrink-0">
-<<<<<<<<< Temporary merge branch 1
-                <p className="text-xs font-bold text-slate-900">
-                  {formatNumber(product.totalSold)}
-                </p>
+                <p className="text-xs font-bold text-slate-900">{formatNumber(product.totalSold)}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{formatVND(product.totalRevenue)}</p>
-=========
                 <p className="text-[11px] font-bold text-slate-900">{product.totalSold} đã bán</p>
                 <p className="text-[10px] text-slate-400">{fmtVND(product.totalRevenue)}</p>
->>>>>>>>> Temporary merge branch 2
               </div>
             </div>
           ))}
