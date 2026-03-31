@@ -13,7 +13,7 @@ import {
 } from "../components/PromotionForm";
 import type { EntityOption } from "../components/MultiSelectDropdown";
 import apiRequest from "@/lib/api";
-
+import { useToasty } from "@/components/Toast";
 export async function fetchProductSearch(
    term: string,
 ): Promise<EntityOption[]> {
@@ -49,10 +49,10 @@ const searchAPIs: TargetSearchAPIs = {
    loadBrands: fetchAllBrands,
 };
 
-// ── Page ───────────────────────────────────────────────────────────────────────
-
 export default function NewPromotionPage() {
    const router = useRouter();
+   const { success, error: toastError } = useToasty(); // 👈
+
    const [saving, setSaving] = useState(false);
    const [error, setError] = useState<string | null>(null);
 
@@ -62,9 +62,14 @@ export default function NewPromotionPage() {
       try {
          const payload = formToPayload(form);
          const res = await createPromotion(payload);
-         router.push(`/admin/promotions/${res.data.id}`);
+         success("Tạo khuyến mãi thành công!"); // 👈
+         setTimeout(() => {
+            router.push(`/admin/promotions/${res.data.id}`);
+         }, 1200);
       } catch (e: any) {
-         setError(e?.message ?? "Không thể tạo khuyến mãi");
+         const msg = e?.message ?? "Không thể tạo khuyến mãi";
+         setError(msg);
+         toastError(msg); // 👈
       } finally {
          setSaving(false);
       }
@@ -72,7 +77,6 @@ export default function NewPromotionPage() {
 
    return (
       <div className="min-h-screen bg-neutral-light">
-         {/* Breadcrumb */}
          <div className="flex items-center gap-3 px-6 pt-5 pb-3">
             <button
                onClick={() => router.back()}
@@ -93,7 +97,6 @@ export default function NewPromotionPage() {
             </span>
          </div>
 
-         {/* Content */}
          <div className="px-6 py-4 flex justify-center">
             <div className="w-full">
                <div className="flex items-center gap-3 mb-6">

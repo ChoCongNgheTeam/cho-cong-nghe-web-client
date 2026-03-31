@@ -1,5 +1,6 @@
 "use client";
 import { Campaign } from "../campaign.types";
+import { parseAPIDate } from "@/helpers/timezoneHelpers";
 
 export function getCampaignStatus(campaign: Campaign): {
   label: string;
@@ -7,18 +8,12 @@ export function getCampaignStatus(campaign: Campaign): {
   value: string;
 } {
   const now = new Date();
-  const start = campaign.startDate ? new Date(campaign.startDate) : null;
-  const end = campaign.endDate ? new Date(campaign.endDate) : null;
+  const start = parseAPIDate(campaign.startDate);
+  const end = parseAPIDate(campaign.endDate);
 
-  if (!campaign.isActive) {
-    return { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" };
-  }
-  if (end && end < now) {
-    return { value: "expired", label: "Đã kết thúc", color: "text-neutral-dark bg-neutral-light-active" };
-  }
-  if (start && start > now) {
-    return { value: "upcoming", label: "Sắp diễn ra", color: "text-blue-600 bg-blue-50" };
-  }
+  if (!campaign.isActive) return { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" };
+  if (end && end < now) return { value: "expired", label: "Đã kết thúc", color: "text-neutral-dark bg-neutral-light-active" };
+  if (start && start > now) return { value: "upcoming", label: "Sắp diễn ra", color: "text-blue-600 bg-blue-50" };
   return { value: "active", label: "Đang hoạt động", color: "text-emerald-600 bg-emerald-50" };
 }
 

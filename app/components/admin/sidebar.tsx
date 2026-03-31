@@ -42,6 +42,7 @@ import {
    BookOpen,
    Boxes,
    Bell,
+   Trash2,
 } from "lucide-react";
 import UserAvatar from "../ui/UserAvatar";
 
@@ -180,6 +181,7 @@ const navGroups: NavGroup[] = [
             icon: ShieldCheck,
          },
          { title: "Cài đặt hệ thống", href: "/admin/settings", icon: Settings },
+         { title: "Thùng rác", href: "/admin/trash", icon: Trash2 },
       ],
    },
 ];

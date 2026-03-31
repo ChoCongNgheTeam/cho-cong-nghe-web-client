@@ -10,8 +10,13 @@ const nextConfig: NextConfig = {
          "res.cloudinary.com",
          "lh3.googleusercontent.com",
          "graph.facebook.com",
-         "platform-lookaside.fbsbx.com", // ← thêm
-         "*.fbcdn.net", // ← thêm phòng khi FB đổi domain
+         "platform-lookaside.fbsbx.com",
+      ],
+      remotePatterns: [
+         {
+            protocol: "https",
+            hostname: "**.fbcdn.net",
+         },
       ],
    },
    productionBrowserSourceMaps: false,

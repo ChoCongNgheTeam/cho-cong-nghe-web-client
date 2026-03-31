@@ -1,17 +1,19 @@
-export const CAMPAIGN_TYPE_LABELS: Record<string, string> = {
-  FLASH_SALE: "Flash Sale",
+import { CampaignType } from "../campaign.types";
+
+export const CAMPAIGN_TYPE_LABELS: Record<CampaignType, string> = {
+  RANKING: "Xếp hạng",
+  CAMPAIGN: "Chiến dịch",
   SEASONAL: "Theo mùa",
-  BRAND: "Thương hiệu",
-  CATEGORY: "Danh mục",
-  SPECIAL: "Đặc biệt",
+  EVENT: "Sự kiện",
+  FLASH_SALE: "Flash Sale",
 };
 
-export const CAMPAIGN_TYPE_COLORS: Record<string, string> = {
-  FLASH_SALE: "text-red-600 bg-red-50",
+export const CAMPAIGN_TYPE_COLORS: Record<CampaignType, string> = {
+  RANKING: "text-indigo-600 bg-indigo-50",
+  CAMPAIGN: "text-blue-600 bg-blue-50",
   SEASONAL: "text-emerald-600 bg-emerald-50",
-  BRAND: "text-blue-600 bg-blue-50",
-  CATEGORY: "text-purple-600 bg-purple-50",
-  SPECIAL: "text-amber-600 bg-amber-50",
+  EVENT: "text-purple-600 bg-purple-50",
+  FLASH_SALE: "text-red-600 bg-red-50",
 };
 
 export const STATUS_TABS = [
@@ -22,13 +24,13 @@ export const STATUS_TABS = [
   { value: "expired", label: "Đã kết thúc" },
 ];
 
-export const TYPE_OPTIONS = [
+export const TYPE_OPTIONS: { value: CampaignType | ""; label: string }[] = [
   { value: "", label: "Tất cả loại" },
-  { value: "FLASH_SALE", label: "Flash Sale" },
+  { value: "RANKING", label: "Xếp hạng" },
+  { value: "CAMPAIGN", label: "Chiến dịch" },
   { value: "SEASONAL", label: "Theo mùa" },
-  { value: "BRAND", label: "Thương hiệu" },
-  { value: "CATEGORY", label: "Danh mục" },
-  { value: "SPECIAL", label: "Đặc biệt" },
+  { value: "EVENT", label: "Sự kiện" },
+  { value: "FLASH_SALE", label: "Flash Sale" },
 ];
 
 type SortField = "createdAt" | "name" | "startDate" | "endDate";

@@ -68,6 +68,7 @@ export interface GetVouchersParams {
   isExpired?: boolean;
   sortBy?: "createdAt" | "code" | "discountValue" | "usesCount" | "priority";
   sortOrder?: "asc" | "desc";
+  status?: "active" | "inactive" | "expired" | "upcoming";
 }
 
 export interface CreateVoucherPayload {
