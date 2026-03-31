@@ -23,5 +23,5 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 export function HighlightIcon({ icon }: { icon: string }) {
    const Icon = ICON_MAP[icon] ?? ICON_MAP["default"];
-   return <Icon className="w-5 h-5 text-neutral-dark-hover opacity-30" />;
+   return <Icon className="w-5 h-5 text-neutral-dark-hover" />;
 }
