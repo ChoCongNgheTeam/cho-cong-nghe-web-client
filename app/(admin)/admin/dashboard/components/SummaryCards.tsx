@@ -5,6 +5,8 @@ import type { DashboardSummary } from "../dashboard.types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+<<<<<<<<< Temporary merge branch 1
+=========
 export const formatVNDShort = (value: number) => {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}T`;
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -13,6 +15,7 @@ export const formatVNDShort = (value: number) => {
 };
 
 export const formatVNDFull = (value: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
+>>>>>>>>> Temporary merge branch 2
 
 const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
