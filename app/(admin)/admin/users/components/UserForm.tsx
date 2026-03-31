@@ -127,8 +127,11 @@ export default function UserForm({ editingUser }: Props) {
     else if (form.fullName.length < 3) err.fullName = "Tối thiểu 3 ký tự";
     else if (form.fullName.length > 50) err.fullName = "Tối đa 50 ký tự";
 
-    if (!form.email.trim()) err.email = "Nhập email";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) err.email = "Email không hợp lệ";
+    // Email chỉ validate khi tạo mới, không validate khi edit
+    if (!editingUser) {
+      if (!form.email.trim()) err.email = "Nhập email";
+      else if (!/\S+@\S+\.\S+/.test(form.email)) err.email = "Email không hợp lệ";
+    }
 
     if (form.phone.trim() && !/^0\d{9}$/.test(form.phone.trim())) err.phone = "10 số, bắt đầu bằng 0";
 
@@ -270,12 +273,24 @@ export default function UserForm({ editingUser }: Props) {
                   placeholder="vd: Nguyễn Văn A" className={inputCls(errors.fullName)} />
               </Field>
 
-              <Field label="Email" required error={errors.email}>
+              {/* Email — chỉ đọc khi edit */}
+              <Field label="Email" required={!editingUser} error={errors.email}>
                 <div className="relative">
-                  <input value={form.email} onChange={(e) => setField("email", e.target.value)}
-                    placeholder="vd: email@example.com" className={`${inputCls(errors.email)} pl-10`} />
+                  <input
+                    value={form.email}
+                    onChange={(e) => !editingUser && setField("email", e.target.value)}
+                    readOnly={!!editingUser}
+                    placeholder="vd: email@example.com"
+                    className={`${inputCls(errors.email)} pl-10 ${editingUser ? "cursor-not-allowed opacity-60 select-none" : ""}`}
+                  />
                   <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
                 </div>
+                {editingUser && (
+                  <p className="text-[11px] text-neutral-dark flex items-center gap-1 mt-0.5">
+                    <span className="w-1 h-1 rounded-full bg-neutral-dark inline-block" />
+                    Email không thể thay đổi
+                  </p>
+                )}
               </Field>
 
               {/* Phone */}
@@ -321,29 +336,27 @@ export default function UserForm({ editingUser }: Props) {
 
           <div className="border-t border-neutral" />
 
-         {/* Security — chỉ hiển thị khi tạo mới */}
-{!editingUser && (
-  <>
-    <section>
-      <SectionTitle icon={<Lock size={16} />} title="Bảo mật" subtitle="Mật khẩu đăng nhập" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-        <Field label="Mật khẩu" required error={errors.password}>
-          <div className="relative">
-            <input type="password" value={form.password}
-              onChange={(e) => setField("password", e.target.value)}
-              placeholder="Tối thiểu 6 ký tự, có chữ hoa và số"
-              className={`${inputCls(errors.password)} pl-10`} />
-            <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
-          </div>
-        </Field>
-      </div>
-    </section>
+          {/* Security — chỉ hiển thị khi tạo mới */}
+          {!editingUser && (
+            <>
+              <section>
+                <SectionTitle icon={<Lock size={16} />} title="Bảo mật" subtitle="Mật khẩu đăng nhập" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  <Field label="Mật khẩu" required error={errors.password}>
+                    <div className="relative">
+                      <input type="password" value={form.password}
+                        onChange={(e) => setField("password", e.target.value)}
+                        placeholder="Tối thiểu 6 ký tự, có chữ hoa và số"
+                        className={`${inputCls(errors.password)} pl-10`} />
+                      <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+                    </div>
+                  </Field>
+                </div>
+              </section>
 
-    <div className="border-t border-neutral" />
-  </>
-)}
-
-          <div className="border-t border-neutral" />
+              <div className="border-t border-neutral" />
+            </>
+          )}
 
           {/* Permissions & Status */}
           <section>

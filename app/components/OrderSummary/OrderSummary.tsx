@@ -224,14 +224,14 @@ export default function OrderSummary({
                               Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
                               <a
                                  className="underline font-medium hover:text-promotion cursor-pointer text-primary"
-                                 href="#"
+                                 href="/policies/TermsOfService"
                               >
                                  Điều khoản dịch vụ
                               </a>{" "}
                               và{" "}
                               <a
                                  className="underline font-medium hover:text-promotion cursor-pointer text-primary"
-                                 href="#"
+                                 href="/policies/DataPrivacy"
                               >
                                  Chính sách xử lý dữ liệu cá nhân
                               </a>{" "}
