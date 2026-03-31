@@ -142,7 +142,6 @@ interface VoucherFormProps {
 export function VoucherForm({ initialData, isEdit = false, onSubmit, saving, error, submitLabel = "Lưu", onCancel }: VoucherFormProps) {
   const [form, setForm] = useState<VoucherFormData>(initialData);
 
-  // Preloaded lists cho CATEGORY & BRAND
   const [categories, setCategories] = useState<EntityOption[]>([]);
   const [brands, setBrands] = useState<EntityOption[]>([]);
   const [loadingCats, setLoadingCats] = useState(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -232,6 +232,224 @@ function buildCategoryTree(flat: CategoryOption[]): CategoryNode[] {
    return roots;
 }
 
+function CategoryTree({
+   nodes,
+   selectedId,
+   onSelect,
+   searchQuery = "",
+}: {
+   nodes: CategoryNode[];
+   selectedId: string | null;
+   onSelect: (id: string) => void;
+   searchQuery?: string;
+}) {
+   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+   const initRef = useRef(false);
+   useEffect(() => {
+      if (initRef.current) return;
+      initRef.current = true;
+      setExpanded(new Set(nodes.map((n) => n.id)));
+   }, [nodes]);
+
+   const normalize = (s: string) =>
+      s
+         .normalize("NFD")
+         .replace(/[\u0300-\u036f]/g, "")
+         .replace(/đ/gi, "d")
+         .toLowerCase();
+
+   // Tách query thành các token, tất cả phải xuất hiện trong fullPath
+   const tokens = normalize(searchQuery.trim()).split(/\s+/).filter(Boolean);
+
+   const toggle = (id: string) =>
+      setExpanded((prev) => {
+         const n = new Set(prev);
+         n.has(id) ? n.delete(id) : n.add(id);
+         return n;
+      });
+
+   // fullPath = "điện máy > tivi > samsung" — search match nếu tất cả tokens có trong path
+   function pathMatches(fullPath: string): boolean {
+      if (!tokens.length) return true;
+      const normalizedPath = normalize(fullPath);
+      return tokens.every((t) => normalizedPath.includes(t));
+   }
+
+   // Node hoặc bất kỳ descendant nào match path kéo dài từ ancestors
+   function subtreeMatches(node: CategoryNode, ancestorPath: string): boolean {
+      const fullPath = ancestorPath
+         ? `${ancestorPath} ${node.name}`
+         : node.name;
+      if (pathMatches(fullPath)) return true;
+      return node.children.some((child) => subtreeMatches(child, fullPath));
+   }
+
+   function highlight(text: string): React.ReactNode {
+      if (!tokens.length) return text;
+      const normalizedText = normalize(text);
+      // Highlight từng token match trong text
+      let result: React.ReactNode = text;
+      for (const token of tokens) {
+         const idx = normalizedText.indexOf(token);
+         if (idx === -1) continue;
+         const str = typeof result === "string" ? result : text;
+         result = (
+            <>
+               {str.slice(0, idx)}
+               <mark className="bg-yellow-200 text-primary rounded-sm px-0.5">
+                  {str.slice(idx, idx + token.length)}
+               </mark>
+               {str.slice(idx + token.length)}
+            </>
+         );
+         break; // highlight token đầu tiên match là đủ
+      }
+      return result;
+   }
+
+   function renderNodes(
+      list: CategoryNode[],
+      ancestorPath: string,
+   ): React.ReactNode {
+      return list
+         .filter((node) => subtreeMatches(node, ancestorPath))
+         .map((node) => {
+            const fullPath = ancestorPath
+               ? `${ancestorPath} ${node.name}`
+               : node.name;
+            const isLeaf = node.children.length === 0;
+            const selfMatch = pathMatches(fullPath);
+            // Expand nếu đang search và node/descendants match
+            const isOpen = tokens.length
+               ? subtreeMatches(node, ancestorPath)
+               : expanded.has(node.id);
+            const isSel = node.id === selectedId;
+
+            return (
+               <div key={node.id}>
+                  <div
+                     onClick={() =>
+                        isLeaf ? onSelect(node.id) : toggle(node.id)
+                     }
+                     className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
+                        ${
+                           isLeaf && isSel
+                              ? "bg-primary text-neutral-light"
+                              : isLeaf
+                                ? "hover:bg-neutral-light-active text-primary"
+                                : "hover:bg-neutral-light-active text-primary font-medium"
+                        }`}
+                  >
+                     {!isLeaf && (
+                        <ChevronRight
+                           size={12}
+                           className={`shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
+                        />
+                     )}
+                     {isLeaf && <span className="w-3 shrink-0" />}
+                     <span className="text-[13px] flex-1 leading-tight">
+                        {selfMatch ? highlight(node.name) : node.name}
+                     </span>
+                     {isSel && isLeaf && (
+                        <Check
+                           size={12}
+                           className="shrink-0 text-neutral-light"
+                        />
+                     )}
+                  </div>
+                  {!isLeaf && isOpen && (
+                     <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
+                        {selfMatch
+                           ? // Cha match toàn bộ path → show tất cả children không filter
+                             renderAllChildren(node.children, fullPath)
+                           : // Cha chưa match → tiếp tục filter theo path
+                             renderNodes(node.children, fullPath)}
+                     </div>
+                  )}
+               </div>
+            );
+         });
+   }
+
+   // Render toàn bộ subtree khi cha đã match (không filter thêm)
+   function renderAllChildren(
+      list: CategoryNode[],
+      ancestorPath: string,
+   ): React.ReactNode {
+      return list.map((node) => {
+         const fullPath = `${ancestorPath} ${node.name}`;
+         const isLeaf = node.children.length === 0;
+         const isOpen = tokens.length ? true : expanded.has(node.id);
+         const isSel = node.id === selectedId;
+         return (
+            <div key={node.id}>
+               <div
+                  onClick={() => (isLeaf ? onSelect(node.id) : toggle(node.id))}
+                  className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
+                     ${
+                        isLeaf && isSel
+                           ? "bg-primary text-neutral-light"
+                           : isLeaf
+                             ? "hover:bg-neutral-light-active text-primary"
+                             : "hover:bg-neutral-light-active text-primary font-medium"
+                     }`}
+               >
+                  {!isLeaf && (
+                     <ChevronRight
+                        size={12}
+                        className={`shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
+                     />
+                  )}
+                  {isLeaf && <span className="w-3 shrink-0" />}
+                  <span className="text-[13px] flex-1 leading-tight">
+                     {node.name}
+                  </span>
+                  {isSel && isLeaf && (
+                     <Check size={12} className="shrink-0 text-neutral-light" />
+                  )}
+               </div>
+               {!isLeaf && isOpen && (
+                  <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
+                     {renderAllChildren(node.children, fullPath)}
+                  </div>
+               )}
+            </div>
+         );
+      });
+   }
+
+   return <div className="space-y-0.5">{renderNodes(nodes, "")}</div>;
+}
+function CategoryMenuList({
+   innerProps,
+   selectProps,
+   categoryTree,
+   categoryId,
+   onCategorySelect,
+}: {
+   innerProps: any;
+   selectProps: any;
+   categoryTree: CategoryNode[];
+   categoryId: string;
+   onCategorySelect: (id: string) => void;
+}) {
+   const searchQuery = selectProps.inputValue ?? "";
+
+   return (
+      <div {...innerProps} className="p-2 max-h-72 overflow-y-auto">
+         <CategoryTree
+            nodes={categoryTree}
+            selectedId={categoryId}
+            onSelect={(id) => {
+               onCategorySelect(id);
+               selectProps.onMenuClose?.();
+            }}
+            searchQuery={searchQuery}
+         />
+      </div>
+   );
+}
+
 function getCategoryPath(
    id: string | null,
    flat: CategoryOption[],
@@ -373,7 +591,7 @@ function Toggle({
       <button
          type="button"
          onClick={() => onChange(!value)}
-         className={`relative rounded-full transition-all cursor-pointer flex-shrink-0
+         className={`relative rounded-full transition-all cursor-pointer shrink-0
             ${sm ? "w-8 h-[17px]" : "w-10 h-[22px]"}
             ${value ? "bg-primary" : "bg-neutral"}`}
       >
@@ -438,78 +656,6 @@ function Section({
    );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CATEGORY TREE
-// ─────────────────────────────────────────────────────────────────────────────
-
-function CategoryTree({
-   nodes,
-   selectedId,
-   onSelect,
-}: {
-   nodes: CategoryNode[];
-   selectedId: string | null;
-   onSelect: (id: string) => void;
-}) {
-   const [expanded, setExpanded] = useState<Set<string>>(() => {
-      const s = new Set<string>();
-      nodes.forEach((n) => s.add(n.id));
-      return s;
-   });
-
-   const toggle = (id: string) =>
-      setExpanded((prev) => {
-         const n = new Set(prev);
-         n.has(id) ? n.delete(id) : n.add(id);
-         return n;
-      });
-
-   function renderNodes(list: CategoryNode[]) {
-      return list.map((node) => {
-         const isLeaf = node.children.length === 0;
-         const isOpen = expanded.has(node.id);
-         const isSel = node.id === selectedId;
-         return (
-            <div key={node.id}>
-               <div
-                  onClick={() => (isLeaf ? onSelect(node.id) : toggle(node.id))}
-                  className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
-                     ${isLeaf && isSel ? "bg-primary text-neutral-light" : isLeaf ? "hover:bg-neutral-light-active text-primary" : "hover:bg-neutral-light-active text-primary-light font-medium"}`}
-               >
-                  {!isLeaf && (
-                     <ChevronRight
-                        size={12}
-                        className={`flex-shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
-                     />
-                  )}
-                  {isLeaf && <span className="w-3 flex-shrink-0" />}
-                  <span className="text-[13px] flex-1 leading-tight">
-                     {node.name}
-                  </span>
-                  {isSel && isLeaf && (
-                     <Check
-                        size={12}
-                        className="flex-shrink-0 text-neutral-light"
-                     />
-                  )}
-               </div>
-               {!isLeaf && isOpen && (
-                  <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
-                     {renderNodes(node.children)}
-                  </div>
-               )}
-            </div>
-         );
-      });
-   }
-
-   return <div className="space-y-0.5">{renderNodes(nodes)}</div>;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CATEGORY CHANGE CONFIRM MODAL
-// ─────────────────────────────────────────────────────────────────────────────
-
 function CategoryChangeModal({
    onConfirm,
    onCancel,
@@ -521,7 +667,7 @@ function CategoryChangeModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/40">
          <div className="bg-neutral-light rounded-2xl border border-neutral shadow-xl w-full max-w-sm p-6">
             <div className="flex items-start gap-3 mb-4">
-               <div className="w-9 h-9 rounded-full bg-promotion-light border border-promotion-light-active flex items-center justify-center flex-shrink-0 mt-0.5">
+               <div className="w-9 h-9 rounded-full bg-promotion-light border border-promotion-light-active flex items-center justify-center shrink-0 mt-0.5">
                   <AlertCircle size={16} className="text-promotion" />
                </div>
                <div>
@@ -643,7 +789,7 @@ function PriceAdjInput({
 
    return (
       <div className="flex items-center gap-1 mt-1.5">
-         <span className="text-[10px] text-neutral-dark whitespace-nowrap flex-shrink-0">
+         <span className="text-[10px] text-neutral-dark whitespace-nowrap shrink-0">
             ±giá
          </span>
          <div className="relative flex-1">
@@ -756,7 +902,7 @@ function ChipAttributeSelector({
                               >
                                  {isColor && (
                                     <span
-                                       className={`w-3 h-3 rounded-full flex-shrink-0 ${isOn ? "ring-2 ring-neutral-light ring-offset-1 ring-offset-primary" : "ring-1 ring-neutral"}`}
+                                       className={`w-3 h-3 rounded-full shrink-0 ${isOn ? "ring-2 ring-neutral-light ring-offset-1 ring-offset-primary" : "ring-1 ring-neutral"}`}
                                        style={{ background: opt.value }}
                                     />
                                  )}
@@ -775,7 +921,7 @@ function ChipAttributeSelector({
                                  {isOn && (
                                     <Check
                                        size={11}
-                                       className="flex-shrink-0 opacity-80"
+                                       className="shrink-0 opacity-80"
                                     />
                                  )}
                               </button>
@@ -1062,7 +1208,7 @@ function VariantTable({
                                        type="button"
                                        onClick={() => autoSKU(v)}
                                        title="Tạo SKU tự động"
-                                       className="p-1 text-neutral hover:text-primary cursor-pointer flex-shrink-0 transition-colors"
+                                       className="p-1 text-neutral hover:text-primary cursor-pointer shrink-0 transition-colors"
                                     >
                                        <Sparkles size={12} />
                                     </button>
@@ -1083,7 +1229,7 @@ function VariantTable({
                                     <div className="flex items-center gap-1.5">
                                        {attr.code === "color" && opt && (
                                           <span
-                                             className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-neutral"
+                                             className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-neutral"
                                              style={{ background: opt.value }}
                                           />
                                        )}
@@ -1226,11 +1372,11 @@ function ColorImages({
                         <div className="flex items-center gap-2">
                            {ci.color ? (
                               <span
-                                 className="w-3.5 h-3.5 rounded-full ring-1 ring-neutral flex-shrink-0"
+                                 className="w-3.5 h-3.5 rounded-full ring-1 ring-neutral shrink-0"
                                  style={{ background: ci.color }}
                               />
                            ) : (
-                              <span className="w-3.5 h-3.5 rounded-full bg-neutral flex-shrink-0" />
+                              <span className="w-3.5 h-3.5 rounded-full bg-neutral shrink-0" />
                            )}
                            <span className="text-[12px] font-semibold text-primary">
                               {(label ?? ci.color) || "Chưa chọn màu"}
@@ -1493,7 +1639,7 @@ export default function ProductForm({ product }: ProductFormProps) {
    const [variantDisplay, setVariantDisplay] = useState<"SELECTOR" | "CARD">(
       (product as any)?.variantDisplay ?? "SELECTOR",
    );
-
+   const [categorySearch, setCategorySearch] = useState("");
    const [basePrice, setBasePrice] = useState<number>(() => {
       if (product?.variants?.length) {
          const def = product.variants.find((v) => v.isDefault && !v.deletedAt);
@@ -1586,6 +1732,27 @@ export default function ProductForm({ product }: ProductFormProps) {
    const categoryTree = buildCategoryTree(categories);
    const categoryPath = getCategoryPath(categoryId, categories);
 
+   const categoryOptions = useMemo(() => {
+      const normalize = (s: string) =>
+         s
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/gi, "d")
+            .toLowerCase();
+
+      return categories
+         .filter((c) => !categories.some((other) => other.parentId === c.id))
+         .map((c) => {
+            const path = getCategoryPath(c.id, categories);
+            const label = path.map((p) => p.name).join(" › ");
+            return {
+               value: c.id,
+               label,
+               searchLabel: normalize(label), // dùng để search
+            };
+         });
+   }, [categories]);
+
    const nameRef = useRef(name);
    useEffect(() => {
       nameRef.current = name;
@@ -1596,8 +1763,10 @@ export default function ProductForm({ product }: ProductFormProps) {
          if (
             categoryTreeRef.current &&
             !categoryTreeRef.current.contains(e.target as Node)
-         )
+         ) {
             setShowCategoryTree(false);
+            setCategorySearch("");
+         }
       };
       if (showCategoryTree) document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
@@ -1823,6 +1992,23 @@ export default function ProductForm({ product }: ProductFormProps) {
          setChecked({});
       },
       [categoryId, variants.length, checked, template],
+   );
+
+   const selectComponents = useMemo(
+      () => ({
+         MenuList: (props: any) => (
+            <CategoryMenuList
+               {...props}
+               categoryTree={categoryTree}
+               categoryId={categoryId}
+               onCategorySelect={(id) => {
+                  handleCategorySelect(id);
+                  setCategorySearch("");
+               }}
+            />
+         ),
+      }),
+      [categoryTree, categoryId, handleCategorySelect],
    );
 
    const confirmCategoryChange = useCallback(() => {
@@ -2097,8 +2283,6 @@ export default function ProductForm({ product }: ProductFormProps) {
             isActive,
             isFeatured,
             variantDisplay,
-            basePrice,
-            optionPriceAdjustments: optionAdjustments,
             variants: variantsPayload,
             colorImages: colorImagesPayload,
             specifications: specificationsPayload,
@@ -2224,66 +2408,46 @@ export default function ProductForm({ product }: ProductFormProps) {
                   <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
                      Danh mục <span className="text-promotion">*</span>
                   </p>
-                  <div className="relative" ref={categoryTreeRef}>
-                     <button
-                        type="button"
-                        onClick={() => setShowCategoryTree((v) => !v)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-[13px] bg-neutral-light-active border rounded-lg
-                           hover:bg-neutral-light focus:outline-none focus:bg-neutral-light focus:ring-4 focus:ring-primary/5 transition-all cursor-pointer
-                           ${errors.categoryId ? "border-promotion" : "border-neutral"}`}
-                     >
-                        {categoryPath.length > 0 ? (
-                           <div className="flex items-center gap-1 flex-wrap">
-                              {categoryPath.map((c, i) => (
-                                 <span
-                                    key={c.id}
-                                    className="flex items-center gap-1"
-                                 >
-                                    {i > 0 && (
-                                       <ChevronRight
-                                          size={11}
-                                          className="text-neutral-dark"
-                                       />
-                                    )}
-                                    <span
-                                       className={
-                                          i === categoryPath.length - 1
-                                             ? "text-primary font-medium"
-                                             : "text-neutral-dark"
-                                       }
-                                    >
-                                       {c.name}
-                                    </span>
-                                 </span>
-                              ))}
-                           </div>
-                        ) : (
-                           <span className="text-neutral-dark">
-                              Chọn danh mục...
-                           </span>
-                        )}
-                        <ChevronDown
-                           size={14}
-                           className={`text-neutral-dark flex-shrink-0 ml-2 transition-transform ${showCategoryTree ? "rotate-180" : ""}`}
-                        />
-                     </button>
-                     {showCategoryTree && (
-                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-neutral-light border border-neutral rounded-xl shadow-lg p-2 max-h-72 overflow-y-auto">
-                           <CategoryTree
-                              nodes={categoryTree}
-                              selectedId={categoryId}
-                              onSelect={handleCategorySelect}
-                           />
-                        </div>
-                     )}
-                  </div>
+                  <Select
+                     options={categoryOptions}
+                     value={
+                        categoryId
+                           ? (categoryOptions.find(
+                                (o) => o.value === categoryId,
+                             ) ?? null)
+                           : null
+                     }
+                     inputValue={categorySearch}
+                     onInputChange={(v, action) => {
+                        if (action.action === "input-change")
+                           setCategorySearch(v);
+                     }}
+                     onChange={(o) => {
+                        if (!o) {
+                           setCategoryId("");
+                           setChecked({});
+                           setVariants([]);
+                           setColorImages([]);
+                           setSelectedKeys(new Set());
+                           setSpecs([]);
+                           setCategorySearch("");
+                        }
+                     }}
+                     onMenuClose={() => setCategorySearch("")}
+                     placeholder="Chọn danh mục..."
+                     isSearchable
+                     isClearable
+                     filterOption={() => true}
+                     components={selectComponents}
+                     styles={rsStyles(!!errors.categoryId)}
+                     noOptionsMessage={() => null}
+                  />
                   {errors.categoryId && (
                      <p className="text-[11px] text-promotion mt-1">
                         {errors.categoryId}
                      </p>
                   )}
                </div>
-
                <BasePriceInput
                   value={basePrice}
                   onChange={setBasePrice}
@@ -2359,7 +2523,7 @@ export default function ProductForm({ product }: ProductFormProps) {
             >
                {!categoryId ? (
                   <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-promotion-light/50 border border-promotion-light-active text-[12px] text-promotion-dark">
-                     <Info size={13} className="flex-shrink-0" />
+                     <Info size={13} className="shrink-0" />
                      Chọn danh mục để hiển thị thuộc tính biến thể
                   </div>
                ) : loadingTemplate ? (
@@ -2369,7 +2533,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                   </div>
                ) : !template || template.attributes.length === 0 ? (
                   <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-accent-light border border-accent-light-active text-[12px] text-accent-dark">
-                     <Info size={13} className="flex-shrink-0" />
+                     <Info size={13} className="shrink-0" />
                      Danh mục này không có cấu hình thuộc tính — sản phẩm đơn
                      giản (không có biến thể).
                   </div>
@@ -2579,7 +2743,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                                                             spec.id,
                                                          )
                                                       }
-                                                      className={`p-1.5 rounded-md transition-all cursor-pointer flex-shrink-0 ${s?.isHighlight ? "text-star bg-promotion-light/30" : "text-neutral hover:text-star hover:bg-promotion-light/20"}`}
+                                                      className={`p-1.5 rounded-md transition-all cursor-pointer shrink-0 ${s?.isHighlight ? "text-star bg-promotion-light/30" : "text-neutral hover:text-star hover:bg-promotion-light/20"}`}
                                                    >
                                                       <Star
                                                          size={12}

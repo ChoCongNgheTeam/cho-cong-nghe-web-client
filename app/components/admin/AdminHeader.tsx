@@ -16,7 +16,6 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
    const toggleBtnRef = useRef<HTMLButtonElement>(null);
 
    const handleThemeToggle = () => {
-      // Fallback nếu browser không hỗ trợ View Transitions
       if (
          !document.startViewTransition ||
          window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -25,7 +24,6 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
          return;
       }
 
-      // Lấy vị trí tâm của nút toggle
       const btn = toggleBtnRef.current;
       const rect = btn?.getBoundingClientRect();
       const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
@@ -47,7 +45,6 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
       });
 
       transition.ready.then(() => {
-         // CẢ HAI CHIỀU: new theme luôn lan ra từ vị trí nút
          document.documentElement.animate(
             { clipPath },
             {
@@ -61,7 +58,6 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
 
    return (
       <>
-         {/* Reset animation mặc định để dùng clip-path thay thế */}
          <style>{`
             ::view-transition-old(root),
             ::view-transition-new(root) {

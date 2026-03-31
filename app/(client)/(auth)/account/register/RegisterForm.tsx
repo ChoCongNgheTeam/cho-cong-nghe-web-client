@@ -195,7 +195,7 @@ const RegisterForm: React.FC = () => {
             </div>
          )}
 
-         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4 p-4">
+         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4">
             <div>
                <label
                   htmlFor="userName"

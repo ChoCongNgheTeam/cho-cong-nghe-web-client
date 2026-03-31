@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Tag } from "lucide-react";
@@ -14,6 +14,7 @@ import {
 import type { EntityOption } from "../components/MultiSelectDropdown";
 import apiRequest from "@/lib/api";
 import { useToasty } from "@/components/Toast";
+import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 export async function fetchProductSearch(
    term: string,
 ): Promise<EntityOption[]> {
@@ -43,18 +44,22 @@ export async function fetchAllBrands(): Promise<EntityOption[]> {
    return (res?.data ?? []).map((b) => ({ id: b.id, name: b.name }));
 }
 
-const searchAPIs: TargetSearchAPIs = {
-   searchProducts: fetchProductSearch,
-   loadCategories: fetchAllCategories,
-   loadBrands: fetchAllBrands,
-};
-
 export default function NewPromotionPage() {
    const router = useRouter();
-   const { success, error: toastError } = useToasty(); // 👈
-
+   const { success, error: toastError } = useToasty();
    const [saving, setSaving] = useState(false);
    const [error, setError] = useState<string | null>(null);
+
+   const debouncedProductSearch = useDebouncedCallback(fetchProductSearch, 350);
+
+   const searchAPIs: TargetSearchAPIs = useMemo(
+      () => ({
+         searchProducts: debouncedProductSearch,
+         loadCategories: fetchAllCategories,
+         loadBrands: fetchAllBrands,
+      }),
+      [debouncedProductSearch],
+   );
 
    const handleSubmit = async (form: PromotionFormData) => {
       setSaving(true);
@@ -62,14 +67,15 @@ export default function NewPromotionPage() {
       try {
          const payload = formToPayload(form);
          const res = await createPromotion(payload);
-         success("Tạo khuyến mãi thành công!"); // 👈
-         setTimeout(() => {
-            router.push(`/admin/promotions/${res.data.id}`);
-         }, 1200);
+         success("Tạo khuyến mãi thành công!");
+         setTimeout(
+            () => router.push(`/admin/promotions/${res.data.id}`),
+            1200,
+         );
       } catch (e: any) {
          const msg = e?.message ?? "Không thể tạo khuyến mãi";
          setError(msg);
-         toastError(msg); // 👈
+         toastError(msg);
       } finally {
          setSaving(false);
       }

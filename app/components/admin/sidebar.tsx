@@ -151,7 +151,6 @@ const navGroups: NavGroup[] = [
       icon: Users,
       items: [
          { title: "Danh sách người dùng", href: "/admin/users", icon: Users },
-         { title: "Tài khoản OAuth", href: "/admin/users/oauth", icon: Globe },
       ],
    },
    {
@@ -161,14 +160,11 @@ const navGroups: NavGroup[] = [
          { title: "Bài viết (Blog)", href: "/admin/blogs", icon: BookOpen },
          { title: "Bình luận", href: "/admin/comments", icon: MessageSquare },
          { title: "Đánh giá sản phẩm", href: "/admin/reviews", icon: Star },
-      ],
-   },
-   {
-      label: "Địa lý",
-      icon: MapPin,
-      items: [
-         { title: "Tỉnh / Thành phố", href: "/admin/provinces", icon: MapPin },
-         { title: "Phường / Xã", href: "/admin/wards", icon: MapPin },
+         {
+            title: "Media (Slider/Banner)",
+            href: "/admin/media",
+            icon: ImageIcon,
+         },
       ],
    },
    {
@@ -235,9 +231,9 @@ function CollapsedFlyout({
       <div
          ref={ref}
          style={{ top, left: 56 }}
-         className="fixed z-50 w-52 bg-white border border-neutral rounded-xl shadow-lg py-1.5 overflow-hidden"
+         className="fixed z-50 w-52 border border-neutral rounded-xl shadow-lg py-1.5 overflow-hidden bg-neutral"
       >
-         <div className="px-3 py-2 text-[11px] font-bold text-neutral-dark uppercase tracking-widest border-b border-neutral mb-1">
+         <div className="px-3 py-2 text-[11px] font-bold text-primary uppercase tracking-widest border-b border-neutral mb-1">
             {group.label}
          </div>
          {group.items.map((item) => {
@@ -256,7 +252,7 @@ function CollapsedFlyout({
                >
                   <Icon
                      size={15}
-                     className={isActive ? "text-white" : "text-neutral-dark"}
+                     className={isActive ? "text-white" : "text-primary"}
                   />
                   {item.title}
                </Link>
@@ -351,7 +347,7 @@ export default function AdminSidebar() {
                      setCollapsed((prev) => !prev);
                      setFlyout(null);
                   }}
-                  className={`text-neutral-dark hover:text-primary transition-colors p-1 rounded-md hover:bg-neutral-light-active cursor-pointer shrink-0 ${collapsed ? "hidden" : "ml-1"}`}
+                  className={`text-primary hover:text-primary transition-colors p-1 rounded-md hover:bg-neutral-light-active cursor-pointer shrink-0 ${collapsed ? "hidden" : "ml-1"}`}
                >
                   <PanelLeftClose size={16} />
                </button>
@@ -364,7 +360,7 @@ export default function AdminSidebar() {
                      setCollapsed(false);
                      setFlyout(null);
                   }}
-                  className="mx-auto mt-1.5 mb-0.5 text-neutral-dark hover:text-primary transition-colors p-1.5 rounded-md hover:bg-neutral-light-active cursor-pointer"
+                  className="mx-auto mt-1.5 mb-0.5 text-primary hover:text-primary transition-colors p-1.5 rounded-md hover:bg-neutral-light-active cursor-pointer"
                >
                   <PanelLeftOpen size={15} />
                </button>
@@ -387,7 +383,7 @@ export default function AdminSidebar() {
                            className={`w-full flex justify-center items-center py-2.5 px-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
                               groupActive || isFlyoutOpen
                                  ? "bg-accent text-white shadow-sm"
-                                 : "text-neutral-dark hover:bg-neutral-light-active hover:text-primary"
+                                 : "text-primary hover:bg-neutral-light-active hover:text-primary"
                            }`}
                         >
                            <GroupIcon size={20} />
@@ -410,21 +406,18 @@ export default function AdminSidebar() {
                               className={
                                  groupActive && !isOpen
                                     ? "text-accent"
-                                    : "text-neutral-dark"
+                                    : "text-primary"
                               }
                            />
                            <span className="flex-1 text-[12px] font-semibold uppercase tracking-wider">
                               {group.label}
                            </span>
                            {isOpen ? (
-                              <ChevronDown
-                                 size={13}
-                                 className="text-neutral-dark"
-                              />
+                              <ChevronDown size={13} className="text-primary" />
                            ) : (
                               <ChevronRight
                                  size={13}
-                                 className="text-neutral-dark"
+                                 className="text-primary"
                               />
                            )}
                         </button>
@@ -452,7 +445,7 @@ export default function AdminSidebar() {
                                           className={
                                              isActive
                                                 ? "text-white"
-                                                : "text-neutral-dark"
+                                                : "text-primary"
                                           }
                                        />
                                        <span className="text-[13px]">
@@ -491,14 +484,14 @@ export default function AdminSidebar() {
                               <div className="text-[13px] font-semibold text-primary truncate">
                                  {user.fullName}
                               </div>
-                              <div className="text-[11px] text-neutral-dark truncate">
+                              <div className="text-[11px] text-primary truncate">
                                  {user.email}
                               </div>
                            </div>
                            <button
                               onClick={handleLogout}
                               title="Đăng xuất"
-                              className="text-neutral-dark hover:text-promotion transition-colors shrink-0 cursor-pointer"
+                              className="text-primary hover:text-promotion transition-colors shrink-0 cursor-pointer"
                            >
                               <LogOut size={15} />
                            </button>
@@ -511,7 +504,7 @@ export default function AdminSidebar() {
                         href="/"
                         className="flex items-center gap-2.5 px-2 py-2 text-[13px] text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150"
                      >
-                        <Store size={15} className="text-neutral-dark" />
+                        <Store size={15} className="text-primary" />
                         <span>Cửa hàng của tôi</span>
                      </Link>
                   )}

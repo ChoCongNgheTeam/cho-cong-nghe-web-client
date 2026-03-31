@@ -7,8 +7,6 @@ import {
    TrendingKeyword,
 } from "../_libs/getTopKeywords";
 
-// ─── MarqueeTrack ───────────────────────────────────────────────────────────────
-
 function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
    const trackRef = useRef<HTMLDivElement>(null);
    const containerRef = useRef<HTMLDivElement>(null);
@@ -18,17 +16,21 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
    useLayoutEffect(() => {
       if (!trackRef.current || keywords.length === 0) return;
 
+      let cancelled = false;
+
       const measure = () => {
-         const track = trackRef.current!;
-         const container = containerRef.current!;
+         if (cancelled) return;
+         const track = trackRef.current;
+         const container = containerRef.current;
+         if (!track || !container) return;
+
          const children = Array.from(track.children) as HTMLElement[];
          const halfCount = Math.floor(children.length / 2);
 
          let oneSetWidth = 0;
          for (let i = 0; i < halfCount; i++) {
-            oneSetWidth += children[i].offsetWidth + 8; // gap-2 = 8px
+            oneSetWidth += children[i].offsetWidth + 8;
          }
-
          const containerWidth = container.offsetWidth;
 
          if (oneSetWidth > containerWidth) {
@@ -39,16 +41,21 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
          }
       };
 
-      const raf = requestAnimationFrame(measure);
+      // Double RAF: đợi layout + paint pass settle
+      const raf1 = requestAnimationFrame(() => {
+         requestAnimationFrame(measure);
+      });
+
+      const container = containerRef.current;
       const ro = new ResizeObserver(measure);
-      ro.observe(containerRef.current!);
+      if (container) ro.observe(container); // ← safe null check
 
       return () => {
-         cancelAnimationFrame(raf);
+         cancelled = true; // block bất kỳ RAF nào đang pending
+         cancelAnimationFrame(raf1);
          ro.disconnect();
       };
    }, [keywords]);
-
    const doubled = [...keywords, ...keywords];
 
    return (
@@ -107,8 +114,6 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
       </div>
    );
 }
-
-// ─── Skeleton ───────────────────────────────────────────────────────────────────
 
 function Skeleton() {
    return (
