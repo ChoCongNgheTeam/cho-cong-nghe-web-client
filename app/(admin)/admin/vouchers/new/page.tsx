@@ -86,7 +86,6 @@ export default function NewVoucherPage() {
                />
             </div>
          </div>
-         {/* 👇 toast thuần đã xoá */}
       </div>
    );
 }
