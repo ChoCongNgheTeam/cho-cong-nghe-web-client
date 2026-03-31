@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
-import CartVariantSelector from "./components/CartVariantSelector";
+import VariantDropdown from "./components/CartVariantSelector";
 import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
@@ -14,6 +14,7 @@ import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
 import { useToasty } from "@/components/Toast";
 import CartBottomBar from "./components/CartBottomMobile";
+import CartVariantSelector from "./components/CartVariantSelector";
 
 export default function CartPage() {
   const router = useRouter();

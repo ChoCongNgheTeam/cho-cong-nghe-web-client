@@ -188,6 +188,7 @@ export interface SaleScheduleData {
 async function fetchHomeData(): Promise<HomeApiResponse["data"]> {
   const response = await apiRequest.get<HomeApiResponse>("/home", {
     noAuth: true,
+    cache: "no-store",
   });
   return response.data;
 }

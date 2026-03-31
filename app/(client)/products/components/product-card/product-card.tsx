@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { formatVND } from "@/helpers";
 import type { Product } from "./product-card.types";
 
 interface ProductCardProps {
@@ -90,11 +91,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="mt-auto">
           <div className="flex items-baseline gap-2 mb-2">
             <p className="text-lg font-bold text-gray-900">
-              {product.price.toLocaleString("vi-VN")}₫
+              {formatVND(product.price)}
             </p>
             {product.originalPrice > product.price && (
               <p className="text-xs text-gray-400 line-through">
-                {product.originalPrice.toLocaleString("vi-VN")}₫
+                {formatVND(product.originalPrice)}
               </p>
             )}
           </div>
@@ -102,7 +103,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Save amount */}
           {product.discount > 0 && (
             <p className="text-xs text-green-600 font-semibold">
-              Tiết kiệm {(product.originalPrice - product.price).toLocaleString("vi-VN")}₫
+              Tiết kiệm {formatVND(product.originalPrice - product.price)}
             </p>
           )}
         </div>

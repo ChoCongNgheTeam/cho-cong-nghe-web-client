@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2, RotateCcw, Loader2, ImageOff, FolderTree, Star, ChevronRight, AlertCircle, Hash, Layers, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
 import type { CategoryDetail, CategoryChild } from "../category.types";
 import { getCategoryDetail, softDeleteCategory, restoreCategory } from "../_libs/categories";
+import { formatDate } from "@/helpers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -252,11 +253,17 @@ export default function CategoryDetailPage() {
                 <Hash size={12} className="text-neutral-dark" /> {category.position}
               </span>
             </InfoRow>
-            <InfoRow label="Ngày tạo">{new Date(category.createdAt).toLocaleString("vi-VN")}</InfoRow>
-            <InfoRow label="Cập nhật">{new Date(category.updatedAt).toLocaleString("vi-VN")}</InfoRow>
+            <InfoRow label="Ngày tạo">
+              {formatDate(category.createdAt, { withTime: true })}
+            </InfoRow>
+            <InfoRow label="Cập nhật">
+              {formatDate(category.updatedAt, { withTime: true })}
+            </InfoRow>
             {isDeleted && category.deletedAt && (
               <InfoRow label="Đã xóa lúc">
-                <span className="text-promotion">{new Date(category.deletedAt).toLocaleString("vi-VN")}</span>
+                <span className="text-promotion">
+                  {formatDate(category.deletedAt, { withTime: true })}
+                </span>
               </InfoRow>
             )}
           </SectionCard>

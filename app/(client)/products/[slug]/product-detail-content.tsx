@@ -63,18 +63,22 @@ export function ProductDetailContent({
   /* ============================================================================
    * AUTO SCROLL KHI CÓ ?review=true
    * ========================================================================== */
-  useEffect(() => {
-    if (searchParams?.get("review") !== "true") return;
+//   const hasAutoScrolled = useRef(false);
 
-    const timer = setTimeout(() => {
-      const TAB_BAR_HEIGHT = 48;
-      const top =
-        (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
-      window.scrollTo({ top, behavior: "smooth" });
-    }, 600);
+// useEffect(() => {
+//    if (searchParams?.get("review") !== "true") return;
+//    if (hasAutoScrolled.current) return; // ── chặn chạy lại ──
+//    hasAutoScrolled.current = true;
 
-    return () => clearTimeout(timer);
-  }, [searchParams, headerHeight]);
+//    const timer = setTimeout(() => {
+//       const TAB_BAR_HEIGHT = 48;
+//       const top =
+//          (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
+//       window.scrollTo({ top, behavior: "smooth" });
+//    }, 600);
+
+//    return () => clearTimeout(timer);
+// }, [searchParams, headerHeight]);
 
   /* ============================================================================
    * STATE
@@ -235,7 +239,7 @@ export function ProductDetailContent({
             { label: "Trang chủ", href: "/" },
             {
               label: product.category.parent.slug,
-              href: `/products/category/${product.category?.slug}`,
+              href: `/category/${product.category?.slug}`,
             },
             { label: product.name },
           ]}
@@ -254,7 +258,7 @@ export function ProductDetailContent({
             />
           </div>
           <div className="w-full lg:w-[40%]">
-            <div className="lg:sticky lg:top-16 lg:h-fit ">
+            <div className="lg:sticky lg:top-16 lg:h-fit">
               <ProductDetailRight
                 product={product}
                 selectedVariant={currentVariant}

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { X, ChevronRight } from "lucide-react";
-import { formatVND } from "@/helpers";
+import { formatNumber, formatVND } from "@/helpers";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -181,7 +181,7 @@ export default function CartSidebar({
                 <div className="flex items-center gap-1 pt-2">
                   <span className="text-xs text-neutral-darker">Điểm thưởng</span>
                   <span className="text-sm">🪙</span>
-                  <span className="text-sm font-medium text-accent-dark">+{rewardPoints.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-accent-dark">+{formatNumber(rewardPoints)}</span>
                 </div>
               </div>
             </div>

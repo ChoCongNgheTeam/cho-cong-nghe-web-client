@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MapPin, CreditCard, Package, ExternalLink, Landmark, Clock } from "lucide-react";
 import { Order } from "../../type/order";
 import { orderStatusConfig, paymentStatusConfig, REDIRECT_PAYMENT_METHODS, BANK_TRANSFER_METHODS } from "./Constants";
+import { formatDate, formatVND } from "@/helpers";
 
 function getFirstValidImage(imgs: { imageUrl: string | null }[] | undefined): string {
   if (!imgs) return "";
@@ -15,10 +16,15 @@ export default function OrderDetailModal({ order }: { order: Order }) {
   const router = useRouter();
 
   const orderStatus = orderStatusConfig[order.orderStatus] ?? {
-    label: order.orderStatus, color: "text-neutral-darker", bgColor: "bg-neutral", dot: "bg-neutral-dark",
+    label: order.orderStatus,
+    color: "text-neutral-darker",
+    bgColor: "bg-neutral",
+    dot: "bg-neutral-dark",
   };
   const paymentStatus = paymentStatusConfig[order.paymentStatus] ?? {
-    label: order.paymentStatus, color: "text-neutral-darker", bgColor: "bg-neutral",
+    label: order.paymentStatus,
+    color: "text-neutral-darker",
+    bgColor: "bg-neutral",
   };
 
   const methodUpper = (order.paymentMethod?.name ?? "").toUpperCase().replace(/\s+/g, "_");
@@ -34,17 +40,12 @@ export default function OrderDetailModal({ order }: { order: Order }) {
 
   return (
     <div className="max-h-[82vh] sm:max-h-[78vh] overflow-y-auto custom-scroll">
-
       {/* ── Sticky Header ── */}
       <div className="sticky top-0 bg-neutral-light px-4 sm:px-6 pt-4 sm:pt-5 pb-2.5 sm:pb-3 border-b border-neutral z-10">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="text-sm sm:text-base font-semibold text-primary">
-              Chi tiết đơn hàng
-            </h2>
-            <p className="text-[11px] sm:text-xs text-neutral-darker mt-0.5">
-              #{order.orderCode}
-            </p>
+            <h2 className="text-sm sm:text-base font-semibold text-primary">Chi tiết đơn hàng</h2>
+            <p className="text-[11px] sm:text-xs text-neutral-darker mt-0.5">#{order.orderCode}</p>
           </div>
           {/* Badges — wrap on small screens */}
           <div className="flex items-center gap-1.5 flex-wrap justify-end max-w-[55%]">
@@ -60,11 +61,9 @@ export default function OrderDetailModal({ order }: { order: Order }) {
       </div>
 
       <div className="px-3 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5 mt-3 sm:mt-4">
-
         {/* ── Payment Action Banner ── */}
         {needsPayment && (isBankTransfer || (isRedirect && order.paymentRedirectUrl)) && (
-          <div className="rounded-xl border p-3 sm:p-4 flex flex-col gap-3"
-            style={{ borderColor: "rgb(180 83 9 / 0.3)", background: "rgb(180 83 9 / 0.08)" }}>
+          <div className="rounded-xl border p-3 sm:p-4 flex flex-col gap-3" style={{ borderColor: "rgb(180 83 9 / 0.3)", background: "rgb(180 83 9 / 0.08)" }}>
             <div className="flex items-start gap-2">
               <Clock className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "rgb(180 83 9)" }} />
               <div>
@@ -73,7 +72,7 @@ export default function OrderDetailModal({ order }: { order: Order }) {
                 </p>
                 {order.paymentExpiredAt && (
                   <p className="text-[11px] sm:text-xs mt-0.5" style={{ color: "rgb(180 83 9 / 0.8)" }}>
-                    Hết hạn: {new Date(order.paymentExpiredAt).toLocaleString("vi-VN")}
+                    Hết hạn: {formatDate(order.paymentExpiredAt, { withTime: true })}
                   </p>
                 )}
               </div>
@@ -103,15 +102,11 @@ export default function OrderDetailModal({ order }: { order: Order }) {
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <div className="bg-neutral-light-active rounded-xl p-2.5 sm:p-3.5">
             <p className="text-[10px] sm:text-xs text-neutral-darker mb-0.5 sm:mb-1">Ngày đặt hàng</p>
-            <p className="font-semibold text-primary text-[10px] sm:text-xs leading-relaxed">
-              {new Date(order.orderDate).toLocaleString("vi-VN")}
-            </p>
+            <p className="font-semibold text-primary text-[10px] sm:text-xs leading-relaxed">{formatDate(order.orderDate, { withTime: true })}</p>
           </div>
           <div className="bg-neutral-light-active rounded-xl p-2.5 sm:p-3.5">
             <p className="text-[10px] sm:text-xs text-neutral-darker mb-0.5 sm:mb-1">Phương thức TT</p>
-            <p className="font-semibold text-primary text-[10px] sm:text-xs leading-relaxed">
-              {order.paymentMethod.description}
-            </p>
+            <p className="font-semibold text-primary text-[10px] sm:text-xs leading-relaxed">{order.paymentMethod.description}</p>
           </div>
         </div>
 
@@ -124,15 +119,11 @@ export default function OrderDetailModal({ order }: { order: Order }) {
           <div className="bg-neutral-light-active rounded-xl px-3 sm:px-4 py-2.5 sm:py-3">
             {/* Name + phone: inline on sm+, stack on mobile */}
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mb-0.5">
-              <p className="text-xs sm:text-sm font-semibold text-primary">
-                {order.shippingContactName}
-              </p>
+              <p className="text-xs sm:text-sm font-semibold text-primary">{order.shippingContactName}</p>
               <span className="hidden xs:inline text-neutral-darker text-xs">•</span>
               <p className="text-xs text-neutral-darker">{order.shippingPhone}</p>
             </div>
-            <p className="text-[11px] sm:text-xs text-neutral-darker leading-relaxed">
-              {[order.shippingDetail, order.shippingWard, order.shippingProvince].filter(Boolean).join(", ")}
-            </p>
+            <p className="text-[11px] sm:text-xs text-neutral-darker leading-relaxed">{[order.shippingDetail, order.shippingWard, order.shippingProvince].filter(Boolean).join(", ")}</p>
           </div>
         </div>
 
@@ -161,25 +152,21 @@ export default function OrderDetailModal({ order }: { order: Order }) {
                   {/* Info + price */}
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                     <div>
-                      <p className="text-xs sm:text-sm font-medium text-primary line-clamp-2">
-                        {item.productVariant?.product?.name}
-                      </p>
+                      <p className="text-xs sm:text-sm font-medium text-primary line-clamp-2">{item.productVariant?.product?.name}</p>
                       {attrs && <p className="text-[10px] sm:text-xs text-neutral-darker mt-0.5 line-clamp-1">{attrs}</p>}
                       <p className="text-[10px] sm:text-xs text-neutral-darker mt-0.5">x{item.quantity}</p>
                     </div>
                   </div>
 
-                  {/* Price — right aligned, shrink-0 */}
-                  <p className="text-xs sm:text-sm font-semibold text-primary shrink-0 self-start pt-0.5">
-                    {Number(item.unitPrice).toLocaleString("vi-VN")}₫
-                  </p>
+                  {/* Price - right aligned, shrink-0 */}
+                  <p className="text-xs sm:text-sm font-semibold text-primary shrink-0 self-start pt-0.5">{formatVND(Number(item.unitPrice))}</p>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* ── Price Breakdown ── */}
+        {/* Price Breakdown */}
         <div>
           <p className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 mb-1.5 sm:mb-2">
             <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-promotion shrink-0" />
@@ -188,38 +175,30 @@ export default function OrderDetailModal({ order }: { order: Order }) {
           <div className="bg-neutral-light-active rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 space-y-1.5 sm:space-y-2">
             <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
               <span>Tạm tính</span>
-              <span>{subtotal.toLocaleString("vi-VN")}₫</span>
+              <span>{formatVND(subtotal)}</span>
             </div>
             <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
               <span>Phí vận chuyển</span>
-              <span>
-                {shipping === 0
-                  ? <span className="text-green-600">Miễn phí</span>
-                  : `${shipping.toLocaleString("vi-VN")}₫`
-                }
-              </span>
+              <span>{shipping === 0 ? <span className="text-green-600">Miễn phí</span> : formatVND(shipping)}</span>
             </div>
             {voucher > 0 && (
               <div className="flex justify-between text-[11px] sm:text-sm text-green-700">
                 <span>Giảm giá voucher</span>
-                <span>-{voucher.toLocaleString("vi-VN")}₫</span>
+                <span>-{formatVND(voucher)}</span>
               </div>
             )}
             {tax > 0 && (
               <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
                 <span>Thuế VAT (10%)</span>
-                <span>{tax.toLocaleString("vi-VN")}₫</span>
+                <span>{formatVND(tax)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-primary border-t border-neutral pt-2 mt-1">
               <span className="text-xs sm:text-sm">Tổng cộng</span>
-              <span className="text-sm sm:text-base text-promotion">
-                {total.toLocaleString("vi-VN")}₫
-              </span>
+              <span className="text-sm sm:text-base text-promotion">{formatVND(total)}</span>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

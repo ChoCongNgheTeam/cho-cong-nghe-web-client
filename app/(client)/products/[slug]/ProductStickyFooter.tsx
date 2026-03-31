@@ -40,13 +40,7 @@ interface ProductStickyFooterProps {
   infoRef?: React.RefObject<HTMLElement | null>;
 }
 
-export default function ProductStickyFooter({
-  product,
-  selectedVariant,
-  selectedPrice,
-  quantity = 1,
-  infoRef,
-}: ProductStickyFooterProps) {
+export default function ProductStickyFooter({ product, selectedVariant, selectedPrice, quantity = 1, infoRef }: ProductStickyFooterProps) {
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
@@ -71,10 +65,7 @@ export default function ProductStickyFooter({
   // IntersectionObserver cho desktop
   useEffect(() => {
     if (!infoRef?.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setHeroHidden(!entry.isIntersecting),
-      { threshold: 0 },
-    );
+    const observer = new IntersectionObserver(([entry]) => setHeroHidden(!entry.isIntersecting), { threshold: 0 });
     observer.observe(infoRef.current);
     return () => observer.disconnect();
   }, [infoRef]);
@@ -83,22 +74,15 @@ export default function ProductStickyFooter({
 
   /* ── Price ─────────────────────────────────────────────────────────── */
   const activePrice = selectedPrice || product.price;
-  const displayPrice = activePrice?.hasPromotion
-    ? activePrice.final
-    : (activePrice?.base ?? 0);
+  const displayPrice = activePrice?.hasPromotion ? activePrice.final : (activePrice?.base ?? 0);
   const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
   const basePrice = activePrice?.base ?? 0;
 
   const maxStock = selectedVariant?.quantity ?? 0;
-  const isOutOfStock =
-    selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
 
   /* ── Image ─────────────────────────────────────────────────────────── */
-  const imageUrl =
-    selectedVariant?.image ??
-    selectedVariant?.images?.[0]?.imageUrl ??
-    (product as any)?.img?.[0]?.imageUrl ??
-    "";
+  const imageUrl = selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? (product as any)?.img?.[0]?.imageUrl ?? "";
 
   /* ── Buy now ───────────────────────────────────────────────────────── */
   const handleBuyNow = async () => {
@@ -116,8 +100,7 @@ export default function ProductStickyFooter({
         price: finalPrice,
         originalPrice: basePrice,
         imageUrl,
-        availableQuantity:
-          selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
+        availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
       });
@@ -142,31 +125,17 @@ export default function ProductStickyFooter({
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {imageUrl && (
               <div className="relative w-11 h-11 shrink-0 rounded-lg overflow-hidden border border-neutral bg-neutral">
-                <Image
-                  src={imageUrl}
-                  alt={product.name}
-                  fill
-                  sizes="44px"
-                  className="object-cover"
-                />
+                <Image src={imageUrl} alt={product.name} fill sizes="44px" className="object-cover" />
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-semibold text-primary line-clamp-1">
-                {selectedVariant?.name || product.name}
-              </p>
+              <p className="text-xs sm:text-sm font-semibold text-primary line-clamp-1">{selectedVariant?.name || product.name}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-sm sm:text-base font-bold text-promotion">
-                  {displayPrice.toLocaleString("vi-VN")}₫
-                </span>
+                <span className="text-sm sm:text-base font-bold text-promotion">{displayPrice.toLocaleString("vi-VN")}₫</span>
                 {activePrice?.hasPromotion && (
                   <>
-                    <span className="text-xs line-through text-neutral-dark hidden sm:inline">
-                      {basePrice.toLocaleString("vi-VN")}₫
-                    </span>
-                    <span className="text-[10px] font-bold text-neutral-light bg-promotion px-1.5 py-0.5 rounded">
-                      -{activePrice.discountPercentage}%
-                    </span>
+                    <span className="text-xs line-through text-neutral-dark hidden sm:inline">{basePrice.toLocaleString("vi-VN")}₫</span>
+                    <span className="text-[10px] font-bold text-neutral-light bg-promotion px-1.5 py-0.5 rounded">-{activePrice.discountPercentage}%</span>
                   </>
                 )}
               </div>
@@ -175,9 +144,7 @@ export default function ProductStickyFooter({
 
           {/* ── Buttons ──────────────────────────────────────────────── */}
           {isOutOfStock ? (
-            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-primary text-sm font-medium">
-              Hết hàng
-            </span>
+            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-primary text-sm font-medium">Hết hàng</span>
           ) : (
             <div className="flex items-center gap-2 shrink-0">
               {/* Thêm giỏ hàng */}
@@ -194,10 +161,7 @@ export default function ProductStickyFooter({
                   price: finalPrice,
                   originalPrice: basePrice,
                   imageUrl,
-                  availableQuantity:
-                    selectedVariant?.availableQuantity ??
-                    selectedVariant?.stock ??
-                    0,
+                  availableQuantity: selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? 0,
                   color: selectedVariant?.color ?? "",
                   colorValue: selectedVariant?.colorValue ?? "",
                 }}
