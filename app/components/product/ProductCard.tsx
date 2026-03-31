@@ -55,7 +55,7 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
           <div className="w-1/3 flex flex-col justify-around h-full gap-1">
             {highlights.map((highlight) => (
               <div key={highlight.key} className="flex flex-col items-center gap-0.5">
-                <div className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center text-neutral-dark">
+                <div className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center text-neutral-dark ">
                   <HighlightIcon icon={highlight.icon} />
                 </div>
                 <span className="text-[8px] xs:text-[9px] w-full text-center text-primary leading-tight break-words hyphens-auto" style={{ textWrap: "balance" }}>
