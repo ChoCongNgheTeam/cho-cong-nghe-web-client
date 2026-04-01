@@ -15,24 +15,19 @@ export default function ProductDetailSection1({
 
   // Ref để scroll về đầu mô tả
   const descriptionRef = useRef<HTMLDivElement | null>(null);
-
   const handleToggleExpand = () => {
+    const wasExpanded = expanded;
     setExpanded((prev) => !prev);
-  };
 
-  useEffect(() => {
-    if (!expanded && descriptionRef.current) {
+    // Chỉ scroll khi đang thu gọn lại
+    if (wasExpanded && descriptionRef.current) {
       const y =
         descriptionRef.current.getBoundingClientRect().top +
         window.pageYOffset -
         80;
-
-      window.scrollTo({
-        top: y,
-        behavior: "smooth",
-      });
+      window.scrollTo({ top: y, behavior: "smooth" });
     }
-  }, [expanded]);
+  };
 
   return (
     <div className="" ref={descriptionRef}>

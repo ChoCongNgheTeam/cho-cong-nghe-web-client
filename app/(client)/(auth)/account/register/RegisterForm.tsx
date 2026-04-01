@@ -195,7 +195,7 @@ const RegisterForm: React.FC = () => {
             </div>
          )}
 
-         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4 p-4">
+         <form onSubmit={handleSubmit} className="space-y-4 md:mt-4">
             <div>
                <label
                   htmlFor="userName"
@@ -389,7 +389,7 @@ const RegisterForm: React.FC = () => {
                   <span className="text-base text-neutral-darker">
                      Bạn đồng ý với tất cả{" "}
                      <Link
-                        href="/terms"
+                        href="/policies/DataPrivacy/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-accent hover:text-accent-hover hover:underline"

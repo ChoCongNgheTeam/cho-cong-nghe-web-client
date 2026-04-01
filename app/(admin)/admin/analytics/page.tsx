@@ -6,7 +6,12 @@ import { RefreshCw, BarChart3 } from "lucide-react";
 
 import { getAnalytics } from "./_libs/analytics";
 import type { TimeGranularity } from "./analytics.types";
-import { DateRangePicker, GranularitySelector, resolvePreset, type QuickRange } from "./components/DateRangePicker";
+import {
+  DateRangePicker,
+  GranularitySelector,
+  resolvePreset,
+  type QuickRange,
+} from "./components/DateRangePicker";
 import { SummaryKPIs } from "./components/SummaryKPIs";
 import { RevenueChart } from "./components/RevenueChart";
 import { PaymentMethodChart, CategoryChart } from "./components/BreakdownCharts";
@@ -21,19 +26,19 @@ function Skeleton() {
       <div className="grid grid-cols-[180px_1fr] gap-2.5">
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-slate-100 h-12" />
+            <div key={i} className="bg-neutral-light rounded-xl border border-neutral h-12" />
           ))}
         </div>
         <div className="space-y-2.5">
-          <div className="bg-white rounded-xl border border-slate-100 h-44" />
+          <div className="bg-neutral-light rounded-xl border border-neutral h-44" />
           <div className="grid grid-cols-3 gap-2.5">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-100 h-48" />
+              <div key={i} className="bg-neutral-light rounded-xl border border-neutral h-48" />
             ))}
           </div>
         </div>
       </div>
-      <div className="bg-white rounded-xl border border-slate-100 h-32" />
+      <div className="bg-neutral-light rounded-xl border border-neutral h-32" />
     </div>
   );
 }
@@ -58,8 +63,8 @@ export default function AnalyticsPage() {
   const analytics = data?.data;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 space-y-2.5">
+    <div className="min-h-screen">
+      <div className="px-6 py-3 space-y-2.5">
         {/* ── Header ── */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -67,8 +72,12 @@ export default function AnalyticsPage() {
               <BarChart3 className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 leading-tight">Thống kê doanh thu</h1>
-              <p className="text-[10px] text-slate-400">{from === to ? from : `${from} → ${to}`}</p>
+              <h1 className="text-sm font-bold text-primary leading-tight">
+                Thống kê doanh thu
+              </h1>
+              <p className="text-[10px] text-neutral-dark">
+                {from === to ? from : `${from} → ${to}`}
+              </p>
             </div>
           </div>
 
@@ -87,7 +96,7 @@ export default function AnalyticsPage() {
             <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-accent hover:border-accent/30 transition-colors disabled:opacity-50"
+              className="w-7 h-7 flex items-center justify-center rounded-lg border border-neutral bg-neutral-light text-neutral-dark hover:text-accent hover:border-accent-light-active transition-colors disabled:opacity-50"
               title="Làm mới"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
@@ -101,17 +110,13 @@ export default function AnalyticsPage() {
         {/* ── Content ── */}
         {analytics && (
           <div className="space-y-2.5">
-            {/* ── Main grid: KPI sidebar (fixed 180px) + charts ── */}
             <div className="grid grid-cols-1 xl:grid-cols-[180px_1fr] gap-2.5 items-start">
-              {/* Col 1: KPI stack */}
               <SummaryKPIs summary={analytics.summary} />
-
-              {/* Col 2: Charts */}
               <div className="space-y-2.5">
-                {/* Revenue line chart — full width of right col */}
-                <RevenueChart data={analytics.revenueOverTime} comparison={analytics.comparisonOverTime} />
-
-                {/* 3-col breakdown row */}
+                <RevenueChart
+                  data={analytics.revenueOverTime}
+                  comparison={analytics.comparisonOverTime}
+                />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                   <PaymentMethodChart data={analytics.revenueByPaymentMethod} />
                   <CategoryChart data={analytics.revenueByCategory} />
@@ -119,18 +124,19 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </div>
-
-            {/* ── Top customers full-width ── */}
             <TopCustomersTable customers={analytics.topCustomers} />
           </div>
         )}
 
         {/* ── Error ── */}
         {!isLoading && !analytics && (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-16 text-neutral-dark">
             <BarChart3 className="w-8 h-8 mb-2 opacity-30" />
             <p className="text-xs">Không thể tải dữ liệu. Vui lòng thử lại.</p>
-            <button onClick={() => refetch()} className="mt-3 text-xs text-accent hover:underline">
+            <button
+              onClick={() => refetch()}
+              className="mt-3 text-xs text-accent hover:underline"
+            >
               Thử lại
             </button>
           </div>
