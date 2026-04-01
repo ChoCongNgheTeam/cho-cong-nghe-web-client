@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Aperture } from "lucide-react";
+import { Zap } from "lucide-react";
 import { FeaturedProduct } from "../../_libs";
 import { HighlightIcon } from "../../common/HighlightIcon";
-import Badge from "@/components/ui/Badge";
 import { formatVND } from "@/helpers";
 import { memo } from "react";
 import { StarRating } from "@/components/product/StarRating";
@@ -14,6 +13,8 @@ import { thumbnailUrl } from "@/helpers/resizeImage";
 interface FlashPromoRule {
    actionType: string;
    discountValue: number | null;
+   totalSlots?: number;
+   remainingSlots?: number;
 }
 
 interface HotSaleProductCardProps {
@@ -29,7 +30,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
    flashPromoRule,
    isUpcoming = false,
 }: HotSaleProductCardProps) {
-   const showFlashBadge = isUpcoming && flashPromoRule != null;
+   const showFlashBadge = flashPromoRule != null;
 
    const previewPrice = (() => {
       if (!showFlashBadge || !flashPromoRule?.discountValue) return null;
@@ -42,45 +43,47 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
       return null;
    })();
 
-   const flashBadgeLabel = (() => {
-      if (!flashPromoRule?.discountValue) return "Sale";
-      if (flashPromoRule.actionType === "DISCOUNT_PERCENT")
-         return `-${flashPromoRule.discountValue}%`;
-      if (flashPromoRule.actionType === "DISCOUNT_FIXED") {
-         return flashPromoRule.discountValue >= 1_000_000
-            ? `-${(flashPromoRule.discountValue / 1_000_000).toFixed(0)}tr`
-            : `-${(flashPromoRule.discountValue / 1000).toFixed(0)}k`;
+   const discountLabel = (() => {
+      if (showFlashBadge && flashPromoRule?.discountValue) {
+         if (flashPromoRule.actionType === "DISCOUNT_PERCENT")
+            return `-${flashPromoRule.discountValue}%`;
+         if (flashPromoRule.actionType === "DISCOUNT_FIXED") {
+            return flashPromoRule.discountValue >= 1_000_000
+               ? `-${(flashPromoRule.discountValue / 1_000_000).toFixed(0)}tr`
+               : `-${(flashPromoRule.discountValue / 1000).toFixed(0)}k`;
+         }
       }
-      return "Sale";
+      if (product.price.hasPromotion)
+         return `-${product.price.discountPercentage}%`;
+      return null;
    })();
+
+   const finalPrice =
+      previewPrice ??
+      (product.price.hasPromotion ? product.price.final : product.price.base);
+
+   const showStrikethrough =
+      (showFlashBadge && previewPrice != null) || product.price.hasPromotion;
+
+   const totalSlots = flashPromoRule?.totalSlots ?? 10;
+   const remainingSlots = flashPromoRule?.remainingSlots ?? 10;
 
    const hasHighlights = product.highlights?.length > 0;
 
    return (
       <Link
          href={`/products/${product.slug}`}
-         className="group relative flex flex-col h-full bg-neutral-light border border-neutral rounded-xl py-2 px-2 xs:py-5 xs:px-2.5 sm:py-6 sm:px-3 select-none"
-         style={{ animationDelay: `${index * 0.08}s` }}
+         className="group relative flex flex-col rounded-xl overflow-hidden select-none h-full"
+         style={{
+            backgroundColor: "rgb(var(--neutral-light))",
+            animationDelay: `${index * 0.08}s`,
+         }}
       >
-         {/* Badge */}
-         {showFlashBadge ? (
-            <Badge
-               label={flashBadgeLabel}
-               isUpcoming
-               className="-top-3 -left-3"
-            />
-         ) : (
-            product.price.hasPromotion && (
-               <Badge
-                  discountPercent={product.price.discountPercentage}
-                  className="-top-3 -left-3"
-               />
-            )
-         )}
-
-         {/* ── Image + Highlights row ── */}
-         <div className="flex flex-row items-center gap-2 pb-3 mt-4 shrink-0">
-            {/* Image: 2/3 width */}
+         {/* ══════════════════════════════════════════
+             SECTION 1: Image + Highlights
+         ══════════════════════════════════════════ */}
+         <div className="flex sm:flex-row sm:items-center gap-2 px-2.5 pt-3 pb-1.5">
+            {/* Image */}
             <div className="relative w-2/3 aspect-square shrink-0">
                {product.thumbnail ? (
                   <Image
@@ -91,16 +94,34 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
                      sizes="(max-width: 400px) 45vw, (max-width: 640px) 35vw, 160px"
                   />
                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-neutral rounded-lg">
-                     <Aperture
-                        className="text-neutral-active w-10 h-10"
-                        strokeWidth={1}
-                     />
+                  <div
+                     className="w-full h-full flex flex-col items-center justify-center gap-1 rounded-lg"
+                     style={{
+                        color: "rgb(var(--neutral-dark))",
+                        backgroundColor: "rgb(var(--neutral))",
+                     }}
+                  >
+                     <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-8 h-8 opacity-40"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                     >
+                        <path
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           strokeWidth={1.5}
+                           d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z"
+                        />
+                        <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
+                     </svg>
+                     <span className="text-[9px] opacity-50">No image</span>
                   </div>
                )}
             </div>
 
-            {/* Highlights: 1/3 width */}
+            {/* Highlights */}
             {hasHighlights && (
                <div className="w-1/3 flex flex-col justify-around h-full gap-1">
                   {product.highlights.map((highlight) => (
@@ -108,12 +129,18 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
                         key={highlight.key}
                         className="flex flex-col items-center gap-0.5"
                      >
-                        <div className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center text-neutral-dark">
+                        <div
+                           className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center"
+                           style={{ color: "rgb(var(--neutral-dark))" }}
+                        >
                            <HighlightIcon icon={highlight.icon} />
                         </div>
                         <span
-                           className="text-[8px] xs:text-[9px] w-full text-center text-primary leading-tight break-words hyphens-auto"
-                           style={{ textWrap: "balance" }}
+                           className="text-[8px] xs:text-[9px] w-full text-center leading-tight break-words hyphens-auto"
+                           style={{
+                              color: "rgb(var(--primary))",
+                              textWrap: "balance",
+                           }}
                         >
                            {highlight.name}
                            <br />
@@ -126,50 +153,122 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
                </div>
             )}
          </div>
+         <div
+            className="mx-2.5 mb-2 rounded-lg px-2.5 py-2 mt-2"
+            style={{
+               background: "#e24c5a",
+            }}
+         >
+            {/* MOBILE */}
+            <div className="flex flex-col gap-0.5 sm:hidden">
+               <span
+                  className="font-bold leading-tight"
+                  style={{
+                     fontSize: "clamp(11px, 3.5vw, 15px)",
+                     color: "#fff",
+                  }}
+               >
+                  {isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}
+               </span>
 
-         {/* ── Text info ── */}
-         <div className="px-1 xs:px-2 flex flex-col flex-1">
-            <h3 className="text-xs xs:text-[13px] sm:text-sm font-medium text-primary mb-1.5 line-clamp-2 min-h-8 sm:min-h-10 transition-colors">
-               {product.name}
-            </h3>
+               {showStrikethrough && (
+                  <span
+                     className="line-through leading-none"
+                     style={{
+                        fontSize: "clamp(9px, 2.5vw, 11px)",
+                        color: "rgba(255,255,255,0.65)",
+                     }}
+                  >
+                     {formatVND(product.price.base)}
+                  </span>
+               )}
 
-            <div className="flex flex-col gap-0.5 mb-1 sm:mb-1.5">
-               {showFlashBadge && previewPrice != null ? (
-                  <>
-                     <span className="text-[11px] xs:text-xs sm:text-[13px] text-neutral-dark line-through min-h-4 sm:min-h-5">
-                        {formatVND(product.price.base)}
-                     </span>
-                     <span className="text-sm xs:text-base sm:text-lg font-bold text-promotion leading-tight truncate">
-                        {formatVND(previewPrice)}
-                     </span>
-                  </>
-               ) : (
-                  <>
-                     <span className="text-[11px] xs:text-xs sm:text-[13px] text-neutral-dark line-through min-h-4 sm:min-h-5">
-                        {product.price.hasPromotion
-                           ? formatVND(product.price.base)
-                           : ""}
-                     </span>
-                     <span className="text-sm xs:text-base sm:text-lg font-bold text-promotion leading-tight truncate">
-                        {formatVND(
-                           product.price.hasPromotion
-                              ? product.price.final
-                              : product.price.base,
-                        )}
-                     </span>
-                  </>
+               {discountLabel && (
+                  <span
+                     className="self-start text-[10px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap"
+                     style={{
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        color: "#fff",
+                        border: "1px solid rgba(255,255,255,0.4)",
+                     }}
+                  >
+                     {isUpcoming ? "-XX%" : discountLabel}
+                  </span>
                )}
             </div>
 
-            {product.rating.count > 0 && (
-               <div className="flex items-center gap-0.5 sm:gap-1 mt-auto">
-                  <StarRating average={product.rating.average} />
-                  <span className="text-[10px] xs:text-[11px] sm:text-xs text-neutral-dark">
-                     ({product.rating.count})
+            {/* TABLET / DESKTOP */}
+            <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-2">
+               <div className="flex flex-col">
+                  <span
+                     className="font-bold leading-tight text-lg"
+                     style={{ color: "#fff" }}
+                  >
+                     {isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}
                   </span>
+                  {showStrikethrough && (
+                     <span
+                        className="text-[11px] line-through leading-none mt-0.5"
+                        style={{ color: "rgba(255,255,255,0.65)" }}
+                     >
+                        {formatVND(product.price.base)}
+                     </span>
+                  )}
                </div>
+
+               {discountLabel && (
+                  <span
+                     className="shrink-0 text-[11px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap self-start"
+                     style={{
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        color: "#fff",
+                        border: "1px solid rgba(255,255,255,0.4)",
+                     }}
+                  >
+                     {isUpcoming ? "-XX%" : discountLabel}
+                  </span>
+               )}
+            </div>
+         </div>
+
+         {/* ══════════════════════════════════════════
+             SECTION 4: Product Name
+         ══════════════════════════════════════════ */}
+         <div className="px-2.5 mb-2 flex-1">
+            <h3 className="text-xs xs:text-[13px] text-[16px] font-medium line-clamp-2 leading-snug text-primary">
+               {product.name}
+            </h3>
+         </div>
+
+         {/* ══════════════════════════════════════════
+             SECTION 5: CTA Button
+         ══════════════════════════════════════════ */}
+         <div className="px-2.5 mb-2.5">
+            {isUpcoming ? (
+               <button className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold bg-transparent text-[#e24c5a] border border-[#e24c5a]">
+                  Sắp diễn ra
+               </button>
+            ) : (
+               <button className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold border border-[#e24c5a] text-[#e24c5a] cursor-pointer">
+                  Mua giá sốc
+               </button>
             )}
          </div>
+
+         {/* ══════════════════════════════════════════
+             SECTION 6: Rating
+         ══════════════════════════════════════════ */}
+         {product.rating.count > 0 && (
+            <div className="px-2.5 pb-2.5 flex items-center gap-1 mt-auto">
+               <StarRating average={product.rating.average} />
+               <span
+                  className="text-[10px] xs:text-[11px]"
+                  style={{ color: "rgb(var(--neutral-dark))" }}
+               >
+                  ({product.rating.count})
+               </span>
+            </div>
+         )}
       </Link>
    );
 });

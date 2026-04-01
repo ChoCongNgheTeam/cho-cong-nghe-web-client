@@ -147,6 +147,33 @@ export interface CompareResponse {
   specMatrix: CompareSpecGroup[];
 }
 
+// export interface AdminProductStats {
+//   total: number;
+//   active: number;
+//   inactive: number;
+//   outOfStock: number;
+//   deleted: number;
+//   featured: number;
+// }
+export interface LowStockVariantInfo {
+  id: string;
+  code: string | null;
+  quantity: number;
+  price: number;
+  label: string;
+  isOutOfStock: boolean;
+}
+
+export interface LowStockProductInfo {
+  id: string;
+  name: string;
+  slug: string;
+  isFeatured: boolean;
+  thumbnail: string | null;
+  lowStockVariants: LowStockVariantInfo[];
+  minQuantity: number;
+}
+
 export interface AdminProductStats {
   total: number;
   active: number;
@@ -154,6 +181,8 @@ export interface AdminProductStats {
   outOfStock: number;
   deleted: number;
   featured: number;
+  lowStock: number;
+  lowStockProducts: LowStockProductInfo[];
 }
 // SEARCH TRENDING
 // ─────────────────────────────────────────────────────────────────────────────

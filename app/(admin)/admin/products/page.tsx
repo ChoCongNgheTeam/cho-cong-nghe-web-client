@@ -1,15 +1,28 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, Trash2, X, Star, ArrowUpDown, ChevronDown, CalendarDays } from "lucide-react";
+import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, Trash2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle, ArchiveRestore } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
 import type { ProductCard } from "./product.types";
-import { getAllProducts, softDeleteProduct, toggleProductActive, bulkAction } from "./_libs/products";
+import {
+  getAllProducts,
+  getDeletedProducts,
+  softDeleteProduct,
+  hardDeleteProduct,
+  restoreProduct,
+  toggleProductActive,
+  bulkAction,
+  getAdminProductStats,
+  type BulkAction,
+  type LowStockProductInfo,
+  type AdminProductStats,
+} from "./_libs/products";
 import { getProductColumns } from "./components/TableProducts";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { StockAlertBanner } from "./components/StockAlertBanner";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -21,6 +34,7 @@ const STATUS_TABS = [
   { value: "inactive", label: "Đang ẩn" },
   { value: "outOfStock", label: "Hết hàng" },
   { value: "featured", label: "Nổi bật" },
+  { value: "deleted", label: "Thùng rác" },
 ];
 
 const SORT_OPTIONS = [
@@ -36,6 +50,7 @@ const SORT_OPTIONS = [
 type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS)[number]["order"]}`;
 type SortValue = (typeof SORT_OPTIONS)[number]["value"];
 type SortOrder = (typeof SORT_OPTIONS)[number]["order"];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,6 +72,34 @@ const DEFAULT_META: ProductMeta = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SORT + INJECT HELPERS (từ file 2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowStockProductInfo[]): ProductCard[] {
+  const lowStockMap = new Map(lowStockProducts.map((p) => [p.id, p]));
+
+  const enriched = products.map((p) => {
+    const lowInfo = lowStockMap.get(p.id);
+    if (!lowInfo) return p;
+    const isOut = lowInfo.minQuantity === 0;
+    return {
+      ...p,
+      stockWarning: isOut ? ("out_of_stock" as const) : ("low_stock" as const),
+      minQuantity: lowInfo.minQuantity,
+    };
+  });
+
+  return [...enriched].sort((a, b) => getRowScore(a) - getRowScore(b));
+}
+
+function getRowScore(p: ProductCard): number {
+  if ((p as any).stockWarning === "out_of_stock") return 0;
+  if ((p as any).stockWarning === "low_stock") return 1;
+  if (p.isFeatured) return 2;
+  return 3;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -64,6 +107,8 @@ export default function ProductsPage() {
   // ── Data ────────────────────────────────────────────────────────────────────
   const [products, setProducts] = useState<ProductCard[]>([]);
   const [meta, setMeta] = useState<ProductMeta>(DEFAULT_META);
+  const [stats, setStats] = useState<AdminProductStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,6 +140,8 @@ export default function ProductsPage() {
 
   // ── Bulk action ──────────────────────────────────────────────────────────────
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkActionType, setBulkActionType] = useState<BulkAction | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   // ── Close dropdowns on outside click ─────────────────────────────────────────
   useEffect(() => {
@@ -116,21 +163,39 @@ export default function ProductsPage() {
     return { isActive: undefined, inStock: undefined, isFeatured: undefined };
   };
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  // ── Fetch stats ───────────────────────────────────────────────────────────────
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const res = await getAdminProductStats();
+      setStats(res.data);
+    } catch {
+      // silent
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  // ── Fetch products ─────────────────────────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAllProducts({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        sortBy,
-        sortOrder,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        ...tabToParams(activeTab),
-      });
+      let res;
+      if (activeTab === "deleted") {
+        res = await getDeletedProducts({ page, limit: pageSize, search: search || undefined });
+      } else {
+        res = await getAllProducts({
+          page,
+          limit: pageSize,
+          search: search || undefined,
+          sortBy,
+          sortOrder,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+          ...tabToParams(activeTab),
+        });
+      }
       setProducts(res.data);
       setMeta(res.meta);
     } catch (e: any) {
@@ -141,8 +206,27 @@ export default function ProductsPage() {
   }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo]);
 
   useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // ── Derived: inject stock warning + sort rows ─────────────────────────────────
+  const sortedProducts = useMemo(() => {
+    const lowStockProducts = stats?.lowStockProducts ?? [];
+    if (activeTab === "deleted") return products;
+    return injectAndSortProducts(products, lowStockProducts);
+  }, [products, stats?.lowStockProducts, activeTab]);
+
+  // ── Row class — highlight low/out of stock ────────────────────────────────────
+  const getRowClassName = (product: ProductCard) => {
+    const warning = (product as any).stockWarning;
+    if (warning === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
+    if (warning === "low_stock") return "bg-amber-50/70 hover:bg-amber-50";
+    return "";
+  };
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
   const resetPage = useCallback(() => setPage(1), []);
@@ -181,6 +265,11 @@ export default function ProductsPage() {
     resetPage();
   };
 
+  const handleRefresh = () => {
+    fetchProducts();
+    fetchStats();
+  };
+
   const hasDateFilter = !!dateFrom || !!dateTo;
   const hasSortFilter = sortKey !== "createdAt_desc";
   const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
@@ -195,13 +284,17 @@ export default function ProductsPage() {
   }, []);
 
   const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === products.length ? new Set() : new Set(products.map((p) => p.id))));
-  }, [products]);
+    setSelected((prev) => (prev.size === sortedProducts.length ? new Set() : new Set(sortedProducts.map((p) => p.id))));
+  }, [sortedProducts]);
 
   // ── Toggle status — optimistic update ────────────────────────────────────────
-  const handleStatusChange = useCallback((productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => {
-    setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updates } : p)));
-  }, []);
+  const handleStatusChange = useCallback(
+    (productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => {
+      setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updates } : p)));
+      fetchStats();
+    },
+    [fetchStats],
+  );
 
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDeleteClick = useCallback((product: ProductCard) => {
@@ -214,33 +307,42 @@ export default function ProductsPage() {
     setDeleting(true);
     setDeleteError(null);
     try {
-      await softDeleteProduct(deleteTarget.id);
+      if ((deleteTarget as any).deletedAt) {
+        await hardDeleteProduct(deleteTarget.id);
+      } else {
+        await softDeleteProduct(deleteTarget.id);
+      }
       setDeleteTarget(null);
       fetchProducts();
+      fetchStats();
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xóa sản phẩm");
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, fetchProducts]);
+  }, [deleteTarget, fetchProducts, fetchStats]);
 
   // ── Bulk actions ─────────────────────────────────────────────────────────────
-  const handleBulkAction = useCallback(
-    async (action: "delete" | "activate" | "deactivate" | "feature" | "unfeature") => {
-      if (selected.size === 0) return;
-      setBulkLoading(true);
-      try {
-        await bulkAction(action, Array.from(selected));
-        setSelected(new Set());
-        fetchProducts();
-      } catch (e: any) {
-        setError(e?.message ?? "Thao tác thất bại");
-      } finally {
-        setBulkLoading(false);
-      }
-    },
-    [selected, fetchProducts],
-  );
+  const openBulkAction = (action: BulkAction) => {
+    setBulkActionType(action);
+    setShowBulkModal(true);
+  };
+
+  const handleBulkConfirm = useCallback(async () => {
+    if (!bulkActionType || selected.size === 0) return;
+    setBulkLoading(true);
+    try {
+      await bulkAction(bulkActionType, Array.from(selected));
+      setShowBulkModal(false);
+      setSelected(new Set());
+      fetchProducts();
+      fetchStats();
+    } catch (e: any) {
+      setError(e?.message ?? "Thao tác thất bại");
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [bulkActionType, selected, fetchProducts, fetchStats]);
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns = useMemo(
@@ -255,6 +357,21 @@ export default function ProductsPage() {
       }),
     [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
   );
+
+  // ── Tab counts (dùng stats nếu có, fallback meta.statusCounts) ───────────────
+  const getTabCount = (tabValue: string) => {
+    if (stats) {
+      if (tabValue === "ALL") return stats.total;
+      if (tabValue === "active") return stats.active;
+      if (tabValue === "inactive") return stats.inactive;
+      if (tabValue === "outOfStock") return stats.outOfStock;
+      if (tabValue === "featured") return stats.featured;
+      if (tabValue === "deleted") return stats.deleted;
+    }
+    return meta.statusCounts[tabValue] ?? 0;
+  };
+
+  const lowStockProducts = stats?.lowStockProducts ?? [];
 
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
@@ -275,7 +392,7 @@ export default function ProductsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchProducts}
+            onClick={handleRefresh}
             disabled={loading}
             className="flex items-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer disabled:opacity-50"
           >
@@ -292,20 +409,56 @@ export default function ProductsPage() {
       </div>
 
       {/* ── Stats ── */}
-      <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatsCard label="Tổng sản phẩm" value={meta.statusCounts.ALL ?? 0} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
+      <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <StatsCard label="Tổng sản phẩm" value={statsLoading ? "..." : (stats?.total ?? meta.statusCounts.ALL ?? 0)} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
         <StatsCard
           label="Đang hiển thị"
-          value={meta.statusCounts.active ?? 0}
+          value={statsLoading ? "..." : (stats?.active ?? meta.statusCounts.active ?? 0)}
           sub="Khách hàng có thể xem"
           icon={<CheckCircle2 size={18} />}
           valueClassName="text-emerald-600"
           iconClassName="text-emerald-600"
         />
-        <StatsCard label="Đang ẩn" value={meta.statusCounts.inactive ?? 0} sub="Chưa hiển thị cho khách" icon={<EyeOff size={18} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
-        <StatsCard label="Nổi bật" value={meta.statusCounts.featured ?? 0} sub="Sản phẩm được featured" icon={<Star size={18} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
+        <StatsCard
+          label="Đang ẩn"
+          value={statsLoading ? "..." : (stats?.inactive ?? meta.statusCounts.inactive ?? 0)}
+          sub="Chưa hiển thị cho khách"
+          icon={<EyeOff size={18} />}
+          valueClassName="text-orange-500"
+          iconClassName="text-orange-500"
+        />
+        <StatsCard
+          label="Nổi bật"
+          value={statsLoading ? "..." : (stats?.featured ?? meta.statusCounts.featured ?? 0)}
+          sub="Sản phẩm được featured"
+          icon={<Star size={18} />}
+          valueClassName="text-amber-500"
+          iconClassName="text-amber-500"
+        />
+        <StatsCard
+          label="Hết hàng"
+          value={statsLoading ? "..." : (stats?.outOfStock ?? 0)}
+          sub="Không còn tồn kho"
+          icon={<Package size={18} />}
+          valueClassName="text-promotion"
+          iconClassName="text-promotion"
+        />
+        <StatsCard
+          label="Sắp hết hàng"
+          value={statsLoading ? "..." : (stats?.lowStock ?? 0)}
+          sub={`Tồn kho dưới ngưỡng`}
+          icon={<AlertTriangle size={18} />}
+          valueClassName={stats?.lowStock && stats.lowStock > 0 ? "text-amber-600" : "text-primary"}
+          iconClassName={stats?.lowStock && stats.lowStock > 0 ? "text-amber-600" : "text-primary"}
+        />
       </div>
 
+      {/* ── Stock Alert Banner ── */}
+      {!statsLoading && lowStockProducts.length > 0 && (
+        <div className="px-6 pb-4 min-w-0 w-full">
+          <StockAlertBanner products={lowStockProducts} />
+        </div>
+      )}
       {/* ── Main table card ── */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
         {/* ── Toolbar: 1 row ── */}
@@ -321,7 +474,7 @@ export default function ProductsPage() {
             >
               {tab.label}
               <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                {meta.statusCounts[tab.value] ?? 0}
+                {getTabCount(tab.value)}
               </span>
             </button>
           ))}
@@ -350,113 +503,117 @@ export default function ProductsPage() {
             )}
           </div>
 
-          {/* Sort dropdown */}
-          <div ref={sortRef} className="relative">
-            <button
-              onClick={() => setShowSortDropdown((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
-                hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
-              }`}
-            >
-              <ArrowUpDown size={14} />
-              {hasSortFilter ? SORT_OPTIONS.find((o) => `${o.value}_${o.order}` === sortKey)?.label : "Sắp xếp"}
-              {hasSortFilter ? (
-                <X
-                  size={12}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSortChange("createdAt_desc");
-                  }}
-                  className="hover:text-promotion"
-                />
-              ) : (
-                <ChevronDown size={12} className={`transition-transform ${showSortDropdown ? "rotate-180" : ""}`} />
-              )}
-            </button>
-            {showSortDropdown && (
-              <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
-                {SORT_OPTIONS.map((opt) => {
-                  const key = `${opt.value}_${opt.order}` as SortKey;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => handleSortChange(key)}
-                      className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
-                        sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Date filter */}
-          <div ref={dateRef} className="relative">
-            <button
-              onClick={() => setShowDatePicker((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
-                hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
-              }`}
-            >
-              <CalendarDays size={14} />
-              {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
-              {hasDateFilter && (
-                <X
-                  size={12}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClearDate();
-                  }}
-                  className="hover:text-promotion"
-                />
-              )}
-            </button>
-            {showDatePicker && (
-              <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
-                <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Khoảng thời gian</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-primary">Từ ngày</label>
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      max={dateTo || undefined}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-primary">Đến ngày</label>
-                    <input
-                      type="date"
-                      value={dateTo}
-                      min={dateFrom || undefined}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={handleClearDate} className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer">
-                    Xóa
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowDatePicker(false);
-                      resetPage();
+          {/* Sort dropdown — ẩn khi đang xem thùng rác */}
+          {activeTab !== "deleted" && (
+            <div ref={sortRef} className="relative">
+              <button
+                onClick={() => setShowSortDropdown((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                  hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+                }`}
+              >
+                <ArrowUpDown size={14} />
+                {hasSortFilter ? SORT_OPTIONS.find((o) => `${o.value}_${o.order}` === sortKey)?.label : "Sắp xếp"}
+                {hasSortFilter ? (
+                  <X
+                    size={12}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSortChange("createdAt_desc");
                     }}
-                    className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 cursor-pointer"
-                  >
-                    Áp dụng
-                  </button>
+                    className="hover:text-promotion"
+                  />
+                ) : (
+                  <ChevronDown size={12} className={`transition-transform ${showSortDropdown ? "rotate-180" : ""}`} />
+                )}
+              </button>
+              {showSortDropdown && (
+                <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
+                  <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                  {SORT_OPTIONS.map((opt) => {
+                    const key = `${opt.value}_${opt.order}` as SortKey;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleSortChange(key)}
+                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                          sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
+
+          {/* Date filter — ẩn khi đang xem thùng rác */}
+          {activeTab !== "deleted" && (
+            <div ref={dateRef} className="relative">
+              <button
+                onClick={() => setShowDatePicker((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                  hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+                }`}
+              >
+                <CalendarDays size={14} />
+                {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
+                {hasDateFilter && (
+                  <X
+                    size={12}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClearDate();
+                    }}
+                    className="hover:text-promotion"
+                  />
+                )}
+              </button>
+              {showDatePicker && (
+                <div className="absolute top-full right-0 mt-1.5 w-72 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 p-4 space-y-3">
+                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Khoảng thời gian</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-primary">Từ ngày</label>
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        max={dateTo || undefined}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-primary">Đến ngày</label>
+                      <input
+                        type="date"
+                        value={dateTo}
+                        min={dateFrom || undefined}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleClearDate} className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                      Xóa
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDatePicker(false);
+                        resetPage();
+                      }}
+                      className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 cursor-pointer"
+                    >
+                      Áp dụng
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Clear filters */}
           {(hasActiveFilters || hasSortFilter) && (
@@ -476,36 +633,40 @@ export default function ProductsPage() {
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20 flex-wrap">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} sản phẩm</span>
             <div className="flex items-center gap-2 flex-wrap">
+              {activeTab !== "deleted" && (
+                <>
+                  <button
+                    onClick={() => openBulkAction("activate")}
+                    disabled={bulkLoading}
+                    className="px-2.5 py-1 rounded-lg border border-emerald-300 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Hiển thị
+                  </button>
+                  <button
+                    onClick={() => openBulkAction("deactivate")}
+                    disabled={bulkLoading}
+                    className="px-2.5 py-1 rounded-lg border border-orange-300 text-[11px] font-medium text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Ẩn
+                  </button>
+                  <button
+                    onClick={() => openBulkAction("feature")}
+                    disabled={bulkLoading}
+                    className="px-2.5 py-1 rounded-lg border border-amber-300 text-[11px] font-medium text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Nổi bật
+                  </button>
+                  <button
+                    onClick={() => openBulkAction("unfeature")}
+                    disabled={bulkLoading}
+                    className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Bỏ nổi bật
+                  </button>
+                </>
+              )}
               <button
-                onClick={() => handleBulkAction("activate")}
-                disabled={bulkLoading}
-                className="px-2.5 py-1 rounded-lg border border-emerald-300 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Hiển thị
-              </button>
-              <button
-                onClick={() => handleBulkAction("deactivate")}
-                disabled={bulkLoading}
-                className="px-2.5 py-1 rounded-lg border border-orange-300 text-[11px] font-medium text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Ẩn
-              </button>
-              <button
-                onClick={() => handleBulkAction("feature")}
-                disabled={bulkLoading}
-                className="px-2.5 py-1 rounded-lg border border-amber-300 text-[11px] font-medium text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Nổi bật
-              </button>
-              <button
-                onClick={() => handleBulkAction("unfeature")}
-                disabled={bulkLoading}
-                className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Bỏ nổi bật
-              </button>
-              <button
-                onClick={() => handleBulkAction("delete")}
+                onClick={() => openBulkAction("delete")}
                 disabled={bulkLoading}
                 className="px-2.5 py-1 rounded-lg border border-promotion/30 text-[11px] font-medium text-promotion hover:bg-promotion-light transition-colors cursor-pointer disabled:opacity-50"
               >
@@ -523,9 +684,23 @@ export default function ProductsPage() {
         {error && (
           <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion/20">
             <span className="text-[12px] text-promotion">{error}</span>
-            <button onClick={fetchProducts} className="flex items-center gap-1 text-[12px] text-promotion hover:underline cursor-pointer">
+            <button onClick={handleRefresh} className="flex items-center gap-1 text-[12px] text-promotion hover:underline cursor-pointer">
               <RefreshCw size={12} /> Thử lại
             </button>
+          </div>
+        )}
+
+        {/* ── Stock row legend ── */}
+        {!statsLoading && lowStockProducts.length > 0 && activeTab !== "deleted" && (
+          <div className="flex items-center gap-4 px-5 py-2 border-b border-neutral bg-neutral-light-active/30 text-[11px] text-primary">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block" />
+              Sắp hết hàng
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block" />
+              Hết hàng
+            </span>
           </div>
         )}
 
@@ -534,7 +709,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-accent" />
           </div>
-        ) : products.length === 0 ? (
+        ) : sortedProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Package size={36} className="text-primary opacity-30" />
             <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
@@ -549,7 +724,7 @@ export default function ProductsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns} data={products} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={sortedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} rowClassName={getRowClassName} />
         )}
 
         {/* ── Pagination ── */}
@@ -602,10 +777,12 @@ export default function ProductsPage() {
               <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
                 <Trash2 size={22} strokeWidth={1.5} />
               </div>
-              <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xóa sản phẩm?</h3>
+              <h3 className="text-[16px] font-bold text-primary text-center mb-1">{(deleteTarget as any).deletedAt ? "Xóa vĩnh viễn?" : "Xóa sản phẩm?"}</h3>
               <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xóa</p>
               <p className="text-[14px] font-semibold text-primary text-center mb-2">"{deleteTarget.name}"</p>
-              <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau.</p>
+              <p className="text-[12px] text-primary text-center mb-6">
+                {(deleteTarget as any).deletedAt ? "Hành động này không thể hoàn tác." : "Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau."}
+              </p>
               {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
               <div className="flex gap-2">
                 <button
@@ -628,6 +805,39 @@ export default function ProductsPage() {
           }
         />
       )}
+
+      {/* ── Bulk Action Confirm Modal ── */}
+      <Popzy
+        isOpen={showBulkModal}
+        onClose={() => !bulkLoading && setShowBulkModal(false)}
+        footer={false}
+        closeMethods={bulkLoading ? [] : ["button", "overlay", "escape"]}
+        content={
+          <div className="py-2">
+            <h3 className="text-[16px] font-bold text-primary text-center mb-2">Xác nhận thao tác hàng loạt</h3>
+            <p className="text-[13px] text-primary/60 text-center mb-6">
+              Áp dụng cho <strong className="text-primary">{selected.size} sản phẩm</strong> đã chọn?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowBulkModal(false)}
+                disabled={bulkLoading}
+                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={handleBulkConfirm}
+                disabled={bulkLoading}
+                className="flex-1 px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {bulkLoading && <Loader2 size={13} className="animate-spin" />}
+                {bulkLoading ? "Đang xử lý..." : "Xác nhận"}
+              </button>
+            </div>
+          </div>
+        }
+      />
     </div>
   );
 }
