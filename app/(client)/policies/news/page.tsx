@@ -1,5 +1,6 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
+import { formatDate as formatLocaleDate } from "@/helpers";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") ?? "";
 
@@ -41,7 +42,7 @@ function formatDate(value?: string): string {
    if (!value) return "";
    const date = new Date(value);
    if (Number.isNaN(date.getTime())) return "";
-   return date.toLocaleDateString("vi-VN");
+   return formatLocaleDate(date.toISOString());
 }
 
 function mapBlog(item: BlogApiItem): NewsBlog {
@@ -104,7 +105,7 @@ export default async function NewsPage() {
          <div className="min-h-screen bg-neutral-light">
             <div className="container py-10">
                <h1 className="text-xl font-bold text-primary mb-2">
-                  Tin tức & Khuyến mãi
+                  Tin tức khuyến mãi
                </h1>
                <p className="text-primary-light">
                   Hiện chưa có bài viết nào. Vui lòng quay lại sau.
@@ -116,7 +117,7 @@ export default async function NewsPage() {
 
    const [featuredNews, ...restNews] = blogs;
    const tabs = [
-      "Tất cả",
+      "T?t c?",
       ...Array.from(
          new Set(blogs.map((item) => item.category?.name).filter(Boolean))
       ),
@@ -133,7 +134,7 @@ export default async function NewsPage() {
                         Cập nhật mới nhất
                      </p>
                      <h1 className="text-[28px] font-bold text-primary leading-tight">
-                        Tin tức & Khuyến mãi
+                        Tin tức khuyến mãi
                      </h1>
                   </div>
 
@@ -248,7 +249,7 @@ export default async function NewsPage() {
                            {item.excerpt}
                         </p>
                         <span className="inline-flex items-center gap-1 font-semibold text-accent group-hover:gap-2 transition-all mt-auto">
-                           Xem chi tiết
+                           Xem chi ti?t
                            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                               <path
                                  d="M2 7h10M8 3l4 4-4 4"

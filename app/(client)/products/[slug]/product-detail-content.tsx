@@ -222,7 +222,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
             <ProductDetailBanner product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
           </div>
           <div className="w-full lg:w-[40%]">
-            <div className="lg:sticky lg:top-16 lg:h-fit pl-6">
+            <div className="lg:sticky lg:top-16 lg:h-fit">
               <ProductDetailRight
                 product={product}
                 selectedVariant={currentVariant}

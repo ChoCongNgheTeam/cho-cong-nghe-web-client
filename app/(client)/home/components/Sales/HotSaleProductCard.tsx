@@ -142,9 +142,6 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
                      <span className="text-sm xs:text-base sm:text-lg font-bold text-promotion leading-tight truncate">
                         {formatVND(previewPrice)}
                      </span>
-                     <span className="text-[11px] text-neutral-dark mt-0.5">
-                        🔥 Giá sale ngày mai
-                     </span>
                   </>
                ) : (
                   <>

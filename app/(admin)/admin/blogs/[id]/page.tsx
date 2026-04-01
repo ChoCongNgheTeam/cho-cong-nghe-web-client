@@ -10,7 +10,7 @@ import { BlogForm, blogToForm } from "../components/BlogForm";
 import { BlogStatusBadge } from "../components/BlogStatusBadge";
 import { BLOG_STATUS_LABELS } from "../const";
 import type { BlogDetail } from "../blog.types";
-import { formatDate } from "@/helpers";
+import { formatDate, formatNumber } from "@/helpers";
 
 export default function BlogDetailPage() {
   const router = useRouter();
@@ -159,7 +159,9 @@ export default function BlogDetailPage() {
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
                   <Eye size={11} /> Lượt xem
                 </span>
-                <span className="text-[13px] font-bold text-primary">{blog.viewCount.toLocaleString("vi-VN")}</span>
+                <span className="text-[13px] font-bold text-primary">
+                  {formatNumber(blog.viewCount)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">

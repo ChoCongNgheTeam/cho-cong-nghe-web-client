@@ -1,77 +1,63 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, Cell, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 import type { ConversionFunnel } from "../analytics.types";
-import { TooltipProps } from "recharts";
-import { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
-const STEPS: { key: keyof ConversionFunnel; label: string; color: string }[] = [
-  { key: "requested", label: "Chatbot gửi yêu cầu", color: "#93c5fd" },
-  { key: "pending", label: "Chờ xác nhận", color: "#4979e4" },
-  { key: "processing", label: "Đang xử lý", color: "#f59e0b" },
-  { key: "shipped", label: "Đang giao", color: "#8b5cf6" },
-  { key: "delivered", label: "Giao thành công", color: "#10b981" },
-  { key: "cancelled", label: "Đã huỷ", color: "#ef4444" },
+const STEPS: { key: keyof ConversionFunnel; label: string; color: string; bg: string }[] = [
+  { key: "requested", label: "Chatbot yêu cầu", color: "#93c5fd", bg: "bg-blue-200" },
+  { key: "pending", label: "Chờ xác nhận", color: "#4979e4", bg: "bg-accent" },
+  { key: "processing", label: "Đang xử lý", color: "#f59e0b", bg: "bg-amber-400" },
+  { key: "shipped", label: "Đang giao", color: "#8b5cf6", bg: "bg-violet-500" },
+  { key: "delivered", label: "Giao thành công", color: "#10b981", bg: "bg-emerald-500" },
+  { key: "cancelled", label: "Đã huỷ", color: "#ef4444", bg: "bg-red-500" },
 ];
 
-function FunnelTooltip(props: TooltipProps<ValueType, NameType>) {
-  const { active, payload } = props as TooltipProps<ValueType, NameType> & {
-    payload?: any[];
-  };
-
-  if (!active || !payload?.length) return null;
-
-  const d = payload[0]?.payload;
-
-  if (!d) return null;
+export function ConversionFunnelChart({ data }: { data: ConversionFunnel }) {
+  // Total = all orders that entered the funnel (excluding chatbot requests as they're pre-order)
+  const totalOrders = data.pending + data.processing + data.shipped + data.delivered + data.cancelled;
+  const total = Math.max(totalOrders, 1);
+  const maxVal = Math.max(...STEPS.map((s) => data[s.key]), 1);
 
   return (
-    <div className="bg-slate-900 text-white rounded-xl px-3 py-2 shadow-xl text-xs">
-      <p className="font-semibold">{d.label}</p>
-      <p className="text-slate-300 mt-0.5">{d.value?.toLocaleString("vi-VN")} đơn</p>
-      <p className="text-slate-400">{d.pct}% tổng</p>
-    </div>
-  );
-}
-interface ConversionFunnelProps {
-  data: ConversionFunnel;
-}
+    <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs font-semibold text-slate-600">Phễu chuyển đổi</h3>
+        <span className="text-[10px] text-emerald-600 font-semibold">{total > 0 ? ((data.delivered / total) * 100).toFixed(1) : "0"}% giao thành công</span>
+      </div>
 
-export function ConversionFunnelChart({ data }: ConversionFunnelProps) {
-  const total = Math.max(data.requested + data.pending, 1);
-  const formatNumber = (v: unknown) => {
-    if (typeof v !== "number") return "";
-    return v.toLocaleString("vi-VN");
-  };
+      <div className="space-y-1.5 flex-1">
+        {STEPS.map((step) => {
+          const val = data[step.key];
+          // For chatbot requests: show % of all entries; for others: % of total orders
+          const base = step.key === "requested" ? Math.max(data.requested + totalOrders, 1) : total;
+          const pct = ((val / base) * 100).toFixed(1);
+          const barW = (val / maxVal) * 100;
 
-  const chartData = STEPS.map((s) => ({
-    label: s.label,
-    value: data[s.key],
-    color: s.color,
-    pct: ((data[s.key] / total) * 100).toFixed(1),
-  }));
+          return (
+            <div key={step.key} className="flex items-center gap-2">
+              <div className="w-20 shrink-0">
+                <span className="text-[10px] text-slate-600 truncate block leading-tight">{step.label}</span>
+              </div>
+              <div className="flex-1 h-4 bg-slate-100 rounded overflow-hidden relative">
+                <div className="h-full rounded transition-all" style={{ width: `${barW}%`, backgroundColor: step.color }} />
+              </div>
+              <div className="w-12 text-right shrink-0">
+                <span className="text-[11px] font-semibold text-slate-800">{val}</span>
+                <span className="text-[9px] text-slate-400 ml-1">{pct}%</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-  return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm h-full">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Phễu chuyển đổi đơn hàng</h3>
-
-      <ResponsiveContainer width="100%" height={240}>
-        <BarChart layout="vertical" data={chartData} margin={{ top: 0, right: 56, left: 4, bottom: 0 }} barCategoryGap="22%">
-          <XAxis type="number" hide />
-          <YAxis type="category" dataKey="label" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} width={116} />
-          <Tooltip content={<FunnelTooltip />} cursor={{ fill: "#f8fafc" }} />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={16}>
-            {chartData.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
-            ))}
-            <LabelList dataKey="value" position="right" formatter={formatNumber} style={{ fontSize: 10, fill: "#94a3b8" }} />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-
-      <div className="mt-1 pt-3 border-t border-slate-50 flex items-center justify-between">
-        <span className="text-xs text-slate-500">Tỉ lệ giao thành công</span>
-        <span className="text-sm font-bold text-emerald-600">{total > 0 ? ((data.delivered / total) * 100).toFixed(1) : "0"}%</span>
+      <div className="mt-2 pt-2 border-t border-slate-50 grid grid-cols-2 gap-x-3 gap-y-0.5">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] text-slate-400">Tỉ lệ huỷ</span>
+          <span className="text-[10px] font-semibold text-red-500">{total > 0 ? ((data.cancelled / total) * 100).toFixed(1) : "0"}%</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] text-slate-400">Tổng đơn</span>
+          <span className="text-[10px] font-semibold text-slate-700">{totalOrders}</span>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { formatDate } from "@/helpers";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
 
@@ -20,7 +21,7 @@ export default function ProfilePage() {
           : "Chưa cập nhật";
 
   const dobLabel = user.dateOfBirth
-    ? new Date(user.dateOfBirth).toLocaleDateString("vi-VN")
+    ? formatDate(user.dateOfBirth)
     : "Chưa có";
 
   return (

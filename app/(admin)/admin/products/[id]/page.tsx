@@ -29,7 +29,7 @@ import { getProduct, softDeleteProduct, restoreProduct } from "../_libs/products
 import { usePopzy } from "@/components/Modal/usePopzy";
 import { Popzy } from "@/components/Modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
-import { formatDate, formatVND } from "@/helpers";
+import { formatDate, formatVND, formatNumber } from "@/helpers";
 import apiRequest from "@/lib/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -612,7 +612,14 @@ export default function ProductDetailPage() {
                     </span>
                   ),
                 },
-                { label: "Lượt xem", value: <span className="font-semibold">{Number(product.viewsCount).toLocaleString()}</span> },
+                {
+                  label: "Lượt xem",
+                  value: (
+                    <span className="font-semibold">
+                      {formatNumber(Number(product.viewsCount))}
+                    </span>
+                  ),
+                },
                 { label: "Tổng đã bán", value: <span className="font-semibold">{product.totalSoldCount}</span> },
                 { label: "Ngày tạo", value: <span className="text-[12px]">{formatDate(product.createdAt)}</span> },
                 { label: "Cập nhật", value: <span className="text-[12px]">{formatDate(product.updatedAt)}</span> },

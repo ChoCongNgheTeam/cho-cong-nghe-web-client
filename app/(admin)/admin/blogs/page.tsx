@@ -11,6 +11,7 @@ import { getAllBlogs, deleteBlog, bulkDeleteBlogs, bulkUpdateBlogStatus, getBlog
 import { BLOG_STATUS_TABS, SORT_OPTIONS } from "./const";
 import { getBlogColumns } from "./components/TableBlogs";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { formatNumber } from "@/helpers";
 
 export default function BlogsPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
@@ -234,7 +235,7 @@ export default function BlogsPage() {
 
         <StatsCard
           label="Tổng lượt xem"
-          value={stats.views.toLocaleString("vi-VN")}
+            value={formatNumber(stats.views)}
           sub="Tổng số lượt truy cập"
           icon={<Eye size={16} />}
           valueClassName="text-purple-600"
