@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useContext, useRef } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, Plus, Pencil, Trash2, RefreshCw, Loader2,
   User as UserIcon, ArrowUpDown, Calendar, ChevronDown,
-  LogIn, ShoppingCart, AlertTriangle, RotateCcw,
+  LogIn, ShoppingCart, RotateCcw, AlertTriangle,
 } from "lucide-react";
 import { getAllUsers, type GetUsersQuery } from "./_libs/getAllUsers";
 import { updateActiveUser } from "./_libs/updateActiveUser";
@@ -42,6 +42,18 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "role", label: "Vai trò" },
 ];
 
+function normalizeRole(role?: string): string {
+  return (role ?? "").toUpperCase();
+}
+
+function formatDateTime(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  return { date, time };
+}
+
 // ── Delete confirm modal ──────────────────────────────────────────────────────
 function DeleteModal({
   user,
@@ -61,57 +73,11 @@ function DeleteModal({
             <AlertTriangle size={22} className="text-promotion" />
           </div>
           <div>
-            <p className="text-base font-semibold text-primary">Xóa người dùng?</p>
+            <p className="text-base font-semibold text-primary">Xóa nhân viên?</p>
             <p className="text-[13px] text-neutral-dark mt-1">
               Bạn có chắc muốn xóa{" "}
-              <span className="font-medium text-primary">
-                {user.fullName || user.userName}
-              </span>
+              <span className="font-medium text-primary">{user.fullName || user.userName}</span>
               ? Hành động này không thể hoàn tác.
-            </p>
-          </div>
-          <div className="flex gap-3 w-full">
-            <button
-              onClick={onCancel}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-primary bg-neutral-light border border-neutral rounded-xl hover:bg-neutral-light-active transition-all cursor-pointer"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={onConfirm}
-              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-promotion rounded-xl hover:bg-promotion-hover transition-all cursor-pointer"
-            >
-              Xóa
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Delete many modal ─────────────────────────────────────────────────────────
-function DeleteManyModal({
-  count,
-  onConfirm,
-  onCancel,
-}: {
-  count: number;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-neutral-light rounded-2xl border border-neutral shadow-xl p-6 w-full max-w-sm mx-4">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-promotion-light flex items-center justify-center">
-            <AlertTriangle size={22} className="text-promotion" />
-          </div>
-          <div>
-            <p className="text-base font-semibold text-primary">Xóa {count} người dùng?</p>
-            <p className="text-[13px] text-neutral-dark mt-1">
-              Hành động này sẽ xóa {count} tài khoản đã chọn và không thể hoàn tác.
             </p>
           </div>
           <div className="flex gap-3 w-full">
@@ -121,7 +87,7 @@ function DeleteManyModal({
             </button>
             <button onClick={onConfirm}
               className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-promotion rounded-xl hover:bg-promotion-hover transition-all cursor-pointer">
-              Xóa tất cả
+              Xóa
             </button>
           </div>
         </div>
@@ -130,21 +96,14 @@ function DeleteManyModal({
   );
 }
 
-// ── Format datetime ───────────────────────────────────────────────────────────
-function formatDateTime(iso?: string) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  return { date, time };
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function UserPage() {
   const router = useRouter();
   const { success, error: toastError } = useToasty();
   const auth = useContext(AuthContext);
   const currentUserId = auth?.user?.id;
+  const currentUserRole = normalizeRole(auth?.user?.role);
+
   const ONLINE_IDS = new Set<string>([]);
   const ORDERING_IDS = new Set<string>([]);
 
@@ -155,10 +114,6 @@ export default function UserPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-  const [showDeleteMany, setShowDeleteMany] = useState(false);
-
-  // Selection
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -195,7 +150,6 @@ export default function UserPage() {
       setUsers(filtered);
       setTotal(dateFilter ? filtered.length : res.pagination.total);
       setTotalPages(dateFilter ? Math.max(Math.ceil(filtered.length / pageSize), 1) : res.pagination.totalPages);
-      setSelectedIds(new Set());
     } catch {
       setError("Không thể tải danh sách người dùng");
     } finally {
@@ -225,7 +179,7 @@ export default function UserPage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setSearch(searchInput); setPage(1); };
-  const handleTabChange = (tab: FilterTab) => { setActiveTab(tab); setPage(1); setSelectedIds(new Set()); };
+  const handleTabChange = (tab: FilterTab) => { setActiveTab(tab); setPage(1); };
   const handleSortChange = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortField(field); setSortDir("asc"); }
@@ -235,32 +189,37 @@ export default function UserPage() {
     setSearch(""); setSearchInput(""); setDateFilter(""); setActiveTab("ALL"); setPage(1);
   };
 
-  // Checkbox helpers
-  const selectableUsers = users.filter((u) => !isHiddenUser(u, currentUserId));
-  const allSelected = selectableUsers.length > 0 && selectableUsers.every((u) => selectedIds.has(u.id));
-  const someSelected = selectableUsers.some((u) => selectedIds.has(u.id));
+  // ── Phân quyền ───────────────────────────────────────────────────────────
 
-  function isHiddenUser(u: User, cid?: string) {
-    return u.id === cid || (u.role === "ADMIN" && u.id !== cid);
+  // Block: chỉ ADMIN, không block ADMIN khác, không tự block mình
+  function isBlockAllowed(u: User): boolean {
+    if (u.id === currentUserId) return false;
+    if (normalizeRole(u.role) === "ADMIN") return false;
+    return currentUserRole === "ADMIN";
   }
 
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(selectableUsers.map((u) => u.id)));
-    }
-  };
+  function getBlockTitle(u: User): string {
+    if (u.id === currentUserId) return "Không thể thay đổi trạng thái của chính mình";
+    if (normalizeRole(u.role) === "ADMIN") return "Không thể khóa tài khoản Admin khác";
+    if (currentUserRole !== "ADMIN") return "Chỉ Admin mới có thể khóa/mở tài khoản";
+    if (ONLINE_IDS.has(u.id) && u.isActive) return "Không thể khóa khi đang online";
+    return u.isActive ? "Đang hoạt động – nhấn để khóa" : "Đã khóa – nhấn để mở";
+  }
 
-  const toggleSelectOne = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  // Edit: chỉ ADMIN, không edit ADMIN khác
+  function isEditAllowed(u: User): boolean {
+    if (normalizeRole(u.role) === "ADMIN") return false; // không edit ADMIN khác
+    return currentUserRole === "ADMIN";                  // chỉ ADMIN mới edit được
+  }
+
+  // Xóa: chỉ ADMIN xóa được STAFF
+  function isDeleteAllowed(u: User): boolean {
+    if (normalizeRole(u.role) !== "STAFF") return false; // chỉ xóa STAFF
+    return currentUserRole === "ADMIN";                  // chỉ ADMIN mới xóa được
+  }
 
   const handleToggleActive = async (user: User) => {
+    if (!isBlockAllowed(user)) return;
     const oldValue = user.isActive;
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isActive: !oldValue } : u)));
     setLoadingId(user.id);
@@ -277,6 +236,12 @@ export default function UserPage() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
+    // Guard lần 2 trước khi gọi API
+    if (!isDeleteAllowed(deleteTarget)) {
+      toastError("Không có quyền xóa người dùng này.");
+      setDeleteTarget(null);
+      return;
+    }
     const user = deleteTarget;
     setDeleteTarget(null);
     const oldUsers = [...users];
@@ -286,67 +251,18 @@ export default function UserPage() {
       await deleteUser(user.id);
       setTotal((t) => t - 1);
       fetchStats();
-      success("Xóa người dùng thành công!");
+      success("Xóa nhân viên thành công!");
     } catch {
       setUsers(oldUsers);
-      toastError("Xóa người dùng thất bại.");
+      toastError("Xóa nhân viên thất bại.");
     } finally {
       setLoadingId(null);
     }
   };
 
-  const handleDeleteMany = async () => {
-    setShowDeleteMany(false);
-    const ids = Array.from(selectedIds);
-    const oldUsers = [...users];
-    setUsers((prev) => prev.filter((u) => !ids.includes(u.id)));
-    try {
-      await Promise.all(ids.map((id) => deleteUser(id)));
-      setTotal((t) => Math.max(0, t - ids.length));
-      setSelectedIds(new Set());
-      fetchStats();
-      success(`Đã xóa ${ids.length} người dùng!`);
-    } catch {
-      setUsers(oldUsers);
-      toastError("Xóa nhiều người dùng thất bại.");
-    }
-  };
-
-  const isHidden = (u: User) => u.id === currentUserId || (u.role === "ADMIN" && u.id !== currentUserId);
-  const toggleLocked = (u: User) =>
-    u.id === currentUserId ||
-    (u.role === "ADMIN" && u.id !== currentUserId) ||
-    (ONLINE_IDS.has(u.id) && u.isActive);
-
   const hasFilter = activeTab !== "ALL" || !!search || !!dateFilter;
 
-  // Ref để set indeterminate state cho checkbox "chọn tất cả" trong header
-  const checkboxAllRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (checkboxAllRef.current) {
-      checkboxAllRef.current.indeterminate = someSelected && !allSelected;
-    }
-  }, [someSelected, allSelected]);
-
   const columns: AdminColumn<User>[] = [
-    {
-      key: "checkbox",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (row) => {
-        if (isHidden(row)) return null;
-        return (
-          <input
-            type="checkbox"
-            checked={selectedIds.has(row.id)}
-            onChange={() => toggleSelectOne(row.id)}
-            className="w-4 h-4 rounded border-neutral accent-accent cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
-          />
-        );
-      },
-    },
     {
       key: "stt", label: "STT", width: "w-14", align: "center",
       render: (_, idx) => <span className="text-neutral-dark">{(page - 1) * pageSize + idx + 1}</span>,
@@ -390,7 +306,7 @@ export default function UserPage() {
       key: "role", label: "Vai trò", align: "center",
       render: (row) => (
         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${roleColor[row.role] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}>
-          {row.role === "ADMIN" ? "Admin" : row.role === "STAFF" ? "Nhân viên" : "Khách hàng"}
+          {normalizeRole(row.role) === "ADMIN" ? "Admin" : normalizeRole(row.role) === "STAFF" ? "Nhân viên" : "Khách hàng"}
         </span>
       ),
     },
@@ -398,16 +314,18 @@ export default function UserPage() {
       key: "isActive", label: "Trạng thái", align: "center",
       render: (row) => {
         const isLoadingRow = loadingId === row.id;
-        const locked = toggleLocked(row);
+        const allowed = isBlockAllowed(row);
+        const isOnlineLocked = ONLINE_IDS.has(row.id) && row.isActive;
+        const interactive = allowed && !isOnlineLocked && !isLoadingRow;
         return (
           <div className="flex items-center justify-center">
             <div
-              onClick={() => !isLoadingRow && !locked && handleToggleActive(row)}
-              title={locked ? "Không thể thay đổi" : row.isActive ? "Đang hoạt động – nhấn để khóa" : "Đã khóa – nhấn để mở"}
+              onClick={() => interactive && handleToggleActive(row)}
+              title={getBlockTitle(row)}
               className={[
                 "w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200",
                 row.isActive ? "bg-accent" : "bg-neutral-active",
-                isLoadingRow || locked ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                interactive ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
               ].join(" ")}
             >
               <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${row.isActive ? "translate-x-5" : "translate-x-0"}`} />
@@ -433,26 +351,51 @@ export default function UserPage() {
     {
       key: "actions", label: "Hành động", align: "center",
       render: (row) => {
-        if (isHidden(row)) return <span className="text-[11px] text-neutral-dark italic">—</span>;
         const isLoadingRow = loadingId === row.id;
-        const cantDelete = ONLINE_IDS.has(row.id) || ORDERING_IDS.has(row.id);
+        const canEdit = isEditAllowed(row);
+        const canDelete = isDeleteAllowed(row);
+        const rowRole = normalizeRole(row.role);
+
+        // Với ADMIN khác: ẩn hoàn toàn cả 2 nút
+        if (rowRole === "ADMIN") {
+          return <span className="text-[11px] text-neutral-dark italic">—</span>;
+        }
+
         return (
           <div className="flex items-center justify-center gap-1.5">
-            <button onClick={() => router.push(`/admin/users/${row.id}/edit`)} title="Chỉnh sửa"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent transition-all cursor-pointer">
-              <Pencil size={14} />
-            </button>
+            {/* Nút Edit: ADMIN edit được STAFF & CUSTOMER */}
             <button
-              onClick={() => { if (!isLoadingRow && !cantDelete) setDeleteTarget(row); }}
-              disabled={isLoadingRow || cantDelete}
-              title={ONLINE_IDS.has(row.id) ? "Đang đăng nhập, không thể xóa" : ORDERING_IDS.has(row.id) ? "Đang đặt hàng, không thể xóa" : "Xóa người dùng"}
+              onClick={() => { if (canEdit) router.push(`/admin/users/${row.id}/edit`); }}
+              disabled={!canEdit}
+              title={canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"}
               className={[
                 "w-7 h-7 flex items-center justify-center rounded-lg transition-all",
-                isLoadingRow || cantDelete ? "text-neutral-active cursor-not-allowed opacity-50" : "text-primary hover:bg-promotion-light hover:text-promotion cursor-pointer",
+                canEdit
+                  ? "text-primary hover:bg-accent-light hover:text-accent cursor-pointer"
+                  : "text-neutral-active opacity-40 cursor-not-allowed",
               ].join(" ")}
             >
-              {isLoadingRow ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              <Pencil size={14} />
             </button>
+
+            {/* Nút Xóa: chỉ hiện với STAFF, CUSTOMER không có nút xóa */}
+            {rowRole === "STAFF" && (
+              <button
+                onClick={() => { if (canDelete && !isLoadingRow) setDeleteTarget(row); }}
+                disabled={!canDelete || isLoadingRow}
+                title={canDelete ? "Xóa nhân viên" : "Không có quyền xóa"}
+                className={[
+                  "w-7 h-7 flex items-center justify-center rounded-lg transition-all",
+                  canDelete && !isLoadingRow
+                    ? "text-primary hover:bg-promotion-light hover:text-promotion cursor-pointer"
+                    : "text-neutral-active opacity-40 cursor-not-allowed",
+                ].join(" ")}
+              >
+                {isLoadingRow
+                  ? <Loader2 size={14} className="animate-spin" />
+                  : <Trash2 size={14} />}
+              </button>
+            )}
           </div>
         );
       },
@@ -463,9 +406,6 @@ export default function UserPage() {
     <div className="space-y-5 p-3 sm:p-5 bg-neutral-light h-full">
       {deleteTarget && (
         <DeleteModal user={deleteTarget} onConfirm={handleDeleteConfirm} onCancel={() => setDeleteTarget(null)} />
-      )}
-      {showDeleteMany && (
-        <DeleteManyModal count={selectedIds.size} onConfirm={handleDeleteMany} onCancel={() => setShowDeleteMany(false)} />
       )}
 
       {/* ── Header ── */}
@@ -502,9 +442,8 @@ export default function UserPage() {
       {/* ── Main card ── */}
       <div className="bg-neutral-light border border-neutral rounded-xl">
 
-        {/* ── Toolbar: single row like product page ── */}
+        {/* ── Toolbar ── */}
         <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-neutral overflow-x-auto scrollbar-thin">
-          {/* Tabs */}
           <div className="flex items-center gap-1 shrink-0">
             {STATUS_TABS.map((tab) => (
               <button key={tab.value} onClick={() => handleTabChange(tab.value)}
@@ -519,10 +458,8 @@ export default function UserPage() {
             ))}
           </div>
 
-          {/* Divider */}
           <div className="w-px h-5 bg-neutral shrink-0" />
 
-          {/* Search */}
           <form onSubmit={handleSearch} className="relative shrink-0">
             <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Tìm tên, email, username..."
@@ -530,7 +467,6 @@ export default function UserPage() {
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
           </form>
 
-          {/* Sort */}
           <div className="relative shrink-0">
             <button onClick={() => setShowSortMenu((v) => !v)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral bg-neutral-light text-primary text-[12px] font-medium hover:bg-neutral-light-active transition-all cursor-pointer whitespace-nowrap">
@@ -551,7 +487,6 @@ export default function UserPage() {
             )}
           </div>
 
-          {/* Date filter */}
           <div className="relative shrink-0">
             <input type="date" value={dateFilter}
               onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
@@ -559,33 +494,17 @@ export default function UserPage() {
             <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
           </div>
 
-          {/* Spacer */}
           <div className="flex-1" />
-
-          {/* Count */}
           <span className="text-[12px] text-neutral-dark whitespace-nowrap shrink-0">{total} người dùng</span>
         </div>
 
-        {/* ── Sub-toolbar: bulk + legend (chỉ hiện khi cần) ── */}
-        {(selectedIds.size > 0 || hasFilter) && (
+        {/* ── Sub-toolbar ── */}
+        {hasFilter && (
           <div className="flex items-center justify-between px-3 sm:px-4 py-1.5 border-b border-neutral bg-neutral-light-active/40 flex-wrap gap-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              {selectedIds.size > 0 && (
-                <>
-                  <span className="text-[11px] text-accent font-medium">{selectedIds.size} đã chọn</span>
-                  <button onClick={() => setShowDeleteMany(true)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-promotion-light text-promotion text-[11px] font-medium hover:bg-promotion-light-active transition-all cursor-pointer">
-                    <Trash2 size={11} /> Xóa đã chọn
-                  </button>
-                </>
-              )}
-              {hasFilter && (
-                <button onClick={handleClearFilters}
-                  className="text-[11px] text-accent hover:underline cursor-pointer font-medium">
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
+            <button onClick={handleClearFilters}
+              className="text-[11px] text-accent hover:underline cursor-pointer font-medium">
+              Xóa bộ lọc
+            </button>
             <div className="flex items-center gap-3 text-[10px] text-neutral-dark">
               <span className="flex items-center gap-1"><LogIn size={10} className="text-emerald-600" /> Đang online</span>
               <span className="flex items-center gap-1"><ShoppingCart size={10} className="text-amber-500" /> Đang đặt hàng</span>
@@ -604,17 +523,7 @@ export default function UserPage() {
         )}
 
         {/* ── Table ── */}
-        <div className="overflow-x-auto relative">
-          {/* Checkbox "chọn tất cả" đặt overlay vào ô header đầu tiên */}
-          <div className="absolute top-0 left-0 w-10 h-[44px] z-10 flex items-center justify-center pointer-events-none">
-            <input
-              ref={checkboxAllRef}
-              type="checkbox"
-              checked={allSelected}
-              onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-neutral accent-accent cursor-pointer pointer-events-auto"
-            />
-          </div>
+        <div className="overflow-x-auto">
           <AdminTable<User>
             columns={columns}
             data={users}
