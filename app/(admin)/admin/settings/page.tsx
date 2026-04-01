@@ -4,7 +4,6 @@ import { useState } from "react";
 import SettingsSidebar, { SettingsKey } from "./components/SettingsSidebar";
 import ProfileSettingsView from "./components/ProfileSettingsView";
 import SecuritySettingsView from "./components/SecuritySettingsView";
-import PermissionsSettingsView from "./components/PermissionsSettingsView";
 import NotificationSettingsView from "./components/NotificationSettingsView";
 import SystemPreferencesView from "./components/SystemPreferencesView";
 
@@ -16,10 +15,6 @@ const TITLES: Record<SettingsKey, { title: string; desc: string }> = {
   security: {
     title: "Thiết lập bảo mật",
     desc: "Bảo mật tài khoản và thiết lập xác thực",
-  },
-  permissions: {
-    title: "Phân quyền",
-    desc: "Quản lý vai trò và quyền truy cập",
   },
   notifications: {
     title: "Thiết lập thông báo",
@@ -51,7 +46,6 @@ export default function AdminSettingsPage() {
 
           {active === "profile" && <ProfileSettingsView />}
           {active === "security" && <SecuritySettingsView />}
-          {active === "permissions" && <PermissionsSettingsView />}
           {active === "notifications" && <NotificationSettingsView />}
           {active === "system" && <SystemPreferencesView />}
         </div>

@@ -119,7 +119,7 @@ export default function SystemPreferencesView() {
           <div className="flex items-center gap-2 text-accent">
             <Globe className="h-5 w-5" />
             <h2 className="text-base font-semibold text-primary">
-              Ngôn ngữ & múi giờ
+              Ngôn ngữ và múi giờ
             </h2>
           </div>
           <p className="text-sm text-neutral-dark mt-1">

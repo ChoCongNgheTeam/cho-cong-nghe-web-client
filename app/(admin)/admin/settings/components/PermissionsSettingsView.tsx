@@ -544,7 +544,7 @@ export default function PermissionsSettingsView() {
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
                   placeholder="VD: Quản trị hệ thống"
-                  className="mt-2 w-full px-3 py-2 rounded-lg border border-neutral bg-white text-[13px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  className="mt-2 w-full px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-[13px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
                 {formError && (
                   <p className="mt-2 text-[11px] text-promotion">{formError}</p>
@@ -579,7 +579,7 @@ export default function PermissionsSettingsView() {
                     value={customRole}
                     onChange={(e) => setCustomRole(e.target.value)}
                     placeholder="Nhập vai trò khác..."
-                    className="flex-1 px-3 py-2 rounded-lg border border-neutral bg-white text-[12px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
+                    className="flex-1 px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-[12px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -628,7 +628,7 @@ export default function PermissionsSettingsView() {
                       value={memberQuery}
                       onChange={(e) => setMemberQuery(e.target.value)}
                       placeholder="Tìm theo tên, email hoặc username..."
-                      className="w-full px-3 py-2 rounded-lg border border-neutral bg-white text-[13px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
+                      className="w-full px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-[13px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
                     />
                     {memberLoading && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-dark">
