@@ -17,7 +17,7 @@ export default function BlogSection({
   title,
   blogs,
   heroAspectClassName = "aspect-video",
-  heroTitleClassName = "text-lg",
+  heroTitleClassName = "text-xl sm:text-2xl",
 }: Props) {
   if (!blogs.length) return null;
 
@@ -25,10 +25,11 @@ export default function BlogSection({
   const sideBlogs = rest.slice(0, 4);
 
   return (
-    <section className="mb-6 sm:mb-8">
-      <h2 className="mb-3 sm:mb-4 text-sm sm:text-base font-semibold uppercase tracking-wide text-primary">
+    <section className="mb-8 sm:mb-10">
+      <h2 className="mb-2 text-lg sm:text-xl font-semibold tracking-tight text-primary">
         {title}
       </h2>
+      <div className="mb-5 h-0.5 w-10 rounded-full bg-accent/50" />
 
       <div className="md:hidden">
         <Slidezy
@@ -47,11 +48,11 @@ export default function BlogSection({
         </Slidezy>
       </div>
 
-      <div className="hidden md:grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
+      <div className="hidden md:grid grid-cols-1 gap-5 sm:gap-7 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <Link href={`/blog/${hero.slug}`} className="block">
+          <Link href={`/blog/${hero.slug}`} className="group block">
             <div
-              className={`relative w-full overflow-hidden rounded-lg bg-neutral-light ${heroAspectClassName}`}
+              className={`relative w-full overflow-hidden rounded-2xl border border-neutral/60 bg-neutral-light/70 shadow-sm ${heroAspectClassName}`}
             >
               <Image
                 src={hero.thumbnail || "/images/avatar.png"}
@@ -59,13 +60,16 @@ export default function BlogSection({
                 fill
                 className="object-cover"
               />
+              <div className="absolute inset-0 bg-linear-to-t from-black/12 via-black/5 to-transparent" />
             </div>
             <h3
-              className={`mt-3 sm:mt-4 font-semibold leading-tight text-primary ${heroTitleClassName}`}
+              className={`mt-4 font-semibold leading-snug tracking-tight text-primary group-hover:text-accent transition-colors ${heroTitleClassName}`}
             >
               {hero.title}
             </h3>
-            <p className="mt-2 text-xs sm:text-sm text-primary-light">{hero.excerpt}</p>
+            <p className="mt-2 text-sm sm:text-base text-primary/70 leading-relaxed line-clamp-3">
+              {hero.excerpt}
+            </p>
           </Link>
         </div>
 
@@ -74,10 +78,10 @@ export default function BlogSection({
             <Link
               key={`${title}-${idx}-${blog.id}`}
               href={`/blog/${blog.slug}`}
-              className="block"
+              className="group block"
             >
-              <div className="overflow-hidden rounded-lg border border-neutral bg-neutral-light hover:shadow-sm">
-                <div className="relative aspect-[4/3] w-full bg-neutral">
+              <div className="overflow-hidden rounded-2xl border border-neutral/60 bg-neutral-light/70 shadow-sm hover:shadow transition-shadow">
+                <div className="relative aspect-4/3 w-full bg-neutral">
                   <Image
                     src={blog.thumbnail || "/images/avatar.png"}
                     alt={blog.title}
@@ -85,8 +89,8 @@ export default function BlogSection({
                     className="object-cover"
                   />
                 </div>
-                <div className="p-2 sm:p-3">
-                  <p className="text-sm font-medium leading-snug text-primary">
+                <div className="p-3 sm:p-4">
+                  <p className="text-sm sm:text-base font-medium leading-snug tracking-tight text-primary/90 line-clamp-2 group-hover:text-accent transition-colors">
                     {blog.title}
                   </p>
                 </div>

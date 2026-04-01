@@ -114,7 +114,7 @@ export default async function BlogPage({ searchParams }: Props) {
           title={breadcrumbLabel}
           blogs={pageBlogs}
           heroAspectClassName="aspect-video"
-          heroTitleClassName="text-xl"
+          heroTitleClassName="text-2xl sm:text-3xl"
         />
 
         <section className="flex justify-center">
@@ -140,7 +140,7 @@ export default async function BlogPage({ searchParams }: Props) {
         title="Nổi bật"
         blogs={featuredBlogs}
         heroAspectClassName="aspect-video"
-        heroTitleClassName="text-xl"
+        heroTitleClassName="text-2xl sm:text-3xl"
       />
 
       <section className="mb-8">
@@ -154,21 +154,21 @@ export default async function BlogPage({ searchParams }: Props) {
         title="Tin mới"
         blogs={latestBlogs}
         heroAspectClassName="aspect-[16/10]"
-        heroTitleClassName="text-lg"
+        heroTitleClassName="text-xl sm:text-2xl"
       />
 
       <BlogSection
         title="Đánh giá - Tư vấn"
         blogs={reviewBlogs}
         heroAspectClassName="aspect-video"
-        heroTitleClassName="text-lg"
+        heroTitleClassName="text-xl sm:text-2xl"
       />
 
       <BlogSection
         title="Khuyến mãi"
         blogs={promoBlogs}
         heroAspectClassName="aspect-video"
-        heroTitleClassName="text-lg"
+        heroTitleClassName="text-xl sm:text-2xl"
       />
     </main>
   );
