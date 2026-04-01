@@ -1,10 +1,10 @@
-// components/admin/AdminHeader.tsx
 "use client";
-import { Search, Bell, Sun, Moon } from "lucide-react";
+import { Search, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import UserAvatar from "../ui/UserAvatar";
 import { useRef } from "react";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 interface AdminHeaderProps {
    title: string;
@@ -90,9 +90,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
                <div className="w-px h-6 bg-neutral mx-1" />
 
                {/* Notification bell */}
-               <button className="relative w-8 h-8 flex items-center justify-center rounded-lg text-neutral-dark hover:text-primary hover:bg-neutral-light-active transition-all duration-150">
-                  <Bell size={17} />
-               </button>
+               <NotificationBell footerHref="/admin/notifications" />
 
                {/* Theme toggle với ripple effect */}
                {mounted && (

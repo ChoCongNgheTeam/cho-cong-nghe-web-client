@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -61,7 +61,21 @@ const TYPE_CONFIG: Record<
    },
 };
 
-export default function NotificationBell() {
+type NotificationBellProps = {
+   footerHref?: string;
+   footerLabel?: string;
+   headerLabel?: string;
+   filterTypes?: string[];
+   showOnlyUnread?: boolean;
+};
+
+export default function NotificationBell({
+   footerHref = "/profile/notifications",
+   footerLabel = "Xem tất cả thông báo",
+   headerLabel = "Thông báo",
+   filterTypes,
+   showOnlyUnread = false,
+}: NotificationBellProps) {
    const { isAuthenticated } = useAuth();
    const {
       notifications,
@@ -76,6 +90,19 @@ export default function NotificationBell() {
    const wrapperRef = useRef<HTMLDivElement>(null);
    const observerRef = useRef<IntersectionObserver | null>(null);
    const sentinelRef = useRef<HTMLDivElement>(null);
+
+   const visibleNotifications = notifications.filter((item) => {
+      if (showOnlyUnread && item.isRead) return false;
+      if (filterTypes && !filterTypes.includes(item.type)) return false;
+      return true;
+   });
+
+   const computedUnreadCount = visibleNotifications.reduce((total, item) => {
+      if (!item.isRead) return total + 1;
+      return total;
+   }, 0);
+   const hasFilter = Boolean(filterTypes?.length) || showOnlyUnread;
+   const visibleUnreadCount = hasFilter ? computedUnreadCount : unreadCount;
 
    useEffect(() => {
       const id = "notif-keyframes";
@@ -145,14 +172,14 @@ export default function NotificationBell() {
                className="w-5 h-5 lg:w-6 lg:h-6 text-primary"
                strokeWidth={2.3}
             />
-            {unreadCount > 0 && (
+            {visibleUnreadCount > 0 && (
                <span
                   className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px]
                     flex items-center justify-center rounded-full
                     bg-accent text-[10px] font-bold text-neutral-light
                     shadow-sm ring-2 ring-neutral-light"
                >
-                  {unreadCount > 99 ? "99+" : unreadCount}
+                  {visibleUnreadCount > 99 ? "99+" : visibleUnreadCount}
                </span>
             )}
          </button>
@@ -179,16 +206,16 @@ export default function NotificationBell() {
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-neutral">
                <div className="flex items-center gap-2">
                   <span className="font-semibold text-[14px] text-primary tracking-tight">
-                     Thông báo
+                     {headerLabel}
                   </span>
-                  {unreadCount > 0 && (
+                  {visibleUnreadCount > 0 && (
                      <span className="text-[11px] font-semibold text-accent bg-accent-light px-2 py-0.5 rounded-full leading-none">
-                        {unreadCount} mới
+                        {visibleUnreadCount} mới
                      </span>
                   )}
                </div>
 
-               {unreadCount > 0 && (
+               {visibleUnreadCount > 0 && (
                   <button
                      onClick={markAllAsRead}
                      className="flex items-center gap-1.5 text-[12px] font-medium
@@ -211,7 +238,7 @@ export default function NotificationBell() {
                  sm:max-h-[380px]
                `}
             >
-               {notifications.length === 0 && !isLoading ? (
+               {visibleNotifications.length === 0 && !isLoading ? (
                   <div className="py-14 text-center px-6">
                      <div className="w-12 h-12 rounded-2xl bg-neutral-light-active flex items-center justify-center mx-auto mb-3">
                         <Inbox className="w-5 h-5 text-neutral-dark" />
@@ -225,7 +252,7 @@ export default function NotificationBell() {
                   </div>
                ) : (
                   <>
-                     {notifications.map((n, idx) => {
+                     {visibleNotifications.map((n, idx) => {
                         const cfg = TYPE_CONFIG[n.type] ?? {
                            icon: Bell,
                            color: "text-neutral-dark",
@@ -308,12 +335,12 @@ export default function NotificationBell() {
             {/* Footer */}
             <div className="border-t border-neutral bg-neutral-light-hover">
                <Link
-                  href="/profile/notifications"
+                  href={footerHref}
                   onClick={() => setOpen(false)}
                   className="flex items-center justify-center gap-1.5 py-3 text-[13px] font-medium
                     text-neutral-dark-active hover:text-accent transition-colors duration-150 group"
                >
-                  Xem tất cả thông báo
+                  {footerLabel}
                   <ChevronRight
                      size={14}
                      className="transition-transform duration-200 group-hover:translate-x-0.5"
