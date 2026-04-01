@@ -36,6 +36,7 @@ import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../const";
 import type { Campaign } from "../campaign.types";
 import { formatDate } from "@/helpers";
 import { useToasty } from "@/components/Toast"; // 👈
+import { CategoryImageEditor } from "../components/CategoryImageEditor";
 
 export default function CampaignDetailPage() {
    const router = useRouter();
@@ -83,15 +84,16 @@ export default function CampaignDetailPage() {
          const payload = formToUpdatePayload(form);
          const res = await updateCampaign(id, payload);
          setCampaign(res.data);
-         success("Cập nhật chiến dịch thành công!"); // 👈
+         success("Cập nhật chiến dịch thành công!");
+         router.push(`/admin/campaigns/${id}`);
       } catch (e: any) {
          const msg = e?.message ?? "Không thể cập nhật chiến dịch";
          setSaveError(msg);
-         toastError(msg); // 👈
+         toastError(msg);
       } finally {
          setSaving(false);
       }
-   };
+   }; 
 
    const handleDelete = async () => {
       setDeleting(true);
@@ -274,33 +276,30 @@ export default function CampaignDetailPage() {
                      </p>
                      <div className="space-y-2">
                         {campaign.categories.map((cc) => (
-                           <div
+                           <CategoryImageEditor
                               key={cc.id}
-                              className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-neutral-light-active transition-colors"
-                           >
-                              {cc.imageUrl ? (
-                                 <img
-                                    src={cc.imageUrl}
-                                    alt={cc.category.name}
-                                    className="w-8 h-8 rounded-lg object-cover shrink-0"
-                                 />
-                              ) : (
-                                 <div className="w-8 h-8 rounded-lg bg-neutral-light-active flex items-center justify-center shrink-0">
-                                    <Tag
-                                       size={12}
-                                       className="text-neutral-dark"
-                                    />
-                                 </div>
-                              )}
-                              <div className="min-w-0">
-                                 <p className="text-[12px] font-medium text-primary truncate">
-                                    {cc.title || cc.category.name}
-                                 </p>
-                                 <p className="text-[10px] text-neutral-dark">
-                                    Vị trí #{cc.position}
-                                 </p>
-                              </div>
-                           </div>
+                              cc={cc}
+                              campaignId={campaign.id}
+                              onUpdated={(updated) =>
+                                 setCampaign((prev) =>
+                                    prev
+                                       ? {
+                                            ...prev,
+                                            categories: prev.categories.map(
+                                               (c) =>
+                                                  c.id === updated.id
+                                                     ? {
+                                                          ...c,
+                                                          imageUrl:
+                                                             updated.imageUrl,
+                                                       }
+                                                     : c,
+                                            ),
+                                         }
+                                       : prev,
+                                 )
+                              }
+                           />
                         ))}
                      </div>
                   </div>

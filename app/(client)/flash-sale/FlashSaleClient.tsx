@@ -473,37 +473,7 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
    return (
       <div className="min-h-screen bg-neutral-50">
          {/* ── Hero Banner ── */}
-         <div className="bg-gradient-to-r from-[#c0392b] via-[#e24c5a] to-[#e8677a] py-6">
             <div className="container">
-               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  {/* Title */}
-                  <div className="flex items-center gap-3">
-                     <Flame className="w-12 h-12 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]" />
-                     <div>
-                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                           FLASH SALE
-                        </h1>
-                        <p className="text-white/70 text-sm mt-0.5">
-                           {isToday
-                              ? "Đang diễn ra hôm nay"
-                              : activeDate
-                                ? `Ngày ${formatDateLabel(activeDate)}`
-                                : "Chương trình giảm giá lớn"}
-                        </p>
-                     </div>
-                  </div>
-
-                  {/* Countdown — chỉ show khi có endDate (hôm nay) */}
-                  {endDate && (
-                     <div className="flex flex-col items-center md:items-end gap-1">
-                        <span className="text-white/70 text-xs font-semibold uppercase tracking-widest">
-                           Kết thúc sau
-                        </span>
-                        <Countdown endDate={endDate} />
-                     </div>
-                  )}
-               </div>
-
                {/* Date tabs */}
                {hasSaleDays && schedule.length > 0 && (
                   <div className="mt-6">
@@ -515,7 +485,6 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
                   </div>
                )}
             </div>
-         </div>
 
          {/* ── Main content ── */}
          <div className="container py-6 space-y-5">
