@@ -224,7 +224,8 @@ export default function ProductsPage() {
   const getRowClassName = (product: ProductCard) => {
     const warning = (product as any).stockWarning;
     if (warning === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
-    if (warning === "low_stock") return "bg-amber-50/70 hover:bg-amber-50";
+    // if (warning === "low_stock") return "bg-amber-50/70 hover:bg-amber-50";
+    if (warning === "low_stock") return "";
     return "";
   };
 

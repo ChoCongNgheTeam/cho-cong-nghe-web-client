@@ -45,12 +45,12 @@ export function StockAlertBanner({ products }: StockAlertBannerProps) {
   return (
     <div className="rounded-xl border border-amber-300 bg-amber-50 overflow-hidden shadow-sm">
       {/* ── Header / Ticker bar ── */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-amber-200 bg-gradient-to-r from-amber-100/80 to-amber-50 min-w-0">
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-amber-200  to-amber-50 min-w-0">
         {/* Badge */}
         <div className="flex items-center gap-1.5 shrink-0">
           <AlertTriangle size={13} className="text-amber-600" />
           <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wide whitespace-nowrap">Cảnh báo tồn kho</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-amber-300/70 text-amber-900 text-[10px] font-bold">{products.length}</span>
+          <span className="px-1.5 py-0.5 rounded-full  text-amber-900 text-[10px] font-bold">{products.length}</span>
           {outCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold border border-red-200">{outCount} hết hàng</span>}
         </div>
 
@@ -120,7 +120,7 @@ export function StockAlertBanner({ products }: StockAlertBannerProps) {
               <Link
                 key={product.id}
                 href={`/admin/products/${product.id}/edit`}
-                className="group flex items-center gap-2.5 bg-white border border-amber-200 rounded-xl px-3 py-2.5 hover:border-amber-400 hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden"
+                className="group flex items-center gap-2.5 bg-white border border-gray-50 rounded-xl px-3 py-2.5 hover:border-amber-200 hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden"
               >
                 {/* Left accent bar */}
                 <span className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl ${hasOut ? "bg-red-400" : "bg-amber-400"}`} />
@@ -136,11 +136,11 @@ export function StockAlertBanner({ products }: StockAlertBannerProps) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-amber-900 truncate mb-1">{product.name}</p>
+                  <p className="text-[12px] font-semibold text-black-900 truncate mb-1">{product.name}</p>
                   <div className="space-y-0.5">
                     {product.lowStockVariants.map((v) => (
                       <div key={v.id} className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] text-amber-600 truncate">{v.label === "Default" ? "Mặc định" : v.label}</span>
+                        <span className="text-[10px] text-black truncate">{v.label === "Default" ? "Mặc định" : v.label}</span>
                         <span className={`text-[10px] font-bold shrink-0 ${v.isOutOfStock ? "text-red-600" : "text-amber-600"}`}>{v.isOutOfStock ? "Hết hàng" : `${v.quantity} còn`}</span>
                       </div>
                     ))}
