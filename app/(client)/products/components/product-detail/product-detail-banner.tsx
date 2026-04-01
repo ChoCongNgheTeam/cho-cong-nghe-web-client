@@ -107,7 +107,7 @@ export default function ProductDetailBanner({
   useEffect(() => {
     setCurrentImageIndex(0);
     setGalleryIndex(0);
-  }, [images]); // reset mỗi khi images prop thay đổi
+  }, [images]);
 
   useEffect(() => {
     if (selectedVariant?.id) {
@@ -242,32 +242,23 @@ export default function ProductDetailBanner({
       : totalVariantSlots
     : totalVariantSlots;
 
-  // ── Thumbnail window ───────────────────────────────────────────────────────
-  // ── Thumbnail window ───────────────────────────────────────────────────────
-  const THUMB_WINDOW = 6;
+  // ── allThumbs (không cần window logic nữa — dùng scroll ngang) ────────────
   const allThumbs = [
     ...validImages.map((img, i) => ({ type: "variant" as const, index: i })),
     { type: "expand" as const, index: EXPAND_INDEX },
   ];
-  const totalThumbs = allThumbs.length;
-  const [thumbWindowStart, setThumbWindowStart] = useState(0);
 
-  // Tự động scroll window theo ảnh đang active
+  // ── Auto-scroll thumbnail active vào view ─────────────────────────────────
+  const thumbRowRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const activeThumbIndex = isExpandSlot ? EXPAND_INDEX : currentImageIndex;
-    const newStart = Math.min(
-      Math.max(0, activeThumbIndex - Math.floor(THUMB_WINDOW / 2)),
-      Math.max(0, totalThumbs - THUMB_WINDOW),
-    );
-    setThumbWindowStart(newStart);
-  }, [currentImageIndex, isExpandSlot, totalThumbs]);
-
-  const visibleThumbs = allThumbs.slice(
-    thumbWindowStart,
-    thumbWindowStart + THUMB_WINDOW,
-  );
-  const canThumbPrev = thumbWindowStart > 0;
-  const canThumbNext = thumbWindowStart + THUMB_WINDOW < totalThumbs;
+    const row = thumbRowRef.current;
+    if (!row) return;
+    const activeIndex = isExpandSlot ? allThumbs.length - 1 : currentImageIndex;
+    const activeEl = row.children[activeIndex] as HTMLElement | undefined;
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+    }
+  }, [currentImageIndex, isExpandSlot]);
 
   const highlights = product.highlights || [];
 
@@ -359,94 +350,69 @@ export default function ProductDetailBanner({
 
       {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
       <div className="mt-4">
-        <div className="relative flex items-center gap-2">
-          {/* Nút prev */}
-          {canThumbPrev && (
-            <button
-              type="button"
-              onClick={() =>
-                setThumbWindowStart((prev) => Math.max(0, prev - 1))
-              }
-              className="flex-shrink-0 bg-white shadow rounded-full p-1 hover:bg-neutral-light transition cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4 text-primary" />
-            </button>
-          )}
-          <div className="flex gap-3 sm:gap-4">
-            {visibleThumbs.map((thumb) => {
-              if (thumb.type === "expand") {
-                return (
-                  <ThumbnailCell
-                    key="expand"
-                    isActive={isExpandSlot}
-                    onClick={goToExpand}
-                    isExpand
-                  >
-                    <div className="flex flex-col items-center justify-center h-full gap-1">
-                      {galleryLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                      ) : galleryLoaded ? (
-                        <>
-                          <Images className="w-5 h-5 text-primary" />
-                          <span className="text-[10px] text-primary font-medium">
-                            +{galleryImages.length}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Images className="w-5 h-5 text-neutral-darker" />
-                          <span className="text-[10px] text-neutral-darker">
-                            Xem thêm
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </ThumbnailCell>
-                );
-              }
-
-              // ── Chỉ render nếu có ảnh (validImages đã lọc sẵn, nhưng guard thêm cho chắc) ──
-              const image = validImages[thumb.index];
-              if (!image?.imageUrl) return null;
-
+        <div
+          ref={thumbRowRef}
+          className="flex gap-2 sm:gap-3  lg:gap-4  scroll-smooth scrollbar-hide py-1.5 px-1 overflow-x-auto"
+        >
+          {allThumbs.map((thumb) => {
+            if (thumb.type === "expand") {
               return (
                 <ThumbnailCell
-                  key={image.id}
-                  isActive={!isExpandSlot && currentImageIndex === thumb.index}
-                  onClick={() => goToVariantIndex(thumb.index)}
+                  key="expand"
+                  isActive={isExpandSlot}
+                  onClick={goToExpand}
+                  isExpand
                 >
-                  <Image
-                    src={image.imageUrl}
-                    alt={image.altText || `Product image ${thumb.index + 1}`}
-                    fill
-                    sizes="120px"
-                    className={clsx(
-                      "object-contain transition-all duration-300 p-2.5 sm:p-3",
-                      !isExpandSlot && currentImageIndex === thumb.index
-                        ? "opacity-100 scale-100"
-                        : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
+                  <div className="flex flex-col items-center justify-center h-full gap-1">
+                    {galleryLoading ? (
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-primary" />
+                    ) : galleryLoaded ? (
+                      <>
+                        <Images className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <span className="text-[9px] sm:text-[10px] text-primary font-medium">
+                          +{galleryImages.length}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Images className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-darker" />
+                        <span className="text-[9px] sm:text-[10px] text-neutral-darker">
+                          Xem thêm
+                        </span>
+                      </>
                     )}
-                  />
+                  </div>
                 </ThumbnailCell>
               );
-            })}
-          </div>
-          {/* Nút next */}
-          {canThumbNext && (
-            <button
-              type="button"
-              onClick={() =>
-                setThumbWindowStart((prev) =>
-                  Math.min(totalThumbs - THUMB_WINDOW, prev + 1),
-                )
-              }
-              className="flex-shrink-0 bg-white shadow rounded-full p-1 hover:bg-neutral-light transition cursor-pointer"
-            >
-              <ChevronRight className="w-4 h-4 text-primary" />
-            </button>
-          )}
+            }
+
+            const image = validImages[thumb.index];
+            if (!image?.imageUrl) return null;
+
+            return (
+              <ThumbnailCell
+                key={image.id}
+                isActive={!isExpandSlot && currentImageIndex === thumb.index}
+                onClick={() => goToVariantIndex(thumb.index)}
+              >
+                <Image
+                  src={image.imageUrl}
+                  alt={image.altText || `Product image ${thumb.index + 1}`}
+                  fill
+                  sizes="(max-width: 640px) 56px, (max-width: 1024px) 72px, 96px"
+                  className={clsx(
+                    "object-contain transition-all duration-300 p-1.5 sm:p-2 lg:p-3",
+                    !isExpandSlot && currentImageIndex === thumb.index
+                      ? "opacity-100 scale-100"
+                      : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
+                  )}
+                />
+              </ThumbnailCell>
+            );
+          })}
         </div>
-        {/* ── Gallery thumbnails row (scroll ngang) ─────────────────────── */}
+
+        {/* ── Gallery thumbnails row ─────────────────────────────────────── */}
         {isExpandSlot && galleryLoaded && galleryImages.length > 0 && (
           <div
             className="mt-3 flex gap-2 overflow-x-auto pb-6 px-1 py-1
@@ -571,13 +537,16 @@ function ThumbnailCell({
       type="button"
       onClick={onClick}
       className={clsx(
-        "relative group w-24 h-24 rounded-xl overflow-hidden transition-all duration-200 ease-out cursor-pointer",
+        // responsive size + flex-shrink-0 để không bị bóp khi overflow
+        "relative group flex-shrink-0",
+        "w-14 h-14 sm:w-16 sm:h-16 lg:w-24 lg:h-24",
+        "rounded-xl overflow-hidden transition-all duration-200 ease-out cursor-pointer",
         isActive
           ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
           : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105",
       )}
     >
-      <div className="relative aspect-square bg-white rounded-xl overflow-hidden">
+      <div className="relative w-full h-full bg-white rounded-xl overflow-hidden">
         {children}
         <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
       </div>

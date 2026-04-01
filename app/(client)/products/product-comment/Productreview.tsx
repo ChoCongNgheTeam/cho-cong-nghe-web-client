@@ -85,26 +85,33 @@ export default function ProductReview({
   const [loading, setLoading] = useState(false);
 
   const fetchComments = useCallback(async () => {
-    if (!productId) return;
-    setLoading(true);
-    try {
-      const result = await apiRequest.get<CommentApiResponse>("/comments", {
-        params: { targetType: "PRODUCT", targetId: productId, limit: 50 },
-      });
+  if (!productId) return;
+  setLoading(true);
+  try {
+    const result = await apiRequest.get<CommentApiResponse>("/comments", {
+      params: { 
+        targetType: "PRODUCT", 
+        targetId: productId, 
+        limit: 50 
+        // Đừng gửi filter isApproved ở đây, hãy để Server tự lọc theo UserID
+      },
+    });
 
-      const filtered = (result?.data ?? []).filter(
-        (c) => c.targetId === productId && c.isApproved,
-      );
+    // CHỈ LỌC THEO productId, KHÔNG LỌC isApproved Ở ĐÂY
+    // Server trả về comment "chờ duyệt" của chính User đó nếu họ đang login
+    const allRelevantComments = (result?.data ?? []).filter(
+      (c) => c.targetId === productId
+    );
 
-      const tree = buildTree(filtered);
-      setComments(tree);
-    } catch (error) {
-      console.error("Lỗi khi lấy comment:", error);
-      setComments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [productId]);
+    const tree = buildTree(allRelevantComments);
+    setComments(tree);
+  } catch (error) {
+    console.error("Lỗi khi lấy comment:", error);
+    setComments([]);
+  } finally {
+    setLoading(false);
+  }
+}, [productId]);
 
   // Fetch replies for a top-level comment
   const fetchReplies = useCallback(async (commentId: string) => {
@@ -157,31 +164,42 @@ export default function ProductReview({
     },
     [],
   );
-  const handleCommentSubmit = useCallback(
-    async (content: string) => {
-      await apiRequest.post("/comments", {
-        content,
-        targetType: "PRODUCT",
-        targetId: productId,
-      });
-      await fetchComments();
-    },
-    [productId, fetchComments],
-  );
+const handleCommentSubmit = useCallback(
+  async (content: string) => {
+    // 1. Hứng kết quả từ API
+    const response = await apiRequest.post<any>("/comments", {
+      content,
+      targetType: "PRODUCT",
+      targetId: productId,
+    });
+    
+    // 2. Fetch lại danh sách 
+    await fetchComments();
+
+    // 3. QUAN TRỌNG: Trả kết quả về cho Component con
+    // Giả sử server trả về { data: { isApproved: false } } hoặc tương tự
+    return response?.data || response; 
+  },
+  [productId, fetchComments],
+);
 
   // Submit reply (có parentId)
-  const handleReplySubmit = useCallback(
-    async (parentId: string, content: string) => {
-      await apiRequest.post("/comments", {
-        content,
-        targetType: "PRODUCT",
-        targetId: productId,
-        parentId,
-      });
-      await fetchReplies(parentId);
-    },
-    [productId, fetchReplies],
-  );
+const handleReplySubmit = useCallback(
+  async (parentId: string, content: string) => {
+    const response = await apiRequest.post<any>("/comments", {
+      content,
+      targetType: "PRODUCT",
+      targetId: productId,
+      parentId,
+    });
+    
+    await fetchReplies(parentId);
+
+    // QUAN TRỌNG: Trả kết quả về
+    return response?.data || response;
+  },
+  [productId, fetchReplies],
+);
 
   function buildTree(flatList: Comment[]): Comment[] {
     // Thêm parentId vào type để dùng được
