@@ -3,14 +3,13 @@
 /**
  * FlashSaleClient
  *
- * Nhận saleSchedule từ SSR (page.tsx), KHÔNG fetch thêm API nào.
- * Products đã có trong saleSchedule.todayProducts và schedule[].promotions.
+ * Nhận saleSchedule từ SSR (page.tsx), KHÔNG fetch thêm API nào cho hôm nay.
+ * Ngày khác: fetch /home/sale-by-date?date=YYYY-MM-DD khi click tab (có cache).
  *
  * Tất cả filter/search/sort đều client-side.
  */
 
-import { useState, useMemo, memo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, memo, useEffect, useCallback } from "react";
 import {
    Flame,
    Search,
@@ -20,11 +19,11 @@ import {
    ArrowUpDown,
    ChevronLeft,
    ChevronRight,
-   Loader2,
    Calendar,
 } from "lucide-react";
 import HotSaleProductCard from "../home/components/Sales/HotSaleProductCard";
 import { SaleProduct, SaleScheduleData } from "../home/_libs";
+import apiRequest from "@/lib/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -47,6 +46,22 @@ const SORT_OPTIONS = [
 ];
 
 const PAGE_SIZE = 20;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+type CachedDayData = {
+   products: SaleProduct[];
+   total: number;
+   promotions: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      priority: number;
+   }>;
+   endDate: string | null;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -149,16 +164,19 @@ const Countdown = memo(function Countdown({
 function DateTabs({
    schedule,
    activeDate,
+   loadingDate,
    onSelect,
 }: {
    schedule: SaleScheduleData["schedule"];
    activeDate: string;
+   loadingDate: string | null;
    onSelect: (d: string) => void;
 }) {
    return (
       <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-1">
          {schedule.map((day) => {
             const isActive = activeDate === day.date;
+            const isLoading = loadingDate === day.date;
             return (
                <button
                   key={day.date}
@@ -171,11 +189,20 @@ function DateTabs({
                           : "bg-neutral-50 border-neutral-200 text-neutral-400 hover:bg-neutral-100"
                   }`}
                >
-                  <span className="text-xs font-bold">
+                  <span className="flex items-center gap-1 text-xs font-bold">
                      {day.isToday ? "Hôm nay" : formatDateTab(day.date)}
+                     {isLoading && (
+                        <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                     )}
                   </span>
                   <span
-                     className={`text-[10px] mt-0.5 ${isActive ? "text-yellow-200" : "text-[#e24c5a]"} ${!day.hasActiveSale ? "opacity-40 text-neutral-400" : ""}`}
+                     className={`text-[10px] mt-0.5 ${
+                        isActive
+                           ? "text-yellow-200"
+                           : day.hasActiveSale
+                             ? "text-[#e24c5a]"
+                             : "text-neutral-400"
+                     }`}
                   >
                      {day.hasActiveSale
                         ? day.isToday
@@ -215,7 +242,6 @@ function FilterBar({
 }) {
    return (
       <div className="bg-white rounded-2xl border border-neutral-200 p-4 shadow-sm space-y-4">
-         {/* Search */}
          <div className="relative">
             <Search
                size={16}
@@ -238,7 +264,6 @@ function FilterBar({
             )}
          </div>
 
-         {/* Price + Sort */}
          <div className="flex flex-wrap gap-3 items-center">
             <div className="flex flex-wrap items-center gap-1.5">
                <Tag size={14} className="text-neutral-500 shrink-0" />
@@ -282,7 +307,6 @@ function FilterBar({
             </div>
          </div>
 
-         {/* Result count */}
          {(search || priceRange !== 0) && (
             <p className="text-xs text-neutral-500">
                Hiển thị{" "}
@@ -355,21 +379,35 @@ function Pagination({
 
 interface Props {
    saleSchedule: SaleScheduleData;
-   initialDate: string | null;
 }
 
-export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
-   const router = useRouter();
+export function FlashSaleClient({ saleSchedule }: Props) {
    const { schedule, todayProducts } = saleSchedule;
 
-   // Xác định ngày active: ưu tiên URL param → hôm nay → đầu tiên
-   const defaultDate = useMemo(() => {
-      if (initialDate && schedule.find((d) => d.date === initialDate))
-         return initialDate;
-      return schedule.find((d) => d.isToday)?.date ?? schedule[0]?.date ?? "";
-   }, [schedule, initialDate]);
+   // Tab mặc định: hôm nay
+   const defaultDate = useMemo(
+      () => schedule.find((d) => d.isToday)?.date ?? schedule[0]?.date ?? "",
+      [schedule],
+   );
 
    const [activeDate, setActiveDate] = useState(defaultDate);
+   const [loadingDate, setLoadingDate] = useState<string | null>(null);
+
+   // Cache products theo ngày — khởi tạo sẵn với todayProducts từ SSR
+   const [productsCache, setProductsCache] = useState<
+      Record<string, CachedDayData>
+   >(() => {
+      const todayKey = schedule.find((d) => d.isToday)?.date ?? "";
+      if (!todayKey || !todayProducts?.products?.length) return {};
+      return {
+         [todayKey]: {
+            products: todayProducts.products,
+            total: todayProducts.total,
+            promotions: todayProducts.promotions ?? [],
+            endDate: todayProducts.endDate,
+         },
+      };
+   });
 
    // Filter state
    const [search, setSearch] = useState("");
@@ -377,34 +415,61 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
    const [sort, setSort] = useState("default");
    const [page, setPage] = useState(1);
 
-   // Sync URL khi chuyển tab
+   // Fetch products cho ngày chưa có trong cache — giống HotSaleOnline
+   const fetchProductsForDate = useCallback(
+      async (date: string) => {
+         if (productsCache[date] !== undefined) return; // đã có cache, bỏ qua
+         setLoadingDate(date);
+         try {
+            const res = await apiRequest.get<any>("/home/sale-by-date", {
+               params: { date, limit: 100 }, // lấy nhiều để pagination client-side hoạt động đúng
+            });
+            const result = res.data;
+            setProductsCache((prev) => ({
+               ...prev,
+               [date]: {
+                  products: result.data ?? [],
+                  total: result.total ?? 0,
+                  promotions: result.promotions ?? [],
+                  endDate: result.endDate ?? null,
+               },
+            }));
+         } catch {
+            // Cache empty để tránh retry liên tục
+            setProductsCache((prev) => ({
+               ...prev,
+               [date]: {
+                  products: [],
+                  total: 0,
+                  promotions: [],
+                  endDate: null,
+               },
+            }));
+         } finally {
+            setLoadingDate(null);
+         }
+      },
+      [productsCache],
+   );
+
+   // Đổi tab — reset filter, fetch nếu chưa có cache
    const handleDateSelect = (date: string) => {
       setActiveDate(date);
       setSearch("");
       setPriceRange(0);
       setSort("default");
       setPage(1);
-      router.replace(`/flash-sale?date=${date}`, { scroll: false });
+      fetchProductsForDate(date);
    };
 
-   // ── Lấy products của ngày đang xem từ saleSchedule ──
-   // Hôm nay: lấy từ todayProducts (đã có sẵn)
-   // Ngày khác: không có API riêng → hiển thị thông tin promotion từ schedule
+   // Data của ngày đang active
    const activeDay = schedule.find((d) => d.date === activeDate);
-   const isToday = activeDay?.isToday ?? false;
+   const currentData = productsCache[activeDate];
+   const isLoadingCurrent = loadingDate === activeDate;
 
-   // Chỉ có products cho hôm nay (todayProducts)
-   // Ngày khác chỉ có thể show "Sắp diễn ra" (không có products)
-   const rawProducts: SaleProduct[] = useMemo(() => {
-      if (isToday && todayProducts?.products?.length) {
-         return todayProducts.products;
-      }
-      return [];
-   }, [isToday, todayProducts]);
-
-   const endDate = isToday ? (todayProducts?.endDate ?? null) : null;
-   const promotions = isToday
-      ? (todayProducts?.promotions ?? [])
+   // Promotions: ưu tiên từ cache (có data thực), fallback sang schedule metadata
+   const promotions = currentData?.promotions?.length
+      ? currentData.promotions
       : (activeDay?.promotions?.map((p) => ({
            id: p.id,
            name: p.name,
@@ -425,15 +490,12 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
       [activeDay],
    );
 
-   const isUpcoming = !!activeDay && !activeDay.isToday;
-
-   // ── Normalize products ──
+   // Normalize + filter + sort — chỉ chạy khi currentData thay đổi
    const allProducts = useMemo(
-      () => rawProducts.map(normalizeProduct),
-      [rawProducts],
+      () => (currentData?.products ?? []).map(normalizeProduct),
+      [currentData],
    );
 
-   // ── Filter + Sort (client-side) ──
    const filtered = useMemo(() => {
       let list = [...allProducts];
 
@@ -464,29 +526,27 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
       return list;
    }, [allProducts, search, priceRange, sort]);
 
-   // ── Pagination ──
    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
    const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
    const hasSaleDays = schedule.some((d) => d.hasActiveSale);
 
    return (
       <div className="min-h-screen bg-neutral-50">
-         {/* ── Hero Banner ── */}
-            <div className="container">
-               {/* Date tabs */}
-               {hasSaleDays && schedule.length > 0 && (
-                  <div className="mt-6">
-                     <DateTabs
-                        schedule={schedule}
-                        activeDate={activeDate}
-                        onSelect={handleDateSelect}
-                     />
-                  </div>
-               )}
-            </div>
+         {/* Date tabs */}
+         <div className="container">
+            {hasSaleDays && schedule.length > 0 && (
+               <div className="mt-6">
+                  <DateTabs
+                     schedule={schedule}
+                     activeDate={activeDate}
+                     loadingDate={loadingDate}
+                     onSelect={handleDateSelect}
+                  />
+               </div>
+            )}
+         </div>
 
-         {/* ── Main content ── */}
+         {/* Main content */}
          <div className="container py-6 space-y-5">
             {/* Promotion badges */}
             {promotions.length > 0 && (
@@ -503,8 +563,18 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
                </div>
             )}
 
-            {/* Có products (hôm nay) */}
-            {isToday && allProducts.length > 0 ? (
+            {/* Loading skeleton */}
+            {isLoadingCurrent ? (
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                     <div
+                        key={i}
+                        className="rounded-xl border border-neutral-200 bg-neutral-100 animate-pulse h-64"
+                     />
+                  ))}
+               </div>
+            ) : allProducts.length > 0 ? (
+               /* Có products */
                <>
                   <FilterBar
                      search={search}
@@ -535,7 +605,7 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
                                  product={product}
                                  index={index}
                                  flashPromoRule={flashPromoRule}
-                                 isUpcoming={false}
+                                 isUpcoming={!!activeDay && !activeDay.isToday}
                               />
                            ))}
                         </div>
@@ -567,41 +637,43 @@ export function FlashSaleClient({ saleSchedule, initialDate }: Props) {
                   )}
                </>
             ) : (
-               /* Ngày khác / không có products */
+               /* Không có products */
                <div className="flex flex-col items-center justify-center py-20 gap-4">
                   <div className="w-20 h-20 rounded-full bg-[#e24c5a]/10 flex items-center justify-center">
                      <Calendar className="w-10 h-10 text-[#e24c5a]/40" />
                   </div>
                   <div className="text-center">
                      <p className="text-base font-semibold text-neutral-500">
-                        {isToday
+                        {activeDay?.isToday
                            ? "Chưa có sản phẩm flash sale hôm nay"
                            : "Chương trình sale sắp diễn ra"}
                      </p>
-                     {!isToday && activeDate && (
+                     {!activeDay?.isToday && activeDate && (
                         <p className="text-sm text-neutral-400 mt-1">
                            Ngày {formatDateLabel(activeDate)}
                         </p>
                      )}
                   </div>
-                  {/* Hiển thị promotions preview cho ngày sắp tới */}
-                  {!isToday && (activeDay?.promotions?.length ?? 0) > 0 && (
-                     <div className="flex flex-col items-center gap-2 mt-2">
-                        <p className="text-xs text-neutral-400 font-medium uppercase tracking-wide">
-                           Chương trình sắp có
-                        </p>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                           {activeDay?.promotions.map((promo) => (
-                              <span
-                                 key={promo.id}
-                                 className="text-xs px-3 py-1.5 rounded-full border border-[#e24c5a]/30 text-[#e24c5a] font-medium"
-                              >
-                                 {promo.name}
-                              </span>
-                           ))}
+
+                  {/* Preview promotions cho ngày sắp tới */}
+                  {!activeDay?.isToday &&
+                     (activeDay?.promotions?.length ?? 0) > 0 && (
+                        <div className="flex flex-col items-center gap-2 mt-2">
+                           <p className="text-xs text-neutral-400 font-medium uppercase tracking-wide">
+                              Chương trình sắp có
+                           </p>
+                           <div className="flex flex-wrap gap-2 justify-center">
+                              {activeDay?.promotions.map((promo) => (
+                                 <span
+                                    key={promo.id}
+                                    className="text-xs px-3 py-1.5 rounded-full border border-[#e24c5a]/30 text-[#e24c5a] font-medium"
+                                 >
+                                    {promo.name}
+                                 </span>
+                              ))}
+                           </div>
                         </div>
-                     </div>
-                  )}
+                     )}
                </div>
             )}
          </div>

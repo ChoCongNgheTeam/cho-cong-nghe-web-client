@@ -21,6 +21,7 @@ import { Flame, ChevronRight, Calendar } from "lucide-react";
 import HotSaleProductCard from "./HotSaleProductCard";
 import apiRequest from "@/lib/api";
 import { formatTime as formatLocaleTime } from "@/helpers";
+import Link from "next/link";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -391,7 +392,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                   {/* ── Products ── */}
                   <div className="px-2">
                      {loadingDate === activeDate ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4 items-stretch">
                            {Array.from({ length: 4 }).map((_, i) => (
                               <div
                                  key={i}
@@ -401,7 +402,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                         </div>
                      ) : products.length > 0 ? (
                         products.length <= 4 ? (
-                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
+                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4 items-stretch">
                               {products.map((item, index) => {
                                  const raw = item.card ?? item;
                                  const product = {
@@ -443,7 +444,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                         ) : (
                            <Slidezy
                               items={{
-                                 mobile: 1,
+                                 mobile: 2,
                                  tablet: 2,
                                  lg: 3,
                                  desktop: 4,
@@ -505,7 +506,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                            <Flame className="w-10 h-10 text-neutral opacity-30" />
                            <p className="text-[13px] text-neutral-dark">
                               {activeDay?.hasActiveSale
-                                 ? "Đang tải sản phẩm..."
+                                 ? "Sản phẩm Sale đang được cập nhật..."
                                  : "Chương trình sale sắp diễn ra"}
                            </p>
                            {activeDay &&
@@ -522,12 +523,12 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                   {/* ── Footer link ── */}
                   {products.length > 0 && (
                      <div className="px-4 pb-2 flex justify-end">
-                        <a
-                           href={`/flash-sale?date=${activeDate}`}
+                        <Link
+                           href={"/flash-sale"}
                            className="flex items-center gap-1 text-[12px] text-promotion font-medium hover:underline"
                         >
                            Xem tất cả <ChevronRight size={13} />
-                        </a>
+                        </Link>
                      </div>
                   )}
                </div>
