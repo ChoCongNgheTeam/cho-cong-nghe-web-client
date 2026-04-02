@@ -38,15 +38,14 @@ interface SafeResponse<T> {
 // ==========================================
 let _refreshPromise: Promise<boolean> | null = null;
 
-export const performRefresh = async (): Promise<boolean> => {
-  // Singleton: nếu đang refresh rồi thì chờ kết quả đó luôn
+export const performRefresh = async (retryCount = 0): Promise<boolean> => {
   if (_refreshPromise) return _refreshPromise;
 
   _refreshPromise = (async () => {
     try {
       const controller = new AbortController();
-      // Timeout ngắn cho refresh — nếu server không trả lời trong 8s thì coi như fail
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      // Tăng từ 8s lên 15s cho Render free tier cold start
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const refreshResponse = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
         method: "POST",
@@ -66,13 +65,18 @@ export const performRefresh = async (): Promise<boolean> => {
         return false;
       }
 
-      // 401, 403 → session hết hạn → không cần retry
-      // 429 → bị rate limit → KHÔNG retry vì vô nghĩa, báo fail luôn
-      // 5xx → server lỗi → không retry ở đây, để caller quyết định
       return false;
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        console.warn("[performRefresh] Timeout sau 8s");
+        console.warn(`[performRefresh] Timeout lần ${retryCount + 1}`);
+
+        // Retry tối đa 2 lần khi timeout (Render cold start có thể cần 10-20s)
+        if (retryCount < 2) {
+          _refreshPromise = null; // reset để retry được
+          return performRefresh(retryCount + 1);
+        }
+
+        console.warn("[performRefresh] Hết retry, coi như fail");
       }
       return false;
     } finally {

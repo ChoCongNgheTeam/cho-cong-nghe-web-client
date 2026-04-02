@@ -74,6 +74,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         try {
           const response = await apiRequest.get<ApiResponse<User>>("/users/me", {
             noRedirectOn401: true,
+            timeout: 15000, // tăng lên 15s
           });
           if (response?.data) {
             setUser(response.data);

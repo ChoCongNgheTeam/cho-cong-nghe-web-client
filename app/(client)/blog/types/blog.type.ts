@@ -7,6 +7,16 @@ export type Author = {
 
 export type BlogStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
+export type BlogType = "TIN_MOI" | "DANH_GIA" | "KHUYEN_MAI" | "DIEN_MAY" | "NOI_BAT";
+
+export const BLOG_TYPE_LABEL: Record<BlogType, string> = {
+  TIN_MOI: "Tin mới",
+  DANH_GIA: "Đánh giá - Tư vấn",
+  KHUYEN_MAI: "Khuyến mãi",
+  DIEN_MAY: "Điện máy - Gia dụng",
+  NOI_BAT: "Nổi bật",
+};
+
 export type BlogCategory = {
   id: string;
   name: string;
@@ -24,6 +34,7 @@ export type Blog = {
   publishedAt: string;
   commentsCount: number;
   status?: BlogStatus;
+  type?: BlogType;
   category?: BlogCategory | null;
   author: Author;
 };
@@ -32,6 +43,7 @@ export type BlogDetail = Blog & {
   content: string;
   updatedAt: string;
   status: BlogStatus;
+  type: BlogType;
 };
 
 export type Pagination = {

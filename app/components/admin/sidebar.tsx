@@ -171,11 +171,11 @@ const navGroups: NavGroup[] = [
     label: "Hệ thống",
     icon: Settings,
     items: [
-      {
-        title: "Vai trò & Phân quyền",
-        href: "/admin/roles",
-        icon: ShieldCheck,
-      },
+      // {
+      //   title: "Vai trò & Phân quyền",
+      //   href: "/admin/roles",
+      //   icon: ShieldCheck,
+      // },
       { title: "Cài đặt hệ thống", href: "/admin/settings", icon: Settings },
       { title: "Thùng rác", href: "/admin/trash", icon: Trash2 },
     ],

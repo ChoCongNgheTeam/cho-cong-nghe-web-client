@@ -159,9 +159,7 @@ export default function BlogDetailPage() {
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
                   <Eye size={11} /> Lượt xem
                 </span>
-                <span className="text-[13px] font-bold text-primary">
-                  {formatNumber(blog.viewCount)}
-                </span>
+                <span className="text-[13px] font-bold text-primary">{formatNumber(blog.viewCount)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
@@ -253,7 +251,18 @@ export default function BlogDetailPage() {
                   </div>
                 </div>
                 <div
-                  className="prose prose-sm max-w-none text-primary [&_h1]:text-[20px] [&_h2]:text-[18px] [&_h3]:text-[16px] [&_h4]:text-[14px] [&_p]:text-[13px] [&_p]:leading-relaxed [&_img]:rounded-xl [&_img]:border [&_img]:border-neutral [&_pre]:rounded-xl [&_pre]:bg-neutral-light-active [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-accent/5 [&_blockquote]:rounded-r-xl [&_a]:text-accent"
+                  className="
+    prose prose-sm max-w-none text-primary
+    break-words overflow-hidden
+    [&_h1]:text-[20px] [&_h2]:text-[18px] [&_h3]:text-[16px] [&_h4]:text-[14px]
+    [&_p]:text-[13px] [&_p]:leading-relaxed
+    [&_img]:rounded-xl [&_img]:border [&_img]:border-neutral
+    [&_img]:max-w-full [&_img]:h-auto
+    [&_pre]:rounded-xl [&_pre]:bg-neutral-light-active [&_pre]:overflow-x-auto
+    [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-accent/5 [&_blockquote]:rounded-r-xl
+    [&_a]:text-accent
+    [&_table]:block [&_table]:overflow-x-auto
+  "
                   dangerouslySetInnerHTML={{ __html: blog.content }}
                 />
               </div>

@@ -17,6 +17,7 @@ const firebaseConfig = {
 };
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+const isFirebaseConfigReady = Object.values(firebaseConfig).every(Boolean);
 
 export function useFcmToken() {
   const { isAuthenticated } = useAuth();
@@ -25,6 +26,12 @@ export function useFcmToken() {
   useEffect(() => {
     if (!isAuthenticated || typeof window === "undefined") return;
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if (!isFirebaseConfigReady || !VAPID_KEY) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[FCM] Missing firebase config or VAPID key. Skipping setup.");
+      }
+      return;
+    }
 
     const setup = async () => {
       try {

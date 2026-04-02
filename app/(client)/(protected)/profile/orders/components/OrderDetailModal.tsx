@@ -38,7 +38,7 @@ export default function OrderDetailModal({ order }: { order: Order }) {
   const total = Number(order.totalAmount);
 
   return (
-    <div className="max-h-[82vh] sm:max-h-[78vh] overflow-y-auto custom-scroll">
+    <div className="max-h-[82vh] sm:max-h-[78vh] overflow-y-auto custom-scroll pr-3 [scrollbar-gutter:stable]">
       {/* ── Sticky Header ── */}
       <div className="sticky top-0 bg-neutral-light px-4 sm:px-6 pt-4 sm:pt-5 pb-2.5 sm:pb-3 border-b border-neutral z-10">
         <div className="flex items-start justify-between gap-2">
