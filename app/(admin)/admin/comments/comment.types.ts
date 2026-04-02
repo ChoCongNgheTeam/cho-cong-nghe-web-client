@@ -21,6 +21,7 @@ export interface Comment {
   deletedAt?: string;
   deletedBy?: string;
   replies?: Comment[];
+  targetName?: string;
 }
 
 export interface CommentsPagination {

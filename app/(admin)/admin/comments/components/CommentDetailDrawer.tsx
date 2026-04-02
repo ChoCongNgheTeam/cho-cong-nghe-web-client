@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, User, Calendar, Tag, Reply, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { X, User, Calendar, Tag, Reply, CheckCircle, XCircle, Loader2, FileText } from "lucide-react";
 import { Comment } from "../comment.types";
 import { getComment, getCommentReplies, approveComment } from "../_libs/comments";
 import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../const";
@@ -96,6 +96,16 @@ export function CommentDetailDrawer({ commentId, onClose, onApprovalChange }: Co
                   }
                 />
                 <MetaItem icon={<User size={12} />} label="Email" value={comment.user?.email ?? "—"} />
+
+                {/* Tên đối tượng (blog / sản phẩm) */}
+                <MetaItem
+                  icon={<FileText size={12} />}
+                  label={TARGET_TYPE_LABELS[comment.targetType] ?? "Đối tượng"}
+                  value={
+                    comment.targetName ? <span className="font-medium text-primary">{comment.targetName}</span> : <span className="font-mono text-neutral-dark">{comment.targetId.slice(0, 8)}…</span>
+                  }
+                />
+
                 {comment.parentId && <MetaItem icon={<Reply size={12} />} label="Reply của" value={comment.parentId.slice(0, 8) + "..."} />}
               </div>
 
