@@ -178,11 +178,12 @@ export interface AdminProductStats {
   total: number;
   active: number;
   inactive: number;
-  outOfStock: number;
+  outOfStock: number; // count sản phẩm hoàn toàn hết hàng
   deleted: number;
   featured: number;
-  lowStock: number;
-  lowStockProducts: LowStockProductInfo[];
+  lowStock: number; // count sản phẩm SẮP hết (> 0 && <= 5), không bao gồm out
+  lowStockProducts: LowStockProductInfo[]; // sắp hết
+  outOfStockProducts: LowStockProductInfo[]; // hết hẳn
 }
 // SEARCH TRENDING
 // ─────────────────────────────────────────────────────────────────────────────

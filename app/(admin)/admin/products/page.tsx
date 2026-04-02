@@ -28,11 +28,15 @@ import { StockAlertBanner } from "./components/StockAlertBanner";
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Tab "low_stock" = gộp cả hết hàng (quantity=0) + sắp hết (0 < quantity <= 5).
+ * Không gọi API riêng — render local từ stats.outOfStockProducts + stats.lowStockProducts.
+ */
 const STATUS_TABS = [
   { value: "ALL", label: "Tất cả" },
   { value: "active", label: "Hiển thị" },
   { value: "inactive", label: "Đang ẩn" },
-  { value: "outOfStock", label: "Hết hàng" },
+  { value: "low_stock", label: "Tồn kho thấp" }, // ← thay "outOfStock"
   { value: "featured", label: "Nổi bật" },
   { value: "deleted", label: "Thùng rác" },
 ];
@@ -72,21 +76,28 @@ const DEFAULT_META: ProductMeta = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SORT + INJECT HELPERS (từ file 2)
+// HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowStockProductInfo[]): ProductCard[] {
-  const lowStockMap = new Map(lowStockProducts.map((p) => [p.id, p]));
+/**
+ * Inject stockWarning vào rows từ 2 nguồn tách biệt:
+ *   outOfStockProducts (quantity = 0)   → "out_of_stock"
+ *   lowStockProducts   (0 < qty <= 5)  → "low_stock"
+ * Sau đó sort: out → low → featured → normal
+ */
+function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowStockProductInfo[], outOfStockProducts: LowStockProductInfo[]): ProductCard[] {
+  const lowMap = new Map(lowStockProducts.map((p) => [p.id, p]));
+  const outMap = new Map(outOfStockProducts.map((p) => [p.id, p]));
 
   const enriched = products.map((p) => {
-    const lowInfo = lowStockMap.get(p.id);
-    if (!lowInfo) return p;
-    const isOut = lowInfo.minQuantity === 0;
-    return {
-      ...p,
-      stockWarning: isOut ? ("out_of_stock" as const) : ("low_stock" as const),
-      minQuantity: lowInfo.minQuantity,
-    };
+    if (outMap.has(p.id)) {
+      return { ...p, stockWarning: "out_of_stock" as const, minQuantity: 0 };
+    }
+    const lowInfo = lowMap.get(p.id);
+    if (lowInfo) {
+      return { ...p, stockWarning: "low_stock" as const, minQuantity: lowInfo.minQuantity };
+    }
+    return p;
   });
 
   return [...enriched].sort((a, b) => getRowScore(a) - getRowScore(b));
@@ -99,12 +110,34 @@ function getRowScore(p: ProductCard): number {
   return 3;
 }
 
+/**
+ * Convert LowStockProductInfo → ProductCard để render trong tab "Tồn kho thấp"
+ * mà không cần gọi thêm API.
+ */
+function lowStockToCard(p: LowStockProductInfo, warning: "out_of_stock" | "low_stock"): ProductCard {
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    priceOrigin: p.lowStockVariants[0]?.price ?? 0,
+    thumbnail: p.thumbnail ?? "",
+    rating: { average: 0, count: 0 },
+    isFeatured: p.isFeatured,
+    isNew: false,
+    highlights: [],
+    inStock: warning !== "out_of_stock",
+    isActive: true,
+    stockWarning: warning,
+    minQuantity: p.minQuantity,
+  } as ProductCard;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ProductsPage() {
-  // ── Data ────────────────────────────────────────────────────────────────────
+  // ── Data ──────────────────────────────────────────────────────────────────
   const [products, setProducts] = useState<ProductCard[]>([]);
   const [meta, setMeta] = useState<ProductMeta>(DEFAULT_META);
   const [stats, setStats] = useState<AdminProductStats | null>(null);
@@ -112,38 +145,35 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Query params ─────────────────────────────────────────────────────────────
+  // ── Query params ──────────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt_desc");
-
-  // Date range
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const dateRef = useRef<HTMLDivElement>(null);
-
-  // Sort dropdown
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  const dateRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // ── Selection ────────────────────────────────────────────────────────────────
+  // ── Selection ─────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // ── Delete modal ─────────────────────────────────────────────────────────────
+  // ── Delete modal ──────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<ProductCard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // ── Bulk action ──────────────────────────────────────────────────────────────
+  // ── Bulk action ───────────────────────────────────────────────────────────
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkActionType, setBulkActionType] = useState<BulkAction | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
 
-  // ── Close dropdowns on outside click ─────────────────────────────────────────
+  // ── Close dropdowns on outside click ─────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
@@ -158,12 +188,11 @@ export default function ProductsPage() {
   const tabToParams = (tab: string) => {
     if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
     if (tab === "inactive") return { isActive: false, inStock: undefined, isFeatured: undefined };
-    if (tab === "outOfStock") return { isActive: undefined, inStock: false, isFeatured: undefined };
     if (tab === "featured") return { isActive: undefined, inStock: undefined, isFeatured: true };
     return { isActive: undefined, inStock: undefined, isFeatured: undefined };
   };
 
-  // ── Fetch stats ───────────────────────────────────────────────────────────────
+  // ── Fetch stats ───────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
@@ -176,8 +205,13 @@ export default function ProductsPage() {
     }
   }, []);
 
-  // ── Fetch products ─────────────────────────────────────────────────────────────
+  // ── Fetch products ────────────────────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
+    // Tab "low_stock" dùng data local từ stats — không fetch API
+    if (activeTab === "low_stock") {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -208,28 +242,35 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
-
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // ── Derived: inject stock warning + sort rows ─────────────────────────────────
-  const sortedProducts = useMemo(() => {
-    const lowStockProducts = stats?.lowStockProducts ?? [];
-    if (activeTab === "deleted") return products;
-    return injectAndSortProducts(products, lowStockProducts);
-  }, [products, stats?.lowStockProducts, activeTab]);
+  // ── Derived data ──────────────────────────────────────────────────────────
+  const outOfStockProducts = useMemo(() => stats?.outOfStockProducts ?? [], [stats]);
+  const lowStockProducts = useMemo(() => stats?.lowStockProducts ?? [], [stats]);
 
-  // ── Row class — highlight low/out of stock ────────────────────────────────────
+  const sortedProducts = useMemo(() => {
+    // Tab "Tồn kho thấp": render local — out (quantity=0) trước, low sau
+    if (activeTab === "low_stock") {
+      const outCards = outOfStockProducts.map((p) => lowStockToCard(p, "out_of_stock"));
+      const lowCards = lowStockProducts.map((p) => lowStockToCard(p, "low_stock"));
+      return [...outCards, ...lowCards];
+    }
+    if (activeTab === "deleted") return products;
+    return injectAndSortProducts(products, lowStockProducts, outOfStockProducts);
+  }, [products, lowStockProducts, outOfStockProducts, activeTab]);
+
+  // ── Row className — highlight theo warning ────────────────────────────────
   const getRowClassName = (product: ProductCard) => {
-    const warning = (product as any).stockWarning;
-    if (warning === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
-    // if (warning === "low_stock") return "bg-amber-50/70 hover:bg-amber-50";
-    if (warning === "low_stock") return "";
+    const w = (product as any).stockWarning;
+    if (w === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
+    // if (w === "low_stock") return "bg-amber-50/60 hover:bg-amber-50";
+    if (w === "low_stock") return "hover:bg-amber-50";
     return "";
   };
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  // ── Misc helpers ──────────────────────────────────────────────────────────
   const resetPage = useCallback(() => setPage(1), []);
 
   const handleTabChange = (tab: string) => {
@@ -275,12 +316,12 @@ export default function ProductsPage() {
   const hasSortFilter = sortKey !== "createdAt_desc";
   const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
 
-  // ── Selection ────────────────────────────────────────────────────────────────
+  // ── Selection ─────────────────────────────────────────────────────────────
   const toggleOne = useCallback((id: string) => {
     setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
     });
   }, []);
 
@@ -288,7 +329,7 @@ export default function ProductsPage() {
     setSelected((prev) => (prev.size === sortedProducts.length ? new Set() : new Set(sortedProducts.map((p) => p.id))));
   }, [sortedProducts]);
 
-  // ── Toggle status — optimistic update ────────────────────────────────────────
+  // ── Status change — optimistic ────────────────────────────────────────────
   const handleStatusChange = useCallback(
     (productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => {
       setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updates } : p)));
@@ -297,7 +338,7 @@ export default function ProductsPage() {
     [fetchStats],
   );
 
-  // ── Delete ───────────────────────────────────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDeleteClick = useCallback((product: ProductCard) => {
     setDeleteTarget(product);
     setDeleteError(null);
@@ -308,11 +349,7 @@ export default function ProductsPage() {
     setDeleting(true);
     setDeleteError(null);
     try {
-      if ((deleteTarget as any).deletedAt) {
-        await hardDeleteProduct(deleteTarget.id);
-      } else {
-        await softDeleteProduct(deleteTarget.id);
-      }
+      (deleteTarget as any).deletedAt ? await hardDeleteProduct(deleteTarget.id) : await softDeleteProduct(deleteTarget.id);
       setDeleteTarget(null);
       fetchProducts();
       fetchStats();
@@ -323,7 +360,7 @@ export default function ProductsPage() {
     }
   }, [deleteTarget, fetchProducts, fetchStats]);
 
-  // ── Bulk actions ─────────────────────────────────────────────────────────────
+  // ── Bulk ──────────────────────────────────────────────────────────────────
   const openBulkAction = (action: BulkAction) => {
     setBulkActionType(action);
     setShowBulkModal(true);
@@ -345,38 +382,30 @@ export default function ProductsPage() {
     }
   }, [bulkActionType, selected, fetchProducts, fetchStats]);
 
-  // ── Columns ──────────────────────────────────────────────────────────────────
+  // ── Columns ───────────────────────────────────────────────────────────────
   const columns = useMemo(
-    () =>
-      getProductColumns({
-        page,
-        pageSize,
-        selected,
-        toggleOne,
-        onStatusChange: handleStatusChange,
-        onDeleteClick: handleDeleteClick,
-      }),
+    () => getProductColumns({ page, pageSize, selected, toggleOne, onStatusChange: handleStatusChange, onDeleteClick: handleDeleteClick }),
     [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
   );
 
-  // ── Tab counts (dùng stats nếu có, fallback meta.statusCounts) ───────────────
+  // ── Tab count ─────────────────────────────────────────────────────────────
   const getTabCount = (tabValue: string) => {
-    if (stats) {
-      if (tabValue === "ALL") return stats.total;
-      if (tabValue === "active") return stats.active;
-      if (tabValue === "inactive") return stats.inactive;
-      if (tabValue === "outOfStock") return stats.outOfStock;
-      if (tabValue === "featured") return stats.featured;
-      if (tabValue === "deleted") return stats.deleted;
-    }
-    return meta.statusCounts[tabValue] ?? 0;
+    if (!stats) return meta.statusCounts[tabValue] ?? 0;
+    if (tabValue === "ALL") return stats.total;
+    if (tabValue === "active") return stats.active;
+    if (tabValue === "inactive") return stats.inactive;
+    if (tabValue === "featured") return stats.featured;
+    if (tabValue === "deleted") return stats.deleted;
+    // "low_stock" = outOfStock + lowStock — 2 nhóm không overlap nhau
+    if (tabValue === "low_stock") return (stats.outOfStock ?? 0) + (stats.lowStock ?? 0);
+    return 0;
   };
 
-  const lowStockProducts = stats?.lowStockProducts ?? [];
+  const showBanner = !statsLoading && (lowStockProducts.length > 0 || outOfStockProducts.length > 0);
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
   // RENDER
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-neutral-light">
@@ -403,18 +432,17 @@ export default function ProductsPage() {
             href="/admin/products/create"
             className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer"
           >
-            <Plus size={15} />
-            Thêm sản phẩm
+            <Plus size={15} /> Thêm sản phẩm
           </Link>
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* ── Stats cards ── */}
       <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-6 gap-3">
-        <StatsCard label="Tổng sản phẩm" value={statsLoading ? "..." : (stats?.total ?? meta.statusCounts.ALL ?? 0)} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
+        <StatsCard label="Tổng sản phẩm" value={statsLoading ? "..." : (stats?.total ?? 0)} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
         <StatsCard
           label="Đang hiển thị"
-          value={statsLoading ? "..." : (stats?.active ?? meta.statusCounts.active ?? 0)}
+          value={statsLoading ? "..." : (stats?.active ?? 0)}
           sub="Khách hàng có thể xem"
           icon={<CheckCircle2 size={18} />}
           valueClassName="text-emerald-600"
@@ -422,7 +450,7 @@ export default function ProductsPage() {
         />
         <StatsCard
           label="Đang ẩn"
-          value={statsLoading ? "..." : (stats?.inactive ?? meta.statusCounts.inactive ?? 0)}
+          value={statsLoading ? "..." : (stats?.inactive ?? 0)}
           sub="Chưa hiển thị cho khách"
           icon={<EyeOff size={18} />}
           valueClassName="text-orange-500"
@@ -430,12 +458,13 @@ export default function ProductsPage() {
         />
         <StatsCard
           label="Nổi bật"
-          value={statsLoading ? "..." : (stats?.featured ?? meta.statusCounts.featured ?? 0)}
+          value={statsLoading ? "..." : (stats?.featured ?? 0)}
           sub="Sản phẩm được featured"
           icon={<Star size={18} />}
           valueClassName="text-amber-500"
           iconClassName="text-amber-500"
         />
+        {/* Hết hàng: quantity = 0, TÁCH BIỆT khỏi sắp hết */}
         <StatsCard
           label="Hết hàng"
           value={statsLoading ? "..." : (stats?.outOfStock ?? 0)}
@@ -444,41 +473,52 @@ export default function ProductsPage() {
           valueClassName="text-promotion"
           iconClassName="text-promotion"
         />
+        {/* Sắp hết: 0 < quantity <= 5, KHÔNG bao gồm hết hàng */}
         <StatsCard
           label="Sắp hết hàng"
           value={statsLoading ? "..." : (stats?.lowStock ?? 0)}
-          sub={`Tồn kho dưới ngưỡng`}
+          sub="Tồn kho dưới ngưỡng"
           icon={<AlertTriangle size={18} />}
           valueClassName={stats?.lowStock && stats.lowStock > 0 ? "text-amber-600" : "text-primary"}
           iconClassName={stats?.lowStock && stats.lowStock > 0 ? "text-amber-600" : "text-primary"}
         />
       </div>
 
-      {/* ── Stock Alert Banner ── */}
-      {!statsLoading && lowStockProducts.length > 0 && (
+      {/* ── Stock Alert Banner — truyền 2 nhóm riêng biệt ── */}
+      {showBanner && (
         <div className="px-6 pb-4 min-w-0 w-full">
-          <StockAlertBanner products={lowStockProducts} />
+          <StockAlertBanner lowStockProducts={lowStockProducts} outOfStockProducts={outOfStockProducts} />
         </div>
       )}
+
       {/* ── Main table card ── */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar: 1 row ── */}
+        {/* ── Toolbar ── */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {/* Status tabs */}
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => handleTabChange(tab.value)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"
-              }`}
-            >
-              {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                {getTabCount(tab.value)}
-              </span>
-            </button>
-          ))}
+          {STATUS_TABS.map((tab) => {
+            const count = getTabCount(tab.value);
+            const isLowStockTab = tab.value === "low_stock";
+            const isActive = activeTab === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => handleTabChange(tab.value)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  isActive ? (isLowStockTab ? "bg-amber-600 text-white" : "bg-accent text-white") : "text-primary hover:bg-neutral-light-active"
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${
+                    isActive ? "bg-white/20 text-white" : isLowStockTab && count > 0 ? "bg-amber-100 text-amber-700" : "bg-neutral-light-active text-primary"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
 
           <div className="w-px h-5 bg-neutral mx-1" />
 
@@ -498,20 +538,18 @@ export default function ProductsPage() {
               className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
             />
             {searchInput && (
-              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer">
+              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary cursor-pointer">
                 <X size={13} />
               </button>
             )}
           </div>
 
-          {/* Sort dropdown — ẩn khi đang xem thùng rác */}
-          {activeTab !== "deleted" && (
+          {/* Sort — ẩn khi deleted hoặc low_stock */}
+          {activeTab !== "deleted" && activeTab !== "low_stock" && (
             <div ref={sortRef} className="relative">
               <button
                 onClick={() => setShowSortDropdown((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
-                  hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"}`}
               >
                 <ArrowUpDown size={14} />
                 {hasSortFilter ? SORT_OPTIONS.find((o) => `${o.value}_${o.order}` === sortKey)?.label : "Sắp xếp"}
@@ -537,9 +575,7 @@ export default function ProductsPage() {
                       <button
                         key={key}
                         onClick={() => handleSortChange(key)}
-                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
-                          sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
-                        }`}
+                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"}`}
                       >
                         {opt.label}
                       </button>
@@ -550,14 +586,12 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* Date filter — ẩn khi đang xem thùng rác */}
-          {activeTab !== "deleted" && (
+          {/* Date filter — ẩn khi deleted hoặc low_stock */}
+          {activeTab !== "deleted" && activeTab !== "low_stock" && (
             <div ref={dateRef} className="relative">
               <button
                 onClick={() => setShowDatePicker((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
-                  hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"}`}
               >
                 <CalendarDays size={14} />
                 {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
@@ -620,13 +654,13 @@ export default function ProductsPage() {
           {(hasActiveFilters || hasSortFilter) && (
             <button
               onClick={handleClearAllFilters}
-              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               <X size={13} /> Xoá lọc
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-primary">{meta.total} sản phẩm</span>
+          <span className="ml-auto text-[12px] text-primary">{activeTab === "low_stock" ? `${sortedProducts.length} sản phẩm` : `${meta.total} sản phẩm`}</span>
         </div>
 
         {/* ── Bulk action bar ── */}
@@ -646,21 +680,21 @@ export default function ProductsPage() {
                   <button
                     onClick={() => openBulkAction("deactivate")}
                     disabled={bulkLoading}
-                    className="px-2.5 py-1 rounded-lg border border-orange-300 text-[11px] font-medium text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-2.5 py-1 rounded-lg border border-orange-300  text-[11px] font-medium text-orange-600  hover:bg-orange-50  transition-colors cursor-pointer disabled:opacity-50"
                   >
                     Ẩn
                   </button>
                   <button
                     onClick={() => openBulkAction("feature")}
                     disabled={bulkLoading}
-                    className="px-2.5 py-1 rounded-lg border border-amber-300 text-[11px] font-medium text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-2.5 py-1 rounded-lg border border-amber-300   text-[11px] font-medium text-amber-600   hover:bg-amber-50   transition-colors cursor-pointer disabled:opacity-50"
                   >
                     Nổi bật
                   </button>
                   <button
                     onClick={() => openBulkAction("unfeature")}
                     disabled={bulkLoading}
-                    className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-2.5 py-1 rounded-lg border border-neutral      text-[11px] font-medium text-primary     hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
                   >
                     Bỏ nổi bật
                   </button>
@@ -675,7 +709,7 @@ export default function ProductsPage() {
               </button>
             </div>
             {bulkLoading && <Loader2 size={13} className="animate-spin text-accent" />}
-            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary hover:text-primary cursor-pointer ml-auto">
+            <button onClick={() => setSelected(new Set())} className="text-[12px] text-primary cursor-pointer ml-auto">
               Bỏ chọn
             </button>
           </div>
@@ -691,16 +725,31 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Stock row legend ── */}
-        {!statsLoading && lowStockProducts.length > 0 && activeTab !== "deleted" && (
+        {/* ── Legend row màu — chỉ hiện khi có warning và không phải tab low_stock ── */}
+        {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && activeTab !== "deleted" && activeTab !== "low_stock" && (
           <div className="flex items-center gap-4 px-5 py-2 border-b border-neutral bg-neutral-light-active/30 text-[11px] text-primary">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block" />
-              Sắp hết hàng
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block" />
-              Hết hàng
+            {lowStockProducts.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block" />
+                Sắp hết hàng
+              </span>
+            )}
+            {outOfStockProducts.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block" />
+                Hết hàng
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* ── Note giải thích khi ở tab Tồn kho thấp ── */}
+        {activeTab === "low_stock" && (
+          <div className="flex items-center gap-3 px-5 py-2.5 border-b border-amber-200 bg-amber-50/50 text-[12px] text-amber-800">
+            <AlertTriangle size={13} className="shrink-0 text-amber-500" />
+            <span>
+              Gồm <strong>{outOfStockProducts.length} sản phẩm hết hàng</strong> (đỏ) và <strong>{lowStockProducts.length} sản phẩm sắp hết</strong> (vàng, tồn kho ≤ 5). Cập nhật tồn kho để xóa khỏi
+              danh sách này.
             </span>
           </div>
         )}
@@ -713,12 +762,15 @@ export default function ProductsPage() {
         ) : sortedProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Package size={36} className="text-primary opacity-30" />
-            <p className="text-[13px] text-primary">{hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}</p>
-            {hasActiveFilters ? (
+            <p className="text-[13px] text-primary">
+              {activeTab === "low_stock" ? "Không có sản phẩm nào có tồn kho thấp 🎉" : hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}
+            </p>
+            {hasActiveFilters && activeTab !== "low_stock" && (
               <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
                 Xóa bộ lọc
               </button>
-            ) : (
+            )}
+            {!hasActiveFilters && activeTab === "ALL" && (
               <Link href="/admin/products/create" className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer">
                 Tạo sản phẩm đầu tiên
               </Link>
@@ -728,8 +780,8 @@ export default function ProductsPage() {
           <AdminTable columns={columns} data={sortedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} rowClassName={getRowClassName} />
         )}
 
-        {/* ── Pagination ── */}
-        {!loading && !error && meta.total > 0 && (
+        {/* ── Pagination — ẩn với tab low_stock (data local, không phân trang) ── */}
+        {!loading && !error && meta.total > 0 && activeTab !== "low_stock" && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-primary">Hiển thị</span>
@@ -766,7 +818,7 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* ── Delete Confirm Modal ── */}
+      {/* ── Delete Modal ── */}
       {deleteTarget && (
         <Popzy
           isOpen={!!deleteTarget}
@@ -807,7 +859,7 @@ export default function ProductsPage() {
         />
       )}
 
-      {/* ── Bulk Action Confirm Modal ── */}
+      {/* ── Bulk Modal ── */}
       <Popzy
         isOpen={showBulkModal}
         onClose={() => !bulkLoading && setShowBulkModal(false)}
