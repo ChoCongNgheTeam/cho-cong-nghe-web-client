@@ -339,13 +339,6 @@ const Header = () => {
                            label="Sổ địa chỉ nhận hàng"
                            onClick={() => setMobileMenuOpen(false)}
                         />
-                        <MenuItem
-                           href="/profile/warranty"
-                           icon={<Shield className="h-5 w-5" />}
-                           label="Thông tin bảo hành"
-                           onClick={() => setMobileMenuOpen(false)}
-                        />
-
                         <div className="mx-1 my-1 border-t border-neutral" />
                      </>
                   ) : (

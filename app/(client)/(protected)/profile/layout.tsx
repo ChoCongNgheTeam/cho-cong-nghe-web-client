@@ -42,12 +42,6 @@ const menuItems = [
     href: "/profile/addresses",
   },
   {
-    icon: Shield,
-    label: "Thông tin bảo hành",
-    shortLabel: "Bảo hành",
-    href: "/profile/warranty",
-  },
-  {
     icon: Key,
     label: "Đổi mật khẩu",
     shortLabel: "Mật khẩu",

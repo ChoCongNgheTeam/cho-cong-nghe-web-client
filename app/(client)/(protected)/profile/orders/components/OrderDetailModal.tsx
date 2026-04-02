@@ -187,12 +187,6 @@ export default function OrderDetailModal({ order }: { order: Order }) {
                 <span>-{formatVND(voucher)}</span>
               </div>
             )}
-            {tax > 0 && (
-              <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
-                <span>Thuế VAT (10%)</span>
-                <span>{formatVND(tax)}</span>
-              </div>
-            )}
             <div className="flex justify-between font-bold text-primary border-t border-neutral pt-2 mt-1">
               <span className="text-xs sm:text-sm">Tổng cộng</span>
               <span className="text-sm sm:text-base text-promotion">{formatVND(total)}</span>
