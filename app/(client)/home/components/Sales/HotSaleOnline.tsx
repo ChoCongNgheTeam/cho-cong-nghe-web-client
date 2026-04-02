@@ -402,7 +402,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                         </div>
                      ) : products.length > 0 ? (
                         products.length <= 4 ? (
-                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4 items-stretch">
+                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch">
                               {products.map((item, index) => {
                                  const raw = item.card ?? item;
                                  const product = {

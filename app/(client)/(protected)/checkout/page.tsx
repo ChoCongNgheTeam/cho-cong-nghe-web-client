@@ -530,7 +530,6 @@ export default function CheckoutPage() {
                 onTermsChange={setAgreedToTerms}
                 isCheckoutPage
                 shippingFee={shippingFee}
-                // taxAmount={calculatedTax}
                 computedTotal={confirmTotal}
               />
             </div>
@@ -631,7 +630,6 @@ export default function CheckoutPage() {
           brandId: item.brandId,
           categoryId: item.categoryId,
           categoryPath: item.categoryPath,
-          // itemTotal = giá sau promotion × số lượng (dùng để tính eligible subtotal cho voucher)
           itemTotal: item.price?.final ?? item.totalFinalPrice ?? item.unitPrice ?? 0,
         }))}
       />

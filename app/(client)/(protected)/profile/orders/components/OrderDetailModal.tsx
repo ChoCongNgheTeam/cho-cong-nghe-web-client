@@ -36,7 +36,6 @@ export default function OrderDetailModal({ order }: { order: Order }) {
   const shipping = Number(order.shippingFee);
   const voucher = Number(order.voucherDiscount);
   const total = Number(order.totalAmount);
-  const tax = Math.max(0, total - subtotal - shipping + voucher);
 
   return (
     <div className="max-h-[82vh] sm:max-h-[78vh] overflow-y-auto custom-scroll">
@@ -185,12 +184,6 @@ export default function OrderDetailModal({ order }: { order: Order }) {
               <div className="flex justify-between text-[11px] sm:text-sm text-green-700">
                 <span>Giảm giá voucher</span>
                 <span>-{formatVND(voucher)}</span>
-              </div>
-            )}
-            {tax > 0 && (
-              <div className="flex justify-between text-[11px] sm:text-sm text-neutral-darker">
-                <span>Thuế VAT (10%)</span>
-                <span>{formatVND(tax)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-primary border-t border-neutral pt-2 mt-1">

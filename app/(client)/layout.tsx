@@ -1,6 +1,6 @@
 import Header from "@/components/layout/Header/header";
 import Footer from "@/components/layout/Footer/footer";
-import ToggleSwitch from "@/components/ui/ThemeToggle";
+// import ToggleSwitch from "@/components/ui/ThemeToggle";
 import ChatButton from "@/components/ui/ChatButton";
 import ScrollBarTop from "@/components/ui/ScrollBarTop";
 
@@ -14,7 +14,7 @@ export default function ClientLayout({
          <ScrollBarTop />
          <ChatButton />
          <Header />
-         <ToggleSwitch />
+         {/* <ToggleSwitch /> */}
          <main className="flex-1">{children}</main>
          <Footer />
       </div>

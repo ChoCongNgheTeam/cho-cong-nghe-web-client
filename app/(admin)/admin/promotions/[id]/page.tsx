@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -43,7 +43,7 @@ import {
    fetchProductSearch,
 } from "../new/page";
 import { useToasty } from "@/components/Toast";
-
+import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 export default function PromotionDetailPage() {
    const params = useParams();
    const router = useRouter();
@@ -81,7 +81,16 @@ export default function PromotionDetailPage() {
          .catch((e) => setError(e?.message ?? "Không thể tải khuyến mãi"))
          .finally(() => setLoading(false));
    }, [id]);
+   const debouncedProductSearch = useDebouncedCallback(fetchProductSearch, 350);
 
+   const searchAPIs = useMemo(
+      () => ({
+         searchProducts: debouncedProductSearch,
+         loadCategories: fetchAllCategories,
+         loadBrands: fetchAllBrands,
+      }),
+      [debouncedProductSearch],
+   );
    // ── Save ──────────────────────────────────────────────────────────────────────
    const handleSave = useCallback(
       async (form: PromotionFormData) => {
@@ -344,11 +353,7 @@ export default function PromotionDetailPage() {
                         error={saveError}
                         submitLabel="Lưu thay đổi"
                         onCancel={handleCancelEdit}
-                        searchAPIs={{
-                           searchProducts: fetchProductSearch,
-                           loadCategories: fetchAllCategories,
-                           loadBrands: fetchAllBrands,
-                        }}
+                        searchAPIs={searchAPIs}
                      />
                   ) : (
                      <>

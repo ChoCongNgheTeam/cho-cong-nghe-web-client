@@ -250,8 +250,11 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
          {/* ══════════════════════════════════════════
              SECTION 3: Product Name
          ══════════════════════════════════════════ */}
-         <div className="px-2.5 mb-2">
-            <h3 className="text-xs xs:text-[13px] sm:text-[14px] font-medium line-clamp-2 leading-snug text-primary">
+         <div className="px-2.5 mb-2 flex-1">
+            <h3
+               className="text-xs xs:text-[13px] sm:text-[14px] font-medium line-clamp-2 leading-snug text-primary"
+               style={{ minHeight: "calc(2 * 1.375em)" }}
+            >
                {product.name}
             </h3>
          </div>
@@ -259,7 +262,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
          {/* ══════════════════════════════════════════
              SECTION 4: CTA Button
          ══════════════════════════════════════════ */}
-         <div className="px-2.5 mb-2.5">
+         <div className="px-2.5 mb-2.5 mt-auto">
             {isUpcoming ? (
                <button className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold bg-transparent text-[#e24c5a] border border-[#e24c5a]">
                   Sắp diễn ra

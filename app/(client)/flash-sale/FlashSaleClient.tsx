@@ -598,7 +598,7 @@ export function FlashSaleClient({ saleSchedule }: Props) {
 
                   {paginated.length > 0 ? (
                      <>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                            {paginated.map((product, index) => (
                               <HotSaleProductCard
                                  key={`${product.id}-${index}`}
