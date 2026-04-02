@@ -233,14 +233,7 @@ export default function BlogsPage() {
 
         <StatsCard label="Lưu trữ" value={stats.archived} sub="Không còn sử dụng" icon={<Archive size={16} />} valueClassName="text-gray-500" iconClassName="text-gray-500" />
 
-        <StatsCard
-          label="Tổng lượt xem"
-            value={formatNumber(stats.views)}
-          sub="Tổng số lượt truy cập"
-          icon={<Eye size={16} />}
-          valueClassName="text-purple-600"
-          iconClassName="text-purple-600"
-        />
+        <StatsCard label="Tổng lượt xem" value={formatNumber(stats.views)} sub="Tổng số lượt truy cập" icon={<Eye size={16} />} valueClassName="text-purple-600" iconClassName="text-purple-600" />
       </div>
 
       {/* ── Main card ── */}

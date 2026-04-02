@@ -3,7 +3,8 @@ import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { BlogCard } from "../blog.types";
 import { BlogStatusBadge } from "./BlogStatusBadge";
-import { BLOG_STATUS_LABELS } from "../const";
+import { BLOG_STATUS_LABELS, BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../const";
+import type { BlogType } from "../blog.types";
 import { formatDate, formatNumber } from "@/helpers";
 
 interface GetBlogColumnsParams {
@@ -87,11 +88,16 @@ export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleO
       key: "viewCount",
       label: "Lượt xem",
       align: "center",
-      render: (blog) => (
-        <span className="text-[13px] font-semibold text-primary">
-          {formatNumber(blog.viewCount)}
-        </span>
-      ),
+      render: (blog) => <span className="text-[13px] font-semibold text-primary">{formatNumber(blog.viewCount)}</span>,
+    },
+    {
+      key: "type",
+      label: "Loại",
+      render: (blog) => {
+        const label = BLOG_TYPE_LABELS[blog.type as BlogType] ?? blog.type;
+        const color = BLOG_TYPE_COLORS[blog.type as BlogType] ?? "text-neutral-dark bg-neutral-light-active";
+        return <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold whitespace-nowrap ${color}`}>{label}</span>;
+      },
     },
     {
       key: "publishedAt",

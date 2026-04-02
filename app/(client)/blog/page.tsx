@@ -1,24 +1,22 @@
-﻿import { BLOG_CATEGORIES, isBlogInCategory } from "./_lib/blog-category";
-import { getBlogs } from "./_lib/blog.api";
+﻿import { getBlogs } from "./_lib/blog.api";
+import { BLOG_CATEGORY_TABS, getBlogTypeLabel } from "./_lib/blog-category";
 import BlogCategoryBar from "./components/BlogCategoryBar";
-import BlogList from "./components/BlogList";
+import BlogCard from "./components/BlogCard";
 import BlogPagination from "./components/BlogPagination";
-import BlogSection from "./components/BlogSection";
-import { Blog } from "./types/blog.type";
+import { Blog, BlogType } from "./types/blog.type";
 
 type Props = {
-  searchParams?: Promise<{
-    page?: string;
-    category?: string;
-  }>;
+  searchParams?: Promise<{ page?: string; type?: string }>;
 };
 
-const PAGE_SIZE = 6;
-const FETCH_LIMIT = 50;
+const PAGE_SIZE = 9;
+const FETCH_LIMIT = 100;
 
-function parseDate(value?: string): number {
-  if (!value) return 0;
-  const ts = new Date(value).getTime();
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function parseDate(v?: string): number {
+  if (!v) return 0;
+  const ts = new Date(v).getTime();
   return Number.isNaN(ts) ? 0 : ts;
 }
 
@@ -29,149 +27,165 @@ function sortByNewest(items: Blog[]): Blog[] {
 function sortByFeatured(items: Blog[]): Blog[] {
   return [...items].sort((a, b) => {
     const byViews = (b.viewCount ?? 0) - (a.viewCount ?? 0);
-    if (byViews !== 0) return byViews;
-    return parseDate(b.publishedAt) - parseDate(a.publishedAt);
+    return byViews !== 0 ? byViews : parseDate(b.publishedAt) - parseDate(a.publishedAt);
   });
 }
 
-function getCategoryTitle(categoryKey?: string): string {
-  if (!categoryKey) return "Tin tức";
-  return BLOG_CATEGORIES.find((item) => item.key === categoryKey)?.title ?? "Tin tức";
+async function fetchAllBlogs(): Promise<Blog[]> {
+  const first = await getBlogs({ page: 1, limit: FETCH_LIMIT });
+  const totalPages = Math.max(1, first.pagination.totalPages ?? 1);
+  if (totalPages <= 1) return first.data;
+
+  const rest = await Promise.allSettled(Array.from({ length: totalPages - 1 }, (_, i) => getBlogs({ page: i + 2, limit: FETCH_LIMIT })));
+
+  return [...first.data, ...rest.flatMap((r) => (r.status === "fulfilled" ? r.value.data : []))];
 }
 
-function getBlogsByCategory(items: Blog[], categoryKey: string, limit: number): Blog[] {
-  const source =
-    categoryKey === "featured"
-      ? sortByFeatured(items)
-      : sortByNewest(items.filter((blog) => blog.category?.slug === categoryKey));
-
-  return source.slice(0, limit);
+function getBlogsByType(blogs: Blog[], type: BlogType, limit?: number): Blog[] {
+  const filtered = sortByNewest(blogs.filter((b) => b.type === type));
+  return limit ? filtered.slice(0, limit) : filtered;
 }
 
-async function getAllBlogsForFrontend(): Promise<Blog[]> {
-  const firstPage = await getBlogs({ page: 1, limit: FETCH_LIMIT });
-  const totalPages = Math.max(1, firstPage.pagination.totalPages ?? 1);
+// ── Components nội bộ ─────────────────────────────────────────────────────────
 
-  if (totalPages <= 1) {
-    return firstPage.data;
-  }
-
-  const requests: ReturnType<typeof getBlogs>[] = [];
-  for (let page = 2; page <= totalPages; page += 1) {
-    requests.push(getBlogs({ page, limit: FETCH_LIMIT }));
-  }
-
-  const morePages = await Promise.allSettled(requests);
-  const merged = [...firstPage.data];
-
-  for (const item of morePages) {
-    if (item.status === "fulfilled") {
-      merged.push(...item.value.data);
-    }
-  }
-
-  return merged;
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="mb-5">
+      <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-primary">{title}</h2>
+      <div className="mt-1.5 h-0.5 w-10 rounded-full bg-accent/50" />
+    </div>
+  );
 }
+
+/** Hero lớn + 4 card nhỏ bên cạnh */
+function HeroSection({ blogs }: { blogs: Blog[] }) {
+  if (!blogs.length) return null;
+  const [hero, ...rest] = blogs;
+  const sides = rest.slice(0, 4);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      {/* Hero */}
+      <div className="lg:col-span-7">
+        <BlogCard blog={hero} variant="list" />
+      </div>
+      {/* Side 2×2 */}
+      <div className="lg:col-span-5 grid grid-cols-2 gap-3">
+        {sides.map((b) => (
+          <BlogCard key={b.id} blog={b} variant="list" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Grid 3 hoặc 4 cột */
+function GridSection({ blogs, cols = 3 }: { blogs: Blog[]; cols?: 3 | 4 }) {
+  if (!blogs.length) return null;
+  const colClass = cols === 4 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3";
+  return (
+    <div className={`grid grid-cols-1 ${colClass} gap-4`}>
+      {blogs.map((b) => (
+        <BlogCard key={b.id} blog={b} variant="list" />
+      ))}
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function BlogPage({ searchParams }: Props) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const parsedPage = Number(resolvedSearchParams.page ?? "1");
-  const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const category = resolvedSearchParams.category;
+  const sp = (await searchParams) ?? {};
+  const rawPage = Number(sp.page ?? "1");
+  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const activeType = sp.type as BlogType | undefined;
 
   let blogs: Blog[] = [];
   try {
-    blogs = await getAllBlogsForFrontend();
+    blogs = await fetchAllBlogs();
   } catch {
     blogs = [];
   }
 
-  const breadcrumbLabel = getCategoryTitle(category);
-
-  if (category) {
-    const categoryBlogs = blogs.filter((blog) =>
-      isBlogInCategory(category, blog.category?.slug)
-    );
-    const filteredBlogs =
-      category === "featured"
-        ? sortByFeatured(categoryBlogs)
-        : sortByNewest(categoryBlogs);
-
-    const total = filteredBlogs.length;
-    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    const currentPage = Math.min(requestedPage, totalPages);
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const pageBlogs = filteredBlogs.slice(start, start + PAGE_SIZE);
+  // ── Tab lọc theo type ──────────────────────────────────────────────────────
+  if (activeType) {
+    const filtered = sortByNewest(blogs.filter((b) => b.type === activeType));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const page = Math.min(currentPage, totalPages);
+    const pageBlogs = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const title = getBlogTypeLabel(activeType);
 
     return (
       <main className="mx-auto max-w-7xl px-4 py-8">
-
         <section className="mb-6">
-          <BlogCategoryBar active={category} />
+          <BlogCategoryBar active={activeType} />
         </section>
 
-        <BlogSection
-          title={breadcrumbLabel}
-          blogs={pageBlogs}
-          heroAspectClassName="aspect-video"
-          heroTitleClassName="text-2xl sm:text-3xl"
-        />
+        <div className="mb-6">
+          <SectionHeader title={title} />
+          <GridSection blogs={pageBlogs} cols={3} />
+          {!pageBlogs.length && <p className="text-sm text-primary-light py-12 text-center">Chưa có bài viết nào.</p>}
+        </div>
 
-        <section className="flex justify-center">
-          <BlogPagination currentPage={currentPage} totalPages={totalPages} />
-        </section>
+        <div className="flex justify-center mt-8">
+          <BlogPagination currentPage={page} totalPages={totalPages} />
+        </div>
       </main>
     );
   }
 
-  const featuredBlogs = getBlogsByCategory(blogs, "featured", 5);
-  const newProductBlogs = getBlogsByCategory(blogs, "dien-may-gia-dung", 4);
-  const latestBlogs = getBlogsByCategory(blogs, "tin-moi", 5);
-  const reviewBlogs = getBlogsByCategory(blogs, "danh-gia-tu-van", 5);
-  const promoBlogs = getBlogsByCategory(blogs, "khuyen-mai", 5);
+  // ── Trang chính — chia section theo type ───────────────────────────────────
+  const noibat = sortByFeatured(blogs.filter((b) => b.type === "NOI_BAT")).slice(0, 5);
+  const tinmoi = getBlogsByType(blogs, "TIN_MOI", 5);
+  const danhgia = getBlogsByType(blogs, "DANH_GIA", 4);
+  const dienmay = getBlogsByType(blogs, "DIEN_MAY", 4);
+  const khuyenmai = getBlogsByType(blogs, "KHUYEN_MAI", 4);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-8 space-y-12">
       <section className="mb-6">
-        <BlogCategoryBar active={category} />
+        <BlogCategoryBar active="" />
       </section>
 
-      <BlogSection
-        title="Nổi bật"
-        blogs={featuredBlogs}
-        heroAspectClassName="aspect-video"
-        heroTitleClassName="text-2xl sm:text-3xl"
-      />
+      {/* Nổi bật — hero layout */}
+      {noibat.length > 0 && (
+        <section>
+          <SectionHeader title="Nổi bật" />
+          <HeroSection blogs={noibat} />
+        </section>
+      )}
 
-      <section className="mb-8">
-        <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
-          Điện máy - Gia dụng
-        </h2>
-        <BlogList blogs={newProductBlogs} />
-      </section>
+      {/* Tin mới — hero layout */}
+      {tinmoi.length > 0 && (
+        <section>
+          <SectionHeader title="Tin mới" />
+          <HeroSection blogs={tinmoi} />
+        </section>
+      )}
 
-      <BlogSection
-        title="Tin mới"
-        blogs={latestBlogs}
-        heroAspectClassName="aspect-[16/10]"
-        heroTitleClassName="text-xl sm:text-2xl"
-      />
+      {/* Đánh giá - Tư vấn — grid 4 */}
+      {danhgia.length > 0 && (
+        <section>
+          <SectionHeader title="Đánh giá - Tư vấn" />
+          <GridSection blogs={danhgia} cols={4} />
+        </section>
+      )}
 
-      <BlogSection
-        title="Đánh giá - Tư vấn"
-        blogs={reviewBlogs}
-        heroAspectClassName="aspect-video"
-        heroTitleClassName="text-xl sm:text-2xl"
-      />
+      {/* Điện máy - Gia dụng — grid 4 */}
+      {dienmay.length > 0 && (
+        <section>
+          <SectionHeader title="Điện máy - Gia dụng" />
+          <GridSection blogs={dienmay} cols={4} />
+        </section>
+      )}
 
-      <BlogSection
-        title="Khuyến mãi"
-        blogs={promoBlogs}
-        heroAspectClassName="aspect-video"
-        heroTitleClassName="text-xl sm:text-2xl"
-      />
+      {/* Khuyến mãi — grid 4 */}
+      {khuyenmai.length > 0 && (
+        <section>
+          <SectionHeader title="Khuyến mãi" />
+          <GridSection blogs={khuyenmai} cols={4} />
+        </section>
+      )}
     </main>
   );
 }
-
-

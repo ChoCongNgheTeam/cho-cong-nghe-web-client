@@ -22,7 +22,7 @@ const MobileHeader = ({ mobileMenuOpen, mobileSearchOpen, isDarkMode, onMenuTogg
           <button onClick={onSearchToggle} className="p-2 hover:bg-accent-hover dark:hover:bg-neutral rounded-lg transition-colors" aria-label="Tìm kiếm">
             {mobileSearchOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6 text-primary" /> : <Search className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />}
           </button>
-          <NotificationBell />
+          <NotificationBell variant="user" />
           <CartIcon />
         </div>
       </div>
