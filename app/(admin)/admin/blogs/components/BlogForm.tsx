@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import type { BlogDetail, BlogStatus, BlogType } from "../blog.types";
 import { BLOG_TYPE_LABELS } from "../const";
 import { CKEditorWrapper } from "./CKEditorWrapper";
+import { AiContentPanel } from "@/(admin)/admin/ai-content/AiContentPanel";
+import { useToasty } from "@/components/Toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -66,7 +68,6 @@ const THUMB_MAX_MB = 5;
 function validateForm(form: BlogFormData, isEdit: boolean): BlogFormErrors {
   const errors: BlogFormErrors = {};
 
-  // Tiêu đề
   const title = form.title.trim();
   if (!title) {
     errors.title = "Tiêu đề không được để trống";
@@ -76,7 +77,6 @@ function validateForm(form: BlogFormData, isEdit: boolean): BlogFormErrors {
     errors.title = `Tiêu đề tối đa ${TITLE_MAX} ký tự`;
   }
 
-  // Nội dung — strip HTML tags để đếm ký tự thực
   const plainContent = form.content.replace(/<[^>]*>/g, "").trim();
   if (!plainContent) {
     errors.content = "Nội dung không được để trống";
@@ -84,7 +84,6 @@ function validateForm(form: BlogFormData, isEdit: boolean): BlogFormErrors {
     errors.content = `Nội dung phải có ít nhất ${CONTENT_MIN} ký tự (hiện tại: ${plainContent.length})`;
   }
 
-  // Thumbnail — chỉ validate file mới (không bắt buộc khi edit đã có ảnh)
   if (form.thumbnailFile) {
     const sizeMB = form.thumbnailFile.size / (1024 * 1024);
     if (sizeMB > THUMB_MAX_MB) {
@@ -96,7 +95,6 @@ function validateForm(form: BlogFormData, isEdit: boolean): BlogFormErrors {
     }
   }
 
-  // publishedAt — nếu có thì phải là ngày hợp lệ và không quá xa trong tương lai
   if (form.publishedAt) {
     const date = new Date(form.publishedAt);
     if (isNaN(date.getTime())) {
@@ -206,49 +204,75 @@ interface BlogFormProps {
   submitLabel?: string;
   onCancel?: () => void;
   layout?: "page" | "panel";
-  /** true khi edit (đã có data) — ảnh thumbnail không bắt buộc */
   isEdit?: boolean;
 }
 
 export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "Lưu", onCancel, layout = "page", isEdit = false }: BlogFormProps) {
+  const { error: toastError } = useToasty();
+
   const [form, setForm] = useState<BlogFormData>(initialData);
   const [fieldErrors, setFieldErrors] = useState<BlogFormErrors>({});
+  const [submitted, setSubmitted] = useState(false);
 
-  const set = <K extends keyof BlogFormData>(key: K, value: BlogFormData[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    // Clear lỗi của field khi user bắt đầu sửa
-    if (fieldErrors[key]) {
-      setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
-    }
-  };
+  // Reset khi initialData thay đổi (ví dụ load blog edit)
+  useEffect(() => {
+    setForm(initialData);
+    setFieldErrors({});
+    setSubmitted(false);
+  }, [initialData]);
 
-  const handleThumbnailChange = (file: File, previewUrl: string) => {
+  const set = useCallback(
+    <K extends keyof BlogFormData>(key: K, value: BlogFormData[K]) => {
+      setForm((prev) => {
+        const next = { ...prev, [key]: value };
+        // Re-validate realtime sau lần submit đầu tiên
+        if (submitted) setFieldErrors(validateForm(next, isEdit));
+        return next;
+      });
+    },
+    [submitted, isEdit],
+  );
+
+  const handleThumbnailChange = useCallback((file: File, previewUrl: string) => {
     setForm((prev) => ({ ...prev, thumbnailFile: file, thumbnailPreview: previewUrl }));
     setFieldErrors((prev) => ({ ...prev, _thumbnail: undefined }));
-  };
+  }, []);
 
-  const handleThumbnailRemove = () => {
+  const handleThumbnailRemove = useCallback(() => {
     setForm((prev) => ({ ...prev, thumbnailFile: null, thumbnailPreview: "" }));
     setFieldErrors((prev) => ({ ...prev, _thumbnail: undefined }));
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors = validateForm(form, isEdit);
-    if (Object.keys(errors).length > 0) {
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setSubmitted(true);
+
+      const errors = validateForm(form, isEdit);
       setFieldErrors(errors);
-      // Scroll đến lỗi đầu tiên
-      const firstErrorKey = Object.keys(errors)[0];
-      document.getElementById(`field-${firstErrorKey}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    setFieldErrors({});
-    const fd = formToFormData(form);
-    await onSubmit(fd, form);
-  };
+
+      if (Object.keys(errors).length > 0) {
+        const msgs = Object.values(errors).filter(Boolean) as string[];
+        const first = msgs[0];
+        const extra = msgs.length > 1 ? ` (+${msgs.length - 1} lỗi khác)` : "";
+        toastError(`${first}${extra}`, {
+          title: "Dữ liệu không hợp lệ",
+          duration: 5000,
+        });
+        // Scroll đến field lỗi đầu tiên
+        const firstErrorKey = Object.keys(errors)[0];
+        document.getElementById(`field-${firstErrorKey}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
+      const fd = formToFormData(form);
+      await onSubmit(fd, form);
+    },
+    [form, isEdit, onSubmit, toastError],
+  );
 
   const isPanel = layout === "panel";
-  const e = fieldErrors; // shorthand
+  const e = fieldErrors;
 
   // ── Shared field renderers ────────────────────────────────────────────────────
 
@@ -314,6 +338,8 @@ export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "
     </div>
   );
 
+  const AiPanel = <AiContentPanel mode="blog" blogType={form.type} currentTitle={form.title} currentContent={form.content} onApply={(content) => set("content", content)} />;
+
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -326,30 +352,21 @@ export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "
         </div>
       )}
 
-      {/* Summary validation errors */}
-      {Object.keys(e).length > 0 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-promotion-light border border-promotion/30 text-promotion text-[13px]">
-          <AlertCircle size={15} className="mt-0.5 shrink-0" />
-          Vui lòng kiểm tra lại {Object.keys(e).length} trường còn lỗi bên dưới.
-        </div>
-      )}
-
       {isPanel ? (
-        // ── Panel layout ────────────────────────────────────────────────────────
+        // ── Panel layout ──────────────────────────────────────────────────────
         <div className="space-y-4">
           {TitleField}
           {ContentField}
+          {AiPanel}
           {ThumbField}
-
           <div className="grid grid-cols-2 gap-3">
             {StatusField}
             {PublishedAtField}
           </div>
-
           {TypeField}
         </div>
       ) : (
-        // ── Page layout ─────────────────────────────────────────────────────────
+        // ── Page layout ───────────────────────────────────────────────────────
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: content */}
           <div className="lg:col-span-2 space-y-5">
@@ -362,7 +379,8 @@ export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "
 
           {/* Right: sidebar */}
           <div className="space-y-4">
-            {/* Publish settings */}
+            {AiPanel}
+
             <div className="bg-neutral-light border border-neutral rounded-2xl p-5 space-y-4">
               <p className="text-[11px] font-bold text-neutral-dark uppercase tracking-widest">Cài đặt đăng</p>
               {StatusField}
@@ -370,13 +388,11 @@ export function BlogForm({ initialData, onSubmit, saving, error, submitLabel = "
               {TypeField}
             </div>
 
-            {/* Thumbnail */}
             <div className="bg-neutral-light border border-neutral rounded-2xl p-5 space-y-3">
               <p className="text-[11px] font-bold text-neutral-dark uppercase tracking-widest">Thumbnail</p>
               {ThumbField}
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col gap-2">
               <button
                 type="submit"

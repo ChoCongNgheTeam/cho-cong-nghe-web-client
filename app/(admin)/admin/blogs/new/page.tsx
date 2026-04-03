@@ -6,9 +6,11 @@ import Link from "next/link";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { createBlog } from "../_libs/blogs";
 import { BlogForm, DEFAULT_FORM } from "../components/BlogForm";
+import { useToasty } from "@/components/Toast";
 
 export default function NewBlogPage() {
   const router = useRouter();
+  const { success: toastSuccess, error: toastError } = useToasty();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,9 +19,12 @@ export default function NewBlogPage() {
     setError(null);
     try {
       const res = await createBlog(formData);
+      toastSuccess("Bài viết đã được tạo thành công!", { title: "Tạo bài viết" });
       router.push(`/admin/blogs/${res.data.id}`);
     } catch (e: any) {
-      setError(e?.message ?? "Không thể tạo bài viết");
+      const msg = e?.message ?? "Không thể tạo bài viết";
+      setError(msg);
+      toastError(msg, { title: "Tạo thất bại" });
     } finally {
       setSaving(false);
     }
@@ -51,7 +56,7 @@ export default function NewBlogPage() {
         </div>
       </div>
 
-      {/* Form — full width với 2 cột (layout="page") */}
+      {/* Form */}
       <div className="px-6 pb-8">
         <BlogForm initialData={DEFAULT_FORM} onSubmit={handleSubmit} saving={saving} error={error} submitLabel="Tạo bài viết" onCancel={() => router.push("/admin/blogs")} layout="page" />
       </div>
