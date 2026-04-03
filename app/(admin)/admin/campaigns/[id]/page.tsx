@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * DIFF so với file gốc:
+ * 1. Import thêm `CampaignCategoryManager` thay cho `CategoryImageEditor`
+ * 2. Thêm state `allCategories` + fetch danh sách tất cả category từ BE
+ * 3. Thay khối render "Danh mục trong chiến dịch" bằng <CampaignCategoryManager>
+ *
+ * Các phần khác giữ nguyên 100%.
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
@@ -14,7 +23,6 @@ import {
    Clock,
    Tag,
    X,
-   Check,
 } from "lucide-react";
 import { Popzy } from "@/components/Modal";
 import {
@@ -35,8 +43,11 @@ import {
 import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../const";
 import type { Campaign } from "../campaign.types";
 import { formatDate } from "@/helpers";
-import { useToasty } from "@/components/Toast"; // 👈
-import { CategoryImageEditor } from "../components/CategoryImageEditor";
+import { useToasty } from "@/components/Toast";
+
+// 👇 THAY CategoryImageEditor bằng CampaignCategoryManager
+import { CampaignCategoryManager } from "../components/CampaignCategoryManager";
+import { getAllCategories } from "../../categories/_libs/categories";
 
 export default function CampaignDetailPage() {
    const router = useRouter();
@@ -45,17 +56,20 @@ export default function CampaignDetailPage() {
    const params = useParams();
    const id = params.id as string;
 
-   const { success, error: toastError } = useToasty(); // 👈
+   const { success, error: toastError } = useToasty();
 
    const [campaign, setCampaign] = useState<Campaign | null>(null);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
 
-   // Edit — bỏ saveSuccess
+   // 👇 Danh sách tất cả categories để chọn thêm vào campaign
+   const [allCategories, setAllCategories] = useState<
+      Array<{ id: string; name: string; slug: string; imageUrl?: string }>
+   >([]);
+
    const [saving, setSaving] = useState(false);
    const [saveError, setSaveError] = useState<string | null>(null);
 
-   // Delete
    const [deleteOpen, setDeleteOpen] = useState(false);
    const [deleting, setDeleting] = useState(false);
    const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -73,9 +87,27 @@ export default function CampaignDetailPage() {
       }
    }, [id]);
 
+   // 👇 Fetch tất cả categories để hiển thị trong panel "Thêm danh mục"
+   const fetchAllCategories = useCallback(async () => {
+      try {
+         const res = await getAllCategories();
+         setAllCategories(
+            (res.data ?? []).map((c) => ({
+               id: c.id,
+               name: c.name,
+               slug: c.slug,
+               imageUrl: c.imageUrl ?? undefined, // null → undefined
+            })),
+         );
+      } catch {
+         // silent — không block UI nếu fail
+      }
+   }, []);
+
    useEffect(() => {
       fetchCampaign();
-   }, [fetchCampaign]);
+      fetchAllCategories();
+   }, [fetchCampaign, fetchAllCategories]);
 
    const handleSave = async (form: CampaignFormData) => {
       setSaving(true);
@@ -93,19 +125,19 @@ export default function CampaignDetailPage() {
       } finally {
          setSaving(false);
       }
-   }; 
+   };
 
    const handleDelete = async () => {
       setDeleting(true);
       setDeleteError(null);
       try {
          await deleteCampaign(id);
-         success("Đã xoá chiến dịch thành công!"); // 👈
+         success("Đã xoá chiến dịch thành công!");
          router.push("/admin/campaigns");
       } catch (e: any) {
          const msg = e?.message ?? "Không thể xoá chiến dịch";
          setDeleteError(msg);
-         toastError(msg); // 👈
+         toastError(msg);
       } finally {
          setDeleting(false);
       }
@@ -249,6 +281,9 @@ export default function CampaignDetailPage() {
                         <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
                            <Tag size={12} /> Danh mục
                         </span>
+                        <span className="text-[12px] text-primary font-medium">
+                           {campaign.categories.length}
+                        </span>
                      </div>
                      <div className="flex items-center justify-between">
                         <span className="text-[12px] text-neutral-dark">
@@ -269,44 +304,22 @@ export default function CampaignDetailPage() {
                   </div>
                </div>
 
-               {campaign.categories.length > 0 && (
-                  <div className="bg-neutral-light border border-neutral rounded-2xl p-5 space-y-3">
-                     <p className="text-[11px] font-bold text-neutral-dark uppercase tracking-widest">
-                        Danh mục trong chiến dịch ({campaign.categories.length})
-                     </p>
-                     <div className="space-y-2">
-                        {campaign.categories.map((cc) => (
-                           <CategoryImageEditor
-                              key={cc.id}
-                              cc={cc}
-                              campaignId={campaign.id}
-                              onUpdated={(updated) =>
-                                 setCampaign((prev) =>
-                                    prev
-                                       ? {
-                                            ...prev,
-                                            categories: prev.categories.map(
-                                               (c) =>
-                                                  c.id === updated.id
-                                                     ? {
-                                                          ...c,
-                                                          imageUrl:
-                                                             updated.imageUrl,
-                                                       }
-                                                     : c,
-                                            ),
-                                         }
-                                       : prev,
-                                 )
-                              }
-                           />
-                        ))}
-                     </div>
-                  </div>
-               )}
+               {/* ── 👇 THAY CategoryImageEditor bằng CampaignCategoryManager ── */}
+               <div className="bg-neutral-light border border-neutral rounded-2xl p-5">
+                  <CampaignCategoryManager
+                     campaignId={campaign.id}
+                     categories={campaign.categories}
+                     availableCategories={allCategories}
+                     onChanged={(updated) =>
+                        setCampaign((prev) =>
+                           prev ? { ...prev, categories: updated } : prev,
+                        )
+                     }
+                  />
+               </div>
             </div>
 
-            {/* ── Right: Edit form ── */}
+            {/* ── Right: Edit form (giữ nguyên) ── */}
             <div className="lg:col-span-2">
                <div className="bg-neutral-light border border-neutral rounded-2xl p-6">
                   <div className="flex items-center justify-between mb-5">
@@ -423,7 +436,7 @@ export default function CampaignDetailPage() {
             </div>
          </div>
 
-         {/* ── Delete Modal ── */}
+         {/* ── Delete Modal (giữ nguyên) ── */}
          <Popzy
             isOpen={deleteOpen}
             onClose={() => !deleting && setDeleteOpen(false)}
