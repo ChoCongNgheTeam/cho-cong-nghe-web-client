@@ -1,42 +1,14 @@
 "use client";
 
-/**
- * AiContentPanel.tsx
- *
- * Panel dùng chung cho BlogForm và ProductForm.
- * - Mode "blog"    → gọi POST /ai-content/blog
- * - Mode "product" → gọi POST /ai-content/product-description
- *                         hoặc /ai-content/product-description-from-name (khi chưa có productId)
- *
- * Props:
- *  mode         — "blog" | "product"
- *  productId    — bắt buộc khi mode="product" (nếu không có thì dùng productName)
- *  productName  — tên sản phẩm đang nhập trong form, dùng khi chưa có productId
- *  blogType     — truyền từ BlogForm khi mode="blog"
- *  onApply      — callback nhận content string để điền vào CKEditor
- *
- * SEO Checker (tab riêng):
- *  - Nhận content + title + keyword hiện tại
- *  - Gọi POST /ai-content/analyze-seo (không tốn token, nhanh)
- *  - Hiển thị overall score + suggestions
- */
-
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, Loader2, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, RefreshCw, ClipboardCopy, ArrowDownToLine, Clock } from "lucide-react";
 import apiRequest from "@/lib/api";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Mode = "blog" | "product";
 
 interface SEOScore {
   overall: number;
-  details: {
-    titleScore: number;
-    keywordDensity: number;
-    readabilityScore: number;
-    lengthScore: number;
-  };
+  details: { titleScore: number; keywordDensity: number; readabilityScore: number; lengthScore: number };
   suggestions: string[];
   keywordCount: number;
   wordCount: number;
@@ -53,7 +25,6 @@ interface GeneratedContent {
 interface AiContentPanelProps {
   mode: Mode;
   productId?: string;
-  /** Tên sản phẩm đang nhập trong form — dùng khi chưa có productId */
   productName?: string;
   blogType?: string;
   currentTitle?: string;
@@ -61,27 +32,10 @@ interface AiContentPanelProps {
   onApply: (content: string) => void;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const scoreColor = (score: number) => (score >= 80 ? "text-emerald-600" : score >= 60 ? "text-yellow-600" : "text-red-500");
+const scoreBg = (score: number) => (score >= 80 ? "bg-emerald-50 border-emerald-200" : score >= 60 ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200");
+const scoreLabel = (score: number) => (score >= 80 ? "Tốt" : score >= 60 ? "Trung bình" : "Cần cải thiện");
 
-const scoreColor = (score: number) => {
-  if (score >= 80) return "text-emerald-600";
-  if (score >= 60) return "text-yellow-600";
-  return "text-red-500";
-};
-
-const scoreBg = (score: number) => {
-  if (score >= 80) return "bg-emerald-50 border-emerald-200";
-  if (score >= 60) return "bg-yellow-50 border-yellow-200";
-  return "bg-red-50 border-red-200";
-};
-
-const scoreLabel = (score: number) => {
-  if (score >= 80) return "Tốt";
-  if (score >= 60) return "Trung bình";
-  return "Cần cải thiện";
-};
-
-// Progress bar mini
 function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="space-y-1">
@@ -96,20 +50,16 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-// ─── Rotating loading overlay ─────────────────────────────────────────────────
-
 function GeneratingOverlay({ mode }: { mode: Mode }) {
   const tips =
     mode === "blog"
       ? ["Đang phân tích yêu cầu...", "Đang soạn nội dung...", "Đang tối ưu SEO...", "Sắp hoàn thành..."]
       : ["Đang phân tích sản phẩm...", "Đang viết mô tả...", "Đang tối ưu từ khóa..."];
-
   const [idx, setIdx] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setIdx((i) => (i + 1) % tips.length), 3500);
     return () => clearInterval(id);
   }, []);
-
   return (
     <div className="flex flex-col items-center py-7 gap-3 text-center">
       <div className="relative">
@@ -132,8 +82,6 @@ function GeneratingOverlay({ mode }: { mode: Mode }) {
   );
 }
 
-// ─── SEO Checker Tab ──────────────────────────────────────────────────────────
-
 function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; currentTitle?: string; currentContent?: string }) {
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -146,11 +94,9 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
       setError("Nội dung quá ngắn để phân tích SEO. Hãy viết thêm nội dung trước.");
       return;
     }
-
     setLoading(true);
     setError(null);
     setResult(null);
-
     try {
       const res = await apiRequest.post<{ data: SEOScore }>("/ai-content/analyze-seo", {
         content: currentContent || "",
@@ -180,6 +126,7 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
             className="flex-1 px-3 py-2 text-[12px] border border-neutral rounded-xl bg-neutral-light text-primary placeholder:text-neutral-dark/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
           />
           <button
+            type="button"
             onClick={handleCheck}
             disabled={loading || !keyword.trim()}
             className="px-3 py-2 bg-accent text-white text-[12px] font-medium rounded-xl hover:bg-accent/90 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
@@ -199,7 +146,6 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
 
       {result && (
         <div className="space-y-3">
-          {/* Overall score */}
           <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${scoreBg(result.overall)}`}>
             <div>
               <p className="text-[11px] font-semibold text-neutral-dark">Điểm SEO tổng quan</p>
@@ -212,16 +158,12 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
               <p className={`text-[10px] font-semibold mt-0.5 ${scoreColor(result.overall)}`}>{scoreLabel(result.overall)}</p>
             </div>
           </div>
-
-          {/* Detail bars */}
           <div className="px-3 py-3 rounded-xl border border-neutral bg-neutral-light space-y-2.5">
             <ScoreBar label="Tiêu đề" value={result.details.titleScore} />
             <ScoreBar label="Mật độ keyword" value={Math.min(100, Math.round((result.details.keywordDensity / 2) * 100))} />
             <ScoreBar label="Dễ đọc" value={result.details.readabilityScore} />
             <ScoreBar label="Độ dài" value={result.details.lengthScore} />
           </div>
-
-          {/* Suggestions */}
           {result.suggestions.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Gợi ý cải thiện</p>
@@ -248,8 +190,6 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
   );
 }
 
-// ─── Generate Tab ─────────────────────────────────────────────────────────────
-
 function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode: Mode; productId?: string; productName?: string; blogType?: string; onApply: (content: string) => void }) {
   const [keyword, setKeyword] = useState("");
   const [tone, setTone] = useState<"professional" | "friendly" | "enthusiastic">("friendly");
@@ -264,10 +204,8 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
   const abortRef = useRef<AbortController | null>(null);
 
   const isProduct = mode === "product";
-
   const canGenerate = isProduct ? !!keyword.trim() && (!!productId || !!productName?.trim()) : !!keyword.trim() && !!blogTitle.trim();
 
-  // Hint hiển thị nguồn dữ liệu AI sẽ dùng
   const productHint = isProduct
     ? productId
       ? { text: "Dùng thông số từ DB", cls: "bg-emerald-50 border-emerald-200 text-emerald-700" }
@@ -279,60 +217,35 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
   const handleGenerate = async () => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
-
     setLoading(true);
     setError(null);
     setResult(null);
-
     try {
       let res: any;
-
       if (isProduct) {
         if (productId) {
           res = await apiRequest.post(
             "/ai-content/product-description",
-            {
-              productId,
-              focusKeyword: keyword.trim(),
-              tone,
-              targetLength: length,
-              additionalNotes: notes.trim() || undefined,
-            },
+            { productId, focusKeyword: keyword.trim(), tone, targetLength: length, additionalNotes: notes.trim() || undefined },
             { timeout: 180_000, signal: abortRef.current.signal },
           );
         } else {
-          // Sản phẩm chưa lưu — dùng tên sản phẩm
           res = await apiRequest.post(
             "/ai-content/product-description-from-name",
-            {
-              productName: productName!.trim(),
-              focusKeyword: keyword.trim(),
-              tone,
-              targetLength: length,
-              additionalNotes: notes.trim() || undefined,
-            },
+            { productName: productName!.trim(), focusKeyword: keyword.trim(), tone, targetLength: length, additionalNotes: notes.trim() || undefined },
             { timeout: 180_000, signal: abortRef.current.signal },
           );
         }
       } else {
         res = await apiRequest.post(
           "/ai-content/blog",
-          {
-            title: blogTitle.trim(),
-            focusKeyword: keyword.trim(),
-            blogType: blogType || "TIN_MOI",
-            targetLength: length,
-            additionalNotes: notes.trim() || undefined,
-          },
+          { title: blogTitle.trim(), focusKeyword: keyword.trim(), blogType: blogType || "TIN_MOI", targetLength: length, additionalNotes: notes.trim() || undefined },
           { timeout: 180_000, signal: abortRef.current.signal },
         );
       }
-
       setResult((res as any)?.data ?? res);
     } catch (e: any) {
-      // User bấm Huỷ → không hiện lỗi
       if (e?.name === "AbortError") return;
-
       if (e?.message?.includes("quá thời gian") || e?.message?.includes("timeout")) {
         setError("OpenAI mất quá nhiều thời gian phản hồi. Thử chọn độ dài ngắn hơn hoặc thử lại.");
       } else {
@@ -350,17 +263,13 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
 
   const handleCopy = async () => {
     if (!result?.content) return;
-    const plain = result.content.replace(/<[^>]+>/g, "");
-    await navigator.clipboard.writeText(plain);
+    await navigator.clipboard.writeText(result.content.replace(/<[^>]+>/g, ""));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const showQuickReplies = !loading;
-
   return (
     <div className="space-y-3">
-      {/* Blog title — chỉ hiển thị ở mode blog */}
       {!isProduct && (
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
@@ -376,7 +285,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         </div>
       )}
 
-      {/* Product hint */}
       {productHint && (
         <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] border ${productHint.cls}`}>
           <Info size={11} className="shrink-0" />
@@ -384,7 +292,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         </div>
       )}
 
-      {/* Keyword */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
           Từ khóa SEO <span className="text-red-400 font-normal">*</span>
@@ -398,7 +305,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         />
       </div>
 
-      {/* Tone + Length */}
       <div className="grid grid-cols-2 gap-2">
         {isProduct && (
           <div className="space-y-1.5">
@@ -428,7 +334,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         </div>
       </div>
 
-      {/* Notes */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
           Ghi chú thêm <span className="text-neutral-dark/40 normal-case font-normal">(tuỳ chọn)</span>
@@ -442,9 +347,9 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         />
       </div>
 
-      {/* Generate + Cancel buttons */}
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={handleGenerate}
           disabled={loading || !canGenerate}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold rounded-xl cursor-pointer transition-colors"
@@ -462,32 +367,32 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
           )}
         </button>
         {loading && (
-          <button onClick={handleCancel} className="px-4 py-2.5 border border-neutral rounded-xl text-[13px] text-neutral-dark hover:bg-neutral-light-active cursor-pointer transition-colors">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="px-4 py-2.5 border border-neutral rounded-xl text-[13px] text-neutral-dark hover:bg-neutral-light-active cursor-pointer transition-colors"
+          >
             Huỷ
           </button>
         )}
       </div>
 
-      {/* Loading overlay */}
       {loading && <GeneratingOverlay mode={mode} />}
 
-      {/* Error */}
       {!loading && error && (
         <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-red-50 border border-red-200 text-[12px] text-red-600">
           <AlertCircle size={13} className="mt-0.5 shrink-0" />
           <div>
             <p>{error}</p>
-            <button onClick={handleGenerate} className="mt-1 text-[11px] underline cursor-pointer">
+            <button type="button" onClick={handleGenerate} className="mt-1 text-[11px] underline cursor-pointer">
               Thử lại
             </button>
           </div>
         </div>
       )}
 
-      {/* Result */}
       {!loading && result && (
         <div className="space-y-3 border-t border-neutral pt-3">
-          {/* SEO quick score */}
           <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border ${scoreBg(result.seoScore.overall)}`}>
             <div>
               <p className="text-[11px] font-semibold text-neutral-dark">Điểm SEO</p>
@@ -498,7 +403,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             <span className={`text-[22px] font-bold ${scoreColor(result.seoScore.overall)}`}>{result.seoScore.overall}</span>
           </div>
 
-          {/* Meta suggestions */}
           {result.suggestedMetaDescription && (
             <div className="px-3 py-2.5 rounded-xl border border-neutral bg-neutral-light space-y-1">
               <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Meta description gợi ý</p>
@@ -507,7 +411,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             </div>
           )}
 
-          {/* Slug suggestion (blog only) */}
           {result.suggestedSlug && (
             <div className="px-3 py-2 rounded-xl border border-neutral bg-neutral-light">
               <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mb-0.5">Slug gợi ý</p>
@@ -515,8 +418,8 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             </div>
           )}
 
-          {/* Preview toggle */}
           <button
+            type="button"
             onClick={() => setShowPreview((v) => !v)}
             className="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-neutral bg-neutral-light hover:bg-neutral-light-active text-[12px] text-primary cursor-pointer"
           >
@@ -531,9 +434,9 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             />
           )}
 
-          {/* Actions */}
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={handleCopy}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-neutral rounded-xl text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer transition-colors"
             >
@@ -550,6 +453,7 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
               )}
             </button>
             <button
+              type="button"
               onClick={() => onApply(result.content)}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-accent text-white rounded-xl text-[12px] font-semibold hover:bg-accent/90 cursor-pointer transition-colors"
             >
@@ -558,7 +462,6 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             </button>
           </div>
 
-          {/* Suggestions */}
           {result.seoScore.suggestions.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Gợi ý cải thiện</p>
@@ -576,15 +479,12 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
   );
 }
 
-// ─── Main AiContentPanel ──────────────────────────────────────────────────────
-
 export function AiContentPanel({ mode, productId, productName, blogType, currentTitle, currentContent, onApply }: AiContentPanelProps) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"generate" | "seo">("generate");
 
   return (
     <div className="rounded-2xl border border-accent/30 bg-accent/[0.03] overflow-hidden">
-      {/* Header toggle */}
       <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-accent/5 transition-colors cursor-pointer">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center">
@@ -598,31 +498,24 @@ export function AiContentPanel({ mode, productId, productName, blogType, current
         {open ? <ChevronUp size={15} className="text-neutral-dark" /> : <ChevronDown size={15} className="text-neutral-dark" />}
       </button>
 
-      {/* Content */}
       {open && (
         <div className="border-t border-accent/20">
-          {/* Tabs */}
           <div className="flex border-b border-neutral">
             <button
               type="button"
               onClick={() => setActiveTab("generate")}
-              className={`flex-1 py-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
-                activeTab === "generate" ? "text-accent border-b-2 border-accent bg-accent/5" : "text-neutral-dark hover:text-primary"
-              }`}
+              className={`flex-1 py-2.5 text-[12px] font-medium transition-colors cursor-pointer ${activeTab === "generate" ? "text-accent border-b-2 border-accent bg-accent/5" : "text-neutral-dark hover:text-primary"}`}
             >
               ✨ Tạo nội dung
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("seo")}
-              className={`flex-1 py-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
-                activeTab === "seo" ? "text-accent border-b-2 border-accent bg-accent/5" : "text-neutral-dark hover:text-primary"
-              }`}
+              className={`flex-1 py-2.5 text-[12px] font-medium transition-colors cursor-pointer ${activeTab === "seo" ? "text-accent border-b-2 border-accent bg-accent/5" : "text-neutral-dark hover:text-primary"}`}
             >
               📊 Check SEO
             </button>
           </div>
-
           <div className="p-4">
             {activeTab === "generate" ? (
               <GenerateTab mode={mode} productId={productId} productName={productName} blogType={blogType} onApply={onApply} />
