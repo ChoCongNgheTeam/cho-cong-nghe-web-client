@@ -70,7 +70,7 @@ const Footer = () => {
                      </h4>
                      <div className="flex gap-3">
                         <Link
-                           href="https://www.facebook.com"
+                           href="https://www.facebook.com/profile.php?id=61574743745458"
                            target="_blank"
                            rel="noopener noreferrer"
                            aria-label="Facebook"
@@ -79,7 +79,7 @@ const Footer = () => {
                            <FaFacebookF className="w-5 h-5" />
                         </Link>
                         <Link
-                           href="https://twitter.com"
+                           href="https://x.com/chocongnghe_"
                            target="_blank"
                            rel="noopener noreferrer"
                            aria-label="Twitter"
@@ -88,7 +88,7 @@ const Footer = () => {
                            <FaTwitter className="w-5 h-5" />
                         </Link>
                         <Link
-                           href="https://www.instagram.com"
+                           href="https://www.instagram.com/chocongnghe.18006060/"
                            target="_blank"
                            rel="noopener noreferrer"
                            aria-label="Instagram"
