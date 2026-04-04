@@ -9,6 +9,7 @@ import { useFcmToken } from "@/hooks/useFcmToken";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/next";
 
 function FcmInitializer() {
   useFcmToken();
