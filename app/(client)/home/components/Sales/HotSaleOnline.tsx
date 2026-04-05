@@ -15,7 +15,7 @@
  * 4. Countdown đếm ngược đến endDate của promotion active hôm nay
  */
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { Slidezy } from "@/components/Slider";
 import { Flame, ChevronRight, Calendar } from "lucide-react";
 import HotSaleProductCard from "./HotSaleProductCard";
@@ -219,7 +219,7 @@ function TabItem({
       )} */}
          {!day.isToday && day.hasActiveSale && (
             <div className="mt-1">
-               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-promotion/10 text-promotion font-medium">
+               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-promotion/10 text-promotion font-medium cursor-pointer">
                   Sắp diễn ra
                </span>
             </div>
@@ -334,12 +334,22 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
    };
 
    const currentData = productsCache[activeDate];
-   const products = currentData?.products ?? [];
+   const products = useMemo(
+      () =>
+         [...(currentData?.products ?? [])].sort((a, b) => {
+            const priceA =
+               (a.card ?? a)?.price?.final ?? (a.card ?? a)?.priceOrigin ?? 0;
+            const priceB =
+               (b.card ?? b)?.price?.final ?? (b.card ?? b)?.priceOrigin ?? 0;
+            return priceA - priceB;
+         }),
+      [currentData],
+   );
+
    const currentPromotions = currentData?.promotions ?? [];
    const currentEndDate = currentData?.endDate ?? null;
    const activeDay = schedule.find((d) => d.date === activeDate);
 
-   // Nếu không có ngày nào có sale
    const hasSaleDays = schedule.some((d) => d.hasActiveSale);
 
    return (
@@ -348,7 +358,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             <div className="relative">
                {/* ── Header ── */}
                <div className="flex justify-center relative z-10">
-                  <div className="bg-[#e24c5a] px-16 py-3 flex items-center gap-2 rounded-t-2xl">
+                  <div className="bg-[#c0392b] px-16 py-2 flex items-center gap-2 rounded-t-2xl">
                      <Flame className="w-10 h-10 text-yellow-400 fill-yellow-400" />
                      <h2 className="text-xl md:text-2xl font-black text-yellow-300 tracking-wider">
                         FLASH SALE
@@ -356,7 +366,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                   </div>
                </div>
 
-               <div className="relative rounded-3xl border-4 border-[#e24c5a] overflow-hidden bg-neutral-light -mt-1">
+               <div className="relative rounded-3xl border-4 border-[#c0392b] overflow-hidden bg-neutral-light -mt-1">
                   {/* ── Tabs (7 ngày) ── */}
                   <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-neutral">
                      {hasSaleDays ? (
@@ -520,11 +530,10 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                      )}
                   </div>
 
-                  {/* ── Footer link ── */}
                   {products.length > 0 && (
                      <div className="px-4 pb-2 flex justify-end">
                         <Link
-                           href={"/flash-sale"}
+                           href={`/flash-sale?date=${activeDate}`}
                            className="flex items-center gap-1 text-[12px] text-promotion font-medium hover:underline"
                         >
                            Xem tất cả <ChevronRight size={13} />
