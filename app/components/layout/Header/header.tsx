@@ -339,12 +339,6 @@ const Header = () => {
                            label="Sổ địa chỉ nhận hàng"
                            onClick={() => setMobileMenuOpen(false)}
                         />
-                        <MenuItem
-                           href="/profile/warranty"
-                           icon={<Shield className="h-5 w-5" />}
-                           label="Thông tin bảo hành"
-                           onClick={() => setMobileMenuOpen(false)}
-                        />
 
                         <div className="mx-1 my-1 border-t border-neutral" />
                      </>
@@ -367,7 +361,7 @@ const Header = () => {
                   )}
 
                   <MenuItem
-                     href="#"
+                     href="/profile/orders"
                      icon={<Truck className="h-5 w-5" />}
                      label="Theo dõi đơn hàng"
                      onClick={() => setMobileMenuOpen(false)}
@@ -379,7 +373,7 @@ const Header = () => {
                      onClick={() => setMobileMenuOpen(false)}
                   />
                   <MenuItem
-                     href="#"
+                     href="/compare"
                      icon={<GitCompareArrows className="h-5 w-5" />}
                      label="So sánh sản phẩm"
                      onClick={() => setMobileMenuOpen(false)}

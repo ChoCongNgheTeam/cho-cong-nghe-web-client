@@ -1,13 +1,5 @@
 "use client";
-
-/**
- * FlashSaleClient
- *
- * Nhận saleSchedule từ SSR (page.tsx), KHÔNG fetch thêm API nào cho hôm nay.
- * Ngày khác: fetch /home/sale-by-date?date=YYYY-MM-DD khi click tab (có cache).
- *
- * Tất cả filter/search/sort đều client-side.
- */
+import { useSearchParams } from "next/navigation";
 
 import { useState, useMemo, memo, useEffect, useCallback } from "react";
 import {
@@ -31,11 +23,12 @@ import apiRequest from "@/lib/api";
 
 const PRICE_RANGES = [
    { label: "Tất cả", min: 0, max: Infinity },
-   { label: "Dưới 500k", min: 0, max: 500_000 },
-   { label: "500k – 1tr", min: 500_000, max: 1_000_000 },
-   { label: "1tr – 2tr", min: 1_000_000, max: 2_000_000 },
+   { label: "Dưới 2tr", min: 0, max: 2_000_000 },
    { label: "2tr – 5tr", min: 2_000_000, max: 5_000_000 },
-   { label: "Trên 5tr", min: 5_000_000, max: Infinity },
+   { label: "5tr – 10tr", min: 5_000_000, max: 10_000_000 },
+   { label: "10tr – 20tr", min: 10_000_000, max: 20_000_000 },
+   { label: "20tr – 30tr", min: 20_000_000, max: 30_000_000 },
+   { label: "Trên 30tr", min: 30_000_000, max: Infinity },
 ];
 
 const SORT_OPTIONS = [
@@ -183,10 +176,10 @@ function DateTabs({
                   onClick={() => onSelect(day.date)}
                   className={`shrink-0 flex flex-col items-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer ${
                      isActive
-                        ? "bg-[#e24c5a] text-white border-[#e24c5a] shadow-lg shadow-[#e24c5a]/30"
+                        ? "bg-[#c0392b] text-white border-[#c0392b] shadow-lg shadow-[#c0392b]/30"
                         : day.hasActiveSale
-                          ? "bg-white border-neutral-200 text-neutral-700 hover:border-[#e24c5a]/50 hover:bg-[#e24c5a]/5"
-                          : "bg-neutral-50 border-neutral-200 text-neutral-400 hover:bg-neutral-100"
+                          ? "bg-neutral-light border-neutral text-primary hover:border-promotion/50 hover:bg-promotion-light"
+                          : "bg-neutral-light border-neutral text-neutral-dark hover:bg-neutral-light-active"
                   }`}
                >
                   <span className="flex items-center gap-1 text-xs font-bold">
@@ -200,8 +193,8 @@ function DateTabs({
                         isActive
                            ? "text-yellow-200"
                            : day.hasActiveSale
-                             ? "text-[#e24c5a]"
-                             : "text-neutral-400"
+                             ? "text-promotion"
+                             : "text-neutral-dark"
                      }`}
                   >
                      {day.hasActiveSale
@@ -241,43 +234,45 @@ function FilterBar({
    filtered: number;
 }) {
    return (
-      <div className="bg-white rounded-2xl border border-neutral-200 p-4 shadow-sm space-y-4">
+      <div className="bg-neutral-light rounded-2xl border border-neutral p-4 shadow-sm space-y-4">
+         {/* Search input */}
          <div className="relative">
             <Search
                size={16}
-               className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+               className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark"
             />
             <input
                type="text"
                placeholder="Tìm sản phẩm trong Flash Sale..."
                value={search}
                onChange={(e) => onSearchChange(e.target.value)}
-               className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:border-[#e24c5a] focus:ring-2 focus:ring-[#e24c5a]/10 outline-none transition-all"
+               className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-neutral bg-neutral-light-active text-primary placeholder:text-neutral-dark focus:bg-neutral-light focus:border-promotion focus:ring-2 focus:ring-promotion/10 outline-none transition-all"
             />
             {search && (
                <button
                   onClick={() => onSearchChange("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary"
                >
                   <X size={14} />
                </button>
             )}
          </div>
 
+         {/* Price ranges + Sort */}
          <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex flex-wrap items-center gap-1.5">
-               <Tag size={14} className="text-neutral-500 shrink-0" />
-               <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide shrink-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-1">
+               <Tag size={14} className="text-neutral-dark shrink-0" />
+               <span className="text-xs font-semibold text-neutral-dark uppercase tracking-wide shrink-0 mr-1">
                   Giá:
                </span>
                {PRICE_RANGES.map((range, i) => (
                   <button
                      key={i}
                      onClick={() => onPriceChange(i)}
-                     className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-all cursor-pointer ${
+                     className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-medium border transition-all cursor-pointer ${
                         priceRange === i
-                           ? "bg-[#e24c5a] text-white border-[#e24c5a]"
-                           : "bg-neutral-50 text-neutral-600 border-neutral-200 hover:border-[#e24c5a]/50"
+                           ? "bg-promotion text-white border-promotion"
+                           : "bg-neutral-light text-primary border-neutral hover:border-promotion/50 hover:bg-promotion-light"
                      }`}
                   >
                      {range.label}
@@ -286,12 +281,12 @@ function FilterBar({
             </div>
 
             <div className="ml-auto flex items-center gap-2">
-               <ArrowUpDown size={14} className="text-neutral-500 shrink-0" />
+               <ArrowUpDown size={14} className="text-neutral-dark shrink-0" />
                <div className="relative">
                   <select
                      value={sort}
                      onChange={(e) => onSortChange(e.target.value)}
-                     className="text-xs pl-3 pr-7 py-2 rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-700 font-medium appearance-none cursor-pointer focus:outline-none focus:border-[#e24c5a]"
+                     className="text-xs pl-3 pr-7 py-2 rounded-xl border border-neutral bg-neutral-light text-primary font-medium appearance-none cursor-pointer focus:outline-none focus:border-promotion"
                   >
                      {SORT_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -301,16 +296,16 @@ function FilterBar({
                   </select>
                   <ChevronDown
                      size={12}
-                     className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none"
+                     className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none"
                   />
                </div>
             </div>
          </div>
 
          {(search || priceRange !== 0) && (
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-neutral-dark">
                Hiển thị{" "}
-               <span className="font-semibold text-[#e24c5a]">{filtered}</span>{" "}
+               <span className="font-semibold text-promotion">{filtered}</span>{" "}
                / {total} sản phẩm
             </p>
          )}
@@ -384,16 +379,18 @@ interface Props {
 export function FlashSaleClient({ saleSchedule }: Props) {
    const { schedule, todayProducts } = saleSchedule;
 
-   // Tab mặc định: hôm nay
-   const defaultDate = useMemo(
-      () => schedule.find((d) => d.isToday)?.date ?? schedule[0]?.date ?? "",
-      [schedule],
-   );
+   const searchParams = useSearchParams();
+   const dateParam = searchParams.get("date");
+   const defaultDate = useMemo(() => {
+      // Nếu có date param hợp lệ trong schedule → dùng nó
+      if (dateParam && schedule.some((d) => d.date === dateParam))
+         return dateParam;
+      return schedule.find((d) => d.isToday)?.date ?? schedule[0]?.date ?? "";
+   }, [schedule, dateParam]);
 
    const [activeDate, setActiveDate] = useState(defaultDate);
    const [loadingDate, setLoadingDate] = useState<string | null>(null);
 
-   // Cache products theo ngày — khởi tạo sẵn với todayProducts từ SSR
    const [productsCache, setProductsCache] = useState<
       Record<string, CachedDayData>
    >(() => {
@@ -412,20 +409,26 @@ export function FlashSaleClient({ saleSchedule }: Props) {
    // Filter state
    const [search, setSearch] = useState("");
    const [priceRange, setPriceRange] = useState(0);
-   const [sort, setSort] = useState("default");
+   const [sort, setSort] = useState("price_asc");
    const [page, setPage] = useState(1);
 
-   // Fetch products cho ngày chưa có trong cache — giống HotSaleOnline
-   const fetchProductsForDate = useCallback(
-      async (date: string) => {
-         if (productsCache[date] !== undefined) return; // đã có cache, bỏ qua
-         setLoadingDate(date);
-         try {
-            const res = await apiRequest.get<any>("/home/sale-by-date", {
-               params: { date, limit: 100 }, // lấy nhiều để pagination client-side hoạt động đúng
-            });
-            const result = res.data;
-            setProductsCache((prev) => ({
+   const fetchProductsForDate = useCallback(async (date: string) => {
+      // Kiểm tra cache bằng cách dùng ref thay vì closure
+      setProductsCache((prev) => {
+         if (prev[date] !== undefined) return prev; // đã có, không fetch
+         return prev; // trả về nguyên, việc fetch xử lý bên dưới
+      });
+
+      // Dùng ref để check cache tránh stale closure
+      setLoadingDate(date);
+      try {
+         const res = await apiRequest.get<any>("/home/sale-by-date", {
+            params: { date, limit: 100 },
+         });
+         const result = res.data;
+         setProductsCache((prev) => {
+            if (prev[date] !== undefined) return prev; // double-check
+            return {
                ...prev,
                [date]: {
                   products: result.data ?? [],
@@ -433,10 +436,12 @@ export function FlashSaleClient({ saleSchedule }: Props) {
                   promotions: result.promotions ?? [],
                   endDate: result.endDate ?? null,
                },
-            }));
-         } catch {
-            // Cache empty để tránh retry liên tục
-            setProductsCache((prev) => ({
+            };
+         });
+      } catch {
+         setProductsCache((prev) => {
+            if (prev[date] !== undefined) return prev;
+            return {
                ...prev,
                [date]: {
                   products: [],
@@ -444,20 +449,30 @@ export function FlashSaleClient({ saleSchedule }: Props) {
                   promotions: [],
                   endDate: null,
                },
-            }));
-         } finally {
-            setLoadingDate(null);
-         }
-      },
-      [productsCache],
-   );
+            };
+         });
+      } finally {
+         setLoadingDate(null);
+      }
+   }, []);
 
-   // Đổi tab — reset filter, fetch nếu chưa có cache
+   useEffect(() => {
+      if (!defaultDate) return;
+      setActiveDate(defaultDate);
+      // Chỉ fetch nếu chưa có trong cache
+      setProductsCache((prev) => {
+         if (prev[defaultDate] === undefined) {
+            fetchProductsForDate(defaultDate);
+         }
+         return prev;
+      });
+   }, [defaultDate]);
+
    const handleDateSelect = (date: string) => {
       setActiveDate(date);
       setSearch("");
       setPriceRange(0);
-      setSort("default");
+      setSort("price_asc"); // ← thay "default"
       setPage(1);
       fetchProductsForDate(date);
    };
@@ -531,7 +546,7 @@ export function FlashSaleClient({ saleSchedule }: Props) {
    const hasSaleDays = schedule.some((d) => d.hasActiveSale);
 
    return (
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen bg-neutral-light">
          {/* Date tabs */}
          <div className="container">
             {hasSaleDays && schedule.length > 0 && (
@@ -569,7 +584,7 @@ export function FlashSaleClient({ saleSchedule }: Props) {
                   {Array.from({ length: 10 }).map((_, i) => (
                      <div
                         key={i}
-                        className="rounded-xl border border-neutral-200 bg-neutral-100 animate-pulse h-64"
+                        className="rounded-xl border border-neutral bg-neutral-light-active animate-pulse h-64"
                      />
                   ))}
                </div>

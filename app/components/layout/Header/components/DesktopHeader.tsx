@@ -93,10 +93,6 @@ const DesktopHeader = memo(
                       <MapPin className="w-5 h-5 text-neutral-darker" />
                       <span className="text-sm">Sổ địa chỉ nhận hàng</span>
                     </Link>
-                    <Link href="/warranty" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={onUserMenuClose}>
-                      <Shield className="w-5 h-5 text-neutral-darker" />
-                      <span className="text-sm">Thông tin bảo hành</span>
-                    </Link>
                   </div>
                   <div className="border-t border-neutral">
                     <button
