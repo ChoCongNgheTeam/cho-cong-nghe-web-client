@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, useTransition, useRef, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, SlidersHorizontal, X, Filter, TrendingUp, TrendingDown, Sparkles, ShoppingBag, Star } from "lucide-react";
-import { FilterGroup } from "../_libs/fetchFilter";
+import { FilterGroup } from "../_libs/index";
 import { formatNumber } from "@/helpers";
 
 // ─── Debounce hook ─────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // thêm useRouter
 import { Home, LayoutGrid, ShoppingBag, Bell, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -13,9 +13,17 @@ type SheetType = "category" | "notification" | null;
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const router = useRouter(); // thêm dòng này
   const { isAuthenticated } = useAuth();
   const { unreadCount } = useNotifications();
   const [openSheet, setOpenSheet] = useState<SheetType>(null);
+
+  // Chỉ render ở trang home
+  const allowedPaths = ["/", "/profile"];
+
+  const shouldShow = allowedPaths.includes(pathname);
+
+  if (!shouldShow) return null;
 
   const closeSheet = () => setOpenSheet(null);
 
@@ -28,7 +36,7 @@ export default function MobileBottomNav() {
       icon: Bell,
       label: "Thông báo",
       badge: isAuthenticated ? unreadCount : 0,
-      onTap: () => (isAuthenticated ? setOpenSheet((s) => (s === "notification" ? null : "notification")) : (window.location.href = "/account")),
+      onTap: () => (isAuthenticated ? setOpenSheet((s) => (s === "notification" ? null : "notification")) : router.push("/account")), // dùng router.push thay vì window.location.href
     },
     { key: "account", href: isAuthenticated ? "/profile" : "/account", icon: User, label: "Tài khoản" },
   ];
