@@ -8,6 +8,8 @@ import { formatVND } from "@/helpers";
 import { memo } from "react";
 import { StarRating } from "@/components/product/StarRating";
 import { thumbnailUrl } from "@/helpers/resizeImage";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/hooks/useCart";
 
 interface FlashPromoRule {
    actionType: string;
@@ -57,6 +59,9 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
       return null;
    })();
 
+   const router = useRouter();
+   const { addToCart } = useCart();
+
    const finalPrice =
       previewPrice ??
       (product.price.hasPromotion ? product.price.final : product.price.base);
@@ -65,6 +70,31 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
       (showFlashBadge && previewPrice != null) || product.price.hasPromotion;
 
    const hasHighlights = product.highlights?.length > 0;
+
+   const handleBuyNow = async (e: React.MouseEvent) => {
+      e.preventDefault(); // ngăn Link navigate
+      e.stopPropagation();
+      console.log(product);
+      if (!product.id) return;
+
+      try {
+         await addToCart(product.id, 1, {
+            productName: product.name,
+            productId: product.id,
+            productSlug: product.slug,
+            variantName: "",
+            price: finalPrice,
+            originalPrice: product.price.base,
+            imageUrl: product.thumbnail ?? "",
+            availableQuantity: 1,
+            color: "",
+            colorValue: "",
+         });
+         router.push("/cart");
+      } catch {
+         router.push(`/products/${product.slug}`);
+      }
+   };
 
    return (
       <Link
@@ -173,7 +203,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
          ══════════════════════════════════════════ */}
          <div
             className="mx-2.5 mb-2 rounded-lg px-2.5 py-2"
-            style={{ background: "#e24c5a" }}
+            style={{ background: "#c0392b" }}
          >
             {/* MOBILE */}
             <div className="flex flex-col gap-0.5 sm:hidden">
@@ -264,11 +294,14 @@ const HotSaleProductCard = memo(function HotSaleProductCard({
          ══════════════════════════════════════════ */}
          <div className="px-2.5 mb-2.5 mt-auto">
             {isUpcoming ? (
-               <button className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold bg-transparent text-[#e24c5a] border border-[#e24c5a]">
+               <button className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold bg-transparent text-[#c0392b] border border-[#c0392b] cursor-pointer">
                   Sắp diễn ra
                </button>
             ) : (
-               <button className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold border border-[#e24c5a] text-[#e24c5a] cursor-pointer">
+               <button
+                  onClick={handleBuyNow}
+                  className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold border border-[#c0392b] text-[#c0392b] cursor-pointer hover:bg-[#c0392b] hover:text-white transition-colors"
+               >
                   Mua giá sốc
                </button>
             )}
