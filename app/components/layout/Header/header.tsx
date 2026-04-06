@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import HeaderTop from "./components/HeaderTop";
-import MobileHeader from "./components/MobileHeader";
+// import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
 import MobileBottomNav from "./components/MobileBottomNav";
 import { useUserMenu } from "@/hooks/useUserMenu";
@@ -132,7 +132,7 @@ const Header = () => {
 
         <div className="container">
           {/* Mobile: logo + search bar always visible */}
-          <MobileHeader
+          {/* <MobileHeader
             isDarkMode={isDark}
             // props below kept for type compatibility but unused in new impl
             mobileMenuOpen={false}
@@ -141,7 +141,7 @@ const Header = () => {
             onMenuToggle={() => {}}
             onSearchToggle={() => {}}
             onSearchChange={() => {}}
-          />
+          /> */}
 
           {/* Desktop header row */}
           <div className="py-2">
