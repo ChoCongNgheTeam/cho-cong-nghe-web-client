@@ -142,15 +142,15 @@ export default function ProductDetailRight({
     highlights.length > 0 ? (
       <div className="mt-6">
         <h2 className="font-semibold text-primary text-sm sm:text-base mb-3">Thông số nổi bật</h2>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
+        <div className="grid grid-cols-3 sm:flex sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
           {highlights.map((highlight, index) => {
             const IconComponent = highlight?.icon ? iconMap[highlight.icon] : null;
             return (
-              <div className="flex-1" key={index}>
+              <div className="flex flex-col" key={index}>
                 <span className="text-xs text-neutral-dark">{highlight?.name || "N/A"}</span>
-                <div className="flex items-center gap-2 mt-1">
-                  {IconComponent && <IconComponent size={22} />}
-                  <span className="text-sm font-semibold text-primary">{highlight?.value || "N/A"}</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {IconComponent && <IconComponent size={18} className="shrink-0" />}
+                  <span className="text-sm font-semibold text-primary leading-tight">{highlight?.value || "N/A"}</span>
                 </div>
               </div>
             );
@@ -164,7 +164,7 @@ export default function ProductDetailRight({
     <div className="mt-5">
       <div className="flex justify-between items-center gap-2 mb-3">
         <h2 className="text-sm sm:text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-        <button className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer">Tìm hiểu thêm</button>
+        <button className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">Tìm hiểu thêm</button>
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">

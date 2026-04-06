@@ -1,7 +1,12 @@
 "use client";
 import apiRequest from "@/lib/api";
-import { MessageCircle, X, Send, Bot, User, RotateCcw } from "lucide-react";
+import { X, Send, Bot, User, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES & CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface Message {
   role: "user" | "assistant";
@@ -14,24 +19,26 @@ interface ChatResponse {
 }
 
 const STORAGE_KEY = "cho-cong-nghe:chat-history";
-const POS_KEY = "cho-cong-nghe:chat-pos";
-const SIZE_KEY = "cho-cong-nghe:chat-size";
 const MAX_STORED = 20;
 
 const QUICK_REPLIES = ["Có iPhone 15 không?", "Laptop dưới 15 triệu?", "Tai nghe không dây tốt?", "Chuột gaming giá rẻ?"];
 
-const MIN_W = 280;
-const MAX_W = 680;
-const MIN_H = 340;
-const MAX_H = 800;
-const DEFAULT_W = 320;
-const DEFAULT_H = 480;
-const BTN_SIZE = 43;
-// ── Nút chat nằm cao hơn để nhường chỗ cho nút scrollToTop (~56px) ──────────
-const BTN_MARGIN_RIGHT = 22;
-const BTN_MARGIN_BOTTOM = 140; // tránh đè lên scrollToTop
-const BTN_MARGIN_BOTTOM_MOBILE = 130;
-const BTN_MARGIN_BOTTOM_DESKTOP = 80;
+// Panel sizes
+const NORMAL_W = 340;
+const NORMAL_H = 500;
+const MAX_W = 560;
+const MAX_H = 680;
+
+// Button
+const BTN_SIZE = 56; // to hơn cũ (43 → 56)
+const BTN_RIGHT = 22;
+const BTN_BOTTOM_MOBILE = 130;
+const BTN_BOTTOM_DESKTOP = 80;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARKDOWN RENDERER
+// ─────────────────────────────────────────────────────────────────────────────
+
 function renderMarkdown(text: string): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -45,15 +52,20 @@ function renderMarkdown(text: string): string {
     .replace(/\n/g, "<br/>");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE BUBBLE
+// ─────────────────────────────────────────────────────────────────────────────
+
 function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
   const isUser = msg.role === "user";
   const html = isUser ? msg.content : renderMarkdown(msg.content);
 
   return (
     <div className={`flex items-end gap-1.5 ${isUser ? "flex-row-reverse" : "flex-row"} ${isNew ? "chat-msg-enter" : ""}`}>
-      <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center transition-transform hover:scale-110 ${isUser ? "bg-accent/20" : "bg-accent/10"}`}>
+      <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center ${isUser ? "bg-accent/20" : "bg-accent/10"}`}>
         {isUser ? <User size={12} className="text-accent" /> : <Bot size={12} className="text-accent" />}
       </div>
+
       {isUser ? (
         <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm">{msg.content}</div>
       ) : (
@@ -66,21 +78,14 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
   );
 }
 
-function clampPos(x: number, y: number, w: number, h: number) {
-  return {
-    x: Math.max(0, Math.min(x, window.innerWidth - w)),
-    y: Math.max(0, Math.min(y, window.innerHeight - h)),
-  };
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 
-// ── Detect mobile (<=768px) ───────────────────────────────────────────────────
-function isMobile() {
-  if (typeof window === "undefined") return false;
-  return window.innerWidth <= 768;
-}
+type PanelState = "closed" | "normal" | "maximized";
 
 export default function ChatButton() {
-  const [open, setOpen] = useState(false);
+  const [panelState, setPanelState] = useState<PanelState>("closed");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,91 +94,43 @@ export default function ChatButton() {
   const [ready, setReady] = useState(false);
   const [mobile, setMobile] = useState(false);
 
-  // Desktop: draggable positions
-  const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
-  const [panelSize, setPanelSize] = useState({ w: DEFAULT_W, h: DEFAULT_H });
-
-  const panelPosRef = useRef({ x: 0, y: 0 });
-  const panelSizeRef = useRef({ w: DEFAULT_W, h: DEFAULT_H });
-  const panelManualPos = useRef(false);
-
-  const isDraggingPanel = useRef(false);
-  const isResizing = useRef(false);
-
-  const ref = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    panelPosRef.current = panelPos;
-  }, [panelPos]);
-  useEffect(() => {
-    panelSizeRef.current = panelSize;
-  }, [panelSize]);
 
-  const calcPanelFromBtn = useCallback((bx: number, by: number, pw: number, ph: number) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let px = bx + BTN_SIZE / 2 - pw / 2;
-    let py = by - ph - 12;
-    if (py < 8) py = by + BTN_SIZE + 12;
-    px = Math.max(8, Math.min(px, vw - pw - 8));
-    py = Math.max(8, Math.min(py, vh - ph - 8));
-    return { x: px, y: py };
+  const isOpen = panelState !== "closed";
+  const isMaximized = panelState === "maximized";
+  const size = isOpen ? BTN_SIZE - 12 : BTN_SIZE;
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const open = (e as CustomEvent<{ open: boolean }>).detail.open;
+      setSheetOpen(open);
+    };
+    window.addEventListener("sheet:toggle", handler);
+    return () => window.removeEventListener("sheet:toggle", handler);
   }, []);
 
-  // ── Init on mount ────────────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    const mob = isMobile();
-    setMobile(mob);
-
-    // Nút chat: góc phải, đủ cao để tránh scrollToTop
-    const defaultBtnX = window.innerWidth - BTN_SIZE - BTN_MARGIN_RIGHT;
-    const defaultBtnY = window.innerHeight - BTN_SIZE - BTN_MARGIN_BOTTOM;
-
-    let bx = defaultBtnX;
-    let by = defaultBtnY;
-    let pw = DEFAULT_W;
-    let ph = DEFAULT_H;
-
+    setMobile(window.innerWidth <= 768);
     try {
-      const storedMsgs = localStorage.getItem(STORAGE_KEY);
-      if (storedMsgs) {
-        const parsed: Message[] = JSON.parse(storedMsgs);
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed: Message[] = JSON.parse(stored);
         if (Array.isArray(parsed)) setMessages(parsed);
       }
-      // Chỉ khôi phục vị trí đã lưu trên desktop
-      if (!mob) {
-        const savedPos = localStorage.getItem(POS_KEY);
-        if (savedPos) {
-          const p = JSON.parse(savedPos);
-          bx = p.x;
-          by = p.y;
-        }
-        const savedSize = localStorage.getItem(SIZE_KEY);
-        if (savedSize) {
-          const s = JSON.parse(savedSize);
-          pw = s.w;
-          ph = s.h;
-        }
-      }
     } catch (_) {}
-    setPanelSize({ w: pw, h: ph });
-    setPanelPos(calcPanelFromBtn(bx, by, pw, ph));
     setReady(true);
 
-    // ── Lắng nghe resize để cập nhật mobile state + clamp vị trí ──────────
-    const handleResize = () => {
-      const nowMobile = isMobile();
-      setMobile(nowMobile);
-      if (!nowMobile) {
-        if (!panelManualPos.current) {
-          const sz = panelSizeRef.current;
-        }
-      }
-    };
+    const handleResize = () => setMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [calcPanelFromBtn]);
+  }, []);
+
+  // ── Persist messages ──────────────────────────────────────────────────────
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -182,112 +139,41 @@ export default function ChatButton() {
     } catch (_) {}
   }, [messages]);
 
+  // ── Scroll to bottom ──────────────────────────────────────────────────────
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  // ── Focus input when opened ───────────────────────────────────────────────
+
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       setHasUnread(false);
       setTimeout(() => inputRef.current?.focus(), 150);
     }
-  }, [open]);
+  }, [isOpen]);
 
-  // Click outside chỉ đóng trên desktop
-  useEffect(() => {
-    if (!open || mobile) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open, mobile]);
+  // ── Lock body scroll on mobile ────────────────────────────────────────────
 
-  // ── Khoá scroll body khi panel mở trên mobile ────────────────────────────
   useEffect(() => {
     if (!mobile) return;
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open, mobile]);
+  }, [isOpen, mobile]);
 
-  const onBtnClick = () => {
-    setOpen((v) => !v);
-  };
+  // ── Panel controls ────────────────────────────────────────────────────────
 
-  // ── Drag: panel header (chỉ desktop) ─────────────────────────────────────
-  const onPanelHeaderMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (mobile || (e.target as HTMLElement).closest("button")) return;
-      e.preventDefault();
-      isDraggingPanel.current = true;
-      const startMx = e.clientX;
-      const startMy = e.clientY;
-      const startPx = panelPosRef.current.x;
-      const startPy = panelPosRef.current.y;
+  const openPanel = () => setPanelState("normal");
 
-      const onMove = (ev: MouseEvent) => {
-        if (!isDraggingPanel.current) return;
-        const dx = ev.clientX - startMx;
-        const dy = ev.clientY - startMy;
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) panelManualPos.current = true;
-        const sz = panelSizeRef.current;
-        const clamped = clampPos(startPx + dx, startPy + dy, sz.w, sz.h);
-        setPanelPos(clamped);
-      };
+  const toggleMaximize = () => setPanelState((s) => (s === "maximized" ? "normal" : "maximized"));
 
-      const onUp = () => {
-        isDraggingPanel.current = false;
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-      };
-
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    },
-    [mobile],
-  );
-
-  // ── Resize (chỉ desktop) ──────────────────────────────────────────────────
-  const onResizeMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (mobile) return;
-      e.preventDefault();
-      e.stopPropagation();
-      isResizing.current = true;
-      const startMx = e.clientX;
-      const startMy = e.clientY;
-      const startW = panelSizeRef.current.w;
-      const startH = panelSizeRef.current.h;
-
-      const onMove = (ev: MouseEvent) => {
-        if (!isResizing.current) return;
-        const newW = Math.min(MAX_W, Math.max(MIN_W, startW + (ev.clientX - startMx)));
-        const newH = Math.min(MAX_H, Math.max(MIN_H, startH + (ev.clientY - startMy)));
-        setPanelSize({ w: newW, h: newH });
-      };
-
-      const onUp = () => {
-        isResizing.current = false;
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-        try {
-          localStorage.setItem(SIZE_KEY, JSON.stringify(panelSizeRef.current));
-        } catch (_) {}
-      };
-
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    },
-    [mobile],
-  );
+  const closePanel = () => setPanelState("closed");
 
   // ── Send message ──────────────────────────────────────────────────────────
+
   const sendMessage = useCallback(
     async (text?: string) => {
       const trimmed = (text ?? input).trim();
@@ -305,12 +191,7 @@ export default function ChatButton() {
         const res = await apiRequest.post<ChatResponse>(
           "/chatbot",
           {
-            messages: updatedMessages
-              .filter((_, i, arr) => {
-                const firstUserIdx = arr.findIndex((m) => m.role === "user");
-                return i >= firstUserIdx;
-              })
-              .map(({ role, content }) => ({ role, content })),
+            messages: updatedMessages.filter((_, i, arr) => i >= arr.findIndex((m) => m.role === "user")).map(({ role, content }) => ({ role, content })),
           },
           { noAuth: true },
         );
@@ -326,20 +207,14 @@ export default function ChatButton() {
           return next;
         });
 
-        if (!open) setHasUnread(true);
+        if (!isOpen) setHasUnread(true);
       } catch (_) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: "Xin lỗi, không thể kết nối. Vui lòng thử lại sau.",
-          },
-        ]);
+        setMessages((prev) => [...prev, { role: "assistant", content: "Xin lỗi, không thể kết nối. Vui lòng thử lại sau." }]);
       } finally {
         setLoading(false);
       }
     },
-    [input, loading, messages, open],
+    [input, loading, messages, isOpen],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -358,240 +233,292 @@ export default function ChatButton() {
 
   if (!ready) return null;
 
-  // ── Panel style: full-screen modal trên mobile, floating trên desktop ─────
+  // ── Panel dimensions ──────────────────────────────────────────────────────
+
+  // Mobile: luôn full-screen khi mở
+  // Desktop: normal = 340×500, maximized = 560×680
   const panelStyle: React.CSSProperties = mobile
     ? {
         position: "fixed",
         inset: 0,
         width: "100%",
         height: "100%",
-        // Safe area cho notch/home bar
         paddingBottom: "env(safe-area-inset-bottom)",
         borderRadius: 0,
         zIndex: 9999,
       }
     : {
         position: "fixed",
-        left: panelPos.x,
-        top: panelPos.y,
-        width: panelSize.w,
-        height: panelSize.h,
+        bottom: 16,
+        right: BTN_RIGHT,
+        width: isMaximized ? MAX_W : NORMAL_W,
+        height: isMaximized ? Math.min(MAX_H, window.innerHeight - 32) : NORMAL_H,
         zIndex: 51,
+
+        transition: "width 0.25s cubic-bezier(0.4,0,0.2,1), height 0.25s cubic-bezier(0.4,0,0.2,1)",
       };
 
-  // ── Vị trí nút toggle: fixed bottom-right trên mobile ─────────────────────
   const btnStyle: React.CSSProperties = {
     position: "fixed",
-    right: BTN_MARGIN_RIGHT,
-    bottom: mobile ? `calc(${BTN_MARGIN_BOTTOM_MOBILE}px + env(safe-area-inset-bottom))` : BTN_MARGIN_BOTTOM_DESKTOP,
+    right: BTN_RIGHT,
+    bottom: mobile ? `calc(${BTN_BOTTOM_MOBILE}px + env(safe-area-inset-bottom))` : BTN_BOTTOM_DESKTOP,
     width: BTN_SIZE,
     height: BTN_SIZE,
     zIndex: 10000,
   };
 
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <>
       <style>{`
-            @keyframes chatSlideIn {
-               from { opacity: 0; transform: scale(0.94); }
-               to   { opacity: 1; transform: scale(1); }
-            }
-            @keyframes chatSlideUp {
-               from { opacity: 0; transform: translateY(100%); }
-               to   { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes chatMsgIn {
-               from { opacity: 0; transform: translateY(8px); }
-               to   { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes chatPulse {
-               0%, 100% { transform: scale(1); }
-               50%       { transform: scale(1.2); }
-            }
-            @keyframes dotBounce {
-               0%, 80%, 100% { transform: translateY(0); }
-               40%           { transform: translateY(-5px); }
-            }
-            .chat-panel-enter-desktop { animation: chatSlideIn 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-            .chat-panel-enter-mobile  { animation: chatSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-            .chat-msg-enter   { animation: chatMsgIn 0.22s ease-out forwards; }
-            .chat-bubble      { transition: box-shadow 0.15s ease; }
-            .chat-bubble:hover{ box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-            .dot-1 { animation: dotBounce 1.2s ease-in-out infinite 0ms; }
-            .dot-2 { animation: dotBounce 1.2s ease-in-out infinite 150ms; }
-            .dot-3 { animation: dotBounce 1.2s ease-in-out infinite 300ms; }
-            .unread-pulse { animation: chatPulse 1.8s ease-in-out infinite; }
-            .prose-chat p  { margin: 0 0 0.3em; }
-            .prose-chat p:last-child { margin-bottom: 0; }
-            .prose-chat ul { margin: 0.3em 0; padding-left: 1.2em; list-style: disc; }
-            .prose-chat li { margin: 0.15em 0; }
-            .prose-chat strong { font-weight: 600; }
-            .prose-chat em { font-style: italic; }
-            .prose-chat code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
-            .chat-link { color: var(--color-accent,#2563eb); text-decoration: underline; text-underline-offset: 2px; }
-            .chat-link:hover { opacity: 0.75; }
-            .chat-drag-header { cursor: grab; user-select: none; -webkit-user-select: none; }
-            .chat-drag-header:active { cursor: grabbing; }
-            .chat-drag-btn { cursor: grab; }
-            .chat-drag-btn:active { cursor: grabbing; }
-            /* Mobile: header không hiện grab cursor */
-            @media (max-width: 768px) {
-               .chat-drag-header { cursor: default; }
-               .chat-drag-btn    { cursor: pointer; }
-            }
-            .chat-resize-handle {
-               position: absolute; bottom: 0; right: 0;
-               width: 20px; height: 20px;
-               cursor: se-resize;
-               display: flex; align-items: flex-end; justify-content: flex-end;
-               padding: 4px; opacity: 0.3; transition: opacity 0.15s;
-               color: currentColor;
-            }
-            .chat-resize-handle:hover { opacity: 0.8; }
-            /* Backdrop mờ phía sau panel trên mobile */
-            .chat-mobile-backdrop {
-               position: fixed;
-               inset: 0;
-               background: rgba(0,0,0,0.4);
-               z-index: 9998;
-               backdrop-filter: blur(2px);
-            }
-         `}</style>
+        @keyframes chatSlideIn {
+          from { opacity: 0; transform: scale(0.92) translateY(8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes chatSlideUp {
+          from { opacity: 0; transform: translateY(100%); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chatMsgIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chatPulse {
+          0%, 100% { transform: scale(1); }
+          50%       { transform: scale(1.25); }
+        }
+        @keyframes dotBounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40%           { transform: translateY(-5px); }
+        }
+        @keyframes mascotFloat {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-3px); }
+        }
+        .chat-panel-enter-desktop { animation: chatSlideIn 0.24s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .chat-panel-enter-mobile  { animation: chatSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .chat-msg-enter   { animation: chatMsgIn 0.22s ease-out forwards; }
+        .chat-bubble      { transition: box-shadow 0.15s ease; }
+        .chat-bubble:hover{ box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .dot-1 { animation: dotBounce 1.2s ease-in-out infinite 0ms; }
+        .dot-2 { animation: dotBounce 1.2s ease-in-out infinite 150ms; }
+        .dot-3 { animation: dotBounce 1.2s ease-in-out infinite 300ms; }
+        .unread-pulse { animation: chatPulse 1.8s ease-in-out infinite; }
+        .mascot-float { animation: mascotFloat 3s ease-in-out infinite; }
+        .prose-chat p  { margin: 0 0 0.3em; }
+        .prose-chat p:last-child { margin-bottom: 0; }
+        .prose-chat ul { margin: 0.3em 0; padding-left: 1.2em; list-style: disc; }
+        .prose-chat li { margin: 0.15em 0; }
+        .prose-chat strong { font-weight: 600; }
+        .prose-chat em { font-style: italic; }
+        .prose-chat code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+        .chat-link { color: var(--color-accent,#2563eb); text-decoration: underline; text-underline-offset: 2px; }
+        .chat-link:hover { opacity: 0.75; }
+        .chat-mobile-backdrop {
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.4);
+          z-index: 9998;
+          backdrop-filter: blur(2px);
+        }
+        /* Window control dots */
+        .wc-btn {
+          width: 12px; height: 12px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          transition: filter 0.15s, transform 0.1s;
+          cursor: pointer; border: none; padding: 0;
+          flex-shrink: 0;
+        }
+        .wc-btn:hover { filter: brightness(0.82); transform: scale(1.12); }
+        .wc-btn svg { opacity: 0; transition: opacity 0.15s; width: 7px; height: 7px; }
+        .wc-group:hover .wc-btn svg { opacity: 1; }
+        .wc-close  { background: #ff5f57; }
+        .wc-min    { background: #febc2e; }
+        .wc-max    { background: #28c840; }
+      `}</style>
 
-      <div ref={ref}>
-        {/* ── Mobile backdrop ──────────────────────────────────────────── */}
-        {open && mobile && <div className="chat-mobile-backdrop" onClick={() => setOpen(false)} />}
+      {/* ── Mobile backdrop ── */}
+      {isOpen && mobile && <div className="chat-mobile-backdrop" onClick={closePanel} />}
 
-        {open && (
+      {/* ── PANEL ── */}
+      {isOpen && (
+        <div
+          className={`rounded-2xl border border-neutral bg-neutral-light shadow-2xl overflow-hidden flex flex-col ${mobile ? "chat-panel-enter-mobile" : "chat-panel-enter-desktop"}`}
+          style={panelStyle}
+        >
+          {/* ── Header ── */}
           <div
-            className={`rounded-2xl border border-neutral bg-neutral-light shadow-2xl overflow-hidden flex flex-col ${mobile ? "chat-panel-enter-mobile" : "chat-panel-enter-desktop"}`}
-            style={panelStyle}
+            className="bg-accent px-4 flex items-center justify-between shrink-0 select-none"
+            style={{
+              paddingTop: mobile ? `calc(0.75rem + env(safe-area-inset-top))` : "0.65rem",
+              paddingBottom: "0.65rem",
+            }}
           >
-            {/* Header */}
-            <div
-              className="chat-drag-header bg-accent px-4 flex items-center justify-between shrink-0"
-              style={{
-                paddingTop: mobile ? `calc(0.75rem + env(safe-area-inset-top))` : "0.75rem",
-                paddingBottom: "0.75rem",
-              }}
-              onMouseDown={onPanelHeaderMouseDown}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center pointer-events-none">
-                  <Bot size={15} className="text-white" />
-                </div>
-                <div className="pointer-events-none">
-                  <p className="text-white text-[13px] font-semibold leading-tight">Trợ lý Chợ Công Nghệ</p>
-                  <p className="text-white/70 text-[11px]">Trả lời tức thì · AI</p>
-                </div>
+            {/* Left: mascot + title */}
+            <div className="flex items-center gap-2.5 pointer-events-none">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shrink-0">
+                <Image src="/images/Robot-mascot.png" alt="Mascot" width={32} height={32} className="object-contain" />
               </div>
-              <div className="flex items-center gap-1">
-                {messages.length > 0 && (
-                  <button type="button" onClick={clearHistory} title="Xóa lịch sử" className="text-white/60 hover:text-white transition-colors cursor-pointer p-1.5 rounded-md hover:bg-white/10">
-                    <RotateCcw size={13} />
+              <div>
+                <p className="text-white text-[13px] font-semibold leading-tight">Trợ lý Chợ Công Nghệ</p>
+                <p className="text-white/70 text-[11px]">Trả lời tức thì · AI</p>
+              </div>
+            </div>
+
+            {/* Right: window controls */}
+            <div className="flex items-center gap-2">
+              {/* Clear history */}
+              {messages.length > 0 && (
+                <button type="button" onClick={clearHistory} title="Xóa lịch sử" className="text-white/60 hover:text-white transition-colors cursor-pointer p-1.5 rounded-md hover:bg-white/10 mr-1">
+                  <RotateCcw size={13} />
+                </button>
+              )}
+
+              {/* Browser-style window controls — chỉ desktop */}
+              {!mobile && (
+                <div className="wc-group flex items-center gap-1.5">
+                  {/* Close */}
+                  <button type="button" className="wc-btn wc-close" onClick={closePanel} title="Đóng">
+                    <svg viewBox="0 0 8 8" fill="none" stroke="#8B0000" strokeWidth="1.5" strokeLinecap="round">
+                      <line x1="1.5" y1="1.5" x2="6.5" y2="6.5" />
+                      <line x1="6.5" y1="1.5" x2="1.5" y2="6.5" />
+                    </svg>
                   </button>
-                )}
-                <button type="button" onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors cursor-pointer p-1.5 rounded-md hover:bg-white/10">
+
+                  {/* Minimize → đóng panel */}
+                  <button type="button" className="wc-btn wc-min" onClick={closePanel} title="Thu nhỏ">
+                    <svg viewBox="0 0 8 8" fill="none" stroke="#7A5200" strokeWidth="1.5" strokeLinecap="round">
+                      <line x1="1.5" y1="4" x2="6.5" y2="4" />
+                    </svg>
+                  </button>
+
+                  {/* Maximize / Restore */}
+                  <button type="button" className="wc-btn wc-max" onClick={toggleMaximize} title={isMaximized ? "Thu lại" : "Phóng to"}>
+                    {isMaximized ? <Minimize2 size={7} color="#0A5C00" strokeWidth={2.5} /> : <Maximize2 size={7} color="#0A5C00" strokeWidth={2.5} />}
+                  </button>
+                </div>
+              )}
+
+              {/* Mobile: chỉ nút X */}
+              {mobile && (
+                <button type="button" onClick={closePanel} className="text-white/70 hover:text-white transition-colors cursor-pointer p-1.5 rounded-md hover:bg-white/10">
                   <X size={16} />
                 </button>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 px-3 py-3 bg-neutral-light-hover min-h-0">
-              {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
-                  <div className="w-11 h-11 rounded-2xl bg-accent/10 flex items-center justify-center mb-1">
-                    <Bot size={22} className="text-accent" />
-                  </div>
-                  <p className="text-[13px] text-primary font-semibold">Xin chào! 👋</p>
-                  <p className="text-[13px] text-primary leading-relaxed">Tôi có thể tư vấn sản phẩm, giá cả và tình trạng hàng cho bạn.</p>
-                </div>
               )}
+            </div>
+          </div>
 
-              {messages.map((msg, i) => (
-                <MessageBubble key={i} msg={msg} isNew={i === newMsgIdx} />
+          {/* ── Messages ── */}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 px-3 py-3 bg-neutral-light-hover min-h-0">
+            {messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
+                <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-1 overflow-hidden">
+                  <Image src="/images/Robot-mascot.png" alt="Mascot" width={56} height={56} className="object-contain" />
+                </div>
+                <p className="text-[13px] text-primary font-semibold">Xin chào! 👋</p>
+                <p className="text-[13px] text-primary leading-relaxed">Tôi có thể tư vấn sản phẩm, giá cả và tình trạng hàng cho bạn.</p>
+              </div>
+            )}
+
+            {messages.map((msg, i) => (
+              <MessageBubble key={i} msg={msg} isNew={i === newMsgIdx} />
+            ))}
+
+            {loading && (
+              <div className="flex items-end gap-1.5 chat-msg-enter">
+                <div className="w-6 h-6 rounded-full bg-accent/10 shrink-0 flex items-center justify-center">
+                  <Bot size={12} className="text-accent" />
+                </div>
+                <div className="bg-white border border-neutral rounded-2xl rounded-bl-sm px-3.5 py-3 shadow-sm">
+                  <div className="flex gap-1 items-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark/35 dot-1" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark/35 dot-2" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark/35 dot-3" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ── Quick replies ── */}
+          {showQuickReplies && (
+            <div className="px-3 pt-2 pb-2 flex flex-wrap gap-1.5 border-t border-neutral bg-neutral-light shrink-0">
+              {QUICK_REPLIES.map((q) => (
+                <button
+                  type="button"
+                  key={q}
+                  onClick={() => sendMessage(q)}
+                  className="text-[11px] px-2.5 py-1 rounded-full border border-accent/30 text-accent bg-accent/5 hover:bg-accent/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                >
+                  {q}
+                </button>
               ))}
-
-              {loading && (
-                <div className="flex items-end gap-1.5 chat-msg-enter">
-                  <div className="w-6 h-6 rounded-full bg-accent/10 shrink-0 flex items-center justify-center">
-                    <Bot size={12} className="text-accent" />
-                  </div>
-                  <div className="bg-white border border-neutral rounded-2xl rounded-bl-sm px-3.5 py-3 shadow-sm">
-                    <div className="flex gap-1 items-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark/35 dot-1" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark/35 dot-2" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark/35 dot-3" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
             </div>
+          )}
 
-            {/* Quick replies */}
-            {showQuickReplies && (
-              <div className="px-3 pt-2 pb-2 flex flex-wrap gap-1.5 border-t border-neutral bg-neutral-light shrink-0">
-                {QUICK_REPLIES.map((q) => (
-                  <button
-                    type="button"
-                    key={q}
-                    onClick={() => sendMessage(q)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-accent/30 text-accent bg-accent/5 hover:bg-accent/15 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* ── Input ── */}
+          <div className="px-3 py-3 border-t border-neutral flex items-center gap-2 bg-neutral-light shrink-0">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={loading}
+              placeholder="Nhập tin nhắn..."
+              className="flex-1 text-[14px] px-3 py-2 rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark/90 border border-neutral focus:outline-none focus:border-accent/50 transition-colors disabled:cursor-not-allowed"
+            />
+            <button
+              type="button"
+              onClick={() => sendMessage()}
+              disabled={loading || !input.trim()}
+              className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center cursor-pointer shrink-0 transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed hover:bg-accent-hover active:scale-95"
+            >
+              <Send size={13} className="text-white" strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      )}
 
-            {/* Input */}
-            <div className="px-3 py-3 border-t border-neutral flex items-center gap-2 bg-neutral-light shrink-0">
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={loading}
-                placeholder="Nhập tin nhắn..."
-                className="flex-1 text-[14px] px-3 py-2 rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark/90 border border-neutral focus:outline-none focus:border-accent/50 transition-colors disabled:cursor-not-allowed"
-              />
-              <button
-                type="button"
-                onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
-                className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center cursor-pointer shrink-0 transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed hover:bg-accent-hover active:scale-95"
-              >
-                <Send size={13} className="text-white" strokeWidth={2} />
-              </button>
-            </div>
+      {/* ── TOGGLE BUTTON ── */}
+      <button
+        type="button"
+        onClick={isOpen ? closePanel : openPanel}
+        aria-label="Chat support"
+        className={`relative rounded-full bg-white border border-neutral-100 flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)] transition-all duration-300 select-none active:scale-90 overflow-visible
+          ${sheetOpen ? "opacity-0 pointer-events-none" : "opacity-100"}
+        `}
+        style={{
+          ...btnStyle,
+          width: size,
+          height: size,
+        }}
+      >
+        {/* Unread dot */}
+        {hasUnread && <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white z-10 unread-pulse" />}
 
-            {/* Resize handle — chỉ desktop */}
-            {!mobile && (
-              <div className="chat-resize-handle" onMouseDown={onResizeMouseDown} title="Kéo để thay đổi kích thước">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M11 1L1 11M11 6L6 11M11 11L11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M11 6L6 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </div>
-            )}
+        {/* Online status dot (always green when closed) */}
+        {!hasUnread && !isOpen && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white z-10" />}
+
+        {isOpen ? (
+          // X icon khi đang mở
+          <X size={isOpen ? 16 : 18} strokeWidth={2.5} className="text-neutral-600 transition-all duration-300" />
+        ) : (
+          // Mascot — tràn nhẹ ra ngoài circle để trông sinh động hơn
+          <div
+            className="mascot-float transition-all duration-300"
+            style={{
+              width: size + 8,
+              height: size + 8,
+              marginTop: -4,
+            }}
+          >
+            <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={size + 8} height={size + 8} className="object-contain drop-shadow-md" />
           </div>
         )}
-
-        {/* ── TOGGLE BUTTON ─────────────────────────────────────────────── */}
-        <button
-          type="button"
-          onClick={onBtnClick}
-          aria-label="Chat support"
-          className={`${mobile ? "" : "chat-drag-btn"} relative rounded-2xl bg-accent hover:bg-accent-hover text-white flex items-center justify-center shadow-lg transition-colors duration-150 select-none bottom-20`}
-          style={btnStyle}
-        >
-          <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-neutral-light pointer-events-none ${hasUnread ? "unread-pulse" : ""}`} />
-          {open ? <X size={20} strokeWidth={2} className="pointer-events-none" /> : <MessageCircle size={20} strokeWidth={2} className="pointer-events-none" />}
-        </button>
-      </div>
+      </button>
     </>
   );
 }
