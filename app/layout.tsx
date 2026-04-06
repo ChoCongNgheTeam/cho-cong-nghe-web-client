@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trang chủ ChoCongNghe",
-  description: "Đang phát triển",
+  title: "ChoCongNghe - Điện thoại, Laptop, Phụ kiện & Điện lạnh chính hãng",
+  description: "Chuyên cung cấp điện thoại, laptop, phụ kiện công nghệ và thiết bị điện lạnh chính hãng. Giá cả cạnh tranh, bảo hành uy tín, giao hàng nhanh chóng toàn quốc.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

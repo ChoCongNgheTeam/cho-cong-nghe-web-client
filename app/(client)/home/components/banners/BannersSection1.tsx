@@ -14,23 +14,36 @@ export function BannersSection1({ banners }: BannersSection1Props) {
 
   return (
     <section className="py-6 md:py-8">
-      <div className="container">
-        <Slidezy items={{ mobile: 1, tablet: 2, desktop: 3 }} gap={24} speed={400} loop={false} nav={false} controls={banners.length > 3} slideBy={1} draggable={true}>
+      <div className="container px-4">
+        <Slidezy
+          items={{ mobile: 1, tablet: 2, desktop: 2 }}
+          gap={24}
+          speed={400}
+          loop={false}
+          nav={true}
+          mobileNav="dots"
+          controls={banners.length > 2}
+          controlsOffset="16"
+          slideBy={1}
+          draggable={true}
+        >
           {banners.map((banner) => (
-            <Link key={banner.id} href={banner.linkUrl ?? "#"} className="group relative overflow-hidden rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 block">
-              <div className="relative h-[160px] md:h-[180px] lg:h-[200px] overflow-hidden">
+            <Link key={banner.id} href={banner.linkUrl ?? "#"} className="group relative overflow-hidden rounded-3xl shadow-md hover:shadow-lg transition-all duration-500 block">
+              {/* Aspect ratio thay cho height */}
+              <div className="relative aspect-[2/1] md:aspect-[2.4/1] overflow-hidden">
                 {banner.imageUrl && (
                   <Image
                     src={banner.imageUrl}
                     alt={banner.title}
                     fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover object-center transition-transform duration-700 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover object-center md:object-[center_40%] transition-transform duration-700 group-hover:scale-105"
                     quality={75}
                   />
                 )}
               </div>
 
+              {/* Corner effect */}
               <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-neutral-light/30 rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </Link>
           ))}

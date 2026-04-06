@@ -4,17 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
 import { Slider } from "../../_libs";
+
 interface HomeSliderProps {
   sliders: Slider[];
 }
 
 type AnimTheme = {
   imgAnim: string;
-  imgDuration: number; // ms
+  imgDuration: number;
   textAnims: {
     keyframe: string;
-    delay: number; // ms (tính từ lúc visible=true)
-    duration: number; // ms
+    delay: number;
+    duration: number;
   }[];
 };
 
@@ -62,50 +63,45 @@ const THEMES: AnimTheme[] = [
 ];
 
 const KEYFRAMES = `
-   /* ── Image animations ── */
-   @keyframes hsImgZoomIn {
-      from { opacity: 0; transform: scale(0.82); }
-      to   { opacity: 1; transform: scale(1); }
-   }
-   @keyframes hsImgSlideRight {
-      from { opacity: 0; transform: translateX(60px) rotate(3deg); }
-      60%  { transform: translateX(-6px) rotate(-0.5deg); }
-      to   { opacity: 1; transform: translateX(0) rotate(0deg); }
-   }
-   @keyframes hsImgDropBounce {
-      0%   { opacity: 0; transform: translateY(-48px) scale(0.92); }
-      65%  { transform: translateY(10px) scale(1.02); }
-      82%  { transform: translateY(-5px) scale(0.99); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-   }
-
-   /* ── Text animations ── */
-   @keyframes hsClipDown {
-      from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-10px); }
-      to   { opacity: 1; clip-path: inset(0 0 0% 0);   transform: translateY(0); }
-   }
-   @keyframes hsFadeScale {
-      from { opacity: 0; transform: scale(0.88) translateY(8px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
-   }
-   @keyframes hsBlurIn {
-      from { opacity: 0; filter: blur(10px); transform: translateY(12px); }
-      to   { opacity: 1; filter: blur(0px);  transform: translateY(0); }
-   }
-   @keyframes hsSlideDown {
-      from { opacity: 0; transform: translateY(-24px); }
-      to   { opacity: 1; transform: translateY(0); }
-   }
-   @keyframes hsSlideUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-   }
-
-   /* ── Progress bar ── */
-   @keyframes hsProgress {
-      from { width: 0% }
-      to   { width: 100% }
-   }
+  @keyframes hsImgZoomIn {
+    from { opacity: 0; transform: scale(0.82); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes hsImgSlideRight {
+    from { opacity: 0; transform: translateX(60px) rotate(3deg); }
+    60%  { transform: translateX(-6px) rotate(-0.5deg); }
+    to   { opacity: 1; transform: translateX(0) rotate(0deg); }
+  }
+  @keyframes hsImgDropBounce {
+    0%   { opacity: 0; transform: translateY(-48px) scale(0.92); }
+    65%  { transform: translateY(10px) scale(1.02); }
+    82%  { transform: translateY(-5px) scale(0.99); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes hsClipDown {
+    from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-10px); }
+    to   { opacity: 1; clip-path: inset(0 0 0% 0);   transform: translateY(0); }
+  }
+  @keyframes hsFadeScale {
+    from { opacity: 0; transform: scale(0.88) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes hsBlurIn {
+    from { opacity: 0; filter: blur(10px); transform: translateY(12px); }
+    to   { opacity: 1; filter: blur(0px);  transform: translateY(0); }
+  }
+  @keyframes hsSlideDown {
+    from { opacity: 0; transform: translateY(-24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes hsSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes hsProgress {
+    from { width: 0% }
+    to   { width: 100% }
+  }
 `;
 
 export function HomeSlider({ sliders }: HomeSliderProps) {
@@ -113,6 +109,8 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
   const [visible, setVisible] = useState(true);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   const goTo = useCallback(
     (index: number) => {
@@ -139,12 +137,28 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
     };
   }, [current, next]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    // Chỉ xử lý swipe ngang, bỏ qua scroll dọc
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      dx < 0 ? next() : prev();
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   if (sliders.length === 0) return null;
 
   const slide = sliders[current];
   const theme = THEMES[current % THEMES.length];
 
-  // Helper: trả về inline style cho animation khi visible, opacity:0 khi ẩn
   const textStyle = (idx: number): CSSProperties => {
     const t = theme.textAnims[idx];
     if (!visible) return { opacity: 0 };
@@ -160,13 +174,13 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       };
 
   return (
-    <div className="relative w-full overflow-hidden aspect-video md:aspect-[21/8] bg-slate-950">
+    <div className="relative w-full overflow-hidden aspect-video md:aspect-[21/8] bg-slate-950" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <style>{KEYFRAMES}</style>
 
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
 
-      {/* Ambient glow — màu thay theo slide */}
+      {/* Ambient glow */}
       <div className="pointer-events-none absolute right-[8%] top-1/2 -translate-y-1/2 w-[55%] aspect-square rounded-full bg-accent blur-[120px] opacity-[0.12]" />
 
       {/* Noise */}
@@ -179,44 +193,20 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       />
 
       {/* Progress bar */}
-      <div
-        key={`prog-${current}`}
-        className="absolute bottom-0 left-0 h-0.5 bg-accent z-20 opacity-60"
-        style={{
-          animation: visible ? "hsProgress 5.5s linear forwards" : "none",
-        }}
-      />
+      <div key={`prog-${current}`} className="absolute bottom-0 left-0 h-0.5 bg-accent z-20 opacity-60" style={{ animation: visible ? "hsProgress 5.5s linear forwards" : "none" }} />
 
-      {/* ── Grid ── */}
+      {/* Grid */}
       <div className="container relative z-10 grid grid-cols-2 items-center h-full gap-[3%]">
         {/* LEFT: text */}
         <div className="flex flex-col">
-          {/* Badge */}
-          {/* <span
-            key={`badge-${current}`}
-            className={[
-              "inline-flex items-center gap-1.5 w-fit mb-3 md:mb-[clamp(10px,1.8vw,20px)]",
-              "px-3 py-1 rounded-full border",
-              "text-[clamp(9px,0.85vw,12px)] font-semibold tracking-[0.1em] uppercase",
-              "text-orange-400 border-orange-400/50 bg-orange-400/10",
-            ].join(" ")}
-            style={textStyle(0)}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-            Đang Hot
-          </span> */}
-
-          {/* Title */}
           <h2 className="font-extrabold leading-tight py-1 tracking-wider text-white text-[clamp(18px,3.6vw,56px)]" style={textStyle(1)}>
             {slide.title}
           </h2>
 
-          {/* Subtitle */}
           <p key={`sub-${current}`} className="text-slate-400 leading-relaxed max-w-[34ch] text-[clamp(10px,1.1vw,17px)] mb-4 md:mb-[clamp(12px,2.2vw,30px)] mt-2" style={textStyle(2)}>
             {slide.subTitle}
           </p>
 
-          {/* CTA */}
           <Link
             key={`cta-${current}`}
             href={slide.linkUrl ?? "#"}
@@ -253,26 +243,24 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         </Link>
       </div>
 
-      {/* Prev */}
+      {/* ── Prev arrow — ẩn mobile, style giống Slidezy ── */}
       <button
         onClick={prev}
         aria-label="Slide trước"
-        className="cursor-pointer absolute left-[clamp(8px,1.4vw,20px)] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full w-[clamp(28px,2.8vw,44px)] h-[clamp(28px,2.8vw,44px)] border border-white/15 bg-white/5 backdrop-blur-md text-white hover:bg-white/14 hover:border-white/30 active:scale-90 transition-all duration-200"
+        disabled={animating}
+        className="hidden md:flex cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
       >
-        <svg className="w-[clamp(12px,1.2vw,17px)] h-[clamp(12px,1.2vw,17px)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
+        ‹
       </button>
 
-      {/* Next */}
+      {/* ── Next arrow — ẩn mobile, style giống Slidezy ── */}
       <button
         onClick={next}
         aria-label="Slide tiếp"
-        className="absolute cursor-pointer right-[clamp(8px,1.4vw,20px)] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full w-[clamp(28px,2.8vw,44px)] h-[clamp(28px,2.8vw,44px)] border border-white/15 bg-white/5 backdrop-blur-md text-white hover:bg-white/14 hover:border-white/30 active:scale-90 transition-all duration-200"
+        disabled={animating}
+        className="hidden md:flex cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
       >
-        <svg className="w-[clamp(12px,1.2vw,17px)] h-[clamp(12px,1.2vw,17px)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
+        ›
       </button>
 
       {/* Dots */}

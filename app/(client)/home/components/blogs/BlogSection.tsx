@@ -38,7 +38,7 @@ export function BlogSection({ blogs }: BlogSectionProps) {
 
         {/* mobile slider */}
         <div className="sm:hidden">
-          <Slidezy items={{ mobile: 1, tablet: 2, desktop: 2 }} gap={12} speed={400} loop={false} nav={false} controls slideBy={1} draggable>
+          <Slidezy items={{ mobile: 1, tablet: 2, desktop: 2 }} gap={12} speed={400} loop={false} nav={false} mobileNav="dots" controls={false} slideBy={1} draggable>
             {displayBlogs.map((blog) => (
               <BlogCard key={blog.id} blog={blog} variant="home" />
             ))}
