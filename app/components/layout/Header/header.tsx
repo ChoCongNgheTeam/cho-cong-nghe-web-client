@@ -48,9 +48,8 @@ const Header = () => {
 
   // Hide-on-scroll
   useEffect(() => {
-    const HIDE_THRESHOLD = 80;
+    const HIDE_THRESHOLD = 10;
     const SHOW_THRESHOLD = 30;
-    const MIN_SCROLL_Y = 120;
 
     const handleScroll = () => {
       if (ticking.current) return;
@@ -61,17 +60,16 @@ const Header = () => {
         lastScrollY.current = currentScrollY;
 
         const headerH = headerRef.current?.offsetHeight || 60;
-        const nextIsPastTop = currentScrollY > headerH;
+        const nextIsPastTop = currentScrollY > 10;
         if (nextIsPastTop !== isPastTopRef.current) {
           isPastTopRef.current = nextIsPastTop;
           setIsPastTop(nextIsPastTop);
         }
 
-        if (currentScrollY < MIN_SCROLL_Y) {
-          if (!isVisibleRef.current) {
-            isVisibleRef.current = true;
-            setIsVisible(true);
-          }
+        // Chỉ reset khi về đúng top = 0
+        if (currentScrollY === 0) {
+          isVisibleRef.current = true;
+          setIsVisible(true);
           scrollAccum.current = 0;
           ticking.current = false;
           return;
@@ -92,7 +90,6 @@ const Header = () => {
         ticking.current = false;
       });
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);

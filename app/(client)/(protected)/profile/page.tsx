@@ -1,8 +1,10 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { formatDate } from "@/helpers";
-import { Package, Bell, Heart, MapPin, Shield, Pencil, ChevronRight, Phone, AlertCircle, Navigation, Settings } from "lucide-react";
+import { Package, Bell, Heart, MapPin, Pencil, ChevronRight, Phone, AlertCircle, Navigation, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 
 const quickMenus = [
@@ -19,8 +21,142 @@ const contactItems = [
   { icon: Navigation, label: "Cửa hàng", href: "/stores" },
 ];
 
+// ── Logout Modal ────────────────────────────────────────────────────────────
+function LogoutModal({ isLoggingOut, onConfirm, onCancel }: { isLoggingOut: boolean; onConfirm: () => void; onCancel: () => void }) {
+  // Khoá scroll body khi modal mở
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return createPortal(
+    // Backdrop — dùng inline style để tránh Tailwind bị override bởi parent
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 99999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(0,0,0,0.5)",
+        padding: "1rem",
+      }}
+      onClick={() => !isLoggingOut && onCancel()}
+    >
+      {/* Modal card */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "1rem",
+          padding: "1.5rem",
+          width: "100%",
+          maxWidth: "320px",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.75rem" }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              backgroundColor: "#FEF2F2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <LogOut size={22} color="#EF4444" />
+          </div>
+        </div>
+
+        {/* Text */}
+        <p style={{ textAlign: "center", fontWeight: 600, fontSize: 16, color: "#111827", margin: "0 0 6px" }}>Đăng xuất?</p>
+        <p style={{ textAlign: "center", fontSize: 13, color: "#6B7280", lineHeight: 1.6, margin: "0 0 1.25rem" }}>Bạn sẽ cần đăng nhập lại để tiếp tục mua sắm.</p>
+
+        {/* Buttons */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={onCancel}
+            disabled={isLoggingOut}
+            style={{
+              flex: 1,
+              padding: "10px 0",
+              borderRadius: 10,
+              border: "1px solid #E5E7EB",
+              backgroundColor: "#F9FAFB",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "#374151",
+              cursor: "pointer",
+              opacity: isLoggingOut ? 0.4 : 1,
+            }}
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoggingOut}
+            style={{
+              flex: 1,
+              padding: "10px 0",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: "#EF4444",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#ffffff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              opacity: isLoggingOut ? 0.7 : 1,
+            }}
+          >
+            {isLoggingOut ? (
+              <span
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: "2px solid rgba(255,255,255,0.4)",
+                  borderTopColor: "#ffffff",
+                  borderRadius: "50%",
+                  display: "inline-block",
+                  animation: "spin 0.7s linear infinite",
+                }}
+              />
+            ) : (
+              <LogOut size={15} color="#ffffff" />
+            )}
+            Đăng xuất
+          </button>
+        </div>
+      </div>
+
+      {/* Spinner keyframes */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>,
+    document.body,
+  );
+}
+
+// ── Profile Page ─────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+  };
 
   if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
   if (!user) return <div className="p-4 text-primary">Bạn chưa đăng nhập</div>;
@@ -31,10 +167,10 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {/* ── Mobile only ──────────────────────────────────── */}
+      {/* ── Mobile only ─────────────────────────────── */}
       <div className="lg:hidden space-y-3">
         {/* 1. User card */}
-        <div className=" rounded-xl p-4 flex items-center gap-3 shadow-sm">
+        <div className="rounded-xl p-4 flex items-center gap-3 shadow-sm">
           <div className="w-14 h-14 rounded-full bg-neutral-light p-0.5 shadow ring-2 ring-neutral shrink-0">
             <img src={user.avatarImage || "/images/avatar.png"} alt="Avatar" className="w-full h-full rounded-full object-cover" />
           </div>
@@ -48,8 +184,8 @@ export default function ProfilePage() {
           </Link>
         </div>
 
-        {/* 2. Tra cứu thông tin — grid 3 cột (CellphoneS style) */}
-        <div className=" ">
+        {/* 2. Tra cứu thông tin */}
+        <div>
           <p className="text-sm font-semibold text-primary mb-3">Tra cứu thông tin</p>
           <div className="grid grid-cols-3 gap-2">
             {quickMenus.map((item) => {
@@ -58,18 +194,27 @@ export default function ProfilePage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex flex-col items-center gap-2 p-3 bg-neutral-light rounded-xl hover:bg-neutral-light-hover active:scale-95 transition-all text-center rounded-xl p-4 shadow-sm"
+                  className="flex flex-col items-center gap-2 p-4 bg-neutral-light rounded-xl hover:bg-neutral-light-hover active:scale-95 transition-all text-center shadow-sm"
                 >
                   <Icon className="w-6 h-6 text-accent" />
                   <span className="text-xs text-primary font-medium leading-tight whitespace-pre-line">{item.label}</span>
                 </Link>
               );
             })}
+
+            {/* Logout button */}
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="flex flex-col items-center gap-2 p-4 bg-neutral-light rounded-xl hover:bg-neutral-light-hover active:scale-95 transition-all text-center shadow-sm"
+            >
+              <LogOut className="w-6 h-6 text-red-500" />
+              <span className="text-xs text-red-500 font-medium leading-tight">Đăng xuất</span>
+            </button>
           </div>
         </div>
 
         {/* 3. Thông tin liên hệ */}
-        <div className="">
+        <div>
           <p className="text-sm font-semibold text-primary mb-3">Thông tin liên hệ</p>
           <div className="grid grid-cols-3 gap-2">
             {contactItems.map((item, i) => {
@@ -83,11 +228,11 @@ export default function ProfilePage() {
                 </div>
               );
               return item.href ? (
-                <Link key={i} href={item.href} className="active:scale-95 transition-all rounded-xl p-4 shadow-sm">
+                <Link key={i} href={item.href} className="active:scale-95 transition-all rounded-xl shadow-sm">
                   {inner}
                 </Link>
               ) : (
-                <div className="rounded-xl p-4 shadow-sm" key={i}>
+                <div key={i} className="rounded-xl shadow-sm">
                   {inner}
                 </div>
               );
@@ -96,7 +241,7 @@ export default function ProfilePage() {
         </div>
 
         {/* 4. Thông tin cá nhân */}
-        <div className=" rounded-xl overflow-hidden shadow-sm">
+        <div className="rounded-xl overflow-hidden shadow-sm">
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
             <p className="text-sm font-semibold text-primary">Thông tin cá nhân</p>
             <Link href="/profile/editProfile" className="text-xs text-accent font-medium flex items-center gap-1">
@@ -113,7 +258,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ── Desktop: giữ nguyên layout cũ ────────────────── */}
+      {/* ── Desktop ──────────────────────────────────── */}
       <div className="hidden lg:block">
         <h1 className="text-xl font-bold text-primary mb-4 mt-2">Thông tin cá nhân</h1>
         <div className="px-6 py-10 bg-neutral-light rounded-2xl">
@@ -133,22 +278,28 @@ export default function ProfilePage() {
               <InfoRow label="Ngày sinh" value={dobLabel} />
               <InfoRow label="Email" value={user.email || "Chưa có"} />
             </div>
-            <div className="pt-8">
+            <div className="pt-8 space-y-3">
               <Link href="/profile/editProfile" className="block">
-                <button
-                  className="w-full flex items-center justify-center gap-2
-    bg-primary text-neutral-light hover:bg-primary-hover
-    font-semibold px-6 py-3 text-base rounded-xl
-    shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
-                >
+                <button className="w-full flex items-center justify-center gap-2 bg-primary text-neutral-light hover:bg-primary-hover font-semibold px-6 py-3 text-base rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer">
                   <Pencil size={18} />
                   Chỉnh sửa thông tin
                 </button>
               </Link>
+              {/* Desktop logout button */}
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                className="w-full flex items-center justify-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 font-semibold px-6 py-3 text-base rounded-xl transition-all active:scale-95 cursor-pointer"
+              >
+                <LogOut size={18} />
+                Đăng xuất
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Portal modal — chỉ render khi showLogoutModal = true */}
+      {showLogoutModal && <LogoutModal isLoggingOut={isLoggingOut} onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />}
     </div>
   );
 }

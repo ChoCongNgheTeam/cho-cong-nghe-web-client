@@ -69,7 +69,7 @@ function NotificationRow({ item, onRead }: { item: NotificationItem; onRead: (id
     <div
       onClick={() => !item.isRead && onRead(item.id)}
       className={`
-        group flex gap-3 sm:gap-3.5 px-4 sm:px-5 py-3.5 sm:py-4
+        group flex gap-3 sm:gap-3.5 px-4 sm:px-5 py-2 sm:py-2.5
         transition-all duration-150
         border-b border-neutral/50 last:border-b-0
         ${!item.isRead ? "bg-blue-50/40 hover:bg-blue-50/70 cursor-pointer" : "bg-neutral-light hover:bg-neutral/20 cursor-default"}
