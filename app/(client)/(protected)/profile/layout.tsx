@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Bell, Heart, MapPin, Shield, LogOut, Key, ChevronRight, Sun, Moon } from "lucide-react";
+import { Package, Bell, Heart, MapPin, Shield, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
-import { useTheme } from "@/hooks/useTheme";
 
 const menuItems = [
   { icon: Package, label: "Đơn hàng của tôi", shortLabel: "Đơn hàng", href: "/profile/orders" },
@@ -15,36 +14,8 @@ const menuItems = [
   { icon: Shield, label: "Cài đặt", shortLabel: "Cài đặt", href: "/profile/settings" },
 ];
 
-// Only show 4 most important items in bottom nav
-const bottomNavItems = menuItems.slice(0, 4);
-
-// ── Theme toggle item ────────────────────────────────────────
-function ThemeMenuItem({ showChevron = false }: { showChevron?: boolean }) {
-  const { isDark, toggleTheme, mounted } = useTheme();
-  if (!mounted) return null;
-
-  const Icon = isDark ? Sun : Moon;
-  const label = isDark ? "Chế độ sáng" : "Chế độ tối";
-
-  if (showChevron) {
-    // Mobile list style
-    return (
-      <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-neutral text-primary hover:bg-neutral-light transition-colors cursor-pointer">
-        <Icon className="w-5 h-5 text-accent shrink-0" />
-        <span className="text-sm flex-1 text-left">{label}</span>
-        <ChevronRight className="w-4 h-4 opacity-40" />
-      </button>
-    );
-  }
-
-  // Desktop sidebar style
-  return (
-    <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-4 py-3 transition-all border-l-4 border-transparent hover:bg-neutral-light text-primary cursor-pointer">
-      <Icon className="w-5 h-5" />
-      <span className="text-sm">{label}</span>
-    </button>
-  );
-}
+// Mobile bottom nav: replace "Cài đặt" (Shield) with "Tài khoản" (User) → /profile
+const mobileBottomNavItems = [...menuItems.slice(0, 4), { icon: User, label: "Tài khoản", shortLabel: "Tài khoản", href: "/profile" }];
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -59,14 +30,11 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   }
 
   const breadcrumbLabel = menuItems.find((item) => pathname === item.href)?.label || "Tài khoản";
-
   const isProfileHome = pathname === "/profile";
 
   return (
     <div className="bg-neutral-light">
-      {/* ── Desktop layout ─────────────────────────────────────── */}
       <div className="container py-4 sm:py-6 pb-20 lg:pb-6">
-        {/* Breadcrumb: hidden on mobile */}
         <div className="hidden sm:block">
           <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Thông tin cá nhân", href: "/profile" }, { label: breadcrumbLabel }]} />
         </div>
@@ -74,7 +42,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* ── Sidebar (desktop only) ───────────────────────── */}
           <aside className="hidden lg:block w-80 shrink-0 space-y-4 sticky top-6 self-start">
-            {/* User Profile Card */}
             <div className="bg-neutral-light-active rounded-lg shadow-sm p-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
@@ -91,7 +58,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 </Link>
               </div>
 
-              {/* Membership Card */}
               <div className="bg-accent rounded-lg p-4 text-white relative overflow-hidden">
                 <div className="absolute right-0 bottom-0 opacity-20">
                   <div className="w-24 h-24 bg-white/30 rounded-full" />
@@ -107,7 +73,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               </div>
             </div>
 
-            {/* Menu Navigation */}
+            {/* Desktop menu — dùng menuItems gốc, đủ 5 item */}
             <div className="bg-neutral-light-active rounded-lg shadow-sm overflow-hidden py-3">
               <nav>
                 {menuItems.map((item, index) => {
@@ -134,18 +100,17 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             </div>
           </aside>
 
-          {/* Main Content */}
           <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
 
-      {/* ── Mobile bottom tab bar (sub-pages only) ─────────────── */}
+      {/* ── Mobile bottom tab bar — dùng mobileBottomNavItems ── */}
       {!isProfileHome && (
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-neutral-light-active border-t border-neutral shadow-lg">
           <div className="flex items-center justify-around px-1 py-1">
-            {bottomNavItems.map((item) => {
+            {mobileBottomNavItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive = item.href === "/profile" ? pathname === "/profile" : pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
