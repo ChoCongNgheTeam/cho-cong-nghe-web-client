@@ -79,25 +79,22 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
           <span className="text-sm xs:text-base sm:text-lg font-bold text-promotion leading-tight truncate">{formatVND(hasPromotion ? product.price.final : product.price.base)}</span>
         </div>
 
-        <div className="mt-auto px-3 pt-3 pb-3 flex justify-between items-center">
+        <div className="mt-auto px-1 flex justify-between items-center">
           {/* Rating - 5 ngôi sao hỗ trợ half star */}
           <div className="flex items-center gap-1">
             {product.rating?.count > 0 ? (
               <>
-                {/* Hiển thị 5 ngôi sao */}
-                <div className="flex text-yellow-400 text-sm">
+                {/* Desktop: 5 sao đầy đủ */}
+                <div className="hidden sm:flex text-yellow-400 text-sm">
                   {[1, 2, 3, 4, 5].map((star) => {
                     const rating = product.rating.average;
-
                     if (rating >= star) {
-                      // Sao đầy đủ
                       return (
                         <span key={star} className="leading-none">
                           ★
                         </span>
                       );
                     } else if (rating + 0.5 >= star && rating < star) {
-                      // Sao nửa (half star)
                       return (
                         <span key={star} className="leading-none relative">
                           ★
@@ -108,7 +105,6 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
                         </span>
                       );
                     } else {
-                      // Sao rỗng
                       return (
                         <span key={star} className="leading-none text-neutral-300">
                           ★
@@ -118,11 +114,14 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
                   })}
                 </div>
 
-                {/* Điểm số */}
+                {/* Mobile: chỉ 1 sao */}
+                <span className="sm:hidden text-yellow-400 text-sm leading-none">★</span>
+
                 <span className="text-[12px] font-semibold text-neutral-600 ml-1">{product.rating.average.toFixed(1)}</span>
               </>
             ) : (
-              <span className="text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
+              /* Desktop mới hiện "Chưa có đánh giá", mobile ẩn */
+              <span className="hidden sm:inline text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
             )}
           </div>
 
@@ -131,7 +130,7 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
             <div className="w-5 h-5 flex items-center justify-center">
               <WishlistHeart productId={product.id} />
             </div>
-            <span className="text-[13px] text-[#4a90e2] font-medium transition-colors group-hover/fav:text-blue-600">Yêu thích</span>
+            {/* <span className="text-[13px] text-[#4a90e2] font-medium transition-colors group-hover/fav:text-blue-600">Yêu thích</span> */}
           </div>
         </div>
       </div>
