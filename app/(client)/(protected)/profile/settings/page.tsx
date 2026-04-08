@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
-import { Lock, Bell, ShieldAlert, ChevronRight, Sun } from "lucide-react";
+import { Lock, Bell, ShieldAlert, ChevronRight } from "lucide-react";
 import { ThemeToggleRow } from "./ThemeToggleRow";
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ const settingGroups = [
     ],
   },
   {
-    label: "Tuỳ chọn",
+    label: "Tùy chọn",
     items: [
       {
         href: "/profile/settings/notifications",
@@ -72,7 +72,7 @@ export default function SettingsPage() {
                   </Link>
                 );
               })}
-              {group.label === "Tuỳ chọn" && <ThemeToggleRow />}
+              {group.label === "Tùy chọn" && <ThemeToggleRow />}
             </div>
           </div>
         ))}
