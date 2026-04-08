@@ -16,8 +16,8 @@ export default async function HomePage() {
       {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
       <FeaturedProducts products={featuredProducts} />
       <BestSellers products={bestSellingProducts} />
-      <SeasonalSale campaigns={activeCampaigns} />
       <BannersSection1 banners={bannersSection1} />
+      <SeasonalSale campaigns={activeCampaigns} />
       <BlogSection blogs={blogs.data} />
       <TrustBadges />
     </main>

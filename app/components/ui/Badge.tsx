@@ -3,44 +3,29 @@
 import clsx from "clsx";
 
 type BadgeProps = {
-   label?: string;
-   discountPercent?: number;
-   className?: string;
-   isUpcoming?: boolean; // true → màu cam/vàng thay vì đỏ
+  label?: string;
+  discountPercent?: number;
+  className?: string;
 };
 
-const Badge = ({
-   label,
-   discountPercent,
-   className,
-   isUpcoming,
-}: BadgeProps) => {
-   const content =
-      typeof discountPercent === "number"
-         ? `-${discountPercent}%`
-         : (label ?? "Sale");
-   const isShortContent = content.length <= 4;
-   return (
-      <div className={clsx("absolute top-1 left-1 z-2", className)}>
-         <div
-            className={clsx(
-               "w-10 h-10 flex items-center justify-center text-white font-bold rotate-[-15deg] select-none",
-               isShortContent ? "text-[14px]" : "text-[10px]", // ← nhỏ hơn cho "-2tr"
-               isUpcoming ? "bg-orange-400" : "bg-red-400",
-            )}
-            style={{
-               clipPath: `polygon(
-            50% 0%, 60% 12%, 75% 5%, 80% 20%, 95% 25%, 88% 40%,
-            100% 50%, 88% 60%, 95% 75%, 80% 80%, 75% 95%, 60% 88%,
-            50% 100%, 40% 88%, 25% 95%, 20% 80%, 5% 75%, 12% 60%,
-            0% 50%, 12% 40%, 5% 25%, 20% 20%, 25% 5%, 40% 12%
-          )`,
-            }}
-         >
-            {content}
-         </div>
-      </div>
-   );
+const Badge = ({ label, discountPercent, className }: BadgeProps) => {
+  const content = discountPercent ? `Giảm ${discountPercent}%` : (label ?? "");
+
+  return (
+    <div
+      className={clsx(
+        "absolute -top-3 left-1.5 z-20",
+        "px-4 py-1.5 text-white font-bold text-[13px] tracking-tight",
+        "bg-[#ef233c] shadow-sm",
+        "rounded-br-2xl rounded-tr-md rounded-bl-md",
+        "before:content-[''] before:absolute before:-top-1 before:-left-2",
+        "before:w-4 before:h-4 before:bg-[#ef233c] before:rotate-45 before:-z-10",
+        className,
+      )}
+    >
+      {content}
+    </div>
+  );
 };
 
 export default Badge;

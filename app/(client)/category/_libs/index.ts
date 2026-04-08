@@ -25,7 +25,51 @@ interface CategoryResponse {
   data: Category;
   message: string;
 }
+import { BrandApiItem, MediaApiItem } from "../types";
 
+export const ROOT_CATEGORY_SLUGS = new Set(["dien-thoai", "laptop", "may-tinh-bang", "phu-kien", "dien-may", "am-thanh"]);
+
+export function isRootCategory(slug: string): boolean {
+  return ROOT_CATEGORY_SLUGS.has(slug);
+}
+
+// ── Fetch brands thuộc category (query qua products) ─────────────────────────
+interface BrandsResponse {
+  data: BrandApiItem[];
+  message: string;
+}
+export async function fetchBrandsByCategory(slug: string): Promise<BrandApiItem[]> {
+  try {
+    const res = await apiRequest.get<BrandsResponse>(`/brands/by-category`, {
+      params: { slug },
+      noAuth: true,
+    });
+    return res?.data ?? [];
+  } catch (err) {
+    console.error("[fetchBrandsByCategory] failed:", err);
+    return [];
+  }
+}
+
+// ── Fetch banners thuộc category ──────────────────────────────────────────────
+interface MediaResponse {
+  data: MediaApiItem[];
+  total: number;
+  message: string;
+}
+
+export async function fetchBannersByCategory(slug: string): Promise<MediaApiItem[]> {
+  try {
+    const res = await apiRequest.get<MediaResponse>(`/media/by-category`, {
+      params: { categorySlug: slug, type: "BANNER" },
+      noAuth: true,
+    });
+    return res?.data ?? [];
+  } catch (err) {
+    console.error("[fetchBannersByCategory] failed:", err);
+    return [];
+  }
+}
 export async function fetchCategory(slug: string): Promise<Category | null> {
   try {
     const res = await apiRequest.get<CategoryResponse>(`/categories/slug/${slug}`, { noAuth: true });
