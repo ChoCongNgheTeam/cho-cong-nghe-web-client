@@ -125,7 +125,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </>
             ) : (
               /* Desktop mới hiện "Chưa có đánh giá", mobile ẩn */
-              <span className=" text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
+              <span className="hidden sm:inline text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
             )}
           </div>
 
