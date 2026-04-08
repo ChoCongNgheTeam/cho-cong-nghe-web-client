@@ -19,7 +19,7 @@ export default function BlogCard({ blog, variant = "list" }: BlogCardProps) {
   const typeLabel = getBlogTypeLabel(blog.type);
 
   return (
-    <Link href={`/blog/${blog.slug}`} className="group block overflow-hidden rounded-2xl bg-neutral-light shadow-sm hover:shadow-md transition-all duration-300">
+    <Link href={`/blog/${blog.slug}`} className="group block overflow-hidden rounded-2xl bg-neutral-light border-neutral-100 hover:shadow-md transition-all duration-300">
       {/* Thumbnail */}
       <div className="relative aspect-video overflow-hidden">
         <Image

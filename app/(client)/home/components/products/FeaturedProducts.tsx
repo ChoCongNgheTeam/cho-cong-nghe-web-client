@@ -10,9 +10,9 @@ interface FeaturedProductsProps {
 
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
   return (
-    <section className="py-8 md:py-12 bg-neutral-light">
+    <section className="py-8 md:py-8 bg-neutral-light-active">
       <div className="container">
-        <div className="rounded-2xl border-2 border-neutral-hover p-3 sm:p-4 md:p-6">
+        <div className="rounded-2xl p-3 sm:p-4 md:p-6">
           <div className="mb-3">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">Sản phẩm nổi bật</h2>
           </div>

@@ -13,7 +13,7 @@ export function BannersTop({ bannersTop }: BannersTopProps) {
   if (bannersTop.length === 0) return null;
 
   return (
-    <section className="py-6 md:py-8">
+    <section className="py-6 md:py-8 bg-neutral-light-active">
       <div className="container px-4">
         <Slidezy
           items={{ mobile: 1, tablet: 2, desktop: 2 }}

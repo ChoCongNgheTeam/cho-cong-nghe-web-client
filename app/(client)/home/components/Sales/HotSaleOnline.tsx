@@ -360,7 +360,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
   const isCountingDown = activeDate === todayDate && !!countdownEndDate;
 
   return (
-    <section className="py-6 md:py-8">
+    <section className="py-6 md:py-8 bg-neutral-light-active">
       <div className="container">
         {/*
          * ── Outer shell ──────────────────────────────────────────────────────

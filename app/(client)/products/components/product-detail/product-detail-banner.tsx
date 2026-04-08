@@ -259,7 +259,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
               <p className="text-sm opacity-50">Chưa có ảnh</p>
             </div>
           )}
-          <WishlistHeart productId={product.id} />
+          <WishlistHeart productId={product.id} absolute={true} />
 
           {/* ── NÚT SO SÁNH ─────────────────────────────────────────────── */}
           <button
