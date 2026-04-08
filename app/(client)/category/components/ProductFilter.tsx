@@ -18,14 +18,18 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // ─── Mobile detection ──────────────────────────────────────────────────────────
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 1023px)").matches;
+  });
+
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
-    setIsMobile(mq.matches);
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
+
   return isMobile;
 }
 
@@ -223,11 +227,14 @@ export default function ProductFilter({ filters }: ProductFilterProps) {
     setDraftBool(initBool);
     setIsSheetOpen(true);
     document.body.style.overflow = "hidden";
+    window.dispatchEvent(new CustomEvent("sheet:toggle", { detail: { open: true } }));
+    document.body.style.overflow = "hidden";
   }, [filters, searchParams]);
 
   const closeSheet = useCallback(() => {
     setIsSheetOpen(false);
     document.body.style.overflow = "";
+    window.dispatchEvent(new CustomEvent("sheet:toggle", { detail: { open: false } }));
   }, []);
 
   const resetDraft = useCallback(() => {
@@ -581,7 +588,7 @@ export default function ProductFilter({ filters }: ProductFilterProps) {
     <>
       <div className={`flex items-center gap-0 transition-opacity duration-200 ${isPending ? "opacity-60 pointer-events-none" : ""}`}>
         {/* Scrollable sort chips */}
-        <div className="flex-1 overflow-x-auto scrollbar-none">
+        <div className="flex-1 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex items-center gap-2 pr-1 pb-3 pt-3" style={{ width: "max-content" }}>
             {SORT_CHIPS.map((chip) => {
               const Icon = chip.icon;

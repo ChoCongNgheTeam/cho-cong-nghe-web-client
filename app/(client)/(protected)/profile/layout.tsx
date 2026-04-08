@@ -115,10 +115,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg flex-1 transition-colors ${isActive ? "text-accent" : "text-primary opacity-60"}`}
+                  className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg flex-1 transition-colors ${isActive ? "text-accent" : "text-primary opacity-60"}`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
-                  <span className="text-[10px] font-medium leading-tight">{item.shortLabel}</span>
+                  <Icon style={{ width: "clamp(16px, 4.5vw, 20px)", height: "clamp(16px, 4.5vw, 20px)" }} className={isActive ? "stroke-[2.5]" : ""} />
+                  <span style={{ fontSize: "clamp(8px, 2.8vw, 11px)" }} className="font-medium leading-tight text-center">
+                    {item.shortLabel}
+                  </span>
                 </Link>
               );
             })}

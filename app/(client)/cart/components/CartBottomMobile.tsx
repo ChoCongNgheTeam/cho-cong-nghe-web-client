@@ -52,10 +52,15 @@ export default function CartBottomBar({
 }: CartBottomBarProps) {
   const [showPanel, setShowPanel] = useState(false);
 
+  const togglePanel = (next: boolean) => {
+    setShowPanel(next);
+    window.dispatchEvent(new CustomEvent("sheet:toggle", { detail: { open: next } }));
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden shadow-2xl">
       {/* Backdrop */}
-      {showPanel && <div className="fixed inset-0 bg-black/40 z-[-1]" onClick={() => setShowPanel(false)} />}
+      {showPanel && <div className="fixed inset-0 bg-black/40 z-[-1]" onClick={() => togglePanel(false)} />}
 
       {/* Expanded panel */}
       <div className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${showPanel ? "max-h-[70vh]" : "max-h-0"}`}>
@@ -63,7 +68,7 @@ export default function CartBottomBar({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
             <span className="text-sm font-semibold text-primary">Thông tin đơn hàng</span>
-            <button onClick={() => setShowPanel(false)} className="p-1.5 hover:bg-neutral rounded-lg transition-colors">
+            <button onClick={() => togglePanel(false)} className="p-1.5 hover:bg-neutral rounded-lg transition-colors">
               <X className="h-5 w-5 text-neutral-darker" />
             </button>
           </div>
@@ -74,7 +79,7 @@ export default function CartBottomBar({
               <button
                 type="button"
                 onClick={() => {
-                  setShowPanel(false);
+                  togglePanel(false);
                   onOpenVoucherModal();
                 }}
                 className="flex w-full items-center justify-between p-3 transition hover:bg-accent/5 group"
@@ -146,7 +151,7 @@ export default function CartBottomBar({
         )}
 
         {/* Tổng tiền + toggle panel */}
-        <button onClick={() => setShowPanel((prev) => !prev)} className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition">
+        <button onClick={() => togglePanel(!showPanel)} className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition">
           <div className="flex flex-col items-end min-w-0">
             <span className="text-base font-bold text-promotion whitespace-nowrap">{formatVND(finalTotal)}</span>
             {totalSaved > 0 && <span className="text-xs text-neutral-darker whitespace-nowrap">Tiết kiệm {formatVND(totalSaved)}</span>}

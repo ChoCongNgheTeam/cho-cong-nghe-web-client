@@ -6,26 +6,16 @@ import { X, Plus, Search, ArrowLeft, Trash2 } from "lucide-react";
 import { StarRating } from "@/components/product/StarRating";
 import { formatVND } from "@/helpers";
 import { ProductDetail, Category } from "@/lib/types/product";
-import {
-  useState,
-  useCallback,
-  useRef,
-  useTransition,
-  useDeferredValue,
-} from "react";
+import { useState, useCallback, useRef, useTransition, useDeferredValue } from "react";
 import { Popzy } from "@/components/Modal";
 import apiRequest from "@/lib/api";
+import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
 
 const MAX_SLOTS = 3;
 
 function getRootSlug(category: any): string | null {
   if (!category) return null;
-  return (
-    category?.parent?.parent?.slug ??
-    category?.parent?.slug ??
-    category?.slug ??
-    null
-  );
+  return category?.parent?.parent?.slug ?? category?.parent?.slug ?? category?.slug ?? null;
 }
 
 interface SearchResult {
@@ -93,10 +83,7 @@ function SearchProductModal({
         noAuth: true,
       });
       const raw = res?.data ?? [];
-      const items = raw.filter(
-        (item, index, self) =>
-          self.findIndex((t) => t.id === item.id) === index,
-      );
+      const items = raw.filter((item, index, self) => self.findIndex((t) => t.id === item.id) === index);
       staleResultsRef.current = items;
       startTransition(() => setResults(items));
     } catch {
@@ -142,10 +129,7 @@ function SearchProductModal({
     setSelecting(item.id);
     setBlockedId(null);
     try {
-      const res = await apiRequest.get<{ data: ProductDetail }>(
-        `/products/slug/${item.slug}`,
-        { noAuth: true },
-      );
+      const res = await apiRequest.get<{ data: ProductDetail }>(`/products/slug/${item.slug}`, { noAuth: true });
       if (res?.data) {
         const detail = res.data;
         if (lockedCategorySlug) {
@@ -165,8 +149,6 @@ function SearchProductModal({
     }
   };
 
-  
-
   const showSkeleton = isSearching && staleResultsRef.current.length === 0;
   const displayResults = deferredResults;
 
@@ -178,26 +160,17 @@ function SearchProductModal({
       content={
         <div className="pt-1">
           <div className="mb-5">
-            <h2
-              className="text-[15px] font-semibold text-primary tracking-tight mb-0.5"
-              style={{ letterSpacing: "-0.01em" }}
-            >
+            <h2 className="text-[15px] font-semibold text-primary tracking-tight mb-0.5" style={{ letterSpacing: "-0.01em" }}>
               Thêm sản phẩm so sánh
             </h2>
             {lockedCategorySlug ? (
               <div className="flex items-center flex-wrap gap-1.5 mt-1">
                 <span className="text-xs text-neutral-dark">Danh mục:</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-neutral px-2 py-0.5 rounded-md">
-                  {lockedCategorySlug}
-                </span>
-                <span className="text-xs text-neutral-dark">
-                  — chỉ so sánh sản phẩm cùng danh mục
-                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-neutral px-2 py-0.5 rounded-md">{lockedCategorySlug}</span>
+                <span className="text-xs text-neutral-dark">— chỉ so sánh sản phẩm cùng danh mục</span>
               </div>
             ) : (
-              <p className="text-xs text-neutral-dark">
-                Tìm và chọn sản phẩm bạn muốn đưa vào bảng so sánh
-              </p>
+              <p className="text-xs text-neutral-dark">Tìm và chọn sản phẩm bạn muốn đưa vào bảng so sánh</p>
             )}
           </div>
 
@@ -209,11 +182,7 @@ function SearchProductModal({
             }}
           >
             <div className="flex items-center pl-4 text-neutral-dark pointer-events-none">
-              <Search
-                className={`w-4 h-4 transition-opacity duration-200 ${
-                  isSearching ? "opacity-30" : "opacity-60"
-                }`}
-              />
+              <Search className={`w-4 h-4 transition-opacity duration-200 ${isSearching ? "opacity-30" : "opacity-60"}`} />
             </div>
             <input
               autoFocus
@@ -230,22 +199,13 @@ function SearchProductModal({
             )}
           </div>
 
-          <div
-            className={`min-h-[220px] transition-opacity duration-200 ${
-              isStale ? "opacity-40" : "opacity-100"
-            }`}
-          >
+          <div className={`min-h-[220px] transition-opacity duration-200 ${isStale ? "opacity-40" : "opacity-100"}`}>
             {!query.trim() && !isSearching && (
               <div className="flex flex-col items-center justify-center h-[220px] gap-3 text-neutral-dark">
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: "var(--color-neutral)" }}
-                >
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "var(--color-neutral)" }}>
                   <Search className="w-5 h-5 opacity-40" />
                 </div>
-                <p className="text-sm opacity-60">
-                  Nhập tên sản phẩm để tìm kiếm
-                </p>
+                <p className="text-sm opacity-60">Nhập tên sản phẩm để tìm kiếm</p>
               </div>
             )}
 
@@ -260,8 +220,7 @@ function SearchProductModal({
             {!isSearching && query.trim() && displayResults.length === 0 && (
               <div className="flex flex-col items-center justify-center h-[220px] gap-2 text-neutral-dark">
                 <p className="text-sm">
-                  Không tìm thấy kết quả cho{" "}
-                  <span className="text-primary font-medium">"{query}"</span>
+                  Không tìm thấy kết quả cho <span className="text-primary font-medium">"{query}"</span>
                 </p>
               </div>
             )}
@@ -269,21 +228,14 @@ function SearchProductModal({
             {displayResults.length > 0 && (
               <ul className="max-h-[340px] overflow-y-auto space-y-0.5 scrollbar-thin -mx-1 px-1">
                 {displayResults.map((item, i) => {
-                  const discount = calcDiscount(
-                    item.priceOrigin,
-                    item.price.base,
-                  );
+                  const discount = calcDiscount(item.priceOrigin, item.price.base);
                   const isAdded = excludeIds.includes(item.id);
                   const isBlocked = blockedId === item.id;
                   const isFetching = selecting === item.id;
                   const isDisabled = isAdded || isBlocked || !!selecting;
 
                   return (
-                    <li
-                      key={item.id}
-                      style={{ animationDelay: `${i * 30}ms` }}
-                      className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
-                    >
+                    <li key={item.id} style={{ animationDelay: `${i * 30}ms` }} className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
                       <button
                         disabled={isDisabled}
                         onClick={() => handleSelect(item)}
@@ -298,43 +250,22 @@ function SearchProductModal({
                                   : "hover:bg-neutral/70 cursor-pointer group"
                           }`}
                       >
-                        <div
-                          className="shrink-0 w-11 h-11 rounded-xl overflow-hidden border flex items-center justify-center bg-white"
-                          style={{ borderColor: "var(--color-neutral)" }}
-                        >
+                        <div className="shrink-0 w-11 h-11 rounded-xl overflow-hidden border flex items-center justify-center bg-white" style={{ borderColor: "var(--color-neutral)" }}>
                           {isFetching ? (
                             <div className="w-4 h-4 border-2 border-neutral border-t-primary rounded-full animate-spin" />
                           ) : item.thumbnail ? (
-                            <Image
-                              src={item.thumbnail}
-                              alt={item.name}
-                              width={44}
-                              height={44}
-                              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
-                            />
+                            <Image src={item.thumbnail} alt={item.name} width={44} height={44} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
                           ) : (
                             <div className="w-full h-full bg-neutral rounded-xl" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-primary font-medium truncate leading-snug group-hover:text-accent-hover transition-colors">
-                            {item.name}
-                          </p>
+                          <p className="text-[13px] text-primary font-medium truncate leading-snug group-hover:text-accent-hover transition-colors">{item.name}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[12px] font-semibold text-primary">
-                              {formatVND(item.price.base)}
-                            </span>
-                            {discount > 0 && (
-                              <span className="text-[10px] font-medium text-white bg-red-500 px-1.5 py-0.5 rounded-md">
-                                -{discount}%
-                              </span>
-                            )}
-                            {!item.inStock && (
-                              <span className="text-[10px] text-neutral-darker">
-                                Hết hàng
-                              </span>
-                            )}
+                            <span className="text-[12px] font-semibold text-primary">{formatVND(item.price.base)}</span>
+                            {discount > 0 && <span className="text-[10px] font-medium text-white bg-red-500 px-1.5 py-0.5 rounded-md">-{discount}%</span>}
+                            {!item.inStock && <span className="text-[10px] text-neutral-darker">Hết hàng</span>}
                           </div>
                         </div>
 
@@ -349,16 +280,8 @@ function SearchProductModal({
                             Đã thêm
                           </span>
                         )}
-                        {isBlocked && (
-                          <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
-                            Khác danh mục
-                          </span>
-                        )}
-                        {isFetching && (
-                          <span className="text-[10px] text-neutral-dark shrink-0">
-                            Đang tải…
-                          </span>
-                        )}
+                        {isBlocked && <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">Khác danh mục</span>}
+                        {isFetching && <span className="text-[10px] text-neutral-dark shrink-0">Đang tải…</span>}
                       </button>
                     </li>
                   );
@@ -380,11 +303,7 @@ type CompareRow = {
 const ROWS: CompareRow[] = [
   {
     label: "Thương hiệu",
-    render: (p) => (
-      <span className="inline-flex items-center px-2 py-1 rounded-lg text-[11px] sm:text-[12px] font-medium bg-neutral/60 text-primary">
-        {p.brand.name}
-      </span>
-    ),
+    render: (p) => <span className="inline-flex items-center px-2 py-1 rounded-lg text-[11px] sm:text-[12px] font-medium bg-neutral/60 text-primary">{p.brand.name}</span>,
   },
   {
     label: "Giá bán",
@@ -401,12 +320,8 @@ const ROWS: CompareRow[] = [
         </span>
         {p.price.hasPromotion && (
           <div className="flex items-center gap-1 flex-wrap justify-center">
-            <span className="text-[10px] text-neutral-darker line-through">
-              {formatVND(p.price.base)}
-            </span>
-            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md">
-              -{p.price.discountPercentage}%
-            </span>
+            <span className="text-[10px] text-neutral-darker line-through">{formatVND(p.price.base)}</span>
+            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md">-{p.price.discountPercentage}%</span>
           </div>
         )}
       </div>
@@ -423,9 +338,7 @@ const ROWS: CompareRow[] = [
           </span>
         </div>
       ) : (
-        <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">
-          Chưa có đánh giá
-        </span>
+        <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">Chưa có đánh giá</span>
       ),
   },
   {
@@ -445,11 +358,7 @@ const ROWS: CompareRow[] = [
   },
   {
     label: "Bảo hành",
-    render: (p) => (
-      <span className="text-[11px] sm:text-[12px] text-primary font-medium">
-        {p.warranty}
-      </span>
-    ),
+    render: (p) => <span className="text-[11px] sm:text-[12px] text-primary font-medium">{p.warranty}</span>,
   },
   {
     label: "Điểm nổi bật",
@@ -457,10 +366,7 @@ const ROWS: CompareRow[] = [
       <div className="flex flex-col gap-1.5 items-center w-full">
         {p.highlights.length > 0 ? (
           p.highlights.map((h) => (
-            <div
-              key={h.id}
-              className="text-[10px] sm:text-[11px] text-neutral-dark text-center leading-relaxed"
-            >
+            <div key={h.id} className="text-[10px] sm:text-[11px] text-neutral-dark text-center leading-relaxed">
               {h.name}:{" "}
               <span className="font-semibold text-primary">
                 {h.value} {h.unit ?? ""}
@@ -508,20 +414,11 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <div
         className="w-16 h-16 rounded-2xl flex items-center justify-center"
         style={{
-          background:
-            "linear-gradient(135deg, var(--color-neutral,#f0f0f0), var(--color-neutral-light,#fafafa))",
+          background: "linear-gradient(135deg, var(--color-neutral,#f0f0f0), var(--color-neutral-light,#fafafa))",
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
         }}
       >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="text-neutral-dark opacity-60"
-        >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-dark opacity-60">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="3" y="14" width="7" height="7" rx="1.5" />
@@ -530,20 +427,12 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         </svg>
       </div>
       <div>
-        <p
-          className="text-[15px] font-semibold text-primary mb-1"
-          style={{ letterSpacing: "-0.01em" }}
-        >
+        <p className="text-[15px] font-semibold text-primary mb-1" style={{ letterSpacing: "-0.01em" }}>
           Chưa có sản phẩm nào
         </p>
-        <p className="text-[13px] text-neutral-darker">
-          Thêm sản phẩm để bắt đầu so sánh tính năng và giá cả
-        </p>
+        <p className="text-[13px] text-neutral-darker">Thêm sản phẩm để bắt đầu so sánh tính năng và giá cả</p>
       </div>
-      <button
-        onClick={onAdd}
-        className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors"
-      >
+      <button onClick={onAdd} className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors">
         <Plus size={15} />
         Thêm sản phẩm đầu tiên
       </button>
@@ -555,10 +444,7 @@ export default function ComparePage() {
   const { items, rootCategorySlug, remove, add, clear } = useCompareStore();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const slots: (ProductDetail | null)[] = Array.from(
-    { length: MAX_SLOTS },
-    (_, i) => items[i] ?? null,
-  );
+  const slots: (ProductDetail | null)[] = Array.from({ length: MAX_SLOTS }, (_, i) => items[i] ?? null);
 
   const specKeys = collectSpecKeys(items);
 
@@ -567,25 +453,14 @@ export default function ComparePage() {
       {/* ── Page header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
-          <h1
-            className="text-[20px] sm:text-[22px] font-bold text-primary leading-tight"
-            style={{ letterSpacing: "-0.025em" }}
-          >
+          <h1 className="text-[20px] sm:text-[22px] font-bold text-primary leading-tight" style={{ letterSpacing: "-0.025em" }}>
             So sánh sản phẩm
           </h1>
-          <p className="text-[13px] text-neutral-darker mt-0.5">
-            Tối đa {MAX_SLOTS} sản phẩm cùng lúc
-          </p>
+          <p className="text-[13px] text-neutral-darker mt-0.5">Tối đa {MAX_SLOTS} sản phẩm cùng lúc</p>
         </div>
         {items.length > 0 && (
-          <button
-            onClick={clear}
-            className="inline-flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-red-500 transition-colors group self-start sm:self-auto"
-          >
-            <Trash2
-              size={13}
-              className="opacity-60 group-hover:opacity-100 transition-opacity"
-            />
+          <button onClick={clear} className="inline-flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-red-500 transition-colors group self-start sm:self-auto">
+            <Trash2 size={13} className="opacity-60 group-hover:opacity-100 transition-opacity" />
             Xóa tất cả
           </button>
         )}
@@ -593,10 +468,7 @@ export default function ComparePage() {
 
       {/* ── Empty state ── */}
       {items.length === 0 && (
-        <div
-          className="rounded-2xl border border-neutral overflow-hidden"
-          style={{ background: "var(--color-neutral-light, #fafafa)" }}
-        >
+        <div className="rounded-2xl border border-neutral overflow-hidden" style={{ background: "var(--color-neutral-light, #fafafa)" }}>
           <EmptyState onAdd={() => setModalOpen(true)} />
         </div>
       )}
@@ -607,15 +479,11 @@ export default function ComparePage() {
           className="rounded-2xl border border-neutral overflow-hidden"
           style={{
             background: "var(--color-neutral-light, #fafafa)",
-            boxShadow:
-              "0 1px 8px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.04)",
+            boxShadow: "0 1px 8px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.04)",
           }}
         >
           <div className="overflow-x-auto">
-            <table
-              className="w-full border-collapse"
-              style={{ tableLayout: "fixed", minWidth: "480px" }}
-            >
+            <table className="w-full border-collapse" style={{ tableLayout: "fixed", minWidth: "480px" }}>
               <colgroup>
                 <col style={{ width: "90px" }} />
                 <col />
@@ -631,9 +499,7 @@ export default function ComparePage() {
                   }}
                 >
                   <th className="px-3 sm:px-5 py-4 sm:py-5 align-bottom">
-                    <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker uppercase tracking-widest">
-                      Thuộc tính
-                    </span>
+                    <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker uppercase tracking-widest">Thuộc tính</span>
                   </th>
                   {slots.map((p, i) => (
                     <th key={i} className="px-2 sm:px-4 py-4 sm:py-5 align-top">
@@ -655,12 +521,7 @@ export default function ComparePage() {
                             }}
                           >
                             {p.currentVariant.images?.[0]?.imageUrl ? (
-                              <Image
-                                src={p.currentVariant.images[0].imageUrl}
-                                alt={p.name}
-                                fill
-                                className="object-contain p-1.5 sm:p-2"
-                              />
+                              <Image src={p.currentVariant.images[0].imageUrl} alt={p.name} fill className="object-contain p-1.5 sm:p-2" />
                             ) : (
                               <div className="w-full h-full bg-neutral rounded-xl" />
                             )}
@@ -681,14 +542,9 @@ export default function ComparePage() {
                             style={{ background: "rgba(0,0,0,0.01)" }}
                           >
                             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200 border border-neutral/80 group-hover:border-primary/30 group-hover:bg-primary/5">
-                              <Plus
-                                size={13}
-                                className="text-neutral-dark group-hover:text-primary transition-colors"
-                              />
+                              <Plus size={13} className="text-neutral-dark group-hover:text-primary transition-colors" />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker group-hover:text-primary transition-colors">
-                              Thêm
-                            </span>
+                            <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker group-hover:text-primary transition-colors">Thêm</span>
                           </button>
                         </div>
                       )}
@@ -703,27 +559,15 @@ export default function ComparePage() {
                     key={row.label}
                     className="border-t border-neutral/60 transition-colors"
                     style={{
-                      background:
-                        i % 2 !== 0 ? "rgba(0,0,0,0.015)" : "transparent",
+                      background: i % 2 !== 0 ? "rgba(0,0,0,0.015)" : "transparent",
                     }}
                   >
                     <td className="px-3 sm:px-5 py-3 sm:py-4 align-middle">
-                      <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker whitespace-nowrap">
-                        {row.label}
-                      </span>
+                      <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker whitespace-nowrap">{row.label}</span>
                     </td>
                     {slots.map((p, j) => (
-                      <td
-                        key={j}
-                        className="text-center text-[12px] sm:text-[13px] text-primary px-2 sm:px-4 py-3 sm:py-4 align-middle"
-                      >
-                        {p ? (
-                          row.render(p)
-                        ) : (
-                          <span className="text-neutral-dark/30 text-base">
-                            —
-                          </span>
-                        )}
+                      <td key={j} className="text-center text-[12px] sm:text-[13px] text-primary px-2 sm:px-4 py-3 sm:py-4 align-middle">
+                        {p ? row.render(p) : <span className="text-neutral-dark/30 text-base">—</span>}
                       </td>
                     ))}
                   </tr>
@@ -731,14 +575,8 @@ export default function ComparePage() {
 
                 {specKeys.length > 0 && (
                   <tr className="border-t-2 border-neutral">
-                    <td
-                      colSpan={4}
-                      className="px-3 sm:px-5 py-3"
-                      style={{ background: "var(--color-neutral, #f0f0f0)" }}
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-darker">
-                        Thông số kỹ thuật
-                      </span>
+                    <td colSpan={4} className="px-3 sm:px-5 py-3" style={{ background: "var(--color-neutral, #f0f0f0)" }}>
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-darker">Thông số kỹ thuật</span>
                     </td>
                   </tr>
                 )}
@@ -748,31 +586,17 @@ export default function ComparePage() {
                     key={key}
                     className="border-t border-neutral/60"
                     style={{
-                      background:
-                        i % 2 === 0 ? "rgba(0,0,0,0.015)" : "transparent",
+                      background: i % 2 === 0 ? "rgba(0,0,0,0.015)" : "transparent",
                     }}
                   >
                     <td className="px-3 sm:px-5 py-2.5 sm:py-3 align-middle">
-                      <span className="text-[10px] sm:text-[11px] text-neutral-darker leading-snug">
-                        {key}
-                      </span>
+                      <span className="text-[10px] sm:text-[11px] text-neutral-darker leading-snug">{key}</span>
                     </td>
                     {slots.map((p, j) => {
                       const val = p ? getSpecValue(p, key) : null;
                       return (
-                        <td
-                          key={j}
-                          className="text-center px-2 sm:px-4 py-2.5 sm:py-3 align-middle"
-                        >
-                          {val ? (
-                            <span className="text-[11px] sm:text-[12px] font-semibold text-primary">
-                              {val}
-                            </span>
-                          ) : (
-                            <span className="text-neutral-dark/30 text-base">
-                              —
-                            </span>
-                          )}
+                        <td key={j} className="text-center px-2 sm:px-4 py-2.5 sm:py-3 align-middle">
+                          {val ? <span className="text-[11px] sm:text-[12px] font-semibold text-primary">{val}</span> : <span className="text-neutral-dark/30 text-base">—</span>}
                         </td>
                       );
                     })}
@@ -786,14 +610,8 @@ export default function ComparePage() {
 
       {/* ── Footer ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-5 sm:mt-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-[13px] text-neutral-darker hover:text-primary transition-colors group"
-        >
-          <ArrowLeft
-            size={14}
-            className="transition-transform duration-150 group-hover:-translate-x-0.5"
-          />
+        <Link href="/" className="inline-flex items-center gap-2 text-[13px] text-neutral-darker hover:text-primary transition-colors group">
+          <ArrowLeft size={14} className="transition-transform duration-150 group-hover:-translate-x-0.5" />
           Tiếp tục mua sắm
         </Link>
         {items.length > 0 && items.length < MAX_SLOTS && (
@@ -808,13 +626,9 @@ export default function ComparePage() {
       </div>
 
       {/* ── Modal ── */}
-      <SearchProductModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSelect={(p) => add(p)}
-        excludeIds={items.map((p) => p.id)}
-        lockedCategorySlug={rootCategorySlug}
-      />
+      <SearchProductModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSelect={(p) => add(p)} excludeIds={items.map((p) => p.id)} lockedCategorySlug={rootCategorySlug} />
+
+      <MobileBottomNav />
     </div>
   );
 }

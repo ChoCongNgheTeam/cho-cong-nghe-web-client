@@ -18,8 +18,10 @@ const Badge = ({ label, discountPercent, className }: BadgeProps) => {
         "px-4 py-1.5 text-white font-bold text-[13px] tracking-tight",
         "bg-[#ef233c] shadow-sm",
         "rounded-br-2xl rounded-tr-md rounded-bl-md",
-        "before:content-[''] before:absolute before:-top-1 before:-left-2",
-        "before:w-4 before:h-4 before:bg-[#ef233c] before:rotate-45 before:-z-10",
+        "before:content-[''] before:absolute before:top-0 before:-left-2",
+        "before:border-t-[12px] before:border-t-[#ef233c]",
+        "before:border-l-[8px] before:border-l-transparent",
+        "before:-z-10",
         className,
       )}
     >

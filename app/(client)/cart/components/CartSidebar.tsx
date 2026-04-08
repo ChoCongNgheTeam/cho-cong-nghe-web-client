@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { X, ChevronRight } from "lucide-react";
 import { formatNumber, formatVND } from "@/helpers";
 
@@ -62,6 +62,10 @@ export default function CartSidebar({
     onClose();
     onCheckout();
   };
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("sheet:toggle", { detail: { open: isOpen } }));
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
