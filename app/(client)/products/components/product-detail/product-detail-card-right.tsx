@@ -64,11 +64,18 @@ export default function ProductDetailRight({
   onSpecificationClick,
   availableOptions = [],
 }: ProductDetailRightProps = {}) {
-  if (!product) return <div className="text-primary">Loading...</div>;
-
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
+  const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setQuantity(1);
+  }, [selectedVariant?.id]);
+
+  if (!product) return <div className="text-primary">Loading...</div>;
 
   const activePrice = selectedPrice || product.price;
   const displayPrice = activePrice?.hasPromotion ? activePrice.final : (activePrice?.base ?? 0);
@@ -78,12 +85,6 @@ export default function ProductDetailRight({
   const maxStock = selectedVariant?.quantity ?? 0;
   const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
   const isInStock = !isOutOfStock && maxStock > 0;
-
-  const [quantity, setQuantity] = useState(1);
-
-  useEffect(() => {
-    setQuantity(1);
-  }, [selectedVariant?.id]);
 
   const handleQuantityChange = (newQuantity: number) => {
     setQuantity(Math.min(Math.max(1, newQuantity), maxStock));
@@ -107,6 +108,10 @@ export default function ProductDetailRight({
         availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
+        storageLabel:
+          availableOptions
+            .find((opt) => opt.type === "storage") // ← thêm
+            ?.values?.find((v: any) => v.value === selectedOptions?.storage)?.label ?? "",
       });
       router.push("/cart");
     } catch {
@@ -114,8 +119,6 @@ export default function ProductDetailRight({
     }
   };
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const count = Math.floor(Math.random() * 20) + 10;
 
   const handleSubmit = (e: React.FormEvent) => {

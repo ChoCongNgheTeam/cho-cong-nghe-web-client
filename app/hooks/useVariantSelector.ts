@@ -115,9 +115,14 @@ export function useVariantSelector({
 
       try {
         const opts = isAuthenticated ? {} : { noAuth: true, noRedirectOn401: true, silentAuth: true };
+        console.log("opts:", opts);
 
         const params: Record<string, string> = {};
-        if (storageValue) params.storage = storageValue;
+        const rawStorage = storageValue || storageLabel; // ← fallback
+        if (rawStorage) {
+          params.storage = rawStorage.toLowerCase().replace(/\s+/g, "");
+        }
+        console.log("[useVariantSelector] storageValue:", storageValue, "productSlug:", productSlug);
 
         const res = await apiRequest.get<{ data: VariantOption[] }>(`/products/slug/${productSlug}/variant-options`, {
           ...opts,
