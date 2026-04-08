@@ -12,6 +12,7 @@ import { slugToTitle } from "../components/SlugToTitle";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { buildCategoryMetadata } from "./buildMetaData";
 import { BrandApiItem, MediaApiItem } from "../types";
+import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -168,6 +169,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           </main>
         </div>
       </div>
+      <MobileBottomNav />
     </div>
   );
 }

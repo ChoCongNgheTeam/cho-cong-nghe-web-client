@@ -15,7 +15,7 @@ interface ProductCardProps {
   showWishlist?: boolean;
 }
 
-export default function ProductCard({ product, index = 0, showWishlist = false }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
   const hasPromotion = product.price?.hasPromotion ?? false;
   const discountPercentage = product.price?.discountPercentage ?? 0;
   const highlights = product.highlights ?? [];
@@ -28,10 +28,9 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
     >
       {hasPromotion && <Badge discountPercent={discountPercentage} className="-top-3 -left-3" />}
 
-      {/* ── Image + Highlights row ── */}
-      <div className="flex flex-row items-center gap-2 pb-3 mt-4 shrink-0">
+      <div className="flex flex-row items-start gap-2 pb-3 mt-4 shrink-0 h-[140px] xs:h-[150px] sm:h-[160px] overflow-hidden">
         {/* Image: 2/3 width */}
-        <div className="relative w-2/3 aspect-square shrink-0">
+        <div className="relative w-2/3 h-full shrink-0">
           {product.thumbnail ? (
             <Image
               src={thumbnailUrl(product.thumbnail, 160)}
@@ -53,16 +52,16 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
 
         {/* Highlights: 1/3 width */}
         {hasHighlights && (
-          <div className="w-1/3 flex flex-col justify-around h-full gap-1">
-            {highlights.map((highlight) => (
-              <div key={highlight.key} className="flex flex-col items-center gap-0.5">
-                <div className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center text-neutral-dark">
+          <div className="w-1/3 h-full flex flex-col justify-start gap-1.5 overflow-hidden">
+            {highlights.slice(0, 3).map((highlight) => (
+              <div key={highlight.key} className="flex flex-col items-center gap-0.5 flex-1 min-h-0">
+                <div className="w-4 h-4 xs:w-5 xs:h-5 flex items-center justify-center text-neutral-dark shrink-0">
                   <HighlightIcon icon={highlight.icon} />
                 </div>
-                <span className="text-[8px] xs:text-[9px] w-full text-center text-primary leading-tight break-words hyphens-auto" style={{ textWrap: "balance" }}>
+                <span className="text-[8px] xs:text-[9px] w-full text-center text-primary leading-tight break-words hyphens-auto line-clamp-3" style={{ textWrap: "balance" }}>
                   {highlight.name}
                   <br />
-                  <span className="font-semibold text-balance">{highlight.value}</span>
+                  <span className="font-semibold">{highlight.value}</span>
                 </span>
               </div>
             ))}
@@ -71,8 +70,13 @@ export default function ProductCard({ product, index = 0, showWishlist = false }
       </div>
 
       {/* ── Text info ── */}
-      <div className="px-1 xs:px-2 flex flex-col flex-1 gap-1.5">
-        <h3 className="text-xs xs:text-[13px] sm:text-sm font-medium text-primary mb-1.5 line-clamp-2 min-h-8 sm:min-h-10 transition-colors">{product.name}</h3>
+      <div className="px-1 xs:px-2 flex flex-col flex-1 gap-1.5 justify-between">
+        <h3
+          className="text-xs xs:text-[13px] sm:text-sm font-medium text-primary mb-1.5 
+                 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] transition-colors"
+        >
+          {product.name}
+        </h3>
 
         <div className="flex flex-col gap-0.5 mb-1 sm:mb-1.5">
           <span className="text-[11px] xs:text-xs sm:text-[13px] text-neutral-dark line-through min-h-4 sm:min-h-5">{hasPromotion ? formatVND(product.price.base) : ""}</span>

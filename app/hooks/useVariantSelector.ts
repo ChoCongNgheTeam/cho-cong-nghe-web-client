@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import apiRequest from "@/lib/api";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
-import {  NewVariantData } from "@/contexts/CartContext";
+import { NewVariantData } from "@/contexts/CartContext";
 import { useToasty } from "@/components/Toast";
 import { useAuth } from "./useAuth";
 import { useCart } from "./useCart";
@@ -101,7 +101,8 @@ export function useVariantSelector({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isChanging, setIsChanging] = useState(false);
 
-  const cacheKey = `${productSlug}-${storageValue ?? storageLabel}`;
+  const cacheKey = `${productSlug}-${currentVariantId}`;
+
   const fetchedSlugRef = useRef<string | null>(null);
 
   const fetchVariants = useCallback(
@@ -136,6 +137,13 @@ export function useVariantSelector({
   const handleToggle = useCallback(() => {
     setIsOpen((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    setOptions([]);
+    setErrorMessage(null);
+    fetchedSlugRef.current = null;
+  }, [cacheKey]);
+
   useEffect(() => {
     fetchVariants();
   }, [fetchVariants]);

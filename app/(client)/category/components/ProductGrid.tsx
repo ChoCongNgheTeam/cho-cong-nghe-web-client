@@ -304,7 +304,7 @@ export default function ProductGrid({ categorySlug, initialProducts = [], initia
       {/* Grid */}
       <div className={`transition-opacity duration-200 ${isPending ? "opacity-50" : "opacity-100"}`}>
         {products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 pt-3">
             {products.map((product, i) => (
               <ProductCard key={`${product.id}-${i}`} product={product} />
             ))}

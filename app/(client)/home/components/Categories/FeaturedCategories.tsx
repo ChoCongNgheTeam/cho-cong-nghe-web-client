@@ -24,7 +24,9 @@ function CategoryItem({ category }: { category: FeaturedCategory }) {
             />
           </div>
         </div>
-        <p className="mt-3 text-center text-sm font-semibold text-primary transition-colors duration-300 line-clamp-2 px-1">{category.name}</p>
+        <p className="mt-1.5 w-full text-center font-semibold text-primary line-clamp-2 leading-tight" style={{ fontSize: "clamp(9px, 2.5vw, 14px)" }}>
+          {category.name}
+        </p>
       </div>
     </Link>
   );

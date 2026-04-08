@@ -13,15 +13,15 @@ type SheetType = "category" | "notification" | null;
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const router = useRouter(); // thêm dòng này
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { unreadCount } = useNotifications();
   const [openSheet, setOpenSheet] = useState<SheetType>(null);
 
-  // Chỉ render ở trang home
-  const allowedPaths = ["/", "/profile"];
+  const exactPaths = ["/", "/profile", "/compare"];
+  const prefixPaths = ["/category", "/policies", "/blog", "/flash-sale"];
 
-  const shouldShow = allowedPaths.includes(pathname);
+  const shouldShow = exactPaths.includes(pathname) || prefixPaths.some((path) => pathname.startsWith(path));
 
   if (!shouldShow) return null;
 
