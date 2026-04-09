@@ -38,12 +38,16 @@ interface ProductStickyFooterProps {
   quantity?: number;
   /** ref của infoRef (hero section) — khi khuất viewport thì footer hiện (desktop only) */
   infoRef?: React.RefObject<HTMLElement | null>;
+  availableOptions?: any[]; // ← thêm
+  selectedOptions?: Record<string, string>; // ← thêm
 }
 
-export default function ProductStickyFooter({ product, selectedVariant, selectedPrice, quantity = 1, infoRef }: ProductStickyFooterProps) {
+export default function ProductStickyFooter({ product, selectedVariant, selectedPrice, quantity = 1, infoRef, availableOptions = [], selectedOptions = {} }: ProductStickyFooterProps) {
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
+
+  const storageLabel = availableOptions.find((opt) => opt.type === "storage")?.values?.find((v: any) => v.value === selectedOptions.storage)?.label ?? "";
 
   /**
    * visible logic:
@@ -103,6 +107,7 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
         availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
+        storageLabel,
       });
       router.push("/cart");
     } catch {
@@ -164,6 +169,7 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
                   availableQuantity: selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? 0,
                   color: selectedVariant?.color ?? "",
                   colorValue: selectedVariant?.colorValue ?? "",
+                  storageLabel,
                 }}
                 label=""
                 iconSize={20}

@@ -193,7 +193,15 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
 
       <TrustBadges className="!bg-gray-400/10" />
 
-      <ProductStickyFooter product={product} selectedVariant={currentVariant} selectedPrice={price} quantity={quantity} infoRef={infoRef} />
+      <ProductStickyFooter
+        product={product}
+        selectedVariant={currentVariant}
+        selectedPrice={price}
+        quantity={quantity}
+        infoRef={infoRef}
+        availableOptions={availableOptions}
+        selectedOptions={selectedOptions}
+      />
     </div>
   );
 }

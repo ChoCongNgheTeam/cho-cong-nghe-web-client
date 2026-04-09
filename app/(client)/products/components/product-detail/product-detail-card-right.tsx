@@ -113,13 +113,13 @@ export default function ProductDetailRight({
             .find((opt) => opt.type === "storage") // ← thêm
             ?.values?.find((v: any) => v.value === selectedOptions?.storage)?.label ?? "",
       });
+      console.log("availableOptions:", availableOptions);
+      console.log("selectedOptions:", selectedOptions);
       router.push("/cart");
     } catch {
       toasty.error("Không thể thêm vào giỏ hàng, vui lòng thử lại");
     }
   };
-
-  const count = Math.floor(Math.random() * 20) + 10;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
