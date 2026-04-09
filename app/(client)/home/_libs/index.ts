@@ -1,5 +1,6 @@
 import apiRequest from "@/lib/api";
 import { HomeApiResponse } from "../types";
+import { Blog } from "@/(client)/blog/types/blog.type";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -85,18 +86,18 @@ export interface BlogAuthor {
   email: string;
 }
 
-export interface Blog {
-  id: string;
-  title: string;
-  slug: string;
-  thumbnail: string;
-  excerpt: string;
-  viewCount: number;
-  status: string;
-  author: BlogAuthor;
-  createdAt: string;
-  publishedAt: string;
-}
+// export interface Blog {
+//   id: string;
+//   title: string;
+//   slug: string;
+//   thumbnail: string;
+//   excerpt: string;
+//   viewCount: number;
+//   status: string;
+//   author: BlogAuthor;
+//   createdAt: string;
+//   publishedAt: string;
+// }
 
 export interface BlogPagination {
   data: Blog[];

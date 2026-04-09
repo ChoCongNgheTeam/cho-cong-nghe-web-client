@@ -1,10 +1,6 @@
 "use client";
-import { useEffect, useRef, useState, useLayoutEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { BsPatchCheckFill } from "react-icons/bs";
-import { HiOutlineRefresh } from "react-icons/hi";
-import { FaTruck } from "react-icons/fa";
-import { MdVerified } from "react-icons/md";
+
+import { useRef, useState, useEffect } from "react";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
 import ProductDetailRight from "../components/product-detail/product-detail-card-right";
@@ -29,23 +25,6 @@ export function ProductDetailContent({
   product,
   slug,
 }: ProductDetailContentProps) {
-  const searchParams = useSearchParams();
-
-  /* ============================================================================
-   * SCROLL TO TOP ON MOUNT
-   * ========================================================================== */
-  useLayoutEffect(() => {
-    window.history.scrollRestoration = "manual";
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  /* ============================================================================
-   * SECTIONS HOOK
-   * ========================================================================== */
   const {
     breadcrumbRef,
     infoRef,
@@ -53,40 +32,29 @@ export function ProductDetailContent({
     articleRef,
     reviewsRef,
     suggestRef,
-    headerHeight,
-    effectiveHeaderHeight,
+    // stickyTop,
     showStickyHeader,
     activeTab,
     scrollToSection,
+    layoutChangingRef,
   } = useProductSections();
 
-  /* ============================================================================
-   * AUTO SCROLL KHI CÓ ?review=true
-   * ========================================================================== */
-//   const hasAutoScrolled = useRef(false);
+  const tabBarRef = useRef<HTMLDivElement>(null);
 
-// useEffect(() => {
-//    if (searchParams?.get("review") !== "true") return;
-//    if (hasAutoScrolled.current) return; // ── chặn chạy lại ──
-//    hasAutoScrolled.current = true;
+  useEffect(() => {
+    if (!tabBarRef.current) return;
+    const btn = tabBarRef.current.querySelector<HTMLElement>(
+      `[data-tab="${activeTab}"]`,
+    );
+    if (btn)
+      btn.scrollIntoView({
+        inline: "nearest",
+        block: "nearest",
+        behavior: "smooth",
+      });
+  }, [activeTab]);
 
-//    const timer = setTimeout(() => {
-//       const TAB_BAR_HEIGHT = 48;
-//       const top =
-//          (reviewsRef.current?.offsetTop ?? 0) - headerHeight - TAB_BAR_HEIGHT;
-//       window.scrollTo({ top, behavior: "smooth" });
-//    }, 600);
-
-//    return () => clearTimeout(timer);
-// }, [searchParams, headerHeight]);
-
-  /* ============================================================================
-   * STATE
-   * ========================================================================== */
-  const isInitialLoad = useRef(true);
-  // Guard để tránh fetch variant lặp khi sync từ gallery
-  const isSyncingFromGallery = useRef(false);
-
+  /* ── Variant state ── */
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
   >(() => {
@@ -98,6 +66,7 @@ export function ProductDetailContent({
     });
     return init;
   });
+
   const [availableOptions, setAvailableOptions] = useState(
     product.availableOptions || [],
   );
@@ -108,137 +77,107 @@ export function ProductDetailContent({
   const [price, setPrice] = useState(product.price);
   const [quantity, setQuantity] = useState(1);
 
-  /* ============================================================================
-   * HANDLERS
-   * ========================================================================== */
-  const handleOptionChange = async (type: string, value: string) => {
-    const newOptions = { ...selectedOptions, [type]: value };
-
-    setSelectedOptions(newOptions);
-
-    await fetchVariantByParams(newOptions);
-  };
-
-  const scrollToReviews = () => scrollToSection("reviews");
-  const scrollToSpecifications = () => scrollToSection("specs");
-
-  /* ============================================================================
-   * FETCH VARIANT — dùng chung cho cả option change và gallery sync
-   * ========================================================================== */
   const fetchVariantByParams = async (params: Record<string, string>) => {
     try {
       const json = await apiRequest.get<{ data: any }>(
         `/products/slug/${product.slug}/variant`,
         { noAuth: true, params },
       );
+      if (!json) return;
+      const data = json.data;
+      setAvailableOptions(data.availableOptions);
+      setCurrentVariant(data.currentVariant);
+      setVariantImages(data.currentVariant.images);
+      setPrice(data.price);
+      setQuantity(1);
 
-      if (json) {
-        const data = json.data;
-
-        setAvailableOptions(data.availableOptions);
-        setCurrentVariant(data.currentVariant);
-        setVariantImages(data.currentVariant.images);
-        setPrice(data.price);
-        setQuantity(1);
-
-        // Sync selectedOptions từ currentVariant (không dùng v.selected vì API không trả về field đó)
-        const newOptions: Record<string, string> = {};
-
-        // Ưu tiên lấy từ currentVariant — đây là nguồn dữ liệu chính xác nhất
-        const variant = data.currentVariant;
-        if (variant?.color) newOptions["color"] = variant.color;
-        if (variant?.storage) newOptions["storage"] = variant.storage;
-        if (variant?.ram) newOptions["ram"] = variant.ram;
-
-        // Fallback: parse từ variant code nếu API không có field riêng
-        // VD: "IPHONE-13-128GB-BLACK" → storage=128gb, color=black
-        if (!newOptions["storage"] && variant?.code) {
-          const storageMatch = variant.code.match(/(\d+GB)/i);
-          if (storageMatch)
-            newOptions["storage"] = storageMatch[1].toLowerCase();
-        }
-
-        // Merge với selectedOptions hiện tại để giữ các option không liên quan
-        if (Object.keys(newOptions).length) {
-          setSelectedOptions((prev) => ({ ...prev, ...newOptions }));
-        }
+      const variant = data.currentVariant;
+      const newOptions: Record<string, string> = {};
+      if (variant?.color) newOptions["color"] = variant.color;
+      if (variant?.storage) newOptions["storage"] = variant.storage;
+      if (variant?.ram) newOptions["ram"] = variant.ram;
+      if (!newOptions["storage"] && variant?.code) {
+        const storageMatch = variant.code.match(/(\d+GB)/i);
+        if (storageMatch) newOptions["storage"] = storageMatch[1].toLowerCase();
+      }
+      if (Object.keys(newOptions).length) {
+        setSelectedOptions((prev) => ({ ...prev, ...newOptions }));
       }
     } catch (error) {
       console.error("Error fetching variant:", error);
     }
   };
 
-  /* ============================================================================
-   * FETCH VARIANT ON OPTION CHANGE (user tự chọn)
-   * ========================================================================== */
-  //   useEffect(() => {
-  //     // Bỏ qua lần mount đầu
-  //     if (isInitialLoad.current) {
-  //       isInitialLoad.current = false;
-  //       return;
-  //     }
-  //     // Bỏ qua nếu đang sync từ gallery (tránh vòng lặp)
-  //     if (isSyncingFromGallery.current) {
-  //       isSyncingFromGallery.current = false;
-  //       return;
-  //     }
-  //     if (!Object.keys(selectedOptions).length) return;
+  const handleOptionChange = async (type: string, value: string) => {
+    const newOptions = { ...selectedOptions, [type]: value };
+    setSelectedOptions(newOptions);
+    await fetchVariantByParams(newOptions);
+  };
 
-  //     fetchVariantByParams(selectedOptions);
-  //   }, [selectedOptions, product.slug]);
-
-  /* ============================================================================
-   * GALLERY COLOR SYNC — gọi khi Banner phát hiện user scroll/click màu mới
-   * ========================================================================== */
   const handleColorChangeFromGallery = async (variantId: string) => {
     if (variantId === currentVariant?.id) return;
-
     await fetchVariantByParams({ bundle: variantId });
   };
 
-  /* ============================================================================
-   * RENDER
-   * ========================================================================== */
   return (
     <div>
-      {/* ── Sticky Tab Header ─────────────────────────────────────────────── */}
+      {/*
+        ── Sticky Tab Bar ──────────────────────────────────────────────────
+        position:sticky — tự dính không cần JS tính top mỗi frame.
+
+        stickyTop chỉ thay đổi 2 lần per scroll session (khi header
+        cross ngưỡng visible↔hidden), không phải mỗi frame.
+
+        Ẩn/hiện bằng opacity+pointerEvents để không conflict sticky.
+        ─────────────────────────────────────────────────────────────────── */}
       <div
-        style={{ top: effectiveHeaderHeight }}
-        className={`fixed left-0 right-0 z-40 bg-neutral-light shadow-md border-b border-neutral
-          transition-[top,transform] duration-300 ease-in-out
-          ${showStickyHeader ? "translate-y-0" : "-translate-y-full"}`}
+        className="fixed left-0 right-0 z-40 bg-neutral-light shadow-md border-b border-neutral"
+        style={{
+          top: 0,
+          transform: `translateY(var(--header-translate, 0px)) + var(--header-translate, 0px)))`,
+          transition: "opacity 0.2s ease, transform 0.3s ease-in-out",
+          height: 48,
+          opacity: showStickyHeader ? 1 : 0,
+          pointerEvents: showStickyHeader ? "auto" : "none",
+          visibility: showStickyHeader ? "visible" : "hidden",
+        }}
       >
-        <div className="container sm:px-6">
-          <div className="flex items-center overflow-x-auto scrollbar-hide">
+        <div className="container sm:px-6 h-full">
+          <div
+            ref={tabBarRef}
+            className="flex items-center h-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {TABS.map((tab) => (
               <button
                 key={tab.id}
+                data-tab={tab.id}
                 onClick={() => scrollToSection(tab.id)}
                 className={`
-                  relative px-4 py-3 text-sm font-medium whitespace-nowrap
+                  relative px-4 py-3 text-sm font-medium whitespace-nowrap h-full
                   transition-colors cursor-pointer flex-shrink-0
                   ${activeTab === tab.id ? "text-accent" : "text-neutral-darker hover:text-primary"}
                 `}
               >
                 {tab.label}
                 <span
-                  className={`absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full
+                  className={`
+                    absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full
                     transition-opacity duration-200
-                    ${activeTab === tab.id ? "opacity-100" : "opacity-0"}`}
+                    ${activeTab === tab.id ? "opacity-100" : "opacity-0"}
+                  `}
                 />
               </button>
             ))}
           </div>
         </div>
       </div>
-
-      {/* ── Breadcrumb ────────────────────────────────────────────────────── */}
+      {/* ── Breadcrumb ── */}
       <div className="container sm:px-6 mt-4" ref={breadcrumbRef}>
         <Breadcrumb
           items={[
             { label: "Trang chủ", href: "/" },
             {
-              label: product.category.parent.slug,
+              label: product.category.parent.name,
               href: `/category/${product.category?.slug}`,
             },
             { label: product.name },
@@ -246,7 +185,7 @@ export function ProductDetailContent({
         />
       </div>
 
-      {/* ── Hero / Thông tin sản phẩm ─────────────────────────────────────── */}
+      {/* ── Hero / Thông tin sản phẩm ── */}
       <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container" ref={infoRef}>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit pr-6">
@@ -266,29 +205,32 @@ export function ProductDetailContent({
                 selectedOptions={selectedOptions}
                 availableOptions={availableOptions}
                 onOptionChange={handleOptionChange}
-                onReviewClick={scrollToReviews}
-                onSpecificationClick={scrollToSpecifications}
+                onReviewClick={() => scrollToSection("reviews")}
+                onSpecificationClick={() => scrollToSection("specs")}
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Thông số kỹ thuật ─────────────────────────────────────────────── */}
+      {/* ── Thông số kỹ thuật ── */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={specificationsRef}>
         <div className="container !px-0">
           <ProductDetailSection slug={slug} product={product} />
         </div>
       </div>
 
-      {/* ── Bài viết đánh giá ─────────────────────────────────────────────── */}
+      {/* ── Bài viết đánh giá ── */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={articleRef}>
         <div className="container !px-0">
-          <ProductDetailSection1 product={product} />
+          <ProductDetailSection1
+            product={product}
+            layoutChangingRef={layoutChangingRef}
+          />
         </div>
       </div>
 
-      {/* ── Đánh giá & Hỏi đáp ───────────────────────────────────────────── */}
+      {/* ── Đánh giá & Hỏi đáp ── */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={reviewsRef}>
         <div className="container !px-0">
           <ProductReview
@@ -301,17 +243,15 @@ export function ProductDetailContent({
         </div>
       </div>
 
-      {/* ── Sản phẩm liên quan ────────────────────────────────────────────── */}
+      {/* ── Sản phẩm liên quan ── */}
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={suggestRef}>
         <div className="container !px-0">
           <ProductDetailSuggest slug={slug} />
         </div>
       </div>
 
-      {/* ── Trust Badges ──────────────────────────────────────────────────── */}
       <TrustBadges className="!bg-gray-400/10" />
 
-      {/* ── Sticky Footer ─────────────────────────────────────────────────── */}
       <ProductStickyFooter
         product={product}
         selectedVariant={currentVariant}

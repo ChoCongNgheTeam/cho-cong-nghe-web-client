@@ -15,6 +15,7 @@ import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useToasty } from "@/components/Toast";
 
 import { HighlightIcon } from "@/(client)/home/common/HighlightIcon";
+import { useIsMobile } from "@/(client)/compare/Useismobile";
 
 interface GalleryImage {
   id: string;
@@ -75,19 +76,22 @@ export default function ProductDetailBanner({
   const { add, remove, isInCompare } = useCompareStore();
   const { success, error, warning, info } = useToasty();
   const inCompare = isInCompare(product.id);
-
+  const isMobile = useIsMobile();
   const handleToggleCompare = () => {
     if (inCompare) {
       remove(product.id);
       info("Đã bỏ khỏi danh sách so sánh");
       return;
     }
-
     const result = add(product);
     if (!result.success) {
       switch (result.reason) {
         case "full":
-          warning("Chỉ được so sánh tối đa 3 sản phẩm");
+          warning(
+            isMobile
+              ? "Chỉ được so sánh tối đa 2 sản phẩm trên điện thoại"
+              : "Chỉ được so sánh tối đa 3 sản phẩm",
+          );
           break;
         case "duplicate":
           info("Sản phẩm đã có trong danh sách");
@@ -256,7 +260,11 @@ export default function ProductDetailBanner({
     const activeIndex = isExpandSlot ? allThumbs.length - 1 : currentImageIndex;
     const activeEl = row.children[activeIndex] as HTMLElement | undefined;
     if (activeEl) {
-      activeEl.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+      activeEl.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
     }
   }, [currentImageIndex, isExpandSlot]);
 
@@ -352,7 +360,7 @@ export default function ProductDetailBanner({
       <div className="mt-4">
         <div
           ref={thumbRowRef}
-          className="flex gap-2 sm:gap-3  lg:gap-4  scroll-smooth scrollbar-hide py-1.5 px-1 overflow-x-auto"
+          className="flex gap-2 sm:gap-3  lg:gap-4  scroll-smooth scrollbar-hide py-1.5 px-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {allThumbs.map((thumb) => {
             if (thumb.type === "expand") {
@@ -492,7 +500,7 @@ export default function ProductDetailBanner({
                 </h2>
                 <button
                   type="button"
-                  className="text-xs sm:text-sm font-medium text-primary hover:text-primary-hover hover:underline underline-offset-2 transition-all active:scale-95 cursor-pointer"
+                  className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer"
                 >
                   Tìm hiểu thêm
                 </button>

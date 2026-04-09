@@ -1,5 +1,7 @@
 export type BlogStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
+export type BlogType = "TIN_MOI" | "DANH_GIA" | "KHUYEN_MAI" | "DIEN_MAY" | "NOI_BAT";
+
 export interface BlogAuthor {
   id: string;
   fullName?: string;
@@ -16,6 +18,7 @@ export interface BlogCard {
   excerpt: string;
   viewCount: number;
   status: BlogStatus;
+  type: BlogType;
   author: BlogAuthor;
   createdAt: string;
   updatedAt?: string;
@@ -46,6 +49,7 @@ export interface GetBlogsParams {
   limit?: number;
   search?: string;
   status?: BlogStatus;
+  type?: BlogType;
   authorId?: string;
   sortBy?: "createdAt" | "publishedAt" | "viewCount" | "title" | "updatedAt";
   sortOrder?: "asc" | "desc";
@@ -56,6 +60,7 @@ export interface CreateBlogPayload {
   title: string;
   content: string;
   status?: BlogStatus;
+  type?: BlogType;
   publishedAt?: string;
   imageUrl?: string;
   imagePath?: string;

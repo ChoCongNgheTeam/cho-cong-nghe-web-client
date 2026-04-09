@@ -3,13 +3,17 @@ import { BannersTop, HomeSlider, FeaturedCategories, FeaturedProducts, BannersSe
 
 export default async function HomePage() {
   const { sliders, featuredCategories, bannersTop, saleSchedule, featuredProducts, bestSellingProducts, activeCampaigns, bannersSection1, blogs } = await getHomePageData();
-  //   console.log("categories:", featuredCategories);
+
+  const hasSale = saleSchedule?.todayProducts?.products.length > 0;
+
+  console.log(hasSale);
+
   return (
     <main className="min-h-screen bg-neutral-light">
       <HomeSlider sliders={sliders} />
       <BannersTop bannersTop={bannersTop} />
       <FeaturedCategories featuredCategories={featuredCategories} />
-      <HotSaleOnline saleSchedule={saleSchedule ?? { schedule: [] }} />
+      {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
       <FeaturedProducts products={featuredProducts} />
       <BestSellers products={bestSellingProducts} />
       <SeasonalSale campaigns={activeCampaigns} />

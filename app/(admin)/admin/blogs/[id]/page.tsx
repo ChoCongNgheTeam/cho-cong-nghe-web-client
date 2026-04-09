@@ -3,22 +3,23 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Pencil, Loader2, XCircle, Trash2, Check, Eye, Clock, BarChart2, User, Calendar } from "lucide-react";
+import { ArrowLeft, BookOpen, Pencil, Loader2, XCircle, Trash2, Eye, Clock, BarChart2, User, Calendar } from "lucide-react";
 import { Popzy } from "@/components/Modal";
 import { getBlog, updateBlog, deleteBlog } from "../_libs/blogs";
 import { BlogForm, blogToForm } from "../components/BlogForm";
 import { BlogStatusBadge } from "../components/BlogStatusBadge";
-import { BLOG_STATUS_LABELS } from "../const";
 import type { BlogDetail } from "../blog.types";
 import { formatDate, formatNumber } from "@/helpers";
+import { useToasty } from "@/components/Toast";
 
 export default function BlogDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditMode = searchParams.get("edit") === "true";
-
   const params = useParams();
   const id = params.id as string;
+
+  const { success: toastSuccess, error: toastError } = useToasty();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,6 @@ export default function BlogDetailPage() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -52,14 +52,14 @@ export default function BlogDetailPage() {
   const handleSave = async (formData: FormData) => {
     setSaving(true);
     setSaveError(null);
-    setSaveSuccess(false);
     try {
       const res = await updateBlog(id, formData);
       setBlog(res.data);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
+      toastSuccess("Bài viết đã được cập nhật!", { title: "Lưu thành công" });
     } catch (e: any) {
-      setSaveError(e?.message ?? "Không thể cập nhật bài viết");
+      const msg = e?.message ?? "Không thể cập nhật bài viết";
+      setSaveError(msg);
+      toastError(msg, { title: "Lưu thất bại" });
     } finally {
       setSaving(false);
     }
@@ -70,9 +70,12 @@ export default function BlogDetailPage() {
     setDeleteError(null);
     try {
       await deleteBlog(id);
+      toastSuccess("Đã xoá bài viết thành công", { title: "Xoá bài viết" });
       router.push("/admin/blogs");
     } catch (e: any) {
-      setDeleteError(e?.message ?? "Không thể xoá bài viết");
+      const msg = e?.message ?? "Không thể xoá bài viết";
+      setDeleteError(msg);
+      toastError(msg, { title: "Xoá thất bại" });
     } finally {
       setDeleting(false);
     }
@@ -138,7 +141,6 @@ export default function BlogDetailPage() {
               </div>
             </div>
 
-            {/* Thumbnail */}
             {blog.thumbnail && <img src={blog.thumbnail} alt={blog.title} className="w-full aspect-video rounded-xl object-cover border border-neutral" />}
 
             <div>
@@ -159,9 +161,7 @@ export default function BlogDetailPage() {
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
                   <Eye size={11} /> Lượt xem
                 </span>
-                <span className="text-[13px] font-bold text-primary">
-                  {formatNumber(blog.viewCount)}
-                </span>
+                <span className="text-[13px] font-bold text-primary">{formatNumber(blog.viewCount)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-neutral-dark flex items-center gap-1.5">
@@ -205,11 +205,6 @@ export default function BlogDetailPage() {
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-[15px] font-bold text-primary">{isEditMode ? "Chỉnh sửa bài viết" : "Nội dung bài viết"}</h3>
               <div className="flex items-center gap-2">
-                {saveSuccess && (
-                  <span className="flex items-center gap-1.5 text-[12px] text-emerald-600 font-medium">
-                    <Check size={14} /> Đã lưu
-                  </span>
-                )}
                 {!isEditMode ? (
                   <Link
                     href={`/admin/blogs/${blog.id}?edit=true`}
@@ -234,9 +229,9 @@ export default function BlogDetailPage() {
                 submitLabel="Lưu thay đổi"
                 onCancel={() => router.push(`/admin/blogs/${blog.id}`)}
                 layout="panel"
+                isEdit
               />
             ) : (
-              /* View mode — render HTML content */
               <div className="space-y-4">
                 <h1 className="text-[20px] font-bold text-primary leading-snug">{blog.title}</h1>
                 <div className="flex items-center gap-3 pb-4 border-b border-neutral">
@@ -253,7 +248,18 @@ export default function BlogDetailPage() {
                   </div>
                 </div>
                 <div
-                  className="prose prose-sm max-w-none text-primary [&_h1]:text-[20px] [&_h2]:text-[18px] [&_h3]:text-[16px] [&_h4]:text-[14px] [&_p]:text-[13px] [&_p]:leading-relaxed [&_img]:rounded-xl [&_img]:border [&_img]:border-neutral [&_pre]:rounded-xl [&_pre]:bg-neutral-light-active [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-accent/5 [&_blockquote]:rounded-r-xl [&_a]:text-accent"
+                  className="
+                    prose prose-sm max-w-none text-primary
+                    break-words overflow-hidden
+                    [&_h1]:text-[20px] [&_h2]:text-[18px] [&_h3]:text-[16px] [&_h4]:text-[14px]
+                    [&_p]:text-[13px] [&_p]:leading-relaxed
+                    [&_img]:rounded-xl [&_img]:border [&_img]:border-neutral
+                    [&_img]:max-w-full [&_img]:h-auto
+                    [&_pre]:rounded-xl [&_pre]:bg-neutral-light-active [&_pre]:overflow-x-auto
+                    [&_blockquote]:border-l-4 [&_blockquote]:border-accent [&_blockquote]:bg-accent/5 [&_blockquote]:rounded-r-xl
+                    [&_a]:text-accent
+                    [&_table]:block [&_table]:overflow-x-auto
+                  "
                   dangerouslySetInnerHTML={{ __html: blog.content }}
                 />
               </div>

@@ -63,27 +63,35 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         const refreshed = await performRefresh();
 
         if (!refreshed) {
-          // Không có session → resolveAuthInit ngay để unblock các request khác
-          // (chúng sẽ tự handle 401)
           setUser(null);
           resolveAuthInit();
           setLoading(false);
           return;
         }
 
-        // ✅ Đã có access token trong memory rồi
-        // → resolveAuthInit SỚM để unblock các request đang chờ
-        // → getMe chạy song song với các request khác của page
         resolveAuthInit();
 
-        const response = await apiRequest.get<ApiResponse<User>>("/users/me", {
-          noRedirectOn401: true,
-        });
-
-        if (response?.data) {
-          setUser(response.data);
-        } else {
-          setUser(null);
+        try {
+          const response = await apiRequest.get<ApiResponse<User>>("/users/me", {
+            noRedirectOn401: true,
+            timeout: 15000, // tăng lên 15s
+          });
+          if (response?.data) {
+            setUser(response.data);
+          } else {
+            setUser(null);
+          }
+        } catch (meError: any) {
+          console.error("[checkAuth] /users/me failed:", meError?.status, meError?.message);
+          if (meError?.status === 401) {
+            setUser(null);
+          }
+          // /users/me lỗi 401 → refresh token đã bị revoke → đây mới là logout thật
+          if (meError?.status === 401) {
+            setUser(null);
+          }
+          // Lỗi khác (500, network) → KHÔNG logout, giữ session
+          // user vẫn null nhưng accessToken vẫn còn trong memory
         }
       } catch {
         setUser(null);

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Select from "react-select";
@@ -21,7 +21,6 @@ interface UserOption {
    sub: string;
    isActive: boolean;
 }
-
 
 const rsStyles = {
    control: (b: any, s: any) => ({
@@ -147,8 +146,6 @@ const rsStyles = {
    }),
 };
 
-// ─── Custom option label ───────────────────────────────────────────────────────
-
 function UserOptionLabel({ data }: { data: UserOption }) {
    return (
       <div className="flex items-center gap-2.5 py-0.5">
@@ -171,8 +168,6 @@ function UserOptionLabel({ data }: { data: UserOption }) {
       </div>
    );
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function NotificationAdmin() {
    const [title, setTitle] = useState("");

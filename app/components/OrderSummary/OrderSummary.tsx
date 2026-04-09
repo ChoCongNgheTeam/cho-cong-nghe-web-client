@@ -172,13 +172,6 @@ export default function OrderSummary({
                         </div>
                      )}
 
-                     {/* {isCheckoutPage && taxAmount !== undefined && taxAmount > 0 && (
-                <div className="flex justify-between pl-4">
-                  <span className="text-neutral-dark text-xs">Phí VAT (10%)</span>
-                  <span className="text-primary text-sm font-medium">+{formatPrice(taxAmount)}</span>
-                </div>
-              )} */}
-
                      <div className="border-t border-neutral pt-2.5 mt-2.5">
                         <div className="flex justify-between items-center">
                            <span className="font-semibold text-primary text-sm">
@@ -207,7 +200,6 @@ export default function OrderSummary({
                   {buttonText}
                </button>
 
-               {/* Terms + VAT/Shipping info (Checkout only) - Below button */}
                {showTerms && (
                   <>
                      <div className="px-3 pb-3 pt-3 bg-accent-light">
@@ -224,14 +216,14 @@ export default function OrderSummary({
                               Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
                               <a
                                  className="underline font-medium hover:text-promotion cursor-pointer text-primary"
-                                 href="#"
+                                 href="/policies/TermsOfService"
                               >
                                  Điều khoản dịch vụ
                               </a>{" "}
                               và{" "}
                               <a
                                  className="underline font-medium hover:text-promotion cursor-pointer text-primary"
-                                 href="#"
+                                 href="/policies/DataPrivacy"
                               >
                                  Chính sách xử lý dữ liệu cá nhân
                               </a>{" "}
@@ -239,15 +231,6 @@ export default function OrderSummary({
                            </p>
                         </label>
                      </div>
-
-                     {/* {taxAmount !== undefined && (
-                        <div className="px-4 pb-4 pt-3 text-xs text-neutral-darker border-t border-neutral rounded-b-lg bg-neutral-light">
-                           <div className="flex justify-between">
-                              <span>Thuế VAT (10%)</span>
-                              <span>{formatVND(taxAmount)}</span>
-                           </div>
-                        </div>
-                     )} */}
                   </>
                )}
             </div>

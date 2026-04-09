@@ -111,8 +111,6 @@ export type ProductDetail = {
   highlightGroups?: SpecificationGroup[];
   price: Price;
   availablePromotions?: Promotion[];
-
-  
 };
 
 export type Price = {
@@ -158,5 +156,7 @@ export interface SpecificationGroup {
 
 // Response API trả về
 export interface SpecificationsData {
+  name: string;
+  image: string;
   specifications: SpecificationGroup[];
 }

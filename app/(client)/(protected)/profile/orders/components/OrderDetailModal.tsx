@@ -36,7 +36,6 @@ export default function OrderDetailModal({ order }: { order: Order }) {
   const shipping = Number(order.shippingFee);
   const voucher = Number(order.voucherDiscount);
   const total = Number(order.totalAmount);
-  const tax = Math.max(0, total - subtotal - shipping + voucher);
 
   return (
     <div className="max-h-[82vh] sm:max-h-[78vh] overflow-y-auto custom-scroll pr-3 [scrollbar-gutter:stable]">

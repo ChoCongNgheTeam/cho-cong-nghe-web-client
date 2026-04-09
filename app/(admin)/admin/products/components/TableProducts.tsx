@@ -91,7 +91,20 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
       key: "inStock",
       label: "Tồn kho",
       align: "center",
-      render: (product) => <span className={`text-[12px] font-medium ${product.inStock ? "text-emerald-600" : "text-promotion"}`}>{product.inStock ? "Còn hàng" : "Hết hàng"}</span>,
+      render: (product) => {
+        const isLowStock = product.stockWarning === "low_stock";
+        const isOutOfStock = product.stockWarning === "out_of_stock";
+        return (
+          <div className="flex flex-col items-center gap-0.5">
+            <span className={`text-[12px] font-medium ${isOutOfStock ? "text-promotion" : isLowStock ? "text-amber-600" : "text-emerald-600"}`}>
+              {isOutOfStock ? "Hết hàng" : isLowStock ? "Sắp hết" : "Còn hàng"}
+            </span>
+            {(isLowStock || isOutOfStock) && product.minQuantity !== undefined && (
+              <span className="text-[10px] text-amber-500 font-semibold">{isOutOfStock ? "0 còn lại" : `${product.minQuantity} còn lại`}</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "isActive",
