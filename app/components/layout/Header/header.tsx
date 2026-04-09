@@ -113,7 +113,7 @@ const Header = () => {
         ref={headerRef}
         className={[
           "fixed top-0 left-0 right-0 z-50",
-          "w-full bg-neutral-light/95 backdrop-blur-md border-b border-neutral",
+          "w-full bg-neutral-light backdrop-blur-md border-b border-neutral",
           "transition-transform duration-300 ease-in-out",
           isPastTop ? "shadow-sm" : "",
           isVisible ? "translate-y-0" : "-translate-y-full",

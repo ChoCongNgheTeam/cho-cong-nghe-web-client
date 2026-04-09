@@ -1,12 +1,10 @@
+"use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ProductDetail } from "@/lib/types/product";
 
-const MAX_COMPARE = 3;
-
 function getRootSlug(category: any): string | null {
   if (!category) return null;
-  // Cấu trúc 3 level: category.slug → parent.slug → parent.parent.slug (root)
   return (
     category?.parent?.parent?.slug ??
     category?.parent?.slug ??
@@ -18,12 +16,16 @@ function getRootSlug(category: any): string | null {
 interface CompareStore {
   items: ProductDetail[];
   rootCategorySlug: string | null;
-  add: (product: ProductDetail) => {
+  maxCompare: (isMobile: boolean) => number;
+  add: (
+    product: ProductDetail,
+    isMobile?: boolean,
+  ) => {
     success: boolean;
     reason?: "full" | "duplicate" | "wrong_category";
   };
   remove: (id: string) => void;
-  toggle: (product: ProductDetail) => void;
+  toggle: (product: ProductDetail, isMobile?: boolean) => void;
   clear: () => void;
   isInCompare: (id: string) => boolean;
   isSameCategory: (product: ProductDetail) => boolean;
@@ -35,11 +37,13 @@ export const useCompareStore = create<CompareStore>()(
       items: [],
       rootCategorySlug: null,
 
-      add: (product) => {
-        const { items, isInCompare, rootCategorySlug } = get();
+      maxCompare: (isMobile: boolean) => (isMobile ? 2 : 3),
 
-        if (items.length >= MAX_COMPARE)
-          return { success: false, reason: "full" };
+      add: (product, isMobile = false) => {
+        const { items, isInCompare, rootCategorySlug, maxCompare } = get();
+        const MAX = maxCompare(isMobile);
+
+        if (items.length >= MAX) return { success: false, reason: "full" };
 
         if (isInCompare(product.id))
           return { success: false, reason: "duplicate" };
@@ -51,8 +55,6 @@ export const useCompareStore = create<CompareStore>()(
 
         set((s) => ({
           items: [...s.items, product],
-          // dùng s.rootCategorySlug thay vì check s.items.length
-          // vì items có thể đã được hydrate từ localStorage
           rootCategorySlug: s.rootCategorySlug ?? productRootSlug,
         }));
 
@@ -68,9 +70,9 @@ export const useCompareStore = create<CompareStore>()(
           };
         }),
 
-      toggle: (product) => {
+      toggle: (product, isMobile = false) => {
         const { isInCompare, remove, add } = get();
-        isInCompare(product.id) ? remove(product.id) : add(product);
+        isInCompare(product.id) ? remove(product.id) : add(product, isMobile);
       },
 
       clear: () => set({ items: [], rootCategorySlug: null }),
@@ -85,7 +87,7 @@ export const useCompareStore = create<CompareStore>()(
     }),
     {
       name: "compare-store",
-      version: 3,
+      version: 4,
       migrate: (_persistedState: any) => {
         return { items: [], rootCategorySlug: null };
       },

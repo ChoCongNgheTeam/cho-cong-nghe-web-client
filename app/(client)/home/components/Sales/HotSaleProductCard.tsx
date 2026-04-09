@@ -94,14 +94,14 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group relative flex flex-col rounded-xl overflow-hidden select-none h-full"
+      className="group relative flex flex-col rounded-xl overflow-hidden select-none h-full border-neutral-100 hover:shadow-md"
       style={{
         backgroundColor: "rgb(var(--neutral-light))",
         animationDelay: `${index * 0.08}s`,
       }}
     >
       {/* ── Section 1: Image + Highlights (fixed height) ── */}
-      <div className="flex flex-row items-stretch gap-2 px-2.5 pt-3 pb-1.5 h-[180px] sm:h-[200px] shrink-0 overflow-hidden">
+      <div className="flex flex-row items-stretch gap-2 px-2.5 pt-3 pb-1.5 h-[180px] sm:h-[200px]  shrink-0 overflow-hidden">
         {/* Image */}
         <div className="w-2/3 shrink-0 flex items-center overflow-hidden">
           <div className="relative w-full aspect-square">

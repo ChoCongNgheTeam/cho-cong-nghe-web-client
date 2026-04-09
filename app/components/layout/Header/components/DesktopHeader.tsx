@@ -48,11 +48,7 @@ const DesktopHeader = memo(
 
         {/* Icons */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.push("/compare")}
-            className="hidden lg:flex p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors"
-            title="So sánh"
-          >
+          <button onClick={() => router.push("/compare")} className="lg:flex p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors" title="So sánh">
             <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
             {items.length > 0 && (
               <span className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px] flex items-center justify-center rounded-full bg-accent text-[10px] font-bold text-neutral-light shadow-sm ring-2 ring-neutral-light">

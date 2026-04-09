@@ -2,7 +2,14 @@
 
 import { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
-import { FaStar, FaGift, FaCog, FaTruck, FaPlus, FaMinus } from "react-icons/fa";
+import {
+  FaStar,
+  FaGift,
+  FaCog,
+  FaTruck,
+  FaPlus,
+  FaMinus,
+} from "react-icons/fa";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
 import { Gift, Gpu, Package, Cpu } from "lucide-react";
@@ -64,26 +71,30 @@ export default function ProductDetailRight({
   onSpecificationClick,
   availableOptions = [],
 }: ProductDetailRightProps = {}) {
-  if (!product) return <div className="text-primary">Loading...</div>;
-
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
-
-  const activePrice = selectedPrice || product.price;
-  const displayPrice = activePrice?.hasPromotion ? activePrice.final : (activePrice?.base ?? 0);
-  const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
-  const basePrice = activePrice?.base ?? 0;
-
-  const maxStock = selectedVariant?.quantity ?? 0;
-  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
-  const isInStock = !isOutOfStock && maxStock > 0;
-
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setQuantity(1);
   }, [selectedVariant?.id]);
+
+  if (!product) return <div className="text-primary">Loading...</div>;
+
+  const activePrice = selectedPrice || product.price;
+  const displayPrice = activePrice?.hasPromotion
+    ? activePrice.final
+    : (activePrice?.base ?? 0);
+  const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
+  const basePrice = activePrice?.base ?? 0;
+
+  const maxStock = selectedVariant?.quantity ?? 0;
+  const isOutOfStock =
+    selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isInStock = !isOutOfStock && maxStock > 0;
 
   const handleQuantityChange = (newQuantity: number) => {
     setQuantity(Math.min(Math.max(1, newQuantity), maxStock));
@@ -103,20 +114,24 @@ export default function ProductDetailRight({
         variantName: selectedVariant.sku ?? "",
         price: finalPrice,
         originalPrice: basePrice,
-        imageUrl: selectedVariant.image ?? selectedVariant.images?.[0]?.imageUrl ?? "",
-        availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
+        imageUrl:
+          selectedVariant.image ?? selectedVariant.images?.[0]?.imageUrl ?? "",
+        availableQuantity:
+          selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
+        storageLabel:
+          availableOptions
+            .find((opt) => opt.type === "storage") // ← thêm
+            ?.values?.find((v: any) => v.value === selectedOptions?.storage)?.label ?? "",
       });
+      console.log("availableOptions:", availableOptions);
+      console.log("selectedOptions:", selectedOptions);
       router.push("/cart");
     } catch {
       toasty.error("Không thể thêm vào giỏ hàng, vui lòng thử lại");
     }
   };
-
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const count = Math.floor(Math.random() * 20) + 10;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +159,9 @@ export default function ProductDetailRight({
         <h2 className="font-semibold text-primary text-sm sm:text-base mb-3">Thông số nổi bật</h2>
         <div className="grid grid-cols-3 sm:flex sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
           {highlights.map((highlight, index) => {
-            const IconComponent = highlight?.icon ? iconMap[highlight.icon] : null;
+            const IconComponent = highlight?.icon
+              ? iconMap[highlight.icon]
+              : null;
             return (
               <div className="flex flex-col" key={index}>
                 <span className="text-xs text-neutral-dark">{highlight?.name || "N/A"}</span>
@@ -169,15 +186,21 @@ export default function ProductDetailRight({
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <MdVerified size={20} />
-          <p className="text-xs sm:text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
+          <p className="text-xs sm:text-sm text-primary">
+            Hàng chính hãng - Bảo hành 18 tháng
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <FaShippingFast size={20} />
-          <p className="text-xs sm:text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
+          <p className="text-xs sm:text-sm text-primary">
+            Miễn phí giao hàng toàn quốc
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <FaUserCog size={20} />
-          <p className="text-xs sm:text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
+          <p className="text-xs sm:text-sm text-primary">
+            Kỹ thuật viên hỗ trợ trực tuyến
+          </p>
         </div>
       </div>
     </div>
@@ -220,7 +243,9 @@ export default function ProductDetailRight({
           }}
         >
           <FaTruck className="text-white text-sm flex-shrink-0" />
-          <p className="text-xs sm:text-sm font-semibold text-white">Free ship toàn quốc</p>
+          <p className="text-xs sm:text-sm font-semibold text-white">
+            Free ship toàn quốc
+          </p>
         </span>
         <span
           className="badge-shimmer relative overflow-hidden rounded-lg px-3 py-1.5 flex items-center gap-2"
@@ -230,25 +255,37 @@ export default function ProductDetailRight({
           }}
         >
           <FaStar className="text-yellow-300 text-sm flex-shrink-0" />
-          <p className="text-xs sm:text-sm font-semibold text-white">Độc quyền tại ChoCongNghe</p>
+          <p className="text-xs sm:text-sm font-semibold text-white">
+            Độc quyền tại ChoCongNghe
+          </p>
         </span>
       </div>
 
       {/* ── Title ───────────────────────────────────────────────────────── */}
-      <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary">{selectedVariant?.name || product.name}</h2>
+      <h2 className="my-3 sm:my-4 text-lg sm:text-xl lg:text-2xl font-bold text-primary">
+        {selectedVariant?.name || product.name}
+      </h2>
 
       {/* ── Rating & Links ───────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
         <span>{product.currentVariant?.code}</span>
         <div className="flex items-center gap-1">
           <FaStar className="text-yellow-400 text-xs sm:text-sm" />
-          <span className="text-primary">{product.rating.average.toFixed(1)}</span>
+          <span className="text-primary">
+            {product.rating.average.toFixed(1)}
+          </span>
         </div>
-        <button onClick={onReviewClick} className="text-accent hover:underline cursor-pointer">
+        <button
+          onClick={onReviewClick}
+          className="text-accent hover:underline cursor-pointer"
+        >
           {product.rating.total} đánh giá
         </button>
         <span>|</span>
-        <button onClick={onSpecificationClick} className="text-accent hover:underline cursor-pointer">
+        <button
+          onClick={onSpecificationClick}
+          className="text-accent hover:underline cursor-pointer"
+        >
           Thông số kỹ thuật
         </button>
       </div>
@@ -257,7 +294,9 @@ export default function ProductDetailRight({
       <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[100px_1fr] gap-y-4 sm:gap-y-5 mt-6">
         {availableOptions.map((option) => (
           <Fragment key={option.type}>
-            <span className="font-medium text-primary text-xs sm:text-sm flex items-center">{TYPE_LABELS[option.type] ?? option.type}:</span>
+            <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
+              {TYPE_LABELS[option.type] ?? option.type}:
+            </span>
             <div className="flex flex-wrap gap-2">
               {option.values?.map((val: any) => {
                 const active = selectedOptions[option.type] === val.value;
@@ -265,7 +304,9 @@ export default function ProductDetailRight({
                 return (
                   <span
                     key={val.value}
-                    onClick={() => !disabled && onOptionChange?.(option.type, val.value)}
+                    onClick={() =>
+                      !disabled && onOptionChange?.(option.type, val.value)
+                    }
                     className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3
                       text-xs sm:text-sm font-bold
                       relative overflow-hidden
@@ -280,11 +321,21 @@ export default function ProductDetailRight({
                             : "border-neutral-dark text-primary bg-neutral-light cursor-pointer hover:border-accent hover:bg-accent-light"
                       }`}
                   >
-                    {val.image?.imageUrl && <Image src={val.image.imageUrl} alt={val.label} width={14} height={14} className="object-contain" />}
+                    {val.image?.imageUrl && (
+                      <Image
+                        src={val.image.imageUrl}
+                        alt={val.label}
+                        width={14}
+                        height={14}
+                        className="object-contain"
+                      />
+                    )}
                     {val.label}
                     {active && !disabled && (
                       <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-accent">
-                        <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">✓</span>
+                        <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
+                          ✓
+                        </span>
                       </div>
                     )}
                   </span>
@@ -296,7 +347,9 @@ export default function ProductDetailRight({
 
         {isInStock && (
           <>
-            <span className="font-medium text-primary text-xs sm:text-sm flex items-center">Số lượng:</span>
+            <span className="font-medium text-primary text-xs sm:text-sm flex items-center">
+              Số lượng:
+            </span>
             <div className="flex items-center gap-3">
               <div className="flex items-center border border-neutral rounded-lg overflow-hidden">
                 <button
@@ -311,7 +364,9 @@ export default function ProductDetailRight({
                   min="1"
                   max={maxStock}
                   value={quantity}
-                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    handleQuantityChange(parseInt(e.target.value) || 1)
+                  }
                   className="w-16 h-10 text-center border-x border-neutral focus:outline-none bg-neutral-light text-primary font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
@@ -322,7 +377,9 @@ export default function ProductDetailRight({
                   <FaPlus className="text-primary text-sm" />
                 </button>
               </div>
-              <span className="text-xs sm:text-sm text-neutral-dark">Còn {maxStock} sản phẩm</span>
+              <span className="text-xs sm:text-sm text-neutral-dark">
+                Còn {maxStock} sản phẩm
+              </span>
             </div>
           </>
         )}
@@ -333,28 +390,42 @@ export default function ProductDetailRight({
           {/* ── Price ───────────────────────────────────────────────────── */}
           <div className="bg-neutral/40 p-4 sm:py-6 rounded-lg mt-6">
             <div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-promotion">{displayPrice.toLocaleString("vi-VN")}₫</h3>
+              <h3 className="text-2xl sm:text-3xl font-bold text-promotion">
+                {displayPrice.toLocaleString("vi-VN")}₫
+              </h3>
               {activePrice?.hasPromotion && (
                 <div className="flex gap-2 items-center mt-1">
-                  <span className="text-xs sm:text-sm line-through text-neutral-500">{basePrice.toLocaleString("vi-VN")}₫</span>
-                  <span className="text-xs font-bold text-white bg-promotion px-2 py-0.5 rounded">-{activePrice.discountPercentage}%</span>
+                  <span className="text-xs sm:text-sm line-through text-neutral-500">
+                    {basePrice.toLocaleString("vi-VN")}₫
+                  </span>
+                  <span className="text-xs font-bold text-white bg-promotion px-2 py-0.5 rounded">
+                    -{activePrice.discountPercentage}%
+                  </span>
                 </div>
               )}
             </div>
 
-            {product.availablePromotions && product.availablePromotions.length > 0 && (
-              <div className="mt-3 sm:mt-4">
-                <p className="font-semibold mb-2 text-xs sm:text-sm text-primary">Chọn 1 trong các khuyến mãi sau:</p>
-                <div className="border border-promotion/30 rounded-lg overflow-hidden bg-neutral-light">
-                  {product.availablePromotions.map((promo, index) => (
-                    <div key={promo.id} className={`flex items-start gap-2 px-3 py-2 text-xs sm:text-sm ${index !== product.availablePromotions!.length - 1 ? "border-b border-neutral" : ""}`}>
-                      <Gift className="w-4 h-4 text-promotion mt-0.5 shrink-0" />
-                      <span className="text-primary">{promo.description}</span>
-                    </div>
-                  ))}
+            {product.availablePromotions &&
+              product.availablePromotions.length > 0 && (
+                <div className="mt-3 sm:mt-4">
+                  <p className="font-semibold mb-2 text-xs sm:text-sm text-primary">
+                    Chọn 1 trong các khuyến mãi sau:
+                  </p>
+                  <div className="border border-promotion/30 rounded-lg overflow-hidden bg-neutral-light">
+                    {product.availablePromotions.map((promo, index) => (
+                      <div
+                        key={promo.id}
+                        className={`flex items-start gap-2 px-3 py-2 text-xs sm:text-sm ${index !== product.availablePromotions!.length - 1 ? "border-b border-neutral" : ""}`}
+                      >
+                        <Gift className="w-4 h-4 text-promotion mt-0.5 shrink-0" />
+                        <span className="text-primary">
+                          {promo.description}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
 
           {/* ── Highlights + Policies: chỉ hiện trên MOBILE (lg ẩn đi vì Banner đã show) ── */}
@@ -365,19 +436,29 @@ export default function ProductDetailRight({
 
           {/* ── Banner ──────────────────────────────────────────────────── */}
           <div className="py-4 sm:py-6 rounded-lg">
-            <Image src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png" alt="Banner" width={507} height={85} className="w-full h-auto rounded-lg" />
+            <Image
+              src="https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/507x85_6_f64d62e323.png"
+              alt="Banner"
+              width={507}
+              height={85}
+              className="w-full h-auto rounded-lg"
+            />
           </div>
 
           {/* ── Gifts ───────────────────────────────────────────────────── */}
           <div className="flex flex-col border border-neutral rounded-lg mb-4">
             <div className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 bg-neutral rounded-t-lg">
-              <p className="text-sm sm:text-base font-semibold text-primary">Quà tặng và ưu đãi khác</p>
+              <p className="text-sm sm:text-base font-semibold text-primary">
+                Quà tặng và ưu đãi khác
+              </p>
             </div>
             <div className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm">
               <div className="flex items-start gap-3 my-3">
                 <FaGift className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
                 <div className="flex flex-col min-w-0">
-                  <span className="break-words text-primary">Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy</span>
+                  <span className="break-words text-primary">
+                    Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy
+                  </span>
                   <Link
                     href="#"
                     className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer inline-block w-fit"
@@ -387,14 +468,19 @@ export default function ProductDetailRight({
                 </div>
               </div>
               <div className="flex items-center gap-3 mb-3">
-                <p className="whitespace-nowrap text-xs sm:text-sm text-primary">Ưu đãi</p>
+                <p className="whitespace-nowrap text-xs sm:text-sm text-primary">
+                  Ưu đãi
+                </p>
                 <span className="border border-neutral w-full" />
               </div>
               <div className="flex items-start gap-3 mb-3">
                 <FaCog className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
                 <span className="break-words text-primary">
                   Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
-                  <Link href="#" className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
+                  <Link
+                    href="#"
+                    className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer"
+                  >
                     Xem chi tiết
                   </Link>
                 </span>
@@ -415,10 +501,17 @@ export default function ProductDetailRight({
                 variantName: selectedVariant?.sku ?? "",
                 price: finalPrice,
                 originalPrice: basePrice,
-                imageUrl: selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? "",
+                imageUrl:
+                  selectedVariant?.image ??
+                  selectedVariant?.images?.[0]?.imageUrl ??
+                  "",
                 availableQuantity: maxStock ?? 0,
                 color: selectedVariant?.color ?? "",
-                storageLabel: availableOptions.find((opt) => opt.type === "storage")?.values?.find((v: any) => v.value === selectedOptions.storage)?.label,
+                storageLabel: availableOptions
+                  .find((opt) => opt.type === "storage")
+                  ?.values?.find(
+                    (v: any) => v.value === selectedOptions.storage,
+                  )?.label,
                 colorValue: selectedVariant?.colorValue ?? "",
               }}
               label=""
@@ -447,10 +540,16 @@ export default function ProductDetailRight({
         /* ── Out of stock ─────────────────────────────────────────────────── */
         <div className="mt-6 rounded-2xl overflow-hidden border border-neutral shadow-sm hover:shadow-lg transition-all duration-300 animate-fadeUp">
           <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl animate-bounceSlow">📦</div>
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl animate-bounceSlow">
+              📦
+            </div>
             <div className="flex-1">
-              <p className="text-primary font-bold text-sm sm:text-base">Tạm hết hàng</p>
-              <p className="text-neutral-dark text-xs">Sản phẩm sẽ sớm quay lại, bạn vui lòng quay lại sau</p>
+              <p className="text-primary font-bold text-sm sm:text-base">
+                Tạm hết hàng
+              </p>
+              <p className="text-neutral-dark text-xs">
+                Sản phẩm sẽ sớm quay lại, bạn vui lòng quay lại sau
+              </p>
             </div>
             {/* <span className="text-[11px] bg-promotion/10 text-promotion px-2 py-1 rounded-full">🔥 {count} người đang chờ</span> */}
           </div>
@@ -498,11 +597,16 @@ export default function ProductDetailRight({
               🔍 Xem sản phẩm tương tự
             </a>
             <div className="flex justify-between items-center text-xs">
-              <a href="tel:18006601" className="flex items-center gap-1.5 text-neutral-dark hover:text-promotion transition-colors">
+              <a
+                href="tel:18006601"
+                className="flex items-center gap-1.5 text-neutral-dark hover:text-promotion transition-colors"
+              >
                 <span className="text-promotion">📞</span>
                 1800-6601
               </a>
-              <span className="text-neutral-dark opacity-70">Hỗ trợ miễn phí 24/7</span>
+              <span className="text-neutral-dark opacity-70">
+                Hỗ trợ miễn phí 24/7
+              </span>
             </div>
           </div>
 

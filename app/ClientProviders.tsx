@@ -48,7 +48,10 @@ export default function ClientProviders({ children }: { children: React.ReactNod
                 <CartProvider>
                   <FcmInitializer />
                   <LocaleInitializer />
+
                   {children}
+
+                  <Analytics />
                 </CartProvider>
               </ThemeProvider>
             </WishlistProvider>

@@ -52,10 +52,15 @@ export default function CartBottomBar({
 }: CartBottomBarProps) {
   const [showPanel, setShowPanel] = useState(false);
 
+  const togglePanel = (next: boolean) => {
+    setShowPanel(next);
+    window.dispatchEvent(new CustomEvent("sheet:toggle", { detail: { open: next } }));
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden shadow-2xl">
       {/* Backdrop */}
-      {showPanel && <div className="fixed inset-0 bg-black/40 z-[-1]" onClick={() => setShowPanel(false)} />}
+      {showPanel && <div className="fixed inset-0 bg-black/40 z-[-1]" onClick={() => togglePanel(false)} />}
 
       {/* Expanded panel */}
       <div className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${showPanel ? "max-h-[70vh]" : "max-h-0"}`}>
@@ -63,7 +68,7 @@ export default function CartBottomBar({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
             <span className="text-sm font-semibold text-primary">Thông tin đơn hàng</span>
-            <button onClick={() => setShowPanel(false)} className="p-1.5 hover:bg-neutral rounded-lg transition-colors">
+            <button onClick={() => togglePanel(false)} className="p-1.5 hover:bg-neutral rounded-lg transition-colors">
               <X className="h-5 w-5 text-neutral-darker" />
             </button>
           </div>
@@ -74,7 +79,7 @@ export default function CartBottomBar({
               <button
                 type="button"
                 onClick={() => {
-                  setShowPanel(false);
+                  togglePanel(false);
                   onOpenVoucherModal();
                 }}
                 className="flex w-full items-center justify-between p-3 transition hover:bg-accent/5 group"
@@ -124,10 +129,10 @@ export default function CartBottomBar({
       </div>
 
       {/* Bottom bar */}
-      <div className="bg-neutral-light border-t border-neutral flex items-center gap-2 px-3 py-2.5">
-        {/* Checkbox điều khoản (checkout only) */}
+      <div className="bg-neutral-light border-t border-neutral px-3 py-2.5 flex flex-col gap-2">
+        {/* Dòng 1: Checkbox điều khoản */}
         {showTerms && onTermsChange && (
-          <label className="flex items-start gap-2 cursor-pointer pt-2 shrink-0 max-w-[45%]">
+          <label className="flex items-start gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={agreedToTerms}
@@ -135,7 +140,7 @@ export default function CartBottomBar({
               style={{ accentColor: "rgb(var(--accent-active))" }}
               className="w-4 h-4 cursor-pointer rounded mt-0.5 shrink-0"
             />
-            <span className="text-xs text-neutral-darker leading-relaxed wrap-break-words">
+            <span className="text-xs text-neutral-darker leading-relaxed">
               Tôi đồng ý với{" "}
               <Link href="/terms" className="text-accent underline">
                 điều khoản đặt hàng
@@ -145,25 +150,26 @@ export default function CartBottomBar({
           </label>
         )}
 
-        {/* Tổng tiền + toggle panel */}
-        <button onClick={() => setShowPanel((prev) => !prev)} className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition">
-          <div className="flex flex-col items-end min-w-0">
-            <span className="text-base font-bold text-promotion whitespace-nowrap">{formatVND(finalTotal)}</span>
-            {totalSaved > 0 && <span className="text-xs text-neutral-darker whitespace-nowrap">Tiết kiệm {formatVND(totalSaved)}</span>}
-          </div>
-          {showPanel ? <ChevronDown className="h-4 w-4 text-neutral-darker shrink-0" /> : <ChevronUp className="h-4 w-4 text-neutral-darker shrink-0" />}
-        </button>
+        {/* Dòng 2: Giá + nút đặt hàng */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => togglePanel(!showPanel)} className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition">
+            <div className="flex flex-col items-end min-w-0">
+              <span className="text-base font-bold text-promotion whitespace-nowrap">{formatVND(finalTotal)}</span>
+              {totalSaved > 0 && <span className="text-xs text-neutral-darker whitespace-nowrap">Tiết kiệm {formatVND(totalSaved)}</span>}
+            </div>
+            {showPanel ? <ChevronDown className="h-4 w-4 text-neutral-darker shrink-0" /> : <ChevronUp className="h-4 w-4 text-neutral-darker shrink-0" />}
+          </button>
 
-        {/* Nút action */}
-        <button
-          onClick={onAction}
-          disabled={actionDisabled}
-          className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${
-            actionDisabled ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50" : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"
-          }`}
-        >
-          {actionLabel}
-        </button>
+          <button
+            onClick={onAction}
+            disabled={actionDisabled}
+            className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${
+              actionDisabled ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50" : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"
+            }`}
+          >
+            {actionLabel}
+          </button>
+        </div>
       </div>
     </div>
   );

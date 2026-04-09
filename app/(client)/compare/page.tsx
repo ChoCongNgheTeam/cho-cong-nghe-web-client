@@ -6,26 +6,15 @@ import { X, Plus, Search, ArrowLeft, Trash2 } from "lucide-react";
 import { StarRating } from "@/components/product/StarRating";
 import { formatVND } from "@/helpers";
 import { ProductDetail, Category } from "@/lib/types/product";
-import {
-  useState,
-  useCallback,
-  useRef,
-  useTransition,
-  useDeferredValue,
-} from "react";
+import { AICompareSummary } from "./components/Aicomparesummary";
+import { useState, useCallback, useRef, useTransition, useDeferredValue, useEffect } from "react";
 import { Popzy } from "@/components/Modal";
 import apiRequest from "@/lib/api";
-
-const MAX_SLOTS = 3;
+import { useIsMobile } from "./Useismobile";
 
 function getRootSlug(category: any): string | null {
   if (!category) return null;
-  return (
-    category?.parent?.parent?.slug ??
-    category?.parent?.slug ??
-    category?.slug ??
-    null
-  );
+  return category?.parent?.parent?.slug ?? category?.parent?.slug ?? category?.slug ?? null;
 }
 
 interface SearchResult {
@@ -37,7 +26,7 @@ interface SearchResult {
   inStock: boolean;
   price: { base: number; hasPromotion: boolean };
   rating: { average: number; count: number };
-  category?: Category;
+  category?: Category | null;
 }
 
 function calcDiscount(origin: number, base: number): number {
@@ -45,6 +34,65 @@ function calcDiscount(origin: number, base: number): number {
   return Math.round(((origin - base) / origin) * 100);
 }
 
+// ── Sticky Compare Header ────────────────────────────────────────────────
+function StickyCompareHeader({ products, maxSlots, onRemove }: { products: ProductDetail[]; maxSlots: number; onRemove: (id: string) => void }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsVisible(window.scrollY > 400 && products.length >= 2);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [products.length]);
+
+  if (!isVisible || products.length < 2) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-40 bg-neutral-light shadow-lg border-b border-neutral animate-in slide-in-from-top duration-300">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3">
+        <div className="flex w-full">
+          <div className="flex items-center justify-center px-2 sm:px-5" style={{ width: "120px" }}>
+            <h2 className="text-[9px] sm:text-[11px] font-medium text-neutral-darker uppercase tracking-widest flex-1">Thuộc tính</h2>
+          </div>
+
+          {Array.from({ length: maxSlots }, (_, index) => {
+            const product = products[index];
+            return (
+              <div key={index} className="flex flex-col items-center gap-1 px-2 sm:px-5 flex-1">
+                {product && (
+                  <>
+                    <div className="relative">
+                      <button
+                        onClick={() => onRemove(product.id)}
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-promotion-light hover:bg-promotion-light-hover text-primary border border-promotion-light-active flex items-center justify-center"
+                      >
+                        <X size={8} />
+                      </button>
+                      <Link href={`/products/${product.slug}`}>
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border border-neutral cursor-pointer bg-neutral-light">
+                          {product.currentVariant.images?.[0]?.imageUrl ? (
+                            <Image src={product.currentVariant.images[0].imageUrl} alt={product.name} width={40} height={40} className="w-full h-full object-contain" />
+                          ) : (
+                            <div className="w-full h-full bg-neutral" />
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] text-center line-clamp-2 text-primary">{product.name}</span>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────
 function SkeletonItem() {
   return (
     <li className="flex items-center gap-3 px-4 py-3">
@@ -57,6 +105,7 @@ function SkeletonItem() {
   );
 }
 
+// ── Search Modal ──────────────────────────────────────────────────────────
 function SearchProductModal({
   isOpen,
   onClose,
@@ -93,10 +142,7 @@ function SearchProductModal({
         noAuth: true,
       });
       const raw = res?.data ?? [];
-      const items = raw.filter(
-        (item, index, self) =>
-          self.findIndex((t) => t.id === item.id) === index,
-      );
+      const items = raw.filter((item, index, self) => self.findIndex((t) => t.id === item.id) === index);
       staleResultsRef.current = items;
       startTransition(() => setResults(items));
     } catch {
@@ -139,13 +185,16 @@ function SearchProductModal({
 
   const handleSelect = async (item: SearchResult) => {
     if (selecting) return;
+    const itemRootSlug = getRootSlug(item.category);
+    if (lockedCategorySlug && item.category && itemRootSlug !== lockedCategorySlug) {
+      setBlockedId(item.id);
+      return;
+    }
+
     setSelecting(item.id);
     setBlockedId(null);
     try {
-      const res = await apiRequest.get<{ data: ProductDetail }>(
-        `/products/slug/${item.slug}`,
-        { noAuth: true },
-      );
+      const res = await apiRequest.get<{ data: ProductDetail }>(`/products/slug/${item.slug}`, { noAuth: true });
       if (res?.data) {
         const detail = res.data;
         if (lockedCategorySlug) {
@@ -165,8 +214,6 @@ function SearchProductModal({
     }
   };
 
-  
-
   const showSkeleton = isSearching && staleResultsRef.current.length === 0;
   const displayResults = deferredResults;
 
@@ -176,44 +223,23 @@ function SearchProductModal({
       onClose={handleClose}
       closeMethods={["button", "overlay", "escape"]}
       content={
-        <div className="pt-1">
+        <div className="pt-1 overflow-y-auto" style={{ maxHeight: "calc(85dvh - 2rem)" }}>
           <div className="mb-5">
-            <h2
-              className="text-[15px] font-semibold text-primary tracking-tight mb-0.5"
-              style={{ letterSpacing: "-0.01em" }}
-            >
-              Thêm sản phẩm so sánh
-            </h2>
+            <h2 className="text-[15px] font-semibold text-primary tracking-tight mb-0.5">Thêm sản phẩm so sánh</h2>
             {lockedCategorySlug ? (
               <div className="flex items-center flex-wrap gap-1.5 mt-1">
                 <span className="text-xs text-neutral-dark">Danh mục:</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-neutral px-2 py-0.5 rounded-md">
-                  {lockedCategorySlug}
-                </span>
-                <span className="text-xs text-neutral-dark">
-                  — chỉ so sánh sản phẩm cùng danh mục
-                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-neutral px-2 py-0.5 rounded-md">{lockedCategorySlug}</span>
+                <span className="text-xs text-neutral-dark">— chỉ so sánh sản phẩm cùng danh mục</span>
               </div>
             ) : (
-              <p className="text-xs text-neutral-dark">
-                Tìm và chọn sản phẩm bạn muốn đưa vào bảng so sánh
-              </p>
+              <p className="text-xs text-neutral-dark">Tìm và chọn sản phẩm bạn muốn đưa vào bảng so sánh</p>
             )}
           </div>
 
-          <div
-            className="relative flex items-stretch mb-5 rounded-2xl overflow-hidden"
-            style={{
-              background: "var(--color-neutral, #f5f5f5)",
-              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.06)",
-            }}
-          >
+          <div className="relative flex items-stretch mb-5 rounded-2xl overflow-hidden bg-neutral shadow-[inset_0_1px_3px_rgba(0,0,0,0.06)]">
             <div className="flex items-center pl-4 text-neutral-dark pointer-events-none">
-              <Search
-                className={`w-4 h-4 transition-opacity duration-200 ${
-                  isSearching ? "opacity-30" : "opacity-60"
-                }`}
-              />
+              <Search className={`w-4 h-4 transition-opacity duration-200 ${isSearching ? "opacity-30" : "opacity-60"}`} />
             </div>
             <input
               autoFocus
@@ -230,22 +256,13 @@ function SearchProductModal({
             )}
           </div>
 
-          <div
-            className={`min-h-[220px] transition-opacity duration-200 ${
-              isStale ? "opacity-40" : "opacity-100"
-            }`}
-          >
+          <div className={`min-h-[200px] transition-opacity duration-200 ${isStale ? "opacity-40" : "opacity-100"}`}>
             {!query.trim() && !isSearching && (
-              <div className="flex flex-col items-center justify-center h-[220px] gap-3 text-neutral-dark">
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: "var(--color-neutral)" }}
-                >
+              <div className="flex flex-col items-center justify-center h-[200px] gap-3 text-neutral-dark">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-neutral">
                   <Search className="w-5 h-5 opacity-40" />
                 </div>
-                <p className="text-sm opacity-60">
-                  Nhập tên sản phẩm để tìm kiếm
-                </p>
+                <p className="text-sm opacity-60">Nhập tên sản phẩm để tìm kiếm</p>
               </div>
             )}
 
@@ -258,32 +275,25 @@ function SearchProductModal({
             )}
 
             {!isSearching && query.trim() && displayResults.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-[220px] gap-2 text-neutral-dark">
+              <div className="flex flex-col items-center justify-center h-[200px] gap-2 text-neutral-dark">
                 <p className="text-sm">
-                  Không tìm thấy kết quả cho{" "}
-                  <span className="text-primary font-medium">"{query}"</span>
+                  Không tìm thấy kết quả cho <span className="text-primary font-medium">"{query}"</span>
                 </p>
               </div>
             )}
 
             {displayResults.length > 0 && (
-              <ul className="max-h-[340px] overflow-y-auto space-y-0.5 scrollbar-thin -mx-1 px-1">
+              <ul className="max-h-[220px] sm:max-h-[320px] overflow-y-auto space-y-0.5 scrollbar-thin -mx-1 px-1">
                 {displayResults.map((item, i) => {
-                  const discount = calcDiscount(
-                    item.priceOrigin,
-                    item.price.base,
-                  );
+                  const discount = calcDiscount(item.priceOrigin, item.price.base);
                   const isAdded = excludeIds.includes(item.id);
-                  const isBlocked = blockedId === item.id;
+                  const itemRootSlug = getRootSlug(item.category);
+                  const isBlocked = blockedId === item.id || (!!lockedCategorySlug && item.category && itemRootSlug !== lockedCategorySlug);
                   const isFetching = selecting === item.id;
                   const isDisabled = isAdded || isBlocked || !!selecting;
 
                   return (
-                    <li
-                      key={item.id}
-                      style={{ animationDelay: `${i * 30}ms` }}
-                      className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
-                    >
+                    <li key={item.id} style={{ animationDelay: `${i * 30}ms` }} className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
                       <button
                         disabled={isDisabled}
                         onClick={() => handleSelect(item)}
@@ -298,67 +308,28 @@ function SearchProductModal({
                                   : "hover:bg-neutral/70 cursor-pointer group"
                           }`}
                       >
-                        <div
-                          className="shrink-0 w-11 h-11 rounded-xl overflow-hidden border flex items-center justify-center bg-white"
-                          style={{ borderColor: "var(--color-neutral)" }}
-                        >
+                        <div className="shrink-0 w-11 h-11 rounded-xl overflow-hidden border border-neutral flex items-center justify-center bg-neutral-light">
                           {isFetching ? (
                             <div className="w-4 h-4 border-2 border-neutral border-t-primary rounded-full animate-spin" />
                           ) : item.thumbnail ? (
-                            <Image
-                              src={item.thumbnail}
-                              alt={item.name}
-                              width={44}
-                              height={44}
-                              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
-                            />
+                            <Image src={item.thumbnail} alt={item.name} width={44} height={44} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
                           ) : (
                             <div className="w-full h-full bg-neutral rounded-xl" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-primary font-medium truncate leading-snug group-hover:text-accent-hover transition-colors">
-                            {item.name}
-                          </p>
+                          <p className="text-[13px] text-primary font-medium truncate leading-snug group-hover:text-accent-hover transition-colors">{item.name}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[12px] font-semibold text-primary">
-                              {formatVND(item.price.base)}
-                            </span>
-                            {discount > 0 && (
-                              <span className="text-[10px] font-medium text-white bg-red-500 px-1.5 py-0.5 rounded-md">
-                                -{discount}%
-                              </span>
-                            )}
-                            {!item.inStock && (
-                              <span className="text-[10px] text-neutral-darker">
-                                Hết hàng
-                              </span>
-                            )}
+                            <span className="text-[12px] font-semibold text-primary">{formatVND(item.price.base)}</span>
+                            {discount > 0 && <span className="text-[10px] font-medium text-white bg-promotion px-1.5 py-0.5 rounded-md">-{discount}%</span>}
+                            {!item.inStock && <span className="text-[10px] text-neutral-darker">Hết hàng</span>}
                           </div>
                         </div>
 
-                        {isAdded && (
-                          <span
-                            className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg"
-                            style={{
-                              background: "var(--color-neutral)",
-                              color: "var(--color-neutral-dark)",
-                            }}
-                          >
-                            Đã thêm
-                          </span>
-                        )}
-                        {isBlocked && (
-                          <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
-                            Khác danh mục
-                          </span>
-                        )}
-                        {isFetching && (
-                          <span className="text-[10px] text-neutral-dark shrink-0">
-                            Đang tải…
-                          </span>
-                        )}
+                        {isAdded && <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-neutral text-neutral-darker">Đã thêm</span>}
+                        {isBlocked && <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">Khác danh mục</span>}
+                        {isFetching && <span className="text-[10px] text-neutral-dark shrink-0">Đang tải…</span>}
                       </button>
                     </li>
                   );
@@ -372,6 +343,7 @@ function SearchProductModal({
   );
 }
 
+// ── Compare Rows ──────────────────────────────────────────────────────────
 type CompareRow = {
   label: string;
   render: (p: ProductDetail) => React.ReactNode;
@@ -380,33 +352,17 @@ type CompareRow = {
 const ROWS: CompareRow[] = [
   {
     label: "Thương hiệu",
-    render: (p) => (
-      <span className="inline-flex items-center px-2 py-1 rounded-lg text-[11px] sm:text-[12px] font-medium bg-neutral/60 text-primary">
-        {p.brand.name}
-      </span>
-    ),
+    render: (p) => <span className="inline-flex items-center px-2 py-1 rounded-lg text-[11px] sm:text-[12px] font-medium bg-neutral text-primary">{p.brand.name}</span>,
   },
   {
     label: "Giá bán",
     render: (p) => (
       <div className="flex flex-col items-center gap-1">
-        <span
-          className="text-[13px] sm:text-[15px] font-bold tracking-tight"
-          style={{
-            color: "var(--color-promotion, #e53e3e)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {formatVND(p.price.hasPromotion ? p.price.final : p.price.base)}
-        </span>
+        <span className="text-[13px] sm:text-[15px] font-bold tracking-tight text-primary">{formatVND(p.price.hasPromotion ? p.price.final : p.price.base)}</span>
         {p.price.hasPromotion && (
           <div className="flex items-center gap-1 flex-wrap justify-center">
-            <span className="text-[10px] text-neutral-darker line-through">
-              {formatVND(p.price.base)}
-            </span>
-            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md">
-              -{p.price.discountPercentage}%
-            </span>
+            <span className="text-[10px] text-neutral-darker line-through">{formatVND(p.price.base)}</span>
+            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md">-{p.price.discountPercentage}%</span>
           </div>
         )}
       </div>
@@ -423,9 +379,7 @@ const ROWS: CompareRow[] = [
           </span>
         </div>
       ) : (
-        <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">
-          Chưa có đánh giá
-        </span>
+        <span className="text-[10px] sm:text-[11px] text-neutral-darker italic">Chưa có đánh giá</span>
       ),
   },
   {
@@ -437,19 +391,15 @@ const ROWS: CompareRow[] = [
           Còn hàng
         </span>
       ) : (
-        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-lg">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block shrink-0" />
+        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-primary bg-promotion-light border border-promotion-light-active px-2 py-1 rounded-lg">
+          <span className="w-1.5 h-1.5 rounded-full bg-promotion inline-block shrink-0" />
           Hết hàng
         </span>
       ),
   },
   {
     label: "Bảo hành",
-    render: (p) => (
-      <span className="text-[11px] sm:text-[12px] text-primary font-medium">
-        {p.warranty}
-      </span>
-    ),
+    render: (p) => <span className="text-[11px] sm:text-[12px] text-primary font-medium">{p.warranty}</span>,
   },
   {
     label: "Điểm nổi bật",
@@ -457,10 +407,7 @@ const ROWS: CompareRow[] = [
       <div className="flex flex-col gap-1.5 items-center w-full">
         {p.highlights.length > 0 ? (
           p.highlights.map((h) => (
-            <div
-              key={h.id}
-              className="text-[10px] sm:text-[11px] text-neutral-dark text-center leading-relaxed"
-            >
+            <div key={h.id} className="text-[10px] sm:text-[11px] text-neutral-dark text-center leading-relaxed">
               {h.name}:{" "}
               <span className="font-semibold text-primary">
                 {h.value} {h.unit ?? ""}
@@ -502,26 +449,12 @@ function getSpecValue(p: ProductDetail, name: string): string | null {
   return null;
 }
 
+// ── Empty State ───────────────────────────────────────────────────────────
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 sm:py-24 gap-5 text-center px-4">
-      <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center"
-        style={{
-          background:
-            "linear-gradient(135deg, var(--color-neutral,#f0f0f0), var(--color-neutral-light,#fafafa))",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-        }}
-      >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="text-neutral-dark opacity-60"
-        >
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-neutral">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-dark opacity-60">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="3" y="14" width="7" height="7" rx="1.5" />
@@ -530,20 +463,10 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         </svg>
       </div>
       <div>
-        <p
-          className="text-[15px] font-semibold text-primary mb-1"
-          style={{ letterSpacing: "-0.01em" }}
-        >
-          Chưa có sản phẩm nào
-        </p>
-        <p className="text-[13px] text-neutral-darker">
-          Thêm sản phẩm để bắt đầu so sánh tính năng và giá cả
-        </p>
+        <p className="text-[15px] font-semibold text-primary mb-1">Chưa có sản phẩm nào</p>
+        <p className="text-[13px] text-neutral-darker">Thêm sản phẩm để bắt đầu so sánh tính năng và giá cả</p>
       </div>
-      <button
-        onClick={onAdd}
-        className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors"
-      >
+      <button onClick={onAdd} className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors">
         <Plus size={15} />
         Thêm sản phẩm đầu tiên
       </button>
@@ -551,41 +474,55 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────
 export default function ComparePage() {
-  const { items, rootCategorySlug, remove, add, clear } = useCompareStore();
-  const [modalOpen, setModalOpen] = useState(false);
+  const { items, rootCategorySlug, remove, add, clear, maxCompare } = useCompareStore();
+  const isMobile = useIsMobile();
+  const MAX_SLOTS = maxCompare(isMobile);
 
-  const slots: (ProductDetail | null)[] = Array.from(
-    { length: MAX_SLOTS },
-    (_, i) => items[i] ?? null,
-  );
+  const [modalOpen, setModalOpen] = useState(false);
+  const [stickyHeaderVisible, setStickyHeaderVisible] = useState(false);
+
+  // Nếu đang ở mobile và có 3 sản phẩm → tự động remove sản phẩm thứ 3
+  useEffect(() => {
+    if (isMobile && items.length > 2) {
+      remove(items[2].id);
+    }
+  }, [isMobile, items, remove]);
+
+  const slots: (ProductDetail | null)[] = Array.from({ length: MAX_SLOTS }, (_, i) => items[i] ?? null);
 
   const specKeys = collectSpecKeys(items);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setStickyHeaderVisible(window.scrollY > 420 && items.length >= 2);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [items.length]);
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 sm:py-14">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      {/* ── Sticky Compare Header (chỉ 1 lần) ── */}
+      <StickyCompareHeader products={items} maxSlots={MAX_SLOTS} onRemove={remove} />
+
+      {/* ── Spacer khi sticky header hiển thị ── */}
+      {stickyHeaderVisible && <div className="h-16 sm:h-20" />}
+
       {/* ── Page header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
         <div>
-          <h1
-            className="text-[20px] sm:text-[22px] font-bold text-primary leading-tight"
-            style={{ letterSpacing: "-0.025em" }}
-          >
-            So sánh sản phẩm
-          </h1>
-          <p className="text-[13px] text-neutral-darker mt-0.5">
+          <h1 className="text-[18px] sm:text-[22px] font-bold text-primary leading-tight tracking-tight">So sánh sản phẩm</h1>
+          <p className="text-[12px] sm:text-[13px] text-neutral-darker mt-0.5">
             Tối đa {MAX_SLOTS} sản phẩm cùng lúc
+            {isMobile && <span className="ml-1 text-accent text-[11px]">(xem trên máy tính để so sánh 3 sản phẩm)</span>}
           </p>
         </div>
         {items.length > 0 && (
-          <button
-            onClick={clear}
-            className="inline-flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-red-500 transition-colors group self-start sm:self-auto"
-          >
-            <Trash2
-              size={13}
-              className="opacity-60 group-hover:opacity-100 transition-opacity"
-            />
+          <button onClick={clear} className="inline-flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-primary transition-colors group self-start sm:self-auto">
+            <Trash2 size={13} className="opacity-60 group-hover:opacity-100 transition-opacity" />
             Xóa tất cả
           </button>
         )}
@@ -593,47 +530,36 @@ export default function ComparePage() {
 
       {/* ── Empty state ── */}
       {items.length === 0 && (
-        <div
-          className="rounded-2xl border border-neutral overflow-hidden"
-          style={{ background: "var(--color-neutral-light, #fafafa)" }}
-        >
+        <div className="rounded-2xl border border-neutral overflow-hidden bg-neutral-light">
           <EmptyState onAdd={() => setModalOpen(true)} />
         </div>
       )}
 
+      {/* ── AI Summary ── */}
+      {items.length >= 2 && <AICompareSummary products={items} />}
+
       {/* ── Compare table ── */}
       {items.length > 0 && (
-        <div
-          className="rounded-2xl border border-neutral overflow-hidden"
-          style={{
-            background: "var(--color-neutral-light, #fafafa)",
-            boxShadow:
-              "0 1px 8px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.04)",
-          }}
-        >
-          <div className="overflow-x-auto">
+        <div className="rounded-2xl border border-neutral overflow-hidden mt-4 bg-neutral-light shadow-sm">
+          <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: "touch" }}>
             <table
               className="w-full border-collapse"
-              style={{ tableLayout: "fixed", minWidth: "480px" }}
+              style={{
+                tableLayout: "fixed",
+                minWidth: isMobile ? "340px" : "520px",
+              }}
             >
               <colgroup>
-                <col style={{ width: "90px" }} />
-                <col />
-                <col />
-                <col />
+                <col style={{ width: "120px" }} />
+                {Array.from({ length: MAX_SLOTS }).map((_, i) => (
+                  <col key={i} />
+                ))}
               </colgroup>
 
-              <thead>
-                <tr
-                  style={{
-                    borderBottom: "1px solid var(--color-neutral)",
-                    background: "var(--color-neutral-light)",
-                  }}
-                >
-                  <th className="px-3 sm:px-5 py-4 sm:py-5 align-bottom">
-                    <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker uppercase tracking-widest">
-                      Thuộc tính
-                    </span>
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-neutral bg-neutral-light backdrop-blur-sm">
+                  <th className="px-2 sm:px-5 py-4 sm:py-5 align-bottom text-left">
+                    <span className="text-[9px] sm:text-[11px] font-medium text-neutral-darker uppercase tracking-widest">Thuộc tính</span>
                   </th>
                   {slots.map((p, i) => (
                     <th key={i} className="px-2 sm:px-4 py-4 sm:py-5 align-top">
@@ -642,33 +568,20 @@ export default function ComparePage() {
                           <button
                             onClick={() => remove(p.id)}
                             title="Xóa sản phẩm"
-                            className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all duration-150 bg-neutral/80 hover:bg-red-50 text-neutral-dark hover:text-red-500 border border-neutral hover:border-red-200 cursor-pointer"
-                            style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
+                            className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all duration-150 bg-neutral hover:bg-promotion-light text-neutral-dark hover:text-primary border border-neutral hover:border-promotion-light-active cursor-pointer"
                           >
                             <X size={10} />
                           </button>
-                          <div
-                            className="w-14 h-14 sm:w-20 sm:h-20 relative rounded-xl sm:rounded-2xl overflow-hidden bg-white flex items-center justify-center"
-                            style={{
-                              border: "1px solid var(--color-neutral)",
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                            }}
-                          >
+                          <div className="w-12 h-12 sm:w-20 sm:h-20 relative rounded-xl sm:rounded-2xl overflow-hidden bg-neutral-light border border-neutral">
                             {p.currentVariant.images?.[0]?.imageUrl ? (
-                              <Image
-                                src={p.currentVariant.images[0].imageUrl}
-                                alt={p.name}
-                                fill
-                                className="object-contain p-1.5 sm:p-2"
-                              />
+                              <Image src={p.currentVariant.images[0].imageUrl} alt={p.name} fill className="object-contain p-1.5 sm:p-2" />
                             ) : (
                               <div className="w-full h-full bg-neutral rounded-xl" />
                             )}
                           </div>
                           <Link
                             href={`/products/${p.slug}`}
-                            className="text-[11px] sm:text-[12px] font-semibold text-primary hover:text-accent-hover transition-colors text-center leading-snug line-clamp-2 px-1"
-                            style={{ letterSpacing: "-0.005em" }}
+                            className="text-[10px] sm:text-[12px] font-semibold text-primary hover:text-accent-hover transition-colors text-center leading-snug line-clamp-2 px-1"
                           >
                             {p.name}
                           </Link>
@@ -677,18 +590,12 @@ export default function ComparePage() {
                         <div className="flex flex-col items-center justify-center py-2">
                           <button
                             onClick={() => setModalOpen(true)}
-                            className="flex flex-col items-center gap-1.5 sm:gap-2 w-full py-5 sm:py-7 rounded-xl sm:rounded-2xl transition-all duration-200 group border border-dashed border-neutral/80 hover:border-primary/40 hover:bg-neutral/30 cursor-pointer"
-                            style={{ background: "rgba(0,0,0,0.01)" }}
+                            className="flex flex-col items-center gap-1.5 sm:gap-2 w-full py-5 sm:py-7 rounded-xl sm:rounded-2xl transition-all duration-200 group border border-dashed border-neutral hover:border-accent/40 hover:bg-neutral/30 cursor-pointer"
                           >
-                            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200 border border-neutral/80 group-hover:border-primary/30 group-hover:bg-primary/5">
-                              <Plus
-                                size={13}
-                                className="text-neutral-dark group-hover:text-primary transition-colors"
-                              />
+                            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200 border border-neutral group-hover:border-accent/30 group-hover:bg-accent-light">
+                              <Plus size={13} className="text-neutral-dark group-hover:text-accent transition-colors" />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker group-hover:text-primary transition-colors">
-                              Thêm
-                            </span>
+                            <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker group-hover:text-primary transition-colors">Thêm</span>
                           </button>
                         </div>
                       )}
@@ -699,31 +606,13 @@ export default function ComparePage() {
 
               <tbody>
                 {ROWS.map((row, i) => (
-                  <tr
-                    key={row.label}
-                    className="border-t border-neutral/60 transition-colors"
-                    style={{
-                      background:
-                        i % 2 !== 0 ? "rgba(0,0,0,0.015)" : "transparent",
-                    }}
-                  >
-                    <td className="px-3 sm:px-5 py-3 sm:py-4 align-middle">
-                      <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker whitespace-nowrap">
-                        {row.label}
-                      </span>
+                  <tr key={row.label} className={`border-t border-neutral/60 transition-colors ${i % 2 !== 0 ? "bg-neutral-light-active" : "bg-transparent"}`}>
+                    <td className="px-2 sm:px-5 py-3 sm:py-4 align-middle">
+                      <span className="text-[9px] sm:text-[11px] font-medium text-neutral-darker whitespace-nowrap">{row.label}</span>
                     </td>
                     {slots.map((p, j) => (
-                      <td
-                        key={j}
-                        className="text-center text-[12px] sm:text-[13px] text-primary px-2 sm:px-4 py-3 sm:py-4 align-middle"
-                      >
-                        {p ? (
-                          row.render(p)
-                        ) : (
-                          <span className="text-neutral-dark/30 text-base">
-                            —
-                          </span>
-                        )}
+                      <td key={j} className="text-center text-[12px] sm:text-[13px] text-primary px-2 sm:px-4 py-3 sm:py-4 align-middle">
+                        {p ? row.render(p) : <span className="text-neutral-dark/30 text-base">—</span>}
                       </td>
                     ))}
                   </tr>
@@ -731,48 +620,22 @@ export default function ComparePage() {
 
                 {specKeys.length > 0 && (
                   <tr className="border-t-2 border-neutral">
-                    <td
-                      colSpan={4}
-                      className="px-3 sm:px-5 py-3"
-                      style={{ background: "var(--color-neutral, #f0f0f0)" }}
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-darker">
-                        Thông số kỹ thuật
-                      </span>
+                    <td colSpan={MAX_SLOTS + 1} className="px-2 sm:px-5 py-3 bg-neutral">
+                      <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-neutral-darker">Thông số kỹ thuật</span>
                     </td>
                   </tr>
                 )}
 
                 {specKeys.map((key, i) => (
-                  <tr
-                    key={key}
-                    className="border-t border-neutral/60"
-                    style={{
-                      background:
-                        i % 2 === 0 ? "rgba(0,0,0,0.015)" : "transparent",
-                    }}
-                  >
-                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 align-middle">
-                      <span className="text-[10px] sm:text-[11px] text-neutral-darker leading-snug">
-                        {key}
-                      </span>
+                  <tr key={key} className={`border-t border-neutral/60 ${i % 2 === 0 ? "bg-neutral-light-active" : "bg-transparent"}`}>
+                    <td className="px-2 sm:px-5 py-2.5 sm:py-3 align-middle">
+                      <span className="text-[9px] sm:text-[11px] text-neutral-darker leading-snug">{key}</span>
                     </td>
                     {slots.map((p, j) => {
                       const val = p ? getSpecValue(p, key) : null;
                       return (
-                        <td
-                          key={j}
-                          className="text-center px-2 sm:px-4 py-2.5 sm:py-3 align-middle"
-                        >
-                          {val ? (
-                            <span className="text-[11px] sm:text-[12px] font-semibold text-primary">
-                              {val}
-                            </span>
-                          ) : (
-                            <span className="text-neutral-dark/30 text-base">
-                              —
-                            </span>
-                          )}
+                        <td key={j} className="text-center px-2 sm:px-4 py-2.5 sm:py-3 align-middle">
+                          {val ? <span className="text-[10px] sm:text-[12px] font-semibold text-primary">{val}</span> : <span className="text-neutral-dark/30 text-base">—</span>}
                         </td>
                       );
                     })}
@@ -785,21 +648,15 @@ export default function ComparePage() {
       )}
 
       {/* ── Footer ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-5 sm:mt-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-[13px] text-neutral-darker hover:text-primary transition-colors group"
-        >
-          <ArrowLeft
-            size={14}
-            className="transition-transform duration-150 group-hover:-translate-x-0.5"
-          />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-5 sm:mt-6">
+        <Link href="/" className="inline-flex items-center gap-2 text-[13px] text-neutral-darker hover:text-primary transition-colors group self-center sm:self-auto">
+          <ArrowLeft size={14} className="transition-transform duration-150 group-hover:-translate-x-0.5" />
           Tiếp tục mua sắm
         </Link>
         {items.length > 0 && items.length < MAX_SLOTS && (
           <button
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary border border-neutral rounded-xl px-4 py-2 hover:bg-neutral/50 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 text-[13px] font-medium text-primary border border-neutral rounded-xl px-4 py-2.5 sm:py-2 hover:bg-neutral/50 transition-colors w-full sm:w-auto"
           >
             <Plus size={14} />
             Thêm sản phẩm
@@ -808,13 +665,7 @@ export default function ComparePage() {
       </div>
 
       {/* ── Modal ── */}
-      <SearchProductModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSelect={(p) => add(p)}
-        excludeIds={items.map((p) => p.id)}
-        lockedCategorySlug={rootCategorySlug}
-      />
+      <SearchProductModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSelect={(p) => add(p, isMobile)} excludeIds={items.map((p) => p.id)} lockedCategorySlug={rootCategorySlug} />
     </div>
   );
 }

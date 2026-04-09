@@ -4,6 +4,7 @@ import BlogCategoryBar from "./components/BlogCategoryBar";
 import BlogCard from "./components/BlogCard";
 import BlogPagination from "./components/BlogPagination";
 import { Blog, BlogType } from "./types/blog.type";
+import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
 
 type Props = {
   searchParams?: Promise<{ page?: string; type?: string }>;
@@ -186,6 +187,8 @@ export default async function BlogPage({ searchParams }: Props) {
           <GridSection blogs={khuyenmai} cols={4} />
         </section>
       )}
+
+      <MobileBottomNav />
     </main>
   );
 }

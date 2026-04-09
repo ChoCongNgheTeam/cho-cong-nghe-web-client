@@ -1,16 +1,18 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import ProductFilter from "../components/ProductFilter";
 import ProductGrid from "../components/ProductGrid";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
 import { Slidezy } from "@/components/Slider";
 import { PageProps } from "@/components/product/types";
-import { fetchProducts, fetchFilters, fetchCategory } from "../_libs";
+import { fetchProducts, fetchFilters, fetchCategory, fetchBrandsByCategory, fetchBannersByCategory, isRootCategory } from "../_libs";
 import { slugToTitle } from "../components/SlugToTitle";
-import { BANNERS, BRANDS, SUB_CATEGORIES } from "../MockData";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { buildCategoryMetadata } from "./buildMetaData";
+import { BrandApiItem, MediaApiItem } from "../types";
+import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -29,57 +31,110 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     if (value !== undefined) filterParams[key] = value as string | string[];
   }
 
-  const [categoryResult, filtersResult, productsResult] = await Promise.allSettled([fetchCategory(slug), fetchFilters(slug), fetchProducts({ categorySlug: slug, page, searchParams: filterParams })]);
+  const isRoot = isRootCategory(slug);
+
+  // Fetch song song — root category thêm brands + banners
+  const [categoryResult, filtersResult, productsResult, brandsResult, bannersResult] = await Promise.allSettled([
+    fetchCategory(slug),
+    fetchFilters(slug),
+    fetchProducts({ categorySlug: slug, page, searchParams: filterParams }),
+    isRoot ? fetchBrandsByCategory(slug) : Promise.resolve([]),
+    isRoot ? fetchBannersByCategory(slug) : Promise.resolve([]),
+  ]);
 
   const resolvedFilters = filtersResult.status === "fulfilled" ? filtersResult.value : [];
   const initialProducts = productsResult.status === "fulfilled" ? productsResult.value.products : [];
   const initialPagination = productsResult.status === "fulfilled" ? productsResult.value.pagination : undefined;
   const fetchError = productsResult.status === "rejected" ? "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau." : null;
-
   const category = categoryResult.status === "fulfilled" ? categoryResult.value : null;
+  const brands: BrandApiItem[] = brandsResult.status === "fulfilled" ? (brandsResult.value as BrandApiItem[]) : [];
+  const banners: MediaApiItem[] = bannersResult.status === "fulfilled" ? (bannersResult.value as MediaApiItem[]) : [];
 
   const categoryTitle = category?.name || slugToTitle(slug);
 
+  // Sub-categories từ category.children (nếu BE trả về)
+  // const subCategories = category?.children?.filter((c) => c.isActive) ?? [];
+
   return (
     <div className="min-h-screen bg-neutral-light-active">
-      {/* Header */}
+      {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="bg-neutral-light border-b border-neutral">
         <div className="container py-4">
           <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: categoryTitle }]} />
-          <h1 className="text-2xl font-bold text-primary mb-3">{categoryTitle}</h1>
 
-          {/* <div className="border-b border-neutral mb-4">
-            <nav className="flex items-center gap-6 overflow-x-auto py-3 text-sm font-medium">
-              {SUB_CATEGORIES.map(({ href, label }) => (
-                <Link key={href} href={href} className="whitespace-nowrap text-primary-light hover:text-promotion border-b-2 border-transparent hover:border-promotion pb-1 transition-colors">
-                  {label}
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div>
+              <h1 className="text-2xl font-bold text-primary">{categoryTitle}</h1>
+              {category?.description && <p className="text-sm text-primary-light mt-1">{category.description}</p>}
+            </div>
+            {/* Category hero image nếu có */}
+            {category?.imageUrl && (
+              <div className="shrink-0 hidden md:block">
+                <Image src={category.imageUrl} alt={categoryTitle} width={160} height={80} className="object-contain h-16 w-auto" priority />
+              </div>
+            )}
+          </div>
+
+          {/* Sub-categories từ API */}
+          {/* {subCategories.length > 0 && (
+            <nav className="flex items-center gap-2 overflow-x-auto pb-3 border-b border-neutral mb-4 scrollbar-none">
+              {subCategories.map((sub) => (
+                <Link
+                  key={sub.slug}
+                  href={`/category/${sub.slug}`}
+                  className="whitespace-nowrap text-sm font-medium text-primary-light hover:text-accent border border-neutral hover:border-accent rounded-full px-4 py-1.5 transition-colors shrink-0"
+                >
+                  {sub.name}
                 </Link>
               ))}
             </nav>
-          </div> */}
-          {/* <Slidezy items={{ mobile: 3, tablet: 4, desktop: 5 }} speed={400} loop nav controls={false} gap={12} slideBy="page" className="mb-6 pb-6 border-b border-neutral">
-            {BRANDS.map(({ href, label, color }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center justify-center px-3 py-3 bg-neutral-light border border-neutral rounded-lg hover:border-accent hover:shadow-md transition-all text-center"
-              >
-                <span className="text-sm font-bold leading-tight" style={{ color }}>
-                  {label}
-                </span>
-              </Link>
-            ))}
-          </Slidezy> */}
+          )} */}
+
+          {/* ── Root category only: Banner Slideshow ──────────────────── */}
+          {isRoot && banners.length > 0 && (
+            <div className="mb-5 rounded-xl overflow-hidden">
+              <Slidezy items={{ mobile: 1, tablet: 1, desktop: 1 }} speed={500} loop autoplay nav controls gap={0} className="rounded-xl">
+                {banners
+                  .filter((banner) => banner.imageUrl) // bỏ qua nếu không có ảnh
+                  .map((banner) => (
+                    <div key={banner.id} className="relative w-full aspect-[1440/400]">
+                      {banner.linkUrl ? (
+                        <Link href={banner.linkUrl} className="absolute inset-0">
+                          <Image src={banner.imageUrl ?? ""} alt={banner.title ?? categoryTitle} fill className="object-contain" priority />
+                        </Link>
+                      ) : (
+                        <Image src={banner.imageUrl ?? ""} alt={banner.title ?? categoryTitle} fill className="object-contain" priority />
+                      )}
+                    </div>
+                  ))}
+              </Slidezy>
+            </div>
+          )}
+
+          {/* ── Root category only: Brand logos ───────────────────────── */}
+          {isRoot && brands.length > 0 && (
+            <Slidezy items={{ mobile: 4, tablet: 6, desktop: 8 }} speed={400} loop={false} nav={false} controls={false} gap={10} slideBy="page" className="pb-2">
+              {brands.map((brand) => (
+                <Link
+                  key={brand.slug}
+                  href={`/category/${brand.slug}`}
+                  className="flex items-center justify-center px-3 py-2.5 bg-neutral-light border border-neutral rounded-xl hover:border-accent hover:shadow-sm transition-all text-center min-h-[52px]"
+                >
+                  {brand.imageUrl ? (
+                    <Image src={brand.imageUrl} alt={brand.name} width={80} height={32} className="object-contain h-8 w-auto max-w-[80px]" />
+                  ) : (
+                    <span className="text-sm font-bold text-primary leading-tight">{brand.name}</span>
+                  )}
+                </Link>
+              ))}
+            </Slidezy>
+          )}
         </div>
       </div>
 
-      {/* Main content */}
+      {/* ── Main content ──────────────────────────────────────────────────── */}
       <div className="container py-6">
-        {/*
-          Mobile only: horizontal sort chips + "Lọc" button + bottom sheet.
-          ProductFilter tự detect isMobile và render đúng UI.
-          Desktop sidebar được render riêng bên dưới với hidden lg:block.
-        */}
+        {/* Mobile filter */}
         <div className="lg:hidden mb-4 rounded-xl overflow-hidden">
           <Suspense fallback={null}>
             <ProductFilter filters={resolvedFilters} />
@@ -114,6 +169,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           </main>
         </div>
       </div>
+      <MobileBottomNav />
     </div>
   );
 }

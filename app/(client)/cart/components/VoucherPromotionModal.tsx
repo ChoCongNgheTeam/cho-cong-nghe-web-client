@@ -74,6 +74,8 @@ export default function VoucherPromotionModal({
 
   // Lock body scroll
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent("sheet:toggle", { detail: { open: isOpen } }));
+
     if (isOpen) {
       const w = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.paddingRight = `${w}px`;

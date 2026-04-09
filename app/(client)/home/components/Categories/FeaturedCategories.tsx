@@ -24,7 +24,9 @@ function CategoryItem({ category }: { category: FeaturedCategory }) {
             />
           </div>
         </div>
-        <p className="mt-3 text-center text-sm font-semibold text-primary transition-colors duration-300 line-clamp-2 px-1">{category.name}</p>
+        <p className="mt-1.5 w-full text-center font-semibold text-primary line-clamp-2 leading-tight" style={{ fontSize: "clamp(9px, 2.5vw, 14px)" }}>
+          {category.name}
+        </p>
       </div>
     </Link>
   );
@@ -39,9 +41,9 @@ export function FeaturedCategories({ featuredCategories }: CategoryGridProps) {
   }, []);
 
   return (
-    <section className="py-4 md:py-6 bg-linear-to-b">
+    <section className="py-4 md:py-6 bg-linear-to-b bg-neutral-light-active">
       <div className="container">
-        <div className="bg-neutral-light rounded-3xl border-2 border-neutral p-6 md:p-8">
+        <div className="bg-neutral-light rounded-3xl p-6 md:p-8">
           <div className="mb-3">
             <h2 className="text-xl md:text-3xl font-bold text-primary tracking-tight">Danh mục nổi bật</h2>
           </div>

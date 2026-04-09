@@ -10,9 +10,9 @@ interface BestSellersProps {
 
 export function BestSellers({ products }: BestSellersProps) {
   return (
-    <section className="py-6 md:py-6 bg-neutral-light">
+    <section className="py-6 md:py-6 bg-neutral-light-active">
       <div className="container">
-        <div className="rounded-2xl border-2 border-neutral-hover p-5 md:p-6">
+        <div className="rounded-2xl md:p-6">
           <div className="mb-3">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">Sản phẩm bán chạy</h2>
           </div>
