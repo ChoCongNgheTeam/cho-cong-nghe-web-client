@@ -15,6 +15,7 @@ import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useToasty } from "@/components/Toast";
 
 import { HighlightIcon } from "@/(client)/home/common/HighlightIcon";
+import { useIsMobile } from "@/(client)/compare/Useismobile";
 
 interface GalleryImage {
   id: string;
@@ -44,7 +45,12 @@ interface ThumbnailCellProps {
   isExpand?: boolean;
 }
 
-export default function ProductDetailBanner({ product, images, selectedVariant, onColorChange }: ProductDetailLeftProps) {
+export default function ProductDetailBanner({
+  product,
+  images,
+  selectedVariant,
+  onColorChange,
+}: ProductDetailLeftProps) {
   // ── Lọc chỉ lấy ảnh có URL thật ──────────────────────────────────────────
   const validImages = images.filter((img) => !!img?.imageUrl);
 
@@ -52,7 +58,9 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
 
   // ── Gallery state ──────────────────────────────────────────────────────────
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
-  const [colorVariantMap, setColorVariantMap] = useState<Record<string, string>>({});
+  const [colorVariantMap, setColorVariantMap] = useState<
+    Record<string, string>
+  >({});
   const [galleryLoaded, setGalleryLoaded] = useState(false);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -68,25 +76,30 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
   const { add, remove, isInCompare } = useCompareStore();
   const { success, error, warning, info } = useToasty();
   const inCompare = isInCompare(product.id);
-
+  const isMobile = useIsMobile();
   const handleToggleCompare = () => {
     if (inCompare) {
       remove(product.id);
       info("Đã bỏ khỏi danh sách so sánh");
       return;
     }
-
     const result = add(product);
     if (!result.success) {
       switch (result.reason) {
         case "full":
-          warning("Chỉ được so sánh tối đa 3 sản phẩm");
+          warning(
+            isMobile
+              ? "Chỉ được so sánh tối đa 2 sản phẩm trên điện thoại"
+              : "Chỉ được so sánh tối đa 3 sản phẩm",
+          );
           break;
         case "duplicate":
           info("Sản phẩm đã có trong danh sách");
           break;
         case "wrong_category":
-          error("Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh !!");
+          error(
+            "Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh !!",
+          );
           break;
       }
     } else {
@@ -108,7 +121,8 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
 
   // ── Stock ──────────────────────────────────────────────────────────────────
   const maxStock = selectedVariant?.quantity ?? 0;
-  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isOutOfStock =
+    selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
   const isInStock = !isOutOfStock && maxStock > 0;
 
   // ── Fetch gallery ──────────────────────────────────────────────────────────
@@ -116,7 +130,10 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
     if (galleryLoaded || galleryLoading) return;
     setGalleryLoading(true);
     try {
-      const res = await apiRequest.get<{ data: GalleryResponse }>(`/products/slug/${product.slug}/gallery`, { noAuth: true });
+      const res = await apiRequest.get<{ data: GalleryResponse }>(
+        `/products/slug/${product.slug}/gallery`,
+        { noAuth: true },
+      );
       const data = res?.data;
       setGalleryImages((data?.images ?? []).filter((img) => !!img?.imageUrl));
       setColorVariantMap(data?.colorVariantMap ?? {});
@@ -211,14 +228,29 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
   };
 
   // ── Current main image ─────────────────────────────────────────────────────
-  const mainImageUrl = isExpandSlot ? (galleryImages[galleryIndex]?.imageUrl ?? "") : (validImages[currentImageIndex]?.imageUrl ?? "");
-  const mainImageAlt = isExpandSlot ? (galleryImages[galleryIndex]?.altText ?? "Gallery image") : (validImages[currentImageIndex]?.altText ?? "Product image");
+  const mainImageUrl = isExpandSlot
+    ? (galleryImages[galleryIndex]?.imageUrl ?? "")
+    : (validImages[currentImageIndex]?.imageUrl ?? "");
+  const mainImageAlt = isExpandSlot
+    ? (galleryImages[galleryIndex]?.altText ?? "Gallery image")
+    : (validImages[currentImageIndex]?.altText ?? "Product image");
 
-  const counterCurrent = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryIndex + 1}` : "▶") : currentImageIndex + 1;
-  const counterTotal = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryImages.length}` : totalVariantSlots) : totalVariantSlots;
+  const counterCurrent = isExpandSlot
+    ? galleryLoaded && galleryImages.length > 0
+      ? `G${galleryIndex + 1}`
+      : "▶"
+    : currentImageIndex + 1;
+  const counterTotal = isExpandSlot
+    ? galleryLoaded && galleryImages.length > 0
+      ? `G${galleryImages.length}`
+      : totalVariantSlots
+    : totalVariantSlots;
 
   // ── allThumbs (không cần window logic nữa — dùng scroll ngang) ────────────
-  const allThumbs = [...validImages.map((img, i) => ({ type: "variant" as const, index: i })), { type: "expand" as const, index: EXPAND_INDEX }];
+  const allThumbs = [
+    ...validImages.map((img, i) => ({ type: "variant" as const, index: i })),
+    { type: "expand" as const, index: EXPAND_INDEX },
+  ];
 
   // ── Auto-scroll thumbnail active vào view ─────────────────────────────────
   const thumbRowRef = useRef<HTMLDivElement>(null);
@@ -228,7 +260,11 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
     const activeIndex = isExpandSlot ? allThumbs.length - 1 : currentImageIndex;
     const activeEl = row.children[activeIndex] as HTMLElement | undefined;
     if (activeEl) {
-      activeEl.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+      activeEl.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
     }
   }, [currentImageIndex, isExpandSlot]);
 
@@ -239,7 +275,14 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
       {/* ── MAIN IMAGE ──────────────────────────────────────────────────── */}
       <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
         <div className="relative w-full h-full flex items-center justify-center">
-          {!isExpandSlot && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
+          {!isExpandSlot && mainImageUrl && (
+            <Image
+              src={mainImageUrl}
+              className="max-w-full max-h-full object-contain transition-opacity duration-500"
+              alt={mainImageAlt}
+              fill
+            />
+          )}
           {!isExpandSlot && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-16 h-16 opacity-20" />
@@ -252,7 +295,14 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
               <p className="text-sm opacity-60">Đang tải ảnh...</p>
             </div>
           )}
-          {isExpandSlot && !galleryLoading && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
+          {isExpandSlot && !galleryLoading && mainImageUrl && (
+            <Image
+              src={mainImageUrl}
+              className="max-w-full max-h-full object-contain transition-opacity duration-500"
+              alt={mainImageAlt}
+              fill
+            />
+          )}
           {isExpandSlot && !galleryLoading && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-10 h-10 opacity-30" />
@@ -270,7 +320,9 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             }}
             className={clsx(
               "absolute top-2 left-2 z-10 p-2 rounded-full shadow transition-colors duration-200",
-              inCompare ? "bg-primary text-white" : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer",
+              inCompare
+                ? "bg-primary text-white"
+                : "bg-neutral-light/90 text-neutral-darker hover:bg-neutral-light hover:text-primary cursor-pointer",
             )}
             aria-label={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
             title={inCompare ? "Bỏ so sánh" : "Thêm vào so sánh"}
@@ -306,23 +358,35 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
 
       {/* ── THUMBNAILS ──────────────────────────────────────────────────── */}
       <div className="mt-4">
-        <div ref={thumbRowRef} className="flex gap-2 sm:gap-3  lg:gap-4  scroll-smooth scrollbar-hide py-1.5 px-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          ref={thumbRowRef}
+          className="flex gap-2 sm:gap-3  lg:gap-4  scroll-smooth scrollbar-hide py-1.5 px-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {allThumbs.map((thumb) => {
             if (thumb.type === "expand") {
               return (
-                <ThumbnailCell key="expand" isActive={isExpandSlot} onClick={goToExpand} isExpand>
+                <ThumbnailCell
+                  key="expand"
+                  isActive={isExpandSlot}
+                  onClick={goToExpand}
+                  isExpand
+                >
                   <div className="flex flex-col items-center justify-center h-full gap-1">
                     {galleryLoading ? (
                       <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-primary" />
                     ) : galleryLoaded ? (
                       <>
                         <Images className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                        <span className="text-[9px] sm:text-[10px] text-primary font-medium">+{galleryImages.length}</span>
+                        <span className="text-[9px] sm:text-[10px] text-primary font-medium">
+                          +{galleryImages.length}
+                        </span>
                       </>
                     ) : (
                       <>
                         <Images className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-darker" />
-                        <span className="text-[9px] sm:text-[10px] text-neutral-darker">Xem thêm</span>
+                        <span className="text-[9px] sm:text-[10px] text-neutral-darker">
+                          Xem thêm
+                        </span>
                       </>
                     )}
                   </div>
@@ -334,7 +398,11 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             if (!image?.imageUrl) return null;
 
             return (
-              <ThumbnailCell key={image.id} isActive={!isExpandSlot && currentImageIndex === thumb.index} onClick={() => goToVariantIndex(thumb.index)}>
+              <ThumbnailCell
+                key={image.id}
+                isActive={!isExpandSlot && currentImageIndex === thumb.index}
+                onClick={() => goToVariantIndex(thumb.index)}
+              >
                 <Image
                   src={image.imageUrl}
                   alt={image.altText || `Product image ${thumb.index + 1}`}
@@ -342,7 +410,9 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
                   sizes="(max-width: 640px) 56px, (max-width: 1024px) 72px, 96px"
                   className={clsx(
                     "object-contain transition-all duration-300 p-1.5 sm:p-2 lg:p-3",
-                    !isExpandSlot && currentImageIndex === thumb.index ? "opacity-100 scale-100" : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
+                    !isExpandSlot && currentImageIndex === thumb.index
+                      ? "opacity-100 scale-100"
+                      : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
                   )}
                 />
               </ThumbnailCell>
@@ -382,7 +452,9 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
                     }}
                     className={clsx(
                       "object-contain p-1.5 transition-all duration-300",
-                      galleryIndex === idx ? "opacity-100 scale-100" : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
+                      galleryIndex === idx
+                        ? "opacity-100 scale-100"
+                        : "opacity-60 scale-95 group-hover:opacity-100 group-hover:scale-100",
                     )}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
@@ -398,15 +470,21 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             {highlights.length > 0 && (
               <div className="mt-8">
                 <div className="text-base flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                  <h2 className="font-semibold text-primary">Thông số nổi bật</h2>
+                  <h2 className="font-semibold text-primary">
+                    Thông số nổi bật
+                  </h2>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 lg:gap-8 border-b border-neutral-dark pb-6 transition-colors duration-300">
                   {highlights.map((highlight, index) => (
                     <div className="flex-1" key={index}>
-                      <span className="text-sm">{highlight?.name || "N/A"}</span>
+                      <span className="text-sm">
+                        {highlight?.name || "N/A"}
+                      </span>
                       <div className="flex items-center gap-2 mt-2">
                         <HighlightIcon icon={highlight?.icon ?? "default"} />
-                        <span className="text-sm font-semibold text-primary">{highlight?.value || "N/A"}</span>
+                        <span className="text-sm font-semibold text-primary">
+                          {highlight?.value || "N/A"}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -417,23 +495,34 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             {/* ── Policies ─────────────────────────────────────────────── */}
             <div>
               <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-                <button type="button" className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">
+                <h2 className="text-base font-semibold text-primary">
+                  Chính sách sản phẩm
+                </h2>
+                <button
+                  type="button"
+                  className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer"
+                >
                   Tìm hiểu thêm
                 </button>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
                 <div className="flex items-center gap-2 sm:mr-12">
                   <MdVerified size={28} />
-                  <p className="text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
+                  <p className="text-sm text-primary">
+                    Hàng chính hãng - Bảo hành 18 tháng
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaShippingFast size={28} />
-                  <p className="text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
+                  <p className="text-sm text-primary">
+                    Miễn phí giao hàng toàn quốc
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaUserCog size={28} />
-                  <p className="text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
+                  <p className="text-sm text-primary">
+                    Kỹ thuật viên hỗ trợ trực tuyến
+                  </p>
                 </div>
               </div>
             </div>
@@ -445,7 +534,12 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
 }
 
 // ── ThumbnailCell ──────────────────────────────────────────────────────────
-function ThumbnailCell({ isActive, onClick, children, isExpand }: ThumbnailCellProps) {
+function ThumbnailCell({
+  isActive,
+  onClick,
+  children,
+  isExpand,
+}: ThumbnailCellProps) {
   return (
     <button
       type="button"
@@ -455,7 +549,9 @@ function ThumbnailCell({ isActive, onClick, children, isExpand }: ThumbnailCellP
         "relative group flex-shrink-0",
         "w-14 h-14 sm:w-16 sm:h-16 lg:w-24 lg:h-24",
         "rounded-xl overflow-hidden transition-all duration-200 ease-out cursor-pointer",
-        isActive ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105" : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105",
+        isActive
+          ? "ring-[1.5px] ring-accent shadow-md shadow-accent/20 scale-105"
+          : "ring-1 ring-black/10 hover:ring-[1.5px] hover:ring-accent hover:shadow-md hover:shadow-accent/10 hover:scale-105",
       )}
     >
       <div className="relative w-full h-full bg-white rounded-xl overflow-hidden">

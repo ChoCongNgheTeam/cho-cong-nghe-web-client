@@ -22,14 +22,31 @@ interface ProductDetailContentProps {
 }
 
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
-  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, stickyTop, showStickyHeader, activeTab, scrollToSection, layoutChangingRef } = useProductSections();
+  const {
+    breadcrumbRef,
+    infoRef,
+    specificationsRef,
+    articleRef,
+    reviewsRef,
+    suggestRef,
+    // stickyTop,
+    showStickyHeader,
+    activeTab,
+    scrollToSection,
+    layoutChangingRef,
+  } = useProductSections();
 
   const tabBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!tabBarRef.current) return;
     const btn = tabBarRef.current.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`);
-    if (btn) btn.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+    if (btn)
+      btn.scrollIntoView({
+        inline: "nearest",
+        block: "nearest",
+        behavior: "smooth",
+      });
   }, [activeTab]);
 
   /* ── Variant state ── */
@@ -99,13 +116,15 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
         Ẩn/hiện bằng opacity+pointerEvents để không conflict sticky.
         ─────────────────────────────────────────────────────────────────── */}
       <div
-        className="sticky z-40 bg-neutral-light shadow-md border-b border-neutral"
+        className="fixed left-0 right-0 z-40 bg-neutral-light shadow-md border-b border-neutral"
         style={{
-          top: stickyTop,
+          top: 0,
+          transform: `translateY(var(--header-translate, 0px)) + var(--header-translate, 0px)))`,
+          transition: "opacity 0.2s ease, transform 0.3s ease-in-out",
+          height: 48,
           opacity: showStickyHeader ? 1 : 0,
           pointerEvents: showStickyHeader ? "auto" : "none",
-          transition: "opacity 0.2s ease, top 0.15s ease",
-          height: 48,
+          visibility: showStickyHeader ? "visible" : "hidden",
         }}
       >
         <div className="container sm:px-6 h-full">
@@ -134,10 +153,18 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           </div>
         </div>
       </div>
-
       {/* ── Breadcrumb ── */}
       <div className="container sm:px-6 mt-4" ref={breadcrumbRef}>
-        <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: product.category.parent.name, href: `/category/${product.category?.slug}` }, { label: product.name }]} />
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            {
+              label: product.category.parent.name,
+              href: `/category/${product.category?.slug}`,
+            },
+            { label: product.name },
+          ]}
+        />
       </div>
 
       {/* ── Hero / Thông tin sản phẩm ── */}
