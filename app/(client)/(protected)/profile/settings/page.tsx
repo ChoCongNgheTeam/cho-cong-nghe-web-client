@@ -27,7 +27,7 @@ const settingGroups = [
         href: "/profile/settings/notifications",
         icon: Bell,
         title: "Thông báo",
-        desc: "Quản lý thông báo email và push",
+        desc: "Quản lý thông báo email",
       },
       {
         href: "/profile/settings/privacy",
