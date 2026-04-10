@@ -252,6 +252,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error(`Chỉ còn ${avail} sản phẩm trong kho`);
       }
 
+      const hasStockInfo = meta?.availableQuantity != null; // undefined → không track
+      if (hasStockInfo && avail > 0 && quantity > avail) {
+        throw new Error(`Chỉ còn ${avail} sản phẩm trong kho`);
+      }
+      // Nếu avail = 0 mà hasStockInfo = true → hết hàng
+      if (hasStockInfo && avail === 0) {
+        throw new Error(`Sản phẩm đã hết hàng`);
+      }
+
       if (isAuthenticated) {
         const res = (await apiAddToCart(variantId, quantity)) as ApiResponse;
         if (res.success) await refetchCart();

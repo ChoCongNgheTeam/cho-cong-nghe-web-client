@@ -80,8 +80,8 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
   const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
   const basePrice = activePrice?.base ?? 0;
 
-  const maxStock = selectedVariant?.quantity ?? 0;
-  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const availQty = selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? selectedVariant?.quantity ?? 0;
+  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || availQty === 0;
 
   /* ── Image ─────────────────────────────────────────────────────────── */
   const imageUrl = selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? (product as any)?.img?.[0]?.imageUrl ?? "";
@@ -92,6 +92,7 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
       toasty.warning("Vui lòng chọn phiên bản sản phẩm");
       return;
     }
+
     try {
       await addToCart(selectedVariant.id, quantity, {
         productName: product.name,
@@ -102,7 +103,7 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
         price: finalPrice,
         originalPrice: basePrice,
         imageUrl,
-        availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
+        availableQuantity: availQty,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
         storageLabel,
@@ -123,34 +124,33 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
         ${visible ? "translate-y-0" : "translate-y-full"}`}
     >
       <div className="container sm:px-6">
-        <div className="flex items-center gap-3 py-3">
-          {/* ── Ảnh + Tên + Giá ──────────────────────────────────────── */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center gap-2 py-3">
+          {/* Ảnh + Tên + Giá */}
+          <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
             {imageUrl && (
-              <div className="relative w-11 h-11 shrink-0 rounded-lg overflow-hidden border border-neutral bg-neutral">
-                <Image src={imageUrl} alt={product.name} fill sizes="44px" className="object-cover" />
+              <div className="relative w-10 h-10 shrink-0 rounded-lg overflow-hidden border border-neutral bg-neutral">
+                <Image src={imageUrl} alt={product.name} fill sizes="40px" className="object-cover" />
               </div>
             )}
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-semibold text-primary line-clamp-1">{selectedVariant?.name || product.name}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-sm sm:text-base font-bold text-promotion">{displayPrice.toLocaleString("vi-VN")}₫</span>
+            <div className="min-w-0 overflow-hidden">
+              <p className="text-xs font-semibold text-primary truncate">{selectedVariant?.name || product.name}</p>
+              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                <span className="text-xs sm:text-sm font-bold text-promotion whitespace-nowrap">{displayPrice.toLocaleString("vi-VN")}₫</span>
                 {activePrice?.hasPromotion && (
                   <>
-                    <span className="text-xs line-through text-neutral-dark hidden sm:inline">{basePrice.toLocaleString("vi-VN")}₫</span>
-                    <span className="text-[10px] font-bold text-neutral-light bg-promotion px-1.5 py-0.5 rounded">-{activePrice.discountPercentage}%</span>
+                    <span className="text-[10px] line-through text-neutral-dark hidden sm:inline whitespace-nowrap">{basePrice.toLocaleString("vi-VN")}₫</span>
+                    <span className="text-[10px] font-bold text-neutral-light bg-promotion px-1 py-0.5 rounded whitespace-nowrap">-{activePrice.discountPercentage}%</span>
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          {/* ── Buttons ──────────────────────────────────────────────── */}
+          {/* Buttons */}
           {isOutOfStock ? (
-            <span className="shrink-0 px-4 py-2.5 rounded-lg bg-neutral text-primary text-sm font-medium">Hết hàng</span>
+            <span className="shrink-0 px-3 py-2 rounded-lg bg-neutral text-primary text-xs font-medium whitespace-nowrap">Hết hàng</span>
           ) : (
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Thêm giỏ hàng */}
+            <div className="flex items-center gap-1.5 shrink-0">
               <AddToCartButton
                 productVariantId={selectedVariant?.id || ""}
                 quantity={quantity}
@@ -164,7 +164,7 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
                   price: finalPrice,
                   originalPrice: basePrice,
                   imageUrl,
-                  availableQuantity: selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? 0,
+                  availableQuantity: selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? selectedVariant?.quantity ?? 0,
                   color: selectedVariant?.color ?? "",
                   colorValue: selectedVariant?.colorValue ?? "",
                   storageLabel,
@@ -172,26 +172,24 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
                 label=""
                 iconSize={20}
                 className={`
-                  !h-10 !w-10 sm:!w-auto sm:!px-4
-                  !rounded-lg
-                  !border !border-neutral-dark
-                  !bg-neutral-light !text-primary
-                  hover:!bg-neutral
-                  active:scale-95
-                  transition-all duration-200
-                  disabled:!opacity-50 disabled:!cursor-not-allowed
-                `}
+          !h-9 !w-9 sm:!w-auto sm:!px-3
+          !rounded-lg
+          !border !border-neutral-dark
+          !bg-neutral-light !text-primary
+          hover:!bg-neutral
+          active:scale-95
+          transition-all duration-200
+          disabled:!opacity-50 disabled:!cursor-not-allowed
+        `}
               />
-
-              {/* Mua ngay */}
               <button
                 onClick={handleBuyNow}
                 disabled={!selectedVariant?.id}
-                className="h-10 px-4 sm:px-6 rounded-lg bg-primary text-neutral-light
-                  text-sm font-semibold whitespace-nowrap
-                  hover:bg-primary-hover active:scale-95
-                  transition-all duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="h-9 px-3 sm:px-5 rounded-lg bg-primary text-neutral-light
+          text-xs sm:text-sm font-semibold whitespace-nowrap
+          hover:bg-primary-hover active:scale-95
+          transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Mua ngay
               </button>
