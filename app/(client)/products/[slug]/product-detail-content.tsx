@@ -13,8 +13,9 @@ import ProductStickyFooter from "./ProductStickyFooter";
 import { TrustBadges } from "@/(client)/home/components";
 
 import { ProductDetail } from "@/lib/types/product";
-import apiRequest from "@/lib/api";
+import { getProductVariant } from "../_lib";
 import { useProductSections, TABS } from "./useProductSections";
+import type { ProductVariant, VariantOption, ProductPrice } from "../types";
 
 interface ProductDetailContentProps {
   product: ProductDetail;
@@ -22,65 +23,51 @@ interface ProductDetailContentProps {
 }
 
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
-  const {
-    breadcrumbRef,
-    infoRef,
-    specificationsRef,
-    articleRef,
-    reviewsRef,
-    suggestRef,
-    // stickyTop,
-    showStickyHeader,
-    activeTab,
-    scrollToSection,
-    layoutChangingRef,
-  } = useProductSections();
+  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, showStickyHeader, activeTab, scrollToSection, layoutChangingRef } = useProductSections();
 
   const tabBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!tabBarRef.current) return;
     const btn = tabBarRef.current.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`);
-    if (btn)
-      btn.scrollIntoView({
-        inline: "nearest",
-        block: "nearest",
-        behavior: "smooth",
-      });
+    if (btn) btn.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
   }, [activeTab]);
 
   /* ── Variant state ── */
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
-    product.availableOptions?.forEach((opt) => {
-      const defaultVal = opt.values?.find((v: any) => v.selected) ?? opt.values?.[0];
+    (product.availableOptions as VariantOption[])?.forEach((opt) => {
+      const defaultVal = opt.values?.find((v) => v.selected) ?? opt.values?.[0];
       if (defaultVal) init[opt.type] = defaultVal.value;
     });
     return init;
   });
+  const [availableOptions, setAvailableOptions] = useState<VariantOption[]>(
+    (product.availableOptions as VariantOption[]) || [], // Lỗi 2
+  );
 
-  const [availableOptions, setAvailableOptions] = useState(product.availableOptions || []);
-  const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
-  const [variantImages, setVariantImages] = useState(product.currentVariant?.images || []);
-  const [price, setPrice] = useState(product.price);
+  const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(
+    product.currentVariant as unknown as ProductVariant, // Lỗi 3
+  );
+
+  const [variantImages, setVariantImages] = useState<{ imageUrl: string }[]>(product.currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) || []);
+  const [price, setPrice] = useState<ProductPrice | undefined>(product.price);
   const [quantity, setQuantity] = useState(1);
 
   const fetchVariantByParams = async (params: Record<string, string>) => {
     try {
-      const json = await apiRequest.get<{ data: any }>(`/products/slug/${product.slug}/variant`, { noAuth: true, params });
-      if (!json) return;
-      const data = json.data;
+      const data = await getProductVariant(product.slug, params);
       setAvailableOptions(data.availableOptions);
       setCurrentVariant(data.currentVariant);
-      setVariantImages(data.currentVariant.images);
+      setVariantImages(data.currentVariant.images ?? []);
       setPrice(data.price);
       setQuantity(1);
 
       const variant = data.currentVariant;
       const newOptions: Record<string, string> = {};
       if (variant?.color) newOptions["color"] = variant.color;
-      if (variant?.storage) newOptions["storage"] = variant.storage;
-      if (variant?.ram) newOptions["ram"] = variant.ram;
+      if (variant?.storage) newOptions["storage"] = variant.storage as string;
+      if (variant?.ram) newOptions["ram"] = variant.ram as string;
       if (!newOptions["storage"] && variant?.code) {
         const storageMatch = variant.code.match(/(\d+GB)/i);
         if (storageMatch) newOptions["storage"] = storageMatch[1].toLowerCase();
@@ -106,20 +93,12 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
 
   return (
     <div>
-      {/*
-        ── Sticky Tab Bar ──────────────────────────────────────────────────
-        position:sticky — tự dính không cần JS tính top mỗi frame.
-
-        stickyTop chỉ thay đổi 2 lần per scroll session (khi header
-        cross ngưỡng visible↔hidden), không phải mỗi frame.
-
-        Ẩn/hiện bằng opacity+pointerEvents để không conflict sticky.
-        ─────────────────────────────────────────────────────────────────── */}
+      {/* ── Sticky Tab Bar ── */}
       <div
         className="fixed left-0 right-0 z-40 bg-neutral-light shadow-md border-b border-neutral"
         style={{
           top: 0,
-          transform: `translateY(var(--header-translate, 0px)) + var(--header-translate, 0px)))`,
+          transform: `translateY(var(--header-translate, 0px))`,
           transition: "opacity 0.2s ease, transform 0.3s ease-in-out",
           height: 48,
           opacity: showStickyHeader ? 1 : 0,
@@ -153,6 +132,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           </div>
         </div>
       </div>
+
       {/* ── Breadcrumb ── */}
       <div className="container sm:px-6 mt-4" ref={breadcrumbRef}>
         <Breadcrumb
@@ -176,6 +156,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-16 lg:h-fit">
               <ProductDetailRight
+                key={currentVariant?.id}
                 product={product}
                 selectedVariant={currentVariant}
                 selectedPrice={price}

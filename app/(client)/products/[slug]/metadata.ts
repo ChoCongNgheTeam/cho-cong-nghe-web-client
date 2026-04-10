@@ -1,6 +1,6 @@
 import { SITE_URL } from "@/config/site.config";
 import { ProductDetail } from "@/lib/types/product";
-import { getProductBySlug } from "../_lib/get-product-by-slug";
+import { getProductBySlug } from "../_lib/index";
 
 type ProductDetailProps = {
   params: Promise<{
@@ -37,9 +37,7 @@ export async function generateMetadata({ params }: ProductDetailProps) {
       url,
       images: [
         {
-          url:
-            product.currentVariant?.images?.[0]?.imageUrl ||
-            `${SITE_URL}/og/product.jpg`,
+          url: product.currentVariant?.images?.[0]?.imageUrl || `${SITE_URL}/og/product.jpg`,
         },
       ],
     },

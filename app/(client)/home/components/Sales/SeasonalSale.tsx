@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Campaign, CampaignCategory } from "../../_libs";
+import { Campaign, CampaignCategory } from "../../types";
 interface SeasonalSaleProps {
   campaigns: Campaign[];
 }
@@ -12,10 +12,11 @@ function SmallBannerCard({ item }: { item: CampaignCategory }) {
     <Link href={`/category/${item.category.slug}`} className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500">
       <div className={`relative aspect-square`}>
         {/* Background Image */}
-        <div className="absolute inset-0 transition-opacity duration-300">
-          <Image src={item.imageUrl} alt={item.title} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
-        </div>
-
+        {item.imageUrl && (
+          <div className="absolute inset-0 transition-opacity duration-300">
+            <Image src={item.imageUrl} alt={item.title ?? ""} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+          </div>
+        )}
         {/* Content */}
         {/* <div className="relative h-full p-4 md:p-5 flex flex-col justify-between">
                <div>
@@ -44,8 +45,7 @@ function LargeBannerCard({ item }: { item: CampaignCategory }) {
     <Link href={`/category/${item.category.slug}`} className="group relative block overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500">
       <div className="relative aspect-square">
         {/* Background Image */}
-        <Image src={item.imageUrl} alt={item.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover duration-700" />
-
+        <Image src={item.imageUrl ?? ""} alt={item.title ?? ""} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover duration-700" />
         {/* Content */}
         {/* <div className="relative h-full flex items-center justify-center p-6 md:p-8 lg:p-12">
                <div className="text-center max-w-lg">

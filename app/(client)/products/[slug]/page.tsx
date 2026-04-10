@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProductDetailContent } from "./product-detail-content";
 import { generateMetadata } from "./metadata";
-import { getProductBySlug } from "../_lib/get-product-by-slug";
+import { getProductBySlug } from "../_lib/index";
 import { ProductDetail } from "@/lib/types/product";
 
 type ProductDetailProps = {

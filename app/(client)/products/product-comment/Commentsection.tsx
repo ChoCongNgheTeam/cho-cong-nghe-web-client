@@ -1,12 +1,5 @@
 "use client";
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useContext,
-  useRef,
-  memo,
-} from "react";
+import { useEffect, useState, useCallback, useContext, useRef, memo } from "react";
 import { AiOutlineLike } from "react-icons/ai";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -23,55 +16,26 @@ interface CommentSectionProps {
   productId: string;
   comments: Comment[];
   loading: boolean;
-  onCommentSubmit: (content: string) => Promise<void>;
-  onReplySubmit: (parentId: string, content: string) => Promise<void>;
+  onCommentSubmit: (content: string) => Promise<{ isApproved: boolean; status?: string } | undefined>;
+  onReplySubmit: (parentId: string, content: string) => Promise<{ isApproved: boolean; status?: string } | undefined>;
   onFetchReplies: (commentId: string) => Promise<void>;
-  onFetchNestedReplies: (
-    replyId: string,
-    parentCommentId: string,
-  ) => Promise<void>;
+  onFetchNestedReplies: (replyId: string, parentCommentId: string) => Promise<void>;
 }
 
 // ── Sub-components ────────────────────────────────────────────────
 
 function Avatar({ user, size }: { user: CommentUser; size: number }) {
-  const validAvatar =
-    user?.avatarImage && !user.avatarImage.startsWith("./")
-      ? user.avatarImage
-      : undefined;
-  return (
-    <UserAvatar
-      avatarImage={validAvatar}
-      fullName={user?.fullName ?? ""}
-      size={size}
-    />
-  );
+  const validAvatar = user?.avatarImage && !user.avatarImage.startsWith("./") ? user.avatarImage : undefined;
+  return <UserAvatar avatarImage={validAvatar} fullName={user?.fullName ?? ""} size={size} />;
 }
 
-function findTopLevelParent(
-  comments: Comment[],
-  replyId: string,
-): string | undefined {
-  return comments.find((c) => (c.replies ?? []).some((r) => r.id === replyId))
-    ?.id;
+function findTopLevelParent(comments: Comment[], replyId: string): string | undefined {
+  return comments.find((c) => (c.replies ?? []).some((r) => r.id === replyId))?.id;
 }
 
 // ── CommentNode (Sử dụng memo để chống giật khi re-render) ────────
 const CommentNode = memo(
-  ({
-    node,
-    depth,
-    replyTargetId,
-    replyContents,
-    replySubmitting,
-    expandedIds,
-    loadingIds,
-    onToggleExpand,
-    onSetReplyTarget,
-    onReplyContentChange,
-    onSubmitReply,
-    onKeyPress,
-  }: any) => {
+  ({ node, depth, replyTargetId, replyContents, replySubmitting, expandedIds, loadingIds, onToggleExpand, onSetReplyTarget, onReplyContentChange, onSubmitReply, onKeyPress }: any) => {
     const avatarSize = AVATAR_SIZES[Math.min(depth, AVATAR_SIZES.length - 1)];
     const hasChildren = (node._repliesCount ?? node.replies?.length ?? 0) > 0;
     const isExpanded = expandedIds[node.id];
@@ -84,18 +48,12 @@ const CommentNode = memo(
         <Avatar user={node.user} size={avatarSize} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-            <span className="font-semibold text-xs sm:text-sm text-primary">
-              {node.user?.fullName}
-            </span>
+            <span className="font-semibold text-xs sm:text-sm text-primary">{node.user?.fullName}</span>
 
-            <span className="text-[11px] sm:text-xs text-neutral-darker">
-              • {formatRelativeDate(node.createdAt)}
-            </span>
+            <span className="text-[11px] sm:text-xs text-neutral-darker">• {formatRelativeDate(node.createdAt)}</span>
           </div>
 
-          <p className="text-neutral-darker mb-2 text-xs sm:text-sm wrap-break-word whitespace-pre-wrap">
-            {node.content}
-          </p>
+          <p className="text-neutral-darker mb-2 text-xs sm:text-sm wrap-break-word whitespace-pre-wrap">{node.content}</p>
 
           <div className="flex items-center gap-3 sm:gap-4 text-xs text-neutral-darker">
             <button className="flex items-center gap-1 hover:text-primary transition-colors">
@@ -104,22 +62,13 @@ const CommentNode = memo(
             </button>
 
             {canReply && (
-              <button
-                onClick={() =>
-                  onSetReplyTarget(replyTargetId === node.id ? null : node.id)
-                }
-                className="hover:text-primary transition-colors cursor-pointer"
-              >
+              <button onClick={() => onSetReplyTarget(replyTargetId === node.id ? null : node.id)} className="hover:text-primary transition-colors cursor-pointer">
                 Trả lời
               </button>
             )}
 
             {canReply && hasChildren && (
-              <button
-                onClick={() => onToggleExpand(node.id, node)}
-                disabled={isLoading}
-                className="flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50 cursor-pointer"
-              >
+              <button onClick={() => onToggleExpand(node.id, node)} disabled={isLoading} className="flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50 cursor-pointer">
                 {isLoading ? (
                   <>
                     <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -127,14 +76,8 @@ const CommentNode = memo(
                   </>
                 ) : (
                   <>
-                    {isExpanded ? (
-                      <ChevronUp className="w-3 h-3" />
-                    ) : (
-                      <ChevronDown className="w-3 h-3" />
-                    )}
-                    <span>
-                      {node._repliesCount ?? node.replies?.length ?? 0} phản hồi
-                    </span>
+                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    <span>{node._repliesCount ?? node.replies?.length ?? 0} phản hồi</span>
                   </>
                 )}
               </button>
@@ -207,14 +150,7 @@ const CommentNode = memo(
 CommentNode.displayName = "CommentNode";
 
 // ── Main ──────────────────────────────────────────────────────────
-export default function CommentSection({
-  productId,
-  comments: initialComments,
-  loading,
-  onCommentSubmit,
-  onReplySubmit,
-  onFetchReplies,
-}: CommentSectionProps) {
+export default function CommentSection({ productId, comments: initialComments, loading, onCommentSubmit, onReplySubmit, onFetchReplies }: CommentSectionProps) {
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const toast = useToasty();
@@ -222,9 +158,7 @@ export default function CommentSection({
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
-  const [replyContents, setReplyContents] = useState<Record<string, string>>(
-    {},
-  );
+  const [replyContents, setReplyContents] = useState<Record<string, string>>({});
   const [replySubmitting, setReplySubmitting] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
@@ -262,23 +196,16 @@ export default function CommentSection({
 
     setSubmitting(true);
     try {
-      // 1. Hứng kết quả trả về từ server 
+      // 1. Hứng kết quả trả về từ server
       const result: any = await onCommentSubmit(comment);
       setComment("");
 
       // 2. Kiểm tra logic duyệt
-      if (
-        result === false ||
-        result?.isApproved === false ||
-        result?.status === "pending"
-      ) {
-        toast.info(
-          "Bình luận của bạn đã được gửi và đang chờ quản trị viên phê duyệt.",
-          {
-            title: "Đang chờ duyệt",
-            duration: 5000,
-          },
-        );
+      if (result === false || result?.isApproved === false || result?.status === "pending") {
+        toast.info("Bình luận của bạn đã được gửi và đang chờ quản trị viên phê duyệt.", {
+          title: "Đang chờ duyệt",
+          duration: 5000,
+        });
       } else {
         toast.success("Câu hỏi của bạn đã được gửi thành công!", {
           title: "Gửi thành công",
@@ -292,58 +219,49 @@ export default function CommentSection({
     }
   };
 
-const handleSubmitReply = useCallback(
-  async (parentId: string) => {
-    if (!isAuthenticated) {
-      toast.warning("Vui lòng đăng nhập để trả lời");
-      return;
-    }
-
-    const content = replyContents[parentId];
-    if (!content?.trim() || replySubmitting === parentId) return;
-
-    const isTopLevel = initialComments.some((c) => c.id === parentId);
-    const actualParentId = isTopLevel
-      ? parentId
-      : (findTopLevelParent(initialComments, parentId) ?? parentId);
-
-    setReplySubmitting(actualParentId);
-
-    try {
-      // 1. Hứng kết quả trả về từ file cha (ProductReview)
-      const result: any = await onReplySubmit(actualParentId, content);
-      
-      setReplyContents((prev) => ({ ...prev, [parentId]: "" }));
-      setReplyTargetId(null);
-      setExpandedIds((prev) => ({ ...prev, [actualParentId]: true }));
-
-      // 2. Logic kiểm tra để hiển thị Toast phù hợp
-      if (result === false || result?.isApproved === false || result?.status === 'pending') {
-        toast.info("Phản hồi của bạn đã được gửi và đang chờ quản trị viên phê duyệt.", {
-          title: "Đang chờ duyệt",
-          duration: 5000,
-        });
-      } else {
-        toast.success("Phản hồi của bạn đã được gửi thành công!", {
-          title: "Thành công",
-          duration: 3000,
-        });
+  const handleSubmitReply = useCallback(
+    async (parentId: string) => {
+      if (!isAuthenticated) {
+        toast.warning("Vui lòng đăng nhập để trả lời");
+        return;
       }
-    } catch {
-      toast.error("Gửi phản hồi thất bại, vui lòng thử lại.");
-    } finally {
-      setReplySubmitting(null);
-    }
-  },
-  [
-    replyContents,
-    replySubmitting,
-    initialComments,
-    onReplySubmit,
-    isAuthenticated,
-    toast,
-  ],
-);
+
+      const content = replyContents[parentId];
+      if (!content?.trim() || replySubmitting === parentId) return;
+
+      const isTopLevel = initialComments.some((c) => c.id === parentId);
+      const actualParentId = isTopLevel ? parentId : (findTopLevelParent(initialComments, parentId) ?? parentId);
+
+      setReplySubmitting(actualParentId);
+
+      try {
+        // 1. Hứng kết quả trả về từ file cha (ProductReview)
+        const result: any = await onReplySubmit(actualParentId, content);
+
+        setReplyContents((prev) => ({ ...prev, [parentId]: "" }));
+        setReplyTargetId(null);
+        setExpandedIds((prev) => ({ ...prev, [actualParentId]: true }));
+
+        // 2. Logic kiểm tra để hiển thị Toast phù hợp
+        if (result === false || result?.isApproved === false || result?.status === "pending") {
+          toast.info("Phản hồi của bạn đã được gửi và đang chờ quản trị viên phê duyệt.", {
+            title: "Đang chờ duyệt",
+            duration: 5000,
+          });
+        } else {
+          toast.success("Phản hồi của bạn đã được gửi thành công!", {
+            title: "Thành công",
+            duration: 3000,
+          });
+        }
+      } catch {
+        toast.error("Gửi phản hồi thất bại, vui lòng thử lại.");
+      } finally {
+        setReplySubmitting(null);
+      }
+    },
+    [replyContents, replySubmitting, initialComments, onReplySubmit, isAuthenticated, toast],
+  );
 
   const handleToggleExpand = useCallback(
     async (id: string, node: any) => {
@@ -373,9 +291,7 @@ const handleSubmitReply = useCallback(
 
   return (
     <div ref={commentListRef}>
-      <h4 className="text-lg sm:text-2xl font-semibold text-primary mb-6 sm:mb-8">
-        Bình luận
-      </h4>
+      <h4 className="text-lg sm:text-2xl font-semibold text-primary mb-6 sm:mb-8">Bình luận</h4>
 
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 pb-6 border-b border-neutral">
         <div className="hidden xs:flex shrink-0 items-start justify-center sm:justify-start">
@@ -389,23 +305,16 @@ const handleSubmitReply = useCallback(
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">
-            Hãy đặt câu hỏi cho chúng tôi
-          </h4>
+          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">Hãy đặt câu hỏi cho chúng tôi</h4>
           <p className="text-xs sm:text-sm text-primary opacity-60 leading-relaxed">
-            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi
-            sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
+            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
           </p>
 
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 min-w-0">
               <input
                 type="text"
-                placeholder={
-                  isAuthenticated
-                    ? "Viết câu hỏi của bạn tại đây..."
-                    : "Đăng nhập để đặt câu hỏi..."
-                }
+                placeholder={isAuthenticated ? "Viết câu hỏi của bạn tại đây..." : "Đăng nhập để đặt câu hỏi..."}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
@@ -413,9 +322,7 @@ const handleSubmitReply = useCallback(
                 maxLength={3000}
                 className="w-full px-3 py-2.5 border border-neutral-dark rounded-lg text-sm focus:outline-none focus:border-neutral-darker bg-neutral-light text-primary disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-darker pointer-events-none">
-                {comment.length}/3000
-              </span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-darker pointer-events-none">{comment.length}/3000</span>
             </div>
             <button
               onClick={handleSubmitComment}
@@ -436,10 +343,7 @@ const handleSubmitReply = useCallback(
           {!isAuthenticated && (
             <p className="text-xs text-neutral-darker mt-2">
               Bạn cần{" "}
-              <a
-                href="/account?login"
-                className="text-primary underline hover:opacity-80 transition-opacity"
-              >
+              <a href="/account?login" className="text-primary underline hover:opacity-80 transition-opacity">
                 đăng nhập
               </a>{" "}
               để đặt câu hỏi hoặc trả lời bình luận.
@@ -448,9 +352,7 @@ const handleSubmitReply = useCallback(
         </div>
       </div>
 
-      <h4 className="text-sm sm:text-base text-primary">
-        Có {initialComments.length} bình luận
-      </h4>
+      <h4 className="text-sm sm:text-base text-primary">Có {initialComments.length} bình luận</h4>
 
       <div className="space-y-5 sm:space-y-6 mt-5 sm:mt-6">
         {loading && initialComments.length === 0 ? (
@@ -465,10 +367,7 @@ const handleSubmitReply = useCallback(
         ) : (
           <>
             {visibleComments.map((c) => (
-              <div
-                key={c.id}
-                className="pb-4 sm:pb-5 border-b border-neutral last:border-0"
-              >
+              <div key={c.id} className="pb-4 sm:pb-5 border-b border-neutral last:border-0">
                 <CommentNode
                   node={c}
                   depth={0}
@@ -479,9 +378,7 @@ const handleSubmitReply = useCallback(
                   loadingIds={loadingIds}
                   onToggleExpand={handleToggleExpand}
                   onSetReplyTarget={setReplyTargetId}
-                  onReplyContentChange={(id: string, val: string) =>
-                    setReplyContents((prev) => ({ ...prev, [id]: val }))
-                  }
+                  onReplyContentChange={(id: string, val: string) => setReplyContents((prev) => ({ ...prev, [id]: val }))}
                   onSubmitReply={handleSubmitReply}
                   onKeyPress={handleKeyPress}
                 />

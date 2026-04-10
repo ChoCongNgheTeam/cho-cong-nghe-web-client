@@ -1,7 +1,7 @@
 "use client";
 
 import ProductCard from "@/components/product/ProductCard";
-import { FeaturedProduct } from "../../_libs";
+import { FeaturedProduct } from "../../types";
 import { Slidezy } from "@/components/Slider";
 
 interface FeaturedProductsProps {
@@ -28,7 +28,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
             draggable={true}
           >
             {products.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+              <ProductCard key={product.id} product={{ ...product, thumbnail: product.thumbnail ?? "" }} index={index} />
             ))}
           </Slidezy>
         </div>
