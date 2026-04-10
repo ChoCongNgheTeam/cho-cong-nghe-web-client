@@ -19,6 +19,7 @@ import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
 import { useToasty } from "@/components/Toast";
 import { useCart } from "@/hooks/useCart";
 import { useRouter } from "next/navigation";
+import { HighlightIcon } from "@/(client)/home/common/HighlightIcon";
 
 const TYPE_LABELS: Record<string, string> = {
   color: "Màu sắc",
@@ -123,7 +124,8 @@ export default function ProductDetailRight({
         storageLabel:
           availableOptions
             .find((opt) => opt.type === "storage") // ← thêm
-            ?.values?.find((v: any) => v.value === selectedOptions?.storage)?.label ?? "",
+            ?.values?.find((v: any) => v.value === selectedOptions?.storage)
+            ?.label ?? "",
       });
       console.log("availableOptions:", availableOptions);
       console.log("selectedOptions:", selectedOptions);
@@ -153,35 +155,70 @@ export default function ProductDetailRight({
   // ── Shared blocks ──────────────────────────────────────────────────────────
 
   /** Khối Thông số nổi bật — dùng lại ở mobile */
+  // ✅ Đúng
   const HighlightsBlock = () =>
     highlights.length > 0 ? (
       <div className="mt-6">
-        <h2 className="font-semibold text-primary text-sm sm:text-base mb-3">Thông số nổi bật</h2>
+        <h2 className="font-semibold text-primary text-sm sm:text-base mb-3">
+          Thông số nổi bật
+        </h2>
         <div className="grid grid-cols-3 sm:flex sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
-          {highlights.map((highlight, index) => {
-            const IconComponent = highlight?.icon
-              ? iconMap[highlight.icon]
-              : null;
-            return (
-              <div className="flex flex-col" key={index}>
-                <span className="text-xs text-neutral-dark">{highlight?.name || "N/A"}</span>
-                <div className="flex items-center gap-1.5 mt-1">
-                  {IconComponent && <IconComponent size={18} className="shrink-0" />}
-                  <span className="text-sm font-semibold text-primary leading-tight">{highlight?.value || "N/A"}</span>
-                </div>
+          {highlights.map((highlight, index) => (
+            <div className="flex flex-col" key={index}>
+              <span className="text-xs text-neutral-dark">
+                {highlight?.name || "N/A"}
+              </span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <HighlightIcon icon={highlight?.icon ?? "default"} />
+                <span className="text-sm font-semibold text-primary leading-tight">
+                  {highlight?.value || "N/A"}
+                </span>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     ) : null;
+  highlights.length > 0 ? (
+    <div className="mt-6">
+      <h2 className="font-semibold text-primary text-sm sm:text-base mb-3">
+        Thông số nổi bật
+      </h2>
+      <div className="grid grid-cols-3 sm:flex sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
+        {highlights.map((highlight, index) => {
+          const IconComponent = highlight?.icon
+            ? iconMap[highlight.icon]
+            : null;
+          return (
+            <div className="flex flex-col" key={index}>
+              <span className="text-xs text-neutral-dark">
+                {highlight?.name || "N/A"}
+              </span>
+              <div className="flex items-center gap-1.5 mt-1">
+                {IconComponent && (
+                  <IconComponent size={18} className="shrink-0" />
+                )}
+                <span className="text-sm font-semibold text-primary leading-tight">
+                  {highlight?.value || "N/A"}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  ) : null;
 
   /** Khối Chính sách sản phẩm — dùng lại ở mobile */
   const PoliciesBlock = () => (
     <div className="mt-5">
       <div className="flex justify-between items-center gap-2 mb-3">
-        <h2 className="text-sm sm:text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-        <button className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">Tìm hiểu thêm</button>
+        <h2 className="text-sm sm:text-base font-semibold text-primary">
+          Chính sách sản phẩm
+        </h2>
+        <button className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">
+          Tìm hiểu thêm
+        </button>
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
