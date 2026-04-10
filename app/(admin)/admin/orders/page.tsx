@@ -123,7 +123,26 @@ export default function OrdersPage() {
             dateFrom: dateFrom || undefined,
             dateTo: dateTo || undefined,
          });
-         setOrders(res.data);
+         const sorted =
+            activeTab === "PENDING"
+               ? [...res.data].sort(
+                    (a, b) =>
+                       new Date(a.orderDate).getTime() -
+                       new Date(b.orderDate).getTime(),
+                 )
+               : activeTab === "ALL"
+                 ? [
+                      ...res.data
+                         .filter((o) => o.orderStatus === "PENDING")
+                         .sort(
+                            (a, b) =>
+                               new Date(a.orderDate).getTime() -
+                               new Date(b.orderDate).getTime(),
+                         ),
+                      ...res.data.filter((o) => o.orderStatus !== "PENDING"),
+                   ]
+                 : res.data;
+         setOrders(sorted);
          setMeta(res.meta);
       } catch (e: any) {
          setError(e?.message ?? "Không thể tải danh sách đơn hàng");
