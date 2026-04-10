@@ -55,12 +55,10 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
    * - desktop (>= lg): hiện khi hero section khuất khỏi viewport
    */
   const [heroHidden, setHeroHidden] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false));
 
-  // Detect mobile/desktop
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
-    setIsMobile(mq.matches);
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);

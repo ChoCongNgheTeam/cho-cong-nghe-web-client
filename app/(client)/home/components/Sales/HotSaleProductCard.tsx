@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FeaturedProduct } from "../../_libs";
-import { HighlightIcon } from "../../common/HighlightIcon";
+import { FeaturedProduct } from "../../types";
+import { HighlightIcon } from "../../../../components/product/HighlightIcon";
 import { formatVND } from "@/helpers";
 import { memo } from "react";
 import { StarRating } from "@/components/product/StarRating";

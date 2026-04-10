@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Banner } from "../../_libs";
+import type { Banner } from "../../types";
 import { Slidezy } from "@/components/Slider";
 
 interface BannersSection1Props {
@@ -34,7 +34,7 @@ export function BannersSection1({ banners }: BannersSection1Props) {
                 {banner.imageUrl && (
                   <Image
                     src={banner.imageUrl}
-                    alt={banner.title}
+                    alt={banner.title ?? ""}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover object-center md:object-[center_40%] transition-transform duration-700 group-hover:scale-105"

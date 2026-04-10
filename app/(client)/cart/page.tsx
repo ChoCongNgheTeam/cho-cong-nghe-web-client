@@ -14,6 +14,7 @@ import { formatVND } from "@/helpers";
 import { useToasty } from "@/components/Toast";
 import CartBottomBar from "./components/CartBottomMobile";
 import CartVariantSelector from "./components/CartVariantSelector";
+import PageLoader from "@/components/shared/PageLoader";
 
 export default function CartPage() {
   const router = useRouter();
@@ -221,16 +222,7 @@ export default function CartPage() {
 
   // ── Loading ──────────────────────────────────────────────────────────────
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-light">
-        <div className="text-center">
-          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-neutral border-t-accent" />
-          <p className="text-neutral-darker">Đang tải giỏ hàng...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <PageLoader message="Đang tải giỏ hàng..." />;
 
   // ── Render ───────────────────────────────────────────────────────────────
 

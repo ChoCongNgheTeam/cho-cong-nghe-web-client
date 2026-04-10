@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
-import { Slider } from "../../_libs";
+import { Slider } from "../../types";
 
 interface HomeSliderProps {
   sliders: Slider[];
@@ -239,7 +239,18 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         <Link key={`img-${current}`} href={slide.linkUrl ?? "#"} className="relative h-[78%] block" style={imgStyle}>
           <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] aspect-square rounded-full border border-accent/20" />
           <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[112%] aspect-square rounded-full border border-accent/10" />
-          {slide.imageUrl && <Image src={slide.imageUrl} alt={slide.title} fill sizes="(max-width: 768px) 90vw, 45vw" className="object-contain object-center" quality={80} priority={current === 0} />}
+          {slide.imageUrl && (
+            <Image
+              src={slide.imageUrl}
+              alt={slide.title ?? ""}
+              fill
+              sizes="(max-width: 768px) 90vw, 45vw"
+              className="object-contain object-center"
+              quality={80}
+              priority={current === 0}
+              loading={current === 0 ? "eager" : "lazy"}
+            />
+          )}
         </Link>
       </div>
 

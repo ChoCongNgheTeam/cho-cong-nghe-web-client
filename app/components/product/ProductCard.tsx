@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import WishlistHeart from "@/components/shared/WishlistHeart";
-import { HighlightIcon } from "@/(client)/home/common/HighlightIcon";
+import { HighlightIcon } from "@/components/product/HighlightIcon";
 import { Product } from "./types";
 import Badge from "../ui/Badge";
 import { formatVND } from "@/helpers";

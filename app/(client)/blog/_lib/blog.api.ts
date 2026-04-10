@@ -1,5 +1,4 @@
 import apiRequest from "@/lib/api";
-import { getBlogTypeLabel } from "./blog-category";
 import { Blog, BlogDetail, BlogListResponse, BlogStatus, BlogType } from "../types/blog.type";
 
 type ApiResponseBase = {
