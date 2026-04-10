@@ -2,65 +2,10 @@
 import { useEffect, useState, useCallback } from "react";
 import RatingSummary from "./Ratingsummary";
 import CommentSection from "./Commentsection";
-import apiRequest from "@/lib/api";
 import { ProductDetail } from "@/lib/types/product";
+import { reviewApi, Comment, Reply } from "../_lib/review";
 
 // ── Types ──────────────────────────────────────────────────────────
-export interface CommentUser {
-  id: string;
-  fullName: string;
-  email?: string;
-  avatarImage?: string;
-}
-
-export interface Reply {
-  id: string;
-  userId: string;
-  content: string;
-  targetType: string;
-  targetId: string;
-  isApproved: boolean;
-  createdAt: string;
-  user: CommentUser;
-  replies?: Reply[];
-  _repliesCount?: number;
-}
-
-export interface Comment {
-  id: string;
-  userId: string;
-  content: string;
-  targetType: "PRODUCT" | "BLOG" | "PAGE";
-  targetId: string;
-  isApproved: boolean;
-  createdAt: string;
-  user: CommentUser;
-  replies?: Reply[];
-  _repliesCount?: number;
-}
-
-interface CommentApiResponse {
-  data: Comment[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  message: string;
-}
-
-interface ReplyApiResponse {
-  data: Reply[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  message: string;
-}
-
 interface ProductReviewProps {
   productId: string;
   rating: {
@@ -73,52 +18,65 @@ interface ProductReviewProps {
   currentVariant?: { name?: string; [key: string]: any };
 }
 
-// ── Component ─────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────
+function buildTree(flatList: Comment[]): Comment[] {
+  type RawItem = Comment & { parentId?: string };
+  const raw = flatList as RawItem[];
+
+  const map = new Map<string, RawItem>();
+  const roots: RawItem[] = [];
+
+  raw.forEach((item) => {
+    map.set(item.id, { ...item, replies: [], _repliesCount: 0 });
+  });
+
+  raw.forEach((item) => {
+    const node = map.get(item.id)!;
+    if (item.parentId && map.has(item.parentId)) {
+      const parent = map.get(item.parentId)!;
+      parent.replies = [...(parent.replies ?? []), node];
+      parent._repliesCount = (parent._repliesCount ?? 0) + 1;
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
+}
+
+// ── Component ──────────────────────────────────────────────────────
 export default function ProductReview({
   productId,
   rating,
   slug,
   product,
-  currentVariant
+  currentVariant,
 }: ProductReviewProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // ── Fetch comments ─────────────────────────────────────────────
   const fetchComments = useCallback(async () => {
-  if (!productId) return;
-  setLoading(true);
-  try {
-    const result = await apiRequest.get<CommentApiResponse>("/comments", {
-      params: { 
-        targetType: "PRODUCT", 
-        targetId: productId, 
-        limit: 50 
-        // Đừng gửi filter isApproved ở đây, hãy để Server tự lọc theo UserID
-      },
-    });
+    if (!productId) return;
+    setLoading(true);
+    try {
+      const result = await reviewApi.getComments(productId);
+      const relevant = (result?.data ?? []).filter(
+        (c) => c.targetId === productId,
+      );
+      setComments(buildTree(relevant));
+    } catch (error) {
+      console.error("Lỗi khi lấy comment:", error);
+      setComments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
 
-    // CHỈ LỌC THEO productId, KHÔNG LỌC isApproved Ở ĐÂY
-    // Server trả về comment "chờ duyệt" của chính User đó nếu họ đang login
-    const allRelevantComments = (result?.data ?? []).filter(
-      (c) => c.targetId === productId
-    );
-
-    const tree = buildTree(allRelevantComments);
-    setComments(tree);
-  } catch (error) {
-    console.error("Lỗi khi lấy comment:", error);
-    setComments([]);
-  } finally {
-    setLoading(false);
-  }
-}, [productId]);
-
-  // Fetch replies for a top-level comment
+  // ── Fetch replies ──────────────────────────────────────────────
   const fetchReplies = useCallback(async (commentId: string) => {
     try {
-      const result = await apiRequest.get<ReplyApiResponse>(
-        `/comments/${commentId}/replies`,
-      );
+      const result = await reviewApi.getReplies(commentId);
       const replies = result?.data ?? [];
       setComments((prev) =>
         prev.map((c) =>
@@ -132,13 +90,11 @@ export default function ProductReview({
     }
   }, []);
 
-  // Fetch nested replies (reply của reply)
+  // ── Fetch nested replies ───────────────────────────────────────
   const fetchNestedReplies = useCallback(
     async (replyId: string, parentCommentId: string) => {
       try {
-        const result = await apiRequest.get<ReplyApiResponse>(
-          `/comments/${replyId}/replies`,
-        );
+        const result = await reviewApi.getReplies(replyId);
         const replies = result?.data ?? [];
         setComments((prev) =>
           prev.map((c) =>
@@ -147,11 +103,7 @@ export default function ProductReview({
                   ...c,
                   replies: c.replies?.map((r) =>
                     r.id === replyId
-                      ? {
-                          ...r,
-                          replies,
-                          _repliesCount: replies.length,
-                        }
+                      ? { ...r, replies, _repliesCount: replies.length }
                       : r,
                   ),
                 }
@@ -164,79 +116,42 @@ export default function ProductReview({
     },
     [],
   );
-const handleCommentSubmit = useCallback(
-  async (content: string) => {
-    // 1. Hứng kết quả từ API
-    const response = await apiRequest.post<any>("/comments", {
-      content,
-      targetType: "PRODUCT",
-      targetId: productId,
-    });
-    
-    // 2. Fetch lại danh sách 
-    await fetchComments();
 
-    // 3. QUAN TRỌNG: Trả kết quả về cho Component con
-    // Giả sử server trả về { data: { isApproved: false } } hoặc tương tự
-    return response?.data || response; 
-  },
-  [productId, fetchComments],
-);
+  // ── Submit comment ─────────────────────────────────────────────
+  const handleCommentSubmit = useCallback(
+    async (content: string) => {
+      const response = await reviewApi.postComment(productId, content);
+      await fetchComments();
+      return response?.data || response;
+    },
+    [productId, fetchComments],
+  );
 
-  // Submit reply (có parentId)
-const handleReplySubmit = useCallback(
-  async (parentId: string, content: string) => {
-    const response = await apiRequest.post<any>("/comments", {
-      content,
-      targetType: "PRODUCT",
-      targetId: productId,
-      parentId,
-    });
-    
-    await fetchReplies(parentId);
-
-    // QUAN TRỌNG: Trả kết quả về
-    return response?.data || response;
-  },
-  [productId, fetchReplies],
-);
-
-  function buildTree(flatList: Comment[]): Comment[] {
-    // Thêm parentId vào type để dùng được
-    type RawItem = Comment & { parentId?: string };
-    const raw = flatList as RawItem[];
-
-    const map = new Map<string, RawItem>();
-    const roots: RawItem[] = [];
-
-    raw.forEach((item) => {
-      map.set(item.id, { ...item, replies: [], _repliesCount: 0 });
-    });
-
-    raw.forEach((item) => {
-      const node = map.get(item.id)!;
-      if (item.parentId && map.has(item.parentId)) {
-        const parent = map.get(item.parentId)!;
-        parent.replies = [...(parent.replies ?? []), node];
-        parent._repliesCount = (parent._repliesCount ?? 0) + 1;
-      } else {
-        roots.push(node);
-      }
-    });
-
-    return roots;
-  }
+  // ── Submit reply ───────────────────────────────────────────────
+  const handleReplySubmit = useCallback(
+    async (parentId: string, content: string) => {
+      const response = await reviewApi.postReply(productId, parentId, content);
+      await fetchReplies(parentId);
+      return response?.data || response;
+    },
+    [productId, fetchReplies],
+  );
 
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
 
   return (
-    <div className=" ">
-      <div className="bg-neutral-light   py-6 sm:py-4 lg:py-6 rounded-lg px-6">
-        <RatingSummary rating={rating} slug={slug} product = {product} currentVariant={currentVariant}/>
+    <div>
+      <div className="bg-neutral-light py-6 sm:py-4 lg:py-6 rounded-lg px-6">
+        <RatingSummary
+          rating={rating}
+          slug={slug}
+          product={product}
+          currentVariant={currentVariant}
+        />
       </div>
-      <div className="bg-neutral-light   py-6 sm:py-4 lg:py-6 rounded-lg px-6 mt-6">
+      <div className="bg-neutral-light py-6 sm:py-4 lg:py-6 rounded-lg px-6 mt-6">
         <CommentSection
           productId={productId}
           comments={comments}
