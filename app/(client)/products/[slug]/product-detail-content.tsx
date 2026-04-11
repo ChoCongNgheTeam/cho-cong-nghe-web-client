@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
 import ProductDetailRight from "../components/product-detail/product-detail-card-right";
@@ -22,10 +23,27 @@ interface ProductDetailContentProps {
   slug: string;
 }
 
+/**
+ * Đọc selectedOptions từ availableOptions.
+ * Hoạt động với mọi mode:
+ *   - bundle (type="bundle", value=variantId): lấy value của item có selected=true
+ *   - individual (type="color"|"storage"...): lấy value của item có selected=true hoặc [0]
+ */
+function initSelectedOptions(availableOptions: VariantOption[]): Record<string, string> {
+  const init: Record<string, string> = {};
+  for (const opt of availableOptions) {
+    const defaultVal = opt.values?.find((v) => v.selected) ?? opt.values?.[0];
+    if (defaultVal) init[opt.type] = defaultVal.value;
+  }
+  return init;
+}
+
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
   const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, showStickyHeader, activeTab, scrollToSection, layoutChangingRef } = useProductSections();
 
   const tabBarRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!tabBarRef.current) return;
@@ -34,26 +52,51 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   }, [activeTab]);
 
   /* ── Variant state ── */
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    (product.availableOptions as VariantOption[])?.forEach((opt) => {
-      const defaultVal = opt.values?.find((v) => v.selected) ?? opt.values?.[0];
-      if (defaultVal) init[opt.type] = defaultVal.value;
-    });
-    return init;
-  });
-  const [availableOptions, setAvailableOptions] = useState<VariantOption[]>(
-    (product.availableOptions as VariantOption[]) || [], // Lỗi 2
-  );
-
-  const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(
-    product.currentVariant as unknown as ProductVariant, // Lỗi 3
-  );
-
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => initSelectedOptions((product.availableOptions as VariantOption[]) || []));
+  const [availableOptions, setAvailableOptions] = useState<VariantOption[]>((product.availableOptions as VariantOption[]) || []);
+  const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(product.currentVariant as unknown as ProductVariant);
   const [variantImages, setVariantImages] = useState<{ imageUrl: string }[]>(product.currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) || []);
   const [price, setPrice] = useState<ProductPrice | undefined>(product.price);
   const [quantity, setQuantity] = useState(1);
 
+  /* ─────────────────────────────────────────────────────────────────────────
+   * FIX A: Đọc ?bundle từ URL khi mount → gọi API load đúng variant.
+   * Sau đó xóa ?bundle khỏi URL (window.history.replaceState) để URL sạch:
+   *   BEFORE: /products/samsung-galaxy-s25-ultra-5g?bundle=ec8f095a-...
+   *   AFTER:  /products/samsung-galaxy-s25-ultra-5g
+   * ───────────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    const bundleId = searchParams.get("bundle");
+
+    const cleanUrl = () => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("bundle");
+      const newUrl = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      window.history.replaceState(null, "", newUrl);
+    };
+
+    if (!bundleId) return;
+
+    if (bundleId === product.currentVariant?.id) {
+      // SSR đã load đúng variant → chỉ cần clean URL
+      cleanUrl();
+      return;
+    }
+
+    fetchVariantByParams({ bundle: bundleId }).then(cleanUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * FIX B: Sync selectedOptions từ availableOptions trả về (có selected flag).
+   *
+   * Trước: sync từ variant.color / variant.storage / variant.ram
+   *   → bỏ sót type="bundle" vì bundle value là variantId, không phải attribute
+   *
+   * Sau: dùng initSelectedOptions(data.availableOptions) — BE đã set
+   *   selected=true cho đúng item trong mọi mode (bundle, color, storage...)
+   *   → "Phiên bản" selector tự highlight đúng 12GB/1TB
+   * ───────────────────────────────────────────────────────────────────────── */
   const fetchVariantByParams = async (params: Record<string, string>) => {
     try {
       const data = await getProductVariant(product.slug, params);
@@ -63,17 +106,10 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
       setPrice(data.price);
       setQuantity(1);
 
-      const variant = data.currentVariant;
-      const newOptions: Record<string, string> = {};
-      if (variant?.color) newOptions["color"] = variant.color;
-      if (variant?.storage) newOptions["storage"] = variant.storage as string;
-      if (variant?.ram) newOptions["ram"] = variant.ram as string;
-      if (!newOptions["storage"] && variant?.code) {
-        const storageMatch = variant.code.match(/(\d+GB)/i);
-        if (storageMatch) newOptions["storage"] = storageMatch[1].toLowerCase();
-      }
+      // Đọc selectedOptions từ availableOptions mới thay vì từ variant attributes
+      const newOptions = initSelectedOptions(data.availableOptions as VariantOption[]);
       if (Object.keys(newOptions).length) {
-        setSelectedOptions((prev) => ({ ...prev, ...newOptions }));
+        setSelectedOptions(newOptions);
       }
     } catch (error) {
       console.error("Error fetching variant:", error);
@@ -83,7 +119,13 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   const handleOptionChange = async (type: string, value: string) => {
     const newOptions = { ...selectedOptions, [type]: value };
     setSelectedOptions(newOptions);
-    await fetchVariantByParams(newOptions);
+
+    if (type === "bundle") {
+      // Bundle mode: value chính là variantId → gọi thẳng bundle param
+      await fetchVariantByParams({ bundle: value });
+    } else {
+      await fetchVariantByParams(newOptions);
+    }
   };
 
   const handleColorChangeFromGallery = async (variantId: string) => {

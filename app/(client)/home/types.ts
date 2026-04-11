@@ -81,6 +81,7 @@ export interface FeaturedProduct {
   name: string;
   priceOrigin: number;
   slug: string;
+  variantId?: string;
   thumbnail: string | null;
   createdAt: string;
   rating: ProductRating;

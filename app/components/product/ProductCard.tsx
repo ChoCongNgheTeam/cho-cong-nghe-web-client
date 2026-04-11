@@ -21,11 +21,14 @@ export default function ProductCard({ product }: ProductCardProps) {
   const highlights = product.highlights ?? [];
   const hasHighlights = highlights.length > 0;
 
+  // ── Build URL: nếu có variantId → trỏ thẳng vào variant đó ──
+  // ?bundle=<variantId> là query param mà detail page dùng để gọi
+  // GET /products/slug/:slug/variant?bundle=<id>
+  // Tránh user vào detail thấy defaultVariant (5%) thay vì variant trên card (15%)
+  const productUrl = product.variantId ? `/products/${product.slug}?bundle=${product.variantId}` : `/products/${product.slug}`;
+
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className="group relative flex flex-col h-full bg-neutral-light border border-neutral-100 hover:shadow-md rounded-xl py-2 px-2 xs:py-3 xs:px-2.5 sm:py-4 sm:px-3"
-    >
+    <Link href={productUrl} className="group relative flex flex-col h-full bg-neutral-light border border-neutral-100 hover:shadow-md rounded-xl py-2 px-2 xs:py-3 xs:px-2.5 sm:py-4 sm:px-3">
       {hasPromotion && <Badge discountPercent={discountPercentage} className="-top-3 -left-3" />}
 
       <div className="flex flex-row items-start gap-2 pb-3 mt-4 shrink-0 h-[140px] xs:h-[150px] sm:h-[160px] overflow-hidden">
@@ -84,11 +87,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <div className="mt-auto px-1 flex justify-between items-center">
-          {/* Rating - 5 ngôi sao hỗ trợ half star */}
+          {/* Rating */}
           <div className="flex items-center gap-1">
             {product.rating?.count > 0 ? (
               <>
-                {/* Desktop: 5 sao đầy đủ */}
                 <div className="hidden sm:flex text-yellow-400 text-sm">
                   {[1, 2, 3, 4, 5].map((star) => {
                     const rating = product.rating.average;
@@ -117,24 +119,19 @@ export default function ProductCard({ product }: ProductCardProps) {
                     }
                   })}
                 </div>
-
-                {/* Mobile: chỉ 1 sao */}
                 <span className="sm:hidden text-yellow-400 text-sm leading-none">★</span>
-
                 <span className="text-[12px] font-semibold text-neutral-600 ml-1">{product.rating.average.toFixed(1)}</span>
               </>
             ) : (
-              /* Desktop mới hiện "Chưa có đánh giá", mobile ẩn */
               <span className="hidden sm:inline text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
             )}
           </div>
 
-          {/* Wishlist - Heart kế bên chữ "Yêu thích" */}
+          {/* Wishlist */}
           <div className="flex items-center gap-2 group/fav cursor-pointer">
             <div className="w-5 h-5 flex items-center justify-center">
               <WishlistHeart productId={product.id} />
             </div>
-            {/* <span className="text-[13px] text-[#4a90e2] font-medium transition-colors group-hover/fav:text-blue-600">Yêu thích</span> */}
           </div>
         </div>
       </div>

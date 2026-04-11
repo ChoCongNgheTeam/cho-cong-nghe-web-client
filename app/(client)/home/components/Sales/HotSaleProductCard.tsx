@@ -11,7 +11,6 @@ import { thumbnailUrl } from "@/helpers/resizeImage";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 
-// Design token — đỏ ấm, không phải đỏ cảnh báo
 const BRAND_RED = "#e63946";
 
 interface FlashPromoRule {
@@ -27,10 +26,6 @@ interface HotSaleProductCardProps {
   flashPromoRule?: FlashPromoRule | null;
   isUpcoming?: boolean;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function calcPreviewPrice(product: FeaturedProduct, rule: FlashPromoRule | null | undefined): number | null {
   if (!rule?.discountValue) return null;
@@ -50,22 +45,19 @@ function calcDiscountLabel(product: FeaturedProduct, rule: FlashPromoRule | null
   return null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
-
 const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0, flashPromoRule, isUpcoming = false }: HotSaleProductCardProps) {
   const previewPrice = calcPreviewPrice(product, flashPromoRule);
   const discountLabel = calcDiscountLabel(product, flashPromoRule, previewPrice);
-
   const finalPrice = previewPrice ?? (product.price.hasPromotion ? product.price.final : product.price.base);
-
   const showStrikethrough = (flashPromoRule != null && previewPrice != null) || product.price.hasPromotion;
-
   const hasHighlights = product.highlights?.length > 0;
 
   const router = useRouter();
   const { addToCart } = useCart();
+
+  // ── Build URL với variantId ──────────────────────────────────────────────
+  // Đảm bảo detail page load đúng variant (và giá) mà card đang hiển thị
+  const productUrl = product.variantId ? `/products/${product.slug}?bundle=${product.variantId}` : `/products/${product.slug}`;
 
   const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -87,22 +79,22 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
       });
       router.push("/cart");
     } catch {
-      router.push(`/products/${product.slug}`);
+      // Fallback: navigate đến đúng variant thay vì product slug chung
+      router.push(productUrl);
     }
   };
 
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={productUrl} // ← SỬA: dùng productUrl thay vì `/products/${product.slug}`
       className="group relative flex flex-col rounded-xl overflow-hidden select-none h-full border-neutral-100 hover:shadow-md"
       style={{
         backgroundColor: "rgb(var(--neutral-light))",
         animationDelay: `${index * 0.08}s`,
       }}
     >
-      {/* ── Section 1: Image + Highlights (fixed height) ── */}
-      <div className="flex flex-row items-stretch gap-2 px-2.5 pt-3 pb-1.5 h-[180px] sm:h-[200px]  shrink-0 overflow-hidden">
-        {/* Image */}
+      {/* ── Section 1: Image + Highlights ── */}
+      <div className="flex flex-row items-stretch gap-2 px-2.5 pt-3 pb-1.5 h-[180px] sm:h-[200px] shrink-0 overflow-hidden">
         <div className="w-2/3 shrink-0 flex items-center overflow-hidden">
           <div className="relative w-full aspect-square">
             {product.thumbnail ? (
@@ -114,13 +106,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
                 sizes="(max-width: 400px) 45vw, (max-width: 640px) 35vw, 160px"
               />
             ) : (
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg"
-                style={{
-                  color: "rgb(var(--neutral-dark))",
-                  backgroundColor: "rgb(var(--neutral))",
-                }}
-              >
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg" style={{ color: "rgb(var(--neutral-dark))", backgroundColor: "rgb(var(--neutral))" }}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
                   <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
@@ -131,7 +117,6 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
           </div>
         </div>
 
-        {/* Highlights */}
         <div className="w-1/3 flex flex-col justify-around gap-1 overflow-hidden">
           {hasHighlights ? (
             product.highlights.map((highlight) => (
@@ -159,28 +144,22 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
           <span className="font-bold leading-tight" style={{ fontSize: "clamp(11px, 3.5vw, 15px)", color: "#fff" }}>
             {isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}
           </span>
-
           {showStrikethrough && (
             <span className="line-through leading-none" style={{ fontSize: "clamp(9px, 2.5vw, 11px)", color: "rgba(255,255,255,0.65)" }}>
               {formatVND(product.price.base)}
             </span>
           )}
-
           {discountLabel && (
             <span
               className="self-start text-[10px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.2)",
-                color: "#fff",
-                border: "1px solid rgba(255,255,255,0.4)",
-              }}
+              style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)" }}
             >
               {isUpcoming ? "-XX%" : discountLabel}
             </span>
           )}
         </div>
 
-        {/* Tablet / Desktop */}
+        {/* Desktop */}
         <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex flex-col flex-1 gap-1">
             <span className="font-bold leading-tight text-lg" style={{ color: "#fff" }}>
@@ -192,15 +171,10 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
               </span>
             )}
           </div>
-
           {discountLabel && (
             <span
               className="shrink-0 text-[11px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap self-start"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.2)",
-                color: "#fff",
-                border: "1px solid rgba(255,255,255,0.4)",
-              }}
+              style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)" }}
             >
               {isUpcoming ? "-XX%" : discountLabel}
             </span>
@@ -228,10 +202,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
           <button
             onClick={handleBuyNow}
             className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold border cursor-pointer transition-colors"
-            style={{
-              color: BRAND_RED,
-              borderColor: BRAND_RED,
-            }}
+            style={{ color: BRAND_RED, borderColor: BRAND_RED }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.background = BRAND_RED;
               (e.currentTarget as HTMLButtonElement).style.color = "#fff";

@@ -1,46 +1,47 @@
 export interface ProductHighlight {
-   key: string;
-   name: string;
-   icon: string;
-   value: string;
+  key: string;
+  name: string;
+  icon: string;
+  value: string;
 }
 
 export interface ProductPrice {
-   base: number;
-   final: number;
-   discountAmount: number;
-   discountPercentage: number;
-   hasPromotion: boolean;
+  base: number;
+  final: number;
+  discountAmount: number;
+  discountPercentage: number;
+  hasPromotion: boolean;
 }
 
 export interface ProductRating {
-   average: number;
-   count: number;
+  average: number;
+  count: number;
 }
 
 export interface Product {
-   id: string;
-   name: string;
-   priceOrigin: number;
-   slug: string;
-   thumbnail: string;
-   rating: ProductRating;
-   isNew?: boolean;
-   highlights?: ProductHighlight[]; // optional — wishlist không trả về
-   inStock: boolean;
-   price: ProductPrice;
-   isWishlist?: boolean;
-   isFeatured?: boolean;
+  id: string;
+  name: string;
+  priceOrigin: number;
+  slug: string;
+  variantId?: string;
+  thumbnail: string;
+  rating: ProductRating;
+  isNew?: boolean;
+  highlights?: ProductHighlight[]; // optional — wishlist không trả về
+  inStock: boolean;
+  price: ProductPrice;
+  isWishlist?: boolean;
+  isFeatured?: boolean;
 }
 
 export interface Pagination {
-   page: number;
-   limit: number;
-   total: number;
-   totalPages: number;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface PageProps {
-   params: Promise<{ slug: string }>;
-   searchParams: Promise<{ page?: string }>;
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
