@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import type { Order, OrderStatus, PaymentStatus } from "./order.types";
-import { cancelOrder, getAllOrders } from "./_libs/orders";
+import { cancelOrder, getAllOrders, updatePaymentStatus } from "./_libs/orders";
 import { STATUS_TABS } from "./const";
 import {
    OrderStatusCell,
@@ -213,17 +213,29 @@ export default function OrdersPage() {
    const hasDateFilter = !!dateFrom || !!dateTo;
 
    const handleStatusChange = useCallback(
-      (orderId: string, newStatus: OrderStatus) => {
+      async (orderId: string, newStatus: OrderStatus) => {
          setOrders((prev) =>
             prev.map((o) =>
                o.id === orderId ? { ...o, orderStatus: newStatus } : o,
             ),
          );
+         // Tự động chuyển thanh toán → PAID khi đơn hoàn tất
+         if (newStatus === "DELIVERED") {
+            try {
+               await updatePaymentStatus(orderId, "PAID");
+               setOrders((prev) =>
+                  prev.map((o) =>
+                     o.id === orderId ? { ...o, paymentStatus: "PAID" } : o,
+                  ),
+               );
+            } catch {
+               // silent — trạng thái sẽ đồng bộ lại khi refetch
+            }
+         }
       },
       [],
    );
 
-   // ✅ Fix type: dùng PaymentStatus thay vì string
    const handlePaymentStatusChange = useCallback(
       (orderId: string, newPaymentStatus: PaymentStatus) => {
          setOrders((prev) =>

@@ -66,7 +66,6 @@ interface OrderSummary {
    itemCount?: number;
 }
 
-// Extended User với stats đơn hàng (dùng cho sort client-side)
 interface UserWithStats extends User {
    orderCount?: number;
    totalSpent?: number;
@@ -213,7 +212,6 @@ function OrderStatusBadge({ status }: { status: string }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // USER ORDER SIDEBAR
-// FIX: Dùng userId string làm key để force re-fetch khi đổi user
 // ─────────────────────────────────────────────────────────────────────────────
 
 function UserOrderSidebarInner({
@@ -229,32 +227,21 @@ function UserOrderSidebarInner({
    const [error, setError] = useState<string | null>(null);
    const sidebarRef = useRef<HTMLDivElement>(null);
 
-   // FIX: Fetch với userId cụ thể — đảm bảo filter đúng user
    useEffect(() => {
       setOrders([]);
       setError(null);
       setLoading(true);
-
       const controller = new AbortController();
-
       const fetchOrders = async () => {
          try {
-            // FIX: Truyền userId vào params để filter đúng
             const res = await apiRequest.get<any>("/orders/admin/all", {
-               params: {
-                  userId: user.id,
-                  limit: 100,
-                  page: 1,
-               },
+               params: { userId: user.id, limit: 100, page: 1 },
                signal: controller.signal,
             });
-
-            // FIX: Lọc thêm client-side phòng API không support userId filter
             const rawData: any[] = res.data ?? [];
             const filtered = rawData.filter(
                (o: any) => !o.userId || o.userId === user.id,
             );
-
             const data: OrderSummary[] = filtered.map((o: any) => ({
                id: o.id,
                orderCode: o.orderCode,
@@ -273,12 +260,10 @@ function UserOrderSidebarInner({
             setLoading(false);
          }
       };
-
       fetchOrders();
       return () => controller.abort();
-   }, [user.id]); // FIX: Chỉ phụ thuộc user.id — đảm bảo re-fetch mỗi khi đổi user
+   }, [user.id]);
 
-   // Đóng khi click ra ngoài
    useEffect(() => {
       const handleClickOutside = (e: MouseEvent) => {
          if (
@@ -296,7 +281,6 @@ function UserOrderSidebarInner({
          document.removeEventListener("mousedown", handleClickOutside);
    }, [onClose]);
 
-   // Đóng khi nhấn Escape
    useEffect(() => {
       const handleKey = (e: KeyboardEvent) => {
          if (e.key === "Escape") onClose();
@@ -309,18 +293,14 @@ function UserOrderSidebarInner({
 
    return (
       <>
-         {/* Overlay */}
          <div
             className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 opacity-100 pointer-events-auto"
             onClick={onClose}
          />
-
-         {/* Sidebar */}
          <div
             ref={sidebarRef}
             className="fixed top-0 right-0 z-50 h-full w-[420px] max-w-[95vw] bg-neutral-light border-l border-neutral shadow-2xl flex flex-col transition-transform duration-300 ease-out translate-x-0"
          >
-            {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-neutral bg-neutral-light shrink-0">
                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center shrink-0 overflow-hidden">
@@ -351,7 +331,6 @@ function UserOrderSidebarInner({
                </button>
             </div>
 
-            {/* Sub-header */}
             <div className="px-5 py-3 border-b border-neutral bg-neutral-light-active/40 flex items-center justify-between shrink-0">
                <div className="flex items-center gap-2">
                   <Package size={14} className="text-primary/60" />
@@ -373,7 +352,6 @@ function UserOrderSidebarInner({
                )}
             </div>
 
-            {/* Body */}
             <div className="flex-1 overflow-y-auto">
                {loading ? (
                   <div className="flex flex-col items-center justify-center h-48 gap-3">
@@ -408,7 +386,6 @@ function UserOrderSidebarInner({
                               className="px-5 py-4 hover:bg-neutral-light-active/50 transition-colors group"
                            >
                               <div className="flex items-start justify-between gap-2">
-                                 {/* Left */}
                                  <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5 mb-1.5">
                                        <span className="text-[12px] font-semibold text-primary font-mono">
@@ -426,7 +403,6 @@ function UserOrderSidebarInner({
                                           <ExternalLink size={11} />
                                        </button>
                                     </div>
-
                                     <div className="flex items-center gap-2 mb-2">
                                        <span className="text-[11px] text-primary/50">
                                           {formatOrderDate(order.orderDate)}
@@ -442,7 +418,6 @@ function UserOrderSidebarInner({
                                           </>
                                        )}
                                     </div>
-
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                        <OrderStatusBadge
                                           status={order.orderStatus}
@@ -456,8 +431,6 @@ function UserOrderSidebarInner({
                                        )}
                                     </div>
                                  </div>
-
-                                 {/* Right */}
                                  <div className="flex flex-col items-end gap-1 shrink-0">
                                     <span className="text-[13px] font-semibold text-primary">
                                        {formatCurrency(order.totalAmount)}
@@ -481,7 +454,6 @@ function UserOrderSidebarInner({
                )}
             </div>
 
-            {/* Footer */}
             {!loading && orders.length > 0 && (
                <div className="px-5 py-3 border-t border-neutral shrink-0 bg-neutral-light">
                   <div className="flex items-center justify-between text-[11px] text-primary/50">
@@ -497,7 +469,6 @@ function UserOrderSidebarInner({
    );
 }
 
-// FIX: Wrapper dùng key={user.id} để force remount + re-fetch khi đổi user
 function UserOrderSidebar({
    user,
    onClose,
@@ -506,13 +477,7 @@ function UserOrderSidebar({
    onClose: () => void;
 }) {
    if (!user) return null;
-   return (
-      <UserOrderSidebarInner
-         key={user.id} // ← KEY FIX: Force unmount/remount khi đổi user
-         user={user}
-         onClose={onClose}
-      />
-   );
+   return <UserOrderSidebarInner key={user.id} user={user} onClose={onClose} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -592,11 +557,7 @@ export default function UserPage() {
    const [error, setError] = useState<string | null>(null);
    const [loadingId, setLoadingId] = useState<string | null>(null);
    const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-
-   // Stats loading — dùng cho sort orderCount/totalSpent
    const [statsLoading, setStatsLoading] = useState(false);
-
-   // ── Sidebar state
    const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
    const [searchInput, setSearchInput] = useState("");
@@ -615,7 +576,26 @@ export default function UserPage() {
       ADMIN: 0,
    });
 
-   // ── Client-side sort đang active (orderCount / totalSpent)
+   // ── Sort dropdown: fixed positioning ──
+   const sortBtnRef = useRef<HTMLButtonElement>(null);
+   const [sortMenuPos, setSortMenuPos] = useState({
+      top: 0,
+      left: 0,
+      width: 0,
+   });
+
+   const handleSortToggle = () => {
+      if (!showSortMenu && sortBtnRef.current) {
+         const rect = sortBtnRef.current.getBoundingClientRect();
+         setSortMenuPos({
+            top: rect.bottom + 6,
+            left: rect.left,
+            width: rect.width,
+         });
+      }
+      setShowSortMenu((v) => !v);
+   };
+
    const isClientSort = CLIENT_SIDE_SORT_FIELDS.includes(sortField);
 
    const buildQuery = useCallback((): GetUsersQuery => {
@@ -634,7 +614,6 @@ export default function UserPage() {
       return q;
    }, [page, pageSize, sortField, sortDir, search, activeTab, isClientSort]);
 
-   // Fetch order stats cho 1 user
    const fetchUserOrderStats = async (
       userId: string,
    ): Promise<{ orderCount: number; totalSpent: number }> => {
@@ -670,12 +649,10 @@ export default function UserPage() {
                : "CUSTOMER",
          }));
 
-         // Lọc theo date filter
          const filtered = dateFilter
             ? normalized.filter((u) => u.createdAt?.slice(0, 10) === dateFilter)
             : normalized;
 
-         // ── Client-side sort: fetch order stats rồi sort
          if (isClientSort) {
             setStatsLoading(true);
             const statsResults = await Promise.all(
@@ -685,7 +662,6 @@ export default function UserPage() {
                u.orderCount = statsResults[i].orderCount;
                u.totalSpent = statsResults[i].totalSpent;
             });
-
             filtered.sort((a, b) => {
                const fieldA =
                   sortField === "orderCount"
@@ -697,11 +673,8 @@ export default function UserPage() {
                      : (b.totalSpent ?? 0);
                return sortDir === "desc" ? fieldB - fieldA : fieldA - fieldB;
             });
-
-            // Paginate client-side
             const start = (page - 1) * pageSize;
             const paginated = filtered.slice(start, start + pageSize);
-
             setUsers(paginated);
             setTotal(filtered.length);
             setTotalPages(Math.max(Math.ceil(filtered.length / pageSize), 1));
@@ -772,7 +745,6 @@ export default function UserPage() {
          setSortDir((d) => (d === "asc" ? "desc" : "asc"));
       else {
          setSortField(field);
-         // Default: desc cho orderCount/totalSpent, asc cho text fields
          setSortDir(CLIENT_SIDE_SORT_FIELDS.includes(field) ? "desc" : "asc");
       }
       setShowSortMenu(false);
@@ -788,13 +760,11 @@ export default function UserPage() {
       setPage(1);
    };
 
-   // ── Phân quyền
    function isBlockAllowed(u: User): boolean {
       if (u.id === currentUserId) return false;
       if (normalizeRole(u.role) === "ADMIN") return false;
       return currentUserRole === "ADMIN";
    }
-
    function getBlockTitle(u: User): string {
       if (u.id === currentUserId)
          return "Không thể thay đổi trạng thái của chính mình";
@@ -808,12 +778,10 @@ export default function UserPage() {
          ? "Đang hoạt động – nhấn để khóa"
          : "Đã khóa – nhấn để mở";
    }
-
    function isEditAllowed(u: User): boolean {
       if (normalizeRole(u.role) === "ADMIN") return false;
       return currentUserRole === "ADMIN";
    }
-
    function isDeleteAllowed(u: User): boolean {
       if (normalizeRole(u.role) !== "STAFF") return false;
       return currentUserRole === "ADMIN";
@@ -954,7 +922,6 @@ export default function UserPage() {
             </span>
          ),
       },
-      // Hiện cột đơn hàng + chi tiêu khi đang sort theo 2 field này
       ...(isClientSort
          ? [
               {
@@ -1041,15 +1008,12 @@ export default function UserPage() {
             const canEdit = isEditAllowed(row);
             const canDelete = isDeleteAllowed(row);
             const rowRole = normalizeRole(row.role);
-
-            if (rowRole === "ADMIN") {
+            if (rowRole === "ADMIN")
                return (
                   <span className="text-[11px] text-neutral-dark italic">
                      —
                   </span>
                );
-            }
-
             return (
                <div className="flex items-center justify-center gap-1.5">
                   <button
@@ -1067,7 +1031,6 @@ export default function UserPage() {
                   >
                      <Pencil size={14} />
                   </button>
-
                   {rowRole === "STAFF" && (
                      <button
                         onClick={() => {
@@ -1111,6 +1074,93 @@ export default function UserPage() {
             user={selectedUser}
             onClose={() => setSelectedUser(null)}
          />
+
+         {/* ── Sort menu portal — fixed, thoát khỏi mọi overflow ── */}
+         {showSortMenu && (
+            <>
+               {/* Backdrop để đóng menu */}
+               <div
+                  className="fixed inset-0 z-[998]"
+                  onClick={() => setShowSortMenu(false)}
+               />
+
+               {/* Menu — hiện phía TRÊN button bằng translateY(-100%) */}
+               <div
+                  style={{
+                     position: "fixed",
+                     top: sortMenuPos.top,
+                     left: sortMenuPos.left,
+                     width: "208px",
+                     zIndex: 999,
+                  }}
+                  className="bg-neutral-light border border-neutral rounded-xl shadow-xl overflow-hidden"
+               >
+                  {/* Note (để trên cùng vì menu mở ngược) */}
+                  <div className="px-3 py-2 border-b border-neutral bg-amber-50/60">
+                     <p className="text-[10px] text-amber-600 leading-relaxed">
+                        ⚠ Xếp hạng theo hoạt động sẽ tải dữ liệu đơn hàng của
+                        toàn bộ người dùng — có thể mất vài giây.
+                     </p>
+                  </div>
+
+                  {/* Nhóm sort nâng cao */}
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral bg-neutral-light-active/60 flex items-center gap-1.5">
+                     <TrendingUp size={10} />
+                     Xếp hạng theo hoạt động
+                  </div>
+                  {SORT_OPTIONS.filter((o) =>
+                     CLIENT_SIDE_SORT_FIELDS.includes(o.value),
+                  ).map((opt) => (
+                     <button
+                        key={opt.value}
+                        onClick={() => handleSortChange(opt.value)}
+                        className={[
+                           "w-full flex items-center justify-between px-3 py-2 text-[12px] transition-colors cursor-pointer",
+                           sortField === opt.value
+                              ? "bg-accent-light text-accent font-medium"
+                              : "text-primary hover:bg-neutral-light-active",
+                        ].join(" ")}
+                     >
+                        <span className="flex items-center gap-1.5">
+                           {opt.icon}
+                           {opt.label}
+                        </span>
+                        {sortField === opt.value && (
+                           <span className="text-[10px]">
+                              {sortDir === "asc" ? "↑" : "↓"}
+                           </span>
+                        )}
+                     </button>
+                  ))}
+
+                  {/* Nhóm sort thường */}
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-t border-b border-neutral">
+                     Sắp xếp thông thường
+                  </div>
+                  {SORT_OPTIONS.filter(
+                     (o) => !CLIENT_SIDE_SORT_FIELDS.includes(o.value),
+                  ).map((opt) => (
+                     <button
+                        key={opt.value}
+                        onClick={() => handleSortChange(opt.value)}
+                        className={[
+                           "w-full flex items-center justify-between px-3 py-2 text-[12px] transition-colors cursor-pointer",
+                           sortField === opt.value
+                              ? "bg-accent-light text-accent font-medium"
+                              : "text-primary hover:bg-neutral-light-active",
+                        ].join(" ")}
+                     >
+                        {opt.label}
+                        {sortField === opt.value && (
+                           <span className="text-[10px]">
+                              {sortDir === "asc" ? "↑" : "↓"}
+                           </span>
+                        )}
+                     </button>
+                  ))}
+               </div>
+            </>
+         )}
 
          {/* ── Header ── */}
          <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -1222,10 +1272,11 @@ export default function UserPage() {
                   />
                </form>
 
-               {/* Sort dropdown */}
-               <div className="relative shrink-0">
+               {/* ── Sort button — ref để tính vị trí fixed menu ── */}
+               <div className="shrink-0">
                   <button
-                     onClick={() => setShowSortMenu((v) => !v)}
+                     ref={sortBtnRef}
+                     onClick={handleSortToggle}
                      className={[
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap",
                         isClientSort
@@ -1249,74 +1300,6 @@ export default function UserPage() {
                         className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`}
                      />
                   </button>
-
-                  {showSortMenu && (
-                     <div className="absolute left-0 top-full mt-1 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                        {/* Nhóm sort thường */}
-                        <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral">
-                           Sắp xếp thông thường
-                        </div>
-                        {SORT_OPTIONS.filter(
-                           (o) => !CLIENT_SIDE_SORT_FIELDS.includes(o.value),
-                        ).map((opt) => (
-                           <button
-                              key={opt.value}
-                              onClick={() => handleSortChange(opt.value)}
-                              className={[
-                                 "w-full flex items-center justify-between px-3 py-2 text-[12px] transition-colors cursor-pointer",
-                                 sortField === opt.value
-                                    ? "bg-accent-light text-accent font-medium"
-                                    : "text-primary hover:bg-neutral-light-active",
-                              ].join(" ")}
-                           >
-                              {opt.label}
-                              {sortField === opt.value && (
-                                 <span className="text-[10px]">
-                                    {sortDir === "asc" ? "↑" : "↓"}
-                                 </span>
-                              )}
-                           </button>
-                        ))}
-
-                        {/* Nhóm sort nâng cao */}
-                        <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-t border-b border-neutral bg-neutral-light-active/60 flex items-center gap-1.5">
-                           <TrendingUp size={10} />
-                           Xếp hạng theo hoạt động
-                        </div>
-                        {SORT_OPTIONS.filter((o) =>
-                           CLIENT_SIDE_SORT_FIELDS.includes(o.value),
-                        ).map((opt) => (
-                           <button
-                              key={opt.value}
-                              onClick={() => handleSortChange(opt.value)}
-                              className={[
-                                 "w-full flex items-center justify-between px-3 py-2 text-[12px] transition-colors cursor-pointer",
-                                 sortField === opt.value
-                                    ? "bg-accent-light text-accent font-medium"
-                                    : "text-primary hover:bg-neutral-light-active",
-                              ].join(" ")}
-                           >
-                              <span className="flex items-center gap-1.5">
-                                 {opt.icon}
-                                 {opt.label}
-                              </span>
-                              {sortField === opt.value && (
-                                 <span className="text-[10px]">
-                                    {sortDir === "asc" ? "↑" : "↓"}
-                                 </span>
-                              )}
-                           </button>
-                        ))}
-
-                        {/* Note */}
-                        <div className="px-3 py-2 border-t border-neutral bg-amber-50/60">
-                           <p className="text-[10px] text-amber-600 leading-relaxed">
-                              ⚠ Xếp hạng theo hoạt động sẽ tải dữ liệu đơn hàng
-                              của toàn bộ người dùng — có thể mất vài giây.
-                           </p>
-                        </div>
-                     </div>
-                  )}
                </div>
 
                <div className="relative shrink-0">
@@ -1337,7 +1320,6 @@ export default function UserPage() {
 
                <div className="flex-1" />
 
-               {/* Loading indicator khi fetch order stats */}
                {statsLoading && (
                   <div className="flex items-center gap-1.5 text-[11px] text-accent shrink-0">
                      <Loader2 size={12} className="animate-spin" />
@@ -1438,13 +1420,6 @@ export default function UserPage() {
                />
             </div>
          </div>
-
-         {showSortMenu && (
-            <div
-               className="fixed inset-0 z-10"
-               onClick={() => setShowSortMenu(false)}
-            />
-         )}
       </div>
    );
 }

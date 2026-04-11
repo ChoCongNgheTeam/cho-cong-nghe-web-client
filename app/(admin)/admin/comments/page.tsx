@@ -259,7 +259,7 @@ export default function CommentsAdminPage() {
                      value={searchInput}
                      onChange={(e) => handleSearchInput(e.target.value)}
                      placeholder="Tìm nội dung..."
-                     className="w-full pl-8 pr-3 py-2 text-[13px] bg-white border border-neutral rounded-xl outline-none focus:border-accent transition-colors"
+                     className="w-full pl-8 pr-3 py-2 text-[13px] bg-neutral border border-neutral rounded-xl outline-none focus:border-accent transition-colors"
                   />
                </div>
 
@@ -267,7 +267,7 @@ export default function CommentsAdminPage() {
                <select
                   value={targetType}
                   onChange={(e) => setTargetType(e.target.value)}
-                  className="px-3 py-2 text-[13px] bg-white border border-neutral rounded-xl outline-none focus:border-accent transition-colors cursor-pointer"
+                  className="px-3 py-2 text-[13px] bg-neutral border border-neutral rounded-xl outline-none focus:border-accent transition-colors cursor-pointer"
                >
                   <option value="">Tất cả loại</option>
                   {Object.entries(TARGET_TYPE_LABELS).map(([val, label]) => (
@@ -380,7 +380,7 @@ export default function CommentsAdminPage() {
             )}
 
             {/* Table */}
-            <div className="bg-white border border-neutral rounded-xl overflow-hidden">
+            <div className="bg-neutral border border-neutral rounded-xl overflow-hidden">
                {/* Select all row */}
                {data && data.data.length > 0 && (
                   <div className="px-4 py-2.5 border-b border-neutral flex items-center gap-2">
