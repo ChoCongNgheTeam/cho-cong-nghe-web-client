@@ -91,7 +91,10 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
     <Link
       href={productUrl}
       className="group relative flex flex-col rounded-xl overflow-hidden select-none h-full border-neutral-100 hover:shadow-md"
-      style={{ backgroundColor: "rgb(var(--neutral-light))", animationDelay: `${index * 0.08}s` }}
+      style={{
+        backgroundColor: "rgb(var(--neutral-light))",
+        animationDelay: `${index * 0.08}s`,
+      }}
     >
       {/* ── Section 1: Image + Highlights ── */}
       <div className="relative w-full aspect-[5/3] overflow-hidden">
@@ -104,7 +107,13 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
             sizes="(max-width: 640px) 50vw, 300px"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg" style={{ color: "rgb(var(--neutral-dark))", backgroundColor: "rgb(var(--neutral))" }}>
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg"
+            style={{
+              color: "rgb(var(--neutral-dark))",
+              backgroundColor: "rgb(var(--neutral))",
+            }}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
               <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
@@ -116,7 +125,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
         {hasHighlights && (
           <>
             <div
-              className="absolute bottom-0 left-0 right-0 h-10 
+              className="absolute bottom-0 left-0 right-0 h-10
                             bg-gradient-to-t from-black/50 to-transparent pointer-events-none"
             />
             <div className="absolute bottom-1.5 left-2 right-2 overflow-hidden">
@@ -133,7 +142,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
               </div>
               {isOverflow && (
                 <div
-                  className="absolute inset-y-0 right-0 w-8 
+                  className="absolute inset-y-0 right-0 w-8
                                 bg-gradient-to-r from-transparent to-black/40 pointer-events-none"
                 />
               )}
@@ -144,6 +153,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
 
       {/* ── Section 2: Price block ── */}
       <div className="mx-2.5 mb-2 mt-1 rounded-lg px-2.5 py-2" style={{ background: BRAND_RED }}>
+        {/* Mobile */}
         <div className="flex flex-col gap-0.5 sm:hidden">
           <span className="font-bold leading-tight" style={{ fontSize: "clamp(11px, 3.5vw, 15px)", color: "#fff" }}>
             {isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}
@@ -156,12 +166,18 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
           {discountLabel && (
             <span
               className="self-start text-[10px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap"
-              style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)" }}
+              style={{
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.4)",
+              }}
             >
               {isUpcoming ? "-XX%" : discountLabel}
             </span>
           )}
         </div>
+
+        {/* Desktop */}
         <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex flex-col flex-1 gap-1">
             <span className="font-bold leading-tight text-lg" style={{ color: "#fff" }}>
@@ -176,7 +192,11 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
           {discountLabel && (
             <span
               className="shrink-0 text-[11px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap self-start"
-              style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)" }}
+              style={{
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.4)",
+              }}
             >
               {isUpcoming ? "-XX%" : discountLabel}
             </span>
@@ -185,7 +205,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
       </div>
 
       {/* ── Section 3: Product Name ── */}
-      <div className="px-2.5 mb-2 flex-1">
+      <div className="px-2.5 mb-2">
         <h3 className="text-xs xs:text-[13px] sm:text-[14px] font-medium line-clamp-2 leading-snug text-primary" style={{ minHeight: "calc(2 * 1.375em)" }}>
           {product.name}
         </h3>
