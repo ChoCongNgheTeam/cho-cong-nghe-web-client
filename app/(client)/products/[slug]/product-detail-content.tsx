@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
@@ -24,18 +24,45 @@ interface ProductDetailContentProps {
 }
 
 /**
- * Đọc selectedOptions từ availableOptions.
- * Hoạt động với mọi mode:
- *   - bundle (type="bundle", value=variantId): lấy value của item có selected=true
- *   - individual (type="color"|"storage"...): lấy value của item có selected=true hoặc [0]
+ * Sync selectedOptions từ currentVariant + availableOptions sau khi API trả về.
+ *
+ * Xử lý 2 mode:
+ *   - Bundle mode (type="bundle"): đọc selected=true từ availableOptions
+ *     (BE set đúng field này cho bundle), fallback về variant.id
+ *   - Individual mode (color/storage/ram): đọc trực tiếp từ variant fields
  */
-function initSelectedOptions(availableOptions: VariantOption[]): Record<string, string> {
-  const init: Record<string, string> = {};
+function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOptions: VariantOption[]): Record<string, string> {
+  if (!variant) return {};
+
+  const result: Record<string, string> = {};
+
   for (const opt of availableOptions) {
-    const defaultVal = opt.values?.find((v) => v.selected) ?? opt.values?.[0];
-    if (defaultVal) init[opt.type] = defaultVal.value;
+    if (opt.type === "bundle") {
+      // BE trả về selected=true cho bundle đang active
+      const selected = opt.values?.find((v) => (v as any).selected === true);
+      const activeValue = selected?.value ?? variant.id;
+      if (activeValue) result["bundle"] = activeValue;
+    } else if (opt.type === "color") {
+      const val = variant.color ?? opt.values?.[0]?.value;
+      if (val) result["color"] = val;
+    } else if (opt.type === "storage") {
+      const fromVariant = variant.storage as string | undefined;
+      const fromCode = (() => {
+        const m = variant.code?.match(/(\d+GB)/i);
+        return m ? m[1].toLowerCase() : undefined;
+      })();
+      const val = fromVariant ?? fromCode ?? opt.values?.[0]?.value;
+      if (val) result["storage"] = val;
+    } else if (opt.type === "ram") {
+      const val = (variant.ram as string | undefined) ?? opt.values?.[0]?.value;
+      if (val) result["ram"] = val;
+    } else {
+      // Generic fallback cho các option type khác
+      if (opt.values?.[0]) result[opt.type] = opt.values[0].value;
+    }
   }
-  return init;
+
+  return result;
 }
 
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
@@ -52,7 +79,9 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   }, [activeTab]);
 
   /* ── Variant state ── */
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => initSelectedOptions((product.availableOptions as VariantOption[]) || []));
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() =>
+    syncOptionsFromVariant(product.currentVariant as unknown as ProductVariant, (product.availableOptions as VariantOption[]) || []),
+  );
   const [availableOptions, setAvailableOptions] = useState<VariantOption[]>((product.availableOptions as VariantOption[]) || []);
   const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(product.currentVariant as unknown as ProductVariant);
   const [variantImages, setVariantImages] = useState<{ imageUrl: string }[]>(product.currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) || []);
@@ -60,10 +89,32 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   const [quantity, setQuantity] = useState(1);
 
   /* ─────────────────────────────────────────────────────────────────────────
-   * FIX A: Đọc ?bundle từ URL khi mount → gọi API load đúng variant.
-   * Sau đó xóa ?bundle khỏi URL (window.history.replaceState) để URL sạch:
-   *   BEFORE: /products/samsung-galaxy-s25-ultra-5g?bundle=ec8f095a-...
-   *   AFTER:  /products/samsung-galaxy-s25-ultra-5g
+   * fetchVariantByParams — batch tất cả state update sau khi có data API
+   * ───────────────────────────────────────────────────────────────────────── */
+  const fetchVariantByParams = useCallback(
+    async (params: Record<string, string>) => {
+      try {
+        const data = await getProductVariant(product.slug, params);
+
+        setAvailableOptions(data.availableOptions as VariantOption[]);
+        setCurrentVariant(data.currentVariant);
+        setVariantImages(data.currentVariant.images ?? []);
+        setPrice(data.price);
+        setQuantity(1);
+
+        const synced = syncOptionsFromVariant(data.currentVariant, data.availableOptions as VariantOption[]);
+        if (Object.keys(synced).length > 0) {
+          setSelectedOptions(synced);
+        }
+      } catch (error) {
+        console.error("Error fetching variant:", error);
+      }
+    },
+    [product.slug],
+  );
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * Mount: đọc ?bundle từ URL → load đúng variant từ card navigate
    * ───────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     const bundleId = searchParams.get("bundle");
@@ -78,7 +129,6 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
     if (!bundleId) return;
 
     if (bundleId === product.currentVariant?.id) {
-      // SSR đã load đúng variant → chỉ cần clean URL
       cleanUrl();
       return;
     }
@@ -88,50 +138,33 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   }, []);
 
   /* ─────────────────────────────────────────────────────────────────────────
-   * FIX B: Sync selectedOptions từ availableOptions trả về (có selected flag).
+   * handleOptionChange
    *
-   * Trước: sync từ variant.color / variant.storage / variant.ram
-   *   → bỏ sót type="bundle" vì bundle value là variantId, không phải attribute
-   *
-   * Sau: dùng initSelectedOptions(data.availableOptions) — BE đã set
-   *   selected=true cho đúng item trong mọi mode (bundle, color, storage...)
-   *   → "Phiên bản" selector tự highlight đúng 12GB/1TB
+   * - type="bundle": gọi ?bundle=<variantId> trực tiếp
+   * - type khác (color/storage/ram): gộp options, loại bỏ key "bundle" nếu có
+   *   để tránh conflict khi sản phẩm chuyển từ bundle → individual mode
    * ───────────────────────────────────────────────────────────────────────── */
-  const fetchVariantByParams = async (params: Record<string, string>) => {
-    try {
-      const data = await getProductVariant(product.slug, params);
-      setAvailableOptions(data.availableOptions);
-      setCurrentVariant(data.currentVariant);
-      setVariantImages(data.currentVariant.images ?? []);
-      setPrice(data.price);
-      setQuantity(1);
-
-      // Đọc selectedOptions từ availableOptions mới thay vì từ variant attributes
-      const newOptions = initSelectedOptions(data.availableOptions as VariantOption[]);
-      if (Object.keys(newOptions).length) {
-        setSelectedOptions(newOptions);
+  const handleOptionChange = useCallback(
+    async (type: string, value: string) => {
+      if (type === "bundle") {
+        await fetchVariantByParams({ bundle: value });
+      } else {
+        // Loại bỏ key "bundle" khỏi selectedOptions khi gọi individual params
+        const { bundle: _drop, ...restOptions } = selectedOptions;
+        const newOptions = { ...restOptions, [type]: value };
+        await fetchVariantByParams(newOptions);
       }
-    } catch (error) {
-      console.error("Error fetching variant:", error);
-    }
-  };
+    },
+    [selectedOptions, fetchVariantByParams],
+  );
 
-  const handleOptionChange = async (type: string, value: string) => {
-    const newOptions = { ...selectedOptions, [type]: value };
-    setSelectedOptions(newOptions);
-
-    if (type === "bundle") {
-      // Bundle mode: value chính là variantId → gọi thẳng bundle param
-      await fetchVariantByParams({ bundle: value });
-    } else {
-      await fetchVariantByParams(newOptions);
-    }
-  };
-
-  const handleColorChangeFromGallery = async (variantId: string) => {
-    if (variantId === currentVariant?.id) return;
-    await fetchVariantByParams({ bundle: variantId });
-  };
+  const handleColorChangeFromGallery = useCallback(
+    async (variantId: string) => {
+      if (variantId === currentVariant?.id) return;
+      await fetchVariantByParams({ bundle: variantId });
+    },
+    [currentVariant?.id, fetchVariantByParams],
+  );
 
   return (
     <div>
