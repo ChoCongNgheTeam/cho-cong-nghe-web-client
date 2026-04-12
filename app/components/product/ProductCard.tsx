@@ -6,8 +6,9 @@ import WishlistHeart from "@/components/shared/WishlistHeart";
 import { Product } from "./types";
 import { formatVND } from "@/helpers";
 import { thumbnailUrl } from "@/helpers/resizeImage";
-import { useRef, useEffect, useState } from "react";
 import Badge from "../ui/Badge";
+import { HighlightIcon } from "./HighlightIcon";
+import { StarRating } from "../ui/StarRating";
 
 interface ProductCardProps {
   product: Product;
@@ -19,14 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const hasPromotion = product.price?.hasPromotion ?? false;
   const discountPercentage = product.price?.discountPercentage ?? 0;
   const highlights = product.highlights ?? [];
-
-  const chipsRef = useRef<HTMLDivElement>(null);
-  const [isOverflow, setIsOverflow] = useState(false);
-
-  useEffect(() => {
-    const el = chipsRef.current;
-    if (el) setIsOverflow(el.scrollWidth > el.clientWidth);
-  }, [highlights]);
+  const visibleHighlights = highlights.slice(0, 2);
 
   const productUrl = product.variantId ? `/products/${product.slug}?bundle=${product.variantId}` : `/products/${product.slug}`;
 
@@ -36,73 +30,70 @@ export default function ProductCard({ product }: ProductCardProps) {
       className="relative flex flex-col bg-neutral-light border border-neutral-100
                  hover:shadow-md rounded-xl h-full"
     >
-      {hasPromotion && <Badge discountPercent={discountPercentage} />}
+      {/*
+        ── Badge wrapper ──
+        Đặt ra ngoài flow card chính, dùng absolute + z-10
+        Wrapper có p-1 để badge không bị clip bởi rounded-xl của card
+      */}
+      {hasPromotion && (
+        <div>
+          <Badge discountPercent={discountPercentage} />
+        </div>
+      )}
 
       {/* ── Image ── */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden">
+      <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl">
         {product.thumbnail ? (
           <Image
             src={thumbnailUrl(product.thumbnail, 300)}
             alt={product.name}
             fill
-            className="object-contain transition-transform duration-500 group-hover:scale-105"
+            className="object-contain transition-transform duration-500 group-hover:scale-105 p-4"
             sizes="(max-width: 640px) 50vw, 300px"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-neutral-dark bg-neutral" />
-        )}
-
-        {highlights.length > 0 && (
-          <>
-            <div
-              className="absolute bottom-0 left-0 right-0 h-10
-                            bg-gradient-to-t from-black/50 to-transparent pointer-events-none"
-            />
-            <div className="absolute bottom-1.5 left-2 right-2 overflow-hidden">
-              <div ref={chipsRef} className="flex gap-1 justify-center">
-                {highlights.slice(0, 3).map((h) => (
-                  <span
-                    key={h.key}
-                    className="bg-black/40 text-white text-[9px] px-1.5 py-0.5
-                               rounded-full whitespace-nowrap backdrop-blur-sm shrink-0"
-                  >
-                    {h.value}
-                  </span>
-                ))}
-              </div>
-              {isOverflow && (
-                <div
-                  className="absolute inset-y-0 right-0 w-8
-                                bg-gradient-to-r from-transparent to-black/40 pointer-events-none"
-                />
-              )}
-            </div>
-          </>
+          <div className="w-full h-full bg-neutral-100" />
         )}
       </div>
 
       {/* ── Content ── */}
-      <div className="flex flex-col gap-1.5 p-2.5 flex-1">
-        {/* Tên sản phẩm: luôn giữ chỗ 2 dòng */}
+      <div className="flex flex-col gap-1 sm:gap-1.5 p-2 sm:p-2.5 flex-1">
         <h3 className="text-xs sm:text-sm font-medium text-primary line-clamp-2 leading-snug" style={{ minHeight: "calc(2 * 1.375em)" }}>
           {product.name}
         </h3>
+        {visibleHighlights.length > 0 && (
+          <div className="flex gap-1 pt-1 sm:flex-row flex-col">
+            {visibleHighlights.map((h) => (
+              <span
+                key={h.key}
+                title={h.value}
+                className="
+          inline-flex items-center gap-1 min-w-0
+          bg-neutral-100 text-neutral-700
+          border border-neutral-200
+          dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700
+          text-[10px] px-2 py-[2px]
+          rounded-md font-medium
+          sm:max-w-[48%] sm:shrink
+        "
+              >
+                <HighlightIcon icon={h.icon} className="w-3 h-3 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
+                <span className="truncate">{h.value}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
-        {/* Giá */}
         <div>
-          <p className="text-[11px] text-neutral-400 line-through min-h-4">{hasPromotion ? formatVND(product.price.base) : ""}</p>
-          <p className="text-sm sm:text-base font-semibold text-promotion">{formatVND(hasPromotion ? product.price.final : product.price.base)}</p>
+          <p className="text-[10px] sm:text-[11px] text-neutral-400 line-through min-h-[14px]">{hasPromotion ? formatVND(product.price.base) : ""}</p>
+          <p className="text-xs sm:text-sm font-semibold text-promotion">{formatVND(hasPromotion ? product.price.final : product.price.base)}</p>
         </div>
 
-        {/* Rating + Wishlist: luôn ở đáy card */}
         <div className="flex justify-between items-center mt-auto pt-1">
           {product.rating?.count > 0 ? (
-            <div className="flex items-center gap-1">
-              <span className="text-yellow-400 text-xs">★</span>
-              <span className="text-xs font-medium text-neutral-600">{product.rating.average.toFixed(1)}</span>
-            </div>
+            <StarRating average={product.rating.average} count={product.rating.count} />
           ) : (
-            <span className="text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
+            <span className="text-[9px] sm:text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
           )}
           <WishlistHeart productId={product.id} />
         </div>

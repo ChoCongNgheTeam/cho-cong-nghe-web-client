@@ -15,7 +15,9 @@ const Badge = ({ label, discountPercent, className }: BadgeProps) => {
     <div
       className={clsx(
         "absolute -top-3 left-1.5 z-20",
-        "px-4 py-1.5 text-white font-bold text-[13px] tracking-tight",
+        // Mobile nhỏ, desktop to hơn
+        "px-2.5 pt-2 pb-1 text-[10px] sm:px-4 sm:py-1.5 sm:text-[13px]",
+        "text-white font-bold tracking-tight",
         "bg-[#ef233c] shadow-sm",
         "rounded-br-2xl rounded-tr-md rounded-bl-md",
         "before:content-[''] before:absolute before:top-0 before:-left-2",
