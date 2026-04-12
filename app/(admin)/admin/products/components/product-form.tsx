@@ -10,6 +10,8 @@ import { createProduct, updateProduct } from "../_libs/products";
 import type { ProductDetail } from "../product.types";
 import { CKEditorWrapper } from "@/(admin)/admin/blogs/components/CKEditorWrapper";
 import { AiContentPanel } from "@/(admin)/admin/ai-content/AiContentPanel";
+// import { AiSpecSuggestButton } from "@/(admin)/admin/ai-content/AiSpecSuggestButton";
+import { SpecImportPanel } from "@/(admin)/admin/ai-content/SpecImportPanel";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -2015,6 +2017,36 @@ export default function ProductForm({ product }: ProductFormProps) {
         {categoryId && !loadingTemplate && template && template.specifications.length > 0 && (
           <Section icon={<Package size={13} />} title="Thông số kỹ thuật" badge={`${filledSpecsCount}/${totalSpecsCount}`} defaultOpen={false}>
             <div className="space-y-5">
+              <SpecImportPanel
+                productName={name}
+                categoryId={categoryId}
+                specGroups={template.specifications.map((g) => ({
+                  groupName: g.groupName,
+                  items: g.items.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    group: g.groupName,
+                    unit: item.unit,
+                  })),
+                }))}
+                specs={specs}
+                onApply={(updates) => {
+                  // updates = { specificationId: { value, isHighlight? }, ... }
+                  setSpecs((prev) =>
+                    prev.map((s) => {
+                      const u = updates[s.specificationId];
+                      if (!u) return s;
+                      return {
+                        ...s,
+                        value: u.value,
+                        isHighlight: u.isHighlight ?? s.isHighlight,
+                        enabled: true,
+                      };
+                    }),
+                  );
+                }}
+              />
+
               {template.specifications.map((group) => (
                 <div key={group.groupName}>
                   <div className="flex items-center gap-3 mb-3">
