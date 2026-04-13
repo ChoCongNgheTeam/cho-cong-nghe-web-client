@@ -74,9 +74,8 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const deferredResults = useDeferredValue(results);
   const isStale = results !== deferredResults;
 
-  // ── Eruda mobile debugger — dev only, remove before prod ─────────────────
+  // ── Eruda mobile debugger — TEMPORARY, remove after debugging ───────────
   useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
     const script = document.createElement("script");
     script.src = "https://cdn.jsdelivr.net/npm/eruda";
     script.onload = () => (window as any).eruda?.init();
@@ -138,9 +137,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     // On-screen debug — shows on iPhone without needing a cable
     const nativeEvent = e.nativeEvent as InputEvent;
     const isComposing = (e.nativeEvent as any).isComposing ?? false;
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Search]", JSON.stringify(val), "composing:", isComposing, "type:", nativeEvent.inputType);
-    }
+    console.log("[Search]", JSON.stringify(val), "composing:", isComposing, "type:", nativeEvent.inputType);
 
     if (isComposing) return;
     setQuery(val);
