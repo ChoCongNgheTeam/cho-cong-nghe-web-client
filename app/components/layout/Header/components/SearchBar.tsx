@@ -234,7 +234,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
         <div className="relative [&:has(input:focus)_.search-addon]:border-accent-hover">
           <input
             ref={inputRef}
-            type="search"
+            type="text"
             placeholder="Tìm kiếm sản phẩm..."
             value={query}
             onChange={handleChange}
@@ -255,6 +255,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
+            data-form-type="other"
             className={`w-full pl-4 py-2.5 lg:py-3
               border border-neutral rounded-full
               focus:outline-none focus:border-accent-hover
