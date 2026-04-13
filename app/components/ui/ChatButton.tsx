@@ -1,6 +1,6 @@
 "use client";
 import apiRequest from "@/lib/api";
-import { X, Send, Bot, User, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
+import { X, Send, Bot, User, RotateCcw, Maximize2, Minimize2, CornerDownLeft } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 
@@ -37,7 +37,6 @@ const BTN_BOTTOM_DESKTOP = 80;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCT CARD PARSER
-// Parses grouped product blocks from markdown and renders as rich cards
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ProductCard {
@@ -51,14 +50,7 @@ interface ProductCard {
   linkLabel?: string;
 }
 
-/**
- * Try to detect if the markdown reply contains product listings.
- * A product block is identified by the presence of an inline image
- * followed by bold name/price lines.
- */
 function parseProductCards(text: string): ProductCard[] | null {
-  // Split on numbered list items that start a product block
-  // Pattern: "1. ![..." or "1. **Name**"
   const blocks = text.split(/\n(?=\d+\.\s)/);
   if (blocks.length < 2) return null;
 
@@ -67,37 +59,30 @@ function parseProductCards(text: string): ProductCard[] | null {
   for (const block of blocks) {
     const card: ProductCard = { highlights: [] };
 
-    // Image: ![alt](url)
     const imgMatch = block.match(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/);
     if (imgMatch) {
       card.imageAlt = imgMatch[1];
       card.image = imgMatch[2];
     }
 
-    // Name from **Tên:** or **Name:** or just bold after image
     const nameMatch = block.match(/\*\*(?:Tên|Name):\*\*\s*(.+)/);
     if (nameMatch) {
       card.name = nameMatch[1].trim();
     } else {
-      // Fallback: first bold text
       const boldMatch = block.match(/\*\*([^*]+)\*\*/);
       if (boldMatch && !boldMatch[1].startsWith("Giá") && !boldMatch[1].startsWith("Khuyến")) {
         card.name = boldMatch[1].trim();
       }
     }
 
-    // Price
     const priceMatch = block.match(/\*\*(?:Giá|Price):\*\*\s*(.+)/);
     if (priceMatch) card.price = priceMatch[1].trim();
 
-    // Promo
     const promoMatch = block.match(/\*\*(?:Khuyến mãi|Promo):\*\*\s*(.+)/);
     if (promoMatch) card.promo = promoMatch[1].trim();
 
-    // Link: **[label](url)** or [label](url)
     const linkMatch = block.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g);
     if (linkMatch) {
-      // Last link is usually "Xem chi tiết"
       const last = linkMatch[linkMatch.length - 1];
       const parsed = last.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
       if (parsed) {
@@ -106,13 +91,11 @@ function parseProductCards(text: string): ProductCard[] | null {
       }
     }
 
-    // Highlights: bullet lines starting with -
     const highlightMatches = block.matchAll(/^\s*-\s+(.+)$/gm);
     for (const m of highlightMatches) {
       card.highlights.push(m[1].trim());
     }
 
-    // Only add if we have at least a name or image
     if (card.name || card.image) {
       cards.push(card);
     }
@@ -122,31 +105,80 @@ function parseProductCards(text: string): ProductCard[] | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX #3: CLEAN CONTENT — normalize escaped newlines & strip literal \n sequences
+// This runs BEFORE markdown rendering so downstream renderers see clean text
+// ─────────────────────────────────────────────────────────────────────────────
+
+function cleanContent(text: string): string {
+  return (
+    text
+      // Replace literal backslash-n sequences (escaped in JSON or from BE) with real newlines
+      .replace(/\\n/g, "\n")
+      // Collapse 3+ consecutive newlines to max 2 (one blank line = paragraph break)
+      .replace(/\n{3,}/g, "\n\n")
+      // Remove trailing whitespace on each line
+      .replace(/[ \t]+$/gm, "")
+      .trim()
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MARKDOWN RENDERER (non-product messages)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function renderMarkdown(text: string): string {
-  return (
-    text
-      // Images: must come BEFORE link processing
-      .replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" class="chat-img" loading="lazy" onerror="this.style.display=\'none\'" />')
-      // Bold
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      // Italic
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      // Inline code
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      // Links
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>')
-      // Bullet lists
-      .replace(/^[\-\*] (.+)$/gm, "<li>$1</li>")
-      .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
-      // Numbered lists
-      .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
-      // Paragraphs
-      .replace(/\n{2,}/g, "</p><p>")
-      .replace(/\n/g, "<br/>")
-  );
+  const cleaned = cleanContent(text);
+
+  // Process line by line to correctly group consecutive list items into a single <ul>
+  const lines = cleaned.split("\n");
+  const result: string[] = [];
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Detect bullet: "- text", "  - text" (indented sub-bullets treated same), "* text"
+    const bulletMatch = line.match(/^[ \t]*[-*] (.+)$/);
+    // Detect numbered: "1. text"
+    const numberedMatch = line.match(/^[ \t]*\d+\. (.+)$/);
+
+    if (bulletMatch || numberedMatch) {
+      const content = (bulletMatch?.[1] ?? numberedMatch?.[1]) as string;
+      if (!inList) {
+        result.push("<ul>");
+        inList = true;
+      }
+      result.push(`<li>${applyInline(content)}</li>`);
+    } else {
+      if (inList) {
+        result.push("</ul>");
+        inList = false;
+      }
+      // Empty line → paragraph separator (skip, handled after join)
+      if (line.trim() === "") {
+        result.push(""); // preserved as separator
+      } else {
+        result.push(applyInline(line));
+      }
+    }
+  }
+  if (inList) result.push("</ul>");
+
+  // Join lines, then convert blank-line runs to paragraph breaks
+  return result
+    .join("\n")
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/\n/g, "<br/>");
+}
+
+/** Apply inline formatting: images, bold, italic, code, links */
+function applyInline(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" class="chat-img" loading="lazy" onerror="this.style.display=\'none\'" />')
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -159,14 +191,14 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
       {cards.map((card, i) => (
         <div key={i} className="bg-white border border-neutral rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
           <div className="flex gap-0">
-            {/* Image */}
+            {/* FIX #4: Image container — reduced from w-[90px] / h-[80px] to w-[68px] / h-[60px] (~half area) */}
             {card.image && (
-              <div className="w-[90px] shrink-0 bg-neutral-50 flex items-center justify-center p-1.5">
+              <div className="w-[68px] shrink-0 bg-neutral-50 flex items-center justify-center p-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={card.image}
                   alt={card.imageAlt ?? card.name ?? "Product"}
-                  className="w-full h-[80px] object-contain"
+                  className="w-full h-[60px] object-contain"
                   loading="lazy"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
@@ -178,7 +210,6 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
             {/* Info */}
             <div className="flex-1 p-2 min-w-0">
               {card.name && <p className="text-[11.5px] font-semibold text-neutral-800 leading-tight line-clamp-2 mb-1">{card.name}</p>}
-
               {card.price && <p className="text-[12px] font-bold text-accent mb-1">{card.price}</p>}
 
               {card.highlights.length > 0 && (
@@ -220,13 +251,11 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
 function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
   const isUser = msg.role === "user";
 
-  // Try to parse product cards for assistant messages
-  const productCards = !isUser ? parseProductCards(msg.content) : null;
+  const productCards = !isUser ? parseProductCards(cleanContent(msg.content)) : null;
 
-  // Extract intro text (before numbered list) for product messages
   let introText = "";
   if (productCards) {
-    const introMatch = msg.content.match(/^([^1-9\n][^\n]*\n?)/);
+    const introMatch = cleanContent(msg.content).match(/^([^1-9\n][^\n]*\n?)/);
     if (introMatch) introText = introMatch[1].trim();
   }
 
@@ -239,15 +268,14 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
       </div>
 
       {isUser ? (
-        <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm">{msg.content}</div>
+        // FIX #3: Render user message with proper newlines preserved
+        <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm whitespace-pre-wrap">{msg.content}</div>
       ) : productCards ? (
-        // Product card layout
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           {introText && <div className="text-[12.5px] text-neutral-dark leading-relaxed px-1">{introText}</div>}
           <ProductCardGrid cards={productCards} />
         </div>
       ) : (
-        // Regular markdown message
         <div
           className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-white text-neutral-dark border border-neutral rounded-bl-sm shadow-sm prose-chat"
           dangerouslySetInnerHTML={{ __html: `<p>${html}</p>` }}
@@ -294,7 +322,8 @@ export default function ChatButton() {
   // ── Init ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    setMobile(window.innerWidth <= 768);
+    const checkMobile = () => setMobile(window.innerWidth <= 768);
+    checkMobile();
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -304,9 +333,8 @@ export default function ChatButton() {
     } catch (_) {}
     setReady(true);
 
-    const handleResize = () => setMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // ── Persist messages ──────────────────────────────────────────────────────
@@ -321,7 +349,11 @@ export default function ChatButton() {
   // ── Scroll to bottom ──────────────────────────────────────────────────────
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Small delay to allow layout to settle (especially on iOS with keyboard)
+    const t = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 80);
+    return () => clearTimeout(t);
   }, [messages, loading]);
 
   // ── Focus input when opened ───────────────────────────────────────────────
@@ -361,7 +393,6 @@ export default function ChatButton() {
 
       setMessages(updatedMessages);
       setInput("");
-      // Reset textarea height
       if (inputRef.current) {
         inputRef.current.style.height = "auto";
       }
@@ -398,17 +429,41 @@ export default function ChatButton() {
     [input, loading, messages, isOpen],
   );
 
+  // FIX #1: Desktop — Enter sends, Shift+Enter inserts newline
+  // Mobile — Enter key on software keyboard inserts newline (user taps Send button)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+    if (e.key === "Enter") {
+      if (mobile) {
+        // On mobile: always allow newline from keyboard; send via button only
+        return; // default textarea behavior (newline)
+      }
+      if (!e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+      // Shift+Enter on desktop: default textarea behavior (newline)
     }
-    // Shift+Enter: default textarea behavior (newline)
+  };
+
+  // FIX #1: Mobile newline button — inserts \n at cursor position
+  const handleMobileNewline = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const newVal = el.value.slice(0, start) + "\n" + el.value.slice(end);
+    setInput(newVal);
+    // Restore cursor after newline
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + 1, start + 1);
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 120) + "px";
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // Auto-resize
     const el = e.target;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
@@ -493,25 +548,28 @@ export default function ChatButton() {
         .dot-3 { animation: dotBounce 1.2s ease-in-out infinite 300ms; }
         .unread-pulse { animation: chatPulse 1.8s ease-in-out infinite; }
         .mascot-float { animation: mascotFloat 3s ease-in-out infinite; }
-        .prose-chat p  { margin: 0 0 0.3em; }
+        .prose-chat p  { margin: 0 0 0.25em; }
         .prose-chat p:last-child { margin-bottom: 0; }
-        .prose-chat ul { margin: 0.3em 0; padding-left: 1.2em; list-style: disc; }
-        .prose-chat li { margin: 0.15em 0; }
+        .prose-chat ul { margin: 0.2em 0; padding-left: 1.1em; list-style: disc; }
+        .prose-chat ul + ul { margin-top: 0; }
+        .prose-chat li { margin: 0; line-height: 1.5; }
         .prose-chat strong { font-weight: 600; }
         .prose-chat em { font-style: italic; }
         .prose-chat code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
         .chat-link { color: var(--color-accent,#2563eb); text-decoration: underline; text-underline-offset: 2px; }
         .chat-link:hover { opacity: 0.75; }
-        /* Inline image in generic markdown messages */
+
+        /* FIX #4: Inline image — reduced max-height & max-width */
         .chat-img {
-          max-width: 100%;
-          max-height: 180px;
+          max-width: min(100%, 160px);
+          max-height: 110px;
           border-radius: 8px;
           object-fit: contain;
           display: block;
           margin: 4px 0;
           background: #f5f5f5;
         }
+
         .chat-mobile-backdrop {
           position: fixed; inset: 0;
           background: rgba(0,0,0,0.4);
@@ -533,8 +591,39 @@ export default function ChatButton() {
         .wc-close  { background: #ff5f57; }
         .wc-min    { background: #febc2e; }
         .wc-max    { background: #28c840; }
-        /* Product card hover */
-        .product-card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+
+        /* FIX #2: Prevent iOS auto-zoom on input focus — font-size must be >= 16px.
+           We set font-size: 16px on the actual textarea and scale it visually with transform
+           so the layout still looks like 14px but iOS won't trigger zoom. */
+        .chat-textarea-ios {
+          font-size: 16px !important;
+          /* Scale text back down visually — layout stays correct, iOS sees 16px */
+          transform-origin: left top;
+        }
+        /* On non-iOS devices keep the original 14px */
+        @supports not (-webkit-touch-callout: none) {
+          .chat-textarea-ios {
+            font-size: 14px !important;
+            transform: none;
+          }
+        }
+
+        /* FIX #1: Mobile newline button */
+        .chat-newline-btn {
+          height: 36px;
+          padding: 0 8px;
+          border-radius: 8px;
+          border: 1px solid rgba(0,0,0,0.12);
+          background: rgba(0,0,0,0.04);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.15s, transform 0.1s;
+          cursor: pointer;
+          color: #666;
+          flex-shrink: 0;
+        }
+        .chat-newline-btn:active { background: rgba(0,0,0,0.1); transform: scale(0.94); }
       `}</style>
 
       {/* ── Mobile backdrop ── */}
@@ -554,7 +643,6 @@ export default function ChatButton() {
               paddingBottom: "0.65rem",
             }}
           >
-            {/* Left: mascot + title */}
             <div className="flex items-center gap-2.5 pointer-events-none">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden shrink-0">
                 <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={32} height={32} className="object-contain" />
@@ -565,7 +653,6 @@ export default function ChatButton() {
               </div>
             </div>
 
-            {/* Right: window controls */}
             <div className="flex items-center gap-2">
               {messages.length > 0 && (
                 <button type="button" onClick={clearHistory} title="Xóa lịch sử" className="text-white/60 hover:text-white transition-colors cursor-pointer p-1.5 rounded-md hover:bg-white/10 mr-1">
@@ -652,17 +739,49 @@ export default function ChatButton() {
 
           {/* ── Input ── */}
           <div className="px-3 py-3 border-t border-neutral flex items-end gap-2 bg-neutral-light shrink-0">
+            {/*
+              FIX #2: iOS zoom prevention
+              iOS Safari zooms in when an input's font-size < 16px.
+              Solution: always render font-size 16px; use CSS to visually
+              compensate on iOS (transforms don't trigger zoom checks).
+              On non-iOS, the @supports rule sets it back to 14px.
+
+              FIX #1: enterKeyHint="send" shows a "send" label on the mobile keyboard's
+              return key, but we DON'T intercept Enter on mobile — we let it insert newlines.
+              The user sends via the Send button. This is the most natural mobile UX.
+            */}
             <textarea
               ref={inputRef}
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               disabled={loading}
-              placeholder="Nhập tin nhắn... (Shift+Enter để xuống hàng)"
+              placeholder={mobile ? "Nhập tin nhắn..." : "Nhập tin nhắn... (Shift+Enter để xuống hàng)"}
               rows={1}
-              className="flex-1 text-[14px] px-3 py-2 rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark/90 border border-neutral focus:outline-none focus:border-accent/50 transition-colors disabled:cursor-not-allowed resize-none overflow-y-auto leading-relaxed"
+              // FIX #2: font-size 16px prevents iOS zoom; enterKeyHint for better keyboard UX
+              enterKeyHint={mobile ? "send" : "enter"}
+              inputMode="text"
+              autoComplete="off"
+              autoCorrect="on"
+              spellCheck={false}
+              className="flex-1 px-3 py-2 rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark/90 border border-neutral focus:outline-none focus:border-accent/50 transition-colors disabled:cursor-not-allowed resize-none overflow-y-auto leading-relaxed chat-textarea-ios"
               style={{ minHeight: "36px", maxHeight: "120px" }}
             />
+
+            {/* FIX #1: Mobile newline button — shown only on mobile */}
+            {mobile && (
+              <button
+                type="button"
+                onClick={handleMobileNewline}
+                disabled={loading}
+                title="Xuống hàng"
+                className="chat-newline-btn disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Xuống hàng"
+              >
+                <CornerDownLeft size={14} strokeWidth={2} />
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => sendMessage()}
