@@ -74,17 +74,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const deferredResults = useDeferredValue(results);
   const isStale = results !== deferredResults;
 
-  // ── Eruda mobile debugger — TEMPORARY, remove after debugging ───────────
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/eruda";
-    script.onload = () => (window as any).eruda?.init();
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -133,13 +122,21 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // On-screen debug — shows on iPhone without needing a cable
-    const nativeEvent = e.nativeEvent as InputEvent;
-    const isComposing = (e.nativeEvent as any).isComposing ?? false;
-    console.log("[Search]", JSON.stringify(val), "composing:", isComposing, "type:", nativeEvent.inputType);
+    // iOS (Laban Key and other Vietnamese keyboards) injects a "predictive space"
+    // after recognizing a complete word — e.g. "dien" → "dien ".
+    // This arrives as a normal insertText event with isComposing=false,
+    // meaning it bypasses all IME guards. The only reliable fix is to strip
+    // trailing spaces from the raw value before updating state.
+    // We strip only TRAILING space (not internal spaces like "dien thoai").
+    const raw = e.target.value;
+    const val = raw.replace(/ +$/, "");
 
-    if (isComposing) return;
+    // If iOS injected a trailing space, write the stripped value back to the
+    // DOM input so the cursor position stays correct and no flicker occurs.
+    if (val !== raw) {
+      e.target.value = val;
+    }
+
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!val.trim()) {
