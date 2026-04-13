@@ -23,12 +23,7 @@ interface ApiProduct {
 
 interface ApiResponse {
   data: ApiProduct[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
   message: string;
 }
 
@@ -64,25 +59,23 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const [results, setResults] = useState<ApiProduct[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  // Keyboard navigation: index into results (-1 = none, results.length = "see all" row)
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const staleResultsRef = useRef<ApiProduct[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  // Track IME composing state (Vietnamese keyboard on iOS: Laban Key, etc.)
-  // During composition, we must NOT update React state or trigger search
-  // because React's controlled input conflicts with IME mid-compose
+  // Tracks whether an IME (Vietnamese/CJK keyboard) is mid-composition.
+  // Only used to guard the Enter key — we do NOT skip onChange during composition
+  // because on iOS, onCompositionEnd fires after the last onChange, so skipping
+  // onChange would cause the final committed value to be missed.
   const isComposingRef = useRef(false);
 
   const [, startTransition] = useTransition();
   const deferredResults = useDeferredValue(results);
   const isStale = results !== deferredResults;
 
-  // ── Close on outside click ────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -94,19 +87,16 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Reset active index when results change ────────────────────────────────
   useEffect(() => {
     setActiveIndex(-1);
   }, [deferredResults]);
 
-  // ── Scroll active item into view ──────────────────────────────────────────
   useEffect(() => {
     if (activeIndex < 0 || !listRef.current) return;
     const el = listRef.current.children[activeIndex] as HTMLElement | undefined;
     el?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   const navigateToSearch = useCallback(
     async (q?: string) => {
       const term = (q ?? query).trim();
@@ -125,7 +115,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     [query, router],
   );
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
   const search = useCallback(async (q: string) => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -149,38 +138,9 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     }
   }, []);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
-  // IME composition handlers — fire when Vietnamese/CJK keyboard is mid-compose
-  const handleCompositionStart = () => {
-    isComposingRef.current = true;
-  };
-
-  const handleCompositionEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
-    isComposingRef.current = false;
-    // Composition just finished — now safe to update state with final value
-    const val = e.currentTarget.value;
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!val.trim()) {
-      abortRef.current?.abort();
-      staleResultsRef.current = [];
-      startTransition(() => {
-        setResults([]);
-        setIsOpen(false);
-      });
-      setIsSearching(false);
-      return;
-    }
-    debounceRef.current = setTimeout(() => search(val), 300);
-  };
-
+  // handleChange is IDENTICAL to the original — no extra guards.
+  // The 300ms debounce naturally absorbs rapid IME keystrokes.
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Skip state update while IME is composing — let the IME finish first.
-    // Without this, React re-renders during composition inject stray spaces
-    // (reproducible with Laban Key / iOS Vietnamese telex input).
-    if (isComposingRef.current) return;
-
     const val = e.target.value;
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -198,7 +158,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Total navigable items = results + "see all" row (when results exist)
     const total = deferredResults.length > 0 ? deferredResults.length + 1 : 0;
 
     if (e.key === "ArrowDown") {
@@ -208,23 +167,19 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       e.preventDefault();
       setActiveIndex((i) => (i > 0 ? i - 1 : total - 1));
     } else if (e.key === "Enter") {
+      // Guard: skip if IME is confirming a composed word (e.g. Vietnamese telex)
+      if (isComposingRef.current) return;
       e.preventDefault();
       if (activeIndex >= 0 && activeIndex < deferredResults.length) {
-        // Navigate to highlighted product
-        const product = deferredResults[activeIndex];
+        router.push(`/products/${deferredResults[activeIndex].slug}`);
         setIsOpen(false);
         setActiveIndex(-1);
-        router.push(`/products/${product.slug}`);
-      } else if (activeIndex === deferredResults.length) {
-        // "See all" row selected
-        navigateToSearch();
       } else {
         navigateToSearch();
       }
     } else if (e.key === "Escape") {
       setIsOpen(false);
       setActiveIndex(-1);
-      inputRef.current?.blur();
     }
   };
 
@@ -245,59 +200,48 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   return (
     <>
       {/*
-        FIX: iOS zoom prevention — same pattern as ChatButton.
-        iOS Safari zooms when font-size < 16px on focus.
-        We force 16px on iOS via @supports, keep 14px/15px on others.
+        iOS zoom fix: Safari zooms when focused input font-size < 16px.
+        @supports (-webkit-touch-callout: none) targets iOS Safari only.
+        We deliberately do NOT add autoCorrect / autoCapitalize / inputMode /
+        spellCheck / data-form-type to the input — those attributes were
+        found to interfere with Vietnamese IME (Laban Key) on iOS, causing
+        stray space injection mid-word.
       */}
       <style>{`
-        .search-input-ios {
-          font-size: 16px !important;
+        @supports (-webkit-touch-callout: none) {
+          .search-input { font-size: 16px !important; }
         }
-        @supports not (-webkit-touch-callout: none) {
-          .search-input-ios {
-            font-size: inherit !important;
-          }
-        }
-        /* Keyboard-highlighted item in dropdown */
-        .search-item-active {
-          background-color: var(--color-neutral, #f3f4f6);
-        }
+        .search-item-active { background-color: var(--color-neutral, #f3f4f6); }
       `}</style>
 
       <div ref={wrapperRef} className="w-full">
         <div className="relative [&:has(input:focus)_.search-addon]:border-accent-hover">
           <input
-            ref={inputRef}
             type="text"
             placeholder="Tìm kiếm sản phẩm..."
             value={query}
             onChange={handleChange}
-            onCompositionStart={handleCompositionStart}
-            onCompositionEnd={handleCompositionEnd}
+            onCompositionStart={() => {
+              isComposingRef.current = true;
+            }}
+            onCompositionEnd={() => {
+              isComposingRef.current = false;
+            }}
             onKeyDown={handleKeyDown}
             onFocus={() => {
               if (results.length > 0) setIsOpen(true);
             }}
-            // Accessibility: link input to listbox
             role="combobox"
             aria-expanded={showDropdown}
             aria-autocomplete="list"
             aria-controls="search-listbox"
             aria-activedescendant={activeIndex >= 0 ? `search-item-${activeIndex}` : undefined}
-            // FIX: iOS — 'search' inputMode + enterKeyHint show correct keyboard
-            inputMode="search"
-            enterKeyHint="search"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            data-form-type="other"
             className={`w-full pl-4 py-2.5 lg:py-3
               border border-neutral rounded-full
               focus:outline-none focus:border-accent-hover
               text-sm lg:text-base
               bg-neutral-light text-primary placeholder:text-neutral-dark
-              search-input-ios
+              search-input
               ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
             `}
           />
@@ -332,20 +276,19 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
           >
             <div className={`transition-opacity duration-150 ${isStale ? "opacity-50" : "opacity-100"}`}>
               {showSkeleton ? (
-                <ul aria-label="Đang tìm kiếm">
+                <ul>
                   {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                     <SkeletonItem key={i} />
                   ))}
                 </ul>
               ) : displayResults.length > 0 ? (
                 <>
-                  <ul ref={listRef} className="max-h-[420px] overflow-y-auto scrollbar-thin">
+                  <ul ref={listRef} className="max-h-105 overflow-y-auto scrollbar-thin">
                     {displayResults.map((product, i) => {
                       const salePrice = product.price.base;
                       const originPrice = product.priceOrigin;
                       const discount = calcDiscount(originPrice, salePrice);
                       const isActive = i === activeIndex;
-
                       return (
                         <li
                           key={`${product.id}-${i}`}
@@ -393,7 +336,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
                     })}
                   </ul>
 
-                  {/* "See all results" footer row */}
+                  {/* "See all results" footer */}
                   <div className={`border-t border-neutral ${activeIndex === displayResults.length ? "search-item-active" : ""}`}>
                     <button
                       id={`search-item-${displayResults.length}`}
