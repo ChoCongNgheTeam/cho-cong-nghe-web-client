@@ -123,6 +123,14 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    // On-screen debug — shows on iPhone without needing a cable
+    const nativeEvent = e.nativeEvent as InputEvent;
+    const isComposing = (e.nativeEvent as any).isComposing ?? false;
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Search]", JSON.stringify(val), "composing:", isComposing, "type:", nativeEvent.inputType);
+    }
+
+    if (isComposing) return;
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!val.trim()) {
@@ -170,13 +178,15 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          // iOS zoom fix: always text-base (16px).
-          // Safari auto-zooms when input font-size < 16px on focus.
-          // Pure Tailwind — no JS, no SSR mismatch, no IME side-effects.
+          // iOS zoom fix: font-size >= 16px prevents Safari auto-zoom on focus.
+          // - Mobile (default): text-base = 16px → no zoom, no IME interference
+          // - Desktop lg+: text-sm = 14px is fine, desktop Safari doesn't zoom
+          // This matches the ORIGINAL class structure, only swapping text-sm → text-base
+          // for the mobile (default) breakpoint. No JS, no SSR issues.
           className={`w-full pl-4 py-2.5 lg:py-3
             border border-neutral rounded-full
             focus:outline-none focus:border-accent-hover
-            text-base
+            text-base lg:text-sm
             bg-neutral-light text-primary placeholder:text-neutral-dark
             ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
           `}
