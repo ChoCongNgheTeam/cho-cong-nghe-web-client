@@ -74,6 +74,18 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const deferredResults = useDeferredValue(results);
   const isStale = results !== deferredResults;
 
+  // ── Eruda mobile debugger — dev only, remove before prod ─────────────────
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/eruda";
+    script.onload = () => (window as any).eruda?.init();
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
