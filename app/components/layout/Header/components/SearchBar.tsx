@@ -170,16 +170,13 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          // iOS zoom fix: use inline style instead of CSS class.
-          // A separate CSS class caused re-layout mid-IME composition on iOS,
-          // interrupting Vietnamese keyboard (Laban Key) and injecting stray spaces.
-          // Inline style is applied once at mount and does not trigger re-layout.
-          // @ts-ignore — React accepts data attributes on inputs
-          style={typeof window !== "undefined" && /iP(hone|ad|od)/.test(navigator.userAgent) ? { fontSize: "16px" } : undefined}
+          // iOS zoom fix: always text-base (16px).
+          // Safari auto-zooms when input font-size < 16px on focus.
+          // Pure Tailwind — no JS, no SSR mismatch, no IME side-effects.
           className={`w-full pl-4 py-2.5 lg:py-3
             border border-neutral rounded-full
             focus:outline-none focus:border-accent-hover
-            text-sm lg:text-base
+            text-base
             bg-neutral-light text-primary placeholder:text-neutral-dark
             ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
           `}
