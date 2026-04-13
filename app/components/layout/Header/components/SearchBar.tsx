@@ -73,6 +73,10 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  // Track IME composing state (Vietnamese keyboard on iOS: Laban Key, etc.)
+  // During composition, we must NOT update React state or trigger search
+  // because React's controlled input conflicts with IME mid-compose
+  const isComposingRef = useRef(false);
 
   const [, startTransition] = useTransition();
   const deferredResults = useDeferredValue(results);
@@ -146,7 +150,37 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   }, []);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
+
+  // IME composition handlers — fire when Vietnamese/CJK keyboard is mid-compose
+  const handleCompositionStart = () => {
+    isComposingRef.current = true;
+  };
+
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
+    isComposingRef.current = false;
+    // Composition just finished — now safe to update state with final value
+    const val = e.currentTarget.value;
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!val.trim()) {
+      abortRef.current?.abort();
+      staleResultsRef.current = [];
+      startTransition(() => {
+        setResults([]);
+        setIsOpen(false);
+      });
+      setIsSearching(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => search(val), 300);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Skip state update while IME is composing — let the IME finish first.
+    // Without this, React re-renders during composition inject stray spaces
+    // (reproducible with Laban Key / iOS Vietnamese telex input).
+    if (isComposingRef.current) return;
+
     const val = e.target.value;
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -238,6 +272,8 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
             placeholder="Tìm kiếm sản phẩm..."
             value={query}
             onChange={handleChange}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             onKeyDown={handleKeyDown}
             onFocus={() => {
               if (results.length > 0) setIsOpen(true);
