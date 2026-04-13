@@ -122,21 +122,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // iOS (Laban Key and other Vietnamese keyboards) injects a "predictive space"
-    // after recognizing a complete word — e.g. "dien" → "dien ".
-    // This arrives as a normal insertText event with isComposing=false,
-    // meaning it bypasses all IME guards. The only reliable fix is to strip
-    // trailing spaces from the raw value before updating state.
-    // We strip only TRAILING space (not internal spaces like "dien thoai").
-    const raw = e.target.value;
-    const val = raw.replace(/ +$/, "");
-
-    // If iOS injected a trailing space, write the stripped value back to the
-    // DOM input so the cursor position stays correct and no flicker occurs.
-    if (val !== raw) {
-      e.target.value = val;
-    }
-
+    const val = e.target.value;
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!val.trim()) {
@@ -149,7 +135,10 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       setIsSearching(false);
       return;
     }
-    debounceRef.current = setTimeout(() => search(val), 300);
+    // Strip trailing space injected by iOS predictive keyboard before searching.
+    // We only strip for the search query — the displayed input keeps the space
+    // so cursor position is never disturbed.
+    debounceRef.current = setTimeout(() => search(val.replace(/ +$/, "")), 300);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -173,107 +162,119 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const showSkeleton = isSearching && staleResultsRef.current.length === 0;
 
   return (
-    <div ref={wrapperRef} className="w-full">
-      <div className="relative [&:has(input:focus)_.search-addon]:border-accent-hover">
-        <input
-          type="text"
-          placeholder="Tìm kiếm sản phẩm..."
-          value={query}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (results.length > 0) setIsOpen(true);
-          }}
-          // iOS zoom fix: font-size >= 16px prevents Safari auto-zoom on focus.
-          // - Mobile (default): text-base = 16px → no zoom, no IME interference
-          // - Desktop lg+: text-sm = 14px is fine, desktop Safari doesn't zoom
-          // This matches the ORIGINAL class structure, only swapping text-sm → text-base
-          // for the mobile (default) breakpoint. No JS, no SSR issues.
-          className={`w-full pl-4 py-2.5 lg:py-3
+    <>
+      <style>{`
+        /* iOS zoom fix: set font-size 16px before focus so iOS never detects
+           a layout change when keyboard opens. Applied via CSS (not JS/Tailwind)
+           so it's present from SSR — no post-mount recalculation, no IME side-effects. */
+        @media (max-width: 1023px) {
+          .search-bar-input { font-size: 16px !important; }
+        }
+      `}</style>
+      <div ref={wrapperRef} className="w-full">
+        <div className="relative [&:has(input:focus)_.search-addon]:border-accent-hover">
+          <input
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
+            value={query}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (results.length > 0) setIsOpen(true);
+            }}
+            className={`w-full pl-4 py-2.5 lg:py-3
             border border-neutral rounded-full
             focus:outline-none focus:border-accent-hover
-            text-base lg:text-sm
+            text-sm lg:text-base
             bg-neutral-light text-primary placeholder:text-neutral-dark
+            search-bar-input
             ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}
           `}
-        />
+          />
 
-        <div className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
-          {!isMobile && (
-            <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors whitespace-nowrap">
-              <span className="xl:hidden cursor-pointer">Danh mục</span>
-              <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
+          <div className="search-addon absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
+            {!isMobile && (
+              <button className="hidden lg:flex items-center gap-1 px-3 lg:px-4 text-xs lg:text-sm text-neutral-darker hover:text-primary border-r border-neutral cursor-pointer bg-neutral-light transition-colors whitespace-nowrap">
+                <span className="xl:hidden cursor-pointer">Danh mục</span>
+                <ChevronsLeftRight className="w-4 h-4 lg:w-5 lg:h-5 rotate-90" />
+              </button>
+            )}
+            <button onClick={navigateToSearch} className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-neutral-hover transition-colors cursor-pointer">
+              <Search className={`w-4 h-4 lg:w-5 lg:h-5 text-neutral-light-dark transition-opacity duration-200 ${isSearching ? "opacity-40" : "opacity-100"}`} />
             </button>
-          )}
-          <button onClick={navigateToSearch} className="flex items-center justify-center px-3 lg:px-4 bg-neutral hover:bg-neutral-hover transition-colors cursor-pointer">
-            <Search className={`w-4 h-4 lg:w-5 lg:h-5 text-neutral-light-dark transition-opacity duration-200 ${isSearching ? "opacity-40" : "opacity-100"}`} />
-          </button>
-        </div>
+          </div>
 
-        {/* Dropdown */}
-        <div
-          className={`
+          {/* Dropdown */}
+          <div
+            className={`
             absolute top-full left-0 right-0 mt-2
             bg-neutral-light border border-neutral rounded-xl shadow-xl z-50
             overflow-hidden
             transition-[opacity,transform] duration-200 ease-out
             ${showDropdown ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"}
           `}
-        >
-          <div className={`transition-opacity duration-150 ${isStale ? "opacity-50" : "opacity-100"}`}>
-            {showSkeleton ? (
-              <ul>
-                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                  <SkeletonItem key={i} />
-                ))}
-              </ul>
-            ) : displayResults.length > 0 ? (
-              <ul className="max-h-105 overflow-y-auto scrollbar-thin">
-                {displayResults.map((product, i) => {
-                  const salePrice = product.price.base;
-                  const originPrice = product.priceOrigin;
-                  const discount = calcDiscount(originPrice, salePrice);
-                  return (
-                    <li key={`${product.id}-${i}`} style={{ animationDelay: `${i * 25}ms` }} className="animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both">
-                      <Link href={`/products/${product.slug}`} onClick={handleClose} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group">
-                        <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
-                          {product.thumbnail ? (
-                            <Image src={product.thumbnail} alt={product.name} width={48} height={48} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-neutral rounded-lg text-neutral-dark">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
-                                <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-primary font-medium truncate group-hover:text-accent-hover transition-colors duration-150">{product.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-sm font-semibold text-primary">{formatVND(salePrice)}</span>
-                            {discount > 0 && (
-                              <>
-                                <span className="text-xs text-promotion font-medium">-{discount}%</span>
-                                <span className="text-xs text-neutral-darker line-through">{formatVND(originPrice)}</span>
-                              </>
+          >
+            <div className={`transition-opacity duration-150 ${isStale ? "opacity-50" : "opacity-100"}`}>
+              {showSkeleton ? (
+                <ul>
+                  {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                    <SkeletonItem key={i} />
+                  ))}
+                </ul>
+              ) : displayResults.length > 0 ? (
+                <ul className="max-h-105 overflow-y-auto scrollbar-thin">
+                  {displayResults.map((product, i) => {
+                    const salePrice = product.price.base;
+                    const originPrice = product.priceOrigin;
+                    const discount = calcDiscount(originPrice, salePrice);
+                    return (
+                      <li key={`${product.id}-${i}`} style={{ animationDelay: `${i * 25}ms` }} className="animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both">
+                        <Link href={`/products/${product.slug}`} onClick={handleClose} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group">
+                          <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
+                            {product.thumbnail ? (
+                              <Image
+                                src={product.thumbnail}
+                                alt={product.name}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-neutral rounded-lg text-neutral-dark">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
+                                  <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
+                                </svg>
+                              </div>
                             )}
-                            {!product.inStock && <span className="text-xs text-neutral-darker">Hết hàng</span>}
                           </div>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : !isSearching ? (
-              <div className="py-6 text-center text-neutral-darker text-sm">
-                Không tìm thấy sản phẩm nào cho <span className="text-primary font-medium">&ldquo;{query}&rdquo;</span>
-              </div>
-            ) : null}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-primary font-medium truncate group-hover:text-accent-hover transition-colors duration-150">{product.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-sm font-semibold text-primary">{formatVND(salePrice)}</span>
+                              {discount > 0 && (
+                                <>
+                                  <span className="text-xs text-promotion font-medium">-{discount}%</span>
+                                  <span className="text-xs text-neutral-darker line-through">{formatVND(originPrice)}</span>
+                                </>
+                              )}
+                              {!product.inStock && <span className="text-xs text-neutral-darker">Hết hàng</span>}
+                            </div>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : !isSearching ? (
+                <div className="py-6 text-center text-neutral-darker text-sm">
+                  Không tìm thấy sản phẩm nào cho <span className="text-primary font-medium">&ldquo;{query}&rdquo;</span>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
