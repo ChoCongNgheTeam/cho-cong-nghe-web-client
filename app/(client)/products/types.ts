@@ -30,7 +30,8 @@ export interface VariantOptionValue {
   value: string;
   label: string;
   enabled: boolean;
-  selected?: boolean;
+  selected?: boolean; // ← THÊM: BE set true cho item đang active
+  price?: number;
   image?: { imageUrl: string };
   variantIds?: string[];
 }

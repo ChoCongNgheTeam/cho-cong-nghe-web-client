@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Bell, Heart, MapPin, Shield, LogOut, User } from "lucide-react";
+import { Package, Bell, Heart, MapPin, Shield, LogOut, User, Navigation } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 
@@ -12,6 +12,7 @@ const menuItems = [
   { icon: Heart, label: "Sản phẩm yêu thích", shortLabel: "Yêu thích", href: "/profile/wishlist" },
   { icon: MapPin, label: "Địa chỉ nhận hàng", shortLabel: "Địa chỉ", href: "/profile/addresses" },
   { icon: Shield, label: "Cài đặt", shortLabel: "Cài đặt", href: "/profile/settings" },
+  { icon: Navigation, label: "Cửa hàng", shortLabel: "Cửa hàng", href: "/profile/stores" },
 ];
 
 // Mobile bottom nav: replace "Cài đặt" (Shield) with "Tài khoản" (User) → /profile

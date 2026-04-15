@@ -194,7 +194,12 @@ const ICON_MAP: Record<string, LucideIcon> = {
   default: Package,
 };
 
-export function HighlightIcon({ icon }: { icon: string }) {
+interface HighlightIconProps {
+  icon: string;
+  className?: string;
+}
+
+export function HighlightIcon({ icon, className }: HighlightIconProps) {
   const Icon = ICON_MAP[icon] ?? ICON_MAP["default"];
-  return <Icon className="w-5 h-5 text-neutral-dark-hover" />;
+  return <Icon className={className ?? "w-5 h-5 text-neutral-dark-hover"} />;
 }

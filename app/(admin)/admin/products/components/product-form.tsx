@@ -109,9 +109,7 @@ interface ExistingImage {
 
 interface ColorImageForm {
    _key: string;
-   /** Current color value (hex or slug), may be edited by user */
    color: string;
-   /** Snapshot from DB — used to detect rename on submit */
    originalColor?: string;
    altText: string;
    files: File[];
@@ -237,205 +235,6 @@ function buildCategoryTree(flat: CategoryOption[]): CategoryNode[] {
    }
    setDepth(roots, 0);
    return roots;
-}
-
-function CategoryTree({
-   nodes,
-   selectedId,
-   onSelect,
-   searchQuery = "",
-}: {
-   nodes: CategoryNode[];
-   selectedId: string | null;
-   onSelect: (id: string) => void;
-   searchQuery?: string;
-}) {
-   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-   const initRef = useRef(false);
-   useEffect(() => {
-      if (initRef.current) return;
-      initRef.current = true;
-      setExpanded(new Set(nodes.map((n) => n.id)));
-   }, [nodes]);
-
-   const normalize = (s: string) =>
-      s
-         .normalize("NFD")
-         .replace(/[\u0300-\u036f]/g, "")
-         .replace(/đ/gi, "d")
-         .toLowerCase();
-
-   const tokens = normalize(searchQuery.trim()).split(/\s+/).filter(Boolean);
-
-   const toggle = (id: string) =>
-      setExpanded((prev) => {
-         const n = new Set(prev);
-         n.has(id) ? n.delete(id) : n.add(id);
-         return n;
-      });
-
-   function pathMatches(fullPath: string): boolean {
-      if (!tokens.length) return true;
-      const normalizedPath = normalize(fullPath);
-      return tokens.every((t) => normalizedPath.includes(t));
-   }
-
-   function subtreeMatches(node: CategoryNode, ancestorPath: string): boolean {
-      const fullPath = ancestorPath
-         ? `${ancestorPath} ${node.name}`
-         : node.name;
-      if (pathMatches(fullPath)) return true;
-      return node.children.some((child) => subtreeMatches(child, fullPath));
-   }
-
-   function highlight(text: string): React.ReactNode {
-      if (!tokens.length) return text;
-      const normalizedText = normalize(text);
-      let result: React.ReactNode = text;
-      for (const token of tokens) {
-         const idx = normalizedText.indexOf(token);
-         if (idx === -1) continue;
-         const str = typeof result === "string" ? result : text;
-         result = (
-            <>
-               {str.slice(0, idx)}
-               <mark className="bg-yellow-200 text-primary rounded-sm px-0.5">
-                  {str.slice(idx, idx + token.length)}
-               </mark>
-               {str.slice(idx + token.length)}
-            </>
-         );
-         break;
-      }
-      return result;
-   }
-
-   function renderNodes(
-      list: CategoryNode[],
-      ancestorPath: string,
-   ): React.ReactNode {
-      return list
-         .filter((node) => subtreeMatches(node, ancestorPath))
-         .map((node) => {
-            const fullPath = ancestorPath
-               ? `${ancestorPath} ${node.name}`
-               : node.name;
-            const isLeaf = node.children.length === 0;
-            const selfMatch = pathMatches(fullPath);
-            const isOpen = tokens.length
-               ? subtreeMatches(node, ancestorPath)
-               : expanded.has(node.id);
-            const isSel = node.id === selectedId;
-
-            return (
-               <div key={node.id}>
-                  <div
-                     onClick={() =>
-                        isLeaf ? onSelect(node.id) : toggle(node.id)
-                     }
-                     className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
-                        ${isLeaf && isSel ? "bg-primary text-neutral-light" : isLeaf ? "hover:bg-neutral-light-active text-primary" : "hover:bg-neutral-light-active text-primary font-medium"}`}
-                  >
-                     {!isLeaf && (
-                        <ChevronRight
-                           size={12}
-                           className={`shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
-                        />
-                     )}
-                     {isLeaf && <span className="w-3 shrink-0" />}
-                     <span className="text-[13px] flex-1 leading-tight">
-                        {selfMatch ? highlight(node.name) : node.name}
-                     </span>
-                     {isSel && isLeaf && (
-                        <Check
-                           size={12}
-                           className="shrink-0 text-neutral-light"
-                        />
-                     )}
-                  </div>
-                  {!isLeaf && isOpen && (
-                     <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
-                        {selfMatch
-                           ? renderAllChildren(node.children, fullPath)
-                           : renderNodes(node.children, fullPath)}
-                     </div>
-                  )}
-               </div>
-            );
-         });
-   }
-
-   function renderAllChildren(
-      list: CategoryNode[],
-      ancestorPath: string,
-   ): React.ReactNode {
-      return list.map((node) => {
-         const fullPath = `${ancestorPath} ${node.name}`;
-         const isLeaf = node.children.length === 0;
-         const isOpen = tokens.length ? true : expanded.has(node.id);
-         const isSel = node.id === selectedId;
-         return (
-            <div key={node.id}>
-               <div
-                  onClick={() => (isLeaf ? onSelect(node.id) : toggle(node.id))}
-                  className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
-                     ${isLeaf && isSel ? "bg-primary text-neutral-light" : isLeaf ? "hover:bg-neutral-light-active text-primary" : "hover:bg-neutral-light-active text-primary font-medium"}`}
-               >
-                  {!isLeaf && (
-                     <ChevronRight
-                        size={12}
-                        className={`shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
-                     />
-                  )}
-                  {isLeaf && <span className="w-3 shrink-0" />}
-                  <span className="text-[13px] flex-1 leading-tight">
-                     {node.name}
-                  </span>
-                  {isSel && isLeaf && (
-                     <Check size={12} className="shrink-0 text-neutral-light" />
-                  )}
-               </div>
-               {!isLeaf && isOpen && (
-                  <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
-                     {renderAllChildren(node.children, fullPath)}
-                  </div>
-               )}
-            </div>
-         );
-      });
-   }
-
-   return <div className="space-y-0.5">{renderNodes(nodes, "")}</div>;
-}
-
-function CategoryMenuList({
-   innerProps,
-   selectProps,
-   categoryTree,
-   categoryId,
-   onCategorySelect,
-}: {
-   innerProps: any;
-   selectProps: any;
-   categoryTree: CategoryNode[];
-   categoryId: string;
-   onCategorySelect: (id: string) => void;
-}) {
-   const searchQuery = selectProps.inputValue ?? "";
-
-   return (
-      <div {...innerProps} className="p-2 max-h-72 overflow-y-auto">
-         <CategoryTree
-            nodes={categoryTree}
-            selectedId={categoryId}
-            onSelect={(id) => {
-               onCategorySelect(id);
-               selectProps.onMenuClose?.();
-            }}
-            searchQuery={searchQuery}
-         />
-      </div>
-   );
 }
 
 function getCategoryPath(
@@ -643,6 +442,206 @@ function Section({
    );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY TREE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CategoryTree({
+   nodes,
+   selectedId,
+   onSelect,
+   searchQuery = "",
+}: {
+   nodes: CategoryNode[];
+   selectedId: string | null;
+   onSelect: (id: string) => void;
+   searchQuery?: string;
+}) {
+   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+   const initRef = useRef(false);
+   useEffect(() => {
+      if (initRef.current) return;
+      initRef.current = true;
+      setExpanded(new Set(nodes.map((n) => n.id)));
+   }, [nodes]);
+
+   const normalize = (s: string) =>
+      s
+         .normalize("NFD")
+         .replace(/[\u0300-\u036f]/g, "")
+         .replace(/đ/gi, "d")
+         .toLowerCase();
+
+   const tokens = normalize(searchQuery.trim()).split(/\s+/).filter(Boolean);
+
+   const toggle = (id: string) =>
+      setExpanded((prev) => {
+         const n = new Set(prev);
+         n.has(id) ? n.delete(id) : n.add(id);
+         return n;
+      });
+
+   function pathMatches(fullPath: string): boolean {
+      if (!tokens.length) return true;
+      const normalizedPath = normalize(fullPath);
+      return tokens.every((t) => normalizedPath.includes(t));
+   }
+
+   function subtreeMatches(node: CategoryNode, ancestorPath: string): boolean {
+      const fullPath = ancestorPath
+         ? `${ancestorPath} ${node.name}`
+         : node.name;
+      if (pathMatches(fullPath)) return true;
+      return node.children.some((child) => subtreeMatches(child, fullPath));
+   }
+
+   function highlight(text: string): React.ReactNode {
+      if (!tokens.length) return text;
+      const normalizedText = normalize(text);
+      let result: React.ReactNode = text;
+      for (const token of tokens) {
+         const idx = normalizedText.indexOf(token);
+         if (idx === -1) continue;
+         const str = typeof result === "string" ? result : text;
+         result = (
+            <>
+               {str.slice(0, idx)}
+               <mark className="bg-yellow-200 text-primary rounded-sm px-0.5">
+                  {str.slice(idx, idx + token.length)}
+               </mark>
+               {str.slice(idx + token.length)}
+            </>
+         );
+         break;
+      }
+      return result;
+   }
+
+   function renderNodes(
+      list: CategoryNode[],
+      ancestorPath: string,
+   ): React.ReactNode {
+      return list
+         .filter((node) => subtreeMatches(node, ancestorPath))
+         .map((node) => {
+            const fullPath = ancestorPath
+               ? `${ancestorPath} ${node.name}`
+               : node.name;
+            const isLeaf = node.children.length === 0;
+            const selfMatch = pathMatches(fullPath);
+            const isOpen = tokens.length
+               ? subtreeMatches(node, ancestorPath)
+               : expanded.has(node.id);
+            const isSel = node.id === selectedId;
+            return (
+               <div key={node.id}>
+                  <div
+                     onClick={() =>
+                        isLeaf ? onSelect(node.id) : toggle(node.id)
+                     }
+                     className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
+                        ${isLeaf && isSel ? "bg-primary text-neutral-light" : isLeaf ? "hover:bg-neutral-light-active text-primary" : "hover:bg-neutral-light-active text-primary font-medium"}`}
+                  >
+                     {!isLeaf && (
+                        <ChevronRight
+                           size={12}
+                           className={`shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
+                        />
+                     )}
+                     {isLeaf && <span className="w-3 shrink-0" />}
+                     <span className="text-[13px] flex-1 leading-tight">
+                        {selfMatch ? highlight(node.name) : node.name}
+                     </span>
+                     {isSel && isLeaf && (
+                        <Check
+                           size={12}
+                           className="shrink-0 text-neutral-light"
+                        />
+                     )}
+                  </div>
+                  {!isLeaf && isOpen && (
+                     <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
+                        {selfMatch
+                           ? renderAllChildren(node.children, fullPath)
+                           : renderNodes(node.children, fullPath)}
+                     </div>
+                  )}
+               </div>
+            );
+         });
+   }
+
+   function renderAllChildren(
+      list: CategoryNode[],
+      ancestorPath: string,
+   ): React.ReactNode {
+      return list.map((node) => {
+         const fullPath = `${ancestorPath} ${node.name}`;
+         const isLeaf = node.children.length === 0;
+         const isOpen = tokens.length ? true : expanded.has(node.id);
+         const isSel = node.id === selectedId;
+         return (
+            <div key={node.id}>
+               <div
+                  onClick={() => (isLeaf ? onSelect(node.id) : toggle(node.id))}
+                  className={`flex items-center gap-2 px-3 py-[7px] rounded-lg cursor-pointer transition-colors select-none
+                     ${isLeaf && isSel ? "bg-primary text-neutral-light" : isLeaf ? "hover:bg-neutral-light-active text-primary" : "hover:bg-neutral-light-active text-primary font-medium"}`}
+               >
+                  {!isLeaf && (
+                     <ChevronRight
+                        size={12}
+                        className={`shrink-0 text-neutral-dark transition-transform duration-150 ${isOpen ? "rotate-90" : ""}`}
+                     />
+                  )}
+                  {isLeaf && <span className="w-3 shrink-0" />}
+                  <span className="text-[13px] flex-1 leading-tight">
+                     {node.name}
+                  </span>
+                  {isSel && isLeaf && (
+                     <Check size={12} className="shrink-0 text-neutral-light" />
+                  )}
+               </div>
+               {!isLeaf && isOpen && (
+                  <div className="ml-4 pl-3 border-l border-neutral mt-0.5 mb-0.5">
+                     {renderAllChildren(node.children, fullPath)}
+                  </div>
+               )}
+            </div>
+         );
+      });
+   }
+
+   return <div className="space-y-0.5">{renderNodes(nodes, "")}</div>;
+}
+
+function CategoryMenuList({
+   innerProps,
+   selectProps,
+   categoryTree,
+   categoryId,
+   onCategorySelect,
+}: {
+   innerProps: any;
+   selectProps: any;
+   categoryTree: CategoryNode[];
+   categoryId: string;
+   onCategorySelect: (id: string) => void;
+}) {
+   return (
+      <div {...innerProps} className="p-2 max-h-72 overflow-y-auto">
+         <CategoryTree
+            nodes={categoryTree}
+            selectedId={categoryId}
+            onSelect={(id) => {
+               onCategorySelect(id);
+               selectProps.onMenuClose?.();
+            }}
+            searchQuery={selectProps.inputValue ?? ""}
+         />
+      </div>
+   );
+}
+
 function CategoryChangeModal({
    onConfirm,
    onCancel,
@@ -742,10 +741,9 @@ function BasePriceInput({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// QUANTITY CELL — shows existing stock + additive input
-// FIX: tách tồn kho hiện tại (read-only) khỏi "số lượng nhập thêm"
-//      → submit sẽ gửi existingQuantity + addQuantity lên backend
+// QUANTITY CELL
 // ─────────────────────────────────────────────────────────────────────────────
+
 function QuantityCell({
    existingQuantity,
    addQuantity,
@@ -761,7 +759,6 @@ function QuantityCell({
 
    return (
       <div className="flex flex-col gap-1.5 min-w-[110px]">
-         {/* Container 1: Kho hiện tại — read-only, không thể chỉnh */}
          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-light-active border border-neutral">
             <span className="text-[10px] text-neutral-dark whitespace-nowrap">
                Kho:
@@ -770,15 +767,9 @@ function QuantityCell({
                {existingQuantity}
             </span>
          </div>
-
-         {/* Container 2: Nhập thêm — cộng vào, KHÔNG ghi đè */}
          <div
             className={`flex flex-col gap-1 px-2 py-1.5 rounded-md border transition-colors
-               ${
-                  hasAdd
-                     ? "border-accent bg-accent-light/20"
-                     : "border-neutral bg-neutral-light-active"
-               }`}
+               ${hasAdd ? "border-accent bg-accent-light/20" : "border-neutral bg-neutral-light-active"}`}
          >
             <div className="flex items-center gap-1.5">
                <span className="text-[10px] text-neutral-dark whitespace-nowrap">
@@ -799,8 +790,6 @@ function QuantityCell({
                      }`}
                />
             </div>
-
-            {/* Preview tổng — chỉ hiện khi có nhập */}
             {hasAdd && (
                <div className="flex items-center gap-1 pt-0.5 border-t border-accent/20">
                   <span className="text-[9px] text-neutral-dark tabular-nums">
@@ -987,7 +976,6 @@ function VariantTable({
                      const isSel = selectedKeys.has(v._key);
                      const codeErr = errors[`variant_${v._key}_code`];
                      const adj = v.computedPrice - basePrice;
-
                      return (
                         <tr
                            key={v._key}
@@ -1061,7 +1049,6 @@ function VariantTable({
                                  </td>
                               );
                            })}
-                           {/* Giá cuối — read-only, computed từ basePrice + adjustments */}
                            <td className="px-3 py-2 text-right">
                               <span className="text-[13px] font-semibold text-primary tabular-nums">
                                  {fmtVND(v.computedPrice)}
@@ -1075,7 +1062,6 @@ function VariantTable({
                                  </div>
                               )}
                            </td>
-                           {/* Tồn kho: additive model */}
                            <td className="px-3 py-2">
                               <QuantityCell
                                  existingQuantity={v.existingQuantity}
@@ -1131,10 +1117,6 @@ function VariantTable({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLOR IMAGES
-// FIX: cho phép sửa màu mà KHÔNG cần upload lại ảnh.
-//      - Tách riêng logic ảnh và màu
-//      - Nếu chỉ đổi màu (không upload ảnh mới) → vẫn gửi màu mới lên backend
-//      - Nếu có upload ảnh mới → thay thế ảnh cũ
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ColorImages({
@@ -1164,7 +1146,6 @@ function ColorImages({
    onRemoveNewFile: (key: string, idx: number) => void;
    onToggleDeleteImg: (key: string, imgId: string) => void;
 }) {
-   // Track which color groups are in "edit color" mode
    const [editingColorKeys, setEditingColorKeys] = useState<Set<string>>(
       new Set(),
    );
@@ -1195,10 +1176,8 @@ function ColorImages({
                   ci.existingImages?.filter((i) => i.toDelete).length ?? 0;
                const newCount = ci.previews.length;
                const SLOTS = 5;
-               // Show color editor if no color yet OR user clicked edit
                const isEditingColor =
                   !ci.color || editingColorKeys.has(ci._key);
-               // FIX: detect rename — originalColor set but differs from current
                const isRenamed =
                   isEdit &&
                   ci.originalColor !== undefined &&
@@ -1227,7 +1206,6 @@ function ColorImages({
                                  {ci.color}
                               </span>
                            )}
-                           {/* FIX: badge hiển thị khi đổi màu mà chưa lưu */}
                            {isRenamed && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-light text-accent font-semibold shrink-0 border border-accent-light-active">
                                  đổi màu
@@ -1245,7 +1223,6 @@ function ColorImages({
                            )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                           {/* Edit color button — always visible when color is set */}
                            {ci.color && (
                               <button
                                  type="button"
@@ -1269,7 +1246,6 @@ function ColorImages({
                         </div>
                      </div>
                      <div className="p-3 space-y-2.5">
-                        {/* Color editor — shown when no color yet OR editing */}
                         {isEditingColor && (
                            <div className="grid grid-cols-2 gap-2 pb-2 border-b border-neutral">
                               <div>
@@ -1335,7 +1311,6 @@ function ColorImages({
                                     className={inp()}
                                  />
                               </div>
-                              {/* Close edit button when already has color */}
                               {ci.color && (
                                  <button
                                     type="button"
@@ -1491,6 +1466,27 @@ export default function ProductForm({ product }: ProductFormProps) {
    const router = useRouter();
    const isEdit = !!product;
 
+   // ── Snapshot bất biến: color → existingImages gốc từ DB ──────────────────
+   // Dùng để restore existingImages khi user bỏ chọn màu rồi chọn lại,
+   // tránh mất ảnh cũ do entry bị xóa khỏi state và tạo lại không có existingImages.
+   const originalColorImagesRef = useRef<Map<string, ExistingImage[]>>(
+      (() => {
+         const map = new Map<string, ExistingImage[]>();
+         if (product?.img?.length) {
+            for (const img of product.img) {
+               if (!map.has(img.color)) map.set(img.color, []);
+               if (img.imageUrl)
+                  map.get(img.color)!.push({
+                     id: img.id,
+                     url: img.imageUrl,
+                     toDelete: false,
+                  });
+            }
+         }
+         return map;
+      })(),
+   );
+
    const [brands, setBrands] = useState<BrandOption[]>([]);
    const [categories, setCategories] = useState<CategoryOption[]>([]);
    const [loadingOptions, setLoadingOptions] = useState(true);
@@ -1575,7 +1571,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          return Array.from(colorMap.entries()).map(([color, imgs]) => ({
             _key: uid(),
             color,
-            originalColor: color, // snapshot for rename detection
+            originalColor: color,
             altText: "",
             files: [],
             previews: [],
@@ -1605,7 +1601,6 @@ export default function ProductForm({ product }: ProductFormProps) {
    const colorOptions =
       template?.attributes.find((a) => a.code === "color")?.options ?? [];
    const categoryTree = buildCategoryTree(categories);
-   const categoryPath = getCategoryPath(categoryId, categories);
 
    const categoryOptions = useMemo(() => {
       const normalize = (s: string) =>
@@ -1614,17 +1609,12 @@ export default function ProductForm({ product }: ProductFormProps) {
             .replace(/[\u0300-\u036f]/g, "")
             .replace(/đ/gi, "d")
             .toLowerCase();
-
       return categories
          .filter((c) => !categories.some((other) => other.parentId === c.id))
          .map((c) => {
             const path = getCategoryPath(c.id, categories);
             const label = path.map((p) => p.name).join(" › ");
-            return {
-               value: c.id,
-               label,
-               searchLabel: normalize(label),
-            };
+            return { value: c.id, label, searchLabel: normalize(label) };
          });
    }, [categories]);
 
@@ -1801,6 +1791,9 @@ export default function ProductForm({ product }: ProductFormProps) {
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [name]);
 
+   // ── Sync colorImages ↔ checked ──────────────────────────────────────────
+   // FIX 1: Bỏ ngoại lệ giữ lại existingImages khi bỏ chọn màu (bug cũ).
+   // FIX 2: Khi chọn lại màu đã bỏ, restore existingImages từ ref snapshot DB.
    useEffect(() => {
       if (!template) return;
       const colorAttr = template.attributes.find((a) => a.code === "color");
@@ -1814,14 +1807,15 @@ export default function ProductForm({ product }: ProductFormProps) {
          const allOptionValues = new Set(colorAttr.options.map((o) => o.value));
 
          const filtered = prev.filter((ci) => {
-            // Giữ entry thủ công (chưa chọn màu hoặc màu nhập tay)
+            // Giữ entry thủ công (chưa chọn màu hoặc màu nhập tay không thuộc options)
             if (!ci.color) return true;
             if (!allOptionValues.has(ci.color)) return true;
             // Màu từ options: chỉ giữ nếu vẫn còn trong checked
+            // (không giữ ngoại lệ existingImages nữa — đây là fix bug chính)
             return selectedColorValues.includes(ci.color);
          });
 
-         // Revoke URLs của entries bị xóa để tránh memory leak
+         // Revoke blob URLs của entries bị xóa để tránh memory leak
          const keptKeys = new Set(filtered.map((c) => c._key));
          prev.forEach((ci) => {
             if (!keptKeys.has(ci._key)) {
@@ -1829,22 +1823,38 @@ export default function ProductForm({ product }: ProductFormProps) {
             }
          });
 
-         // Thêm màu mới được chọn
+         // Thêm màu mới được chọn chưa có trong list
          const have = new Set(filtered.map((c) => c.color).filter(Boolean));
          const toAdd = selectedColorValues
             .filter((c) => !have.has(c))
-            .map((c) => ({
-               _key: uid(),
-               color: c,
-               originalColor: isEdit ? c : undefined,
-               altText: "",
-               files: [],
-               previews: [],
-            }));
+            .map((c) => {
+               // Restore existingImages từ snapshot DB nếu là edit mode
+               // → user bỏ chọn rồi chọn lại màu sẽ thấy ảnh cũ trở lại
+               const restoredImages = isEdit
+                  ? (originalColorImagesRef.current.get(c) ?? []).map(
+                       (img) => ({
+                          ...img,
+                          toDelete: false, // reset toDelete khi restore
+                       }),
+                    )
+                  : undefined;
+               return {
+                  _key: uid(),
+                  color: c,
+                  originalColor: isEdit ? c : undefined,
+                  altText: "",
+                  files: [],
+                  previews: [],
+                  ...(restoredImages !== undefined
+                     ? { existingImages: restoredImages }
+                     : {}),
+               };
+            });
 
          return [...filtered, ...toAdd];
       });
    }, [checked, template, isEdit]);
+
    const handleCategorySelect = useCallback(
       async (newId: string) => {
          setShowCategoryTree(false);
@@ -1996,8 +2006,10 @@ export default function ProductForm({ product }: ProductFormProps) {
       setVariants((p) =>
          p.map((v) => (v._key === key ? { ...v, [field]: value } : v)),
       );
+
    const setDefaultVariant = (key: string) =>
       setVariants((p) => p.map((v) => ({ ...v, isDefault: v._key === key })));
+
    const removeVariant = (key: string) => {
       setVariants((p) => p.filter((v) => v._key !== key));
       setSelectedKeys((prev) => {
@@ -2006,12 +2018,14 @@ export default function ProductForm({ product }: ProductFormProps) {
          return n;
       });
    };
+
    const toggleSelect = (key: string) =>
       setSelectedKeys((prev) => {
          const n = new Set(prev);
          n.has(key) ? n.delete(key) : n.add(key);
          return n;
       });
+
    const toggleAll = (v: boolean) =>
       setSelectedKeys(v ? new Set(variants.map((v) => v._key)) : new Set());
 
@@ -2020,6 +2034,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          ...p,
          { _key: uid(), color: "", altText: "", files: [], previews: [] },
       ]);
+
    const removeColor = (key: string) => {
       colorImages
          .find((c) => c._key === key)
@@ -2027,26 +2042,19 @@ export default function ProductForm({ product }: ProductFormProps) {
       setColorImages((p) => p.filter((c) => c._key !== key));
    };
 
-   // ─────────────────────────────────────────────────────────────────────────
-   // FIX: updateColor — khi đổi màu trong colorImages, KHÔNG cần upload lại ảnh.
-   //      originalColor giữ nguyên để backend biết record nào cần rename.
-   // ─────────────────────────────────────────────────────────────────────────
-   // Thay thế updateColor bằng handleUpdateColor trong ProductForm
-
+   // ── handleUpdateColor — đổi màu + sync checked ──────────────────────────
    const handleUpdateColor = (
       key: string,
       field: "color" | "altText",
       val: string,
    ) => {
       if (field !== "color") {
-         // altText → chỉ update colorImages
          setColorImages((p) =>
             p.map((c) => (c._key === key ? { ...c, [field]: val } : c)),
          );
          return;
       }
 
-      // Đổi màu → cần sync với checked
       const colorAttr = template?.attributes.find((a) => a.code === "color");
       if (!colorAttr) {
          setColorImages((p) =>
@@ -2058,19 +2066,16 @@ export default function ProductForm({ product }: ProductFormProps) {
       const ci = colorImages.find((c) => c._key === key);
       if (!ci) return;
 
-      const oldColor = ci.color;
-      const oldOptId = colorAttr.options.find((o) => o.value === oldColor)?.id;
+      const oldOptId = colorAttr.options.find((o) => o.value === ci.color)?.id;
       const newOptId = colorAttr.options.find((o) => o.value === val)?.id;
 
-      // Update colorImages
       setColorImages((p) =>
          p.map((c) => (c._key === key ? { ...c, color: val } : c)),
       );
 
-      // Sync checked: swap old optId → new optId trong color attribute
+      // Sync checked: swap old optId → new optId
       setChecked((prev) => {
-         const prevSet = new Set(prev[colorAttr.id] ?? []);
-         const next = new Set(prevSet);
+         const next = new Set(prev[colorAttr.id] ?? []);
          if (oldOptId) next.delete(oldOptId);
          if (newOptId) next.add(newOptId);
          return { ...prev, [colorAttr.id]: next };
@@ -2093,6 +2098,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          ),
       );
    };
+
    const removeNewFile = (key: string, idx: number) =>
       setColorImages((p) =>
          p.map((c) => {
@@ -2105,6 +2111,7 @@ export default function ProductForm({ product }: ProductFormProps) {
             };
          }),
       );
+
    const toggleDeleteImg = (key: string, imgId: string) =>
       setColorImages((p) =>
          p.map((c) => {
@@ -2170,17 +2177,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       setSubmitError(null);
       createdIdRef.current = null;
       try {
-         const optionAdjustments =
-            template?.attributes.flatMap((a) =>
-               a.options
-                  .filter((o) => o.priceAdjustment !== 0)
-                  .map((o) => ({
-                     attributeOptionId: o.id,
-                     priceAdjustment: o.priceAdjustment,
-                  })),
-            ) ?? [];
-
-         // FIX: quantity = existingQuantity + addQuantity (additive, không ghi đè)
          const variantsPayload = variants.map((v) => ({
             ...(v.id ? { id: v.id } : {}),
             code: v.code.trim(),
@@ -2193,43 +2189,24 @@ export default function ProductForm({ product }: ProductFormProps) {
                .map(([, attributeOptionId]) => ({ attributeOptionId })),
          }));
 
-         // ─────────────────────────────────────────────────────────────────
-         // FIX: colorImagesPayload — bao gồm CẢ trường hợp chỉ đổi màu
-         //      mà không upload ảnh mới.
-         //
-         //      Điều kiện include một colorImage vào payload:
-         //      1. Có ảnh mới upload (c.files.length > 0)
-         //      2. Có ảnh cũ bị đánh dấu xóa
-         //      3. Màu bị đổi (originalColor !== color) — đây là fix chính
-         //
-         //      Với mỗi entry:
-         //      - Nếu KHÔNG upload ảnh mới → backend giữ nguyên ảnh cũ
-         //      - Nếu CÓ upload ảnh mới → backend thay thế ảnh cũ
-         //      - Luôn gửi originalColor để backend biết record nào rename
-         // ─────────────────────────────────────────────────────────────────
          const colorImagesPayload = colorImages
             .filter((c) => {
                if (!c.color.trim()) return false;
                if (!isEdit) return c.files.length > 0;
-
                const colorRenamed =
                   c.originalColor !== undefined && c.originalColor !== c.color;
                const hasNewFiles = c.files.length > 0;
                const hasDeletedImages = (c.existingImages ?? []).some(
                   (i) => i.toDelete,
                );
-
-               // Include if ANY change happened
                return colorRenamed || hasNewFiles || hasDeletedImages;
             })
             .map((c) => ({
                color: c.color.trim(),
                altText: c.altText.trim() || c.color.trim(),
-               // Send originalColor so backend knows which record to rename
                ...(isEdit && c.originalColor !== undefined
                   ? { originalColor: c.originalColor }
                   : {}),
-               // Images to delete
                ...(isEdit && c.existingImages
                   ? {
                        deleteImageIds: c.existingImages
@@ -2237,8 +2214,6 @@ export default function ProductForm({ product }: ProductFormProps) {
                           .map((i) => i.id),
                     }
                   : {}),
-               // FIX: signal to backend whether new images are being uploaded.
-               //      If false, backend must NOT wipe existing images.
                hasNewImages: c.files.length > 0,
             }));
 
@@ -2263,7 +2238,6 @@ export default function ProductForm({ product }: ProductFormProps) {
             specifications: specificationsPayload,
          };
 
-         // Only include colorImages in FormData that actually have new files
          const fd = buildFormData(
             { ...payload, colorImages: colorImagesPayload },
             colorImages.filter((c) => c.color.trim() && c.files.length > 0),
@@ -2328,7 +2302,7 @@ export default function ProductForm({ product }: ProductFormProps) {
          )}
 
          <div className="space-y-3 pb-24">
-            {/* ── BASIC INFO ─────────────────────────────────────────────── */}
+            {/* ── BASIC INFO ──────────────────────────────────────────────── */}
             <Section icon={<FileText size={13} />} title="Thông tin cơ bản">
                <div>
                   <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">
@@ -2426,6 +2400,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                      </p>
                   )}
                </div>
+
                <BasePriceInput
                   value={basePrice}
                   onChange={setBasePrice}
@@ -2502,7 +2477,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                />
             </Section>
 
-            {/* ── VARIANTS ───────────────────────────────────────────────── */}
+            {/* ── VARIANTS ────────────────────────────────────────────────── */}
             <Section
                icon={<Layers size={13} />}
                title="Thuộc tính & Biến thể"
@@ -2614,7 +2589,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                )}
             </Section>
 
-            {/* ── COLOR IMAGES ───────────────────────────────────────────── */}
+            {/* ── COLOR IMAGES ─────────────────────────────────────────────── */}
             <Section
                icon={<Palette size={13} />}
                title="Hình ảnh biến thể"
@@ -2652,7 +2627,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                )}
             </Section>
 
-            {/* ── SPECIFICATIONS ─────────────────────────────────────────── */}
+            {/* ── SPECIFICATIONS ───────────────────────────────────────────── */}
             {categoryId &&
                !loadingTemplate &&
                template &&
@@ -2769,7 +2744,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                </div>
             )}
 
-            {/* ── FOOTER BAR ─────────────────────────────────────────────── */}
+            {/* ── FOOTER BAR ───────────────────────────────────────────────── */}
             <div className="sticky bottom-0 -mx-1 bg-neutral-light border-t border-neutral px-5 py-3 flex items-center justify-between z-20">
                <div className="flex items-center gap-5 text-[12px] text-neutral-dark">
                   <div className="flex items-center gap-1.5">

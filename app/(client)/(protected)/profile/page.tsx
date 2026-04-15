@@ -18,7 +18,7 @@ const quickMenus = [
 const contactItems = [
   { icon: Phone, label: "", value: "1800.2097", sub: "(7h30 – 22h00)" },
   { icon: AlertCircle, label: "Khiếu nại", value: "1800.2063", sub: "(8h00 – 21h30)" },
-  { icon: Navigation, label: "Cửa hàng", href: "/stores" },
+  { icon: Navigation, label: "Cửa hàng", href: "/profile/stores" },
 ];
 
 // ── Logout Modal ────────────────────────────────────────────────────────────

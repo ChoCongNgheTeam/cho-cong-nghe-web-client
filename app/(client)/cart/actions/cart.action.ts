@@ -1,4 +1,3 @@
-// cart/actions/cart.action.ts
 import apiRequest from "@/lib/api";
 import { ApiCartData, ApiResponse, ApiResult } from "../types/cart.types";
 
@@ -42,25 +41,6 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
   }
 }
 
-// PUT /cart/:cartItemId/change-variant
-// export async function changeCartItemVariant(
-//    cartItemId: string,
-//    newVariantId: string,
-//    quantity: number,
-// ): Promise<ApiResult> {
-//    try {
-//       await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}/change-variant`, {
-//          newVariantId,
-//          quantity,
-//       });
-//       return { success: true };
-//    } catch (error: unknown) {
-//       const message =
-//          error instanceof Error ? error.message : "Lỗi không xác định";
-//       return { success: false, error: message };
-//    }
-// }
-
 // DELETE /cart/:cartItemId
 export async function removeCartItem(cartItemId: string): Promise<ApiResult> {
   try {
@@ -72,11 +52,25 @@ export async function removeCartItem(cartItemId: string): Promise<ApiResult> {
   }
 }
 
-// Batch delete
-export async function removeCartItems(cartItemIds: string[]): Promise<ApiResult> {
-  const results = await Promise.all(cartItemIds.map(removeCartItem));
-  const failed = results.find((r) => !r.success);
-  return failed ?? { success: true };
+/**
+ * Batch delete — dùng Promise.allSettled để biết chính xác item nào fail.
+ * Trả về { success, failedIds } thay vì chỉ success/fail toàn bộ.
+ * Context có thể dùng failedIds để rollback đúng phần bị lỗi.
+ */
+export async function removeCartItems(cartItemIds: string[]): Promise<ApiResult & { failedIds?: string[] }> {
+  const results = await Promise.allSettled(cartItemIds.map(removeCartItem));
+
+  const failedIds = cartItemIds.filter((_, i) => {
+    const r = results[i];
+    return r.status === "rejected" || (r.status === "fulfilled" && !r.value.success);
+  });
+
+  if (failedIds.length === 0) return { success: true };
+  return {
+    success: false,
+    error: `Không xóa được ${failedIds.length}/${cartItemIds.length} sản phẩm`,
+    failedIds,
+  };
 }
 
 // DELETE /cart

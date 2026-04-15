@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import { useVariantSelector } from "@/hooks/useVariantSelector";
 import VariantDropdown from "./VariantDropdown";
@@ -15,6 +14,8 @@ interface CartVariantSelectorProps {
   colorValue?: string;
   currentQuantity: number;
   productName: string;
+  /** variantCode đầy đủ từ cart item — dùng để detect RAM+Storage */
+  variantCode?: string;
   onSuccess?: () => void;
   onUpdateItem?: (patch: Partial<CartItemWithDetails>) => void;
 }
@@ -25,8 +26,9 @@ export default function CartVariantSelector({
   currentVariantId,
   colorLabel,
   storageLabel,
-  storageValue, // ← thêm
+  storageValue,
   colorValue,
+  variantCode,
   productName,
   currentQuantity,
   onSuccess,
@@ -38,14 +40,16 @@ export default function CartVariantSelector({
     currentVariantId,
     colorLabel,
     storageLabel,
-    storageValue, // ← truyền xuống hook
+    storageValue,
     colorValue,
+    variantCode,
     currentQuantity,
     onSuccess,
     onUpdateItem,
   });
 
   const displayLabel = [storageLabel, colorLabel].filter(Boolean).join(" / ") || "Mặc định";
+
   if (hasFetched && !isFetching && options.length <= 1) {
     return (
       <div className="text-xs text-neutral-darker mb-2 flex items-center gap-1">

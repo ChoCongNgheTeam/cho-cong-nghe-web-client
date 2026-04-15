@@ -340,6 +340,7 @@ export default function CartPage() {
                             colorLabel={item.colorLabel}
                             storageLabel={item.storageLabel}
                             storageValue={item.storageLabel.toLowerCase().replace(/\s+/g, "")}
+                            variantCode={item.variantCode}
                             currentQuantity={item.quantity}
                             onSuccess={() => refetchCart(true)}
                             onUpdateItem={(patch) => updateItem(item.id, patch)}

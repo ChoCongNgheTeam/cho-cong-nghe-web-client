@@ -112,6 +112,8 @@ export const resetAuthInit = () => {
   _authInitResolve = null;
 };
 
+type ApiResponseType = "json" | "blob" | "text";
+
 // ==========================================
 // SHARED OPTIONS TYPE
 // ==========================================
@@ -123,6 +125,8 @@ interface RequestOptions extends Omit<RequestInit, "signal"> {
   timeout?: number;
   /** Cho phép caller truyền AbortSignal để cancel request */
   signal?: AbortSignal;
+
+  responseType?: ApiResponseType;
 }
 
 // ==========================================
@@ -172,11 +176,19 @@ class ApiRequest {
     const isFormData = fetchOptions.body instanceof FormData;
     const isJsonBody = fetchOptions.body && typeof fetchOptions.body === "object" && !isFormData;
 
-    const buildHeaders = () => ({
-      ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
-      ...(_accessToken && !noAuth ? { Authorization: `Bearer ${_accessToken}` } : {}),
-      ...fetchOptions.headers,
-    });
+    const buildHeaders = () => {
+      // Với FormData: KHÔNG set Content-Type — browser tự thêm boundary
+      // Caller headers vẫn được merge, nhưng Content-Type bị strip nếu là FormData
+      const callerHeaders = fetchOptions.headers
+        ? Object.fromEntries(Object.entries(fetchOptions.headers as Record<string, string>).filter(([k]) => !(isFormData && k.toLowerCase() === "content-type")))
+        : {};
+
+      return {
+        ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
+        ...(_accessToken && !noAuth ? { Authorization: `Bearer ${_accessToken}` } : {}),
+        ...callerHeaders,
+      };
+    };
 
     try {
       const response = await fetch(url, {
@@ -217,7 +229,16 @@ class ApiRequest {
 
           if (retryResponse.ok) {
             if (retryResponse.status === 204) return null as T;
-            return (await retryResponse.json()) as T;
+            const responseType = options.responseType ?? "json";
+
+            switch (responseType) {
+              case "blob":
+                return (await response.blob()) as T;
+              case "text":
+                return (await response.text()) as T;
+              default:
+                return (await response.json()) as T;
+            }
           }
 
           if (!silentAuth) {
@@ -244,7 +265,17 @@ class ApiRequest {
       }
 
       if (response.status === 204) return null as T;
-      return (await response.json()) as T;
+
+      const responseType = options.responseType ?? "json";
+
+      switch (responseType) {
+        case "blob":
+          return (await response.blob()) as T;
+        case "text":
+          return (await response.text()) as T;
+        default:
+          return (await response.json()) as T;
+      }
     } catch (error: any) {
       clearTimeout(timeoutId);
 

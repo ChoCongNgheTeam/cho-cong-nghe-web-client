@@ -120,6 +120,9 @@ export default function ProductDetailRight({
       toasty.warning("Vui lòng chọn phiên bản sản phẩm");
       return;
     }
+
+    const availQty = selectedVariant.availableQuantity ?? selectedVariant.stock ?? selectedVariant.quantity ?? 0;
+
     try {
       await addToCart(selectedVariant.id, 1, {
         productName: product.name,
@@ -130,7 +133,7 @@ export default function ProductDetailRight({
         price: finalPrice,
         originalPrice: basePrice,
         imageUrl: selectedVariant.image ?? selectedVariant.images?.[0]?.imageUrl ?? "",
-        availableQuantity: selectedVariant.availableQuantity ?? selectedVariant.stock ?? 0,
+        availableQuantity: availQty,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
         storageLabel: getStorageLabel(),
