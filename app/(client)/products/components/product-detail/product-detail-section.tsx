@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { SpecificationGroup, SpecificationItem, ProductDetail } from "@/lib/types/product";
 import ProductSpecsModal, { type ProductSpecsModalRef } from "./ProductSpecsModal";
-import { getProductBySpecifications } from "../../_lib/get-product-by-specifications";
+import { getProductBySpecifications } from "../../_lib/index";
 
 interface ProductDetailSectionProps {
   slug?: string;

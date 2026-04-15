@@ -1,8 +1,8 @@
 "use client";
 
 import {
-   AreaChart,
-   Area,
+   BarChart,
+   Bar,
    XAxis,
    YAxis,
    CartesianGrid,
@@ -15,6 +15,69 @@ import {
    ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import type { RevenueDataPoint } from "../analytics.types";
+
+// ─── Fill Missing Dates ───────────────────────────────────────────────────────
+
+function toDateKey(period: string): string {
+   if (/^\d{4}-\d{2}-\d{2}$/.test(period)) return period;
+   const d = new Date(period);
+   if (isNaN(d.getTime())) return period;
+   return d.toISOString().slice(0, 10);
+}
+
+function addDays(dateStr: string, n: number): string {
+   const d = new Date(dateStr + "T00:00:00Z");
+   d.setUTCDate(d.getUTCDate() + n);
+   return d.toISOString().slice(0, 10);
+}
+
+function fillMissingDates(
+   data: RevenueDataPoint[],
+   comparison?: RevenueDataPoint[],
+): {
+   filledData: RevenueDataPoint[];
+   filledComparison: RevenueDataPoint[] | undefined;
+} {
+   if (!data.length) return { filledData: [], filledComparison: undefined };
+
+   const allSources = [...data, ...(comparison ?? [])];
+   const allKeys = allSources.map((d) => toDateKey(d.period));
+   const minDate = allKeys.reduce((a, b) => (a < b ? a : b));
+   const maxDate = allKeys.reduce((a, b) => (a > b ? a : b));
+
+   const days: string[] = [];
+   let cur = minDate;
+   while (cur <= maxDate) {
+      days.push(cur);
+      cur = addDays(cur, 1);
+   }
+
+   function buildMap(arr: RevenueDataPoint[]): Map<string, RevenueDataPoint> {
+      return new Map(arr.map((d) => [toDateKey(d.period), d]));
+   }
+
+   function fillArray(
+      arr: RevenueDataPoint[],
+      map: Map<string, RevenueDataPoint>,
+   ): RevenueDataPoint[] {
+      return days.map(
+         (day) =>
+            map.get(day) ?? {
+               period: day,
+               revenue: 0,
+               orderCount: 0,
+               averageOrderValue: 0,
+            },
+      );
+   }
+
+   const filledData = fillArray(data, buildMap(data));
+   const filledComparison = comparison?.length
+      ? fillArray(comparison, buildMap(comparison))
+      : undefined;
+
+   return { filledData, filledComparison };
+}
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
@@ -34,20 +97,29 @@ const fmtFull = (v: number) =>
 
 const fmtPeriod = (p?: string) => {
    if (!p) return "--";
+
+   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(p);
+   if (dateOnly) {
+      const [, month, day] = p.split("-").map(Number);
+      return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
+   }
+
    const d = new Date(p);
    if (isNaN(d.getTime())) return "--";
    return new Intl.DateTimeFormat("vi-VN", {
       day: "2-digit",
       month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+      timeZone: "UTC",
    }).format(d);
 };
 
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 
 function CustomTooltip(
-   props: TooltipProps<ValueType, NameType> & { payload?: any; label?: string },
+   props: TooltipProps<ValueType, NameType> & {
+      payload?: any;
+      label?: string;
+   },
 ) {
    const { active, payload, label } = props;
    if (!active || !payload?.length) return null;
@@ -59,9 +131,7 @@ function CustomTooltip(
 
    return (
       <div className="bg-primary text-white rounded-xl px-3 py-2 shadow-xl text-xs min-w-[148px]">
-         <p className="text-neutral-dark mb-1 text-[10px]">
-            {fmtPeriod(label)}
-         </p>
+         <p className="text-neutral-dark mb-1 text-[10px]">{label}</p>
          {d && (
             <>
                <p className="font-bold">{fmtFull(d.revenue)}</p>
@@ -85,17 +155,38 @@ function EmptyChart() {
    return (
       <div className="h-[130px] flex flex-col items-center justify-center gap-2 text-neutral-dark">
          <svg width="52" height="36" viewBox="0 0 52 36" fill="none">
-            <path
-               d="M2 30 Q12 20 18 24 Q26 28 32 12 Q38 2 50 6"
-               stroke="var(--color-neutral)"
-               strokeWidth="2"
-               strokeLinecap="round"
-               fill="none"
+            <rect
+               x="2"
+               y="20"
+               width="8"
+               height="14"
+               rx="1.5"
+               fill="var(--color-neutral)"
             />
-            <circle cx="2" cy="30" r="2.5" fill="var(--color-neutral)" />
-            <circle cx="18" cy="24" r="2.5" fill="var(--color-neutral)" />
-            <circle cx="32" cy="12" r="2.5" fill="var(--color-neutral)" />
-            <circle cx="50" cy="6" r="2.5" fill="var(--color-neutral)" />
+            <rect
+               x="14"
+               y="12"
+               width="8"
+               height="22"
+               rx="1.5"
+               fill="var(--color-neutral)"
+            />
+            <rect
+               x="26"
+               y="6"
+               width="8"
+               height="28"
+               rx="1.5"
+               fill="var(--color-neutral)"
+            />
+            <rect
+               x="38"
+               y="16"
+               width="8"
+               height="18"
+               rx="1.5"
+               fill="var(--color-neutral)"
+            />
             <path
                d="M2 34 L50 34"
                stroke="var(--color-neutral)"
@@ -117,40 +208,41 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ data, comparison }: RevenueChartProps) {
-   if (!data.length) {
+   const { filledData, filledComparison } = fillMissingDates(data, comparison);
+
+   if (!filledData.length) {
       return (
          <div className="bg-neutral-light rounded-xl border border-neutral px-4 py-3 shadow-sm">
             <h3 className="text-xs font-semibold text-primary mb-1">
-               Doanh thu theo thời gian
+               Doanh thu theo ngày
             </h3>
             <EmptyChart />
          </div>
       );
    }
 
-   const merged = data.map((d, i) => ({
+   const merged = filledData.map((d, i) => ({
       ...d,
       label: fmtPeriod(d.period),
-      compareRevenue: comparison?.[i]?.revenue,
+      compareRevenue: filledComparison?.[i]?.revenue,
    }));
 
-   const hasComparison = (comparison?.length ?? 0) > 0;
+   const hasComparison = (filledComparison?.length ?? 0) > 0;
 
    return (
       <div className="bg-neutral-light rounded-xl border border-neutral px-4 py-3 shadow-sm">
          <div className="flex items-center justify-between mb-1">
             <h3 className="text-xs font-semibold text-primary">
-               Doanh thu theo thời gian
+               Doanh thu theo ngày
             </h3>
             {hasComparison && (
                <div className="flex items-center gap-3 text-[10px] text-neutral-dark">
                   <span className="flex items-center gap-1">
-                     <span className="w-3 h-0.5 bg-accent inline-block rounded" />
+                     <span className="w-3 h-2 bg-accent inline-block rounded-sm" />
                      Kỳ này
                   </span>
                   <span className="flex items-center gap-1">
-                     {/* Dashed line indicator — dùng neutral-dark thay slate-300 */}
-                     <span className="w-3 h-0.5 bg-neutral-dark inline-block rounded" />
+                     <span className="w-3 h-2 bg-neutral-dark inline-block rounded-sm" />
                      Kỳ trước
                   </span>
                </div>
@@ -158,31 +250,12 @@ export function RevenueChart({ data, comparison }: RevenueChartProps) {
          </div>
 
          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart
+            <BarChart
                data={merged}
                margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+               barCategoryGap="30%"
+               barGap={2}
             >
-               <defs>
-                  {/* Gradient màu business — giữ nguyên hex */}
-                  <linearGradient id="gMain" x1="0" y1="0" x2="0" y2="1">
-                     <stop offset="5%" stopColor="#4979e4" stopOpacity={0.16} />
-                     <stop offset="95%" stopColor="#4979e4" stopOpacity={0} />
-                  </linearGradient>
-                  {/* Gradient comparison — dùng CSS variable */}
-                  <linearGradient id="gCmp" x1="0" y1="0" x2="0" y2="1">
-                     <stop
-                        offset="5%"
-                        stopColor="var(--color-neutral-dark)"
-                        stopOpacity={0.12}
-                     />
-                     <stop
-                        offset="95%"
-                        stopColor="var(--color-neutral-dark)"
-                        stopOpacity={0}
-                     />
-                  </linearGradient>
-               </defs>
-
                <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="var(--color-neutral)"
@@ -204,43 +277,20 @@ export function RevenueChart({ data, comparison }: RevenueChartProps) {
                />
                <Tooltip
                   content={<CustomTooltip />}
-                  cursor={{
-                     stroke: "#4979e4",
-                     strokeWidth: 1,
-                     strokeDasharray: "3 2",
-                  }}
+                  cursor={{ fill: "var(--color-neutral)", opacity: 0.5 }}
                />
 
-               {/* Comparison area (behind) */}
                {hasComparison && (
-                  <Area
-                     type="monotoneX"
+                  <Bar
                      dataKey="compareRevenue"
-                     stroke="var(--color-neutral-dark)"
-                     strokeWidth={1.5}
-                     strokeDasharray="4 3"
-                     fill="url(#gCmp)"
-                     dot={false}
-                     activeDot={false}
+                     fill="var(--color-neutral-dark)"
+                     opacity={0.4}
+                     radius={[3, 3, 0, 0]}
                   />
                )}
 
-               {/* Main area — màu business giữ nguyên */}
-               <Area
-                  type="monotoneX"
-                  dataKey="revenue"
-                  stroke="#4979e4"
-                  strokeWidth={2}
-                  fill="url(#gMain)"
-                  dot={false}
-                  activeDot={{
-                     r: 4,
-                     fill: "#4979e4",
-                     stroke: "#fff",
-                     strokeWidth: 2,
-                  }}
-               />
-            </AreaChart>
+               <Bar dataKey="revenue" fill="#4979e4" radius={[3, 3, 0, 0]} />
+            </BarChart>
          </ResponsiveContainer>
       </div>
    );

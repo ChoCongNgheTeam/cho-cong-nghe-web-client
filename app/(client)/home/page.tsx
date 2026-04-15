@@ -6,8 +6,6 @@ export default async function HomePage() {
 
   const hasSale = saleSchedule?.todayProducts?.products.length > 0;
 
-  // console.log(hasSale);
-
   return (
     <main className="min-h-screen bg-neutral-light">
       <HomeSlider sliders={sliders} />

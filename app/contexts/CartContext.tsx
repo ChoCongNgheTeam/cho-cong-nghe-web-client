@@ -1,6 +1,13 @@
 "use client";
 // ============================================================
 // CART CONTEXT — unified logic cho Guest & Authenticated user
+//
+// PATTERN chuẩn hóa cho mọi mutation:
+//   1. Validate (qty bounds, availableQty) — cả Guest lẫn Auth
+//   2. Snapshot state hiện tại để rollback
+//   3. Optimistic setState
+//   4. Persist: Auth → gọi API, Guest → writeLocalCart
+//   5. Nếu lỗi → rollback về snapshot
 // ============================================================
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
@@ -63,17 +70,51 @@ export interface NewVariantData {
   storageLabel: string;
   price: number;
   originalPrice?: number;
-  colorValue?: string; // ← thêm
+  colorValue?: string;
+}
+
+// ── Response types ────────────────────────────────────────────────────────
+
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
+interface CartItemsResponse {
+  items: CartItemWithDetails[];
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Clamp quantity theo availableQuantity.
+ * Nếu availableQty = 0 (không track) thì chỉ clamp min = 1.
+ */
+function clampQty(desired: number, availableQty: number): number {
+  const clamped = Math.max(1, desired);
+  return availableQty > 0 ? Math.min(availableQty, clamped) : clamped;
+}
+
+/**
+ * Validate xem có thể thêm `delta` vào quantity hiện tại không.
+ * Trả về null nếu OK, hoặc message lỗi nếu không hợp lệ.
+ */
+function validateQtyChange(current: number, delta: number, availableQty: number): string | null {
+  const next = current + delta;
+  if (next < 1) return "Số lượng tối thiểu là 1";
+  if (availableQty > 0 && next > availableQty) {
+    return `Chỉ còn ${availableQty} sản phẩm trong kho`;
+  }
+  return null;
 }
 
 // ── Transform API response → CartItemWithDetails ─────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function transformApiItem(raw: any): CartItemWithDetails {
+function transformApiItem(raw: CartItemWithDetails): CartItemWithDetails {
   const now = Date.now();
-  // BE trả color/storage, FE cần colorLabel/storageLabel
-  const colorLabel = raw.colorLabel ?? raw.color ?? "";
-  const storageLabel = raw.storageLabel ?? raw.storage ?? extractStorage(raw.variantCode ?? "");
+  const colorLabel = (raw as CartItemWithDetails & { color?: string }).colorLabel ?? (raw as CartItemWithDetails & { color?: string }).color ?? "";
+  const storageLabel = raw.storageLabel ?? extractStorage((raw as CartItemWithDetails & { variantCode?: string }).variantCode ?? "");
 
   return {
     id: raw.id,
@@ -91,10 +132,9 @@ function transformApiItem(raw: any): CartItemWithDetails {
     color: colorLabel,
     colorValue: raw.colorValue ?? "",
     image: raw.image ?? "",
-    // Ưu tiên price.final nếu có (từ getCartWithPricing)
-    unitPrice: raw.price?.final ?? raw.unitPrice ?? 0,
-    originalPrice: raw.price?.base ?? raw.originalPrice ?? raw.unitPrice ?? 0,
-    totalPrice: raw.totalFinalPrice ?? raw.totalPrice ?? 0,
+    unitPrice: (raw as CartItemWithDetails & { price?: { final?: number } }).price?.final ?? raw.unitPrice ?? 0,
+    originalPrice: (raw as CartItemWithDetails & { price?: { base?: number } }).price?.base ?? raw.originalPrice ?? raw.unitPrice ?? 0,
+    totalPrice: (raw as CartItemWithDetails & { totalFinalPrice?: number }).totalFinalPrice ?? raw.totalPrice ?? 0,
     quantity: raw.quantity,
     availableQuantity: raw.availableQuantity ?? 0,
     selected: true,
@@ -123,6 +163,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const hasSyncedRef = useRef(false);
   const [rawItems, setRawItems] = useState<CartItemWithDetails[]>([]);
 
+  // Ref luôn trỏ vào items mới nhất — tránh stale closure trong callbacks
+  const itemsRef = useRef<CartItemWithDetails[]>(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
   // ── Fetch ───────────────────────────────────────────────────────────────
 
   const refetchCart = useCallback(
@@ -130,18 +176,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!silent) setIsLoading(true);
       try {
         if (isAuthenticated) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const res = (await getCartItems()) as any;
+          const res = (await getCartItems()) as ApiResponse<CartItemsResponse>;
           if (res.success && Array.isArray(res.data?.items)) {
             setItems((prev) =>
-              res.data.items.map((raw: CartItemWithDetails) => ({
+              res.data!.items.map((raw) => ({
                 ...transformApiItem(raw),
-                // Giữ lại trạng thái selected
                 selected: prev.find((p) => p.id === raw.id)?.selected ?? true,
               })),
             );
-
-            setRawItems(res.data.items);
+            setRawItems(res.data!.items);
           } else {
             setItems([]);
             setRawItems([]);
@@ -171,8 +214,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const payload: SyncCartPayload[] = buildSyncPayload(local);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await syncGuestCart(payload)) as any;
+      const res = (await syncGuestCart(payload)) as ApiResponse;
       if (res.success) {
         clearLocalCart();
         await refetchCart();
@@ -193,23 +235,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
     hasSyncedRef.current = true;
     syncLocalToDB().then((count) => {
       if (count > 0) {
-        // toast.success(`Đã đồng bộ ${count} sản phẩm vào giỏ hàng 🛒`);
         console.info(`[Cart] synced ${count} guest items`);
       }
     });
   }, [isAuthenticated, syncLocalToDB]);
 
   // ── Add to cart ─────────────────────────────────────────────────────────
+  //
+  // Cải tiến Guest: check availableQuantity cho cả item MỚI (không chỉ existing).
 
   const addToCart = useCallback(
     async (variantId: string, quantity = 1, meta?: AddToCartMeta): Promise<void> => {
+      // ── Validate chung (cả Auth và Guest) ──
+      const avail = meta?.availableQuantity ?? 0;
+      if (avail > 0 && quantity > avail) {
+        throw new Error(`Chỉ còn ${avail} sản phẩm trong kho`);
+      }
+
+      const hasStockInfo = meta?.availableQuantity != null; // undefined → không track
+      if (hasStockInfo && avail > 0 && quantity > avail) {
+        throw new Error(`Chỉ còn ${avail} sản phẩm trong kho`);
+      }
+      // Nếu avail = 0 mà hasStockInfo = true → hết hàng
+      if (hasStockInfo && avail === 0) {
+        throw new Error(`Sản phẩm đã hết hàng`);
+      }
+
       if (isAuthenticated) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = (await apiAddToCart(variantId, quantity)) as any;
+        const res = (await apiAddToCart(variantId, quantity)) as ApiResponse;
         if (res.success) await refetchCart();
         return;
       }
-      console.log(meta);
 
       // ── Guest ──
       const local = readLocalCart();
@@ -218,9 +274,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (existing) {
         const newQty = existing.quantity + quantity;
-        if (meta?.availableQuantity && newQty > meta.availableQuantity) {
-          throw new Error(`Chỉ còn ${meta.availableQuantity} sản phẩm`);
-        }
+        // Validate tổng qty sau khi cộng
+        const err = validateQtyChange(existing.quantity, quantity, avail);
+        if (err) throw new Error(err);
+
         existing.quantity = newQty;
         existing.totalPrice = existing.unitPrice * existing.quantity;
         existing.updatedAt = new Date(now).toISOString();
@@ -244,7 +301,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           originalPrice: meta?.originalPrice ?? meta?.price ?? 0,
           totalPrice: (meta?.price ?? 0) * quantity,
           quantity,
-          availableQuantity: meta?.availableQuantity ?? 0,
+          availableQuantity: avail,
           selected: true,
           addedAt: now,
           createdAt: new Date(now).toISOString(),
@@ -259,40 +316,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   // ── Change variant ──────────────────────────────────────────────────────
-  /**
-   * Đổi variant của 1 cart item.
-   * - Nếu variantId mới đã tồn tại trong cart → merge quantity, xóa item cũ.
-   * - Nếu chưa → replace in-place.
-   * - Auth: gọi API /cart/:id/change-variant
-   * - Guest: update localStorage
-   */
+  //
+  // Cải tiến Guest: persist → rollback nếu writeLocalCart throw (disk full v.v.)
+  // Auth: giữ nguyên — rollback nếu API fail.
+
   const changeVariant = useCallback(
     async (cartItemId: string, newVariant: NewVariantData): Promise<void> => {
       const newVariantCode = [newVariant.storageLabel, newVariant.colorLabel].filter(Boolean).join(" / ");
+      const snapshot = itemsRef.current;
 
-      // ── Optimistic update ──
-      setItems((prev) => {
+      // ── Optimistic update (dùng chung cho cả Guest và Auth) ──
+      const buildNext = (prev: CartItemWithDetails[]): CartItemWithDetails[] => {
         const currentItem = prev.find((i) => i.id === cartItemId);
         if (!currentItem) return prev;
 
         const duplicate = prev.find((i) => i.productVariantId === newVariant.id && i.id !== cartItemId);
 
         if (duplicate) {
-          return prev
-            .filter((i) => i.id !== cartItemId)
-            .map((i) =>
-              i.id === duplicate.id
-                ? {
-                    ...i,
-                    quantity: i.quantity + currentItem.quantity,
-                    updatedAt: new Date().toISOString(),
-                  }
-                : i,
-            );
+          return prev.filter((i) => i.id !== cartItemId).map((i) => (i.id === duplicate.id ? { ...i, quantity: i.quantity + currentItem.quantity, updatedAt: new Date().toISOString() } : i));
         }
 
-        // Replace in-place — GIỮ NGUYÊN unitPrice/originalPrice cũ
-        // Chỉ update labels + image để UI không bị NaN
         return prev.map((i) =>
           i.id !== cartItemId
             ? i
@@ -304,97 +347,79 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 storageLabel: newVariant.storageLabel,
                 color: newVariant.colorLabel,
                 colorValue: newVariant.colorValue ?? newVariant.colorLabel.toLowerCase().replace(/\s+/g, "-"),
-                // ← GIỮ NGUYÊN: unitPrice, originalPrice, totalPrice
-                // Price sẽ được update đúng sau refetchCart
                 updatedAt: new Date().toISOString(),
               },
         );
-      });
+      };
+
+      setItems((prev) => buildNext(prev));
 
       if (isAuthenticated) {
         try {
-          const currentItem = items.find((i) => i.id === cartItemId);
+          const currentItem = itemsRef.current.find((i) => i.id === cartItemId);
           await apiRequest.put(`/cart/${cartItemId}/change-variant`, {
             newVariantId: newVariant.id,
             quantity: currentItem?.quantity ?? 1,
           });
-          // ← KHÔNG gọi refetchCart ở đây
-          // onSuccess trong useVariantSelector sẽ gọi refetchCart
         } catch {
-          await refetchCart(true); // chỉ refetch khi lỗi để rollback
+          // Rollback về snapshot nếu API fail
+          setItems(snapshot);
         }
         return;
       }
-      // ── Guest: persist localStorage ──
-      // Đọc lại từ state hiện tại (sau optimistic update)
-      setItems((prev) => {
-        writeLocalCart(prev);
-        return prev;
-      });
+
+      // ── Guest: persist vào localStorage, rollback nếu lỗi ──
+      try {
+        setItems((prev) => {
+          const next = buildNext(prev);
+          writeLocalCart(next);
+          return next;
+        });
+      } catch {
+        setItems(snapshot);
+      }
     },
-    [isAuthenticated, items, refetchCart],
+    [isAuthenticated],
   );
 
   // ── Update quantity ─────────────────────────────────────────────────────
+  //
+  // Cải tiến Guest: dùng cùng validate + rollback pattern như Auth.
 
   const updateQuantity = useCallback(
     async (cartItemId: string, delta: number): Promise<boolean> => {
-      const item = items.find((i) => i.id === cartItemId);
+      const item = itemsRef.current.find((i) => i.id === cartItemId);
       if (!item) return false;
 
-      // Chỉ check availableQuantity nếu nó hợp lệ (> 0)
-      if (item.availableQuantity > 0 && item.quantity + delta > item.availableQuantity) {
-        return false;
-      }
+      // ── Validate chung (cả Guest và Auth) ──
+      const err = validateQtyChange(item.quantity, delta, item.availableQuantity);
+      if (err) return false;
 
-      const newQty = item.availableQuantity > 0 ? Math.min(item.availableQuantity, Math.max(1, item.quantity + delta)) : Math.max(1, item.quantity + delta); // guest: không giới hạn trên
+      const newQty = clampQty(item.quantity + delta, item.availableQuantity);
+      const snapshot = itemsRef.current;
 
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id === cartItemId
-            ? {
-                ...i,
-                quantity: newQty,
-                totalPrice: i.unitPrice * newQty,
-              }
-            : i,
-        ),
-      );
+      // Optimistic update
+      setItems((prev) => prev.map((i) => (i.id === cartItemId ? { ...i, quantity: newQty, totalPrice: i.unitPrice * newQty } : i)));
 
       if (isAuthenticated) {
-        const res = (await updateCartItemQuantity(cartItemId, newQty)) as any;
-
+        const res = (await updateCartItemQuantity(cartItemId, newQty)) as ApiResponse;
         if (!res.success) {
-          setItems((prev) =>
-            prev.map((i) =>
-              i.id === cartItemId
-                ? {
-                    ...i,
-                    quantity: item.quantity,
-                    totalPrice: item.unitPrice * item.quantity,
-                  }
-                : i,
-            ),
-          );
+          setItems(snapshot);
           return false;
         }
       } else {
-        const local = readLocalCart().map((i) =>
-          i.id === cartItemId
-            ? {
-                ...i,
-                quantity: newQty,
-                totalPrice: i.unitPrice * newQty,
-              }
-            : i,
-        );
-
-        writeLocalCart(local);
+        // ── Guest: persist, rollback nếu lỗi ──
+        try {
+          writeLocalCart(readLocalCart().map((i) => (i.id === cartItemId ? { ...i, quantity: newQty, totalPrice: i.unitPrice * newQty } : i)));
+        } catch {
+          setItems(snapshot);
+          return false;
+        }
       }
 
       return true;
     },
-    [isAuthenticated, items],
+    [isAuthenticated],
   );
 
   // ── Optimistic patch ────────────────────────────────────────────────────
@@ -404,38 +429,65 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Remove ──────────────────────────────────────────────────────────────
+  //
+  // Cải tiến Guest: rollback nếu writeLocalCart throw.
 
   const removeItem = useCallback(
     async (cartItemId: string): Promise<void> => {
-      const prev = items;
+      const snapshot = itemsRef.current;
       setItems((curr) => curr.filter((i) => i.id !== cartItemId));
 
       if (isAuthenticated) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = (await removeCartItem(cartItemId)) as any;
-        if (!res.success) setItems(prev);
+        const res = (await removeCartItem(cartItemId)) as ApiResponse;
+        if (!res.success) setItems(snapshot);
       } else {
-        writeLocalCart(readLocalCart().filter((i) => i.id !== cartItemId));
+        try {
+          writeLocalCart(readLocalCart().filter((i) => i.id !== cartItemId));
+        } catch {
+          setItems(snapshot);
+        }
       }
     },
-    [isAuthenticated, items],
+    [isAuthenticated],
   );
 
+  // ── Remove selected ─────────────────────────────────────────────────────
+  //
+  // Cải tiến Auth: dùng failedIds từ action để rollback chỉ item thực sự lỗi,
+  // không rollback toàn bộ.
+  // Cải tiến Guest: rollback nếu writeLocalCart throw.
+
   const removeSelectedItems = useCallback(async (): Promise<void> => {
-    const selectedIds = items.filter((i) => i.selected).map((i) => i.id);
+    const snapshot = itemsRef.current;
+    const selectedIds = snapshot.filter((i) => i.selected).map((i) => i.id);
     if (!selectedIds.length) return;
 
-    const prev = items;
     setItems((curr) => curr.filter((i) => !i.selected));
 
     if (isAuthenticated) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await removeCartItems(selectedIds)) as any;
-      if (!res.success) setItems(prev);
+      const res = (await removeCartItems(selectedIds)) as ApiResponse & { failedIds?: string[] };
+      if (!res.success) {
+        if (res.failedIds && res.failedIds.length < selectedIds.length) {
+          // Partial rollback: chỉ khôi phục những item thực sự fail
+          const failedSet = new Set(res.failedIds);
+          setItems((curr) => {
+            const failedItems = snapshot.filter((i) => failedSet.has(i.id));
+            return [...curr, ...failedItems].sort((a, b) => (a.addedAt ?? 0) - (b.addedAt ?? 0));
+          });
+        } else {
+          // Toàn bộ fail → rollback hết
+          setItems(snapshot);
+        }
+      }
     } else {
-      writeLocalCart(readLocalCart().filter((i) => !selectedIds.includes(i.id)));
+      try {
+        const selectedSet = new Set(selectedIds);
+        writeLocalCart(readLocalCart().filter((i) => !selectedSet.has(i.id)));
+      } catch {
+        setItems(snapshot);
+      }
     }
-  }, [isAuthenticated, items]);
+  }, [isAuthenticated]);
 
   // ── Selection ───────────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
-import { FeaturedCategory } from "../../_libs";
+import { FeaturedCategory } from "../../types";
 
 interface CategoryGridProps {
   featuredCategories: FeaturedCategory[];
@@ -15,13 +15,15 @@ function CategoryItem({ category }: { category: FeaturedCategory }) {
       <div className="flex flex-col items-center">
         <div className="relative w-full bg-neutral-light rounded-2xl p-0.5 md:p-4 transition-all duration-300 group-hover/item:scale-105">
           <div className="relative w-full aspect-square rounded-xl overflow-hidden">
-            <Image
-              src={category.imageUrl}
-              alt={category.name}
-              fill
-              sizes="(max-width: 1024px) 25vw, 12.5vw"
-              className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-110"
-            />
+            {category.imageUrl && (
+              <Image
+                src={category.imageUrl}
+                alt={category.name}
+                fill
+                sizes="(max-width: 1024px) 25vw, 12.5vw"
+                className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-110"
+              />
+            )}
           </div>
         </div>
         <p className="mt-1.5 w-full text-center font-semibold text-primary line-clamp-2 leading-tight" style={{ fontSize: "clamp(9px, 2.5vw, 14px)" }}>

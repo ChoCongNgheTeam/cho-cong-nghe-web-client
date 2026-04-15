@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
 import ProductDetailRight from "../components/product-detail/product-detail-card-right";
@@ -13,113 +14,166 @@ import ProductStickyFooter from "./ProductStickyFooter";
 import { TrustBadges } from "@/(client)/home/components";
 
 import { ProductDetail } from "@/lib/types/product";
-import apiRequest from "@/lib/api";
+import { getProductVariant } from "../_lib";
 import { useProductSections, TABS } from "./useProductSections";
+import type { ProductVariant, VariantOption, ProductPrice } from "../types";
 
 interface ProductDetailContentProps {
   product: ProductDetail;
   slug: string;
 }
 
+/**
+ * Sync selectedOptions từ currentVariant + availableOptions sau khi API trả về.
+ *
+ * Xử lý 2 mode:
+ *   - Bundle mode (type="bundle"): đọc selected=true từ availableOptions
+ *     (BE set đúng field này cho bundle), fallback về variant.id
+ *   - Individual mode (color/storage/ram): đọc trực tiếp từ variant fields
+ */
+function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOptions: VariantOption[]): Record<string, string> {
+  if (!variant) return {};
+
+  const result: Record<string, string> = {};
+
+  for (const opt of availableOptions) {
+    if (opt.type === "bundle") {
+      // BE trả về selected=true cho bundle đang active
+      const selected = opt.values?.find((v) => (v as any).selected === true);
+      const activeValue = selected?.value ?? variant.id;
+      if (activeValue) result["bundle"] = activeValue;
+    } else if (opt.type === "color") {
+      const val = variant.color ?? opt.values?.[0]?.value;
+      if (val) result["color"] = val;
+    } else if (opt.type === "storage") {
+      const fromVariant = variant.storage as string | undefined;
+      const fromCode = (() => {
+        const m = variant.code?.match(/(\d+GB)/i);
+        return m ? m[1].toLowerCase() : undefined;
+      })();
+      const val = fromVariant ?? fromCode ?? opt.values?.[0]?.value;
+      if (val) result["storage"] = val;
+    } else if (opt.type === "ram") {
+      const val = (variant.ram as string | undefined) ?? opt.values?.[0]?.value;
+      if (val) result["ram"] = val;
+    } else {
+      // Generic fallback cho các option type khác
+      if (opt.values?.[0]) result[opt.type] = opt.values[0].value;
+    }
+  }
+
+  return result;
+}
+
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
-  const {
-    breadcrumbRef,
-    infoRef,
-    specificationsRef,
-    articleRef,
-    reviewsRef,
-    suggestRef,
-    // stickyTop,
-    showStickyHeader,
-    activeTab,
-    scrollToSection,
-    layoutChangingRef,
-  } = useProductSections();
+  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, showStickyHeader, activeTab, scrollToSection, layoutChangingRef } = useProductSections();
 
   const tabBarRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!tabBarRef.current) return;
     const btn = tabBarRef.current.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`);
-    if (btn)
-      btn.scrollIntoView({
-        inline: "nearest",
-        block: "nearest",
-        behavior: "smooth",
-      });
+    if (btn) btn.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
   }, [activeTab]);
 
   /* ── Variant state ── */
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    product.availableOptions?.forEach((opt) => {
-      const defaultVal = opt.values?.find((v: any) => v.selected) ?? opt.values?.[0];
-      if (defaultVal) init[opt.type] = defaultVal.value;
-    });
-    return init;
-  });
-
-  const [availableOptions, setAvailableOptions] = useState(product.availableOptions || []);
-  const [currentVariant, setCurrentVariant] = useState(product.currentVariant);
-  const [variantImages, setVariantImages] = useState(product.currentVariant?.images || []);
-  const [price, setPrice] = useState(product.price);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() =>
+    syncOptionsFromVariant(product.currentVariant as unknown as ProductVariant, (product.availableOptions as VariantOption[]) || []),
+  );
+  const [availableOptions, setAvailableOptions] = useState<VariantOption[]>((product.availableOptions as VariantOption[]) || []);
+  const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(product.currentVariant as unknown as ProductVariant);
+  const [variantImages, setVariantImages] = useState<{ imageUrl: string }[]>(product.currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) || []);
+  const [price, setPrice] = useState<ProductPrice | undefined>(product.price);
   const [quantity, setQuantity] = useState(1);
 
-  const fetchVariantByParams = async (params: Record<string, string>) => {
-    try {
-      const json = await apiRequest.get<{ data: any }>(`/products/slug/${product.slug}/variant`, { noAuth: true, params });
-      if (!json) return;
-      const data = json.data;
-      setAvailableOptions(data.availableOptions);
-      setCurrentVariant(data.currentVariant);
-      setVariantImages(data.currentVariant.images);
-      setPrice(data.price);
-      setQuantity(1);
+  /* ─────────────────────────────────────────────────────────────────────────
+   * fetchVariantByParams — batch tất cả state update sau khi có data API
+   * ───────────────────────────────────────────────────────────────────────── */
+  const fetchVariantByParams = useCallback(
+    async (params: Record<string, string>) => {
+      try {
+        const data = await getProductVariant(product.slug, params);
 
-      const variant = data.currentVariant;
-      const newOptions: Record<string, string> = {};
-      if (variant?.color) newOptions["color"] = variant.color;
-      if (variant?.storage) newOptions["storage"] = variant.storage;
-      if (variant?.ram) newOptions["ram"] = variant.ram;
-      if (!newOptions["storage"] && variant?.code) {
-        const storageMatch = variant.code.match(/(\d+GB)/i);
-        if (storageMatch) newOptions["storage"] = storageMatch[1].toLowerCase();
+        setAvailableOptions(data.availableOptions as VariantOption[]);
+        setCurrentVariant(data.currentVariant);
+        setVariantImages(data.currentVariant.images ?? []);
+        setPrice(data.price);
+        setQuantity(1);
+
+        const synced = syncOptionsFromVariant(data.currentVariant, data.availableOptions as VariantOption[]);
+        if (Object.keys(synced).length > 0) {
+          setSelectedOptions(synced);
+        }
+      } catch (error) {
+        console.error("Error fetching variant:", error);
       }
-      if (Object.keys(newOptions).length) {
-        setSelectedOptions((prev) => ({ ...prev, ...newOptions }));
-      }
-    } catch (error) {
-      console.error("Error fetching variant:", error);
+    },
+    [product.slug],
+  );
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * Mount: đọc ?bundle từ URL → load đúng variant từ card navigate
+   * ───────────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    const bundleId = searchParams.get("bundle");
+
+    const cleanUrl = () => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("bundle");
+      const newUrl = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      window.history.replaceState(null, "", newUrl);
+    };
+
+    if (!bundleId) return;
+
+    if (bundleId === product.currentVariant?.id) {
+      cleanUrl();
+      return;
     }
-  };
 
-  const handleOptionChange = async (type: string, value: string) => {
-    const newOptions = { ...selectedOptions, [type]: value };
-    setSelectedOptions(newOptions);
-    await fetchVariantByParams(newOptions);
-  };
+    fetchVariantByParams({ bundle: bundleId }).then(cleanUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleColorChangeFromGallery = async (variantId: string) => {
-    if (variantId === currentVariant?.id) return;
-    await fetchVariantByParams({ bundle: variantId });
-  };
+  /* ─────────────────────────────────────────────────────────────────────────
+   * handleOptionChange
+   *
+   * - type="bundle": gọi ?bundle=<variantId> trực tiếp
+   * - type khác (color/storage/ram): gộp options, loại bỏ key "bundle" nếu có
+   *   để tránh conflict khi sản phẩm chuyển từ bundle → individual mode
+   * ───────────────────────────────────────────────────────────────────────── */
+  const handleOptionChange = useCallback(
+    async (type: string, value: string) => {
+      if (type === "bundle") {
+        await fetchVariantByParams({ bundle: value });
+      } else {
+        // Loại bỏ key "bundle" khỏi selectedOptions khi gọi individual params
+        const { bundle: _drop, ...restOptions } = selectedOptions;
+        const newOptions = { ...restOptions, [type]: value };
+        await fetchVariantByParams(newOptions);
+      }
+    },
+    [selectedOptions, fetchVariantByParams],
+  );
+
+  const handleColorChangeFromGallery = useCallback(
+    async (variantId: string) => {
+      if (variantId === currentVariant?.id) return;
+      await fetchVariantByParams({ bundle: variantId });
+    },
+    [currentVariant?.id, fetchVariantByParams],
+  );
 
   return (
     <div>
-      {/*
-        ── Sticky Tab Bar ──────────────────────────────────────────────────
-        position:sticky — tự dính không cần JS tính top mỗi frame.
-
-        stickyTop chỉ thay đổi 2 lần per scroll session (khi header
-        cross ngưỡng visible↔hidden), không phải mỗi frame.
-
-        Ẩn/hiện bằng opacity+pointerEvents để không conflict sticky.
-        ─────────────────────────────────────────────────────────────────── */}
+      {/* ── Sticky Tab Bar ── */}
       <div
         className="fixed left-0 right-0 z-40 bg-neutral-light shadow-md border-b border-neutral"
         style={{
           top: 0,
-          transform: `translateY(var(--header-translate, 0px)) + var(--header-translate, 0px)))`,
+          transform: `translateY(var(--header-translate, 0px))`,
           transition: "opacity 0.2s ease, transform 0.3s ease-in-out",
           height: 48,
           opacity: showStickyHeader ? 1 : 0,
@@ -153,6 +207,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           </div>
         </div>
       </div>
+
       {/* ── Breadcrumb ── */}
       <div className="container sm:px-6 mt-4" ref={breadcrumbRef}>
         <Breadcrumb
@@ -176,6 +231,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-16 lg:h-fit">
               <ProductDetailRight
+                key={currentVariant?.id}
                 product={product}
                 selectedVariant={currentVariant}
                 selectedPrice={price}

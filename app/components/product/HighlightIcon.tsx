@@ -1,0 +1,205 @@
+import {
+  Maximize2,
+  Weight,
+  Droplets,
+  Layers,
+  Cpu,
+  Zap,
+  HardDrive,
+  IdCard,
+  Monitor,
+  MonitorCheck,
+  Grid2x2,
+  Palette,
+  RefreshCw,
+  Glasses,
+  Sun,
+  Contrast,
+  Camera,
+  Video,
+  Sparkles,
+  Lock,
+  Signal,
+  Wifi,
+  MapPin,
+  Bluetooth,
+  Link,
+  Battery,
+  BatteryFull,
+  BatteryCharging,
+  Plug,
+  Bell,
+  Star,
+  Box,
+  Calendar,
+  ShieldCheck,
+  BookOpen,
+  Sliders,
+  Laptop,
+  Database,
+  Usb,
+  Headphones,
+  Speaker,
+  Mic,
+  Music,
+  Keyboard,
+  Lightbulb,
+  Thermometer,
+  Snowflake,
+  Leaf,
+  Wind,
+  Settings,
+  Moon,
+  Globe,
+  Smartphone,
+  Mouse,
+  Activity,
+  Volume2,
+  VolumeX,
+  Ear,
+  RotateCw,
+  List,
+  Timer,
+  ToggleLeft,
+  Anchor,
+  DoorOpen,
+  Tv,
+  Package,
+  LucideIcon,
+} from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  // Display / Screen
+  maximize: Maximize2,
+  screen: Monitor,
+  "screen-small": Monitor,
+  monitor: Monitor,
+  "monitor-check": MonitorCheck,
+  tv: Tv,
+  fold: Laptop,
+  laptop: Laptop,
+
+  // Processor / Performance
+  cpu: Cpu,
+  "cpu-fill": Cpu,
+  "cpu-chip": Cpu,
+  gpu: Monitor,
+  "gpu-brand": Monitor,
+  "gpu-model": Monitor,
+
+  // Memory / Storage
+  ram: Database,
+  "ram-fill": Database,
+  storage: HardDrive,
+  "hard-drive": HardDrive,
+  "sd-card": IdCard,
+  database: Database,
+  slots: Layers,
+
+  // Power / Battery
+  zap: Zap,
+  battery: Battery,
+  "battery-full": BatteryFull,
+  "battery-charging": BatteryCharging,
+  plug: Plug,
+  upgrade: Zap,
+
+  // Camera / Video
+  camera: Camera,
+  "camera-1": Camera,
+  "camera-2": Camera,
+  "camera-3": Camera,
+  "camera-sparkles": Sparkles,
+  "camera-user": Camera,
+  "camera-front": Camera,
+  video: Video,
+  "video-user": Video,
+  sensor: Camera,
+
+  // Connectivity
+  wifi: Wifi,
+  bluetooth: Bluetooth,
+  link: Link,
+  usb: Usb,
+  "usb-c": Usb,
+  hdmi: Monitor,
+  "sim-card": Smartphone,
+  "sim-slots": Smartphone,
+  signal: Signal,
+  "map-pin": MapPin,
+
+  // Audio
+  headphones: Headphones,
+  speaker: Speaker,
+  mic: Mic,
+  music: Music,
+  "volume-2": Volume2,
+  "volume-x": VolumeX,
+  ear: Ear,
+
+  // Display / Visual
+  sun: Sun,
+  contrast: Contrast,
+  palette: Palette,
+  glass: Glasses,
+  grid: Grid2x2,
+  "dot-grid": Grid2x2,
+  layers: Layers,
+  refresh: RefreshCw,
+  "rotate-cw": RotateCw,
+  sync: RefreshCw,
+  hinge: RotateCw,
+  sliders: Sliders,
+  touch: Mouse,
+
+  // System / OS
+  os: Settings,
+  "os-version": Settings,
+  settings: Settings,
+  shield: ShieldCheck,
+  "shield-check": ShieldCheck,
+  lock: Lock,
+
+  // Environment
+  droplets: Droplets,
+  thermometer: Thermometer,
+  snowflake: Snowflake,
+  leaf: Leaf,
+  wind: Wind,
+  moon: Moon,
+
+  // Physical
+  weight: Weight,
+  door: DoorOpen,
+  anchor: Anchor,
+
+  // Info / UI
+  bell: Bell,
+  star: Star,
+  box: Box,
+  calendar: Calendar,
+  "book-open": BookOpen,
+  list: List,
+  globe: Globe,
+  sparkles: Sparkles,
+  lightbulb: Lightbulb,
+  timer: Timer,
+  toggle: ToggleLeft,
+  activity: Activity,
+  keyboard: Keyboard,
+  mouse: Mouse,
+  smartphone: Smartphone,
+
+  // Default fallback
+  default: Package,
+};
+
+interface HighlightIconProps {
+  icon: string;
+  className?: string;
+}
+
+export function HighlightIcon({ icon, className }: HighlightIconProps) {
+  const Icon = ICON_MAP[icon] ?? ICON_MAP["default"];
+  return <Icon className={className ?? "w-5 h-5 text-neutral-dark-hover"} />;
+}

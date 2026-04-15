@@ -2,23 +2,48 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: [
-      "store.storeimages.cdn-apple.com",
-      "images.unsplash.com",
-      "cdn2.fptshop.com.vn",
-      "cdn2.cellphones.com.vn",
-      "res.cloudinary.com",
-      "lh3.googleusercontent.com",
-      "graph.facebook.com",
-      "platform-lookaside.fbsbx.com",
-    ],
+    unoptimized: true,
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "store.storeimages.cdn-apple.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn2.fptshop.com.vn",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn2.cellphones.com.vn",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "graph.facebook.com",
+      },
+      {
+        protocol: "https",
+        hostname: "platform-lookaside.fbsbx.com",
+      },
       {
         protocol: "https",
         hostname: "**.fbcdn.net",
       },
     ],
+    qualities: [75, 80],
   },
+
   typedRoutes: false,
   productionBrowserSourceMaps: false,
 };

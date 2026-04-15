@@ -7,6 +7,7 @@ import HotSaleProductCard from "./HotSaleProductCard";
 import apiRequest from "@/lib/api";
 import { formatTime as formatLocaleTime } from "@/helpers";
 import Link from "next/link";
+import { FeaturedProduct } from "../../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES (giữ nguyên)
@@ -35,13 +36,13 @@ interface SaleScheduleDay {
   promotions: SaleSchedulePromotion[];
 }
 
-interface SaleProduct {
+export interface SaleProduct {
   card: any;
   pricingContext: any;
 }
 
 interface TodayProducts {
-  products: SaleProduct[];
+  products: FeaturedProduct[];
   total: number;
   date: string;
   startDate: string | null;
@@ -55,7 +56,7 @@ export interface HomeSaleScheduleData {
 }
 
 interface CachedDayData {
-  products: SaleProduct[];
+  products: FeaturedProduct[];
   total: number;
   promotions: Array<{ id: string; name: string; description: string | null; priority: number }>;
   endDate: string | null;
@@ -215,7 +216,7 @@ function EmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?
 // PRODUCT GRID
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ProductGrid({ products, activeDay }: { products: SaleProduct[]; activeDay: SaleScheduleDay | undefined }) {
+function ProductGrid({ products, activeDay }: { products: FeaturedProduct[]; activeDay: SaleScheduleDay | undefined }) {
   const flashPromoRule = useMemo(
     () => activeDay?.promotions?.flatMap((p) => p.rules).find((r) => (r.actionType === "DISCOUNT_PERCENT" || r.actionType === "DISCOUNT_FIXED") && r.discountValue != null) ?? null,
     [activeDay],
@@ -223,13 +224,12 @@ function ProductGrid({ products, activeDay }: { products: SaleProduct[]; activeD
 
   const isUpcoming = !!activeDay && !activeDay.isToday;
 
-  const renderCard = (item: SaleProduct, index: number) => {
-    const raw = item.card ?? item;
+  const renderCard = (item: FeaturedProduct, index: number) => {
     const product = {
-      ...raw,
-      price: raw.price ?? {
-        base: raw.priceOrigin ?? 0,
-        final: raw.priceOrigin ?? 0,
+      ...item,
+      price: item.price ?? {
+        base: item.priceOrigin ?? 0,
+        final: item.priceOrigin ?? 0,
         discountAmount: 0,
         discountPercentage: 0,
         hasPromotion: false,
@@ -347,8 +347,8 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
   const products = useMemo(
     () =>
       [...(currentData?.products ?? [])].sort((a, b) => {
-        const priceA = (a.card ?? a)?.price?.final ?? (a.card ?? a)?.priceOrigin ?? 0;
-        const priceB = (b.card ?? b)?.price?.final ?? (b.card ?? b)?.priceOrigin ?? 0;
+        const priceA = a.price?.final ?? a.priceOrigin ?? 0;
+        const priceB = b.price?.final ?? b.priceOrigin ?? 0;
         return priceA - priceB;
       }),
     [currentData],

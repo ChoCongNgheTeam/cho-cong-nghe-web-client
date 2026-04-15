@@ -3,8 +3,6 @@ import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import apiRequest from "@/lib/api";
 
-// ── Shared type ────────────────────────────────────────────────────────────────
-
 export interface EntityOption {
    id: string;
    name: string;
@@ -12,8 +10,6 @@ export interface EntityOption {
    thumbnail?: string;
    price?: number;
 }
-
-// ── Internal react-select option shape ────────────────────────────────────────
 
 interface RsOption {
    value: string;
@@ -42,8 +38,6 @@ function fromRs(o: RsOption): EntityOption {
       price: o.price,
    };
 }
-
-// ── Shared styles ──────────────────────────────────────────────────────────────
 
 const rsStyles = {
    control: (b: any, s: any) => ({
@@ -116,11 +110,7 @@ const rsStyles = {
       backgroundColor: "var(--color-neutral-light, #fff)",
       marginTop: "6px",
    }),
-   menuList: (b: any) => ({
-      ...b,
-      padding: "4px",
-      maxHeight: "260px",
-   }),
+   menuList: (b: any) => ({ ...b, padding: "4px", maxHeight: "260px" }),
    option: (b: any, s: any) => ({
       ...b,
       borderRadius: "0.5rem",
@@ -169,8 +159,6 @@ const rsStyles = {
    }),
 };
 
-// ── Custom Option: thumbnail + name + meta + price ─────────────────────────────
-
 function ProductOptionLabel({ data }: { data: RsOption }) {
    const price = data.price;
    return (
@@ -200,7 +188,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
                </svg>
             )}
          </div>
-
          <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-primary truncate leading-tight">
                {data.label}
@@ -211,7 +198,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
                </p>
             )}
          </div>
-
          {price != null && (
             <span className="shrink-0 text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                {new Intl.NumberFormat("vi-VN", {
@@ -223,8 +209,6 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
       </div>
    );
 }
-
-// ── API loader ─────────────────────────────────────────────────────────────────
 
 async function defaultSearchProducts(term: string): Promise<RsOption[]> {
    if (!term.trim()) return [];
@@ -240,8 +224,6 @@ async function defaultSearchProducts(term: string): Promise<RsOption[]> {
       price: p.price?.base,
    }));
 }
-
-// ── ProductSearch ──────────────────────────────────────────────────────────────
 
 interface ProductSearchProps {
    selected: EntityOption[];
@@ -285,11 +267,11 @@ export function ProductSearch({
          closeMenuOnSelect={false}
          hideSelectedOptions={false}
          classNamePrefix="rs-product"
+         menuPosition="fixed"
+         menuPlacement="auto"
       />
    );
 }
-
-// ── MultiSelectDropdown ────────────────────────────────────────────────────────
 
 interface MultiSelectDropdownProps {
    selected: EntityOption[];
@@ -324,6 +306,8 @@ export function MultiSelectDropdown({
          closeMenuOnSelect={false}
          hideSelectedOptions={false}
          classNamePrefix="rs-multi"
+         menuPosition="fixed"
+         menuPlacement="auto"
       />
    );
 }
