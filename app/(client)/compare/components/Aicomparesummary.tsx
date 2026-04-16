@@ -1,120 +1,89 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, RefreshCw, ChevronDown, ChevronUp, Trophy, Zap, Camera, Battery } from "lucide-react";
 import { ProductDetail } from "@/lib/types/product";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface VerdictItem {
-  productName: string;
-  badge: "best" | "budget" | "consider";
-  badgeLabel: string;
-  reason: string;
+interface ComparisonItem {
+  category: string;
+  analysis: string;
+  winner: string;
 }
 
 interface AIResult {
   summary: string;
-  verdicts: VerdictItem[];
-  recommendation: string;
+  comparison: ComparisonItem[];
+  strengths: Record<string, string[]>;
+  recommendation: {
+    best_performance: string;
+    best_value: string;
+    best_for_users: {
+      gaming: string;
+      camera: string;
+      battery: string;
+    };
+  };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const BADGE_STYLES: Record<VerdictItem["badge"], string> = {
-  best:     "bg-accent-light text-accent-dark border border-accent-light-active",
-  budget:   "bg-accent-light text-accent border border-accent-light-active",
-  consider: "bg-neutral-light-active text-neutral-darker border border-neutral",
-};
-
-function buildPrompt(products: ProductDetail[]): string {
-  const formatPrice = (p: ProductDetail) =>
-    (p.price.hasPromotion ? p.price.final : p.price.base);
-
-  const list = products
-    .map((p, index) => {
-      const price = formatPrice(p);
-      return `#${index + 1}
-Tên: ${p.name}
-Thương hiệu: ${p.brand.name}
-Giá: ${price.toLocaleString("vi-VN")}đ
-Rating: ${p.rating.average}/5 (${p.rating.total} lượt)
-Tình trạng: ${p.stockStatus === "in_stock" ? "Còn hàng" : "Hết hàng"}
-Thông số:
-${p.highlights.map((h) => `- ${h.name}: ${h.value}${h.unit ?? ""}`).join("\n")}`;
-    })
-    .join("\n\n");
-
-  return `
-Bạn là chuyên gia so sánh sản phẩm trong thương mại điện tử. 
-Nhiệm vụ của bạn là đưa ra đánh giá KHÁCH QUAN, CÓ DỮ LIỆU và HỮU ÍCH cho quyết định mua hàng.
-
-====================
-DANH SÁCH SẢN PHẨM:
-====================
-${list}
-
-====================
-NGUYÊN TẮC BẮT BUỘC:
-====================
-
-1. KHÔNG ĐƯỢC NÓI CHUNG CHUNG
-- Mọi nhận xét phải có số liệu cụ thể (giá, RAM, chip, rating…)
-- Không dùng từ mơ hồ như: "mạnh", "tốt", "ổn"
-
-2. KHÔNG ĐƯỢC TỰ BỊA
-- Chỉ sử dụng dữ liệu đã cung cấp
-- Nếu thiếu dữ liệu → ghi rõ "không có dữ liệu"
-
-3. CHUẨN HÓA SO SÁNH
-- Chỉ so sánh cùng loại thông số
-- Không suy luận ngoài dữ liệu
-
-4. CHẤM ĐIỂM NGẦM (QUAN TRỌNG)
-Tự đánh giá mỗi sản phẩm theo:
-- Giá (30%): giá càng thấp càng tốt
-- Hiệu năng (40%): dựa trên thông số nổi bật
-- Rating (30%): dựa trên rating + số lượt đánh giá
-
-→ Dùng logic này để chọn sản phẩm "best"
-
-5. QUY TẮC BADGE
-- "best": điểm tổng cao nhất
-- "budget": giá thấp nhất + rating >= 3.5
-- "consider": các sản phẩm còn lại
-
-6. KHÔNG DÌM HÀNG
-- Mỗi sản phẩm phải có ít nhất 1 ưu điểm cụ thể (có số liệu)
-
-7. EDGE CASE
-- Nếu các sản phẩm tương đương → ưu tiên rating cao hơn
-- Nếu giá bằng nhau → ưu tiên thông số tốt hơn
-- Nếu rating thấp (<3.5) → không được gán "best"
-
-====================
-FORMAT TRẢ VỀ (JSON):
-====================
-
+// ─── Prompt builders ──────────────────────────────────────────────────────────
+const SYSTEM_PROMPT = `Bạn là trợ lý AI chuyên so sánh sản phẩm công nghệ cho website thương mại điện tử. Nhiệm vụ của bạn là phân tích thông số kỹ thuật sản phẩm được cung cấp dưới dạng JSON và tạo ra bản so sánh rõ ràng, dễ hiểu.
+Quy tắc bắt buộc:
+- Chỉ sử dụng thông tin có trong JSON được cung cấp. Không tự bịa thêm thông số.
+- Nếu một sản phẩm thiếu thông số thì ghi "Không có thông tin".
+- So sánh theo từng danh mục thực tế (dựa vào specs có trong dữ liệu): RAM, màn hình, camera, pin, chip, bộ nhớ, v.v.
+- Chỉ ra điểm mạnh và khác biệt nổi bật của từng sản phẩm.
+- Phân tích bằng tiếng Việt, ngắn gọn và khách quan.
+- Trường "winner" chỉ được dùng đúng tên sản phẩm (lấy từ field "name" trong JSON) hoặc chuỗi "Ngang nhau".
+QUAN TRỌNG: Chỉ trả về JSON thuần, không có text bên ngoài, không có markdown code fences.
+Format JSON bắt buộc:
 {
-  "summary": "So sánh cốt lõi dựa trên số liệu (chênh lệch giá, thông số nổi bật...)",
-  "verdicts": [
+  "summary": "Tóm tắt tổng quan về các sản phẩm và điểm khác biệt chính",
+  "comparison": [
     {
-      "productName": "tên sản phẩm",
-      "badge": "best" | "budget" | "consider",
-      "badgeLabel": "Nhãn hấp dẫn và tích cực dựa trên ưu điểm riêng (ví dụ: 'Pin cực khủng', 'Thiết kế sang trọng', 'Màn hình sắc nét') thay vì chỉ dùng từ 'Cân nhắc' chung chung.",
-      "reason": "Ưu điểm nhờ [GIÁ/TRỊ/THÔNG SỐ CỤ THỂ]"
+      "category": "Tên danh mục (vd: RAM, Màn hình, Camera chính, Pin)",
+      "analysis": "Phân tích chi tiết từng sản phẩm trong danh mục này",
+      "winner": "Tên sản phẩm thắng hoặc Ngang nhau"
     }
   ],
-  "recommendation": "Nếu cần [X] → chọn [A], nếu muốn tiết kiệm [Y tiền] → chọn [B]"
+  "strengths": {
+    "<tên sản phẩm 1>": ["Điểm mạnh 1", "Điểm mạnh 2"],
+    "<tên sản phẩm 2>": ["Điểm mạnh 1", "Điểm mạnh 2"]
+  },
+  "recommendation": {
+    "best_performance": "Tên sản phẩm hiệu năng tốt nhất",
+    "best_value": "Tên sản phẩm có giá trị tốt nhất (hiệu năng / giá)",
+    "best_for_users": {
+      "gaming": "Tên sản phẩm phù hợp chơi game",
+      "camera": "Tên sản phẩm phù hợp chụp ảnh / quay phim",
+      "battery": "Tên sản phẩm pin tốt nhất"
+    }
+  }
+}`;
+
+function buildUserPrompt(products: ProductDetail[]): string {
+  const payload = products.map((p) => ({
+    name: p.name,
+    brand: p.brand.name,
+    price: p.price.hasPromotion ? p.price.final : p.price.base,
+    rating: { average: p.rating.average, total: p.rating.total },
+    stockStatus: p.stockStatus,
+    specs: p.highlights.map((h) => ({
+      name: h.name,
+      value: `${h.value}${h.unit ?? ""}`,
+    })),
+  }));
+
+  return `Hãy so sánh các sản phẩm sau đây dựa trên thông số kỹ thuật được cung cấp:
+
+${JSON.stringify({ products: payload }, null, 2)}
+
+Trả về kết quả đúng format JSON đã quy định trong system prompt.`;
 }
 
-CHỈ TRẢ JSON. KHÔNG GIẢI THÍCH THÊM.
-`;
-}
-
+// ─── API call ─────────────────────────────────────────────────────────────────
 async function callGroq(products: ProductDetail[]): Promise<AIResult> {
   const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
-
-  if (!GROQ_API_KEY) {
-    throw new Error("Chưa cấu hình NEXT_PUBLIC_GROQ_API_KEY trong .env");
-  }
+  if (!GROQ_API_KEY) throw new Error("Chưa cấu hình NEXT_PUBLIC_GROQ_API_KEY trong .env");
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -125,15 +94,11 @@ async function callGroq(products: ProductDetail[]): Promise<AIResult> {
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
       temperature: 0.4,
-      max_tokens: 1024,
+      max_tokens: 1500,
       response_format: { type: "json_object" },
       messages: [
-        {
-          role: "system",
-          content:
-            "Bạn là chuyên gia tư vấn mua sắm. Chỉ trả về JSON, không thêm bất kỳ text nào khác.",
-        },
-        { role: "user", content: buildPrompt(products) },
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildUserPrompt(products) },
       ],
     }),
   });
@@ -147,6 +112,23 @@ async function callGroq(products: ProductDetail[]): Promise<AIResult> {
   const text: string = data?.choices?.[0]?.message?.content ?? "";
   const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   return JSON.parse(clean) as AIResult;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function WinnerBadge({ winner, products }: { winner: string; products: ProductDetail[] }) {
+  if (winner === "Ngang nhau") {
+    return (
+      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-neutral-light-active text-neutral-darker border border-neutral whitespace-nowrap">
+        Ngang nhau
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent-light text-accent-dark border border-accent-light-active whitespace-nowrap flex items-center gap-1">
+      <Trophy size={9} />
+      {winner}
+    </span>
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -188,7 +170,7 @@ export function AICompareSummary({ products }: Props) {
 
   return (
     <div className="mt-6 rounded-2xl border border-neutral overflow-hidden bg-neutral-light">
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-neutral">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-accent-light flex items-center justify-center">
@@ -196,12 +178,11 @@ export function AICompareSummary({ products }: Props) {
           </div>
           <p className="text-[13px] font-semibold text-primary">Gợi ý từ AI</p>
         </div>
-
         <div className="flex items-center gap-2">
           {!result && !loading && (
             <button
               onClick={analyze}
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-primary text-neutral-light px-3.5 py-1.5 rounded-lg hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-primary text-neutral-light px-3.5 py-1.5 rounded-lg hover:opacity-80 transition-opacity cursor-pointer"
             >
               <Sparkles size={12} />
               Phân tích ngay
@@ -227,7 +208,7 @@ export function AICompareSummary({ products }: Props) {
         </div>
       </div>
 
-      {/* Loading */}
+      {/* ── Loading ── */}
       {loading && (
         <div className="flex items-center gap-3 px-5 py-5">
           <div className="flex gap-1">
@@ -239,77 +220,132 @@ export function AICompareSummary({ products }: Props) {
               />
             ))}
           </div>
-          <span className="text-[13px] text-neutral-darker">
-            AI đang phân tích sản phẩm...
-          </span>
+          <span className="text-[13px] text-neutral-darker">AI đang phân tích sản phẩm...</span>
         </div>
       )}
 
-      {/* Error */}
+      {/* ── Error ── */}
       {error && !loading && (
         <div className="px-5 py-4">
           <p className="text-[12px] text-promotion">{error}</p>
-          <button
-            onClick={analyze}
-            className="mt-2 text-[12px] text-accent underline underline-offset-2"
-          >
+          <button onClick={analyze} className="mt-2 text-[12px] text-accent underline underline-offset-2 cursor-pointer">
             Thử lại
           </button>
         </div>
       )}
 
-      {/* Empty state */}
+      {/* ── Empty state ── */}
       {!result && !loading && !error && (
         <div className="px-5 py-5 text-center">
           <p className="text-[13px] text-neutral-darker">
-            Nhấn{" "}
-            <span className="font-medium text-primary">Phân tích ngay</span>{" "}
-            để AI tổng kết và gợi ý sản phẩm phù hợp nhất cho bạn.
+            Nhấn <span className="font-medium text-primary">Phân tích ngay</span> để AI tổng kết và gợi ý sản phẩm phù hợp nhất cho bạn.
           </p>
         </div>
       )}
 
-      {/* Result */}
+      {/* ── Result ── */}
       {result && expanded && !loading && (
-        <div className="px-5 py-4 space-y-4">
-          {/* Summary */}
-          <p className="text-[13px] text-neutral-darker leading-relaxed">
-            {result.summary}
-          </p>
+        <div className="px-5 py-4 space-y-5">
 
-          {/* Verdict cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {result.verdicts.map((v) => (
-              <div
-                key={v.productName}
-                className="bg-neutral-light border border-neutral rounded-xl px-3.5 py-3"
-              >
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <p className="text-[12px] font-semibold text-primary leading-snug line-clamp-2">
-                    {v.productName}
-                  </p>
-                  <span
-                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${BADGE_STYLES[v.badge]}`}
+          {/* Summary */}
+          <p className="text-[13px] text-neutral-darker leading-relaxed">{result.summary}</p>
+
+          {/* Comparison table */}
+          {result.comparison?.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold text-neutral-darker uppercase tracking-wide mb-2">
+                So sánh chi tiết
+              </p>
+              <div className="rounded-xl border border-neutral overflow-hidden">
+                {result.comparison.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={`px-4 py-3 ${idx !== result.comparison.length - 1 ? "border-b border-neutral" : ""}`}
                   >
-                    {v.badgeLabel}
-                  </span>
-                </div>
-                <p className="text-[11px] text-neutral-darker leading-relaxed">
-                  {v.reason}
-                </p>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[12px] font-semibold text-primary">{item.category}</span>
+                      <WinnerBadge winner={item.winner} products={products} />
+                    </div>
+                    <p className="text-[12px] text-neutral-darker leading-relaxed">{item.analysis}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Strengths */}
+          {result.strengths && Object.keys(result.strengths).length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold text-neutral-darker uppercase tracking-wide mb-2">
+                Điểm mạnh nổi bật
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {Object.entries(result.strengths).map(([name, points]) => (
+                  <div key={name} className="bg-neutral-light border border-neutral rounded-xl px-3.5 py-3">
+                    <p className="text-[12px] font-semibold text-primary mb-2 line-clamp-1">{name}</p>
+                    <ul className="space-y-1">
+                      {points.map((point, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-[11px] text-neutral-darker">
+                          <span className="text-accent mt-0.5 shrink-0">✓</span>
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Recommendation */}
-          <div className="bg-accent-light border border-accent-light-active rounded-xl px-4 py-3">
-            <p className="text-[11px] font-semibold text-accent-dark uppercase tracking-wide mb-1">
-              Gợi ý của AI
-            </p>
-            <p className="text-[13px] text-accent-darker leading-relaxed">
-              {result.recommendation}
-            </p>
-          </div>
+          {result.recommendation && (
+            <div className="bg-accent-light border border-accent-light-active rounded-xl px-4 py-3 space-y-2.5">
+              <p className="text-[11px] font-semibold text-accent-dark uppercase tracking-wide">
+                Gợi ý của AI
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="flex items-start gap-2">
+                  <Trophy size={13} className="text-accent-dark mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-accent-dark font-medium">Hiệu năng tốt nhất</p>
+                    <p className="text-[12px] text-accent-darker">{result.recommendation.best_performance}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Zap size={13} className="text-accent-dark mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-accent-dark font-medium">Giá trị tốt nhất</p>
+                    <p className="text-[12px] text-accent-darker">{result.recommendation.best_value}</p>
+                  </div>
+                </div>
+                {result.recommendation.best_for_users && (
+                  <>
+                    <div className="flex items-start gap-2">
+                      <Zap size={13} className="text-accent-dark mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-accent-dark font-medium">Chơi game</p>
+                        <p className="text-[12px] text-accent-darker">{result.recommendation.best_for_users.gaming}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Camera size={13} className="text-accent-dark mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-accent-dark font-medium">Chụp ảnh / quay phim</p>
+                        <p className="text-[12px] text-accent-darker">{result.recommendation.best_for_users.camera}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Battery size={13} className="text-accent-dark mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-accent-dark font-medium">Pin tốt nhất</p>
+                        <p className="text-[12px] text-accent-darker">{result.recommendation.best_for_users.battery}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

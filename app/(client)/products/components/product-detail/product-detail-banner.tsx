@@ -15,8 +15,8 @@ import { HighlightIcon } from "@/components/product/HighlightIcon";
 import { useIsMobile } from "@/(client)/compare/Useismobile";
 import { getProductGallery } from "../../_lib";
 import type { GalleryImage } from "../../types";
+import { heroUrl, thumbnailUrl } from "@/helpers/resizeImage";
 
-// Sau — mở rộng images type, selectedVariant dùng type lỏng hơn
 interface ProductDetailLeftProps {
   product: ProductDetail;
   selectedVariant?: {
@@ -181,8 +181,14 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
     syncColorFromGalleryIndex(index);
   };
 
-  const mainImageUrl = isExpandSlot ? (galleryImages[galleryIndex]?.imageUrl ?? "") : (validImages[currentImageIndex]?.imageUrl ?? "");
-  const mainImageAlt = isExpandSlot ? (galleryImages[galleryIndex]?.altText ?? "Gallery image") : (validImages[currentImageIndex]?.altText ?? "Product image");
+  const rawMainUrl = isExpandSlot
+    ? (galleryImages[galleryIndex]?.imageUrl ?? "")
+    : (validImages[currentImageIndex]?.imageUrl ?? "");
+
+  const mainImageUrl = rawMainUrl ? heroUrl(rawMainUrl, 800) : "";
+  const mainImageAlt = isExpandSlot
+    ? (galleryImages[galleryIndex]?.altText ?? "Gallery image")
+    : (validImages[currentImageIndex]?.altText ?? "Product image");
 
   const counterCurrent = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryIndex + 1}` : "▶") : currentImageIndex + 1;
   const counterTotal = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryImages.length}` : totalVariantSlots) : totalVariantSlots;
@@ -205,7 +211,14 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
       {/* Main Image */}
       <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
         <div className="relative w-full h-full flex items-center justify-center">
-          {!isExpandSlot && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
+          {!isExpandSlot && mainImageUrl && (
+            <Image
+              src={mainImageUrl}
+              className="max-w-full max-h-full object-contain transition-opacity duration-500"
+              alt={mainImageAlt}
+              fill
+            />
+          )}
           {!isExpandSlot && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-16 h-16 opacity-20" />
@@ -218,7 +231,14 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
               <p className="text-sm opacity-60">Đang tải ảnh...</p>
             </div>
           )}
-          {isExpandSlot && !galleryLoading && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
+          {isExpandSlot && !galleryLoading && mainImageUrl && (
+            <Image
+              src={mainImageUrl}
+              className="max-w-full max-h-full object-contain transition-opacity duration-500"
+              alt={mainImageAlt}
+              fill
+            />
+          )}
           {isExpandSlot && !galleryLoading && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-10 h-10 opacity-30" />
@@ -304,9 +324,13 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             const image = validImages[thumb.index];
             if (!image?.imageUrl) return null;
             return (
-              <ThumbnailCell key={image.imageUrl || `variant-${thumb.index}`} isActive={!isExpandSlot && currentImageIndex === thumb.index} onClick={() => setCurrentImageIndex(thumb.index)}>
+              <ThumbnailCell
+                key={image.imageUrl || `variant-${thumb.index}`}
+                isActive={!isExpandSlot && currentImageIndex === thumb.index}
+                onClick={() => setCurrentImageIndex(thumb.index)}
+              >
                 <Image
-                  src={image.imageUrl}
+                  src={thumbnailUrl(image.imageUrl, 96)}
                   alt={image.altText || `Product image ${thumb.index + 1}`}
                   fill
                   sizes="(max-width: 640px) 56px, (max-width: 1024px) 72px, 96px"
@@ -336,7 +360,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
               >
                 <div className="relative w-full h-full bg-white rounded-xl overflow-hidden">
                   <Image
-                    src={img.imageUrl}
+                    src={thumbnailUrl(img.imageUrl, 56)}
                     alt={img.altText || `Gallery ${idx + 1}`}
                     fill
                     sizes="56px"
