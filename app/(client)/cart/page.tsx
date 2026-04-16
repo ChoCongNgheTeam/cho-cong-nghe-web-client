@@ -425,7 +425,7 @@ export default function CartPage() {
               value: voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫",
               indent: true,
             },
-            { label: "Phí vận chuyển", value: "Miễn phí" },
+            // { label: "Phí vận chuyển", value: "Miễn phí" },
             {
               label: "Cần thanh toán",
               value: formatVND(finalTotalWithVoucher),

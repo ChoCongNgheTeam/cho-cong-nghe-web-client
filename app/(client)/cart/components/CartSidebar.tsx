@@ -168,12 +168,12 @@ export default function CartSidebar({
                   <span className="text-primary text-sm font-medium">{appliedVoucherValue > 0 ? `-${formatVND(appliedVoucherValue)}` : "0₫"}</span>
                 </div>
 
-                {isCheckoutPage && (
+                {/* {isCheckoutPage && (
                   <div className="flex justify-between">
                     <span className="text-neutral-darker">Phí vận chuyển</span>
                     <span className="font-medium text-accent-dark">Miễn phí</span>
                   </div>
-                )}
+                )} */}
 
                 <div className="border-t border-neutral pt-2.5 mt-2.5">
                   <div className="flex justify-between items-center">
@@ -182,11 +182,11 @@ export default function CartSidebar({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 pt-2">
+                {/* <div className="flex items-center gap-1 pt-2">
                   <span className="text-xs text-neutral-darker">Điểm thưởng</span>
                   <span className="text-sm">🪙</span>
                   <span className="text-sm font-medium text-accent-dark">+{formatNumber(rewardPoints)}</span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

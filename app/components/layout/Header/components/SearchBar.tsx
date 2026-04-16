@@ -265,7 +265,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
             className={`w-full pl-4 py-2.5 lg:py-3
               border border-neutral rounded-full
               focus:outline-none focus:border-accent-hover
-              text-sm lg:text-base
+              text-sm
               bg-neutral-light text-primary placeholder:text-neutral-dark
               search-input-ios
               ${isMobile ? "pr-14" : "pr-14 lg:pr-48 xl:pr-60"}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
-import { FaStar, FaGift, FaCog, FaTruck, FaPlus, FaMinus } from "react-icons/fa";
+import { FaStar, FaGift, FaCog, FaTruck, FaPlus, FaMinus, FaUndoAlt } from "react-icons/fa";
 import { FaUserCog, FaShippingFast } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
 import { Gift } from "lucide-react";
@@ -39,12 +39,14 @@ function HighlightsBlock({ highlights }: { highlights: Highlight[] }) {
   return (
     <div className="mt-6">
       <h2 className="font-semibold text-primary text-sm sm:text-base mb-3">Thông số nổi bật</h2>
-      <div className="grid grid-cols-3 sm:flex sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
+      <div className="grid grid-cols-3 sm:flex sm:flex-row sm:items-start gap-4 sm:gap-6 border-b border-neutral-dark pb-5">
         {highlights.map((highlight, index) => (
-          <div className="flex flex-col" key={index}>
-            <span className="text-xs text-neutral-dark">{highlight?.name || "N/A"}</span>
-            <div className="flex items-center gap-1.5 mt-1">
-              <HighlightIcon icon={highlight?.icon ?? "default"} />
+          <div className="flex flex-col gap-1" key={index}>
+            <span className="text-xs text-neutral-dark leading-tight line-clamp-2 min-h-[32px]">{highlight?.name || "N/A"}</span>
+            <div className="flex items-start gap-1.5">
+              <div className="flex-shrink-0 mt-0.5">
+                <HighlightIcon icon={highlight?.icon ?? "default"} />
+              </div>
               <span className="text-sm font-semibold text-primary leading-tight">{highlight?.value || "N/A"}</span>
             </div>
           </div>
@@ -54,25 +56,33 @@ function HighlightsBlock({ highlights }: { highlights: Highlight[] }) {
   );
 }
 
-function PoliciesBlock() {
+export function PoliciesBlock() {
   return (
     <div className="mt-5">
       <div className="flex justify-between items-center gap-2 mb-3">
         <h2 className="text-sm sm:text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-        <button className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">Tìm hiểu thêm</button>
+        {/* <button className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">Tìm hiểu thêm</button> */}
       </div>
-      <div className="flex flex-col gap-2">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex items-center gap-2">
           <MdVerified size={20} />
           <p className="text-xs sm:text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
         </div>
+
         <div className="flex items-center gap-2">
           <FaShippingFast size={20} />
           <p className="text-xs sm:text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
         </div>
+
         <div className="flex items-center gap-2">
           <FaUserCog size={20} />
           <p className="text-xs sm:text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <FaUndoAlt size={20} />
+          <p className="text-xs sm:text-sm text-primary">Đổi trả dễ dàng trong 7 ngày</p>
         </div>
       </div>
     </div>
@@ -306,7 +316,7 @@ export default function ProductDetailRight({
           </div>
 
           {/* Highlights + Policies: mobile only */}
-          <div className="lg:hidden">
+          <div className="lg:hidden mt-6">
             <HighlightsBlock highlights={highlights} />
             <PoliciesBlock />
           </div>
@@ -326,12 +336,12 @@ export default function ProductDetailRight({
                 <FaGift className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
                 <div className="flex flex-col min-w-0">
                   <span className="break-words text-primary">Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy</span>
-                  <Link
+                  {/* <Link
                     href="#"
                     className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer inline-block w-fit"
                   >
                     Xem chi tiết
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
               <div className="flex items-center gap-3 mb-3">
@@ -342,9 +352,9 @@ export default function ProductDetailRight({
                 <FaCog className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
                 <span className="break-words text-primary">
                   Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
-                  <Link href="#" className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
+                  {/* <Link href="#" className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
                     Xem chi tiết
-                  </Link>
+                  </Link> */}
                 </span>
               </div>
             </div>
