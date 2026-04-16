@@ -5,7 +5,7 @@ import RatingSummary from "./Ratingsummary";
 import CommentSection from "./Commentsection";
 import { getComments, getReplies, postComment } from "../_lib";
 import { ProductDetail } from "@/lib/types/product";
-import { reviewApi, Comment, Reply } from "../_lib/review";
+// import { reviewApi, Comment, Reply } from "../_lib/review";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
