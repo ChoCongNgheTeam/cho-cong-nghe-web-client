@@ -90,7 +90,7 @@ export interface ShippingSectionProps {
   contactPhone: string;
   provinceId: string;
   wardId: string;
-  detailAddress: string;
+  // detailAddress: string;
   provinces: Province[];
   wards: Ward[];
   isLoadingProvinces: boolean;
@@ -104,7 +104,11 @@ export interface ShippingSectionProps {
   onContactPhoneChange: (v: string) => void;
   onProvinceChange: (v: string) => void;
   onWardChange: (v: string) => void;
-  onDetailAddressChange: (v: string) => void;
+  // onDetailAddressChange: (v: string) => void;
   onWantSaveAddressChange: (v: boolean) => void;
   onEditAddress: () => void;
+  houseNumber: string;
+  streetName: string;
+  onHouseNumberChange: (v: string) => void;
+  onStreetNameChange: (v: string) => void;
 }

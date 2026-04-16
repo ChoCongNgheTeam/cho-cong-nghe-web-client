@@ -25,28 +25,6 @@ import PageLoader from "@/components/shared/PageLoader";
 
 // ─── Error parsers ────────────────────────────────────────────────────────────
 
-function parseAddressError(err: any): string {
-  const data = err?.response?.data ?? {};
-  const code: string = data.code ?? "";
-  const message: string = data.message ?? err?.message ?? "";
-
-  if (code === "DUPLICATE") {
-    // Trích field names từ: "Duplicate value on field: userId, detailAddress, phone đã được sử dụng"
-    const match = message.match(/field:\s*([^đ]+)/i);
-    const fields = match ? match[1].split(",").map((f: string) => f.trim().toLowerCase()) : [];
-
-    const hasPhone = fields.includes("phone");
-    const hasAddress = fields.includes("detailaddress");
-
-    if (hasPhone && hasAddress) return "Số điện thoại và địa chỉ này đã được lưu trong tài khoản. Vui lòng chọn từ địa chỉ đã lưu thay vì nhập lại.";
-    if (hasPhone) return "Số điện thoại này đã được dùng cho một địa chỉ khác. Vui lòng dùng số khác hoặc chọn từ địa chỉ đã lưu.";
-    if (hasAddress) return "Địa chỉ này đã tồn tại trong tài khoản. Vui lòng chọn từ địa chỉ đã lưu.";
-    return "Thông tin địa chỉ bị trùng lặp. Vui lòng chọn từ địa chỉ đã lưu.";
-  }
-
-  return message || "Không thể lưu địa chỉ. Vui lòng thử lại.";
-}
-
 function parseCheckoutError(err: any): string {
   const data = err?.response?.data ?? {};
   const code: string = data.code ?? "";
@@ -60,6 +38,18 @@ function parseCheckoutError(err: any): string {
   if (code === "PAYMENT_FAILED" || (lower.includes("payment") && lower.includes("failed"))) return "Thanh toán thất bại. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.";
 
   return message || "Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.";
+}
+
+// ─── Helper: split detailAddress → { houseNumber, streetName } ───────────────
+// Dùng khi load từ saved address (format cũ: "42B Nguyễn Trãi")
+function splitDetailAddress(detail: string): { houseNumber: string; streetName: string } {
+  const trimmed = detail.trim();
+  // Tách phần đầu (số nhà) và phần còn lại (tên đường)
+  // Pattern: chuỗi bắt đầu bằng chữ số hoặc "Lô/Căn hộ/..." rồi đến tên đường
+  const match = trimmed.match(/^(\S+)\s+(.+)$/);
+  if (match) return { houseNumber: match[1], streetName: match[2] };
+  // Không tách được → để toàn bộ vào streetName
+  return { houseNumber: "", streetName: trimmed };
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -95,19 +85,22 @@ export default function CheckoutPage() {
   const [contactSelectedId, setContactSelectedId] = useState<string | null>(null);
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  const [isContactOpen, setIsContactOpen] = useState(false);
   const contactRef = useRef<HTMLDivElement>(null);
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [hasFetchedAddresses, setHasFetchedAddresses] = useState(false);
   const [selectedSavedAddress, setSelectedSavedAddress] = useState<SavedAddress | null>(null);
-  const [isAddressOpen, setIsAddressOpen] = useState(false);
   const addressRef = useRef<HTMLDivElement>(null);
 
   const [provinceId, setProvinceId] = useState("");
   const [wardId, setWardId] = useState("");
-  const [detailAddress, setDetailAddress] = useState("");
+  // ── Tách detailAddress thành 2 field ──────────────────────────────────────
+  const [houseNumber, setHouseNumber] = useState("");
+  const [streetName, setStreetName] = useState("");
+  // combine khi cần gửi lên API:
+  const detailAddress = [houseNumber.trim(), streetName.trim()].filter(Boolean).join(" ");
+
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
@@ -115,7 +108,6 @@ export default function CheckoutPage() {
 
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>("");
   const [notes, setNotes] = useState("");
-  const [sendInvoice, setSendInvoice] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [mobileSelectedAddress, setMobileSelectedAddress] = useState<ApiAddress | null>(null);
@@ -131,15 +123,17 @@ export default function CheckoutPage() {
     orderId: string;
   }>({ isOpen: false, paymentInfo: null, orderId: "" });
 
+  // ─── Click-outside handler ─────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (contactRef.current && !contactRef.current.contains(e.target as Node)) setIsContactOpen(false);
-      if (addressRef.current && !addressRef.current.contains(e.target as Node)) setIsAddressOpen(false);
+      if (contactRef.current && !contactRef.current.contains(e.target as Node)) return;
+      if (addressRef.current && !addressRef.current.contains(e.target as Node)) return;
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // ─── Load user profile ─────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       setIsLoadingProfiles(true);
@@ -155,6 +149,7 @@ export default function CheckoutPage() {
     load();
   }, []);
 
+  // ─── Load provinces ────────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       setIsLoadingProvinces(true);
@@ -167,6 +162,7 @@ export default function CheckoutPage() {
     load();
   }, []);
 
+  // ─── Load wards when province changes ─────────────────────────────────────
   useEffect(() => {
     if (!provinceId) {
       setWards([]);
@@ -183,6 +179,7 @@ export default function CheckoutPage() {
     load();
   }, [provinceId]);
 
+  // ─── Load saved addresses ──────────────────────────────────────────────────
   const fetchSavedAddresses = async () => {
     if (hasFetchedAddresses) return;
     setIsLoadingAddresses(true);
@@ -196,7 +193,10 @@ export default function CheckoutPage() {
         setSelectedSavedAddress(defaultAddr);
         setProvinceId(defaultAddr.province.id);
         setWardId(defaultAddr.ward.id);
-        setDetailAddress(defaultAddr.detailAddress);
+        // Tách detailAddress sang 2 field
+        const { houseNumber: hn, streetName: sn } = splitDetailAddress(defaultAddr.detailAddress);
+        setHouseNumber(hn);
+        setStreetName(sn);
         setContactName(defaultAddr.contactName);
         setContactPhone(defaultAddr.phone);
       }
@@ -212,6 +212,7 @@ export default function CheckoutPage() {
     fetchSavedAddresses();
   }, []);
 
+  // ─── Load checkout data from localStorage ──────────────────────────────────
   useEffect(() => {
     sessionStorage.removeItem("paymentInfo");
     sessionStorage.removeItem("pendingOrderId");
@@ -271,15 +272,13 @@ export default function CheckoutPage() {
     }
   }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ─── Load default address for mobile ──────────────────────────────────────
   useEffect(() => {
     if (authLoading) return;
     if (searchParams.get("newAddress") === "1") return;
     const load = async () => {
       try {
-        const res = await apiRequest.get<{
-          success: boolean;
-          data: ApiAddress | null;
-        }>("/addresses/default");
+        const res = await apiRequest.get<{ success: boolean; data: ApiAddress | null }>("/addresses/default");
         if (res?.data) {
           setMobileSelectedAddress(res.data);
           return;
@@ -288,10 +287,7 @@ export default function CheckoutPage() {
         /* fallback */
       }
       try {
-        const listRes = await apiRequest.get<{
-          success: boolean;
-          data: ApiAddress[];
-        }>("/addresses");
+        const listRes = await apiRequest.get<{ success: boolean; data: ApiAddress[] }>("/addresses");
         const list = listRes?.data ?? [];
         if (list.length > 0) setMobileSelectedAddress(list.find((a) => a.isDefault) ?? list[0]);
       } catch {
@@ -301,6 +297,7 @@ export default function CheckoutPage() {
     load();
   }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ─── Fetch order preview ───────────────────────────────────────────────────
   const fetchPreview = useCallback(async () => {
     if (!mobileSelectedAddress?.id || !selectedPaymentMethodId) return;
     try {
@@ -309,10 +306,7 @@ export default function CheckoutPage() {
         shippingAddressId: mobileSelectedAddress.id,
         ...(voucherId ? { voucherId } : {}),
       });
-      const res = await apiRequest.get<{
-        success: boolean;
-        data: PreviewData;
-      }>(`/checkout/preview?${params.toString()}`);
+      const res = await apiRequest.get<{ success: boolean; data: PreviewData }>(`/checkout/preview?${params.toString()}`);
       if (res?.data) setPreviewData(res.data);
     } catch {
       /* non-critical */
@@ -323,22 +317,27 @@ export default function CheckoutPage() {
     fetchPreview();
   }, [fetchPreview]);
 
+  // ─── Address handlers ──────────────────────────────────────────────────────
+
   const handleSelectSavedAddress = (addr: SavedAddress) => {
     setSelectedSavedAddress(addr);
     setProvinceId(addr.province.id);
     setWardId(addr.ward.id);
-    setDetailAddress(addr.detailAddress);
+    // Tách detailAddress sang 2 field
+    const { houseNumber: hn, streetName: sn } = splitDetailAddress(addr.detailAddress);
+    setHouseNumber(hn);
+    setStreetName(sn);
     setContactName(addr.contactName);
     setContactPhone(addr.phone);
     setContactSelectedId(null);
-    setIsAddressOpen(false);
   };
 
   const handleClearAddress = () => {
     setSelectedSavedAddress(null);
     setProvinceId("");
     setWardId("");
-    setDetailAddress("");
+    setHouseNumber("");
+    setStreetName("");
     setWards([]);
     setContactName("");
     setContactPhone("");
@@ -353,19 +352,30 @@ export default function CheckoutPage() {
     setWards([]);
   };
 
-  const handleFieldChange = (field: "wardId" | "detailAddress", val: string) => {
+  const handleWardChange = (val: string) => {
     if (selectedSavedAddress) setSelectedSavedAddress(null);
-    if (field === "wardId") setWardId(val);
-    else setDetailAddress(val);
+    setWardId(val);
   };
+
+  const handleHouseNumberChange = (val: string) => {
+    if (selectedSavedAddress) setSelectedSavedAddress(null);
+    setHouseNumber(val);
+  };
+
+  const handleStreetNameChange = (val: string) => {
+    if (selectedSavedAddress) setSelectedSavedAddress(null);
+    setStreetName(val);
+  };
+
+  // ─── Checkout validation ───────────────────────────────────────────────────
 
   const handleCheckoutClick = () => {
     if (!contactName.trim()) {
-      toast.error("Vui lòng nhập họ tên người đặt");
+      toast.error("Vui lòng nhập họ tên người nhận");
       return;
     }
     if (!contactPhone.trim()) {
-      toast.error("Vui lòng nhập số điện thoại người đặt");
+      toast.error("Vui lòng nhập số điện thoại người nhận");
       return;
     }
     if (!selectedSavedAddress && (!provinceId || !wardId || !detailAddress.trim())) {
@@ -383,6 +393,8 @@ export default function CheckoutPage() {
     setShowConfirmModal(true);
   };
 
+  // ─── Place order ───────────────────────────────────────────────────────────
+
   const handlePlaceOrder = async () => {
     setShowConfirmModal(false);
     setIsSubmitting(true);
@@ -391,17 +403,15 @@ export default function CheckoutPage() {
     try {
       let addressId = selectedSavedAddress?.id ?? null;
 
-      // ── Bước 1: Tạo địa chỉ tạm nếu nhập tay ─────────────────────────────
+      // Bước 1: Tạo địa chỉ tạm nếu nhập tay
       if (!addressId) {
         try {
-          const createRes = await apiRequest.post<{
-            data: { id: string };
-          }>("/addresses", {
+          const createRes = await apiRequest.post<{ data: { id: string } }>("/addresses", {
             contactName,
             phone: contactPhone,
             provinceId,
             wardId,
-            detailAddress,
+            detailAddress, // combined từ houseNumber + streetName
             type: "HOME",
             isDefault: false,
           });
@@ -411,7 +421,6 @@ export default function CheckoutPage() {
           const addrCode: string = addrErr?.code ?? addrErr?.data?.code ?? "";
           const addrMsg: string = addrErr?.message ?? "";
           const msgLower = addrMsg.toLowerCase();
-
           const isDuplicate = addrCode === "DUPLICATE" || msgLower.includes("duplicate") || msgLower.includes("đã được sử dụng");
 
           if (isDuplicate) {
@@ -420,15 +429,10 @@ export default function CheckoutPage() {
             const hasPhone = fields.includes("phone");
             const hasAddress = fields.includes("detailaddress");
 
-            if (hasPhone && hasAddress) {
-              toast.error("Số điện thoại và địa chỉ này đã được lưu trong tài khoản khác.");
-            } else if (hasPhone) {
-              toast.error("Số điện thoại này đã được dùng cho một địa chỉ khác. Vui lòng dùng số khác hoặc chọn từ địa chỉ đã lưu.");
-            } else if (hasAddress) {
-              toast.error("Địa chỉ này đã tồn tại trong tài khoản. Vui lòng chọn từ địa chỉ đã lưu.");
-            } else {
-              toast.error("Thông tin địa chỉ bị trùng lặp. Vui lòng chọn từ địa chỉ đã lưu.");
-            }
+            if (hasPhone && hasAddress) toast.error("Số điện thoại và địa chỉ này đã được lưu. Vui lòng chọn từ địa chỉ đã lưu.");
+            else if (hasPhone) toast.error("Số điện thoại này đã được dùng cho một địa chỉ khác. Vui lòng dùng số khác hoặc chọn từ địa chỉ đã lưu.");
+            else if (hasAddress) toast.error("Địa chỉ này đã tồn tại. Vui lòng chọn từ địa chỉ đã lưu.");
+            else toast.error("Thông tin địa chỉ bị trùng lặp. Vui lòng chọn từ địa chỉ đã lưu.");
           } else {
             toast.error(addrMsg || "Không thể lưu địa chỉ. Vui lòng thử lại.");
           }
@@ -441,15 +445,10 @@ export default function CheckoutPage() {
         return;
       }
 
-      // ── Bước 2: Đặt hàng ──────────────────────────────────────────────────
+      // Bước 2: Đặt hàng
       const res = await apiRequest.post<{
         success: boolean;
-        data: {
-          orderId: string;
-          orderCode: string;
-          paymentMethodCode: string;
-          paymentInfo: any;
-        };
+        data: { orderId: string; orderCode: string; paymentMethodCode: string; paymentInfo: any };
       }>("/checkout", {
         paymentMethodId: selectedPaymentMethodId,
         shippingAddressId: addressId,
@@ -468,7 +467,7 @@ export default function CheckoutPage() {
       }
     } catch (err: any) {
       if (tempAddressId) apiRequest.delete(`/addresses/${tempAddressId}`).catch(() => {});
-      toast.error(err?.response?.data?.message ?? err?.message ?? "Có lỗi xảy ra khi đặt hàng");
+      toast.error(parseCheckoutError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -492,13 +491,13 @@ export default function CheckoutPage() {
     router.push(`/order/${orderCode}/payment`);
   };
 
-  const displaySubtotal = subtotal;
-  const displayDiscount = totalDiscount;
-  const displayVoucherDiscount = voucherValue;
-  const displayFinalTotal = finalTotal;
+  // ─── Derived totals ────────────────────────────────────────────────────────
+
   const shippingFee = previewData?.shippingFee;
   const amountAfterDiscount = Math.max(0, subtotal - totalDiscount - voucherValue);
   const confirmTotal = amountAfterDiscount + (shippingFee ?? 0);
+
+  // ─── ShippingSection props ─────────────────────────────────────────────────
 
   const shippingProps: ShippingSectionProps = {
     isLoadingAddresses,
@@ -509,7 +508,8 @@ export default function CheckoutPage() {
     contactPhone,
     provinceId,
     wardId,
-    detailAddress,
+    houseNumber,
+    streetName,
     provinces,
     wards,
     isLoadingProvinces,
@@ -529,8 +529,9 @@ export default function CheckoutPage() {
     onContactNameChange: setContactName,
     onContactPhoneChange: setContactPhone,
     onProvinceChange: handleProvinceChange,
-    onWardChange: (v) => handleFieldChange("wardId", v),
-    onDetailAddressChange: (v) => handleFieldChange("detailAddress", v),
+    onWardChange: handleWardChange,
+    onHouseNumberChange: handleHouseNumberChange,
+    onStreetNameChange: handleStreetNameChange,
     onWantSaveAddressChange: setWantSaveAddress,
     onEditAddress: () => router.push("/profile/addresses?redirect=checkout"),
   };
@@ -565,12 +566,12 @@ export default function CheckoutPage() {
             </div>
             <div className="lg:col-span-1">
               <OrderSummary
-                subtotal={displaySubtotal}
-                totalDiscount={displayDiscount}
-                finalTotal={displayFinalTotal}
+                subtotal={subtotal}
+                totalDiscount={totalDiscount}
+                finalTotal={finalTotal}
                 selectedItemsCount={cartItems.length}
                 appliedVoucherCode={voucherCode}
-                appliedVoucherValue={displayVoucherDiscount}
+                appliedVoucherValue={voucherValue}
                 selectedPromotions={selectedPromotions}
                 promotionValue={promotionValue}
                 onOpenVoucherModal={() => setShowVoucherModal(true)}
@@ -616,32 +617,14 @@ export default function CheckoutPage() {
 
       <CartBottomBar
         finalTotal={confirmTotal}
-        totalSaved={displayDiscount + voucherValue}
+        totalSaved={totalDiscount + voucherValue}
         summaryRows={[
-          { label: "Tổng tiền", value: formatVND(displaySubtotal) },
-          {
-            label: "Tổng khuyến mãi",
-            value: `-${formatVND(displayDiscount + voucherValue)}`,
-          },
-          {
-            label: "Giảm giá sản phẩm",
-            value: `-${formatVND(displayDiscount)}`,
-            indent: true,
-          },
-          {
-            label: "Voucher",
-            value: voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫",
-            indent: true,
-          },
-          {
-            label: "Phí vận chuyển",
-            value: shippingFee != null ? formatVND(shippingFee) : "Miễn phí",
-          },
-          {
-            label: "Cần thanh toán",
-            value: formatVND(confirmTotal),
-            highlight: true,
-          },
+          { label: "Tổng tiền", value: formatVND(subtotal) },
+          { label: "Tổng khuyến mãi", value: `-${formatVND(totalDiscount + voucherValue)}` },
+          { label: "Giảm giá sản phẩm", value: `-${formatVND(totalDiscount)}`, indent: true },
+          { label: "Voucher", value: voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫", indent: true },
+          { label: "Phí vận chuyển", value: shippingFee != null ? formatVND(shippingFee) : "Miễn phí" },
+          { label: "Cần thanh toán", value: formatVND(confirmTotal), highlight: true },
         ]}
         voucherCode={voucherCode}
         voucherValue={voucherValue}
@@ -654,7 +637,7 @@ export default function CheckoutPage() {
         onTermsChange={setAgreedToTerms}
       />
 
-      {/* Sidebars & Modals */}
+      {/* ── Sidebars & Modals ── */}
       <AddressSidebar isOpen={showAddressSidebar} onClose={() => setShowAddressSidebar(false)} selectedAddressId={mobileSelectedAddress?.id} onSelect={setMobileSelectedAddress} />
       <VoucherPromotionModal
         isOpen={showVoucherModal}
