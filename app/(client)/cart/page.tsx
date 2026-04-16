@@ -166,6 +166,7 @@ export default function CartPage() {
     }
     const checkoutData = {
       selectedItems,
+      cartItemIds: selectedItems.map((item) => item.id), // ← THÊM
       selectedPromotions,
       promotionValue,
       appliedVoucherCode: voucherCode,

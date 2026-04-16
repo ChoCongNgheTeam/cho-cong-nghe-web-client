@@ -1942,7 +1942,12 @@ export default function ProductForm({ product }: ProductFormProps) {
          return next;
       });
 
-   const handleAddOption = (attrId: string, label: string, value: string) =>
+   const handleAddOption = (
+      attrId: string,
+      createdId: string,
+      label: string,
+      value: string,
+   ) =>
       setTemplate((prev) =>
          prev
             ? {
@@ -1955,7 +1960,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                             options: [
                                ...a.options,
                                {
-                                  id: "new-" + uid(),
+                                  id: createdId,
                                   value,
                                   label,
                                   priceAdjustment: 0,

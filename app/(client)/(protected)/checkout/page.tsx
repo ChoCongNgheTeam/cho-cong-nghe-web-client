@@ -86,7 +86,7 @@ export default function CheckoutPage() {
     setVoucherValue(value);
     setVoucherId(id);
   }, []);
-
+  const [cartItemIds, setCartItemIds] = useState<string[]>([]);
   const [showManualForm, setShowManualForm] = useState(false);
   const [wantSaveAddress, setWantSaveAddress] = useState<boolean | null>(null);
 
@@ -241,6 +241,7 @@ export default function CheckoutPage() {
           image: item.image ?? item.image_url ?? "",
         })),
       );
+      setCartItemIds(data.cartItemIds ?? data.selectedItems.map((item: SelectedItem) => item.id));
       setSelectedPromotions(data.selectedPromotions);
       setPromotionValue(data.promotionValue);
       setSubtotal(data.subtotal);
@@ -302,22 +303,26 @@ export default function CheckoutPage() {
   }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPreview = useCallback(async () => {
-    if (!mobileSelectedAddress?.id || !selectedPaymentMethodId) return;
-    try {
-      const params = new URLSearchParams({
-        paymentMethodId: selectedPaymentMethodId,
-        shippingAddressId: mobileSelectedAddress.id,
-        ...(voucherId ? { voucherId } : {}),
-      });
-      const res = await apiRequest.get<{
-        success: boolean;
-        data: PreviewData;
-      }>(`/checkout/preview?${params.toString()}`);
-      if (res?.data) setPreviewData(res.data);
-    } catch {
-      /* non-critical */
-    }
-  }, [mobileSelectedAddress?.id, selectedPaymentMethodId, voucherId]);
+  if (!mobileSelectedAddress?.id || !selectedPaymentMethodId) return;
+  try {
+    const params = new URLSearchParams({
+      paymentMethodId: selectedPaymentMethodId,
+      shippingAddressId: mobileSelectedAddress.id,
+      ...(voucherId ? { voucherId } : {}),
+    });
+
+    // ← THÊM: append từng id theo cú pháp mảng
+    cartItemIds.forEach((id) => params.append("cartItemIds[]", id));
+
+    const res = await apiRequest.get<{
+      success: boolean;
+      data: PreviewData;
+    }>(`/checkout/preview?${params.toString()}`);
+    if (res?.data) setPreviewData(res.data);
+  } catch {
+    /* non-critical */
+  }
+  }, [mobileSelectedAddress?.id, selectedPaymentMethodId, voucherId, cartItemIds]);
 
   useEffect(() => {
     fetchPreview();
@@ -442,21 +447,22 @@ export default function CheckoutPage() {
       }
 
       // ── Bước 2: Đặt hàng ──────────────────────────────────────────────────
-      const res = await apiRequest.post<{
-        success: boolean;
-        data: {
-          orderId: string;
-          orderCode: string;
-          paymentMethodCode: string;
-          paymentInfo: any;
-        };
-      }>("/checkout", {
-        paymentMethodId: selectedPaymentMethodId,
-        shippingAddressId: addressId,
-        contactName,
-        phone: contactPhone,
-        ...(voucherId ? { voucherId } : {}),
-      });
+    const res = await apiRequest.post<{
+      success: boolean;
+      data: {
+        orderId: string;
+        orderCode: string;
+        paymentMethodCode: string;
+        paymentInfo: any;
+      };
+    }>("/checkout", {
+      paymentMethodId: selectedPaymentMethodId,
+      shippingAddressId: addressId,
+      contactName,
+      phone: contactPhone,
+      ...(voucherId ? { voucherId } : {}),
+      ...(cartItemIds.length > 0 ? { cartItemIds } : {}), // ← THÊM
+    });
 
       if (res?.success) {
         localStorage.removeItem("checkoutData");
