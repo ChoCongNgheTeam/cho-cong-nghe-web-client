@@ -54,13 +54,14 @@ const DEFAULT_META: OrderMeta = {
 };
 
 const PAYMENT_STATUS_OPTIONS: {
-   value: PaymentStatus | "ALL";
-   label: string;
+  value: PaymentStatus | "ALL";
+  label: string;
 }[] = [
-   { value: "ALL", label: "Tất cả" },
-   { value: "PAID", label: "Đã thanh toán" },
-   { value: "UNPAID", label: "Chưa thanh toán" },
-   { value: "REFUNDED", label: "Đã hoàn tiền" },
+  { value: "ALL", label: "Tất cả" },
+  { value: "PAID", label: "Đã thanh toán" },
+  { value: "UNPAID", label: "Chưa thanh toán" },
+  { value: "REFUNDED_PENDING", label: "Chờ hoàn tiền" },
+  { value: "REFUNDED", label: "Đã hoàn tiền" },
 ];
 
 export default function OrdersPage() {

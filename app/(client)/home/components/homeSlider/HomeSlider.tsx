@@ -198,7 +198,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       {/* Grid */}
       <div className="container relative z-10 grid grid-cols-2 items-center h-full gap-[3%]">
         {/* LEFT: text */}
-        <div className="flex flex-col">
+        <div className="flex flex-col pl-4">
           <h2 className="font-extrabold leading-tight py-1 tracking-wider text-white text-[clamp(18px,3.6vw,56px)]" style={textStyle(1)}>
             {slide.title}
           </h2>

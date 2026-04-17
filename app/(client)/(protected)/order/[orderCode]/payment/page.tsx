@@ -192,7 +192,7 @@ export default function OrderPaymentPage() {
       .toUpperCase()
       .includes("BANK_TRANSFER");
    const isCOD = data.paymentMethodCode.toUpperCase().includes("COD");
-   const total = Number(data.subtotalAmount);
+   const total = Number(data.totalAmount);
    const shipping = Number(data.shippingFee);
    const voucher = Number(data.voucherDiscount);
    return (
@@ -368,7 +368,7 @@ export default function OrderPaymentPage() {
                <div className="px-5 py-4 space-y-2.5 border-t border-neutral">
                   <div className="flex justify-between text-sm">
                      <span className="text-neutral-darker">Tạm tính</span>
-                     <span className="text-primary">{formatVND(total)}</span>
+                     <span className="text-primary">{formatVND(data.subtotalAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                      <span className="text-neutral-darker">Phí vận chuyển</span>

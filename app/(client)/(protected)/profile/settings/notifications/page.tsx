@@ -121,7 +121,7 @@ export default function NotificationSettingsPage() {
   }, [local]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto pb-24">
+    <div className="w-full pb-24">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-semibold text-primary">Cài đặt thông báo</h1>

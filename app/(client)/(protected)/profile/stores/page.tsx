@@ -31,17 +31,16 @@ export default function StoresPage() {
   const handleCall = () => {
     window.location.href = `tel:${STORE.phone.replace(/\./g, "")}`;
   };
-
-  return (
-    <div className="flex flex-col min-h-screen bg-neutral-50">
+return (
+    <div className="flex flex-col min-h-screen bg-neutral-light">
       {/* ── Header ── */}
       <div className="px-4 pt-5 pb-3">
         <h1 className="text-lg font-bold text-primary">Cửa hàng</h1>
-        <p className="text-xs text-neutral-400 mt-0.5">Tìm đường đến chúng tôi</p>
+        <p className="text-xs text-neutral-dark mt-0.5">Tìm đường đến chúng tôi</p>
       </div>
 
       {/* ── Map ── */}
-      <div className="relative mx-4 rounded-2xl overflow-hidden shadow-sm border border-neutral-200" style={{ height: 260 }}>
+      <div className="relative mx-4 rounded-2xl overflow-hidden shadow-sm border border-neutral" style={{ height: 260 }}>
         <iframe
           src={`https://www.google.com/maps?q=${STORE.lat},${STORE.lng}&z=16&output=embed`}
           width="100%"
@@ -55,7 +54,7 @@ export default function StoresPage() {
         {/* Navigate FAB */}
         <button
           onClick={handleNavigate}
-          className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-white text-accent font-semibold text-xs px-3 py-2 rounded-full shadow-md border border-neutral-200 active:scale-95 transition-all"
+          className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-neutral-light text-accent font-semibold text-xs px-3 py-2 rounded-full shadow-md border border-neutral active:scale-95 transition-all"
         >
           <Navigation className="w-3.5 h-3.5" />
           Chỉ đường
@@ -63,44 +62,44 @@ export default function StoresPage() {
       </div>
 
       {/* ── Info card ── */}
-      <div className="mx-4 mt-3 rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden">
+      <div className="mx-4 mt-3 rounded-2xl bg-neutral-light border border-neutral shadow-sm overflow-hidden">
         {/* Address */}
-        <div className="flex items-start gap-3 px-4 py-3.5 border-b border-neutral-100">
-          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+        <div className="flex items-start gap-3 px-4 py-3.5 border-b border-neutral">
+          <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center shrink-0 mt-0.5">
             <MapPin className="w-4 h-4 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-neutral-400 mb-0.5">Địa chỉ</p>
+            <p className="text-[11px] text-neutral-dark mb-0.5">Địa chỉ</p>
             <p className="text-sm font-medium text-primary leading-snug">{STORE.address}</p>
           </div>
-          <button onClick={handleCopy} className="shrink-0 mt-1 p-1.5 rounded-lg hover:bg-neutral-100 active:scale-95 transition-all">
-            {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-neutral-400" />}
+          <button onClick={handleCopy} className="shrink-0 mt-1 p-1.5 rounded-lg hover:bg-neutral-light-active active:scale-95 transition-all">
+            {copied ? <CheckCheck className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4 text-neutral-dark" />}
           </button>
         </div>
 
         {/* Phone */}
-        <button onClick={handleCall} className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-neutral-100 active:bg-neutral-50 transition-colors text-left">
-          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-            <Phone className="w-4 h-4 text-green-500" />
+        <button onClick={handleCall} className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-neutral active:bg-neutral-light-active transition-colors text-left">
+          <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center shrink-0">
+            <Phone className="w-4 h-4 text-accent" />
           </div>
           <div>
-            <p className="text-[11px] text-neutral-400 mb-0.5">Hotline</p>
-            <p className="text-sm font-semibold text-green-600">{STORE.phone}</p>
+            <p className="text-[11px] text-neutral-dark mb-0.5">Hotline</p>
+            <p className="text-sm font-semibold text-accent">{STORE.phone}</p>
           </div>
-          <span className="ml-auto text-[11px] text-neutral-400">Gọi ngay →</span>
+          <span className="ml-auto text-[11px] text-neutral-dark">Gọi ngay →</span>
         </button>
 
         {/* Hours */}
         <div className="flex items-start gap-3 px-4 py-3.5">
-          <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
-            <Clock className="w-4 h-4 text-amber-500" />
+          <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center shrink-0 mt-0.5">
+            <Clock className="w-4 h-4 text-accent" />
           </div>
           <div className="flex-1">
-            <p className="text-[11px] text-neutral-400 mb-1.5">Giờ mở cửa</p>
+            <p className="text-[11px] text-neutral-dark mb-1.5">Giờ mở cửa</p>
             <div className="space-y-1">
               {STORE.hours.map((h) => (
                 <div key={h.day} className="flex justify-between items-center">
-                  <span className="text-xs text-neutral-500">{h.day}</span>
+                  <span className="text-xs text-neutral-dark">{h.day}</span>
                   <span className="text-xs font-medium text-primary">{h.time}</span>
                 </div>
               ))}
@@ -113,7 +112,7 @@ export default function StoresPage() {
       <div className="mx-4 mt-3 mb-6">
         <button
           onClick={handleNavigate}
-          className="w-full flex items-center justify-center gap-2 bg-accent text-white font-semibold py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all text-sm"
+          className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-neutral-light font-semibold py-3.5 rounded-2xl shadow-sm active:scale-95 transition-all text-sm"
         >
           <Navigation className="w-4 h-4" />
           Mở Google Maps

@@ -269,7 +269,7 @@ export default function ChangePasswordPage() {
                      {formData.newPassword && (
                         <div className="mt-3">
                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-primary-light">
+                              <span className="text-xs text-primary">
                                  Độ mạnh mật khẩu
                               </span>
                               <span
@@ -370,7 +370,7 @@ export default function ChangePasswordPage() {
                   {/* Security Notice */}
                   <div className="flex gap-3 p-4 bg-accent-light border border-accent-light-active rounded-lg">
                      <ShieldCheck className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                     <div className="text-sm text-primary-light">
+                     <div className="text-sm text-primary">
                         <p className="font-medium text-primary mb-1">
                            Lưu ý bảo mật
                         </p>

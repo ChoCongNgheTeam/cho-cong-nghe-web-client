@@ -7,7 +7,7 @@ export type OrderStatus =
    | "DELIVERED"
    | "CANCELLED";
 
-export type PaymentStatus = "UNPAID" | "PAID" | "REFUNDED";
+export type PaymentStatus = "PAID" | "UNPAID" | "REFUNDED_PENDING" | "REFUNDED";
 
 // ─── Entities ─────────────────────────────────────────────────────────────────
 
