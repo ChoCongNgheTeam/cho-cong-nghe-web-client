@@ -35,7 +35,7 @@ const DesktopHeader = memo(
       <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
         {/* Logo */}
         <Link href="/" className="shrink-0 pr-10">
-          <Image src={isDarkMode ? "/logo-dark.png" : "/logo.png"} width={180} height={60} alt="Logo" className="h-15 lg:h-18 w-auto hover:opacity-90 transition-opacity" priority />
+          <Image src={isDarkMode ? "/logo-dark.png" : "/logo.png"} width={180} height={60} alt="Logo" className="h-12 lg:h-15 w-auto hover:opacity-90 transition-opacity" priority />
         </Link>
 
         {/* Mega menu */}

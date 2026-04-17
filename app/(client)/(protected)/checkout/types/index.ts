@@ -61,6 +61,7 @@ export interface SelectedItem {
 export interface CheckoutData {
   selectedItems: SelectedItem[];
   selectedPromotions: string[];
+  cartItemIds?: string[]; // ← THÊM (optional để backward compat)
   promotionValue: number;
   appliedVoucherCode: string;
   appliedVoucherValue: number;

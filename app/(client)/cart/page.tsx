@@ -166,6 +166,7 @@ export default function CartPage() {
     }
     const checkoutData = {
       selectedItems,
+      cartItemIds: selectedItems.map((item) => item.id), // ← THÊM
       selectedPromotions,
       promotionValue,
       appliedVoucherCode: voucherCode,
@@ -238,22 +239,7 @@ export default function CartPage() {
         {items.length === 0 ? (
           <div className="rounded-2xl bg-neutral-light p-8 sm:p-12 lg:p-16 text-center">
             <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-accent opacity-10 animate-ping" style={{ animationDuration: "2.5s" }} />
-                <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-accent flex items-center justify-center shadow-lg">
-                  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24 sm:w-32 sm:h-32">
-                    <path d="M10 12h4l2 8" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="text-white" />
-                    <path d="M14 18h6l6 24h26l4-16H24" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="text-white" />
-                    <circle cx="30" cy="49" r="3.5" fill="currentColor" className="text-white" />
-                    <circle cx="46" cy="49" r="3.5" fill="currentColor" className="text-white" />
-                    <circle cx="35" cy="31" r="1.5" fill="currentColor" className="text-white" />
-                    <circle cx="45" cy="31" r="1.5" fill="currentColor" className="text-white" />
-                    <path d="M33 37.5 Q40 34 47 37.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-white" />
-                  </svg>
-                </div>
-                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary-dark opacity-60" />
-                <span className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full bg-accent-dark opacity-40" />
-              </div>
+              <Image src="/images/empty-cart.png" alt="Empty cart" width={160} height={160} className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 object-contain" priority />{" "}
             </div>
             <h2 className="mb-2 text-xl sm:text-2xl font-bold text-primary">Giỏ hàng của bạn đang trống</h2>
             <p className="mb-8 text-sm sm:text-base text-neutral-darker max-w-xs mx-auto leading-relaxed">Hãy khám phá và thêm sản phẩm yêu thích vào giỏ hàng để tiếp tục mua sắm nhé!</p>

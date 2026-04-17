@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Select, { MultiValue, components } from "react-select";
 import { Plus, X } from "lucide-react";
+import apiRequest, { ApiError } from "@/lib/api";
 
 // ─── types (copy từ ProductForm) ─────────────────────────────────────────────
 
@@ -267,7 +268,12 @@ interface ChipAttributeSelectorProps {
    checked: Record<string, Set<string>>;
    basePrice: number;
    onToggle: (attrId: string, optId: string) => void;
-   onAddOption: (attrId: string, label: string, value: string) => void;
+   onAddOption: (
+      attrId: string,
+      createdId: string, // ← UUID thật từ DB
+      label: string,
+      value: string,
+   ) => void;
    onUpdatePriceAdjustment: (
       attrId: string,
       optId: string,
@@ -287,9 +293,10 @@ export function ChipAttributeSelector({
    const [adding, setAdding] = useState<Record<string, boolean>>({});
    const [newLabel, setNewLabel] = useState<Record<string, string>>({});
 
-   const submitNew = (attrId: string) => {
+   const submitNew = async (attrId: string) => {
       const label = newLabel[attrId]?.trim();
       if (!label) return;
+
       const value =
          label
             .toLowerCase()
@@ -299,7 +306,24 @@ export function ChipAttributeSelector({
             .replace(/[^a-z0-9]/g, "-")
             .replace(/-+/g, "-")
             .replace(/^-|-$/g, "") || label.toLowerCase();
-      onAddOption(attrId, label, value);
+
+      try {
+         const res = await apiRequest.post<{
+            data: { id: string; label: string; value: string };
+            message: string;
+         }>(`/attributes/admin/${attrId}/options`, { label, value });
+
+         onAddOption(attrId, res.data.id, label, value);
+      } catch (err) {
+         if (err instanceof ApiError) {
+            console.error("Tạo option thất bại:", err.message, err.status);
+            // toast.error(err.message); // nếu có toast
+         } else {
+            console.error("Tạo option thất bại:", err);
+         }
+         return;
+      }
+
       setNewLabel((p) => ({ ...p, [attrId]: "" }));
       setAdding((p) => ({ ...p, [attrId]: false }));
    };
