@@ -45,7 +45,7 @@ export interface CartContextValue {
   selectAll: boolean;
   selectedItems: CartItemWithDetails[];
 
-  addToCart: (variantId: string, quantity?: number, meta?: AddToCartMeta) => Promise<void>;
+addToCart: (variantId: string | undefined, quantity?: number, meta?: AddToCartMeta) => Promise<void>;
   updateQuantity: (cartItemId: string, delta: number) => Promise<boolean>;
   /** Optimistic patch — dùng sau khi đổi variant */
   updateItem: (cartItemId: string, patch: Partial<CartItemWithDetails>) => void;
@@ -245,7 +245,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Cải tiến Guest: check availableQuantity cho cả item MỚI (không chỉ existing).
 
   const addToCart = useCallback(
-    async (variantId: string, quantity = 1, meta?: AddToCartMeta): Promise<void> => {
+   async (variantId: string | undefined, quantity = 1, meta?: AddToCartMeta): Promise<void> => {
       // ── Validate chung (cả Auth và Guest) ──
       const avail = meta?.availableQuantity ?? 0;
       if (avail > 0 && quantity > avail) {
@@ -262,7 +262,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       if (isAuthenticated) {
-        const res = (await apiAddToCart(variantId, quantity)) as ApiResponse;
+        if (!variantId) throw new Error("Thiếu variantId");
+       const res = (await apiAddToCart(variantId, quantity)) as ApiResponse;
         if (res.success) await refetchCart();
         return;
       }
@@ -282,6 +283,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         existing.totalPrice = existing.unitPrice * existing.quantity;
         existing.updatedAt = new Date(now).toISOString();
       } else {
+         if (!variantId) throw new Error("Thiếu variantId"); 
         const colorLabel = meta?.colorLabel ?? meta?.color ?? "";
         const storageLabel = meta?.storageLabel ?? "";
         local.push({

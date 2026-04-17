@@ -1,11 +1,11 @@
 export const STATUS_TABS = [
   { value: "ALL", label: "Tất cả" },
-  { value: "active", label: "Đang hoạt động" },
-  { value: "inactive", label: "Tạm dừng" },
+  { value: "ACTIVE", label: "Đang hoạt động" },
+  { value: "INACTIVE", label: "Tạm dừng" },
 ];
 
 export const SORT_OPTIONS = [
   { value: "createdAt", label: "Ngày tạo" },
-  { value: "name", label: "Tên" },
-  { value: "code", label: "Code" },
+  { value: "optionCount", label: "Số options" },
+  { value: "name", label: "Tên A-Z" },
 ];

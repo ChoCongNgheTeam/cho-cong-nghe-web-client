@@ -19,6 +19,8 @@ const STATUS_DROPDOWN = [
   { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" },
 ];
 
+const isHexColor = (v: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v);
+
 export function getAttributeColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onEditClick }: GetAttributeColumnsParams): AdminColumn<Attribute>[] {
   return [
     {
@@ -65,7 +67,9 @@ export function getAttributeColumns({ page, pageSize, selected, openStatusId, to
         return (
           <div className="flex flex-wrap gap-1 max-w-xs">
             {activeOpts.slice(0, 5).map((opt) => (
-              <span key={opt.id} className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-accent/10 text-accent">
+              <span key={opt.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-accent/10 text-accent">
+                {/* hiển thị swatch nếu value là hex */}
+                {isHexColor(opt.value) && <span className="w-3 h-3 rounded-full border border-neutral/30 shrink-0" style={{ backgroundColor: opt.value }} />}
                 {opt.label}
               </span>
             ))}

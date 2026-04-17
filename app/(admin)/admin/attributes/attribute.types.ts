@@ -19,6 +19,7 @@ export interface AttributesMeta {
   limit: number;
   total: number;
   totalPages: number;
+  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number };
 }
 
 export interface AttributesResponse {
@@ -32,7 +33,7 @@ export interface GetAttributesParams {
   limit?: number;
   search?: string;
   isActive?: boolean;
-  sortBy?: "createdAt" | "name" | "code";
+  sortBy?: "createdAt" | "name" | "code" | "optionCount";
   sortOrder?: "asc" | "desc";
 }
 
@@ -54,6 +55,7 @@ export interface CreateOptionPayload {
 }
 
 export interface UpdateOptionPayload {
+  value?: string; // ← mới: cho phép sửa value
   label?: string;
   isActive?: boolean;
 }

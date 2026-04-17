@@ -9,6 +9,7 @@ import type { CategoryWithAttributes, AttributeSimple } from "./category-variant
 import { getAllCategoryAttributes, getAttributeOptions, updateCategoryAttributes } from "./_libs/category-variant-attributes";
 import { getCategoryAttributeColumns } from "./components/TableCategoryAttributes";
 import { CategoryAttributeForm } from "./components/CategoryAttributeForm";
+import { toast } from "sonner";
 
 export default function CategoryVariantAttributesPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
@@ -95,15 +96,26 @@ export default function CategoryVariantAttributesPage() {
   const handleFormSubmit = useCallback(
     async (attributeIds: string[]) => {
       if (!editTarget) return;
+
       setFormSaving(true);
       setFormError(null);
+
       try {
         const res = await updateCategoryAttributes(editTarget.id, attributeIds);
+
+        // Cập nhật lại danh sách
         setCategories((prev) => prev.map((c) => (c.id === editTarget.id ? res.data : c)));
         setEditTarget(res.data);
+
+        // Đóng form và hiển thị toast thành công
         setFormOpen(false);
       } catch (e: any) {
-        setFormError(e?.message ?? "Có lỗi xảy ra");
+        const errorMsg = e?.message ?? "Có lỗi xảy ra khi cập nhật";
+        setFormError(errorMsg);
+
+        toast.error("Cập nhật thất bại", {
+          description: errorMsg,
+        });
       } finally {
         setFormSaving(false);
       }

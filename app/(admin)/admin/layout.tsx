@@ -3,6 +3,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Toaster } from "sonner"; // ← Thêm dòng này
+
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeaderAuto from "@/components/admin/AdminHeaderAuto";
 import { AdminPreferencesProvider } from "@/contexts/AdminPreferencesContext";
@@ -14,7 +16,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!loading) {
-      // console.log(user);
       if (!user) {
         router.replace("/account");
       } else if (user.role !== "ADMIN") {
@@ -39,6 +40,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>
           </div>
         </div>
+
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          duration={3000}
+          theme="light" // hoặc "dark" nếu bạn dùng dark mode
+        />
+        {/* ============================================================ */}
       </AdminPreferencesProvider>
     </AdminNotificationProvider>
   );

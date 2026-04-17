@@ -196,7 +196,7 @@ export default function EditOrderPage() {
         </Link>
         <span className="text-neutral-dark">/</span>
         <Link href={`/admin/orders/${order.id}`} className="text-[13px] text-neutral-dark hover:text-accent">
-          #{order.orderCode}
+          {order.orderCode}
         </Link>
         <span className="text-neutral-dark">/</span>
         <span className="text-[13px] text-primary font-medium">Chỉnh sửa</span>
@@ -204,7 +204,7 @@ export default function EditOrderPage() {
 
       <div className="px-6 py-4 max-w-3xl mx-auto space-y-5">
         <div>
-          <h1 className="text-[20px] font-bold text-primary">Chỉnh sửa đơn #{order.orderCode}</h1>
+          <h1 className="text-[20px] font-bold text-primary">Chỉnh sửa đơn {order.orderCode}</h1>
           <p className="text-[13px] text-neutral-dark mt-1">Trạng thái: {order.orderStatus === "PENDING" ? "Chờ duyệt" : "Đang xử lý"}</p>
         </div>
 

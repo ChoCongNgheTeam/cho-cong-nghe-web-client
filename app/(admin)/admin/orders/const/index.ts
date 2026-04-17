@@ -11,10 +11,10 @@ export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; pill:
     pill: "bg-accent-light border-accent-light-active text-accent-dark",
     dot: "bg-accent",
   },
-  REFUNDED_PENDING: {
+  REFUND_PENDING: {
     label: "Chờ hoàn tiền",
-    pill: "bg-neutral-light-active border-neutral text-neutral-darker",
-    dot: "bg-neutral-darker",
+    dot: "bg-amber-400",
+    pill: "bg-amber-50 text-amber-600 border border-amber-200",
   },
   REFUNDED: {
     label: "Đã hoàn tiền",

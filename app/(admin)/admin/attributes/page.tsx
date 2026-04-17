@@ -10,6 +10,7 @@ import { SORT_OPTIONS, STATUS_TABS } from "./const/index";
 import { getAttributeColumns } from "./components/TableAttributes";
 import { AttributeForm, DEFAULT_FORM, attrToForm, formToCreatePayload, formToUpdatePayload, type AttributeFormData } from "./components/AttributeForm";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { toast } from "sonner";
 
 interface Meta {
   page: number;
@@ -129,20 +130,33 @@ export default function AttributesPage() {
     async (form: AttributeFormData) => {
       setFormSaving(true);
       setFormError(null);
+
       try {
         if (editTarget) {
+          // === CHỈNH SỬA ===
           const payload = formToUpdatePayload(form);
           const res = await updateAttribute(editTarget.id, payload);
+
+          // Cập nhật lại danh sách và editTarget
           setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? res.data : a)));
           setEditTarget(res.data);
+
+          // Đóng form + thông báo thành công
+          setFormOpen(false);
         } else {
+          // === TẠO MỚI ===
           const payload = formToCreatePayload(form);
           await createAttribute(payload);
+
+          // Đóng form + thông báo + refresh danh sách
           setFormOpen(false);
-          fetchAttrs();
+          toast.success("Thêm thuộc tính thành công!");
+
+          fetchAttrs(); // refresh bảng
         }
       } catch (e: any) {
-        setFormError(e?.message ?? "Có lỗi xảy ra");
+        setFormError(e?.message ?? "Có lỗi xảy ra khi lưu thuộc tính");
+        toast.error(e?.message ?? "Lưu thuộc tính thất bại");
       } finally {
         setFormSaving(false);
       }
@@ -259,9 +273,7 @@ export default function AttributesPage() {
                 }`}
               >
                 {tab.label}
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                  {count}
-                </span>
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>{count}</span>
               </button>
             );
           })}

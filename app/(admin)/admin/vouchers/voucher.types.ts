@@ -5,6 +5,7 @@ export interface VoucherTarget {
   id: string;
   targetType: TargetType;
   targetId?: string;
+  targetName?: string;
 }
 
 export interface VoucherCard {
@@ -88,3 +89,103 @@ export interface CreateVoucherPayload {
 }
 
 export type UpdateVoucherPayload = Omit<Partial<CreateVoucherPayload>, "code"> & { code?: string };
+
+// ── Voucher Usages ────────────────────────────────────────────────────────────
+
+export interface VoucherUsageItem {
+  id: string;
+  usedAt: string;
+  voucher: {
+    id: string;
+    code: string;
+    discountType: DiscountType;
+    discountValue: number;
+  };
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+  };
+  order: {
+    id: string;
+    orderCode: string;
+    totalAmount: number;
+  };
+}
+
+export interface GetVoucherUsagesParams {
+  page?: number;
+  limit?: number;
+  voucherId?: string;
+  userId?: string;
+  orderId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: "usedAt";
+  sortOrder?: "asc" | "desc";
+}
+
+export interface VoucherUsagesResponse {
+  data: VoucherUsageItem[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  message: string;
+}
+
+// ── Voucher Private Users ─────────────────────────────────────────────────────
+
+export interface VoucherUserItem {
+  id: string;
+  maxUses: number;
+  usedCount: number;
+  createdAt: string;
+  voucher: {
+    id: string;
+    code: string;
+    discountType: DiscountType;
+    discountValue: number;
+    endDate?: string;
+    isActive: boolean;
+  };
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+  };
+}
+
+export interface GetVoucherUsersParams {
+  page?: number;
+  limit?: number;
+  voucherId?: string;
+  userId?: string;
+}
+
+export interface VoucherUsersResponse {
+  data: VoucherUserItem[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  message: string;
+}
+
+// ── User search ───────────────────────────────────────────────────────────────
+
+export interface UserResult {
+  id: string;
+  userName: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: string;
+  isActive: boolean;
+  avatarImage: string | null;
+  createdAt: string;
+}
