@@ -385,7 +385,7 @@ export function FlashSaleClient({ saleSchedule }: Props) {
     setActiveDate(date);
     setSearch("");
     setPriceRange(0);
-    setSort("price_asc"); // ← thay "default"
+    setSort("price_desc"); // ← thay "default"
     setPage(1);
     fetchProductsForDate(date);
   };
@@ -429,7 +429,7 @@ export function FlashSaleClient({ saleSchedule }: Props) {
       });
     }
 
-    if (sort === "price_asc") list.sort((a, b) => getProductPrice(a) - getProductPrice(b));
+    if (sort === "price_desc") list.sort((a, b) => getProductPrice(a) - getProductPrice(b));
     else if (sort === "price_desc") list.sort((a, b) => getProductPrice(b) - getProductPrice(a));
     else if (sort === "discount_desc") list.sort((a, b) => getProductDiscount(b) - getProductDiscount(a));
 
