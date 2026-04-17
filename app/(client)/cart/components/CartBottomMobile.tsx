@@ -42,7 +42,7 @@ export default function CartBottomBar({
   voucherCode,
   voucherValue = 0,
   onOpenVoucherModal,
-  rewardPoints,
+  // rewardPoints,
   actionLabel,
   actionDisabled = false,
   onAction,
@@ -117,13 +117,13 @@ export default function CartBottomBar({
             </div>
 
             {/* Điểm thưởng */}
-            {rewardPoints != null && rewardPoints > 0 && (
+            {/* {rewardPoints != null && rewardPoints > 0 && (
               <div className="flex items-center gap-1 pt-1 pb-2">
                 <span className="text-xs text-neutral-darker">Điểm thưởng</span>
                 <span className="text-sm">🪙</span>
                 <span className="text-sm font-medium text-accent-dark">+{formatNumber(rewardPoints)}</span>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>

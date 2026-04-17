@@ -16,6 +16,7 @@ import { useIsMobile } from "@/(client)/compare/Useismobile";
 import { getProductGallery } from "../../_lib";
 import type { GalleryImage } from "../../types";
 import { heroUrl, thumbnailUrl } from "@/helpers/resizeImage";
+import { PoliciesBlock } from "./product-detail-card-right";
 
 interface ProductDetailLeftProps {
   product: ProductDetail;
@@ -181,14 +182,10 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
     syncColorFromGalleryIndex(index);
   };
 
-  const rawMainUrl = isExpandSlot
-    ? (galleryImages[galleryIndex]?.imageUrl ?? "")
-    : (validImages[currentImageIndex]?.imageUrl ?? "");
+  const rawMainUrl = isExpandSlot ? (galleryImages[galleryIndex]?.imageUrl ?? "") : (validImages[currentImageIndex]?.imageUrl ?? "");
 
   const mainImageUrl = rawMainUrl ? heroUrl(rawMainUrl, 800) : "";
-  const mainImageAlt = isExpandSlot
-    ? (galleryImages[galleryIndex]?.altText ?? "Gallery image")
-    : (validImages[currentImageIndex]?.altText ?? "Product image");
+  const mainImageAlt = isExpandSlot ? (galleryImages[galleryIndex]?.altText ?? "Gallery image") : (validImages[currentImageIndex]?.altText ?? "Product image");
 
   const counterCurrent = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryIndex + 1}` : "▶") : currentImageIndex + 1;
   const counterTotal = isExpandSlot ? (galleryLoaded && galleryImages.length > 0 ? `G${galleryImages.length}` : totalVariantSlots) : totalVariantSlots;
@@ -211,14 +208,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
       {/* Main Image */}
       <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
         <div className="relative w-full h-full flex items-center justify-center">
-          {!isExpandSlot && mainImageUrl && (
-            <Image
-              src={mainImageUrl}
-              className="max-w-full max-h-full object-contain transition-opacity duration-500"
-              alt={mainImageAlt}
-              fill
-            />
-          )}
+          {!isExpandSlot && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
           {!isExpandSlot && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-16 h-16 opacity-20" />
@@ -231,14 +221,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
               <p className="text-sm opacity-60">Đang tải ảnh...</p>
             </div>
           )}
-          {isExpandSlot && !galleryLoading && mainImageUrl && (
-            <Image
-              src={mainImageUrl}
-              className="max-w-full max-h-full object-contain transition-opacity duration-500"
-              alt={mainImageAlt}
-              fill
-            />
-          )}
+          {isExpandSlot && !galleryLoading && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
           {isExpandSlot && !galleryLoading && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-10 h-10 opacity-30" />
@@ -324,11 +307,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
             const image = validImages[thumb.index];
             if (!image?.imageUrl) return null;
             return (
-              <ThumbnailCell
-                key={image.imageUrl || `variant-${thumb.index}`}
-                isActive={!isExpandSlot && currentImageIndex === thumb.index}
-                onClick={() => setCurrentImageIndex(thumb.index)}
-              >
+              <ThumbnailCell key={image.imageUrl || `variant-${thumb.index}`} isActive={!isExpandSlot && currentImageIndex === thumb.index} onClick={() => setCurrentImageIndex(thumb.index)}>
                 <Image
                   src={thumbnailUrl(image.imageUrl, 96)}
                   alt={image.altText || `Product image ${thumb.index + 1}`}
@@ -400,26 +379,7 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
               </div>
             )}
             <div>
-              <div className="flex flex-col sm:flex-row justify-between mt-6 items-start sm:items-center gap-2">
-                <h2 className="text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-                <button type="button" className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">
-                  Tìm hiểu thêm
-                </button>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap mt-4">
-                <div className="flex items-center gap-2 sm:mr-12">
-                  <MdVerified size={28} />
-                  <p className="text-sm text-primary">Hàng chính hãng - Bảo hành 18 tháng</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaShippingFast size={28} />
-                  <p className="text-sm text-primary">Miễn phí giao hàng toàn quốc</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaUserCog size={28} />
-                  <p className="text-sm text-primary">Kỹ thuật viên hỗ trợ trực tuyến</p>
-                </div>
-              </div>
+              <PoliciesBlock />
             </div>
           </div>
         )}
