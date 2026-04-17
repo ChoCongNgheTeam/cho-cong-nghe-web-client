@@ -41,7 +41,7 @@ const settingGroups = [
 
 export default function SettingsPage() {
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full">
       <h1 className="mb-6 text-xl sm:text-2xl font-semibold text-primary">Cài đặt</h1>
 
       <div className="space-y-6">

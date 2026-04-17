@@ -176,7 +176,7 @@ function FilterAwarePagination({ currentPage, totalPages, total }: { currentPage
 
   return (
     <div className="mt-8 flex flex-col items-center gap-3">
-      <p className="text-sm text-primary-light">
+      <p className="text-sm text-primary">
         Trang <strong className="text-primary">{currentPage}</strong>
         {" / "}
         <strong className="text-primary">{totalPages}</strong>
@@ -197,7 +197,7 @@ function FilterAwarePagination({ currentPage, totalPages, total }: { currentPage
 
         {pages.map((p, i) =>
           p === "..." ? (
-            <span key={`dots-${i}`} className="px-2 text-primary-light text-sm select-none">
+            <span key={`dots-${i}`} className="px-2 text-primary text-sm select-none">
               ···
             </span>
           ) : (
@@ -275,7 +275,7 @@ export default function ProductGrid({ categorySlug, initialProducts = [], initia
     <div>
       {/* Sort bar — desktop only */}
       <div className="hidden lg:flex items-center gap-4 flex-wrap mb-4 bg-neutral-light border border-neutral p-4 rounded-xl">
-        <span className="text-sm text-primary-light">
+        <span className="text-sm text-primary">
           Tìm thấy <strong className="text-primary">{pagination.total}</strong> kết quả
         </span>
         <div className="flex items-center gap-2 flex-wrap ml-auto">
@@ -296,7 +296,7 @@ export default function ProductGrid({ categorySlug, initialProducts = [], initia
 
       {/* Result count — mobile */}
       <div className="lg:hidden mb-3">
-        <span className="text-sm text-primary-light">
+        <span className="text-sm text-primary">
           Tìm thấy <strong className="text-primary">{pagination.total}</strong> kết quả
         </span>
       </div>
@@ -314,7 +314,7 @@ export default function ProductGrid({ categorySlug, initialProducts = [], initia
             <div className="flex flex-col items-center justify-center py-20 bg-neutral-light border border-neutral rounded-2xl">
               <span className="text-5xl mb-4">🔍</span>
               <p className="text-base font-semibold text-primary">Không tìm thấy sản phẩm</p>
-              <p className="text-sm text-primary-light mt-1">Vui lòng thử lại với bộ lọc khác</p>
+              <p className="text-sm text-primary mt-1">Vui lòng thử lại với bộ lọc khác</p>
             </div>
           )
         )}

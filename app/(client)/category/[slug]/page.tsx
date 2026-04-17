@@ -65,7 +65,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           <div className="flex items-start justify-between gap-4 mb-3">
             <div>
               <h1 className="text-2xl font-bold text-primary">{categoryTitle}</h1>
-              {category?.description && <p className="text-sm text-primary-light mt-1">{category.description}</p>}
+              {category?.description && <p className="text-sm text-primary mt-1">{category.description}</p>}
             </div>
             {/* Category hero image nếu có */}
             {category?.imageUrl && (
@@ -82,7 +82,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                 <Link
                   key={sub.slug}
                   href={`/category/${sub.slug}`}
-                  className="whitespace-nowrap text-sm font-medium text-primary-light hover:text-accent border border-neutral hover:border-accent rounded-full px-4 py-1.5 transition-colors shrink-0"
+                  className="whitespace-nowrap text-sm font-medium text-primary hover:text-accent border border-neutral hover:border-accent rounded-full px-4 py-1.5 transition-colors shrink-0"
                 >
                   {sub.name}
                 </Link>
@@ -154,7 +154,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               <div className="flex flex-col items-center justify-center py-20 bg-neutral-light rounded-2xl border border-neutral shadow-sm">
                 <span className="text-5xl mb-4">⚠️</span>
                 <p className="text-base font-semibold text-promotion mb-1">Đã có lỗi xảy ra</p>
-                <p className="text-sm text-primary-light mb-6">{fetchError}</p>
+                <p className="text-sm text-primary mb-6">{fetchError}</p>
                 <Link href={`/category/${slug}`} className="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-full text-sm font-semibold transition-colors">
                   Thử lại
                 </Link>

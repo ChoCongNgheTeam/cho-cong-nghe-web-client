@@ -1,16 +1,17 @@
 import { OrderStatus, PaymentStatus } from "../order.types";
 
-export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; dot: string; pill: string }> = {
+export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; pill: string; dot: string }> = {
   UNPAID: {
     label: "Chưa thanh toán",
-    dot: "bg-orange-400",
-    pill: "bg-orange-50 text-orange-600 border border-orange-200",
+    pill: "bg-neutral-light-active border-neutral text-neutral-darker",
+    dot: "bg-neutral-dark",
   },
   PAID: {
     label: "Đã thanh toán",
-    dot: "bg-green-400",
-    pill: "bg-green-50 text-green-600 border border-green-200",
+    pill: "bg-accent-light border-accent-light-active text-accent-dark",
+    dot: "bg-accent",
   },
+
   REFUND_PENDING: {
     label: "Chờ hoàn tiền",
     dot: "bg-amber-400",
@@ -18,8 +19,8 @@ export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; dot: 
   },
   REFUNDED: {
     label: "Đã hoàn tiền",
-    dot: "bg-neutral-dark",
-    pill: "bg-neutral-light-active text-neutral-darker border border-neutral",
+    pill: "bg-promotion-light border-promotion-light-active text-promotion",
+    dot: "bg-promotion",
   },
 };
 
@@ -45,30 +46,30 @@ export const ORDER_STATUS_CONFIG: Record<
   PENDING: {
     label: "Đang chờ",
     dot: "bg-accent",
-    pill: "bg-accent-light text-accent border border-accent",
+    pill: "bg-accent-light text-accent border border-accent-light-active",
     pillSelected: "bg-accent-light text-accent",
     dropdownHover: "hover:bg-accent-light",
   },
   PROCESSING: {
     label: "Đang xử lý",
-    dot: "bg-orange-400",
-    pill: "bg-orange-50 text-orange-600 border border-orange-200",
-    pillSelected: "bg-orange-50 text-orange-600",
-    dropdownHover: "hover:bg-orange-50",
+    dot: "bg-accent-dark",
+    pill: "bg-accent-light text-accent-dark border border-accent-light-active",
+    pillSelected: "bg-accent-light text-accent-dark",
+    dropdownHover: "hover:bg-accent-light",
   },
   SHIPPED: {
     label: "Đang giao hàng",
-    dot: "bg-purple-400",
-    pill: "bg-purple-50 text-purple-600 border border-purple-200",
-    pillSelected: "bg-purple-50 text-purple-600",
-    dropdownHover: "hover:bg-purple-50",
+    dot: "bg-neutral-darker",
+    pill: "bg-neutral-light-active text-neutral-darker border border-neutral",
+    pillSelected: "bg-neutral-light-active text-neutral-darker",
+    dropdownHover: "hover:bg-neutral-light-active",
   },
   DELIVERED: {
     label: "Hoàn tất",
-    dot: "bg-green-400",
-    pill: "bg-green-50 text-green-600 border border-green-200",
-    pillSelected: "bg-green-50 text-green-600",
-    dropdownHover: "hover:bg-green-50",
+    dot: "bg-accent",
+    pill: "bg-accent-light text-accent-dark border border-accent-light-active",
+    pillSelected: "bg-accent-light text-accent-dark",
+    dropdownHover: "hover:bg-accent-light",
   },
   CANCELLED: {
     label: "Hủy đơn",

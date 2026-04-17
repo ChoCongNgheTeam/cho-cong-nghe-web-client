@@ -451,7 +451,7 @@ export default function Slidezy({
 
       {/* Dots - hiện khi nav=true (desktop) hoặc mobileNav="dots" (mobile) */}
       {showDots && (
-        <div className="flex items-center justify-center gap-2 mt-4">
+        <div className="flex items-center justify-center gap-2 my-4">
           {Array.from({ length: pageCount }).map((_, index) => (
             <button
               key={index}

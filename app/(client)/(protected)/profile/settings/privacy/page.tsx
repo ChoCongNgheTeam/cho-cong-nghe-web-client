@@ -55,7 +55,7 @@ function Row({
 
 export default function PrivacySettingsPage() {
   return (
-    <div className="w-full max-w-2xl mx-auto pb-24">
+    <div className="w-full pb-24">
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-semibold text-primary">Quyền riêng tư</h1>
         <p className="text-sm text-neutral-dark mt-2">Kiểm soát dữ liệu cá nhân và cách hệ thống sử dụng.</p>

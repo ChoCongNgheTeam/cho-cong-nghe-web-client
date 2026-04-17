@@ -504,7 +504,7 @@ export default function ComparePage() {
   }, [items.length]);
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <div className="container px-3 sm:px-4 py-6 sm:py-8">
       {/* ── Sticky Compare Header (chỉ 1 lần) ── */}
       <StickyCompareHeader products={items} maxSlots={MAX_SLOTS} onRemove={remove} />
 

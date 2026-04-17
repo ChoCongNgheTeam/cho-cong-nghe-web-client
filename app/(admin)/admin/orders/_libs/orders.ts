@@ -43,7 +43,6 @@ export interface UpdateOrderAdminPayload {
   shippingFee?: number;
   voucherDiscount?: number;
 }
-
 export interface UpdateShippingPayload {
   shippingContactName?: string;
   shippingPhone?: string;
