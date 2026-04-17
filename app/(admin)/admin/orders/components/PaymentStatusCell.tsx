@@ -13,9 +13,10 @@ interface PaymentStatusCellProps {
 }
 
 const PAYMENT_TRANSITIONS: Record<PaymentStatus, PaymentStatus[]> = {
-   UNPAID: ["PAID", "REFUNDED"],
-   PAID: ["REFUNDED"],
-   REFUNDED: [],
+  UNPAID: ["PAID", "REFUNDED_PENDING"],
+  PAID: ["REFUNDED_PENDING"],
+  REFUNDED_PENDING: ["REFUNDED"],
+  REFUNDED: [],
 };
 
 export function PaymentStatusCell({

@@ -38,12 +38,11 @@ export interface GetAllOrdersParams {
 
 export interface UpdateOrderAdminPayload {
    orderStatus?: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED";
-   paymentStatus?: "UNPAID" | "PAID" | "REFUNDED";
-   paymentMethodId?: string; // ← thêm field này
+   paymentStatus?: PaymentStatus; // ← dùng type thay vì hardcode
+   paymentMethodId?: string;
    shippingFee?: number;
    voucherDiscount?: number;
 }
-
 export interface UpdateShippingPayload {
    shippingContactName?: string;
    shippingPhone?: string;
@@ -62,7 +61,7 @@ export interface CreateOrderAdminPayload {
    voucherCode?: string;
    shippingFee: number;
    paymentMethodId: string;
-   paymentStatus: "UNPAID" | "PAID" | "REFUNDED";
+   paymentStatus: PaymentStatus;
    orderStatus:
       | "PENDING"
       | "PROCESSING"
@@ -184,7 +183,7 @@ export async function updateOrderStatus(
 
 export async function updatePaymentStatus(
    id: string,
-   paymentStatus: "UNPAID" | "PAID" | "REFUNDED",
+   paymentStatus: PaymentStatus,
 ): Promise<OrderDetailResponse> {
    return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, {
       paymentStatus,
