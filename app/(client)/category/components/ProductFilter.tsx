@@ -668,19 +668,19 @@ export default function ProductFilter({ filters }: ProductFilterProps) {
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-2">{filters.map(renderGroupSheet)}</div>
 
         {/* Footer — sticky */}
-        <div className="shrink-0 px-4 py-4 border-t border-neutral bg-neutral-light">
+      <div className="shrink-0 px-4 pt-2 border-t border-neutral bg-neutral-light" style={{ paddingBottom: "calc(1rem + 60px + env(safe-area-inset-bottom))" }}>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={resetDraft}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold border-2 border-neutral text-primary bg-neutral-light hover:border-neutral-hover transition-colors"
+              className="flex-1 py-2 rounded-xl text-sm font-semibold border-2 border-neutral text-primary bg-neutral-light hover:border-neutral-hover transition-colors"
             >
               Thiết lập lại
             </button>
             <button
               type="button"
               onClick={applyDraft}
-              className={`flex-1 py-3 rounded-xl text-sm font-semibold text-neutral-light transition-colors ${isPending ? "bg-accent-dark cursor-not-allowed" : "bg-accent hover:bg-accent-hover"}`}
+              className={`flex-1 py-2 rounded-xl text-sm font-semibold text-neutral-light transition-colors ${isPending ? "bg-accent-dark cursor-not-allowed" : "bg-accent hover:bg-accent-hover"}`}
               disabled={isPending}
             >
               {isPending ? "Đang lọc..." : "Áp dụng"}

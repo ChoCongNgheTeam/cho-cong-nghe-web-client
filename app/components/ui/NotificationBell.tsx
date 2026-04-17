@@ -195,28 +195,37 @@ export default function NotificationBell({
 
    return (
       <div ref={wrapperRef} className="relative">
-         {/* ── Bell button ── */}
          <button
             onClick={() => setOpen((v) => !v)}
             aria-label={resolvedHeaderLabel}
-            className={`relative w-8 h-8 flex items-center justify-center rounded-lg
-    text-neutral-dark hover:text-primary hover:bg-neutral-light-active
-    transition-all duration-150 cursor-pointer
-    ${open ? "text-primary bg-neutral-light-active" : ""}`}
+            className={
+               variant === "admin"
+                  ? `relative w-8 h-8 flex items-center justify-center rounded-lg
+         text-neutral-dark hover:text-primary hover:bg-neutral-light-active
+         transition-all duration-150 cursor-pointer
+         ${open ? "text-primary bg-neutral-light-active" : ""}`
+                  : `relative inline-flex items-center p-2 rounded-xl
+         text-primary hover:bg-neutral-light-active
+         transition-all duration-200 cursor-pointer
+         ${open ? "bg-neutral-light-active" : ""}`
+            }
          >
-            <Bell size={17} strokeWidth={2.3} />
+            {variant === "admin" ? (
+               <Bell size={17} strokeWidth={2.3} />
+            ) : (
+               <Bell className="w-5 h-5 lg:w-6 lg:h-6" />
+            )}
             {unreadCount > 0 && (
                <span
                   className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px]
         flex items-center justify-center rounded-full
         bg-accent text-[10px] font-bold text-neutral-light
-        ring-2 ring-neutral-light"
+        shadow-sm ring-2 ring-neutral-light"
                >
                   {unreadCount > 99 ? "99+" : unreadCount}
                </span>
             )}
          </button>
-
          {/* ── Dropdown ── */}
          <div
             className={`
