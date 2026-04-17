@@ -40,7 +40,6 @@ export interface TopCustomer {
 }
 
 export interface ConversionFunnel {
-  requested: number;
   pending: number;
   processing: number;
   shipped: number;
@@ -49,8 +48,8 @@ export interface ConversionFunnel {
 }
 
 export interface HeatmapPoint {
-  day: number; // 0=Sun … 6=Sat
-  hour: number; // 0-23
+  day: number;
+  hour: number;
   count: number;
 }
 

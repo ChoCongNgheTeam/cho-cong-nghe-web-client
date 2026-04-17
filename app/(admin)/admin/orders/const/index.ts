@@ -11,6 +11,11 @@ export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; dot: 
     dot: "bg-green-400",
     pill: "bg-green-50 text-green-600 border border-green-200",
   },
+  REFUND_PENDING: {
+    label: "Chờ hoàn tiền",
+    dot: "bg-amber-400",
+    pill: "bg-amber-50 text-amber-600 border border-amber-200",
+  },
   REFUNDED: {
     label: "Đã hoàn tiền",
     dot: "bg-neutral-dark",

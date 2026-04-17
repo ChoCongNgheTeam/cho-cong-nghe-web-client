@@ -19,14 +19,15 @@ export function ConversionFunnelChart({ data }: { data: ConversionFunnel }) {
   return (
     <div className="bg-neutral-light rounded-xl border border-neutral px-4 py-3 shadow-sm h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-semibold text-primary">Phễu chuyển đổi</h3>
+        <h3 className="text-xs font-semibold text-primary">Phân bố đơn hàng</h3>
         <span className="text-[10px] text-accent font-semibold">{total > 0 ? ((data.delivered / total) * 100).toFixed(1) : "0"}% giao thành công</span>
       </div>
 
       <div className="space-y-1.5 flex-1">
         {STEPS.map((step) => {
           const val = data[step.key];
-          const base = step.key === "requested" ? Math.max(data.requested + totalOrders, 1) : total;
+          // const base = step.key === "requested" ? Math.max(data.requested + totalOrders, 1) : total;
+          const base = Math.max(totalOrders, 1);
           const pct = ((val / base) * 100).toFixed(1);
           const barW = (val / maxVal) * 100;
 

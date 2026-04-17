@@ -1,24 +1,19 @@
+// page.tsx — analytics
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, BarChart3 } from "lucide-react";
 
 import { getAnalytics } from "./_libs/analytics";
 import type { TimeGranularity } from "./analytics.types";
-import {
-  DateRangePicker,
-  GranularitySelector,
-  resolvePreset,
-  type QuickRange,
-} from "./components/DateRangePicker";
+import { DateRangePicker, GranularitySelector, resolvePreset, autoGranularity, getValidGranularities, type QuickRange } from "./components/DateRangePicker";
 import { SummaryKPIs } from "./components/SummaryKPIs";
 import { RevenueChart } from "./components/RevenueChart";
 import { PaymentMethodChart, CategoryChart } from "./components/BreakdownCharts";
 import { ConversionFunnelChart } from "./components/ConversionFunnelChart";
 import { TopCustomersTable } from "./components/TopCustomersTable";
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function Skeleton() {
   return (
@@ -43,15 +38,23 @@ function Skeleton() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function AnalyticsPage() {
   const [preset, setPreset] = useState<QuickRange>("30d");
-  const [granularity, setGranularity] = useState<TimeGranularity>("day");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
   const { from, to } = resolvePreset(preset, customFrom, customTo);
+
+  // granularity tự động reset về giá trị hợp lệ khi range thay đổi
+  const [granularity, setGranularity] = useState<TimeGranularity>(() => autoGranularity(from, to));
+
+  useEffect(() => {
+    const valid = getValidGranularities(from, to);
+    // Nếu granularity hiện tại không còn hợp lệ với range mới → reset về auto
+    if (!valid.includes(granularity)) {
+      setGranularity(autoGranularity(from, to));
+    }
+  }, [from, to]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["admin-analytics", from, to, granularity],
@@ -72,12 +75,8 @@ export default function AnalyticsPage() {
               <BarChart3 className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-primary leading-tight">
-                Thống kê doanh thu
-              </h1>
-              <p className="text-[10px] text-neutral-dark">
-                {from === to ? from : `${from} → ${to}`}
-              </p>
+              <h1 className="text-sm font-bold text-primary leading-tight">Thống kê doanh thu</h1>
+              <p className="text-[10px] text-neutral-dark">{from === to ? from : `${from} → ${to}`}</p>
             </div>
           </div>
 
@@ -92,7 +91,8 @@ export default function AnalyticsPage() {
                 setCustomTo(t);
               }}
             />
-            <GranularitySelector value={granularity} onChange={setGranularity} />
+            {/* GranularitySelector chỉ show options hợp lệ theo range */}
+            <GranularitySelector value={granularity} onChange={setGranularity} from={from} to={to} />
             <button
               onClick={() => refetch()}
               disabled={isFetching}
@@ -104,19 +104,14 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Loading ── */}
         {isLoading && <Skeleton />}
 
-        {/* ── Content ── */}
         {analytics && (
           <div className="space-y-2.5">
             <div className="grid grid-cols-1 xl:grid-cols-[180px_1fr] gap-2.5 items-start">
               <SummaryKPIs summary={analytics.summary} />
               <div className="space-y-2.5">
-                <RevenueChart
-                  data={analytics.revenueOverTime}
-                  comparison={analytics.comparisonOverTime}
-                />
+                <RevenueChart data={analytics.revenueOverTime} comparison={analytics.comparisonOverTime} />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                   <PaymentMethodChart data={analytics.revenueByPaymentMethod} />
                   <CategoryChart data={analytics.revenueByCategory} />
@@ -128,15 +123,11 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {/* ── Error ── */}
         {!isLoading && !analytics && (
           <div className="flex flex-col items-center justify-center py-16 text-neutral-dark">
             <BarChart3 className="w-8 h-8 mb-2 opacity-30" />
             <p className="text-xs">Không thể tải dữ liệu. Vui lòng thử lại.</p>
-            <button
-              onClick={() => refetch()}
-              className="mt-3 text-xs text-accent hover:underline"
-            >
+            <button onClick={() => refetch()} className="mt-3 text-xs text-accent hover:underline">
               Thử lại
             </button>
           </div>

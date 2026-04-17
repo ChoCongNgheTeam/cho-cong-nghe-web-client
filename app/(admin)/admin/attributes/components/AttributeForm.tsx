@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, AlertCircle, Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { Loader2, AlertCircle, Plus, Pencil, Check, X } from "lucide-react";
 import type { Attribute, AttributeOption, CreateOptionPayload, UpdateOptionPayload } from "../attribute.types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -29,6 +29,9 @@ export function formToUpdatePayload(form: AttributeFormData) {
   return { name: form.name.trim(), isActive: form.isActive };
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const isHexColor = (v: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v);
+
 // ── Sub-components ──────────────────────────────────────────────────────────────
 const inputCls =
   "w-full px-3 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all placeholder:text-neutral-dark/50";
@@ -45,55 +48,97 @@ function FormRow({ label, required, children, hint }: { label: string; required?
   );
 }
 
-// ── Option row (inline edit) ────────────────────────────────────────────────────
-interface OptionRowProps {
-  option: AttributeOption;
-  onUpdateLabel: (optionId: string, label: string) => Promise<void>;
-  onToggleActive: (optionId: string, isActive: boolean) => Promise<void>;
+// ── Color swatch ────────────────────────────────────────────────────────────────
+function ColorSwatch({ value }: { value: string }) {
+  if (!isHexColor(value)) return null;
+  return <span className="inline-block w-4 h-4 rounded-full border border-neutral/50 shrink-0" style={{ backgroundColor: value }} title={value} />;
 }
 
-function OptionRow({ option, onUpdateLabel, onToggleActive }: OptionRowProps) {
+// ── Option row (inline edit — bao gồm cả value) ────────────────────────────────
+interface OptionRowProps {
+  option: AttributeOption;
+  onUpdate: (optionId: string, payload: UpdateOptionPayload) => Promise<void>;
+}
+
+function OptionRow({ option, onUpdate }: OptionRowProps) {
   const [editing, setEditing] = useState(false);
+  const [valueInput, setValueInput] = useState(option.value);
   const [labelInput, setLabelInput] = useState(option.label);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (labelInput.trim() === option.label) {
+    const payload: UpdateOptionPayload = {};
+    if (valueInput.trim() !== option.value) payload.value = valueInput.trim();
+    if (labelInput.trim() !== option.label) payload.label = labelInput.trim();
+
+    if (Object.keys(payload).length === 0) {
       setEditing(false);
       return;
     }
     setSaving(true);
-    await onUpdateLabel(option.id, labelInput.trim());
-    setSaving(false);
-    setEditing(false);
+    try {
+      await onUpdate(option.id, payload);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
+    setValueInput(option.value);
     setLabelInput(option.label);
     setEditing(false);
   };
+
+  const isHex = isHexColor(option.value);
 
   return (
     <div
       className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors ${option.isActive ? "border-neutral bg-neutral-light" : "border-neutral/50 bg-neutral-light/50 opacity-60"}`}
     >
-      {/* value badge */}
-      <span className="text-[11px] font-mono text-neutral-dark bg-neutral-light-active px-2 py-0.5 rounded shrink-0">{option.value}</span>
-
-      {/* label */}
       {editing ? (
-        <input
-          autoFocus
-          value={labelInput}
-          onChange={(e) => setLabelInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleSave();
-            if (e.key === "Escape") handleCancel();
-          }}
-          className="flex-1 px-2 py-1 text-[12px] border border-accent rounded-lg focus:outline-none bg-neutral-light"
-        />
+        /* ── Edit mode ── */
+        <div className="flex-1 grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Value</p>
+            <div className="flex items-center gap-1.5">
+              {/* nếu đang gõ hex thì hiển thị color picker */}
+              {isHexColor(valueInput) && (
+                <input type="color" value={valueInput} onChange={(e) => setValueInput(e.target.value)} className="w-6 h-6 rounded cursor-pointer border-0 p-0" title="Chọn màu" />
+              )}
+              <input
+                autoFocus
+                value={valueInput}
+                onChange={(e) => setValueInput(e.target.value)}
+                placeholder="red hoặc #FF5733"
+                className="flex-1 px-2 py-1 text-[12px] font-mono border border-accent rounded-lg focus:outline-none bg-neutral-light"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Label</p>
+            <input
+              value={labelInput}
+              onChange={(e) => setLabelInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") handleCancel();
+              }}
+              placeholder="Đỏ"
+              className="w-full px-2 py-1 text-[12px] border border-accent rounded-lg focus:outline-none bg-neutral-light"
+            />
+          </div>
+        </div>
       ) : (
-        <span className="flex-1 text-[13px] text-primary">{option.label}</span>
+        /* ── View mode ── */
+        <>
+          {/* value badge + color swatch nếu là hex */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ColorSwatch value={option.value} />
+            <span className="text-[11px] font-mono text-neutral-dark bg-neutral-light-active px-2 py-0.5 rounded">{option.value}</span>
+          </div>
+          <span className="flex-1 text-[13px] text-primary">{option.label}</span>
+        </>
       )}
 
       {/* actions */}
@@ -111,15 +156,17 @@ function OptionRow({ option, onUpdateLabel, onToggleActive }: OptionRowProps) {
           <>
             <button
               onClick={() => setEditing(true)}
-              title="Sửa label"
+              title="Sửa option"
               className="w-6 h-6 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent cursor-pointer"
             >
               <Pencil size={11} />
             </button>
             <button
-              onClick={() => onToggleActive(option.id, !option.isActive)}
+              onClick={() => onUpdate(option.id, { isActive: !option.isActive })}
               title={option.isActive ? "Tạm dừng" : "Kích hoạt"}
-              className={`w-6 h-6 flex items-center justify-center rounded-lg cursor-pointer transition-colors ${option.isActive ? "text-emerald-600 hover:bg-emerald-50" : "text-orange-500 hover:bg-orange-50"}`}
+              className={`w-6 h-6 flex items-center justify-center rounded-lg cursor-pointer transition-colors ${
+                option.isActive ? "text-emerald-600 hover:bg-emerald-50" : "text-orange-500 hover:bg-orange-50"
+              }`}
             >
               <span className="text-[10px] font-bold">{option.isActive ? "ON" : "OFF"}</span>
             </button>
@@ -141,6 +188,8 @@ function AddOptionForm({ onAdd }: AddOptionFormProps) {
   const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  const isHex = isHexColor(value);
 
   const handleAdd = async () => {
     if (!value.trim() || !label.trim()) {
@@ -181,8 +230,20 @@ function AddOptionForm({ onAdd }: AddOptionFormProps) {
           <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
             Value <span className="text-promotion">*</span>
           </label>
-          <input autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder="red" className={inputCls} />
-          <p className="text-[10px] text-neutral-dark/60">Chỉ chữ thường, số, - _</p>
+          {/* Color picker hiện khi value là hex hợp lệ */}
+          <div className="flex items-center gap-1.5">
+            {isHex && (
+              <input
+                type="color"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-8 h-8 rounded-lg cursor-pointer border border-neutral p-0.5 bg-neutral-light"
+                title="Chọn màu"
+              />
+            )}
+            <input autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder="red hoặc #FF5733" className={`${inputCls} ${isHex ? "" : ""}`} />
+          </div>
+          <p className="text-[10px] text-neutral-dark/60">Chữ thường, số, - _ hoặc mã màu HEX (#rgb, #rrggbb)</p>
         </div>
         <div className="space-y-1">
           <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">
@@ -191,6 +252,14 @@ function AddOptionForm({ onAdd }: AddOptionFormProps) {
           <input value={label} onChange={(e) => setLabel(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAdd()} placeholder="Đỏ" className={inputCls} />
         </div>
       </div>
+      {/* Preview màu nếu có */}
+      {isHex && (
+        <div className="flex items-center gap-2 text-[11px] text-neutral-dark">
+          <span className="w-5 h-5 rounded-full border border-neutral/40" style={{ backgroundColor: value }} />
+          Preview: <span className="font-mono">{value}</span>
+          {label && <span>→ {label}</span>}
+        </div>
+      )}
       <div className="flex gap-2">
         <button
           type="button"
@@ -222,7 +291,7 @@ function AddOptionForm({ onAdd }: AddOptionFormProps) {
 interface AttributeFormProps {
   initialData: AttributeFormData;
   isEdit?: boolean;
-  attribute?: Attribute; // for options management when editing
+  attribute?: Attribute;
   onSubmit: (form: AttributeFormData) => Promise<void>;
   onAddOption?: (payload: CreateOptionPayload) => Promise<void>;
   onUpdateOption?: (optionId: string, payload: UpdateOptionPayload) => Promise<void>;
@@ -240,14 +309,6 @@ export function AttributeForm({ initialData, isEdit = false, attribute, onSubmit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit(form);
-  };
-
-  const handleUpdateLabel = async (optionId: string, label: string) => {
-    await onUpdateOption?.(optionId, { label });
-  };
-
-  const handleToggleOptionActive = async (optionId: string, isActive: boolean) => {
-    await onUpdateOption?.(optionId, { isActive });
   };
 
   return (
@@ -302,7 +363,13 @@ export function AttributeForm({ initialData, isEdit = false, attribute, onSubmit
           ) : (
             <div className="space-y-1.5">
               {attribute.options.map((opt) => (
-                <OptionRow key={opt.id} option={opt} onUpdateLabel={handleUpdateLabel} onToggleActive={handleToggleOptionActive} />
+                <OptionRow
+                  key={opt.id}
+                  option={opt}
+                  onUpdate={async (optionId, payload) => {
+                    await onUpdateOption?.(optionId, payload);
+                  }}
+                />
               ))}
             </div>
           )}

@@ -268,3 +268,13 @@ export const getAdminProductStats = async (): Promise<{ data: AdminProductStats 
 // ─────────────────────────────────────────────────────────────────────────────
 // MEDIA UPLOAD (dùng cho CKEditor image adapter)
 // ─────────────────────────────────────────────────────────────────────────────
+export interface CategoryOption {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+}
+
+export const getCategories = async (): Promise<{ data: CategoryOption[] }> => {
+  return apiRequest.get("/categories", { params: { isActive: true, limit: 200 } });
+};

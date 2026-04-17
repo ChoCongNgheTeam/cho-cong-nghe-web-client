@@ -16,27 +16,26 @@ import {
   toggleProductActive,
   bulkAction,
   getAdminProductStats,
+  getCategories,
   type BulkAction,
   type LowStockProductInfo,
   type AdminProductStats,
+  CategoryOption,
 } from "./_libs/products";
 import { getProductColumns } from "./components/TableProducts";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { StockAlertBanner } from "./components/StockAlertBanner";
+import { Filter } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Tab "low_stock" = gộp cả hết hàng (quantity=0) + sắp hết (0 < quantity <= 5).
- * Không gọi API riêng — render local từ stats.outOfStockProducts + stats.lowStockProducts.
- */
 const STATUS_TABS = [
   { value: "ALL", label: "Tất cả" },
   { value: "active", label: "Hiển thị" },
   { value: "inactive", label: "Đang ẩn" },
-  { value: "low_stock", label: "Tồn kho thấp" }, // ← thay "outOfStock"
+  { value: "low_stock", label: "Tồn kho thấp" },
   { value: "featured", label: "Nổi bật" },
   { value: "deleted", label: "Thùng rác" },
 ];
@@ -79,12 +78,6 @@ const DEFAULT_META: ProductMeta = {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Inject stockWarning vào rows từ 2 nguồn tách biệt:
- *   outOfStockProducts (quantity = 0)   → "out_of_stock"
- *   lowStockProducts   (0 < qty <= 5)  → "low_stock"
- * Sau đó sort: out → low → featured → normal
- */
 function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowStockProductInfo[], outOfStockProducts: LowStockProductInfo[]): ProductCard[] {
   const lowMap = new Map(lowStockProducts.map((p) => [p.id, p]));
   const outMap = new Map(outOfStockProducts.map((p) => [p.id, p]));
@@ -110,10 +103,6 @@ function getRowScore(p: ProductCard): number {
   return 3;
 }
 
-/**
- * Convert LowStockProductInfo → ProductCard để render trong tab "Tồn kho thấp"
- * mà không cần gọi thêm API.
- */
 function lowStockToCard(p: LowStockProductInfo, warning: "out_of_stock" | "low_stock"): ProductCard {
   return {
     id: p.id,
@@ -157,8 +146,19 @@ export default function ProductsPage() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
+  // ── Category ──────────────────────────────────────────────────────────────
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  // NEW: search trong dropdown category
+  const [categorySearch, setCategorySearch] = useState("");
+
   const dateRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  // NEW: debounce ref cho search sản phẩm
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Selection ─────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -178,9 +178,19 @@ export default function ProductsPage() {
     const handler = (e: MouseEvent) => {
       if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false);
+        setCategorySearch(""); // reset search khi đóng
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    getCategories()
+      .then((res) => setCategories(res.data))
+      .catch(() => {});
   }, []);
 
   const [sortBy, sortOrder] = sortKey.split("_") as [SortValue, SortOrder];
@@ -207,7 +217,6 @@ export default function ProductsPage() {
 
   // ── Fetch products ────────────────────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
-    // Tab "low_stock" dùng data local từ stats — không fetch API
     if (activeTab === "low_stock") {
       setLoading(false);
       return;
@@ -227,6 +236,7 @@ export default function ProductsPage() {
           sortOrder,
           dateFrom: dateFrom || undefined,
           dateTo: dateTo || undefined,
+          categoryId: categoryId || undefined,
           ...tabToParams(activeTab),
         });
       }
@@ -237,11 +247,12 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo]);
+  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo, categoryId]);
 
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -251,7 +262,6 @@ export default function ProductsPage() {
   const lowStockProducts = useMemo(() => stats?.lowStockProducts ?? [], [stats]);
 
   const sortedProducts = useMemo(() => {
-    // Tab "Tồn kho thấp": render local — out (quantity=0) trước, low sau
     if (activeTab === "low_stock") {
       const outCards = outOfStockProducts.map((p) => lowStockToCard(p, "out_of_stock"));
       const lowCards = lowStockProducts.map((p) => lowStockToCard(p, "low_stock"));
@@ -261,11 +271,10 @@ export default function ProductsPage() {
     return injectAndSortProducts(products, lowStockProducts, outOfStockProducts);
   }, [products, lowStockProducts, outOfStockProducts, activeTab]);
 
-  // ── Row className — highlight theo warning ────────────────────────────────
+  // ── Row className ─────────────────────────────────────────────────────────
   const getRowClassName = (product: ProductCard) => {
     const w = (product as any).stockWarning;
     if (w === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
-    // if (w === "low_stock") return "bg-amber-50/60 hover:bg-amber-50";
     if (w === "low_stock") return "hover:bg-amber-50";
     return "";
   };
@@ -278,7 +287,18 @@ export default function ProductsPage() {
     resetPage();
   };
 
+  // NEW: debounce search — tự động gọi API sau 400ms, không cần Enter
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setSearch(value);
+      resetPage();
+    }, 400);
+  };
+
   const handleClearSearch = () => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     setSearchInput("");
     setSearch("");
     resetPage();
@@ -298,10 +318,13 @@ export default function ProductsPage() {
   };
 
   const handleClearAllFilters = () => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     setSearch("");
     setSearchInput("");
     setDateFrom("");
     setDateTo("");
+    setCategoryId("");
+    setCategorySearch("");
     setActiveTab("ALL");
     setSortKey("createdAt_desc");
     resetPage();
@@ -314,7 +337,10 @@ export default function ProductsPage() {
 
   const hasDateFilter = !!dateFrom || !!dateTo;
   const hasSortFilter = sortKey !== "createdAt_desc";
-  const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
+  const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL" || categoryId);
+
+  // NEW: filtered categories cho dropdown search
+  const filteredCategories = useMemo(() => (categorySearch ? categories.filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase())) : categories), [categories, categorySearch]);
 
   // ── Selection ─────────────────────────────────────────────────────────────
   const toggleOne = useCallback((id: string) => {
@@ -384,7 +410,15 @@ export default function ProductsPage() {
 
   // ── Columns ───────────────────────────────────────────────────────────────
   const columns = useMemo(
-    () => getProductColumns({ page, pageSize, selected, toggleOne, onStatusChange: handleStatusChange, onDeleteClick: handleDeleteClick }),
+    () =>
+      getProductColumns({
+        page,
+        pageSize,
+        selected,
+        toggleOne,
+        onStatusChange: handleStatusChange,
+        onDeleteClick: handleDeleteClick,
+      }),
     [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
   );
 
@@ -396,7 +430,6 @@ export default function ProductsPage() {
     if (tabValue === "inactive") return stats.inactive;
     if (tabValue === "featured") return stats.featured;
     if (tabValue === "deleted") return stats.deleted;
-    // "low_stock" = outOfStock + lowStock — 2 nhóm không overlap nhau
     if (tabValue === "low_stock") return (stats.outOfStock ?? 0) + (stats.lowStock ?? 0);
     return 0;
   };
@@ -464,7 +497,6 @@ export default function ProductsPage() {
           valueClassName="text-amber-500"
           iconClassName="text-amber-500"
         />
-        {/* Hết hàng: quantity = 0, TÁCH BIỆT khỏi sắp hết */}
         <StatsCard
           label="Hết hàng"
           value={statsLoading ? "..." : (stats?.outOfStock ?? 0)}
@@ -473,7 +505,6 @@ export default function ProductsPage() {
           valueClassName="text-promotion"
           iconClassName="text-promotion"
         />
-        {/* Sắp hết: 0 < quantity <= 5, KHÔNG bao gồm hết hàng */}
         <StatsCard
           label="Sắp hết hàng"
           value={statsLoading ? "..." : (stats?.lowStock ?? 0)}
@@ -484,7 +515,7 @@ export default function ProductsPage() {
         />
       </div>
 
-      {/* ── Stock Alert Banner — truyền 2 nhóm riêng biệt ── */}
+      {/* ── Stock Alert Banner ── */}
       {showBanner && (
         <div className="px-6 pb-4 min-w-0 w-full">
           <StockAlertBanner lowStockProducts={lowStockProducts} outOfStockProducts={outOfStockProducts} />
@@ -522,14 +553,16 @@ export default function ProductsPage() {
 
           <div className="w-px h-5 bg-neutral mx-1" />
 
-          {/* Search */}
+          {/* Search — NEW: dùng handleSearchChange với debounce, bỏ onKeyDown Enter */}
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
             <input
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               onKeyDown={(e) => {
+                // Vẫn giữ Enter để search ngay lập tức (không cần chờ debounce)
                 if (e.key === "Enter") {
+                  if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
                   setSearch(searchInput);
                   resetPage();
                 }
@@ -544,12 +577,14 @@ export default function ProductsPage() {
             )}
           </div>
 
-          {/* Sort — ẩn khi deleted hoặc low_stock */}
+          {/* Sort */}
           {activeTab !== "deleted" && activeTab !== "low_stock" && (
             <div ref={sortRef} className="relative">
               <button
                 onClick={() => setShowSortDropdown((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                  hasSortFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+                }`}
               >
                 <ArrowUpDown size={14} />
                 {hasSortFilter ? SORT_OPTIONS.find((o) => `${o.value}_${o.order}` === sortKey)?.label : "Sắp xếp"}
@@ -575,7 +610,9 @@ export default function ProductsPage() {
                       <button
                         key={key}
                         onClick={() => handleSortChange(key)}
-                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"}`}
+                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                          sortKey === key ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                        }`}
                       >
                         {opt.label}
                       </button>
@@ -586,12 +623,14 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* Date filter — ẩn khi deleted hoặc low_stock */}
+          {/* Date filter */}
           {activeTab !== "deleted" && activeTab !== "low_stock" && (
             <div ref={dateRef} className="relative">
               <button
                 onClick={() => setShowDatePicker((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                  hasDateFilter ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+                }`}
               >
                 <CalendarDays size={14} />
                 {hasDateFilter ? `${dateFrom || "..."} → ${dateTo || "..."}` : "Ngày tạo"}
@@ -650,6 +689,97 @@ export default function ProductsPage() {
             </div>
           )}
 
+          {/* Category filter — NEW: có ô search bên trong dropdown */}
+          {activeTab !== "deleted" && activeTab !== "low_stock" && (
+            <div ref={categoryRef} className="relative">
+              <button
+                onClick={() => setShowCategoryDropdown((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] transition-all cursor-pointer ${
+                  categoryId ? "border-accent bg-accent/5 text-accent" : "border-neutral text-primary hover:bg-neutral-light-active"
+                }`}
+              >
+                <ChevronDown size={14} />
+                {categoryId ? (categories.find((c) => c.id === categoryId)?.name ?? "Danh mục") : "Danh mục"}
+                {categoryId && (
+                  <X
+                    size={12}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCategoryId("");
+                      resetPage();
+                    }}
+                    className="hover:text-promotion"
+                  />
+                )}
+              </button>
+
+              {showCategoryDropdown && (
+                <div className="absolute top-full left-0 mt-1.5 w-56 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden max-h-72 flex flex-col">
+                  {/* Header + Search input — sticky */}
+                  <div className="sticky top-0 bg-neutral-light border-b border-neutral shrink-0">
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-primary uppercase tracking-wider">Lọc theo danh mục</p>
+                    <div className="relative px-2 pb-2">
+                      <Search size={12} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 pointer-events-none" />
+                      <input
+                        autoFocus
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        placeholder="Tìm danh mục..."
+                        className="w-full pl-7 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
+                      />
+                      {categorySearch && (
+                        <button onClick={() => setCategorySearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary cursor-pointer">
+                          <X size={11} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Danh sách cuộn */}
+                  <div className="overflow-y-auto">
+                    {/* "Tất cả" — chỉ hiện khi chưa search */}
+                    {!categorySearch && (
+                      <button
+                        onClick={() => {
+                          setCategoryId("");
+                          setCategorySearch("");
+                          setShowCategoryDropdown(false);
+                          resetPage();
+                        }}
+                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                          !categoryId ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                        }`}
+                      >
+                        Tất cả danh mục
+                      </button>
+                    )}
+
+                    {filteredCategories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setCategoryId(cat.id);
+                          setCategorySearch("");
+                          setShowCategoryDropdown(false);
+                          resetPage();
+                        }}
+                        className={`w-full text-left px-3 py-2 text-[12px] transition-colors cursor-pointer ${
+                          categoryId === cat.id ? "bg-accent/5 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+                        }`}
+                      >
+                        {cat.parentId && <span className="text-primary/40 mr-1">└</span>}
+                        {cat.name}
+                      </button>
+                    ))}
+
+                    {/* Không tìm thấy */}
+                    {filteredCategories.length === 0 && <p className="px-3 py-4 text-[12px] text-primary/40 text-center">Không tìm thấy "{categorySearch}"</p>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Clear filters */}
           {(hasActiveFilters || hasSortFilter) && (
             <button
@@ -680,21 +810,21 @@ export default function ProductsPage() {
                   <button
                     onClick={() => openBulkAction("deactivate")}
                     disabled={bulkLoading}
-                    className="px-2.5 py-1 rounded-lg border border-orange-300  text-[11px] font-medium text-orange-600  hover:bg-orange-50  transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-2.5 py-1 rounded-lg border border-orange-300 text-[11px] font-medium text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     Ẩn
                   </button>
                   <button
                     onClick={() => openBulkAction("feature")}
                     disabled={bulkLoading}
-                    className="px-2.5 py-1 rounded-lg border border-amber-300   text-[11px] font-medium text-amber-600   hover:bg-amber-50   transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-2.5 py-1 rounded-lg border border-amber-300 text-[11px] font-medium text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     Nổi bật
                   </button>
                   <button
                     onClick={() => openBulkAction("unfeature")}
                     disabled={bulkLoading}
-                    className="px-2.5 py-1 rounded-lg border border-neutral      text-[11px] font-medium text-primary     hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-2.5 py-1 rounded-lg border border-neutral text-[11px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
                   >
                     Bỏ nổi bật
                   </button>
@@ -725,7 +855,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Legend row màu — chỉ hiện khi có warning và không phải tab low_stock ── */}
+        {/* ── Legend row ── */}
         {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && activeTab !== "deleted" && activeTab !== "low_stock" && (
           <div className="flex items-center gap-4 px-5 py-2 border-b border-neutral bg-neutral-light-active/30 text-[11px] text-primary">
             {lowStockProducts.length > 0 && (
@@ -743,7 +873,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Note giải thích khi ở tab Tồn kho thấp ── */}
+        {/* ── Note tab Tồn kho thấp ── */}
         {activeTab === "low_stock" && (
           <div className="flex items-center gap-3 px-5 py-2.5 border-b border-amber-200 bg-amber-50/50 text-[12px] text-amber-800">
             <AlertTriangle size={13} className="shrink-0 text-amber-500" />
@@ -780,7 +910,7 @@ export default function ProductsPage() {
           <AdminTable columns={columns} data={sortedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} rowClassName={getRowClassName} />
         )}
 
-        {/* ── Pagination — ẩn với tab low_stock (data local, không phân trang) ── */}
+        {/* ── Pagination ── */}
         {!loading && !error && meta.total > 0 && activeTab !== "low_stock" && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
