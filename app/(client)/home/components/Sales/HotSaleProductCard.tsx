@@ -63,7 +63,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
     e.stopPropagation();
     if (!product.id) return;
     try {
-      await addToCart(product.id, 1, {
+      await addToCart(product.variantId, 1, {
         productName: product.name,
         productId: product.id,
         productSlug: product.slug,
