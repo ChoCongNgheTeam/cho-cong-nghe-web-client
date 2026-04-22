@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { Loader2, MapPin, Plus, Pencil } from "lucide-react";
-import { useToasty } from "@/components/Toast";
 import { ShippingSectionProps } from "../types";
 import { inputCls } from "../helpers/styles";
 import Select from "react-select";
@@ -40,7 +39,6 @@ export default function ShippingSection({
   onHouseNumberChange,
   onStreetNameChange,
 }: ShippingSectionProps) {
-  const { toasty } = useToasty();
   const [touchedPhone, setTouchedPhone] = useState(false);
 
   const provinceOptions = provinces.map((p) => ({
