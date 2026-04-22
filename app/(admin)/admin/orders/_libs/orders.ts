@@ -153,3 +153,32 @@ export const getUserAddresses = async (userId: string): Promise<UserAddress[]> =
   );
   return res.data ?? [];
 };
+export const getAllOrders = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  paymentStatus?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{ data: Order[]; meta: any }> => {
+  const res = await apiRequest.get<{ data: Order[]; meta: any }>(
+    "/admin/orders", { params }
+  );
+  return res;
+};
+
+export const cancelOrder = async (id: string): Promise<void> => {
+  await apiRequest.put(`/admin/orders/${id}`, { orderStatus: "CANCELLED" });
+};
+
+export const updatePaymentStatus = async (
+  id: string,
+  paymentStatus: PaymentStatus
+): Promise<Order> => {
+  const res = await apiRequest.put<{ data: Order }>(
+    `/admin/orders/${id}`,
+    { paymentStatus }
+  );
+  return res.data;
+};
