@@ -90,32 +90,27 @@ export const getOrders = async (params?: {
     total: number;
     page: number;
     limit: number;
-  }>("/admin/orders", { params });
+  }>("/orders/admin/", { params });
   return res;
 };
 
 export const getOrderById = async (id: string): Promise<OrderDetail> => {
-  const res = await apiRequest.get<{ data: OrderDetail }>(`/admin/orders/${id}`);
+  const res = await apiRequest.get<{ data: OrderDetail }>(`/orders/admin/${id}`);
   return res.data;
 };
 
-export const createOrder = async (
-  payload: CreateOrderAdminPayload
-): Promise<Order> => {
-  const res = await apiRequest.post<{ data: Order }>("/admin/orders", payload);
+export const createOrder = async (payload: CreateOrderAdminPayload): Promise<Order> => {
+  const res = await apiRequest.post<{ data: Order }>("/orders/admin/", payload);
   return res.data;
 };
 
-export const updateOrder = async (
-  id: string,
-  payload: UpdateOrderPayload
-): Promise<Order> => {
-  const res = await apiRequest.put<{ data: Order }>(`/admin/orders/${id}`, payload);
+export const updateOrder = async (id: string, payload: UpdateOrderPayload): Promise<Order> => {
+  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, payload);
   return res.data;
 };
 
 export const deleteOrder = async (id: string): Promise<void> => {
-  await apiRequest.delete(`/admin/orders/${id}`);
+  await apiRequest.delete(`/orders/admin/${id}`);
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,9 +134,7 @@ export const getProvinces = async (): Promise<Province[]> => {
 
 export const getWards = async (provinceCode: string): Promise<Ward[]> => {
   try {
-    const res = await fetch(
-      `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
-    );
+    const res = await fetch(`https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`);
     if (!res.ok) return [];
     const data = await res.json();
     return (data?.wards ?? []).map((w: any) => ({
@@ -155,9 +148,7 @@ export const getWards = async (provinceCode: string): Promise<Ward[]> => {
 };
 
 export const getUserAddresses = async (userId: string): Promise<UserAddress[]> => {
-  const res = await apiRequest.get<{ data: UserAddress[] }>(
-    `/admin/users/${userId}/addresses`
-  );
+  const res = await apiRequest.get<{ data: UserAddress[] }>(`/admin/users/${userId}/addresses`);
   return res.data ?? [];
 };
 
@@ -170,52 +161,32 @@ export const getAllOrders = async (params?: {
   dateFrom?: string;
   dateTo?: string;
 }): Promise<{ data: Order[]; meta: any }> => {
-  const res = await apiRequest.get<{ data: Order[]; meta: any }>(
-    "/admin/orders", { params }
-  );
+  const res = await apiRequest.get<{ data: Order[]; meta: any }>("/orders/admin/all", { params });
   return res;
 };
 
 export const cancelOrder = async (id: string): Promise<void> => {
-  await apiRequest.put(`/admin/orders/${id}`, { orderStatus: "CANCELLED" });
+  await apiRequest.patch(`/orders/admin/${id}`, { orderStatus: "CANCELLED" });
 };
 
 // ─── Payment status ───────────────────────────────────────────────────────────
 
-export const updatePaymentStatus = async (
-  id: string,
-  paymentStatus: PaymentStatus
-): Promise<Order> => {
-  const res = await apiRequest.put<{ data: Order }>(
-    `/admin/orders/${id}`,
-    { paymentStatus }
-  );
+export const updatePaymentStatus = async (id: string, paymentStatus: PaymentStatus): Promise<Order> => {
+  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { paymentStatus });
   return res.data;
 };
 
 /** Xác nhận hoàn tiền thủ công: chuyển paymentStatus → REFUNDED */
-export const confirmManualRefund = async (
-  id: string,
-  note?: string
-): Promise<Order> => {
-  const res = await apiRequest.put<{ data: Order }>(
-    `/admin/orders/${id}`,
-    { paymentStatus: "REFUNDED" as PaymentStatus, ...(note ? { note } : {}) }
-  );
+export const confirmManualRefund = async (id: string, note?: string): Promise<Order> => {
+  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { paymentStatus: "REFUNDED" as PaymentStatus, ...(note ? { note } : {}) });
   return res.data;
 };
 
 // ─── Order status ─────────────────────────────────────────────────────────────
 
 /** Cập nhật orderStatus */
-export const updateOrderStatus = async (
-  id: string,
-  orderStatus: OrderStatus
-): Promise<Order> => {
-  const res = await apiRequest.put<{ data: Order }>(
-    `/admin/orders/${id}`,
-    { orderStatus }
-  );
+export const updateOrderStatus = async (id: string, orderStatus: OrderStatus): Promise<Order> => {
+  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { orderStatus });
   return res.data;
 };
 
@@ -223,21 +194,12 @@ export const updateOrderStatus = async (
 
 /** Lấy danh sách phương thức thanh toán đang active */
 export const getActivePaymentMethods = async (): Promise<PaymentMethod[]> => {
-  const res = await apiRequest.get<{ data: PaymentMethod[] }>(
-    "/admin/payment-methods",
-    { params: { isActive: true } }
-  );
+  const res = await apiRequest.get<{ data: PaymentMethod[] }>("/admin/payment-methods", { params: { isActive: true } });
   return res.data ?? [];
 };
 
 /** Chuyển phương thức thanh toán của đơn hàng (thường dùng để chuyển sang COD) */
-export const updatePaymentMethod = async (
-  id: string,
-  paymentMethodId: string
-): Promise<Order> => {
-  const res = await apiRequest.put<{ data: Order }>(
-    `/admin/orders/${id}`,
-    { paymentMethodId }
-  );
+export const updatePaymentMethod = async (id: string, paymentMethodId: string): Promise<Order> => {
+  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { paymentMethodId });
   return res.data;
 };
