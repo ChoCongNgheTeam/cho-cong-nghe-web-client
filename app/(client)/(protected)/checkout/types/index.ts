@@ -1,11 +1,11 @@
 export interface Province {
-  id: string;
+  code: string;
   name: string;
   fullName: string;
 }
 
 export interface Ward {
-  id: string;
+  code: string;
   name: string;
   fullName: string;
 }
@@ -21,8 +21,8 @@ export interface SavedAddress {
   id: string;
   contactName: string;
   phone: string;
-  province: { id: string; name: string; fullName: string };
-  ward: { id: string; name: string; fullName: string };
+  province: { code: string; name: string; fullName?: string };
+  ward: { code: string; name: string; fullName?: string };
   detailAddress: string;
   fullAddress: string;
   type: "HOME" | "OFFICE" | "OTHER";
@@ -61,7 +61,7 @@ export interface SelectedItem {
 export interface CheckoutData {
   selectedItems: SelectedItem[];
   selectedPromotions: string[];
-  cartItemIds?: string[]; // ← THÊM (optional để backward compat)
+  cartItemIds?: string[];
   promotionValue: number;
   appliedVoucherCode: string;
   appliedVoucherValue: number;
@@ -78,7 +78,6 @@ export interface PreviewData {
   subtotalAmount: number;
   shippingFee: number;
   voucherDiscount: number;
-  // taxAmount: number;
   totalAmount: number;
 }
 
@@ -89,9 +88,8 @@ export interface ShippingSectionProps {
   selectedSavedAddress: SavedAddress | null;
   contactName: string;
   contactPhone: string;
-  provinceId: string;
-  wardId: string;
-  // detailAddress: string;
+  provinceCode: string;
+  wardCode: string;
   provinces: Province[];
   wards: Ward[];
   isLoadingProvinces: boolean;
@@ -105,7 +103,6 @@ export interface ShippingSectionProps {
   onContactPhoneChange: (v: string) => void;
   onProvinceChange: (v: string) => void;
   onWardChange: (v: string) => void;
-  // onDetailAddressChange: (v: string) => void;
   onWantSaveAddressChange: (v: boolean) => void;
   onEditAddress: () => void;
   houseNumber: string;

@@ -41,14 +41,10 @@ function parseCheckoutError(err: any): string {
 }
 
 // ─── Helper: split detailAddress → { houseNumber, streetName } ───────────────
-// Dùng khi load từ saved address (format cũ: "42B Nguyễn Trãi")
 function splitDetailAddress(detail: string): { houseNumber: string; streetName: string } {
   const trimmed = detail.trim();
-  // Tách phần đầu (số nhà) và phần còn lại (tên đường)
-  // Pattern: chuỗi bắt đầu bằng chữ số hoặc "Lô/Căn hộ/..." rồi đến tên đường
   const match = trimmed.match(/^(\S+)\s+(.+)$/);
   if (match) return { houseNumber: match[1], streetName: match[2] };
-  // Không tách được → để toàn bộ vào streetName
   return { houseNumber: "", streetName: trimmed };
 }
 
@@ -93,8 +89,10 @@ export default function CheckoutPage() {
   const [selectedSavedAddress, setSelectedSavedAddress] = useState<SavedAddress | null>(null);
   const addressRef = useRef<HTMLDivElement>(null);
 
-  const [provinceId, setProvinceId] = useState("");
-  const [wardId, setWardId] = useState("");
+  // ── Dùng code thay vì id ───────────────────────────────────────────────────
+  const [provinceCode, setProvinceCode] = useState("");
+  const [wardCode, setWardCode] = useState("");
+
   // ── Tách detailAddress thành 2 field ──────────────────────────────────────
   const [houseNumber, setHouseNumber] = useState("");
   const [streetName, setStreetName] = useState("");
@@ -149,7 +147,7 @@ export default function CheckoutPage() {
     load();
   }, []);
 
-  // ─── Load provinces ────────────────────────────────────────────────────────
+  // ─── Load provinces (gọi trực tiếp open-api qua getProvinces) ─────────────
   useEffect(() => {
     const load = async () => {
       setIsLoadingProvinces(true);
@@ -162,22 +160,22 @@ export default function CheckoutPage() {
     load();
   }, []);
 
-  // ─── Load wards when province changes ─────────────────────────────────────
+  // ─── Load wards when provinceCode changes ─────────────────────────────────
   useEffect(() => {
-    if (!provinceId) {
+    if (!provinceCode) {
       setWards([]);
       return;
     }
     const load = async () => {
       setIsLoadingWards(true);
       try {
-        setWards(await getWards(provinceId));
+        setWards(await getWards(provinceCode));
       } finally {
         setIsLoadingWards(false);
       }
     };
     load();
-  }, [provinceId]);
+  }, [provinceCode]);
 
   // ─── Load saved addresses ──────────────────────────────────────────────────
   const fetchSavedAddresses = async () => {
@@ -191,9 +189,8 @@ export default function CheckoutPage() {
       const defaultAddr = list.find((a) => a.isDefault) ?? list[0];
       if (defaultAddr) {
         setSelectedSavedAddress(defaultAddr);
-        setProvinceId(defaultAddr.province.id);
-        setWardId(defaultAddr.ward.id);
-        // Tách detailAddress sang 2 field
+        setProvinceCode(defaultAddr.province.code);
+        setWardCode(defaultAddr.ward.code);
         const { houseNumber: hn, streetName: sn } = splitDetailAddress(defaultAddr.detailAddress);
         setHouseNumber(hn);
         setStreetName(sn);
@@ -308,7 +305,6 @@ export default function CheckoutPage() {
         ...(voucherId ? { voucherId } : {}),
       });
 
-      // ← THÊM: append từng id theo cú pháp mảng
       cartItemIds.forEach((id) => params.append("cartItemIds[]", id));
 
       const res = await apiRequest.get<{
@@ -329,9 +325,8 @@ export default function CheckoutPage() {
 
   const handleSelectSavedAddress = (addr: SavedAddress) => {
     setSelectedSavedAddress(addr);
-    setProvinceId(addr.province.id);
-    setWardId(addr.ward.id);
-    // Tách detailAddress sang 2 field
+    setProvinceCode(addr.province.code);
+    setWardCode(addr.ward.code);
     const { houseNumber: hn, streetName: sn } = splitDetailAddress(addr.detailAddress);
     setHouseNumber(hn);
     setStreetName(sn);
@@ -342,8 +337,8 @@ export default function CheckoutPage() {
 
   const handleClearAddress = () => {
     setSelectedSavedAddress(null);
-    setProvinceId("");
-    setWardId("");
+    setProvinceCode("");
+    setWardCode("");
     setHouseNumber("");
     setStreetName("");
     setWards([]);
@@ -353,16 +348,16 @@ export default function CheckoutPage() {
     setWantSaveAddress(null);
   };
 
-  const handleProvinceChange = (id: string) => {
+  const handleProvinceChange = (code: string) => {
     if (selectedSavedAddress) setSelectedSavedAddress(null);
-    setProvinceId(id);
-    setWardId("");
+    setProvinceCode(code);
+    setWardCode("");
     setWards([]);
   };
 
   const handleWardChange = (val: string) => {
     if (selectedSavedAddress) setSelectedSavedAddress(null);
-    setWardId(val);
+    setWardCode(val);
   };
 
   const handleHouseNumberChange = (val: string) => {
@@ -386,7 +381,7 @@ export default function CheckoutPage() {
       toast.error("Vui lòng nhập số điện thoại người nhận");
       return;
     }
-    if (!selectedSavedAddress && (!provinceId || !wardId || !detailAddress.trim())) {
+    if (!selectedSavedAddress && (!provinceCode || !wardCode || !detailAddress.trim())) {
       toast.error("Vui lòng điền đầy đủ địa chỉ giao hàng");
       return;
     }
@@ -417,9 +412,9 @@ export default function CheckoutPage() {
           const createRes = await apiRequest.post<{ data: { id: string } }>("/addresses", {
             contactName,
             phone: contactPhone,
-            provinceId,
-            wardId,
-            detailAddress, // combined từ houseNumber + streetName
+            provinceCode,
+            wardCode,
+            detailAddress,
             type: "HOME",
             isDefault: false,
           });
@@ -468,7 +463,7 @@ export default function CheckoutPage() {
         contactName,
         phone: contactPhone,
         ...(voucherId ? { voucherId } : {}),
-        ...(cartItemIds.length > 0 ? { cartItemIds } : {}), // ← THÊM
+        ...(cartItemIds.length > 0 ? { cartItemIds } : {}),
       });
 
       if (res?.success) {
@@ -520,10 +515,8 @@ export default function CheckoutPage() {
     selectedSavedAddress,
     contactName,
     contactPhone,
-    provinceId,
-    wardId,
-    houseNumber,
-    streetName,
+    provinceCode,
+    wardCode,
     provinces,
     wards,
     isLoadingProvinces,
@@ -548,6 +541,8 @@ export default function CheckoutPage() {
     onStreetNameChange: handleStreetNameChange,
     onWantSaveAddressChange: setWantSaveAddress,
     onEditAddress: () => router.push("/profile/addresses?redirect=checkout"),
+    houseNumber,
+    streetName,
   };
 
   if (isPageLoading || authLoading) return <PageLoader message="Đang tải thông tin đơn hàng..." />;

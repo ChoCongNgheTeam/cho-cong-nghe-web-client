@@ -14,8 +14,8 @@ export interface ApiAddress {
   phone: string;
   detailAddress: string;
   fullAddress?: string;
-  ward?: { id: string; name: string; fullName?: string };
-  province?: { id: string; name: string; fullName?: string };
+  ward?: { code: string; name: string; fullName?: string };
+  province?: { code: string; name: string; fullName?: string };
   isDefault: boolean;
   type?: string;
   createdAt?: string;
