@@ -24,7 +24,7 @@ interface OrderSummaryProps {
   isCheckoutPage?: boolean;
   shippingFee?: number;
   computedTotal?: number;
-  totalPromotionDiscount?: number; // ← thêm mới
+  totalPromotionDiscount?: number;
 }
 
 export default function OrderSummary({
@@ -45,7 +45,7 @@ export default function OrderSummary({
   isCheckoutPage = false,
   shippingFee,
   computedTotal,
-  totalPromotionDiscount = 0, // ← thêm mới
+  totalPromotionDiscount = 0,
 }: OrderSummaryProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -122,10 +122,10 @@ export default function OrderSummary({
           {totalPromotionDiscount > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-neutral-darker flex items-center gap-1.5">
-                <Gift size={13} className="text-accent shrink-0" />
+                <Gift size={13} className="text-neutral-dark shrink-0" />
                 Giảm giá sản phẩm
               </span>
-              <span className="font-medium text-promotion">
+              <span className="font-medium text-neutral-darker">
                 -{formatPrice(totalPromotionDiscount)}
               </span>
             </div>
@@ -160,21 +160,21 @@ export default function OrderSummary({
                 Chọn địa chỉ để tính
               </span>
             ) : shippingFee === 0 ? (
-              <span className="font-medium text-promotion">Miễn phí</span>
+              <span className="font-medium text-neutral-darker">Miễn phí</span>
             ) : (
-              <span className="font-medium text-primary">
+              <span className="font-medium text-neutral-darker">
                 {formatPrice(shippingFee)}
               </span>
             )}
           </div>
 
-          {/* Tổng tiết kiệm — badge nổi bật nếu có */}
+          {/* Tổng tiết kiệm */}
           {totalSaved > 0 && (
-            <div className="flex justify-between items-center bg-promotion-light rounded-lg px-3 py-2 mt-1">
-              <span className="text-xs font-medium text-promotion">
+            <div className="flex justify-between items-center bg-neutral-light-active rounded-lg px-3 py-2 mt-1">
+              <span className="text-xs font-medium text-neutral-darker">
                 🎉 Bạn đã tiết kiệm được
               </span>
-              <span className="text-xs font-bold text-promotion">
+              <span className="text-xs font-bold text-neutral-darker">
                 -{formatPrice(totalSaved)}
               </span>
             </div>
