@@ -384,6 +384,8 @@ export default function CartPage() {
                 buttonText="Xác nhận đơn"
                 showTerms={false}
                 isCheckoutPage={false}
+                totalPromotionDiscount={totalDiscount}  // ← THÊM dòng này
+
               />
             </div>
           </div>
