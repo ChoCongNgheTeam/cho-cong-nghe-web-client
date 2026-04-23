@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronUp } from "lucide-react";
+import { ChevronRight, Truck, Tag, Gift } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { formatVND } from "@/helpers";
@@ -23,8 +23,8 @@ interface OrderSummaryProps {
   onTermsChange?: (checked: boolean) => void;
   isCheckoutPage?: boolean;
   shippingFee?: number;
-  // taxAmount?: number;
-  computedTotal?: number; // ← thêm: tổng đã tính sẵn
+  computedTotal?: number;
+  totalPromotionDiscount?: number; // ← thêm mới
 }
 
 export default function OrderSummary({
@@ -44,26 +44,28 @@ export default function OrderSummary({
   onTermsChange,
   isCheckoutPage = false,
   shippingFee,
-  //   taxAmount,
   computedTotal,
+  totalPromotionDiscount = 0, // ← thêm mới
 }: OrderSummaryProps) {
   const router = useRouter();
   const { user } = useAuth();
 
-  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-  const totalDiscountWithVoucher = totalDiscount + appliedVoucherValue;
-  const finalTotalWithVoucher = computedTotal ?? Math.max(0, subtotal - totalDiscountWithVoucher);
+  const totalSaved = totalPromotionDiscount + appliedVoucherValue;
+  const finalTotalWithVoucher =
+    computedTotal ?? Math.max(0, subtotal - totalPromotionDiscount - appliedVoucherValue);
 
   const handleCheckoutClick = () => {
     if (isCheckoutPage && !user) {
       router.push("/account?returnUrl=/cart");
       return;
     }
-
     if (showTerms && !agreedToTerms) {
       const toastDiv = document.createElement("div");
-      toastDiv.className = "fixed top-5 right-5 bg-promotion text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium ";
+      toastDiv.className =
+        "fixed top-5 right-5 bg-promotion text-neutral-light px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium";
       toastDiv.textContent = "⚠️ Vui lòng đồng ý với điều khoản dịch vụ";
       document.body.appendChild(toastDiv);
       setTimeout(() => toastDiv.remove(), 3000);
@@ -73,116 +75,168 @@ export default function OrderSummary({
   };
 
   return (
-    <div className="rounded-lg bg-neutral-light sticky top-4 ">
-      <div className="pt-0 space-y-3">
-        {/* Gifts Box */}
-        {/* <div className="rounded-lg bg-neutral-light shadow-sm overflow-hidden">
-          <button className="flex w-full items-center justify-between p-3 transition hover:bg-accent-light border-b border-neutral cursor-pointer">
-            <div className="flex items-center gap-3">
-              <span className="text-lg">🎁</span>
-              <span className="text-sm font-medium text-primary">Quà tặng</span>
-            </div>
-            <span className="text-sm text-neutral-dark">Xem quà ({selectedPromotions.length})</span>
-          </button>
-        </div> */}
-
-        {/* Voucher */}
-        {onOpenVoucherModal && (
-          <div className="rounded-lg bg-neutral-light overflow-hidden border border-neutral">
-            <button onClick={onOpenVoucherModal} className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-accent-light group cursor-pointer min-h-13">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <span className="text-lg shrink-0">🏷️</span>
-                <div className="flex flex-col items-start min-w-0">
-                  <span className="text-sm font-medium text-primary">Chọn hoặc nhập ưu đãi</span>
-                  {appliedVoucherCode && (
-                    <span className="text-xs text-accent-dark font-semibold truncate w-full">
-                      {appliedVoucherCode} • -{formatPrice(appliedVoucherValue)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-neutral-dark group-hover:text-primary transition-colors shrink-0" />
-            </button>
-          </div>
-        )}
-
-        {/* Order Summary */}
-        <div className="rounded-lg bg-neutral-light">
-          <div className="p-3 border border-neutral rounded-t-lg">
-            <h3 className="mb-3 text-sm font-semibold text-primary">Thông tin đơn hàng</h3>
-
-            <div className="space-y-2.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-neutral-darker">Tổng tiền</span>
-                <span className="font-medium text-primary">{formatPrice(subtotal)}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-neutral-darker">Tổng khuyến mãi</span>
-                <span className="font-medium text-primary">-{formatPrice(totalDiscountWithVoucher)}</span>
-              </div>
-
-              <div className="flex justify-between pl-4">
-                <span className="text-neutral-dark text-xs">Giảm giá sản phẩm</span>
-                <span className="text-primary text-sm">-{formatPrice(totalDiscount)}</span>
-              </div>
-
-              <div className="flex justify-between pl-4">
-                <span className="text-neutral-dark text-xs">Voucher</span>
-                <span className="text-primary text-sm font-medium">{appliedVoucherValue > 0 ? `-${formatPrice(appliedVoucherValue)}` : "0₫"}</span>
-              </div>
-
-              {/* {isCheckoutPage && shippingFee !== undefined && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-darker">Phí vận chuyển</span>
-                  <span className="font-medium text-accent-dark">{shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}</span>
-                </div>
-              )} */}
-
-              <div className="border-t border-neutral pt-2.5 mt-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-primary text-sm">Cần thanh toán</span>
-                  <span className="text-xl font-bold text-promotion">{formatPrice(finalTotalWithVoucher)}</span>
-                </div>
-              </div>
+    <div className="rounded-xl bg-neutral-light sticky top-4 overflow-hidden border border-neutral">
+      {/* ── Voucher ─────────────────────────────────────────────────────── */}
+      {onOpenVoucherModal && (
+        <button
+          onClick={onOpenVoucherModal}
+          className="flex w-full items-center justify-between px-4 py-3 border-b border-neutral transition-colors hover:bg-neutral-light-active group cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <Tag
+              size={15}
+              className="shrink-0 text-accent"
+            />
+            <div className="flex flex-col items-start min-w-0">
+              <span className="text-sm font-medium text-primary leading-tight">
+                Chọn hoặc nhập ưu đãi
+              </span>
+              {appliedVoucherCode && (
+                <span className="text-xs text-accent font-semibold truncate w-full mt-0.5">
+                  {appliedVoucherCode} &bull; -{formatPrice(appliedVoucherValue)}
+                </span>
+              )}
             </div>
           </div>
+          <ChevronRight
+            size={16}
+            className="text-neutral-dark group-hover:text-primary transition-colors shrink-0"
+          />
+        </button>
+      )}
 
-          {/* Checkout Button */}
-          <button
-            onClick={handleCheckoutClick}
-            disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
-            className={`block w-full py-3.5 text-center text-base font-semibold transition ${showTerms ? "" : "rounded-b-lg"} ${
-              selectedItemsCount === 0 || (showTerms && !agreedToTerms)
-                ? "cursor-not-allowed bg-primary text-neutral-light opacity-50"
-                : "bg-primary text-neutral-light hover:bg-primary-hover shadow-lg cursor-pointer"
-            }`}
-          >
-            {buttonText}
-          </button>
+      {/* ── Order breakdown ──────────────────────────────────────────────── */}
+      <div className="px-4 pt-4 pb-0">
+        <p className="text-sm font-semibold text-primary mb-3">
+          Thông tin đơn hàng
+        </p>
 
-          {showTerms && (
-            <>
-              <div className="px-3 pb-3 pt-3 bg-accent-light">
-                <label className="flex gap-2 text-xs cursor-pointer items-start">
-                  <input type="checkbox" checked={agreedToTerms} onChange={(e) => onTermsChange?.(e.target.checked)} className="mt-1 cursor-pointer shrink-0 w-4 h-4 accent-accent" />
-                  <p className="text-neutral-darker leading-relaxed">
-                    Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
-                    <a className="underline font-medium hover:text-promotion cursor-pointer text-primary" href="/policies/TermsOfService">
-                      Điều khoản dịch vụ
-                    </a>{" "}
-                    và{" "}
-                    <a className="underline font-medium hover:text-promotion cursor-pointer text-primary" href="/policies/DataPrivacy">
-                      Chính sách xử lý dữ liệu cá nhân
-                    </a>{" "}
-                    của ChoCongNghe.
-                  </p>
-                </label>
-              </div>
-            </>
+        <div className="space-y-2.5 text-sm">
+          {/* Tổng tiền hàng */}
+          <div className="flex justify-between items-center">
+            <span className="text-neutral-darker">Tổng tiền hàng</span>
+            <span className="font-medium text-primary">{formatPrice(subtotal)}</span>
+          </div>
+
+          {/* Giảm giá sản phẩm — từ promotion */}
+          {totalPromotionDiscount > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-darker flex items-center gap-1.5">
+                <Gift size={13} className="text-accent shrink-0" />
+                Giảm giá sản phẩm
+              </span>
+              <span className="font-medium text-promotion">
+                -{formatPrice(totalPromotionDiscount)}
+              </span>
+            </div>
+          )}
+
+          {/* Voucher */}
+          {appliedVoucherValue > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-darker flex items-center gap-1.5">
+                <Tag size={13} className="text-accent shrink-0" />
+                Voucher
+                {appliedVoucherCode && (
+                  <span className="text-xs bg-accent-light text-accent-dark font-semibold px-1.5 py-0.5 rounded-full">
+                    {appliedVoucherCode}
+                  </span>
+                )}
+              </span>
+              <span className="font-medium text-promotion">
+                -{formatPrice(appliedVoucherValue)}
+              </span>
+            </div>
+          )}
+
+          {/* Phí vận chuyển */}
+          <div className="flex justify-between items-center">
+            <span className="text-neutral-darker flex items-center gap-1.5">
+              <Truck size={13} className="text-neutral-dark shrink-0" />
+              Phí vận chuyển
+            </span>
+            {shippingFee == null ? (
+              <span className="text-xs italic text-neutral-dark">
+                Chọn địa chỉ để tính
+              </span>
+            ) : shippingFee === 0 ? (
+              <span className="font-medium text-promotion">Miễn phí</span>
+            ) : (
+              <span className="font-medium text-primary">
+                {formatPrice(shippingFee)}
+              </span>
+            )}
+          </div>
+
+          {/* Tổng tiết kiệm — badge nổi bật nếu có */}
+          {totalSaved > 0 && (
+            <div className="flex justify-between items-center bg-promotion-light rounded-lg px-3 py-2 mt-1">
+              <span className="text-xs font-medium text-promotion">
+                🎉 Bạn đã tiết kiệm được
+              </span>
+              <span className="text-xs font-bold text-promotion">
+                -{formatPrice(totalSaved)}
+              </span>
+            </div>
           )}
         </div>
+
+        {/* Divider + Cần thanh toán */}
+        <div className="border-t border-neutral mt-3 pt-3 pb-4">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-primary text-sm">
+              Cần thanh toán
+            </span>
+            <span className="text-xl font-bold text-promotion">
+              {formatPrice(finalTotalWithVoucher)}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* ── CTA Button ───────────────────────────────────────────────────── */}
+      <button
+        onClick={handleCheckoutClick}
+        disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
+        className={`block w-full py-3.5 text-center text-base font-semibold transition-colors ${
+          selectedItemsCount === 0 || (showTerms && !agreedToTerms)
+            ? "bg-primary opacity-40 text-neutral-light cursor-not-allowed"
+            : "bg-primary text-neutral-light hover:bg-primary-hover cursor-pointer"
+        }`}
+      >
+        {buttonText}
+      </button>
+
+      {/* ── Terms ────────────────────────────────────────────────────────── */}
+      {showTerms && (
+        <div className="px-4 py-3 bg-accent-light border-t border-neutral">
+          <label className="flex gap-2 text-xs cursor-pointer items-start">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => onTermsChange?.(e.target.checked)}
+              className="mt-0.5 cursor-pointer shrink-0 w-4 h-4 accent-accent"
+            />
+            <p className="text-neutral-darker leading-relaxed">
+              Bằng việc tiến hành đặt mua hàng, bạn đồng ý với{" "}
+              <a
+                className="underline font-medium hover:text-promotion text-primary"
+                href="/policies/TermsOfService"
+              >
+                Điều khoản dịch vụ
+              </a>{" "}
+              và{" "}
+              <a
+                className="underline font-medium hover:text-promotion text-primary"
+                href="/policies/DataPrivacy"
+              >
+                Chính sách xử lý dữ liệu cá nhân
+              </a>{" "}
+              của ChoCongNghe.
+            </p>
+          </label>
+        </div>
+      )}
     </div>
   );
 }
