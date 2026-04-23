@@ -77,6 +77,7 @@ export interface CheckoutData {
 export interface PreviewData {
   subtotalAmount: number;
   shippingFee: number;
+  totalPromotionDiscount: number; // ← thêm trường này
   voucherDiscount: number;
   totalAmount: number;
 }
