@@ -66,7 +66,7 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
 
     // return_url trỏ về BE return handler
     // BE sẽ query DB theo payment_intent → tìm orderCode → redirect /order/{orderCode}/payment
-    const returnUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payments/stripe/return`;
+    const returnUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/v1/payments/stripe/return`;
 
     const { error } = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,
