@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react"; // ← thêm useRef
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { User, UserRole } from "../user.types";
 import { createUser } from "../_libs/createUser";
 import { updateUserApi } from "../_libs/updateUser";
 import { useToasty } from "@/components/Toast";
 import { User as UserIcon, Mail, Lock, Phone, ShieldCheck, Camera, X, AlertCircle } from "lucide-react";
-import Image from "next/image"; // ← dùng Next/Image cho avatar tốt hơn
+import Image from "next/image";
 
 type Gender = "MALE" | "FEMALE" | "OTHER";
 
@@ -19,7 +19,7 @@ interface UserFormState {
   gender: Gender;
   role: UserRole;
   isActive: boolean;
-  avatarImage: string | null; // giữ để hiển thị ảnh cũ
+  avatarImage: string | null;
   password: string;
 }
 
@@ -74,11 +74,12 @@ function Field({ label, required, hint, error, children }: { label: string; requ
   );
 }
 
-function inputCls(err?: string) {
+function inputCls(err?: string, readonly?: boolean) {
   return [
     "w-full border px-4 py-2.5 rounded-xl text-sm text-primary bg-neutral-light",
     "placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all duration-150",
     err ? "border-promotion bg-promotion-light/30" : "border-neutral hover:border-neutral-active",
+    readonly ? "cursor-not-allowed opacity-60 select-none" : "",
   ].join(" ");
 }
 
@@ -87,6 +88,16 @@ function selectCls() {
     "w-full border border-neutral px-4 py-2.5 rounded-xl text-sm text-primary bg-neutral-light",
     "hover:border-neutral-active focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all cursor-pointer",
   ].join(" ");
+}
+
+// Helper: hint note shown below readonly fields
+function ReadonlyNote({ text }: { text: string }) {
+  return (
+    <p className="text-[11px] text-neutral-dark flex items-center gap-1 mt-0.5">
+      <span className="w-1 h-1 rounded-full bg-neutral-dark inline-block" />
+      {text}
+    </p>
+  );
 }
 
 export default function UserForm({ editingUser }: Props) {
@@ -100,10 +111,11 @@ export default function UserForm({ editingUser }: Props) {
   const [loading, setLoading] = useState(false);
   const [phoneInputWarning, setPhoneInputWarning] = useState("");
 
-  // Avatar states (mới)
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
+
+  const isEditing = !!editingUser;
 
   useEffect(() => {
     if (editingUser) {
@@ -130,7 +142,6 @@ export default function UserForm({ editingUser }: Props) {
     }
   }, [editingUser]);
 
-  // Cleanup preview URL
   useEffect(() => {
     return () => {
       if (avatarPreview) URL.revokeObjectURL(avatarPreview);
@@ -142,28 +153,21 @@ export default function UserForm({ editingUser }: Props) {
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  // Xử lý chọn file ảnh (mới)
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
     setRemoveAvatar(false);
-    setField("avatarImage", null); // reset avatarImage cũ để ưu tiên preview
-
-    // Reset input để chọn lại cùng file
+    setField("avatarImage", null);
     e.target.value = "";
   };
 
-  // Xóa ảnh (mới)
   const handleRemoveAvatar = () => {
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
     setAvatarFile(null);
     setAvatarPreview(null);
-
     if (form.avatarImage) {
       setRemoveAvatar(true);
       setField("avatarImage", null);
@@ -172,31 +176,31 @@ export default function UserForm({ editingUser }: Props) {
     }
   };
 
-  // Ảnh hiển thị
   const displayAvatar = avatarPreview || (!removeAvatar && form.avatarImage) || undefined;
   const hasAvatar = !!(avatarPreview || (!removeAvatar && form.avatarImage));
 
   const validate = (): boolean => {
-    // ... giữ nguyên validate cũ của bạn
     const err: FormErrors = {};
-    if (!form.userName.trim()) err.userName = "Nhập username";
-    else if (form.userName.length < 3) err.userName = "Tối thiểu 3 ký tự";
-    else if (form.userName.length > 30) err.userName = "Tối đa 30 ký tự";
-    else if (!/^[a-zA-Z0-9_]+$/.test(form.userName)) err.userName = "Chỉ chữ, số và dấu gạch dưới";
 
-    if (!form.fullName.trim()) err.fullName = "Nhập họ tên";
-    else if (form.fullName.length < 3) err.fullName = "Tối thiểu 3 ký tự";
-    else if (form.fullName.length > 50) err.fullName = "Tối đa 50 ký tự";
+    // Only validate editable fields when editing
+    if (!isEditing) {
+      if (!form.userName.trim()) err.userName = "Nhập username";
+      else if (form.userName.length < 3) err.userName = "Tối thiểu 3 ký tự";
+      else if (form.userName.length > 30) err.userName = "Tối đa 30 ký tự";
+      else if (!/^[a-zA-Z0-9_]+$/.test(form.userName)) err.userName = "Chỉ chữ, số và dấu gạch dưới";
 
-    if (!editingUser) {
+      if (!form.fullName.trim()) err.fullName = "Nhập họ tên";
+      else if (form.fullName.length < 3) err.fullName = "Tối thiểu 3 ký tự";
+      else if (form.fullName.length > 50) err.fullName = "Tối đa 50 ký tự";
+
       if (!form.email.trim()) err.email = "Nhập email";
       else if (!/\S+@\S+\.\S+/.test(form.email)) err.email = "Email không hợp lệ";
+
+      if (form.phone.trim() && !/^0\d{9}$/.test(form.phone.trim())) err.phone = "10 số, bắt đầu bằng 0";
     }
 
-    if (form.phone.trim() && !/^0\d{9}$/.test(form.phone.trim())) err.phone = "10 số, bắt đầu bằng 0";
-
     const pwRule = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]+$/;
-    if (!editingUser) {
+    if (!isEditing) {
       if (!form.password.trim()) err.password = "Nhập mật khẩu";
       else if (form.password.length < 6) err.password = "Tối thiểu 6 ký tự";
       else if (!pwRule.test(form.password)) err.password = "Cần có chữ hoa và số";
@@ -218,13 +222,15 @@ export default function UserForm({ editingUser }: Props) {
 
     try {
       if (editingUser) {
-        // Dùng FormData khi edit để hỗ trợ upload ảnh
         const fd = new FormData();
 
+        // Readonly fields — still sent to keep the record intact
         fd.append("userName", form.userName.trim());
         fd.append("email", form.email.trim());
         fd.append("fullName", form.fullName.trim());
         fd.append("phone", form.phone.trim());
+
+        // Editable fields
         fd.append("gender", form.gender);
         fd.append("role", form.role);
         fd.append("isActive", String(form.isActive));
@@ -233,18 +239,15 @@ export default function UserForm({ editingUser }: Props) {
           fd.append("password", form.password.trim());
         }
 
-        // Avatar logic
         if (avatarFile) {
           fd.append("avatarImage", avatarFile);
         } else if (removeAvatar) {
           fd.append("removeAvatar", "true");
         }
 
-        await updateUserApi(editingUser.id, fd); // ← giả sử updateUserApi hỗ trợ FormData (nếu không, bạn cần sửa hàm này thành fetch FormData)
-
+        await updateUserApi(editingUser.id, fd);
         success("Cập nhật người dùng thành công!");
       } else {
-        // Tạo mới: giữ nguyên object (hoặc bạn có thể mở rộng sau)
         await createUser({
           userName: form.userName.trim(),
           email: form.email.trim(),
@@ -271,8 +274,8 @@ export default function UserForm({ editingUser }: Props) {
     <div className="space-y-5 p-5 bg-neutral-light min-h-full">
       {/* ── Page header ── */}
       <div>
-        <h1 className="text-xl font-bold text-primary leading-tight">{editingUser ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}</h1>
-        {editingUser ? (
+        <h1 className="text-xl font-bold text-primary leading-tight">{isEditing ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}</h1>
+        {isEditing ? (
           <p className="text-[13px] text-neutral-dark mt-0.5">
             Đang chỉnh sửa: <span className="font-semibold text-primary">{editingUser.fullName || editingUser.userName}</span>
             <span className="ml-2 text-[11px] font-mono opacity-60">ID: {editingUser.id}</span>
@@ -285,21 +288,20 @@ export default function UserForm({ editingUser }: Props) {
       {/* ── Form card ── */}
       <div className="bg-neutral-light rounded-2xl border border-neutral shadow-sm overflow-hidden">
         <div className="p-7 space-y-8">
-          {/* Avatar */}
+
+          {/* ── Avatar ── */}
           <section>
             <SectionTitle icon={<Camera size={16} />} title="Ảnh đại diện" subtitle="Hỗ trợ JPG, PNG – khuyến nghị tỉ lệ 1:1" />
 
             <div className="flex items-center gap-6">
               <div className="relative shrink-0">
-                <div className="w-24 h-24 rounded-2xl border-2 border-neutral overflow-hidden bg-neutral-light-active">
+                <div className="w-24 h-24 rounded-2xl border-2 border-neutral overflow-hidden bg-neutral-light-active flex items-center justify-center">
                   {displayAvatar ? (
                     <Image src={displayAvatar} alt="avatar" className="w-full h-full object-cover" width={96} height={96} />
                   ) : (
-                    <UserIcon size={32} className="text-neutral-dark m-auto" />
+                    <UserIcon size={32} className="text-neutral-dark" />
                   )}
                 </div>
-
-                {/* Nút chọn ảnh */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -307,8 +309,6 @@ export default function UserForm({ editingUser }: Props) {
                 >
                   <Camera size={13} className="text-white" />
                 </button>
-
-                {/* Nút xóa ảnh */}
                 {hasAvatar && (
                   <button
                     type="button"
@@ -328,59 +328,70 @@ export default function UserForm({ editingUser }: Props) {
                 >
                   <Camera size={13} /> Chọn ảnh
                 </button>
-
                 {avatarFile && <p className="text-[11px] text-neutral-dark truncate max-w-[200px]">{avatarFile.name}</p>}
                 {removeAvatar && !avatarFile && <p className="text-[11px] text-red-500">Ảnh sẽ bị xóa khi lưu</p>}
-
                 <p className="text-[11px] text-neutral-dark">Kích thước tối đa: 5MB</p>
               </div>
             </div>
 
-            {/* Hidden file input */}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </section>
+
           <div className="border-t border-neutral" />
 
-          {/* Account info */}
+          {/* ── Account info ── */}
           <section>
             <SectionTitle icon={<UserIcon size={16} />} title="Thông tin tài khoản" subtitle="Tên đăng nhập và thông tin cơ bản" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              <Field label="Username" required error={errors.userName}>
-                <input value={form.userName} onChange={(e) => setField("userName", e.target.value)} placeholder="vd: john_doe" className={inputCls(errors.userName)} />
+
+              {/* Username */}
+              <Field label="Username" required={!isEditing} error={errors.userName}>
+                <input
+                  value={form.userName}
+                  onChange={(e) => !isEditing && setField("userName", e.target.value)}
+                  readOnly={isEditing}
+                  placeholder="vd: john_doe"
+                  className={inputCls(errors.userName, isEditing)}
+                />
+                {isEditing && <ReadonlyNote text="Username không thể thay đổi" />}
               </Field>
 
-              <Field label="Họ và tên" required error={errors.fullName}>
-                <input value={form.fullName} onChange={(e) => setField("fullName", e.target.value)} placeholder="vd: Nguyễn Văn A" className={inputCls(errors.fullName)} />
+              {/* Họ và tên */}
+              <Field label="Họ và tên" required={!isEditing} error={errors.fullName}>
+                <input
+                  value={form.fullName}
+                  onChange={(e) => !isEditing && setField("fullName", e.target.value)}
+                  readOnly={isEditing}
+                  placeholder="vd: Nguyễn Văn A"
+                  className={inputCls(errors.fullName, isEditing)}
+                />
+                {isEditing && <ReadonlyNote text="Họ tên không thể thay đổi" />}
               </Field>
 
-              {/* Email — chỉ đọc khi edit */}
-              <Field label="Email" required={!editingUser} error={errors.email}>
+              {/* Email */}
+              <Field label="Email" required={!isEditing} error={errors.email}>
                 <div className="relative">
                   <input
                     value={form.email}
-                    onChange={(e) => !editingUser && setField("email", e.target.value)}
-                    readOnly={!!editingUser}
+                    onChange={(e) => !isEditing && setField("email", e.target.value)}
+                    readOnly={isEditing}
                     placeholder="vd: email@example.com"
-                    className={`${inputCls(errors.email)} pl-10 ${editingUser ? "cursor-not-allowed opacity-60 select-none" : ""}`}
+                    className={`${inputCls(errors.email, isEditing)} pl-10`}
                   />
                   <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
                 </div>
-                {editingUser && (
-                  <p className="text-[11px] text-neutral-dark flex items-center gap-1 mt-0.5">
-                    <span className="w-1 h-1 rounded-full bg-neutral-dark inline-block" />
-                    Email không thể thay đổi
-                  </p>
-                )}
+                {isEditing && <ReadonlyNote text="Email không thể thay đổi" />}
               </Field>
 
               {/* Phone */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-semibold text-primary flex items-center gap-1.5 uppercase tracking-wide">Số điện thoại</label>
+              <Field label="Số điện thoại" error={errors.phone}>
                 <div className="relative">
                   <input
                     value={form.phone}
-                    inputMode="numeric"
+                    inputMode={isEditing ? undefined : "numeric"}
+                    readOnly={isEditing}
                     onChange={(e) => {
+                      if (isEditing) return;
                       const raw = e.target.value;
                       const digitsOnly = raw.replace(/\D/g, "");
                       if (raw !== digitsOnly) {
@@ -392,31 +403,32 @@ export default function UserForm({ editingUser }: Props) {
                       setField("phone", digitsOnly);
                     }}
                     placeholder="vd: 0912345678"
-                    className={`${inputCls(errors.phone)} pl-10`}
-                    maxLength={10}
+                    className={`${inputCls(errors.phone, isEditing)} pl-10`}
+                    maxLength={isEditing ? undefined : 10}
                   />
                   <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
                 </div>
-                {phoneInputWarning && (
+                {isEditing && <ReadonlyNote text="Số điện thoại không thể thay đổi" />}
+                {!isEditing && phoneInputWarning && (
                   <p className="text-[11px] text-amber-600 flex items-center gap-1">
                     <AlertCircle size={11} className="shrink-0" />
                     {phoneInputWarning}
                   </p>
                 )}
-                {errors.phone && !phoneInputWarning && (
+                {!isEditing && errors.phone && !phoneInputWarning && (
                   <p className="text-[11px] text-promotion flex items-center gap-1">
                     <span className="w-1 h-1 rounded-full bg-promotion inline-block" />
                     {errors.phone}
                   </p>
                 )}
-              </div>
+              </Field>
             </div>
           </section>
 
           <div className="border-t border-neutral" />
 
-          {/* Security — chỉ hiển thị khi tạo mới */}
-          {!editingUser && (
+          {/* ── Security — chỉ khi tạo mới ── */}
+          {!isEditing && (
             <>
               <section>
                 <SectionTitle icon={<Lock size={16} />} title="Bảo mật" subtitle="Mật khẩu đăng nhập" />
@@ -435,12 +447,11 @@ export default function UserForm({ editingUser }: Props) {
                   </Field>
                 </div>
               </section>
-
               <div className="border-t border-neutral" />
             </>
           )}
 
-          {/* Permissions & Status */}
+          {/* ── Permissions & Status ── */}
           <section>
             <SectionTitle icon={<ShieldCheck size={16} />} title="Quyền & Trạng thái" subtitle="Phân quyền và cài đặt tài khoản" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
@@ -478,7 +489,7 @@ export default function UserForm({ editingUser }: Props) {
           </section>
         </div>
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div className="px-7 py-4 border-t border-neutral bg-neutral-light-active/60 flex items-center justify-between gap-3">
           <p className="text-[11px] text-neutral-dark">
             <span className="text-promotion">*</span> Các trường bắt buộc
@@ -503,7 +514,7 @@ export default function UserForm({ editingUser }: Props) {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               )}
-              {loading ? "Đang xử lý..." : editingUser ? "Lưu thay đổi" : "Tạo người dùng"}
+              {loading ? "Đang xử lý..." : isEditing ? "Lưu thay đổi" : "Tạo người dùng"}
             </button>
           </div>
         </div>
