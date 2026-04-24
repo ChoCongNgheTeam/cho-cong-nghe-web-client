@@ -194,7 +194,7 @@ export const updateOrderStatus = async (id: string, orderStatus: OrderStatus): P
 
 /** Lấy danh sách phương thức thanh toán đang active */
 export const getActivePaymentMethods = async (): Promise<PaymentMethod[]> => {
-  const res = await apiRequest.get<{ data: PaymentMethod[] }>("/admin/payment-methods", { params: { isActive: true } });
+  const res = await apiRequest.get<{ data: PaymentMethod[] }>("/payments/active");
   return res.data ?? [];
 };
 
