@@ -58,10 +58,10 @@ export const ORDER_STATUS_CONFIG: Record<
   },
   SHIPPED: {
     label: "Đang giao hàng",
-    dot: "bg-neutral-darker",
-    pill: "bg-neutral-light-active text-neutral-darker border border-neutral",
-    pillSelected: "bg-neutral-light-active text-neutral-darker",
-    dropdownHover: "hover:bg-neutral-light-active",
+    dot: "bg-purple-400",
+    pill: "bg-purple-50 text-purple-600 border border-purple-200",
+    pillSelected: "bg-purple-50 text-purple-600",
+    dropdownHover: "hover:bg-purple-50",
   },
   DELIVERED: {
     label: "Hoàn tất",
