@@ -9,6 +9,12 @@ import Select from "react-select";
 const phoneRe = /^(0[3|5|7|8|9])+([0-9]{8})$/;
 const isValidPhone = (v: string) => phoneRe.test(v.trim());
 
+// Họ tên: không chứa số
+const nameHasDigit = (v: string) => /\d/.test(v);
+
+// Địa chỉ: chỉ chữ, số, khoảng trắng, /, ,, .
+const addressInvalidChar = (v: string) => /[^a-zA-ZÀ-ỹ0-9\s\/,.]/.test(v);
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function ShippingSection({
   isLoadingAddresses,
@@ -40,6 +46,34 @@ export default function ShippingSection({
   onStreetNameChange,
 }: ShippingSectionProps) {
   const [touchedPhone, setTouchedPhone] = useState(false);
+  const [touchedName, setTouchedName] = useState(false);
+  const [touchedHouse, setTouchedHouse] = useState(false);
+  const [touchedStreet, setTouchedStreet] = useState(false);
+
+  // ─── Phone: chỉ cho nhập số ──────────────────────────────────────────────
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // Lọc bỏ mọi ký tự không phải số
+    const digitsOnly = raw.replace(/[^0-9]/g, "");
+    onContactPhoneChange(digitsOnly);
+  };
+
+  // ─── Họ tên: không cho nhập số ───────────────────────────────────────────
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // Loại bỏ ký tự số
+    const noDigits = raw.replace(/[0-9]/g, "");
+    onContactNameChange(noDigits);
+  };
+
+  // ─── Địa chỉ: chỉ cho chữ, số, khoảng trắng, /, ,, . ───────────────────
+  const handleAddressChange = (
+    raw: string,
+    setter: (v: string) => void
+  ) => {
+    const cleaned = raw.replace(/[^a-zA-ZÀ-ỹ0-9\s\/,.]/g, "");
+    setter(cleaned);
+  };
 
   const provinceOptions = provinces.map((p) => ({
     value: p.code,
@@ -188,18 +222,30 @@ export default function ShippingSection({
 
         {/* Row 1: Họ tên + Số điện thoại */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Họ tên */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Họ tên người nhận <span className="text-red-500">*</span>
             </label>
             <input
-              className={inputCls}
+              className={`${inputCls} ${
+                touchedName && nameHasDigit(contactName)
+                  ? "border-red-400"
+                  : ""
+              }`}
               value={contactName}
-              onChange={(e) => onContactNameChange(e.target.value)}
+              onChange={handleNameChange}
+              onBlur={() => setTouchedName(true)}
               placeholder="Nguyễn Văn A"
             />
+            {touchedName && nameHasDigit(contactName) && (
+              <p className="text-red-500 text-xs mt-1">
+                Họ tên không được chứa số
+              </p>
+            )}
           </div>
 
+          {/* Số điện thoại */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Số điện thoại <span className="text-red-500">*</span>
@@ -211,13 +257,17 @@ export default function ShippingSection({
                   : ""
               }`}
               value={contactPhone}
-              onChange={(e) => onContactPhoneChange(e.target.value)}
+              onChange={handlePhoneChange}
               onBlur={() => setTouchedPhone(true)}
               placeholder="0901234567"
+              inputMode="numeric"
+              maxLength={10}
             />
             {touchedPhone && !isValidPhone(contactPhone) && (
               <p className="text-red-500 text-xs mt-1">
-                Số điện thoại không hợp lệ
+                {contactPhone.length === 0
+                  ? "Vui lòng nhập số điện thoại"
+                  : "Số điện thoại không hợp lệ (VD: 0901234567)"}
               </p>
             )}
           </div>
@@ -275,28 +325,54 @@ export default function ShippingSection({
 
         {/* Row 3: Số nhà + Tên đường */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Số nhà */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Số nhà / Tòa nhà <span className="text-red-500">*</span>
             </label>
             <input
-              className={inputCls}
+              className={`${inputCls} ${
+                touchedHouse && addressInvalidChar(houseNumber)
+                  ? "border-red-400"
+                  : ""
+              }`}
               value={houseNumber}
-              onChange={(e) => onHouseNumberChange(e.target.value)}
+              onChange={(e) =>
+                handleAddressChange(e.target.value, onHouseNumberChange)
+              }
+              onBlur={() => setTouchedHouse(true)}
               placeholder="VD: 42, 42B, Lô 5, Căn hộ 08"
             />
+            {touchedHouse && addressInvalidChar(houseNumber) && (
+              <p className="text-red-500 text-xs mt-1">
+                Chỉ được nhập chữ, số và các ký tự / , .
+              </p>
+            )}
           </div>
 
+          {/* Tên đường */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Tên đường / Khu vực <span className="text-red-500">*</span>
             </label>
             <input
-              className={inputCls}
+              className={`${inputCls} ${
+                touchedStreet && addressInvalidChar(streetName)
+                  ? "border-red-400"
+                  : ""
+              }`}
               value={streetName}
-              onChange={(e) => onStreetNameChange(e.target.value)}
+              onChange={(e) =>
+                handleAddressChange(e.target.value, onStreetNameChange)
+              }
+              onBlur={() => setTouchedStreet(true)}
               placeholder="VD: Nguyễn Trãi, KDC Vạn Phúc"
             />
+            {touchedStreet && addressInvalidChar(streetName) && (
+              <p className="text-red-500 text-xs mt-1">
+                Chỉ được nhập chữ, số và các ký tự / , .
+              </p>
+            )}
           </div>
         </div>
 
@@ -332,7 +408,7 @@ export default function ShippingSection({
     );
   };
 
-  // ─── Wrapper card (matches other sections on checkout page) ──────────────
+  // ─── Wrapper card ─────────────────────────────────────────────────────────
   return (
     <div className="bg-neutral-light rounded-lg p-4 sm:p-5 border border-neutral">
       <h2 className="text-base font-semibold text-primary mb-4">
