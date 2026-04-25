@@ -10,6 +10,7 @@ import { OrderStatusCell, PaymentStatusCell, PaymentBadge, OrderStatusBadge } fr
 import { Popzy } from "@/components/Modal";
 import { formatDate, formatVND } from "@/helpers";
 import type { Order, OrderStatus, PaymentStatus } from "../order.types";
+import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
 
 // Chỉ cho hủy ở các trạng thái đầu — SHIPPED trở đi không hủy được
 const CANCELLABLE: OrderStatus[] = ["PENDING", "PROCESSING"];
@@ -57,6 +58,7 @@ export default function OrderDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const prefix = useAdminPrefix();
 
   const loadOrder = useCallback(async () => {
     if (!id) return;
@@ -156,7 +158,7 @@ export default function OrderDetailPage() {
             <OrderStatusBadge status={order.orderStatus as OrderStatus} />
             {canEdit && (
               <Link
-                href={`/admin/orders/${order.id}/edit`}
+                href={`${prefix}/orders/${order.id}/edit`}
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[13px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
               >
                 <Pencil size={13} /> Chỉnh sửa
