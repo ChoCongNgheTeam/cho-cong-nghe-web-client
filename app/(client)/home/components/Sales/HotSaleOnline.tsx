@@ -70,7 +70,7 @@ const ACCENT_RED = "#e63946";
 const ACCENT_RED_DARK = "#c1121f";
 
 // Header navy — sync với site header xanh đậm
-const HEADER_BG_FROM = "#0d1b2a";
+const HEADER_BG_FROM = "#1f3042";
 const HEADER_BG_MID = "#162035";
 const HEADER_BG_TO = "#1e2d45";
 
