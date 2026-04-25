@@ -13,7 +13,7 @@ export function BlogSection({ blogs }: BlogSectionProps) {
   const displayBlogs = blogs.slice(0, 4);
 
   return (
-    <section className="py-6 md:py-10 bg-neutral-light-active">
+    <section className="py-6 md:py-10 bg-neutral-light">
       <div className="container">
         {/* header */}
         <div className="flex items-center justify-between mb-5 md:mb-7">

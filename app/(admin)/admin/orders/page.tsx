@@ -13,6 +13,7 @@ import { Popzy } from "@/components/Modal";
 import { Ban, ShoppingCart, Clock, CheckCircle, Truck } from "lucide-react";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { PaymentMethodCell } from "./components/PaymentMethodCell";
+import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OrderMeta {
@@ -80,6 +81,8 @@ export default function OrdersPage() {
   // ─── Cancel modal ─────────────────────────────────────────────────────────────
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+
+  const prefix = useAdminPrefix();
 
   // ─── Close dropdowns khi click ngoài ─────────────────────────────────────────
   useEffect(() => {
@@ -379,7 +382,7 @@ export default function OrdersPage() {
             </div>
 
             <Link
-              href="/admin/orders/create"
+              href={`${prefix}/orders/create`}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer"
             >
               <Plus size={14} /> Thêm đơn hàng
@@ -492,7 +495,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-3 py-2.5">
                         <Link
-                          href={`/admin/orders/${order.id}`}
+                          href={`${prefix}/orders/${order.id}`}
                           title="Xem chi tiết"
                           className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent cursor-pointer transition-all"
                         >

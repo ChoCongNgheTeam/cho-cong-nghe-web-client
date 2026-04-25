@@ -10,6 +10,11 @@ import { useUserMenu } from "@/hooks/useUserMenu";
 import { useTheme } from "@/hooks/useTheme";
 import { TrendingBar } from "./components/TrendingBar";
 
+// ── Dark navy premium gradient ─────────────────────────────────────────────────
+// Top → bottom: #0a1628 (rất tối) → #0f1f4a (navy) → #1a3580 (xanh đậm)
+// Tạo chiều sâu rõ ràng, HeaderTop tối hơn main bar một bậc
+const HEADER_BG = "linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%)";
+
 const Header = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [isPastTop, setIsPastTop] = useState(false);
@@ -59,14 +64,12 @@ const Header = () => {
         const diff = currentScrollY - lastScrollY.current;
         lastScrollY.current = currentScrollY;
 
-        const headerH = headerRef.current?.offsetHeight || 60;
         const nextIsPastTop = currentScrollY > 10;
         if (nextIsPastTop !== isPastTopRef.current) {
           isPastTopRef.current = nextIsPastTop;
           setIsPastTop(nextIsPastTop);
         }
 
-        // Chỉ reset khi về đúng top = 0
         if (currentScrollY === 0) {
           isVisibleRef.current = true;
           setIsVisible(true);
@@ -113,34 +116,28 @@ const Header = () => {
         ref={headerRef}
         className={[
           "fixed top-0 left-0 right-0 z-50",
-          "w-full bg-neutral-light backdrop-blur-md border-b border-neutral",
-          "transition-transform duration-300 ease-in-out",
-          isPastTop ? "shadow-sm" : "",
+          "w-full transition-transform duration-300 ease-in-out",
+          // Shadow đậm hơn, tông navy để tách khỏi slider
+          isPastTop ? "shadow-[0_4px_24px_rgba(0,0,0,0.35)]" : "shadow-[0_2px_12px_rgba(0,0,0,0.2)]",
           isVisible ? "translate-y-0" : "-translate-y-full",
         ].join(" ")}
+        style={{ background: HEADER_BG }}
       >
-        {/* HeaderTop — desktop only */}
+        {/* HeaderTop — desktop only, thêm border-bottom để tách tầng */}
         <div
           className={["transition-all duration-300 overflow-hidden", isPastTop ? "opacity-0 pointer-events-none max-h-0" : "opacity-100 pointer-events-auto max-h-[200px]"].join(" ")}
+          // Nền tối hơn 1 bậc để phân biệt với main bar
+          style={{ background: "rgba(0,0,0,0.25)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
           aria-hidden={isPastTop}
         >
           <HeaderTop isAuthenticated={isAuthenticated} />
         </div>
 
         <div className="container">
-          {/* Mobile: logo + search bar always visible */}
-          <MobileHeader
-            isDarkMode={isDark}
-            // props below kept for type compatibility but unused in new impl
-            mobileMenuOpen={false}
-            mobileSearchOpen={false}
-            searchQuery=""
-            onMenuToggle={() => {}}
-            onSearchToggle={() => {}}
-            onSearchChange={() => {}}
-          />
+          {/* Mobile */}
+          <MobileHeader isDarkMode={isDark} mobileMenuOpen={false} mobileSearchOpen={false} searchQuery="" onMenuToggle={() => {}} onSearchToggle={() => {}} onSearchChange={() => {}} />
 
-          {/* Desktop header row */}
+          {/* Desktop */}
           <div className="py-2">
             <DesktopHeader
               isDarkMode={isDark}
@@ -156,6 +153,9 @@ const Header = () => {
             <TrendingBar className="hidden md:block" />
           </div>
         </div>
+
+        {/* Bottom border — tách header khỏi slider */}
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
       </div>
 
       {/* ── Mobile Bottom Tab Bar ──────────────────────────── */}

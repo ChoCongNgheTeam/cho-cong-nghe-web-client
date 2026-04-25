@@ -50,7 +50,6 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
   const finalPrice = previewPrice ?? (product.price.hasPromotion ? product.price.final : product.price.base);
   const showStrikethrough = (flashPromoRule != null && previewPrice != null) || product.price.hasPromotion;
 
-  // Thống nhất với ProductCard: chỉ lấy 2 highlights đầu
   const visibleHighlights = (product.highlights ?? []).slice(0, 2);
 
   const router = useRouter();
@@ -85,20 +84,29 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
     <Link
       href={productUrl}
       className="group relative flex flex-col rounded-xl overflow-hidden select-none h-full
-                 border border-neutral-100 hover:shadow-md"
+                 border border-neutral-100
+                 transition-all duration-300 ease-out
+                 hover:shadow-lg hover:-translate-y-0.5"
       style={{
         backgroundColor: "rgb(var(--neutral-light))",
         animationDelay: `${index * 0.08}s`,
       }}
     >
-      {/* ── Section 1: Image (không còn highlights overlay) ── */}
+      {/* ── Section 1: Image ── */}
+      {/* ✅ overflow-hidden ở đây để ảnh không tràn ra ngoài card khi hover */}
       <div className="relative w-full aspect-[5/3] overflow-hidden">
         {product.thumbnail ? (
           <Image
             src={thumbnailUrl(product.thumbnail, 300)}
             alt={product.name}
             fill
-            className="object-contain transition-transform duration-500 group-hover:scale-105"
+            className="
+              object-contain
+              p-4
+              scale-90
+              transition-transform duration-500 ease-out
+              group-hover:scale-100
+            "
             sizes="(max-width: 640px) 50vw, 300px"
           />
         ) : (
@@ -112,7 +120,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
         )}
       </div>
 
-      {/* ── Section 2: Highlights — thống nhất với ProductCard ── */}
+      {/* ── Section 2: Highlights ── */}
       {visibleHighlights.length > 0 && (
         <div className="flex gap-1.5 px-2.5 pt-2 sm:flex-row flex-col">
           {visibleHighlights.map((h) => (
@@ -120,13 +128,13 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
               key={h.key}
               title={h.value}
               className="
-          inline-flex items-center gap-1 min-w-0
-          bg-neutral-100 text-neutral-700
-          border border-neutral-200
-          dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700
-          text-[10px] px-2 py-[2px] rounded-md font-medium
-          sm:max-w-[48%] sm:shrink
-        "
+                inline-flex items-center gap-1 min-w-0
+                bg-neutral-100 text-neutral-700
+                border border-neutral-200
+                dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700
+                text-[10px] px-2 py-[2px] rounded-md font-medium
+                sm:max-w-[48%] sm:shrink
+              "
             >
               <HighlightIcon icon={h.icon} className="w-3 h-3 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
               <span className="truncate">{h.value}</span>
@@ -136,7 +144,13 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
       )}
 
       {/* ── Section 3: Price block ── */}
-      <div className="mx-2.5 mb-2 mt-2 rounded-lg px-2.5 py-2" style={{ background: BRAND_RED }}>
+      <div
+        className="mx-2.5 mb-2 mt-2 rounded-lg px-2.5 py-2"
+        style={{
+          background: "linear-gradient(135deg, #e63946 0%, #c1121f 100%)",
+          boxShadow: "0 2px 8px rgba(230, 57, 70, 0.25)",
+        }}
+      >
         {/* Mobile */}
         <div className="flex flex-col gap-0.5 sm:hidden">
           <span className="font-bold leading-tight text-white" style={{ fontSize: "clamp(11px, 3.5vw, 15px)" }}>
@@ -185,7 +199,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
       <div className="px-2.5 mb-2.5 mt-auto">
         {isUpcoming ? (
           <button
-            className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold bg-transparent border cursor-pointer"
+            className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold bg-transparent border cursor-pointer transition-colors duration-200"
             style={{ color: BRAND_RED, borderColor: BRAND_RED }}
           >
             Sắp diễn ra
@@ -193,15 +207,20 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
         ) : (
           <button
             onClick={handleBuyNow}
-            className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold border cursor-pointer transition-colors"
+            className="w-full rounded-full h-8 xs:h-9 sm:h-10 text-center text-xs xs:text-sm font-semibold
+                       border cursor-pointer transition-all duration-200 ease-out"
             style={{ color: BRAND_RED, borderColor: BRAND_RED }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = BRAND_RED;
-              (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+              const btn = e.currentTarget;
+              btn.style.background = BRAND_RED;
+              btn.style.color = "#fff";
+              btn.style.boxShadow = "0 2px 8px rgba(230,57,70,0.35)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color = BRAND_RED;
+              const btn = e.currentTarget;
+              btn.style.background = "transparent";
+              btn.style.color = BRAND_RED;
+              btn.style.boxShadow = "none";
             }}
           >
             Mua giá sốc

@@ -1,8 +1,11 @@
 "use client";
 import apiRequest from "@/lib/api";
-import { X, Send, Bot, User, RotateCcw, Maximize2, Minimize2, CornerDownLeft } from "lucide-react";
+import { X, Send, User, RotateCcw, Maximize2, Minimize2, CornerDownLeft, ShoppingCart, ExternalLink, Tag } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+// Đã thêm Import useCart và useToasty từ hệ thống của bạn
+import { useCart } from "@/hooks/useCart";
+import { useToasty } from "@/components/Toast";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES & CONSTANTS
@@ -11,11 +14,15 @@ import Image from "next/image";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  products?: Product[]; 
 }
 
 interface ChatResponse {
   success: boolean;
-  data: { role: "assistant"; content: string };
+  data: { 
+    reply: string;
+    products?: Product[];
+  };
 }
 
 const STORAGE_KEY = "cho-cong-nghe:chat-history";
@@ -36,8 +43,29 @@ const BTN_BOTTOM_MOBILE = 130;
 const BTN_BOTTOM_DESKTOP = 80;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRODUCT CARD PARSER
+// PRODUCT CARD PARSER (Markdown Fallback)
 // ─────────────────────────────────────────────────────────────────────────────
+
+interface Product {
+  id: string;
+  name: string;
+  slug?: string;
+  thumbnail: string;
+  priceMin: number;
+  priceMax: number;
+  originalPriceMin?: number;
+  promotionLabel?: string;
+  inStock: boolean;
+  defaultVariantId?: string;
+  productUrl?: string;
+  variants?: Variant[];
+}
+
+interface Variant {
+  id: string;
+  name?: string;
+  label: string;
+}
 
 interface ProductCard {
   image?: string;
@@ -104,32 +132,18 @@ function parseProductCards(text: string): ProductCard[] | null {
   return cards.length >= 2 ? cards : null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX #3: CLEAN CONTENT — normalize escaped newlines & strip literal \n sequences
-// This runs BEFORE markdown rendering so downstream renderers see clean text
-// ─────────────────────────────────────────────────────────────────────────────
-
 function cleanContent(text: string): string {
   return (
     text
-      // Replace literal backslash-n sequences (escaped in JSON or from BE) with real newlines
       .replace(/\\n/g, "\n")
-      // Collapse 3+ consecutive newlines to max 2 (one blank line = paragraph break)
       .replace(/\n{3,}/g, "\n\n")
-      // Remove trailing whitespace on each line
       .replace(/[ \t]+$/gm, "")
       .trim()
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MARKDOWN RENDERER (non-product messages)
-// ─────────────────────────────────────────────────────────────────────────────
-
 function renderMarkdown(text: string): string {
   const cleaned = cleanContent(text);
-
-  // Process line by line to correctly group consecutive list items into a single <ul>
   const lines = cleaned.split("\n");
   const result: string[] = [];
   let inList = false;
@@ -137,9 +151,7 @@ function renderMarkdown(text: string): string {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Detect bullet: "- text", "  - text" (indented sub-bullets treated same), "* text"
     const bulletMatch = line.match(/^[ \t]*[-*] (.+)$/);
-    // Detect numbered: "1. text"
     const numberedMatch = line.match(/^[ \t]*\d+\. (.+)$/);
 
     if (bulletMatch || numberedMatch) {
@@ -154,9 +166,8 @@ function renderMarkdown(text: string): string {
         result.push("</ul>");
         inList = false;
       }
-      // Empty line → paragraph separator (skip, handled after join)
       if (line.trim() === "") {
-        result.push(""); // preserved as separator
+        result.push("");
       } else {
         result.push(applyInline(line));
       }
@@ -164,14 +175,12 @@ function renderMarkdown(text: string): string {
   }
   if (inList) result.push("</ul>");
 
-  // Join lines, then convert blank-line runs to paragraph breaks
   return result
     .join("\n")
     .replace(/\n{2,}/g, "</p><p>")
     .replace(/\n/g, "<br/>");
 }
 
-/** Apply inline formatting: images, bold, italic, code, links */
 function applyInline(text: string): string {
   return text
     .replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" class="chat-img" loading="lazy" onerror="this.style.display=\'none\'" />')
@@ -182,8 +191,135 @@ function applyInline(text: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRODUCT CARD COMPONENT
+// COMPONENTS: UI THẺ SẢN PHẨM TỪ CẤU TRÚC JSON & MARKDOWN
 // ─────────────────────────────────────────────────────────────────────────────
+
+function StructuredProductCard({ product }: { product: Product }) {
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
+  const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0]?.id || product.defaultVariantId || "");
+
+  // Lấy các hàm context của dự án
+  const { addToCart } = useCart();
+  const { toast } = useToasty();
+
+  const priceDisplay = product.priceMin === product.priceMax
+    ? formatPrice(product.priceMin)
+    : `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax)}`;
+
+  const originalPriceDisplay = product.originalPriceMin ? formatPrice(product.originalPriceMin) : "";
+  const hasDiscount = !!(product.originalPriceMin && product.originalPriceMin > product.priceMin);
+  const discountPercent = hasDiscount && product.originalPriceMin ? Math.round(((product.originalPriceMin - product.priceMin) / product.originalPriceMin) * 100) : 0;
+
+  // XỬ LÝ THÊM VÀO GIỎ HÀNG CHUẨN KIẾN TRÚC DỰ ÁN
+  const handleAddToCart = async () => {
+    if (!selectedVariant) return;
+    try {
+      await addToCart(selectedVariant, 1, {
+        productId: product.id,
+        productName: product.name,
+        productSlug: product.slug || "", 
+        price: product.priceMin,
+        originalPrice: product.originalPriceMin || product.priceMin,
+        imageUrl: product.thumbnail,
+      });
+      // Gọi giao diện Toast thành công
+      toast({
+        type: "success",
+        title: "Thành công",
+        description: `Đã thêm "${product.name}" vào giỏ hàng`,
+      });
+    } catch (error: Error | unknown) {
+      const errorMsg = error instanceof Error ? error.message : "Không thể thêm vào giỏ hàng";
+      
+      // FIX TOAST: Thêm type: "error"
+      toast({
+        type: "error",
+        title: "Lỗi",
+        description: errorMsg,
+      });
+    }
+  };
+
+  return (
+    <div className="bg-white border border-neutral rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+      <div className="flex gap-2.5 p-2.5">
+        <div className="w-[76px] shrink-0 bg-neutral-50 rounded-lg flex items-center justify-center p-1.5 relative border border-black/5">
+          {hasDiscount && (
+            <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg z-10 shadow-sm">
+              -{discountPercent}%
+            </div>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={product.thumbnail} alt={product.name} className="w-full h-[64px] object-contain mix-blend-multiply" loading="lazy" />
+          {!product.inStock && (
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
+              <span className="bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">Hết hàng</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          <div>
+            <p className="text-[12px] font-semibold text-neutral-800 leading-snug line-clamp-2 mb-1">{product.name}</p>
+            <div className="flex items-baseline gap-1.5 mb-0.5">
+              <p className="text-[13.5px] font-bold text-accent">{priceDisplay}</p>
+              {hasDiscount && <p className="text-[10.5px] text-neutral-400 line-through">{originalPriceDisplay}</p>}
+            </div>
+            {product.promotionLabel && (
+              <p className="text-[10.5px] text-emerald-600 font-medium line-clamp-1 flex items-center gap-1">
+                <Tag size={11} /> {product.promotionLabel}
+              </p>
+            )}
+          </div>
+
+          {product.variants && product.variants.length > 0 ? (
+            <div className="flex flex-col gap-1.5 mt-2">
+              <select
+                value={selectedVariant}
+                onChange={(e) => setSelectedVariant(e.target.value)}
+                className="w-full text-[11.5px] font-medium px-2.5 py-1.5 rounded-lg border border-neutral bg-neutral-50 text-gray-900 focus:outline-none focus:border-accent appearance-none cursor-pointer shadow-sm"
+                style={{ backgroundImage: `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px top 50%', backgroundSize: '8px auto' }}
+              >
+                {product.variants.map((v: Variant) => (
+                  <option key={v.id} value={v.id}>{v.label}</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5">
+               <button onClick={handleAddToCart} className="flex-1 flex items-center justify-center gap-1.5 text-[11.5px] px-2 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors active:scale-95 shadow-sm">
+                <ShoppingCart size={13} strokeWidth={2.5} />
+              </button>
+                {product.productUrl && (
+                  <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="w-[30px] h-[30px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors shrink-0 shadow-sm">
+                    <ExternalLink size={15} />
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : product.defaultVariantId ? (
+            <div className="flex items-center gap-1.5 mt-2">
+              <button onClick={handleAddToCart} className="flex-1 flex items-center justify-center gap-1 text-[11.5px] px-2 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 font-semibold hover:bg-sky-100 transition-colors active:scale-95 shadow-sm">
+                <ShoppingCart size={13} /> Mua ngay
+              </button>
+              {product.productUrl && (
+                <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="w-[30px] h-[30px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors shrink-0 shadow-sm">
+                  <ExternalLink size={15} />
+                </a>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-2">
+              {product.productUrl && (
+                <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1 text-[11.5px] px-2 py-1.5 rounded-lg bg-accent/10 border border-accent/20 text-accent font-semibold hover:bg-accent/20 transition-colors shadow-sm">
+                  Xem tuỳ chọn
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
   return (
@@ -191,7 +327,6 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
       {cards.map((card, i) => (
         <div key={i} className="bg-white border border-neutral rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
           <div className="flex gap-0">
-            {/* FIX #4: Image container — reduced from w-[90px] / h-[80px] to w-[68px] / h-[60px] (~half area) */}
             {card.image && (
               <div className="w-[68px] shrink-0 bg-neutral-50 flex items-center justify-center p-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -200,14 +335,10 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
                   alt={card.imageAlt ?? card.name ?? "Product"}
                   className="w-full h-[60px] object-contain"
                   loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />
               </div>
             )}
-
-            {/* Info */}
             <div className="flex-1 p-2 min-w-0">
               {card.name && <p className="text-[11.5px] font-semibold text-neutral-800 leading-tight line-clamp-2 mb-1">{card.name}</p>}
               {card.price && <p className="text-[12px] font-bold text-accent mb-1">{card.price}</p>}
@@ -224,7 +355,7 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
               )}
 
               <div className="flex items-center justify-between gap-2 mt-1.5">
-                {card.promo && <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">{card.promo}</span>}
+                {card.promo ? <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">{card.promo}</span> : <span></span>}
                 {card.link && (
                   <a
                     href={card.link}
@@ -250,29 +381,64 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
 
 function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
   const isUser = msg.role === "user";
-
-  const productCards = !isUser ? parseProductCards(cleanContent(msg.content)) : null;
+  const hasStructuredProducts = Array.isArray(msg.products) && msg.products.length > 0;
 
   let introText = "";
-  if (productCards) {
-    const introMatch = cleanContent(msg.content).match(/^([^1-9\n][^\n]*\n?)/);
-    if (introMatch) introText = introMatch[1].trim();
+  let productCards: ProductCard[] | null = null;
+
+  if (!isUser) {
+    const cleanedContent = cleanContent(msg.content);
+    if (hasStructuredProducts) {
+      if (cleanedContent.match(/^\d+\.\s/m)) {
+        introText = cleanedContent.split('\n\n')[0] || cleanedContent.substring(0, 100);
+      } else {
+        introText = cleanedContent;
+      }
+      introText = introText.replace(/^\d+\.\s.+/gm, '').trim();
+    } else {
+      productCards = parseProductCards(cleanedContent);
+      if (productCards) {
+        const introMatch = cleanedContent.match(/^([^1-9\n][^\n]*\n?)/);
+        if (introMatch) introText = introMatch[1].trim();
+      }
+    }
   }
 
   const html = isUser ? msg.content : renderMarkdown(msg.content);
+  const introHtml = introText ? renderMarkdown(introText) : "";
 
   return (
     <div className={`flex items-end gap-1.5 ${isUser ? "flex-row-reverse" : "flex-row"} ${isNew ? "chat-msg-enter" : ""}`}>
-      <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center ${isUser ? "bg-accent/20" : "bg-accent/10"}`}>
-        {isUser ? <User size={12} className="text-accent" /> : <Bot size={12} className="text-accent" />}
+      <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center ${isUser ? "bg-accent/20" : "bg-accent/10"} mb-1`}>
+        {isUser ? (
+          <User size={12} className="text-accent" />
+        ) : (
+          <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={16} height={16} className="object-contain rounded-full" />
+        )}
       </div>
 
       {isUser ? (
-        // FIX #3: Render user message with proper newlines preserved
         <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm whitespace-pre-wrap">{msg.content}</div>
+      ) : hasStructuredProducts ? (
+        <div className="flex-1 min-w-[240px] flex flex-col gap-1.5">
+          {introText && (
+            <div
+              className="w-fit max-w-[100%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-white text-neutral-dark border border-neutral rounded-bl-sm shadow-sm prose-chat"
+              dangerouslySetInnerHTML={{ __html: `<p>${introHtml}</p>` }}
+            />
+          )}
+          <div className="flex flex-col gap-2.5 w-full mt-1">
+            {msg.products!.map((p, i) => <StructuredProductCard key={i} product={p} />)}
+          </div>
+        </div>
       ) : productCards ? (
-        <div className="flex-1 min-w-0 flex flex-col gap-2">
-          {introText && <div className="text-[12.5px] text-neutral-dark leading-relaxed px-1">{introText}</div>}
+        <div className="flex-1 min-w-[240px] flex flex-col gap-1.5">
+          {introText && (
+            <div
+              className="w-fit max-w-[100%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-white text-neutral-dark border border-neutral rounded-bl-sm shadow-sm prose-chat"
+              dangerouslySetInnerHTML={{ __html: `<p>${introHtml}</p>` }}
+            />
+          )}
           <ProductCardGrid cards={productCards} />
         </div>
       ) : (
@@ -319,8 +485,6 @@ export default function ChatButton() {
     return () => window.removeEventListener("sheet:toggle", handler);
   }, []);
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-
   useEffect(() => {
     const checkMobile = () => setMobile(window.innerWidth <= 768);
     checkMobile();
@@ -330,33 +494,30 @@ export default function ChatButton() {
         const parsed: Message[] = JSON.parse(stored);
         if (Array.isArray(parsed)) setMessages(parsed);
       }
-    } catch (_) {}
+    } catch {
+      // Ignore parsing errors
+    }
     setReady(true);
 
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // ── Persist messages ──────────────────────────────────────────────────────
-
   useEffect(() => {
     if (messages.length === 0) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_STORED)));
-    } catch (_) {}
+    } catch {
+      // Ignore storage errors
+    }
   }, [messages]);
 
-  // ── Scroll to bottom ──────────────────────────────────────────────────────
-
   useEffect(() => {
-    // Small delay to allow layout to settle (especially on iOS with keyboard)
     const t = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 80);
     return () => clearTimeout(t);
   }, [messages, loading]);
-
-  // ── Focus input when opened ───────────────────────────────────────────────
 
   useEffect(() => {
     if (isOpen) {
@@ -364,8 +525,6 @@ export default function ChatButton() {
       setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [isOpen]);
-
-  // ── Lock body scroll on mobile ────────────────────────────────────────────
 
   useEffect(() => {
     if (!mobile) return;
@@ -375,13 +534,9 @@ export default function ChatButton() {
     };
   }, [isOpen, mobile]);
 
-  // ── Panel controls ────────────────────────────────────────────────────────
-
   const openPanel = () => setPanelState("normal");
   const toggleMaximize = () => setPanelState((s) => (s === "maximized" ? "normal" : "maximized"));
   const closePanel = () => setPanelState("closed");
-
-  // ── Send message ──────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
     async (text?: string) => {
@@ -408,9 +563,11 @@ export default function ChatButton() {
           { noAuth: true },
         );
 
+        const data = (res as ChatResponse)?.data;
         const assistantMsg: Message = {
           role: "assistant",
-          content: (res as any)?.data?.reply ?? "Xin lỗi, có lỗi xảy ra.",
+          content: data?.reply ?? "Xin lỗi, có lỗi xảy ra.",
+          products: data?.products,
         };
 
         setMessages((prev) => {
@@ -420,7 +577,7 @@ export default function ChatButton() {
         });
 
         if (!isOpen) setHasUnread(true);
-      } catch (_) {
+      } catch {
         setMessages((prev) => [...prev, { role: "assistant", content: "Xin lỗi, không thể kết nối. Vui lòng thử lại sau." }]);
       } finally {
         setLoading(false);
@@ -429,23 +586,16 @@ export default function ChatButton() {
     [input, loading, messages, isOpen],
   );
 
-  // FIX #1: Desktop — Enter sends, Shift+Enter inserts newline
-  // Mobile — Enter key on software keyboard inserts newline (user taps Send button)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
-      if (mobile) {
-        // On mobile: always allow newline from keyboard; send via button only
-        return; // default textarea behavior (newline)
-      }
+      if (mobile) return;
       if (!e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
-      // Shift+Enter on desktop: default textarea behavior (newline)
     }
   };
 
-  // FIX #1: Mobile newline button — inserts \n at cursor position
   const handleMobileNewline = () => {
     const el = inputRef.current;
     if (!el) return;
@@ -453,7 +603,6 @@ export default function ChatButton() {
     const end = el.selectionEnd ?? el.value.length;
     const newVal = el.value.slice(0, start) + "\n" + el.value.slice(end);
     setInput(newVal);
-    // Restore cursor after newline
     requestAnimationFrame(() => {
       el.focus();
       el.setSelectionRange(start + 1, start + 1);
@@ -477,8 +626,6 @@ export default function ChatButton() {
   const showQuickReplies = messages.length === 0 && !loading;
 
   if (!ready) return null;
-
-  // ── Panel dimensions ──────────────────────────────────────────────────────
 
   const panelStyle: React.CSSProperties = mobile
     ? {
@@ -508,8 +655,6 @@ export default function ChatButton() {
     height: BTN_SIZE,
     zIndex: 10000,
   };
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -559,7 +704,6 @@ export default function ChatButton() {
         .chat-link { color: var(--color-accent,#2563eb); text-decoration: underline; text-underline-offset: 2px; }
         .chat-link:hover { opacity: 0.75; }
 
-        /* FIX #4: Inline image — reduced max-height & max-width */
         .chat-img {
           max-width: min(100%, 160px);
           max-height: 110px;
@@ -576,7 +720,7 @@ export default function ChatButton() {
           z-index: 9998;
           backdrop-filter: blur(2px);
         }
-        /* Window control dots */
+        
         .wc-btn {
           width: 12px; height: 12px;
           border-radius: 50%;
@@ -592,15 +736,10 @@ export default function ChatButton() {
         .wc-min    { background: #febc2e; }
         .wc-max    { background: #28c840; }
 
-        /* FIX #2: Prevent iOS auto-zoom on input focus — font-size must be >= 16px.
-           We set font-size: 16px on the actual textarea and scale it visually with transform
-           so the layout still looks like 14px but iOS won't trigger zoom. */
         .chat-textarea-ios {
           font-size: 16px !important;
-          /* Scale text back down visually — layout stays correct, iOS sees 16px */
           transform-origin: left top;
         }
-        /* On non-iOS devices keep the original 14px */
         @supports not (-webkit-touch-callout: none) {
           .chat-textarea-ios {
             font-size: 14px !important;
@@ -608,7 +747,6 @@ export default function ChatButton() {
           }
         }
 
-        /* FIX #1: Mobile newline button */
         .chat-newline-btn {
           height: 36px;
           padding: 0 8px;
@@ -626,7 +764,6 @@ export default function ChatButton() {
         .chat-newline-btn:active { background: rgba(0,0,0,0.1); transform: scale(0.94); }
       `}</style>
 
-      {/* ── Mobile backdrop ── */}
       {isOpen && mobile && <div className="chat-mobile-backdrop" onClick={closePanel} />}
 
       {/* ── PANEL ── */}
@@ -639,8 +776,8 @@ export default function ChatButton() {
           <div
             className="bg-accent px-4 flex items-center justify-between shrink-0 select-none"
             style={{
-              paddingTop: mobile ? `calc(0.75rem + env(safe-area-inset-top))` : "0.65rem",
-              paddingBottom: "0.65rem",
+              paddingTop: mobile ? `calc(0.75rem + env(safe-area-inset-top))` : "0.75rem",
+              paddingBottom: "0.75rem",
             }}
           >
             <div className="flex items-center gap-2.5 pointer-events-none">
@@ -692,7 +829,7 @@ export default function ChatButton() {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
                 <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-1 overflow-hidden">
-                  <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={56} height={56} className="object-contain" />
+                  <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={48} height={48} className="object-contain" />
                 </div>
                 <p className="text-[13px] text-primary font-semibold">Xin chào! 👋</p>
                 <p className="text-[13px] text-primary leading-relaxed">Tôi có thể tư vấn sản phẩm, giá cả và tình trạng hàng cho bạn.</p>
@@ -706,7 +843,7 @@ export default function ChatButton() {
             {loading && (
               <div className="flex items-end gap-1.5 chat-msg-enter">
                 <div className="w-6 h-6 rounded-full bg-accent/10 shrink-0 flex items-center justify-center">
-                  <Bot size={12} className="text-accent" />
+                  <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={16} height={16} className="object-contain rounded-full" />
                 </div>
                 <div className="bg-white border border-neutral rounded-2xl rounded-bl-sm px-3.5 py-3 shadow-sm">
                   <div className="flex gap-1 items-center">
@@ -739,17 +876,6 @@ export default function ChatButton() {
 
           {/* ── Input ── */}
           <div className="px-3 py-3 border-t border-neutral flex items-end gap-2 bg-neutral-light shrink-0">
-            {/*
-              FIX #2: iOS zoom prevention
-              iOS Safari zooms in when an input's font-size < 16px.
-              Solution: always render font-size 16px; use CSS to visually
-              compensate on iOS (transforms don't trigger zoom checks).
-              On non-iOS, the @supports rule sets it back to 14px.
-
-              FIX #1: enterKeyHint="send" shows a "send" label on the mobile keyboard's
-              return key, but we DON'T intercept Enter on mobile — we let it insert newlines.
-              The user sends via the Send button. This is the most natural mobile UX.
-            */}
             <textarea
               ref={inputRef}
               value={input}
@@ -758,7 +884,6 @@ export default function ChatButton() {
               disabled={loading}
               placeholder={mobile ? "Nhập tin nhắn..." : "Nhập tin nhắn... (Shift+Enter để xuống hàng)"}
               rows={1}
-              // FIX #2: font-size 16px prevents iOS zoom; enterKeyHint for better keyboard UX
               enterKeyHint={mobile ? "send" : "enter"}
               inputMode="text"
               autoComplete="off"
@@ -768,7 +893,6 @@ export default function ChatButton() {
               style={{ minHeight: "36px", maxHeight: "120px" }}
             />
 
-            {/* FIX #1: Mobile newline button — shown only on mobile */}
             {mobile && (
               <button
                 type="button"
@@ -810,8 +934,8 @@ export default function ChatButton() {
         {isOpen ? (
           <X size={isOpen ? 16 : 18} strokeWidth={2.5} className="text-neutral-600 transition-all duration-300" />
         ) : (
-          <div className="mascot-float transition-all duration-300" style={{ width: size + 8, height: size + 8, marginTop: -4 }}>
-            <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={size + 8} height={size + 8} className="object-contain drop-shadow-md" />
+          <div className="mascot-float transition-all duration-300 flex items-center justify-center" style={{ width: size + 8, height: size + 8, marginTop: -4 }}>
+            <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={40} height={40} className="object-contain drop-shadow-md" />
           </div>
         )}
       </button>

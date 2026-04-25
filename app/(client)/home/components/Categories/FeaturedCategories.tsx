@@ -43,7 +43,7 @@ export function FeaturedCategories({ featuredCategories }: CategoryGridProps) {
   }, []);
 
   return (
-    <section className="py-4 md:py-6 bg-linear-to-b bg-neutral-light-active">
+    <section className="py-4 md:py-6 bg-linear-to-b bg-neutral-light">
       <div className="container">
         <div className="bg-neutral-light rounded-3xl p-6 md:p-8">
           <div className="mb-3">

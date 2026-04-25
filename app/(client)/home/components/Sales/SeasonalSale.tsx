@@ -73,7 +73,7 @@ export function SeasonalSale({ campaigns }: SeasonalSaleProps) {
   if (!campaigns || campaigns.length === 0) return null;
 
   return (
-    <section className="py-6 md:py-8 bg-neutral-light-active">
+    <section className="py-6 md:py-8 bg-neutral-light">
       <div className="container space-y-10">
         {campaigns.map((campaign) => {
           // Sắp xếp theo position, lấy 4 ô nhỏ + 1 ô lớn

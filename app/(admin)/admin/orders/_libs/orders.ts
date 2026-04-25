@@ -4,16 +4,83 @@ import type { Order, OrderStatus, PaymentStatus } from "../order.types";
 // ─────────────────────────────────────────────────────────────────────────────
 // RESPONSE TYPES
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Province {
-  code: string;
-  name: string;
-  fullName: string;
+
+export interface OrdersResponse {
+  data: Order[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    statusCounts: Record<string, number>;
+  };
+  message: string;
 }
 
-export interface Ward {
-  code: string;
+export interface OrderDetailResponse {
+  data: Order;
+  message: string;
+}
+
+export interface CancelOrderResponse {
+  message: string;
+}
+
+export interface GetAllOrdersParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  paymentStatus?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface UpdateOrderAdminPayload {
+  orderStatus?: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED";
+  paymentStatus?: "UNPAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
+  paymentMethodId?: string; // ← thêm field này
+  shippingFee?: number;
+  voucherDiscount?: number;
+}
+
+export interface UpdateShippingPayload {
+  shippingContactName?: string;
+  shippingPhone?: string;
+  shippingProvince?: string;
+  shippingWard?: string;
+  shippingDetail?: string;
+  shippingAddressId?: string;
+}
+
+export interface CreateOrderAdminPayload {
+  userId?: string;
+  shippingAddressId?: string;
+  customerInfo?: { fullName: string; phone: string; email?: string };
+  newAddress?: { provinceId: string; wardId: string; detailAddress: string };
+  items: { productVariantId: string; quantity: number; unitPrice: number }[];
+  voucherCode?: string;
+  shippingFee: number;
+  paymentMethodId: string;
+  paymentStatus: "UNPAID" | "PAID" | "REFUNDED";
+  orderStatus: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER / ADDRESS / LOCATION TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface Province {
+  id: string;
   name: string;
   fullName: string;
+  code: string;
+}
+export interface Ward {
+  id: string;
+  name: string;
+  fullName: string;
+  code: string;
 }
 
 export interface UserAddress {
@@ -21,61 +88,61 @@ export interface UserAddress {
   contactName: string;
   phone: string;
   detailAddress: string;
-  fullAddress?: string;
-  province: { code: string; name: string; fullName?: string };
-  ward: { code: string; name: string; fullName?: string };
+  province: { id: string; name: string; fullName: string };
+  ward: { id: string; name: string; fullName: string };
   isDefault: boolean;
-  type?: string;
+  deletedAt: string | null;
 }
 
-export interface OrderItem {
+export interface UserResult {
   id: string;
-  productName: string;
-  variantCode?: string;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-  image?: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: string;
 }
 
-export interface OrderDetail extends Order {
-  items: OrderItem[];
-  shippingAddress?: UserAddress;
-}
-
-export interface CreateOrderAdminPayload {
-  userId: string;
-  shippingAddressId?: string;
-  newAddress?: {
-    contactName: string;
-    phone: string;
-    provinceCode: string;
-    wardCode: string;
-    detailAddress: string;
-    type?: string;
-  };
-  paymentMethodId: string;
-  voucherId?: string;
-  cartItemIds: string[];
-  note?: string;
-}
-
-export interface UpdateOrderPayload {
-  orderStatus?: OrderStatus;
-  paymentStatus?: PaymentStatus;
-  note?: string;
-}
-
-// ─── NEW: PaymentMethod type ──────────────────────────────────────────────────
 export interface PaymentMethod {
   id: string;
   name: string;
   code: string;
+  description: string;
   isActive: boolean;
 }
 
+export interface VariantOption {
+  id: string;
+  colorLabel: string;
+  colorValue: string;
+  storageLabel: string;
+  storageValue: string;
+  price: number;
+  finalPrice: number;
+  discountPercentage: number;
+  available: boolean;
+  isDefault: boolean;
+  imageUrl: string | null;
+  code: string;
+}
+
+/**
+ * Product từ search result.
+ * name có thể có variant suffix ("iPhone 13 128GB") — dùng baseName để hiển thị tên gốc.
+ * baseName được tính FE bằng cách deduplicate theo slug.
+ */
+export interface ProductSearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  thumbnail: string | null;
+  category: { id?: string; name: string };
+  brand: { id?: string; name: string };
+  isActive?: boolean;
+  priceOrigin?: number;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// API FUNCTIONS
+// ORDER APIS
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const getOrders = async (params?: {
@@ -119,25 +186,26 @@ export const deleteOrder = async (id: string): Promise<void> => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LOCATION — gọi thẳng provinces.open-api.vn (không qua backend)
+// USER APIS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const getProvinces = async (): Promise<Province[]> => {
-  try {
-    const res = await fetch("https://provinces.open-api.vn/api/v2/p/");
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data ?? []).map((p: any) => ({
-      code: String(p.code),
-      name: p.name,
-      fullName: p.nameWithType ?? p.name,
-    }));
-  } catch {
-    return [];
-  }
-};
+/**
+ * GET /users/admin?search=&limit=10&role=CUSTOMER
+ * Response shape: { data: UserResult[], pagination: { total, page, limit, totalPages } }
+ *
+ * FIX: endpoint là /users/admin (không phải /users/admin/all)
+ * FIX: parse res.data (không phải res.data.data)
+ */
+export async function searchUsers(q: string, limit = 10): Promise<UserResult[]> {
+  const res = await apiRequest.get<{ data: UserResult[]; pagination: any }>("/users/admin", { params: { search: q, limit, role: "CUSTOMER" } });
+  // Controller trả về { data: users[], pagination: {...} }
+  return Array.isArray(res.data) ? res.data : [];
+}
 
-export const getWards = async (provinceCode: string): Promise<Ward[]> => {
+/**
+ * GET /users/admin/:id — lấy thông tin 1 user theo ID
+ */
+export async function getUserById(userId: string): Promise<UserResult | null> {
   try {
     const res = await fetch(
       `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
@@ -150,9 +218,9 @@ export const getWards = async (provinceCode: string): Promise<Ward[]> => {
       fullName: w.nameWithType ?? w.name,
     }));
   } catch {
-    return [];
+    return null;
   }
-};
+}
 
 export const getUserAddresses = async (userId: string): Promise<UserAddress[]> => {
   const res = await apiRequest.get<{ data: UserAddress[] }>(
@@ -180,7 +248,16 @@ export const cancelOrder = async (id: string): Promise<void> => {
   await apiRequest.put(`/admin/orders/${id}`, { orderStatus: "CANCELLED" });
 };
 
-// ─── Payment status ───────────────────────────────────────────────────────────
+export async function getWards(provinceId: string): Promise<Ward[]> {
+  const res = await apiRequest.get<any>(`/addresses/locations/${provinceId}/wards`);
+  // Controller: { success, data: Ward[], meta: {...} }
+  // apiRequest có thể unwrap 1 lần → res = { success, data: Ward[], meta }
+  // hoặc không unwrap → res.data = { success, data: Ward[], meta }
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res.data)) return res.data; // data là array trực tiếp
+  if (Array.isArray(res.data?.data)) return res.data.data; // data.data là array (nested)
+  return [];
+}
 
 export const updatePaymentStatus = async (
   id: string,
@@ -205,7 +282,9 @@ export const confirmManualRefund = async (
   return res.data;
 };
 
-// ─── Order status ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCT APIS
+// ─────────────────────────────────────────────────────────────────────────────
 
 /** Cập nhật orderStatus */
 export const updateOrderStatus = async (
@@ -219,7 +298,12 @@ export const updateOrderStatus = async (
   return res.data;
 };
 
-// ─── Payment method ───────────────────────────────────────────────────────────
+  // Handle multiple response shapes:
+  // { data: { data: [...] } } — paginated  |  { data: [...] } — array  |  [...] — raw
+  let raw: any[] = [];
+  if (Array.isArray(res)) raw = res;
+  else if (Array.isArray(res.data)) raw = res.data;
+  else if (Array.isArray(res.data?.data)) raw = res.data.data;
 
 /** Lấy danh sách phương thức thanh toán đang active */
 export const getActivePaymentMethods = async (): Promise<PaymentMethod[]> => {
