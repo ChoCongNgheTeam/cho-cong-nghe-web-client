@@ -10,7 +10,7 @@ interface FeaturedProductsProps {
 
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
   return (
-    <section className="py-8 md:py-8 bg-neutral-light-active">
+    <section className="py-8 md:py-8 bg-neutral-light">
       <div className="container">
         <div className="rounded-2xl sm:p-4 md:p-6">
           <div className="mb-3">

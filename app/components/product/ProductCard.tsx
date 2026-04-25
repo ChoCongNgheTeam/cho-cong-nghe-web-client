@@ -27,14 +27,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={productUrl}
-      className="relative flex flex-col bg-neutral-light border border-neutral-100
-                 hover:shadow-md rounded-xl h-full"
+      // ✅ FIX: thêm "group" để group-hover hoạt động
+      // ✅ IMPROVE: thêm transition cho shadow + scale nhẹ toàn card
+      className="group relative flex flex-col bg-neutral-light border border-neutral-100
+                 rounded-xl h-full
+                 transition-all duration-300 ease-out
+                 hover:shadow-lg hover:-translate-y-0.5"
     >
-      {/*
-        ── Badge wrapper ──
-        Đặt ra ngoài flow card chính, dùng absolute + z-10
-        Wrapper có p-1 để badge không bị clip bởi rounded-xl của card
-      */}
       {hasPromotion && (
         <div>
           <Badge discountPercent={discountPercentage} />
@@ -48,7 +47,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             src={thumbnailUrl(product.thumbnail, 300)}
             alt={product.name}
             fill
-            className="object-contain transition-transform duration-500 group-hover:scale-105 p-4"
+            // ✅ FIX: group-hover:scale-105 giờ hoạt động vì Link có class "group"
+            className="object-contain transition-transform duration-500 ease-out group-hover:scale-105 p-4"
             sizes="(max-width: 640px) 50vw, 300px"
           />
         ) : (
@@ -61,6 +61,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <h3 className="text-xs sm:text-sm font-medium text-primary line-clamp-2 leading-snug" style={{ minHeight: "calc(2 * 1.375em)" }}>
           {product.name}
         </h3>
+
         {visibleHighlights.length > 0 && (
           <div className="flex gap-1 pt-1 sm:flex-row flex-col">
             {visibleHighlights.map((h) => (
@@ -68,14 +69,14 @@ export default function ProductCard({ product }: ProductCardProps) {
                 key={h.key}
                 title={h.value}
                 className="
-          inline-flex items-center gap-1 min-w-0
-          bg-neutral-100 text-neutral-700
-          border border-neutral-200
-          dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700
-          text-[10px] px-2 py-[2px]
-          rounded-md font-medium
-          sm:max-w-[48%] sm:shrink
-        "
+                  inline-flex items-center gap-1 min-w-0
+                  bg-neutral-100 text-neutral-700
+                  border border-neutral-200
+                  dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700
+                  text-[10px] px-2 py-[2px]
+                  rounded-md font-medium
+                  sm:max-w-[48%] sm:shrink
+                "
               >
                 <HighlightIcon icon={h.icon} className="w-3 h-3 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
                 <span className="truncate">{h.value}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { GitCompareArrows, Heart, User, ChevronDown, Package, MapPin, Shield, LogOut } from "lucide-react";
+import { GitCompareArrows, Heart, User, ChevronDown, Package, MapPin, LogOut } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, memo } from "react";
@@ -30,46 +30,64 @@ const DesktopHeader = memo(
       return () => document.removeEventListener("mousedown", handler);
     }, [showUserMenu, onUserMenuClose]);
 
+    // Icon button: hover bg trắng trong suốt, active đậm hơn
+    // Badge counter: nền trắng + text navy để tương phản rõ
+    const iconBtn = "p-2 rounded-lg relative cursor-pointer transition-colors duration-150 text-white hover:bg-white/10 active:bg-white/20";
+
     return (
-      // ← class "desktop-header-row" để TrendingBar đo được children
       <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
-        {/* Logo */}
+        {/* Logo — luôn dùng logo sáng (light) vì nền navy */}
         <Link href="/" className="shrink-0 pr-10">
-          <Image src={isDarkMode ? "/logo-dark.png" : "/logo.png"} width={180} height={60} alt="Logo" className="h-12 lg:h-15 w-auto hover:opacity-90 transition-opacity" priority />
+          <Image src="/logo-dark-5.png" width={180} height={60} alt="Logo" className="h-12 lg:h-15 w-auto hover:opacity-80 transition-opacity" priority />
         </Link>
 
         {/* Mega menu */}
         <CategoryMegaMenu />
 
-        {/* Search */}
+        {/* Search — glass style (xử lý trong SearchBar.tsx) */}
         <div className="flex-1 max-w-2xl relative">
           <SearchBar />
         </div>
 
         {/* Icons */}
-        <div className="flex items-center gap-2">
-          <button onClick={() => router.push("/compare")} className="lg:flex p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors" title="So sánh">
-            <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
+        <div className="flex items-center gap-1">
+          {/* Compare */}
+          <button onClick={() => router.push("/compare")} className={iconBtn} title="So sánh">
+            <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6" />
             {items.length > 0 && (
-              <span className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px] flex items-center justify-center rounded-full bg-accent text-[10px] font-bold text-neutral-light shadow-sm ring-2 ring-neutral-light">
+              <span
+                className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px] flex items-center justify-center rounded-full text-[10px] font-bold shadow-sm"
+                style={{
+                  background: "#fff",
+                  color: "#0f2050",
+                  // ring navy thay vì xanh sáng để match header
+                  boxShadow: "0 0 0 2px rgba(15,32,80,0.5)",
+                }}
+              >
                 {items.length}
               </span>
             )}
           </button>
+
+          {/* Notification */}
           <NotificationBell variant="user" />
+
+          {/* Cart */}
           <CartIcon />
 
+          {/* User */}
           {isLoading ? (
-            <div className="w-11.5 h-9.5 flex items-center justify-center">
-              <div className="w-8 h-8 rounded-full bg-neutral-dark/20 animate-pulse" />
+            <div className="w-11 h-9 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-white/15 animate-pulse" />
             </div>
           ) : isAuthenticated && user ? (
             <div className="relative" ref={userMenuRef}>
-              <button onClick={onUserMenuToggle} className="flex items-center hover:bg-neutral/50 rounded-lg transition-colors cursor-pointer p-2">
+              <button onClick={onUserMenuToggle} className="flex items-center gap-1 hover:bg-white/10 active:bg-white/20 rounded-lg transition-colors cursor-pointer p-2">
                 <UserAvatar avatarImage={user.avatarImage || "/images/avatar.png"} fullName={user.fullName} size={30} />
-                <ChevronDown className={`w-4 h-4 text-primary transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-white/80 transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`} />
               </button>
 
+              {/* Dropdown — nền trắng/neutral, không navy */}
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-64 bg-neutral-light border border-neutral rounded-lg shadow-xl z-50 overflow-hidden">
                   <div className="py-2">
@@ -106,8 +124,8 @@ const DesktopHeader = memo(
               )}
             </div>
           ) : (
-            <Link href="/account" className="p-2 hover:bg-neutral-light dark:hover:bg-neutral rounded-lg relative cursor-pointer transition-colors" title="Tài khoản">
-              <User className="w-5 h-5 text-primary" />
+            <Link href="/account" className={iconBtn} title="Tài khoản">
+              <User className="w-5 h-5" />
             </Link>
           )}
         </div>

@@ -4,7 +4,7 @@ interface Props {
 
 export const TrustBadges = ({ className = "" }: Props) => {
   return (
-    <section className={`py-12 bg-neutral-light-active ${className}`}>
+    <section className={`py-12 bg-neutral-light ${className}`}>
       <div className="container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Authentic Products */}
