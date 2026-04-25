@@ -1,21 +1,25 @@
 "use client";
 
 /**
- * /admin/orders/create/page.tsx  v2
+ * /admin/orders/create/page.tsx  v3
  *
  * Fix:
- * 1. Tab khách hàng: "Khách cũ" (search) | "Khách mới" (nhập thông tin)
- * 2. User search: đúng endpoint /users/admin?search=, parse { data: [], pagination }
- * 3. Product search: hiển thị name gốc (không có variant suffix)
- *    Sau khi chọn → chọn từng attribute (color, storage...) thay vì chip variants
- * 4. Địa chỉ: lấy đúng địa chỉ của user đó (có userId param)
+ * 1. Khách mới: dùng newAddr.contactName + newAddr.phone thay vì newCustomer state riêng
+ *    → customerInfo và newAddress cùng lấy từ một nguồn duy nhất
+ * 2. AddressForm: gộp 2 nhánh if/else name/phone thành 1 block, chỉ đổi label text
+ * 3. validate() và handleSubmit() đồng bộ với state mới
+ * 4. Giữ nguyên toàn bộ logic khách cũ, sản phẩm, thanh toán
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Search, Plus, Trash2, Loader2, User, MapPin, Package, CreditCard, Tag, X, AlertCircle, CheckCircle2, ShoppingCart, UserPlus, Users } from "lucide-react";
+import {
+  ArrowLeft, Search, Plus, Trash2, Loader2, User, MapPin,
+  Package, CreditCard, Tag, X, AlertCircle, CheckCircle2,
+  ShoppingCart, UserPlus, Users,
+} from "lucide-react";
 import Select from "react-select";
 import { formatVND } from "@/helpers";
 import {
@@ -126,13 +130,20 @@ export default function CreateOrderPage() {
   const [showNewAddress, setShowNewAddress] = useState(false);
   const userSearchRef = useRef<HTMLDivElement>(null);
 
-  // New customer
-  const [newCustomer, setNewCustomer] = useState({ fullName: "", phone: "", email: "" });
+  // ── FIX: Khách mới — dùng chung newAddr cho cả customerInfo lẫn địa chỉ ──
+  // Bỏ newCustomer state riêng. contactName + phone trong newAddr = người đặt = người nhận.
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
 
-  // Address fields (dùng cho cả khách mới và khách cũ nhập địa chỉ mới)
+  // Address fields — dùng cho cả khách mới lẫn khách cũ nhập địa chỉ mới
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [newAddr, setNewAddr] = useState({ contactName: "", phone: "", provinceId: "", wardId: "", detailAddress: "" });
+  const [newAddr, setNewAddr] = useState({
+    contactName: "",
+    phone: "",
+    provinceId: "",
+    wardId: "",
+    detailAddress: "",
+  });
 
   // ── Products ──────────────────────────────────────────────────────────────
   const [productSearch, setProductSearch] = useState("");
@@ -144,9 +155,7 @@ export default function CreateOrderPage() {
   const [loadingVariants, setLoadingVariants] = useState(false);
   const productSearchRef = useRef<HTMLDivElement>(null);
 
-  // Selected attributes (color, storage...)
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
-  // Derived: variant matching selected attrs
   const [matchedVariant, setMatchedVariant] = useState<VariantOption | null>(null);
   const [addQty, setAddQty] = useState(1);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -215,37 +224,20 @@ export default function CreateOrderPage() {
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // DERIVED: attribute groups từ variants
-  // VD: variants của iPhone 13 → { color: ["black","white","green"], storage: ["128gb","256gb","512gb"] }
+  // ATTR GROUPS
   // ─────────────────────────────────────────────────────────────────────────
 
-  /**
-   * attrGroups: build từ TẤT CẢ variants (kể cả unavailable).
-   * Mỗi option có thêm field `enabled` = có ít nhất 1 variant available khi kết hợp với selection hiện tại.
-   *
-   * Logic disable cross-dependency:
-   * - Khi chọn màu X → storage Y disabled nếu không có variant {color=X, storage=Y, available=true}
-   * - Khi chọn storage Y → màu X disabled nếu không có variant {color=X, storage=Y, available=true}
-   */
   const attrGroups = (() => {
     if (!variants.length) return [];
-
-    // Thu thập tất cả unique values (kể cả unavailable)
     const colorMap = new Map<string, { value: string; label: string; imageUrl: string | null }>();
     const storageMap = new Map<string, { value: string; label: string }>();
-
     for (const v of variants) {
-      if (v.colorValue && !colorMap.has(v.colorValue)) {
+      if (v.colorValue && !colorMap.has(v.colorValue))
         colorMap.set(v.colorValue, { value: v.colorValue, label: v.colorLabel || v.colorValue, imageUrl: v.imageUrl });
-      }
-      if (v.storageValue && !storageMap.has(v.storageValue)) {
+      if (v.storageValue && !storageMap.has(v.storageValue))
         storageMap.set(v.storageValue, { value: v.storageValue, label: v.storageLabel || v.storageValue });
-      }
     }
-
     const groups = [];
-
-    // Color group — enabled nếu có variant available với storage đang chọn
     if (colorMap.size > 0) {
       groups.push({
         code: "color",
@@ -253,17 +245,11 @@ export default function CreateOrderPage() {
         values: Array.from(colorMap.values()).map((c) => ({
           ...c,
           enabled: variants.some(
-            (v) =>
-              v.colorValue === c.value &&
-              v.available &&
-              // Nếu đang chọn storage rồi → phải match storage đó
-              (!selectedAttrs.storage || v.storageValue === selectedAttrs.storage),
+            (v) => v.colorValue === c.value && v.available && (!selectedAttrs.storage || v.storageValue === selectedAttrs.storage),
           ),
         })),
       });
     }
-
-    // Storage group — enabled nếu có variant available với color đang chọn
     if (storageMap.size > 0) {
       groups.push({
         code: "storage",
@@ -272,34 +258,22 @@ export default function CreateOrderPage() {
           ...s,
           imageUrl: null as string | null,
           enabled: variants.some(
-            (v) =>
-              v.storageValue === s.value &&
-              v.available &&
-              // Nếu đang chọn màu rồi → phải match màu đó
-              (!selectedAttrs.color || v.colorValue === selectedAttrs.color),
+            (v) => v.storageValue === s.value && v.available && (!selectedAttrs.color || v.colorValue === selectedAttrs.color),
           ),
         })),
       });
     }
-
     return groups;
   })();
 
-  // Tìm variant khớp với selectedAttrs
   useEffect(() => {
-    if (!variants.length) {
-      setMatchedVariant(null);
-      return;
-    }
-
-    const matched =
-      variants.find((v) => {
-        if (!v.available) return false;
-        const colorMatch = !selectedAttrs.color || v.colorValue === selectedAttrs.color;
-        const storageMatch = !selectedAttrs.storage || v.storageValue === selectedAttrs.storage;
-        return colorMatch && storageMatch;
-      }) ?? null;
-
+    if (!variants.length) { setMatchedVariant(null); return; }
+    const matched = variants.find((v) => {
+      if (!v.available) return false;
+      const colorMatch = !selectedAttrs.color || v.colorValue === selectedAttrs.color;
+      const storageMatch = !selectedAttrs.storage || v.storageValue === selectedAttrs.storage;
+      return colorMatch && storageMatch;
+    }) ?? null;
     setMatchedVariant(matched);
   }, [selectedAttrs, variants]);
 
@@ -308,19 +282,11 @@ export default function CreateOrderPage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   const doSearchUsers = useCallback(async (q: string) => {
-    if (q.trim().length < 2) {
-      setUserResults([]);
-      return;
-    }
+    if (q.trim().length < 2) { setUserResults([]); return; }
     setSearchingUser(true);
-    try {
-      const results = await searchUsers(q);
-      setUserResults(results);
-    } catch {
-      setUserResults([]);
-    } finally {
-      setSearchingUser(false);
-    }
+    try { setUserResults(await searchUsers(q)); }
+    catch { setUserResults([]); }
+    finally { setSearchingUser(false); }
   }, []);
 
   useEffect(() => {
@@ -329,34 +295,24 @@ export default function CreateOrderPage() {
   }, [userSearch, doSearchUsers]);
 
   const doSearchProducts = useCallback(async (q: string) => {
-    if (q.trim().length < 2) {
-      setProductResults([]);
-      setShowProductDropdown(false);
-      return;
-    }
+    if (q.trim().length < 2) { setProductResults([]); setShowProductDropdown(false); return; }
     setSearchingProduct(true);
     try {
       const results = await searchProducts(q);
       setProductResults(results);
       if (results.length > 0) setShowProductDropdown(true);
-    } catch {
-      setProductResults([]);
-      setShowProductDropdown(false);
-    } finally {
-      setSearchingProduct(false);
-    }
+    } catch { setProductResults([]); setShowProductDropdown(false); }
+    finally { setSearchingProduct(false); }
   }, []);
 
-  // Chỉ search khi chưa chọn product
   useEffect(() => {
-    if (selectedProduct) return; // Đã chọn rồi, không search lại
+    if (selectedProduct) return;
     const t = setTimeout(() => doSearchProducts(productSearch), 300);
     return () => clearTimeout(t);
   }, [productSearch, doSearchProducts, selectedProduct]);
 
   const handleSelectProduct = async (product: ProductSearchResult) => {
     setSelectedProduct(product);
-    // Hiển thị name gốc (không có variant suffix như "128GB")
     setProductSearch(product.name);
     setShowProductDropdown(false);
     setVariants([]);
@@ -366,7 +322,6 @@ export default function CreateOrderPage() {
     try {
       const opts = await getVariantOptions(product.slug);
       setVariants(opts);
-      // Auto-select default variant attributes
       const def = opts.find((v) => v.isDefault) ?? opts[0];
       if (def) {
         const auto: Record<string, string> = {};
@@ -374,11 +329,8 @@ export default function CreateOrderPage() {
         if (def.storageValue) auto.storage = def.storageValue;
         setSelectedAttrs(auto);
       }
-    } catch {
-      setVariants([]);
-    } finally {
-      setLoadingVariants(false);
-    }
+    } catch { setVariants([]); }
+    finally { setLoadingVariants(false); }
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -388,7 +340,6 @@ export default function CreateOrderPage() {
   const handleAddToCart = () => {
     if (!selectedProduct || !matchedVariant) return;
     const label = [matchedVariant.colorLabel, matchedVariant.storageLabel].filter(Boolean).join(" / ") || matchedVariant.code || "Default";
-
     const existing = cart.find((c) => c.variantId === matchedVariant.id);
     if (existing) {
       setCart((p) => p.map((c) => (c.variantId === matchedVariant.id ? { ...c, quantity: c.quantity + addQty } : c)));
@@ -398,7 +349,7 @@ export default function CreateOrderPage() {
         {
           _key: uid(),
           productId: selectedProduct.id,
-          productName: selectedProduct.name, // name gốc
+          productName: selectedProduct.name,
           productThumbnail: matchedVariant.imageUrl ?? selectedProduct.thumbnail,
           variantId: matchedVariant.id,
           variantLabel: label,
@@ -449,8 +400,9 @@ export default function CreateOrderPage() {
         if (!newAddr.detailAddress.trim()) errs.detailAddress = "Địa chỉ không được trống";
       }
     } else {
-      if (!newCustomer.fullName.trim()) errs.newFullName = "Họ tên không được trống";
-      if (!newCustomer.phone.trim()) errs.newPhone = "SĐT không được trống";
+      // ── FIX: khách mới — check từ newAddr thay vì newCustomer ──
+      if (!newAddr.contactName.trim()) errs.contactName = "Họ tên không được trống";
+      if (!newAddr.phone.trim()) errs.phone = "SĐT không được trống";
       if (!newAddr.provinceId) errs.province = "Chọn tỉnh/thành";
       if (!newAddr.wardId) errs.ward = "Chọn phường/xã";
       if (!newAddr.detailAddress.trim()) errs.detailAddress = "Địa chỉ không được trống";
@@ -479,15 +431,30 @@ export default function CreateOrderPage() {
       if (customerTab === "existing" && selectedUser) {
         payload.userId = selectedUser.id;
         if (showNewAddress) {
-          payload.newAddress = { provinceId: newAddr.provinceId, wardId: newAddr.wardId, detailAddress: newAddr.detailAddress.trim() };
-          payload.customerInfo = { fullName: newAddr.contactName.trim(), phone: newAddr.phone.trim() };
+          payload.newAddress = {
+            provinceId: newAddr.provinceId,
+            wardId: newAddr.wardId,
+            detailAddress: newAddr.detailAddress.trim(),
+          };
+          payload.customerInfo = {
+            fullName: newAddr.contactName.trim(),
+            phone: newAddr.phone.trim(),
+          };
         } else {
           payload.shippingAddressId = selectedAddressId;
         }
       } else {
-        // Khách mới
-        payload.customerInfo = { fullName: newCustomer.fullName.trim(), phone: newCustomer.phone.trim(), email: newCustomer.email.trim() || undefined };
-        payload.newAddress = { provinceId: newAddr.provinceId, wardId: newAddr.wardId, detailAddress: newAddr.detailAddress.trim() };
+        // ── FIX: Khách mới — lấy customerInfo từ newAddr, không phải newCustomer ──
+        payload.customerInfo = {
+          fullName: newAddr.contactName.trim(),
+          phone: newAddr.phone.trim(),
+          ...(newCustomerEmail.trim() ? { email: newCustomerEmail.trim() } : {}),
+        };
+        payload.newAddress = {
+          provinceId: newAddr.provinceId,
+          wardId: newAddr.wardId,
+          detailAddress: newAddr.detailAddress.trim(),
+        };
       }
 
       const res = await createOrderAdmin(payload);
@@ -510,9 +477,7 @@ export default function CreateOrderPage() {
           <ArrowLeft size={14} /> Quay lại
         </button>
         <span className="text-neutral-dark">/</span>
-        <Link href="/admin/orders" className="text-[13px] text-neutral-dark hover:text-accent">
-          Đơn hàng
-        </Link>
+        <Link href="/admin/orders" className="text-[13px] text-neutral-dark hover:text-accent">Đơn hàng</Link>
         <span className="text-neutral-dark">/</span>
         <span className="text-[13px] text-primary font-medium">Tạo đơn mới</span>
       </div>
@@ -525,6 +490,7 @@ export default function CreateOrderPage() {
 
         <div className="grid grid-cols-3 gap-5">
           <div className="col-span-2 space-y-5">
+
             {/* ── 1. Khách hàng ── */}
             <SectionCard title="Khách hàng" icon={<User size={15} />}>
               {/* Tab switcher */}
@@ -552,22 +518,13 @@ export default function CreateOrderPage() {
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
                       <input
                         value={selectedUser ? `${selectedUser.fullName} — ${selectedUser.email}` : userSearch}
-                        onChange={(e) => {
-                          setUserSearch(e.target.value);
-                          setSelectedUser(null);
-                        }}
+                        onChange={(e) => { setUserSearch(e.target.value); setSelectedUser(null); }}
                         placeholder="Tìm theo tên, email, SĐT..."
                         className={inputCls(!!errors.user) + " pl-8 pr-8"}
                         readOnly={!!selectedUser}
                       />
                       {selectedUser && (
-                        <button
-                          onClick={() => {
-                            setSelectedUser(null);
-                            setUserSearch("");
-                          }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-promotion cursor-pointer"
-                        >
+                        <button onClick={() => { setSelectedUser(null); setUserSearch(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-promotion cursor-pointer">
                           <X size={14} />
                         </button>
                       )}
@@ -580,19 +537,15 @@ export default function CreateOrderPage() {
                         {userResults.map((u) => (
                           <button
                             key={u.id}
-                            onClick={() => {
-                              setSelectedUser(u);
-                              setUserSearch("");
-                              setUserResults([]);
-                            }}
+                            onClick={() => { setSelectedUser(u); setUserSearch(""); setUserResults([]); }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-light-active cursor-pointer text-left"
                           >
-                            <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center shrink-0 text-[11px] font-bold">{u.fullName?.[0]?.toUpperCase() ?? "U"}</div>
+                            <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center shrink-0 text-[11px] font-bold">
+                              {u.fullName?.[0]?.toUpperCase() ?? "U"}
+                            </div>
                             <div className="min-w-0">
                               <p className="text-[13px] font-medium text-primary truncate">{u.fullName}</p>
-                              <p className="text-[11px] text-neutral-dark">
-                                {u.email} · {u.phone}
-                              </p>
+                              <p className="text-[11px] text-neutral-dark">{u.email} · {u.phone}</p>
                             </div>
                           </button>
                         ))}
@@ -644,32 +597,29 @@ export default function CreateOrderPage() {
                   )}
                 </>
               ) : (
-                /* Khách mới */
+                /* ── FIX: Khách mới — chỉ có email riêng, name/phone lấy từ AddressForm ── */
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label required>Họ và tên</Label>
-                      <input
-                        value={newCustomer.fullName}
-                        onChange={(e) => setNewCustomer((p) => ({ ...p, fullName: e.target.value }))}
-                        placeholder="Nguyễn Văn A"
-                        className={inputCls(!!errors.newFullName)}
-                      />
-                      {errors.newFullName && <p className="text-[11px] text-promotion mt-1">{errors.newFullName}</p>}
-                    </div>
-                    <div>
-                      <Label required>Số điện thoại</Label>
-                      <input value={newCustomer.phone} onChange={(e) => setNewCustomer((p) => ({ ...p, phone: e.target.value }))} placeholder="0912345678" className={inputCls(!!errors.newPhone)} />
-                      {errors.newPhone && <p className="text-[11px] text-promotion mt-1">{errors.newPhone}</p>}
-                    </div>
-                  </div>
                   <div>
                     <Label>Email (tùy chọn)</Label>
-                    <input type="email" value={newCustomer.email} onChange={(e) => setNewCustomer((p) => ({ ...p, email: e.target.value }))} placeholder="email@example.com" className={inputCls()} />
+                    <input
+                      type="email"
+                      value={newCustomerEmail}
+                      onChange={(e) => setNewCustomerEmail(e.target.value)}
+                      placeholder="email@example.com"
+                      className={inputCls()}
+                    />
                   </div>
                   <div>
-                    <p className="text-[12px] font-semibold text-primary mb-2">Địa chỉ giao hàng</p>
-                    <AddressForm provinces={provinces} wards={wards} addr={newAddr} setAddr={setNewAddr} errors={errors} showNamePhone />
+                    <p className="text-[12px] font-semibold text-primary mb-2">Thông tin người nhận & địa chỉ giao hàng</p>
+                    {/* showNamePhone=true → AddressForm tự render name/phone vào newAddr */}
+                    <AddressForm
+                      provinces={provinces}
+                      wards={wards}
+                      addr={newAddr}
+                      setAddr={setNewAddr}
+                      errors={errors}
+                      showNamePhone
+                    />
                   </div>
                 </div>
               )}
@@ -684,26 +634,17 @@ export default function CreateOrderPage() {
                   <input
                     value={selectedProduct ? selectedProduct.name : productSearch}
                     onChange={(e) => {
-                      if (selectedProduct) return; // readOnly effect khi đã chọn
+                      if (selectedProduct) return;
                       setProductSearch(e.target.value);
-                      // Nếu xóa hết thì ẩn dropdown
                       if (!e.target.value) setShowProductDropdown(false);
                     }}
                     readOnly={!!selectedProduct}
                     placeholder="Tìm theo tên sản phẩm... (VD: iPhone, MacBook)"
                     className={inputCls() + " pl-8 pr-8" + (selectedProduct ? " bg-neutral-light-active/60 cursor-default" : "")}
                   />
-                  {/* Nút X khi đã chọn product */}
                   {selectedProduct && (
                     <button
-                      onClick={() => {
-                        setSelectedProduct(null);
-                        setProductSearch("");
-                        setVariants([]);
-                        setSelectedAttrs({});
-                        setMatchedVariant(null);
-                        setShowProductDropdown(false);
-                      }}
+                      onClick={() => { setSelectedProduct(null); setProductSearch(""); setVariants([]); setSelectedAttrs({}); setMatchedVariant(null); setShowProductDropdown(false); }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-promotion cursor-pointer"
                     >
                       <X size={14} />
@@ -717,18 +658,13 @@ export default function CreateOrderPage() {
                     {productResults.map((p) => (
                       <button key={p.id} onClick={() => handleSelectProduct(p)} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-light-active cursor-pointer text-left">
                         <div className="w-9 h-9 rounded-lg overflow-hidden border border-neutral bg-neutral-light-active shrink-0">
-                          {p.thumbnail ? (
-                            <Image src={p.thumbnail} alt={p.name} width={36} height={36} className="object-contain w-full h-full" unoptimized />
-                          ) : (
-                            <Package size={14} className="text-neutral-dark m-auto mt-2.5" />
-                          )}
+                          {p.thumbnail
+                            ? <Image src={p.thumbnail} alt={p.name} width={36} height={36} className="object-contain w-full h-full" unoptimized />
+                            : <Package size={14} className="text-neutral-dark m-auto mt-2.5" />}
                         </div>
                         <div className="min-w-0">
-                          {/* Hiển thị name gốc: "iPhone 13" không phải "iPhone 13 128GB" */}
                           <p className="text-[13px] font-medium text-primary truncate">{p.name}</p>
-                          <p className="text-[11px] text-neutral-dark">
-                            {p.brand?.name} · {p.category?.name}
-                          </p>
+                          <p className="text-[11px] text-neutral-dark">{p.brand?.name} · {p.category?.name}</p>
                         </div>
                       </button>
                     ))}
@@ -736,16 +672,14 @@ export default function CreateOrderPage() {
                 )}
               </div>
 
-              {/* Attribute selectors + add to cart */}
+              {/* Attribute selectors */}
               {selectedProduct && (
                 <div className="p-4 rounded-xl border border-neutral bg-neutral-light-active/40 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden border border-neutral bg-neutral-light shrink-0">
-                      {selectedProduct.thumbnail ? (
-                        <Image src={selectedProduct.thumbnail} alt={selectedProduct.name} width={40} height={40} className="object-contain w-full h-full" unoptimized />
-                      ) : (
-                        <Package size={14} className="text-neutral-dark m-3" />
-                      )}
+                      {selectedProduct.thumbnail
+                        ? <Image src={selectedProduct.thumbnail} alt={selectedProduct.name} width={40} height={40} className="object-contain w-full h-full" unoptimized />
+                        : <Package size={14} className="text-neutral-dark m-3" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold text-primary">{selectedProduct.name}</p>
@@ -759,7 +693,6 @@ export default function CreateOrderPage() {
                     </div>
                   ) : attrGroups.length > 0 ? (
                     <div className="space-y-3">
-                      {/* Attribute groups */}
                       {attrGroups.map((group) => (
                         <div key={group.code}>
                           <Label>{group.label}</Label>
@@ -788,7 +721,6 @@ export default function CreateOrderPage() {
                                     <span className={`w-3.5 h-3.5 rounded-full border border-neutral/50 shrink-0 ${!isEnabled ? "opacity-40" : ""}`} style={{ background: val.value }} />
                                   )}
                                   {val.label}
-                                  {/* Gạch chéo overlay khi disabled */}
                                   {!isEnabled && (
                                     <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                       <span className="w-full h-px bg-neutral-dark/30 rotate-[-20deg] absolute" />
@@ -801,7 +733,6 @@ export default function CreateOrderPage() {
                         </div>
                       ))}
 
-                      {/* Matched variant info + qty */}
                       {matchedVariant ? (
                         <div className="flex items-end gap-3 pt-1">
                           <div className="flex-1 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50">
@@ -812,24 +743,12 @@ export default function CreateOrderPage() {
                           <div>
                             <Label>Số lượng</Label>
                             <div className="flex items-center border border-neutral rounded-xl overflow-hidden w-28">
-                              <button onClick={() => setAddQty((q) => Math.max(1, q - 1))} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">
-                                −
-                              </button>
-                              <input
-                                type="number"
-                                value={addQty}
-                                onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
-                                className="flex-1 text-center text-[13px] bg-transparent border-none outline-none py-2 min-w-0"
-                              />
-                              <button onClick={() => setAddQty((q) => q + 1)} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">
-                                +
-                              </button>
+                              <button onClick={() => setAddQty((q) => Math.max(1, q - 1))} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">−</button>
+                              <input type="number" value={addQty} onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))} className="flex-1 text-center text-[13px] bg-transparent border-none outline-none py-2 min-w-0" />
+                              <button onClick={() => setAddQty((q) => q + 1)} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">+</button>
                             </div>
                           </div>
-                          <button
-                            onClick={handleAddToCart}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-[13px] font-medium rounded-xl cursor-pointer mb-0.5"
-                          >
+                          <button onClick={handleAddToCart} className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-[13px] font-medium rounded-xl cursor-pointer mb-0.5">
                             <ShoppingCart size={14} /> Thêm vào đơn
                           </button>
                         </div>
@@ -838,7 +757,6 @@ export default function CreateOrderPage() {
                       )}
                     </div>
                   ) : variants.length > 0 ? (
-                    // Fallback: sản phẩm chỉ có 1 variant không có attributes
                     <div className="flex items-end gap-3">
                       <div className="flex-1 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50">
                         <p className="text-[15px] font-bold text-accent">{formatVND(variants[0].finalPrice ?? variants[0].price)}</p>
@@ -846,25 +764,13 @@ export default function CreateOrderPage() {
                       <div>
                         <Label>Số lượng</Label>
                         <div className="flex items-center border border-neutral rounded-xl overflow-hidden w-28">
-                          <button onClick={() => setAddQty((q) => Math.max(1, q - 1))} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            value={addQty}
-                            onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
-                            className="flex-1 text-center text-[13px] bg-transparent border-none outline-none py-2 min-w-0"
-                          />
-                          <button onClick={() => setAddQty((q) => q + 1)} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">
-                            +
-                          </button>
+                          <button onClick={() => setAddQty((q) => Math.max(1, q - 1))} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">−</button>
+                          <input type="number" value={addQty} onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))} className="flex-1 text-center text-[13px] bg-transparent border-none outline-none py-2 min-w-0" />
+                          <button onClick={() => setAddQty((q) => q + 1)} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">+</button>
                         </div>
                       </div>
                       <button
-                        onClick={() => {
-                          setMatchedVariant(variants[0]);
-                          handleAddToCart();
-                        }}
+                        onClick={() => { setMatchedVariant(variants[0]); handleAddToCart(); }}
                         className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-[13px] font-medium rounded-xl cursor-pointer mb-0.5"
                       >
                         <ShoppingCart size={14} /> Thêm vào đơn
@@ -898,11 +804,9 @@ export default function CreateOrderPage() {
                           <td className="px-3 py-2.5">
                             <div className="flex items-center gap-2">
                               <div className="w-8 h-8 rounded-lg overflow-hidden border border-neutral bg-neutral-light-active shrink-0">
-                                {item.productThumbnail ? (
-                                  <Image src={item.productThumbnail} alt="" width={32} height={32} className="object-contain w-full h-full" unoptimized />
-                                ) : (
-                                  <Package size={11} className="text-neutral-dark m-2.5" />
-                                )}
+                                {item.productThumbnail
+                                  ? <Image src={item.productThumbnail} alt="" width={32} height={32} className="object-contain w-full h-full" unoptimized />
+                                  : <Package size={11} className="text-neutral-dark m-2.5" />}
                               </div>
                               <div className="min-w-0">
                                 <p className="text-primary font-medium truncate max-w-[160px]">{item.productName}</p>
@@ -913,21 +817,14 @@ export default function CreateOrderPage() {
                           <td className="px-3 py-2.5 text-right">{formatVND(item.unitPrice)}</td>
                           <td className="px-3 py-2.5">
                             <div className="flex items-center justify-center border border-neutral rounded-lg overflow-hidden w-20 mx-auto">
-                              <button onClick={() => updateQty(item._key, item.quantity - 1)} className="px-2 py-1 hover:bg-neutral-light-active text-[13px] cursor-pointer">
-                                −
-                              </button>
+                              <button onClick={() => updateQty(item._key, item.quantity - 1)} className="px-2 py-1 hover:bg-neutral-light-active text-[13px] cursor-pointer">−</button>
                               <span className="flex-1 text-center py-1">{item.quantity}</span>
-                              <button onClick={() => updateQty(item._key, item.quantity + 1)} className="px-2 py-1 hover:bg-neutral-light-active text-[13px] cursor-pointer">
-                                +
-                              </button>
+                              <button onClick={() => updateQty(item._key, item.quantity + 1)} className="px-2 py-1 hover:bg-neutral-light-active text-[13px] cursor-pointer">+</button>
                             </div>
                           </td>
                           <td className="px-3 py-2.5 text-right font-semibold text-accent">{formatVND(item.unitPrice * item.quantity)}</td>
                           <td className="px-3 py-2.5">
-                            <button
-                              onClick={() => removeFromCart(item._key)}
-                              className="w-6 h-6 rounded-lg hover:bg-promotion-light hover:text-promotion flex items-center justify-center cursor-pointer text-neutral-dark"
-                            >
+                            <button onClick={() => removeFromCart(item._key)} className="w-6 h-6 rounded-lg hover:bg-promotion-light hover:text-promotion flex items-center justify-center cursor-pointer text-neutral-dark">
                               <Trash2 size={11} />
                             </button>
                           </td>
@@ -1011,19 +908,21 @@ export default function CreateOrderPage() {
                 <span className="text-[14px] font-bold text-primary">Tổng cộng</span>
                 <span className="text-[16px] font-bold text-accent">{formatVND(total)}</span>
               </div>
-              {(selectedUser || (customerTab === "new" && newCustomer.fullName)) && (
+              {/* Summary: tên khách */}
+              {(selectedUser || (customerTab === "new" && newAddr.contactName)) && (
                 <div className="pt-2.5 border-t border-neutral">
                   <div className="flex items-center gap-1.5 text-[12px]">
                     <User size={11} className="text-neutral-dark shrink-0" />
-                    <span className="font-medium text-primary">{selectedUser?.fullName ?? newCustomer.fullName}</span>
+                    <span className="font-medium text-primary">
+                      {/* FIX: khách mới lấy từ newAddr */}
+                      {selectedUser?.fullName ?? newAddr.contactName}
+                    </span>
                     {customerTab === "new" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">Mới</span>}
                   </div>
                   {selectedAddress && (
                     <div className="flex items-start gap-1.5 text-[12px] text-neutral-dark mt-1">
                       <MapPin size={11} className="shrink-0 mt-0.5" />
-                      <span className="line-clamp-2">
-                        {selectedAddress.detailAddress}, {selectedAddress.ward.name}
-                      </span>
+                      <span className="line-clamp-2">{selectedAddress.detailAddress}, {selectedAddress.ward.name}</span>
                     </div>
                   )}
                 </div>
@@ -1041,15 +940,7 @@ export default function CreateOrderPage() {
               disabled={submitting}
               className="w-full flex items-center justify-center gap-2 py-3 bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold rounded-xl cursor-pointer disabled:opacity-60 shadow-sm"
             >
-              {submitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Đang tạo...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={16} /> Tạo đơn hàng
-                </>
-              )}
+              {submitting ? <><Loader2 size={16} className="animate-spin" /> Đang tạo...</> : <><CheckCircle2 size={16} /> Tạo đơn hàng</>}
             </button>
             <button
               onClick={() => router.back()}
@@ -1075,11 +966,11 @@ interface AddressFormProps {
   addr: { contactName: string; phone: string; provinceId: string; wardId: string; detailAddress: string };
   setAddr: (fn: (p: any) => any) => void;
   errors: Record<string, string>;
-  showNamePhone?: boolean; // Khách mới thì form này cũng có name/phone
+  showNamePhone?: boolean;
 }
 
 function AddressForm({ provinces, wards, addr, setAddr, errors, showNamePhone }: AddressFormProps) {
-  const rsStyles = () => ({
+  const rsStylesLocal = () => ({
     control: (b: any) => ({
       ...b,
       borderRadius: "0.75rem",
@@ -1097,10 +988,11 @@ function AddressForm({ provinces, wards, addr, setAddr, errors, showNamePhone }:
     placeholder: (b: any) => ({ ...b, fontSize: "13px", color: "#9ca3af" }),
   });
 
-  function inputCls(err?: boolean) {
+  function fieldCls(err?: boolean) {
     return `w-full px-3 py-2 text-[13px] bg-neutral-light border rounded-xl text-primary placeholder:text-neutral-dark/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all ${err ? "border-promotion" : "border-neutral"}`;
   }
-  function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
+
+  function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
     return (
       <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider block mb-1.5">
         {children}
@@ -1111,50 +1003,50 @@ function AddressForm({ provinces, wards, addr, setAddr, errors, showNamePhone }:
 
   return (
     <div className="space-y-3 p-4 rounded-xl border border-accent/20 bg-accent/5">
-      {showNamePhone && (
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label required>Họ tên người nhận</Label>
-            <input value={addr.contactName} onChange={(e) => setAddr((p: any) => ({ ...p, contactName: e.target.value }))} placeholder="Nguyễn Văn A" className={inputCls(!!errors.contactName)} />
-            {errors.contactName && <p className="text-[11px] text-promotion mt-1">{errors.contactName}</p>}
-          </div>
-          <div>
-            <Label required>SĐT người nhận</Label>
-            <input value={addr.phone} onChange={(e) => setAddr((p: any) => ({ ...p, phone: e.target.value }))} placeholder="0912345678" className={inputCls(!!errors.phone)} />
-            {errors.phone && <p className="text-[11px] text-promotion mt-1">{errors.phone}</p>}
-          </div>
-        </div>
-      )}
-      {!showNamePhone && (
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label required>Họ tên</Label>
-            <input value={addr.contactName} onChange={(e) => setAddr((p: any) => ({ ...p, contactName: e.target.value }))} placeholder="Nguyễn Văn A" className={inputCls(!!errors.contactName)} />
-            {errors.contactName && <p className="text-[11px] text-promotion mt-1">{errors.contactName}</p>}
-          </div>
-          <div>
-            <Label required>Số điện thoại</Label>
-            <input value={addr.phone} onChange={(e) => setAddr((p: any) => ({ ...p, phone: e.target.value }))} placeholder="0912345678" className={inputCls(!!errors.phone)} />
-            {errors.phone && <p className="text-[11px] text-promotion mt-1">{errors.phone}</p>}
-          </div>
-        </div>
-      )}
+      {/* ── FIX: Gộp 2 nhánh if/else thành 1 block duy nhất, chỉ đổi label ── */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label required>Tỉnh / Thành phố</Label>
+          <FieldLabel required>
+            {showNamePhone ? "Họ tên người nhận" : "Họ tên"}
+          </FieldLabel>
+          <input
+            value={addr.contactName}
+            onChange={(e) => setAddr((p: any) => ({ ...p, contactName: e.target.value }))}
+            placeholder="Nguyễn Văn A"
+            className={fieldCls(!!errors.contactName)}
+          />
+          {errors.contactName && <p className="text-[11px] text-promotion mt-1">{errors.contactName}</p>}
+        </div>
+        <div>
+          <FieldLabel required>
+            {showNamePhone ? "SĐT người nhận" : "Số điện thoại"}
+          </FieldLabel>
+          <input
+            value={addr.phone}
+            onChange={(e) => setAddr((p: any) => ({ ...p, phone: e.target.value }))}
+            placeholder="0912345678"
+            className={fieldCls(!!errors.phone)}
+          />
+          {errors.phone && <p className="text-[11px] text-promotion mt-1">{errors.phone}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <FieldLabel required>Tỉnh / Thành phố</FieldLabel>
           <Select
             options={provinces.map((p) => ({ value: p.id, label: p.fullName }))}
             value={addr.provinceId ? { value: addr.provinceId, label: provinces.find((p) => p.id === addr.provinceId)?.fullName ?? "" } : null}
             onChange={(o: any) => setAddr((p: any) => ({ ...p, provinceId: o?.value ?? "", wardId: "" }))}
             placeholder="— Chọn tỉnh —"
             isSearchable
-            styles={rsStyles()}
+            styles={rsStylesLocal()}
             noOptionsMessage={() => "Không tìm thấy"}
           />
           {errors.province && <p className="text-[11px] text-promotion mt-1">{errors.province}</p>}
         </div>
         <div>
-          <Label required>Phường / Xã</Label>
+          <FieldLabel required>Phường / Xã</FieldLabel>
           <Select
             options={wards.map((w) => ({ value: w.id, label: w.fullName }))}
             value={addr.wardId ? { value: addr.wardId, label: wards.find((w) => w.id === addr.wardId)?.fullName ?? "" } : null}
@@ -1162,19 +1054,20 @@ function AddressForm({ provinces, wards, addr, setAddr, errors, showNamePhone }:
             placeholder={addr.provinceId ? "— Chọn phường/xã —" : "Chọn tỉnh trước"}
             isDisabled={!addr.provinceId}
             isSearchable
-            styles={rsStyles()}
+            styles={rsStylesLocal()}
             noOptionsMessage={() => "Không tìm thấy"}
           />
           {errors.ward && <p className="text-[11px] text-promotion mt-1">{errors.ward}</p>}
         </div>
       </div>
+
       <div>
-        <Label required>Địa chỉ chi tiết</Label>
+        <FieldLabel required>Địa chỉ chi tiết</FieldLabel>
         <input
           value={addr.detailAddress}
           onChange={(e) => setAddr((p: any) => ({ ...p, detailAddress: e.target.value }))}
           placeholder="Số nhà, tên đường..."
-          className={inputCls(!!errors.detailAddress)}
+          className={fieldCls(!!errors.detailAddress)}
         />
         {errors.detailAddress && <p className="text-[11px] text-promotion mt-1">{errors.detailAddress}</p>}
       </div>
