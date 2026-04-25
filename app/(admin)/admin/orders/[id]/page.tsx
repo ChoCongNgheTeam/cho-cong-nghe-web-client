@@ -64,7 +64,7 @@ export default function OrderDetailPage() {
     setError(null);
     try {
       const res = await getOrderById(id);
-      setOrder(res); // ← fix: getOrderById đã return OrderDetail trực tiếp, không có .data
+      setOrder(res.data);
     } catch (e: any) {
       setError(e?.message ?? "Không thể tải đơn hàng");
     } finally {
