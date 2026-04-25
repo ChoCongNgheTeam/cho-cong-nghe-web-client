@@ -20,6 +20,7 @@ import {
    Star,
    Percent,
    Ticket,
+   Megaphone,
 } from "lucide-react";
 import {
    getTrash,
@@ -73,6 +74,12 @@ const RESOURCES: ResourceConfig[] = [
       key: "vouchers",
       label: "Voucher",
       icon: <Ticket size={13} />,
+      group: "transaction",
+   },
+   {
+      key: "campaigns",
+      label: "Chiến dịch",
+      icon: <Megaphone size={13} />,
       group: "transaction",
    },
    // Content

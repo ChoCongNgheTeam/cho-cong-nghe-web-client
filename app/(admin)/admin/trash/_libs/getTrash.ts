@@ -9,7 +9,8 @@ export type TrashResource =
    | "comments"
    | "reviews"
    | "promotions"
-   | "vouchers";
+   | "vouchers"
+   | "campaigns";
 
 export interface TrashItem {
    id: string;
@@ -116,6 +117,8 @@ export const getItemDisplayName = (
       case "promotions":
       case "vouchers":
          return item.name || item.code || item.id;
+      case "campaigns": // ← thêm
+         return item.name || item.code || item.id;
       default:
          return item.name || item.id;
    }
@@ -134,6 +137,8 @@ export const getItemSubInfo = (
          return item.rating ? `${item.rating} ★` : null;
       case "promotions":
       case "vouchers":
+         return item.code ?? null;
+      case "campaigns":
          return item.code ?? null;
       default:
          return item.slug ?? null;

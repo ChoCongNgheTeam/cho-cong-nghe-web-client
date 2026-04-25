@@ -167,8 +167,8 @@ export default function CampaignDetailPage() {
          </div>
       );
    }
-
-   const status = getCampaignStatus(campaign);
+   const status = getCampaignStatus(campaign); // đã có sẵn ở dưới
+   const canDelete = !campaign.isActive || status.value === "expired";
 
    return (
       <div className="min-h-screen bg-neutral-light">
@@ -209,12 +209,17 @@ export default function CampaignDetailPage() {
                         >
                            <Pencil size={14} />
                         </Link>
-                        <button
-                           onClick={() => setDeleteOpen(true)}
-                           className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-                           title="Xoá"
+                       <button
+                        onClick={() => canDelete && setDeleteOpen(true)}
+                        disabled={!canDelete}
+                        title={canDelete ? "Xoá" : "Tắt chiến dịch trước khi xóa"}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                           canDelete
+                              ? "text-neutral-dark hover:bg-promotion-light hover:text-promotion cursor-pointer"
+                              : "text-neutral-dark/25 cursor-not-allowed"
+                        }`}
                         >
-                           <Trash2 size={14} />
+                        <Trash2 size={14} />
                         </button>
                      </div>
                   </div>

@@ -84,6 +84,8 @@ export default function OrdersPage() {
 
   const prefix = useAdminPrefix();
 
+  const [globalCounts, setGlobalCounts] = useState<Record<string, number>>(DEFAULT_META.statusCounts);
+
   // ─── Close dropdowns khi click ngoài ─────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -129,6 +131,17 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  const fetchGlobalCounts = useCallback(async () => {
+    try {
+      const res = await getAllOrders({ page: 1, limit: 1 });
+      setGlobalCounts(res.meta.statusCounts);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchGlobalCounts();
+  }, []);
 
   const handlePaymentMethodChange = useCallback((orderId: string, newMethod: { id: string; name: string }) => {
     setOrders((prev) =>
@@ -211,21 +224,22 @@ export default function OrdersPage() {
       handleStatusChange(cancelTargetId, "CANCELLED");
       setCancelTargetId(null);
       fetchOrders();
+      fetchGlobalCounts(); // ← thêm ở đây
     } catch (e: any) {
       setError(e?.message ?? "Không thể hủy đơn hàng. Vui lòng thử lại.");
     } finally {
       setCancelling(false);
     }
-  }, [cancelTargetId, handleStatusChange, fetchOrders]);
+  },  [cancelTargetId, handleStatusChange, fetchOrders, fetchGlobalCounts]);
 
   return (
     <div className="space-y-5 p-5 bg-neutral-light h-full">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard label="Tổng đơn hàng" value={meta.statusCounts.ALL ?? 0} sub="Tất cả đơn trong hệ thống" icon={<ShoppingCart size={18} />} valueClassName="text-accent" />
+        <StatsCard label="Tổng đơn hàng" value={globalCounts.ALL ?? 0} sub="Tất cả đơn trong hệ thống" icon={<ShoppingCart size={18} />} valueClassName="text-accent" />
         <StatsCard
           label="Đơn hàng mới"
-          value={meta.statusCounts.PENDING ?? 0}
+          value={globalCounts.PENDING ?? 0}
           sub="Đơn đang chờ bạn xác nhận"
           icon={<Clock size={18} />}
           valueClassName="text-yellow-600"
@@ -233,7 +247,7 @@ export default function OrdersPage() {
         />
         <StatsCard
           label="Đơn hàng thành công"
-          value={meta.statusCounts.DELIVERED ?? 0}
+          value={globalCounts.DELIVERED ?? 0}
           sub="Đã hoàn tất giao đến khách hàng"
           icon={<CheckCircle size={18} />}
           valueClassName="text-emerald-600"
@@ -241,7 +255,7 @@ export default function OrdersPage() {
         />
         <StatsCard
           label="Đang giao hàng"
-          value={meta.statusCounts.SHIPPED ?? 0}
+          value={globalCounts.SHIPPED ?? 0}
           sub="Sản phẩm đang trên đường vận chuyển"
           icon={<Truck size={18} />}
           valueClassName="text-blue-600"
