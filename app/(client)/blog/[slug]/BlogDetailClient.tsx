@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import BlogCategoryBar from "../components/BlogCategoryBar";
+import CommentSection from "../../products/product-comment/Commentsection";
+import { getComments, getReplies, postComment } from "../../products/_lib";
+import type { Comment } from "../../products/product-comment/Productreview";
 import { BlogDetail } from "../types/blog.type";
 
 type Props = {
@@ -74,6 +77,67 @@ export default function BlogDetailClient({ blog }: Props) {
     : "<p>Nội dung bài viết đang được cập nhật.</p>";
 
   const publishedAtLabel = formatDateTime(blog.publishedAt || blog.createdAt);
+
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  const fetchComments = useCallback(async () => {
+    setLoadingComments(true);
+    try {
+      const result = await getComments("BLOG", blog.id);
+      setComments(result?.data ?? []);
+    } catch (error) {
+      console.error("Lỗi khi lấy bình luận blog:", error);
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [blog.id]);
+
+  const fetchReplies = useCallback(async (commentId: string) => {
+    try {
+      const result = await getReplies(commentId);
+      const replies = result?.data ?? [];
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, replies, _repliesCount: replies.length } : c,
+        ),
+      );
+    } catch (error) {
+      console.error("Lỗi khi lấy replies:", error);
+    }
+  }, []);
+
+  const handleCommentSubmit = useCallback(
+    async (content: string) => {
+      const response = await postComment({
+        content,
+        targetType: "BLOG",
+        targetId: blog.id,
+      });
+      await fetchComments();
+      return response?.data;
+    },
+    [blog.id, fetchComments],
+  );
+
+  const handleReplySubmit = useCallback(
+    async (parentId: string, content: string) => {
+      const response = await postComment({
+        content,
+        targetType: "BLOG",
+        targetId: blog.id,
+        parentId,
+      });
+      await fetchReplies(parentId);
+      return response?.data;
+    },
+    [blog.id, fetchReplies],
+  );
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   return (
     <main className="mx-auto max-w-[1240px] px-4 py-8 lg:px-6">
@@ -208,6 +272,23 @@ export default function BlogDetailClient({ blog }: Props) {
             dangerouslySetInnerHTML={{ __html: articleHtml }}
           />
         </article>
+      </section>
+
+      <section className="mt-12">
+        <div className="bg-neutral-light rounded-xl p-6">
+          <CommentSection
+            productId={blog.id}
+            comments={comments}
+            loading={loadingComments}
+            onCommentSubmit={handleCommentSubmit}
+            onReplySubmit={handleReplySubmit}
+            onFetchReplies={fetchReplies}
+            title="Hãy để lại ý kiến của bạn"
+            description="Bình luận của bạn sẽ giúp độc giả khác và tác giả cải thiện nội dung."
+            placeholder="Viết bình luận của bạn..."
+            submitLabel="Gửi bình luận"
+          />
+        </div>
       </section>
     </main>
   );

@@ -19,7 +19,13 @@ interface CommentSectionProps {
   onCommentSubmit: (content: string) => Promise<{ isApproved: boolean; status?: string } | undefined>;
   onReplySubmit: (parentId: string, content: string) => Promise<{ isApproved: boolean; status?: string } | undefined>;
   onFetchReplies: (commentId: string) => Promise<void>;
-  onFetchNestedReplies: (replyId: string, parentCommentId: string) => Promise<void>;
+  onFetchNestedReplies?: (replyId: string, parentCommentId: string) => Promise<void>;
+  title?: string;
+  description?: string;
+  placeholder?: string;
+  submitLabel?: string;
+  loginDescription?: string;
+  imageSrc?: string;
 }
 
 // ── Sub-components ────────────────────────────────────────────────
@@ -150,10 +156,39 @@ const CommentNode = memo(
 CommentNode.displayName = "CommentNode";
 
 // ── Main ──────────────────────────────────────────────────────────
-export default function CommentSection({ productId, comments: initialComments, loading, onCommentSubmit, onReplySubmit, onFetchReplies }: CommentSectionProps) {
+export default function CommentSection({
+  productId,
+  comments: initialComments,
+  loading,
+  onCommentSubmit,
+  onReplySubmit,
+  onFetchReplies,
+  title,
+  description,
+  placeholder,
+  submitLabel,
+  loginDescription,
+  imageSrc,
+}: CommentSectionProps) {
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const toast = useToasty();
+
+  const sectionTitle = title ?? "Hãy đặt câu hỏi cho chúng tôi";
+  const sectionDescription =
+    description ??
+    "ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.";
+  const commentPlaceholder =
+    placeholder ??
+    (isAuthenticated
+      ? "Viết câu hỏi của bạn tại đây..."
+      : "Đăng nhập để đặt câu hỏi...");
+  const submitButtonLabel = submitLabel ?? "Gửi bình luận";
+  const loginHintPrefix = loginDescription ?? "Bạn cần ";
+  const loginHintSuffix = " để đặt câu hỏi hoặc trả lời bình luận.";
+  const heroImageSrc =
+    imageSrc ??
+    "https://cdn2.cellphones.com.vn/insecure/rs:fill:160:0/q:90/plain/https://cellphones.com.vn/media/wysiwyg/ant-hello-2025.png";
 
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -296,8 +331,8 @@ export default function CommentSection({ productId, comments: initialComments, l
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 pb-6 border-b border-neutral">
         <div className="hidden xs:flex shrink-0 items-start justify-center sm:justify-start">
           <Image
-            src="https://cdn2.cellphones.com.vn/insecure/rs:fill:160:0/q:90/plain/https://cellphones.com.vn/media/wysiwyg/ant-hello-2025.png"
-            alt="Sản phẩm"
+            src={heroImageSrc}
+            alt="Bình luận"
             width={100}
             height={100}
             className="sm:w-[120px] lg:w-[160px] h-auto object-contain"
@@ -305,16 +340,16 @@ export default function CommentSection({ productId, comments: initialComments, l
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">Hãy đặt câu hỏi cho chúng tôi</h4>
+          <h4 className="text-base sm:text-lg font-semibold text-primary mb-1 opacity-80">{sectionTitle}</h4>
           <p className="text-xs sm:text-sm text-primary opacity-60 leading-relaxed">
-            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
+            {sectionDescription}
           </p>
 
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 min-w-0">
               <input
                 type="text"
-                placeholder={isAuthenticated ? "Viết câu hỏi của bạn tại đây..." : "Đăng nhập để đặt câu hỏi..."}
+                placeholder={commentPlaceholder}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
@@ -335,18 +370,18 @@ export default function CommentSection({ productId, comments: initialComments, l
                   <span>Đang gửi...</span>
                 </>
               ) : (
-                "Gửi bình luận"
+                submitButtonLabel
               )}
             </button>
           </div>
 
           {!isAuthenticated && (
             <p className="text-xs text-neutral-darker mt-2">
-              Bạn cần{" "}
+              {loginHintPrefix}
               <a href="/account?login" className="text-primary underline hover:opacity-80 transition-opacity">
                 đăng nhập
-              </a>{" "}
-              để đặt câu hỏi hoặc trả lời bình luận.
+              </a>
+              {loginHintSuffix}
             </p>
           )}
         </div>

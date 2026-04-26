@@ -44,6 +44,7 @@ export async function getComments(targetType: "PRODUCT" | "BLOG" | "PAGE", targe
     pagination: { page: number; limit: number; total: number; totalPages: number };
     message: string;
   }>("/comments", {
+    noAuth: true,
     params: { targetType, targetId, limit: 50 },
   });
   return response;
@@ -54,7 +55,9 @@ export async function getReplies(commentId: string) {
     data: import("../product-comment/Productreview").Reply[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
     message: string;
-  }>(`/comments/${commentId}/replies`);
+  }>(`/comments/${commentId}/replies`, {
+    noAuth: true,
+  });
   return response;
 }
 
