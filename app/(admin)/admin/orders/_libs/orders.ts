@@ -39,7 +39,7 @@ export interface GetAllOrdersParams {
 export interface UpdateOrderAdminPayload {
   orderStatus?: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED";
   paymentStatus?: "UNPAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
-  paymentMethodId?: string; // ← thêm field này
+  paymentMethodId?: string;
   shippingFee?: number;
   voucherDiscount?: number;
 }
@@ -57,7 +57,13 @@ export interface CreateOrderAdminPayload {
   userId?: string;
   shippingAddressId?: string;
   customerInfo?: { fullName: string; phone: string; email?: string };
-  newAddress?: { provinceId: string; wardId: string; detailAddress: string };
+  newAddress?: {
+    provinceCode: number;
+    provinceName: string;
+    wardCode: number;
+    wardName: string;
+    detailAddress: string;
+  };
   items: { productVariantId: string; quantity: number; unitPrice: number }[];
   voucherCode?: string;
   shippingFee: number;
@@ -70,17 +76,26 @@ export interface CreateOrderAdminPayload {
 // USER / ADDRESS / LOCATION TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Province từ https://provinces.open-api.vn/api/v2/p/
+ */
 export interface Province {
-  id: string;
-  name: string;
-  fullName: string;
-  code: string;
+  code: number; // Dùng làm key — e.g. 1, 79
+  name: string; // e.g. "Thành phố Hà Nội"
+  codename: string; // e.g. "ha_noi"
+  division_type: string;
+  phone_code: number;
 }
+
+/**
+ * Ward từ https://provinces.open-api.vn/api/v2/p/{provinceCode}?depth=2
+ */
 export interface Ward {
-  id: string;
+  code: number;
   name: string;
-  fullName: string;
-  code: string;
+  codename: string;
+  division_type: string;
+  province_code: number;
 }
 
 export interface UserAddress {
@@ -88,8 +103,8 @@ export interface UserAddress {
   contactName: string;
   phone: string;
   detailAddress: string;
-  province: { id: string; name: string; fullName: string };
-  ward: { id: string; name: string; fullName: string };
+  wardName: string;
+  provinceName: string;
   isDefault: boolean;
   deletedAt: string | null;
 }
@@ -112,24 +127,26 @@ export interface PaymentMethod {
 
 export interface VariantOption {
   id: string;
-  colorLabel: string;
-  colorValue: string;
-  storageLabel: string;
-  storageValue: string;
+  code: string;
   price: number;
-  finalPrice: number;
+  finalPrice: number; // nếu BE có promotion engine
   discountPercentage: number;
   available: boolean;
   isDefault: boolean;
   imageUrl: string | null;
-  code: string;
-}
 
-/**
- * Product từ search result.
- * name có thể có variant suffix ("iPhone 13 128GB") — dùng baseName để hiển thị tên gốc.
- * baseName được tính FE bằng cách deduplicate theo slug.
- */
+  // Known attrs (backward compat)
+  colorLabel: string;
+  colorValue: string;
+  storageLabel: string;
+  storageValue: string;
+
+  // Dynamic attrs — ramLabel, ramValue, bundleLabel, bundleValue...
+  [key: string]: unknown;
+
+  // Structured map
+  attributes: Record<string, { value: string; label: string }>;
+}
 export interface ProductSearchResult {
   id: string;
   name: string;
@@ -139,6 +156,12 @@ export interface ProductSearchResult {
   brand: { id?: string; name: string };
   isActive?: boolean;
   priceOrigin?: number;
+  price?: {
+    base: number;
+    final: number;
+    discountPercentage: number;
+    hasPromotion: boolean;
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,18 +185,13 @@ export async function updateOrderAdmin(id: string, payload: UpdateOrderAdminPayl
 }
 
 export async function updateOrderStatus(id: string, orderStatus: string): Promise<OrderDetailResponse> {
-  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, {
-    orderStatus,
-  });
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, { orderStatus });
 }
 
 export async function updatePaymentStatus(id: string, paymentStatus: "UNPAID" | "PAID" | "REFUND_PENDING" | "REFUNDED"): Promise<OrderDetailResponse> {
-  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, {
-    paymentStatus,
-  });
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, { paymentStatus });
 }
 
-// API mới — staff xác nhận đã chuyển tiền hoàn thủ công
 export async function confirmManualRefund(id: string, refundNote?: string): Promise<{ success: boolean; message: string }> {
   return apiRequest.post(`/orders/admin/${id}/confirm-refund`, { refundNote });
 }
@@ -186,26 +204,21 @@ export async function cancelOrder(id: string): Promise<CancelOrderResponse> {
   return apiRequest.post<CancelOrderResponse>(`/orders/admin/${id}/cancel`);
 }
 
+export async function updatePaymentMethod(id: string, paymentMethodId: string): Promise<OrderDetailResponse> {
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, { paymentMethodId });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USER APIS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * GET /users/admin?search=&limit=10&role=CUSTOMER
- * Response shape: { data: UserResult[], pagination: { total, page, limit, totalPages } }
- *
- * FIX: endpoint là /users/admin (không phải /users/admin/all)
- * FIX: parse res.data (không phải res.data.data)
- */
 export async function searchUsers(q: string, limit = 10): Promise<UserResult[]> {
-  const res = await apiRequest.get<{ data: UserResult[]; pagination: any }>("/users/admin", { params: { search: q, limit, role: "CUSTOMER" } });
-  // Controller trả về { data: users[], pagination: {...} }
+  const res = await apiRequest.get<{ data: UserResult[]; pagination: any }>("/users/admin", {
+    params: { search: q, limit, role: "CUSTOMER" },
+  });
   return Array.isArray(res.data) ? res.data : [];
 }
 
-/**
- * GET /users/admin/:id — lấy thông tin 1 user theo ID
- */
 export async function getUserById(userId: string): Promise<UserResult | null> {
   try {
     const res = await apiRequest.get<{ data: UserResult }>(`/users/admin/${userId}`);
@@ -215,74 +228,74 @@ export async function getUserById(userId: string): Promise<UserResult | null> {
   }
 }
 
-/**
- * GET /addresses/admin/all?userId=xxx
- * FIX: truyền userId param để chỉ lấy địa chỉ của user đó, không phải tất cả
- */
 export async function getUserAddresses(userId: string): Promise<UserAddress[]> {
-  const res = await apiRequest.get<{ data: UserAddress[] }>("/addresses/admin/all", { params: { userId } });
+  const res = await apiRequest.get<{ data: UserAddress[] }>("/addresses/admin/all", {
+    params: { userId },
+  });
   return Array.isArray(res.data) ? res.data : [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LOCATION APIS
+// LOCATION APIS — provinces.open-api.vn
 // ─────────────────────────────────────────────────────────────────────────────
 
+const PROVINCES_API = "https://provinces.open-api.vn/api/v2";
+
+/**
+ * Lấy tất cả tỉnh/thành phố.
+ * GET https://provinces.open-api.vn/api/v2/p/
+ * Response: Province[]  (array trực tiếp, không wrap)
+ */
 export async function getProvinces(): Promise<Province[]> {
-  const res = await apiRequest.get<any>("/addresses/locations/provinces");
-  // Controller: { success, data: Province[] } — handle cả unwrapped và nested
-  if (Array.isArray(res)) return res;
-  if (Array.isArray(res.data)) return res.data;
-  if (Array.isArray(res.data?.data)) return res.data.data;
-  return [];
+  const res = await fetch(`${PROVINCES_API}/p/`);
+  if (!res.ok) throw new Error("Không thể tải danh sách tỉnh/thành");
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 }
 
-export async function getWards(provinceId: string): Promise<Ward[]> {
-  const res = await apiRequest.get<any>(`/addresses/locations/${provinceId}/wards`);
-  // Controller: { success, data: Ward[], meta: {...} }
-  // apiRequest có thể unwrap 1 lần → res = { success, data: Ward[], meta }
-  // hoặc không unwrap → res.data = { success, data: Ward[], meta }
-  if (Array.isArray(res)) return res;
-  if (Array.isArray(res.data)) return res.data; // data là array trực tiếp
-  if (Array.isArray(res.data?.data)) return res.data.data; // data.data là array (nested)
-  return [];
+/**
+ * Lấy danh sách phường/xã theo mã tỉnh.
+ * GET https://provinces.open-api.vn/api/v2/p/{provinceCode}?depth=2
+ * Response: { ...province, wards: Ward[] }
+ */
+export async function getWards(provinceCode: number): Promise<Ward[]> {
+  const res = await fetch(`${PROVINCES_API}/p/${provinceCode}?depth=2`);
+  if (!res.ok) throw new Error("Không thể tải danh sách phường/xã");
+  const data = await res.json();
+  return Array.isArray(data.wards) ? data.wards : [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAYMENT METHODS
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * apiRequest đã unwrap response một lớp:
+ *   BE trả về  { data: [...], message: "..." }
+ *   apiRequest trả về  { data: [...], message: "..." }  (tức là res = BE response)
+ * Nên res.data là array payment methods trực tiếp.
+ */
 export async function getActivePaymentMethods(): Promise<PaymentMethod[]> {
-  const res = await apiRequest.get<{ data: PaymentMethod[] }>("/payments/active");
-  return Array.isArray(res.data) ? res.data : [];
+  const res = await apiRequest.get<{ data: PaymentMethod[]; message: string }>("/payments/active");
+  // res.data là array (sau khi apiRequest unwrap lớp ngoài)
+  if (Array.isArray(res.data)) return res.data;
+  // Fallback: nếu apiRequest không unwrap (raw response)
+  if (Array.isArray(res)) return res as any;
+  return [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCT APIS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * GET /products?search=iphone&limit=8
- *
- * Dùng public endpoint thay vì /products/admin/all vì:
- * - Trả về đúng format card với name có thể deduplicate theo slug
- * - 1 slug = 1 sản phẩm gốc → group theo slug để hiển thị tên sạch
- *
- * Response: { data: { data: ProductSearchResult[], total, ... } }
- */
 export async function searchProducts(q: string, limit = 8): Promise<ProductSearchResult[]> {
-  const res = await apiRequest.get<any>("/products", {
-    params: { search: q, limit },
-  });
+  const res = await apiRequest.get<any>("/products", { params: { search: q, limit } });
 
-  // Handle multiple response shapes:
-  // { data: { data: [...] } } — paginated  |  { data: [...] } — array  |  [...] — raw
   let raw: any[] = [];
   if (Array.isArray(res)) raw = res;
   else if (Array.isArray(res.data)) raw = res.data;
   else if (Array.isArray(res.data?.data)) raw = res.data.data;
 
-  // Deduplicate theo slug — 1 slug = 1 sản phẩm gốc
   const seen = new Set<string>();
   const deduped: ProductSearchResult[] = [];
   for (const p of raw) {
@@ -290,39 +303,55 @@ export async function searchProducts(q: string, limit = 8): Promise<ProductSearc
     seen.add(p.slug);
     deduped.push({
       id: p.id,
-      name: stripVariantSuffix(p.name), // "iPhone 13 128GB" → "iPhone 13"
+      name: stripVariantSuffix(p.name),
       slug: p.slug,
       thumbnail: p.thumbnail ?? null,
       category: p.category ?? { name: "" },
       brand: p.brand ?? { name: "" },
       priceOrigin: p.priceOrigin,
+      price: p.price ?? null,
     });
   }
   return deduped;
 }
 
-/**
- * Strip variant suffix: "iPhone 13 128GB" → "iPhone 13"
- * "MacBook Air 13 M2 2024 16GB 256GB 8-core" → "MacBook Air 13 M2 2024"
- * "Apple EarPods Lightning (MMTN2ZA/A)"      → unchanged (no GB/TB)
- */
 function stripVariantSuffix(name: string): string {
   if (!name) return name;
   const m = name.match(/^(.*?)\s+\d+\s*(GB|TB|MB)\b/i);
   return m && m[1] ? m[1].trim() : name;
 }
 
-/**
- * GET /products/slug/:slug/variant-options
- * Trả về tất cả variant options (colors, storages...) với pricing
- */
 export async function getVariantOptions(slug: string): Promise<VariantOption[]> {
   const res = await apiRequest.get<{ data: VariantOption[] }>(`/products/slug/${slug}/variant-options`);
   return Array.isArray(res.data) ? res.data : [];
 }
 
-export async function updatePaymentMethod(id: string, paymentMethodId: string): Promise<OrderDetailResponse> {
-  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, {
-    paymentMethodId,
+export async function exportOrders(params: {
+  format: "excel" | "csv";
+  status?: string;
+  paymentStatus?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{ blob: Blob; filename: string; count: number }> {
+  const { format, status, paymentStatus, search, dateFrom, dateTo } = params;
+
+  const queryParams: Record<string, any> = { format };
+  if (status && status !== "ALL") queryParams.status = status;
+  if (paymentStatus && paymentStatus !== "ALL") queryParams.paymentStatus = paymentStatus;
+  if (search) queryParams.search = search;
+  if (dateFrom) queryParams.dateFrom = dateFrom;
+  if (dateTo) queryParams.dateTo = dateTo;
+
+  // apiRequest tự build: ${BASE_URL}/api/v1/orders/admin/export?...
+  // responseType: "blob" để nhận binary file thay vì parse JSON
+  const blob = await apiRequest.get<Blob>("/orders/admin/export", {
+    params: queryParams,
+    responseType: "blob",
   });
+
+  const ext = format === "excel" ? "xlsx" : "csv";
+  const filename = `orders_export_${Date.now()}.${ext}`;
+
+  return { blob, filename, count: 0 };
 }

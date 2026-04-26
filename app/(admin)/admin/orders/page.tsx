@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Search, Filter, CalendarDays, Eye, Package, RefreshCw, Plus, X, ChevronDown } from "lucide-react";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import type { Order, OrderStatus, PaymentStatus } from "./order.types";
-import { cancelOrder, getAllOrders, updatePaymentStatus } from "./_libs/orders";
+import { cancelOrder, exportOrders, getAllOrders, updatePaymentStatus } from "./_libs/orders";
 import { STATUS_TABS } from "./const";
 import { OrderStatusCell, PaymentStatusCell, PaymentBadge, TableSkeleton } from "./components";
 import { formatDate, formatVND } from "@/helpers";
@@ -14,6 +14,8 @@ import { Ban, ShoppingCart, Clock, CheckCircle, Truck } from "lucide-react";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { PaymentMethodCell } from "./components/PaymentMethodCell";
 import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
+import { ExportButton } from "@/components/admin/ExportButton";
+import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OrderMeta {
@@ -230,21 +232,14 @@ export default function OrdersPage() {
     } finally {
       setCancelling(false);
     }
-  },  [cancelTargetId, handleStatusChange, fetchOrders, fetchGlobalCounts]);
+  }, [cancelTargetId, handleStatusChange, fetchOrders, fetchGlobalCounts]);
 
   return (
     <div className="space-y-5 p-5 bg-neutral-light h-full">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard label="Tổng đơn hàng" value={globalCounts.ALL ?? 0} sub="Tất cả đơn trong hệ thống" icon={<ShoppingCart size={18} />} valueClassName="text-accent" />
-        <StatsCard
-          label="Đơn hàng mới"
-          value={globalCounts.PENDING ?? 0}
-          sub="Đơn đang chờ bạn xác nhận"
-          icon={<Clock size={18} />}
-          valueClassName="text-yellow-600"
-          iconClassName="text-yellow-600"
-        />
+        <StatsCard label="Đơn hàng mới" value={globalCounts.PENDING ?? 0} sub="Đơn đang chờ bạn xác nhận" icon={<Clock size={18} />} valueClassName="text-yellow-600" iconClassName="text-yellow-600" />
         <StatsCard
           label="Đơn hàng thành công"
           value={globalCounts.DELIVERED ?? 0}
@@ -295,7 +290,6 @@ export default function OrdersPage() {
               />
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/50" />
             </form>
-
             {/* Bộ lọc thanh toán */}
             <div ref={filterRef} className="relative">
               <button
@@ -336,7 +330,6 @@ export default function OrdersPage() {
                 </div>
               )}
             </div>
-
             {/* Lọc theo ngày */}
             <div ref={dateRef} className="relative">
               <button
@@ -395,6 +388,22 @@ export default function OrdersPage() {
               )}
             </div>
 
+            <ExportButton
+              onExport={(fmt) =>
+                exportOrders({
+                  format: fmt,
+                  status: activeTab,
+                  paymentStatus: paymentFilter,
+                  search: search,
+                  dateFrom: dateFrom,
+                  dateTo: dateTo,
+                })
+              }
+              label="Export"
+              disabled={loading}
+              onSuccess={(count, fmt) => toast.success(`Đã export đơn hàng dạng ${fmt.toUpperCase()}`)}
+              onError={(err) => toast.error(err)}
+            />
             <Link
               href={`${prefix}/orders/create`}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer"
