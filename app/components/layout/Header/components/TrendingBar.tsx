@@ -12,7 +12,6 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
 
   useLayoutEffect(() => {
     if (!trackRef.current || keywords.length === 0) return;
-
     let cancelled = false;
 
     const measure = () => {
@@ -20,16 +19,13 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
       const track = trackRef.current;
       const container = containerRef.current;
       if (!track || !container) return;
-
       const children = Array.from(track.children) as HTMLElement[];
       const halfCount = Math.floor(children.length / 2);
-
       let oneSetWidth = 0;
       for (let i = 0; i < halfCount; i++) {
         oneSetWidth += children[i].offsetWidth + 8;
       }
       const containerWidth = container.offsetWidth;
-
       if (oneSetWidth > containerWidth) {
         setNeedsScroll(true);
         setDuration(Math.max(12, oneSetWidth / 80));
@@ -38,21 +34,20 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
       }
     };
 
-    // Double RAF: đợi layout + paint pass settle
     const raf1 = requestAnimationFrame(() => {
       requestAnimationFrame(measure);
     });
-
     const container = containerRef.current;
     const ro = new ResizeObserver(measure);
-    if (container) ro.observe(container); // ← safe null check
+    if (container) ro.observe(container);
 
     return () => {
-      cancelled = true; // block bất kỳ RAF nào đang pending
+      cancelled = true;
       cancelAnimationFrame(raf1);
       ro.disconnect();
     };
   }, [keywords]);
+
   const doubled = [...keywords, ...keywords];
 
   return (
@@ -68,25 +63,15 @@ function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
           : undefined
       }
     >
-      <div
-        ref={trackRef}
-        className="flex items-center gap-2 w-max"
-        style={
-          needsScroll
-            ? {
-                animation: `trending-marquee ${duration}s linear infinite`,
-                willChange: "transform",
-              }
-            : undefined
-        }
-      >
+      <div ref={trackRef} className="flex items-center gap-2 w-max" style={needsScroll ? { animation: `trending-marquee ${duration}s linear infinite`, willChange: "transform" } : undefined}>
         {doubled.map((kw, i) => (
           <Link
             key={`${kw.id}-${i}`}
             href={`/products/${kw.slug}`}
             tabIndex={needsScroll && i >= keywords.length ? -1 : undefined}
             aria-hidden={needsScroll && i >= keywords.length ? "true" : undefined}
-            className="text-xs text-neutral-darker hover:text-accent-hover hover:underline transition-colors whitespace-nowrap shrink-0 leading-4"
+            // White/translucent text on blue header
+            className="text-xs text-white/70 hover:text-white hover:underline transition-colors whitespace-nowrap shrink-0 leading-4"
           >
             {kw.name}
           </Link>
@@ -110,17 +95,11 @@ function Skeleton() {
   return (
     <div className="flex items-center gap-2 h-4 overflow-hidden">
       {[72, 52, 64, 44, 68, 56, 48].map((w, i) => (
-        <div key={i} className="h-3 rounded-full bg-neutral animate-pulse shrink-0" style={{ width: `${w}px`, animationDelay: `${i * 60}ms` }} />
+        <div key={i} className="h-3 rounded-full bg-white/20 animate-pulse shrink-0" style={{ width: `${w}px`, animationDelay: `${i * 60}ms` }} />
       ))}
     </div>
   );
 }
-
-// ─── TrendingBar ────────────────────────────────────────────────────────────────
-//
-// Đặt component này NGAY BÊN DƯỚI <DesktopHeader /> trong layout.
-// Tự đo DOM của `.desktop-header-row` để tính marginLeft,
-// align chính xác với SearchBar (flex-1 max-w-2xl column).
 
 export const TrendingBar = ({ className }: { className?: string }) => {
   const [keywords, setKeywords] = useState<TrendingKeyword[]>([]);
@@ -134,26 +113,18 @@ export const TrendingBar = ({ className }: { className?: string }) => {
     });
   }, []);
 
-  // Đo logo col + megamenu col + gaps để tính offset
   useLayoutEffect(() => {
     const measure = () => {
       const row = document.querySelector(".desktop-header-row") as HTMLElement | null;
       if (!row) return;
-
       const children = Array.from(row.children) as HTMLElement[];
       if (children.length < 2) return;
-
-      // gap-4 = 16px, lg:gap-4 = 16px (same)
       const gap = parseFloat(getComputedStyle(row).gap) || 16;
-
-      // children[0] = Logo, children[1] = CategoryMegaMenu
       const logoWidth = children[0].offsetWidth;
       const megaWidth = children[1].offsetWidth;
-
       setMarginLeft(logoWidth + gap + megaWidth + gap);
     };
 
-    // Đợi layout settle sau hydration
     const raf = requestAnimationFrame(measure);
     const ro = new ResizeObserver(measure);
     const row = document.querySelector(".desktop-header-row");
@@ -165,15 +136,9 @@ export const TrendingBar = ({ className }: { className?: string }) => {
     };
   }, []);
 
-  // Chỉ hiển thị trên desktop, ẩn trên mobile
   return (
     <div className={`mt-2 ${className ?? "hidden md:block"}`}>
-      <div
-        className="max-w-2xl"
-        style={
-          marginLeft !== null ? { marginLeft } : { visibility: "hidden" } // tránh flash lệch trước khi đo xong
-        }
-      >
+      <div className="max-w-2xl" style={marginLeft !== null ? { marginLeft } : { visibility: "hidden" }}>
         {loading ? <Skeleton /> : <MarqueeTrack keywords={keywords} />}
       </div>
     </div>

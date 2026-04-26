@@ -23,7 +23,7 @@ export function PeriodSelector({
                key={p.value}
                onClick={() => onChange(p.value)}
                className={`
-            px-3 py-1 rounded-md text-[11px] font-semibold transition-all
+            px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer
             ${
                value === p.value
                   ? "bg-accent text-white shadow-sm"

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Search, Filter, CalendarDays, Eye, Package, RefreshCw, Plus, X, ChevronDown } from "lucide-react";
 import AdminPagination from "@/components/admin/PaginationAdmin";
 import type { Order, OrderStatus, PaymentStatus } from "./order.types";
-import { cancelOrder, getAllOrders, updatePaymentStatus } from "./_libs/orders";
+import { cancelOrder, exportOrders, getAllOrders, updatePaymentStatus } from "./_libs/orders";
 import { STATUS_TABS } from "./const";
 import { OrderStatusCell, PaymentStatusCell, PaymentBadge, TableSkeleton } from "./components";
 import { formatDate, formatVND } from "@/helpers";
@@ -13,6 +13,9 @@ import { Popzy } from "@/components/Modal";
 import { Ban, ShoppingCart, Clock, CheckCircle, Truck } from "lucide-react";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { PaymentMethodCell } from "./components/PaymentMethodCell";
+import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
+import { ExportButton } from "@/components/admin/ExportButton";
+import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OrderMeta {
@@ -81,6 +84,10 @@ export default function OrdersPage() {
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
+  const prefix = useAdminPrefix();
+
+  const [globalCounts, setGlobalCounts] = useState<Record<string, number>>(DEFAULT_META.statusCounts);
+
   // ─── Close dropdowns khi click ngoài ─────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -126,6 +133,17 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  const fetchGlobalCounts = useCallback(async () => {
+    try {
+      const res = await getAllOrders({ page: 1, limit: 1 });
+      setGlobalCounts(res.meta.statusCounts);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchGlobalCounts();
+  }, []);
 
   const handlePaymentMethodChange = useCallback((orderId: string, newMethod: { id: string; name: string }) => {
     setOrders((prev) =>
@@ -208,29 +226,23 @@ export default function OrdersPage() {
       handleStatusChange(cancelTargetId, "CANCELLED");
       setCancelTargetId(null);
       fetchOrders();
+      fetchGlobalCounts(); // ← thêm ở đây
     } catch (e: any) {
       setError(e?.message ?? "Không thể hủy đơn hàng. Vui lòng thử lại.");
     } finally {
       setCancelling(false);
     }
-  }, [cancelTargetId, handleStatusChange, fetchOrders]);
+  }, [cancelTargetId, handleStatusChange, fetchOrders, fetchGlobalCounts]);
 
   return (
     <div className="space-y-5 p-5 bg-neutral-light h-full">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard label="Tổng đơn hàng" value={meta.statusCounts.ALL ?? 0} sub="Tất cả đơn trong hệ thống" icon={<ShoppingCart size={18} />} valueClassName="text-accent" />
-        <StatsCard
-          label="Đơn hàng mới"
-          value={meta.statusCounts.PENDING ?? 0}
-          sub="Đơn đang chờ bạn xác nhận"
-          icon={<Clock size={18} />}
-          valueClassName="text-yellow-600"
-          iconClassName="text-yellow-600"
-        />
+        <StatsCard label="Tổng đơn hàng" value={globalCounts.ALL ?? 0} sub="Tất cả đơn trong hệ thống" icon={<ShoppingCart size={18} />} valueClassName="text-accent" />
+        <StatsCard label="Đơn hàng mới" value={globalCounts.PENDING ?? 0} sub="Đơn đang chờ bạn xác nhận" icon={<Clock size={18} />} valueClassName="text-yellow-600" iconClassName="text-yellow-600" />
         <StatsCard
           label="Đơn hàng thành công"
-          value={meta.statusCounts.DELIVERED ?? 0}
+          value={globalCounts.DELIVERED ?? 0}
           sub="Đã hoàn tất giao đến khách hàng"
           icon={<CheckCircle size={18} />}
           valueClassName="text-emerald-600"
@@ -238,7 +250,7 @@ export default function OrdersPage() {
         />
         <StatsCard
           label="Đang giao hàng"
-          value={meta.statusCounts.SHIPPED ?? 0}
+          value={globalCounts.SHIPPED ?? 0}
           sub="Sản phẩm đang trên đường vận chuyển"
           icon={<Truck size={18} />}
           valueClassName="text-blue-600"
@@ -278,7 +290,6 @@ export default function OrdersPage() {
               />
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/50" />
             </form>
-
             {/* Bộ lọc thanh toán */}
             <div ref={filterRef} className="relative">
               <button
@@ -319,7 +330,6 @@ export default function OrdersPage() {
                 </div>
               )}
             </div>
-
             {/* Lọc theo ngày */}
             <div ref={dateRef} className="relative">
               <button
@@ -378,8 +388,24 @@ export default function OrdersPage() {
               )}
             </div>
 
+            <ExportButton
+              onExport={(fmt) =>
+                exportOrders({
+                  format: fmt,
+                  status: activeTab,
+                  paymentStatus: paymentFilter,
+                  search: search,
+                  dateFrom: dateFrom,
+                  dateTo: dateTo,
+                })
+              }
+              label="Export"
+              disabled={loading}
+              onSuccess={(count, fmt) => toast.success(`Đã export đơn hàng dạng ${fmt.toUpperCase()}`)}
+              onError={(err) => toast.error(err)}
+            />
             <Link
-              href="/admin/orders/create"
+              href={`${prefix}/orders/create`}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-all shadow-sm cursor-pointer"
             >
               <Plus size={14} /> Thêm đơn hàng
@@ -492,7 +518,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-3 py-2.5">
                         <Link
-                          href={`/admin/orders/${order.id}`}
+                          href={`${prefix}/orders/${order.id}`}
                           title="Xem chi tiết"
                           className="w-7 h-7 flex items-center justify-center rounded-lg text-primary hover:bg-accent-light hover:text-accent cursor-pointer transition-all"
                         >

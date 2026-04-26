@@ -11,7 +11,7 @@ import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } 
 import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
 import { getCampaignColumns } from "./components/TableCampaigns";
 import { StatsCard } from "@/components/admin/StatsCard";
-
+import { getCampaignStatus } from "./components/CampaignStatusBadge";
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface CampaignMeta {
@@ -190,6 +190,15 @@ export default function CampaignsPage() {
 
   const handleBulkDelete = useCallback(async () => {
     if (selected.size === 0) return;
+    const hasActive = campaigns.some((c) => {
+      if (!selected.has(c.id)) return false;
+      const status = getCampaignStatus(c);
+      return c.isActive && status.value !== "expired";
+    });
+    if (hasActive) {
+      alert("Không thể xóa chiến dịch đang hoạt động. Vui lòng tắt trước.");
+      return;
+    }
     setBulkDeleting(true);
     try {
       await bulkDeleteCampaigns([...selected]);
@@ -200,7 +209,7 @@ export default function CampaignsPage() {
     } finally {
       setBulkDeleting(false);
     }
-  }, [selected, fetchCampaigns]);
+  }, [selected, campaigns, fetchCampaigns]);
 
   const columns = useCallback(
     () =>

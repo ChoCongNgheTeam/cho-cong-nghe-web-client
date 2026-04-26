@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, Truck, Tag, Gift } from "lucide-react";
+import { ChevronRight, Truck, Tag, Gift, LogIn, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { formatVND } from "@/helpers";
@@ -49,6 +49,7 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const [showLoginHint, setShowLoginHint] = useState(false);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN").format(price) + "₫";
@@ -56,6 +57,15 @@ export default function OrderSummary({
   const totalSaved = totalPromotionDiscount + appliedVoucherValue;
   const finalTotalWithVoucher =
     computedTotal ?? Math.max(0, subtotal - totalPromotionDiscount - appliedVoucherValue);
+
+  const handleVoucherClick = () => {
+    if (!user) {
+      setShowLoginHint(true);
+      setTimeout(() => setShowLoginHint(false), 3000);
+      return;
+    }
+    onOpenVoucherModal?.();
+  };
 
   const handleCheckoutClick = () => {
     if (isCheckoutPage && !user) {
@@ -76,10 +86,61 @@ export default function OrderSummary({
 
   return (
     <div className="rounded-xl bg-neutral-light sticky top-4 overflow-hidden border border-neutral">
+      {/* ── Login Hint Sidebar ──────────────────────────────────────────── */}
+      <div
+        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-[9999] flex flex-col transition-transform duration-300 ease-in-out ${
+          showLoginHint ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 py-4 border-b border-neutral">
+          <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+            <Tag size={15} className="text-accent" />
+            Ưu đãi & Voucher
+          </div>
+          <button
+            onClick={() => setShowLoginHint(false)}
+            className="text-neutral-dark hover:text-primary transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center justify-center flex-1 px-6 gap-5 text-center">
+          <div className="w-14 h-14 rounded-full bg-accent-light flex items-center justify-center">
+            <LogIn size={24} className="text-accent" />
+          </div>
+          <div>
+            <p className="font-semibold text-primary text-sm mb-1">
+              Bạn cần đăng nhập trước
+            </p>
+            <p className="text-xs text-neutral-darker leading-relaxed">
+              Vui lòng đăng nhập để có thể chọn và áp dụng voucher ưu đãi cho đơn hàng.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowLoginHint(false);
+              router.push("/account?returnUrl=/cart");
+            }}
+            className="w-full py-2.5 bg-primary text-neutral-light text-sm font-semibold rounded-lg hover:bg-primary-hover transition-colors"
+          >
+            Đăng nhập ngay
+          </button>
+        </div>
+      </div>
+
+      {/* Backdrop */}
+      {showLoginHint && (
+        <div
+          className="fixed inset-0 bg-black/30 z-[9998]"
+          onClick={() => setShowLoginHint(false)}
+        />
+      )}
+
       {/* ── Voucher ─────────────────────────────────────────────────────── */}
       {onOpenVoucherModal && (
         <button
-          onClick={onOpenVoucherModal}
+          onClick={handleVoucherClick}
           className="flex w-full items-center justify-between px-4 py-3 border-b border-neutral transition-colors hover:bg-neutral-light-active group cursor-pointer"
         >
           <div className="flex items-center gap-2.5 flex-1 min-w-0">

@@ -81,7 +81,9 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
           <div className="text-[11px] text-neutral-dark">
             {campaign.startDate ? <span>Từ {formatDate(campaign.startDate)}</span> : <span className="italic opacity-60">Không giới hạn bắt đầu</span>}
           </div>
-          <div className="text-[11px] text-neutral-dark">{campaign.endDate ? <span>Đến {formatDate(campaign.endDate)}</span> : <span className="italic opacity-60">Không giới hạn kết thúc</span>}</div>
+          <div className="text-[11px] text-neutral-dark">
+            {campaign.endDate ? <span>Đến {formatDate(campaign.endDate)}</span> : <span className="italic opacity-60">Không giới hạn kết thúc</span>}
+          </div>
         </div>
       ),
     },
@@ -132,31 +134,40 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
       key: "_actions",
       label: "Hành động",
       align: "right",
-      render: (campaign) => (
-        <div className="flex items-center justify-end gap-2">
-          <Link
-            href={`/admin/campaigns/${campaign.id}`}
-            title="Xem"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-          >
-            <Eye size={14} />
-          </Link>
-          <Link
-            href={`/admin/campaigns/${campaign.id}?edit=true`}
-            title="Chỉnh sửa"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-          >
-            <Pencil size={14} />
-          </Link>
-          <button
-            title="Xoá"
-            onClick={() => onDeleteClick(campaign)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      ),
+      render: (campaign) => {
+        const status = getCampaignStatus(campaign);
+        const canDelete = !campaign.isActive || status.value === "expired";
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <Link
+              href={`/admin/campaigns/${campaign.id}`}
+              title="Xem"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
+            >
+              <Eye size={14} />
+            </Link>
+            <Link
+              href={`/admin/campaigns/${campaign.id}?edit=true`}
+              title="Chỉnh sửa"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
+            >
+              <Pencil size={14} />
+            </Link>
+            <button
+              title={canDelete ? "Xoá" : "Tắt chiến dịch trước khi xóa"}
+              onClick={() => canDelete && onDeleteClick(campaign)}
+              disabled={!canDelete}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+                canDelete
+                  ? "text-neutral-dark hover:bg-promotion-light hover:text-promotion cursor-pointer"
+                  : "text-neutral-dark/25 cursor-not-allowed"
+              }`}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 }

@@ -96,16 +96,22 @@ function buildTree(flat: Category[]): CategoryNode[] {
       } else {
          const parent = map.get(node.parentId);
          if (parent) {
-            node.depth = parent.depth + 1;
             parent.children.push(node);
          } else {
-            // orphan → treat as root
             roots.push(node);
          }
       }
    });
 
-   // Sort mỗi level theo position rồi name
+   // Tính depth SAU khi đã build xong cấu trúc cây
+   const assignDepth = (nodes: CategoryNode[], depth: number) => {
+      nodes.forEach((n) => {
+         n.depth = depth;
+         assignDepth(n.children, depth + 1);
+      });
+   };
+   assignDepth(roots, 0);
+
    const sortNodes = (nodes: CategoryNode[]) => {
       nodes.sort(
          (a, b) =>
@@ -475,7 +481,7 @@ function TreeRow({
    const hasChildrenCount = (node._count?.children ?? 0) > 0;
    const canDelete = !hasProducts && !hasChildrenCount;
    const indent = DEPTH_INDENT[node.depth] ?? 40;
-
+   console.log(node);
    return (
       <tr
          className={`border-b border-neutral transition-colors duration-100 hover:bg-neutral-light-active/40 ${DEPTH_BG[node.depth] ?? DEPTH_BG[2]}`}

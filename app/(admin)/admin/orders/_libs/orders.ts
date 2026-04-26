@@ -4,16 +4,98 @@ import type { Order, OrderStatus, PaymentStatus } from "../order.types";
 // ─────────────────────────────────────────────────────────────────────────────
 // RESPONSE TYPES
 // ─────────────────────────────────────────────────────────────────────────────
-export interface Province {
-  code: string;
-  name: string;
-  fullName: string;
+
+export interface OrdersResponse {
+  data: Order[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    statusCounts: Record<string, number>;
+  };
+  message: string;
 }
 
+export interface OrderDetailResponse {
+  data: Order;
+  message: string;
+}
+
+export interface CancelOrderResponse {
+  message: string;
+}
+
+export interface GetAllOrdersParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  paymentStatus?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface UpdateOrderAdminPayload {
+  orderStatus?: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED";
+  paymentStatus?: "UNPAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
+  paymentMethodId?: string;
+  shippingFee?: number;
+  voucherDiscount?: number;
+}
+
+export interface UpdateShippingPayload {
+  shippingContactName?: string;
+  shippingPhone?: string;
+  shippingProvince?: string;
+  shippingWard?: string;
+  shippingDetail?: string;
+  shippingAddressId?: string;
+}
+
+export interface CreateOrderAdminPayload {
+  userId?: string;
+  shippingAddressId?: string;
+  customerInfo?: { fullName: string; phone: string; email?: string };
+  newAddress?: {
+    provinceCode: number;
+    provinceName: string;
+    wardCode: number;
+    wardName: string;
+    detailAddress: string;
+  };
+  items: { productVariantId: string; quantity: number; unitPrice: number }[];
+  voucherCode?: string;
+  shippingFee: number;
+  paymentMethodId: string;
+  paymentStatus: "UNPAID" | "PAID" | "REFUNDED";
+  orderStatus: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER / ADDRESS / LOCATION TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Province từ https://provinces.open-api.vn/api/v2/p/
+ */
+export interface Province {
+  code: number; // Dùng làm key — e.g. 1, 79
+  name: string; // e.g. "Thành phố Hà Nội"
+  codename: string; // e.g. "ha_noi"
+  division_type: string;
+  phone_code: number;
+}
+
+/**
+ * Ward từ https://provinces.open-api.vn/api/v2/p/{provinceCode}?depth=2
+ */
 export interface Ward {
-  code: string;
+  code: number;
   name: string;
-  fullName: string;
+  codename: string;
+  division_type: string;
+  province_code: number;
 }
 
 export interface UserAddress {
@@ -21,185 +103,255 @@ export interface UserAddress {
   contactName: string;
   phone: string;
   detailAddress: string;
-  fullAddress?: string;
-  province: { code: string; name: string; fullName?: string };
-  ward: { code: string; name: string; fullName?: string };
+  wardName: string;
+  provinceName: string;
   isDefault: boolean;
-  type?: string;
+  deletedAt: string | null;
 }
 
-export interface OrderItem {
+export interface UserResult {
   id: string;
-  productName: string;
-  variantCode?: string;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-  image?: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: string;
 }
 
-export interface OrderDetail extends Order {
-  items: OrderItem[];
-  shippingAddress?: UserAddress;
-}
-
-export interface CreateOrderAdminPayload {
-  userId: string;
-  shippingAddressId?: string;
-  newAddress?: {
-    contactName: string;
-    phone: string;
-    provinceCode: string;
-    wardCode: string;
-    detailAddress: string;
-    type?: string;
-  };
-  paymentMethodId: string;
-  voucherId?: string;
-  cartItemIds: string[];
-  note?: string;
-}
-
-export interface UpdateOrderPayload {
-  orderStatus?: OrderStatus;
-  paymentStatus?: PaymentStatus;
-  note?: string;
-}
-
-// ─── NEW: PaymentMethod type ──────────────────────────────────────────────────
 export interface PaymentMethod {
   id: string;
   name: string;
   code: string;
+  description: string;
   isActive: boolean;
 }
 
+export interface VariantOption {
+  id: string;
+  code: string;
+  price: number;
+  finalPrice: number; // nếu BE có promotion engine
+  discountPercentage: number;
+  available: boolean;
+  isDefault: boolean;
+  imageUrl: string | null;
+
+  // Known attrs (backward compat)
+  colorLabel: string;
+  colorValue: string;
+  storageLabel: string;
+  storageValue: string;
+
+  // Dynamic attrs — ramLabel, ramValue, bundleLabel, bundleValue...
+  [key: string]: unknown;
+
+  // Structured map
+  attributes: Record<string, { value: string; label: string }>;
+}
+export interface ProductSearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  thumbnail: string | null;
+  category: { id?: string; name: string };
+  brand: { id?: string; name: string };
+  isActive?: boolean;
+  priceOrigin?: number;
+  price?: {
+    base: number;
+    final: number;
+    discountPercentage: number;
+    hasPromotion: boolean;
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// API FUNCTIONS
+// ORDER APIS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const getOrders = async (params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  orderStatus?: string;
-  paymentStatus?: string;
-}): Promise<{ data: Order[]; total: number; page: number; limit: number }> => {
-  const res = await apiRequest.get<{
-    data: Order[];
-    total: number;
-    page: number;
-    limit: number;
-  }>("/orders/admin/", { params });
-  return res;
-};
+export async function getAllOrders(params?: GetAllOrdersParams): Promise<OrdersResponse> {
+  return apiRequest.get<OrdersResponse>("/orders/admin/all", { params });
+}
 
-export const getOrderById = async (id: string): Promise<OrderDetail> => {
-  const res = await apiRequest.get<{ data: OrderDetail }>(`/orders/admin/${id}`);
-  return res.data;
-};
+export async function getOrderById(id: string): Promise<OrderDetailResponse> {
+  return apiRequest.get<OrderDetailResponse>(`/orders/admin/${id}`);
+}
 
-export const createOrder = async (payload: CreateOrderAdminPayload): Promise<Order> => {
-  const res = await apiRequest.post<{ data: Order }>("/orders/admin/", payload);
-  return res.data;
-};
+export async function createOrderAdmin(payload: CreateOrderAdminPayload): Promise<OrderDetailResponse> {
+  return apiRequest.post<OrderDetailResponse>("/orders/admin", payload);
+}
 
-export const updateOrder = async (id: string, payload: UpdateOrderPayload): Promise<Order> => {
-  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, payload);
-  return res.data;
-};
+export async function updateOrderAdmin(id: string, payload: UpdateOrderAdminPayload): Promise<OrderDetailResponse> {
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, payload);
+}
 
-export const deleteOrder = async (id: string): Promise<void> => {
-  await apiRequest.delete(`/orders/admin/${id}`);
-};
+export async function updateOrderStatus(id: string, orderStatus: string): Promise<OrderDetailResponse> {
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, { orderStatus });
+}
+
+export async function updatePaymentStatus(id: string, paymentStatus: "UNPAID" | "PAID" | "REFUND_PENDING" | "REFUNDED"): Promise<OrderDetailResponse> {
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, { paymentStatus });
+}
+
+export async function confirmManualRefund(id: string, refundNote?: string): Promise<{ success: boolean; message: string }> {
+  return apiRequest.post(`/orders/admin/${id}/confirm-refund`, { refundNote });
+}
+
+export async function updateOrderShipping(id: string, payload: UpdateShippingPayload): Promise<OrderDetailResponse> {
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, payload);
+}
+
+export async function cancelOrder(id: string): Promise<CancelOrderResponse> {
+  return apiRequest.post<CancelOrderResponse>(`/orders/admin/${id}/cancel`);
+}
+
+export async function updatePaymentMethod(id: string, paymentMethodId: string): Promise<OrderDetailResponse> {
+  return apiRequest.patch<OrderDetailResponse>(`/orders/admin/${id}`, { paymentMethodId });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LOCATION — gọi thẳng provinces.open-api.vn (không qua backend)
+// USER APIS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const getProvinces = async (): Promise<Province[]> => {
+export async function searchUsers(q: string, limit = 10): Promise<UserResult[]> {
+  const res = await apiRequest.get<{ data: UserResult[]; pagination: any }>("/users/admin", {
+    params: { search: q, limit, role: "CUSTOMER" },
+  });
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+export async function getUserById(userId: string): Promise<UserResult | null> {
   try {
-    const res = await fetch("https://provinces.open-api.vn/api/v2/p/");
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data ?? []).map((p: any) => ({
-      code: String(p.code),
-      name: p.name,
-      fullName: p.nameWithType ?? p.name,
-    }));
+    const res = await apiRequest.get<{ data: UserResult }>(`/users/admin/${userId}`);
+    return res.data ?? null;
   } catch {
-    return [];
+    return null;
   }
-};
+}
 
-export const getWards = async (provinceCode: string): Promise<Ward[]> => {
-  try {
-    const res = await fetch(`https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data?.wards ?? []).map((w: any) => ({
-      code: String(w.code),
-      name: w.name,
-      fullName: w.nameWithType ?? w.name,
-    }));
-  } catch {
-    return [];
+export async function getUserAddresses(userId: string): Promise<UserAddress[]> {
+  const res = await apiRequest.get<{ data: UserAddress[] }>("/addresses/admin/all", {
+    params: { userId },
+  });
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCATION APIS — provinces.open-api.vn
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PROVINCES_API = "https://provinces.open-api.vn/api/v2";
+
+/**
+ * Lấy tất cả tỉnh/thành phố.
+ * GET https://provinces.open-api.vn/api/v2/p/
+ * Response: Province[]  (array trực tiếp, không wrap)
+ */
+export async function getProvinces(): Promise<Province[]> {
+  const res = await fetch(`${PROVINCES_API}/p/`);
+  if (!res.ok) throw new Error("Không thể tải danh sách tỉnh/thành");
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * Lấy danh sách phường/xã theo mã tỉnh.
+ * GET https://provinces.open-api.vn/api/v2/p/{provinceCode}?depth=2
+ * Response: { ...province, wards: Ward[] }
+ */
+export async function getWards(provinceCode: number): Promise<Ward[]> {
+  const res = await fetch(`${PROVINCES_API}/p/${provinceCode}?depth=2`);
+  if (!res.ok) throw new Error("Không thể tải danh sách phường/xã");
+  const data = await res.json();
+  return Array.isArray(data.wards) ? data.wards : [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYMENT METHODS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * apiRequest đã unwrap response một lớp:
+ *   BE trả về  { data: [...], message: "..." }
+ *   apiRequest trả về  { data: [...], message: "..." }  (tức là res = BE response)
+ * Nên res.data là array payment methods trực tiếp.
+ */
+export async function getActivePaymentMethods(): Promise<PaymentMethod[]> {
+  const res = await apiRequest.get<{ data: PaymentMethod[]; message: string }>("/payments/active");
+  // res.data là array (sau khi apiRequest unwrap lớp ngoài)
+  if (Array.isArray(res.data)) return res.data;
+  // Fallback: nếu apiRequest không unwrap (raw response)
+  if (Array.isArray(res)) return res as any;
+  return [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCT APIS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function searchProducts(q: string, limit = 8): Promise<ProductSearchResult[]> {
+  const res = await apiRequest.get<any>("/products", { params: { search: q, limit } });
+
+  let raw: any[] = [];
+  if (Array.isArray(res)) raw = res;
+  else if (Array.isArray(res.data)) raw = res.data;
+  else if (Array.isArray(res.data?.data)) raw = res.data.data;
+
+  const seen = new Set<string>();
+  const deduped: ProductSearchResult[] = [];
+  for (const p of raw) {
+    if (!p.slug || seen.has(p.slug)) continue;
+    seen.add(p.slug);
+    deduped.push({
+      id: p.id,
+      name: stripVariantSuffix(p.name),
+      slug: p.slug,
+      thumbnail: p.thumbnail ?? null,
+      category: p.category ?? { name: "" },
+      brand: p.brand ?? { name: "" },
+      priceOrigin: p.priceOrigin,
+      price: p.price ?? null,
+    });
   }
-};
+  return deduped;
+}
 
-export const getUserAddresses = async (userId: string): Promise<UserAddress[]> => {
-  const res = await apiRequest.get<{ data: UserAddress[] }>(`/admin/users/${userId}/addresses`);
-  return res.data ?? [];
-};
+function stripVariantSuffix(name: string): string {
+  if (!name) return name;
+  const m = name.match(/^(.*?)\s+\d+\s*(GB|TB|MB)\b/i);
+  return m && m[1] ? m[1].trim() : name;
+}
 
-export const getAllOrders = async (params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
+export async function getVariantOptions(slug: string): Promise<VariantOption[]> {
+  const res = await apiRequest.get<{ data: VariantOption[] }>(`/products/slug/${slug}/variant-options`);
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+export async function exportOrders(params: {
+  format: "excel" | "csv";
   status?: string;
   paymentStatus?: string;
+  search?: string;
   dateFrom?: string;
   dateTo?: string;
-}): Promise<{ data: Order[]; meta: any }> => {
-  const res = await apiRequest.get<{ data: Order[]; meta: any }>("/orders/admin/all", { params });
-  return res;
-};
+}): Promise<{ blob: Blob; filename: string; count: number }> {
+  const { format, status, paymentStatus, search, dateFrom, dateTo } = params;
 
-export const cancelOrder = async (id: string): Promise<void> => {
-  await apiRequest.patch(`/orders/admin/${id}`, { orderStatus: "CANCELLED" });
-};
+  const queryParams: Record<string, any> = { format };
+  if (status && status !== "ALL") queryParams.status = status;
+  if (paymentStatus && paymentStatus !== "ALL") queryParams.paymentStatus = paymentStatus;
+  if (search) queryParams.search = search;
+  if (dateFrom) queryParams.dateFrom = dateFrom;
+  if (dateTo) queryParams.dateTo = dateTo;
 
-// ─── Payment status ───────────────────────────────────────────────────────────
+  // apiRequest tự build: ${BASE_URL}/api/v1/orders/admin/export?...
+  // responseType: "blob" để nhận binary file thay vì parse JSON
+  const blob = await apiRequest.get<Blob>("/orders/admin/export", {
+    params: queryParams,
+    responseType: "blob",
+  });
 
-export const updatePaymentStatus = async (id: string, paymentStatus: PaymentStatus): Promise<Order> => {
-  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { paymentStatus });
-  return res.data;
-};
+  const ext = format === "excel" ? "xlsx" : "csv";
+  const filename = `orders_export_${Date.now()}.${ext}`;
 
-/** Xác nhận hoàn tiền thủ công: chuyển paymentStatus → REFUNDED */
-export const confirmManualRefund = async (id: string, note?: string): Promise<Order> => {
-  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { paymentStatus: "REFUNDED" as PaymentStatus, ...(note ? { note } : {}) });
-  return res.data;
-};
-
-// ─── Order status ─────────────────────────────────────────────────────────────
-
-/** Cập nhật orderStatus */
-export const updateOrderStatus = async (id: string, orderStatus: OrderStatus): Promise<Order> => {
-  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { orderStatus });
-  return res.data;
-};
-
-// ─── Payment method ───────────────────────────────────────────────────────────
-
-/** Lấy danh sách phương thức thanh toán đang active */
-export const getActivePaymentMethods = async (): Promise<PaymentMethod[]> => {
-  const res = await apiRequest.get<{ data: PaymentMethod[] }>("/admin/payment-methods", { params: { isActive: true } });
-  return res.data ?? [];
-};
-
-/** Chuyển phương thức thanh toán của đơn hàng (thường dùng để chuyển sang COD) */
-export const updatePaymentMethod = async (id: string, paymentMethodId: string): Promise<Order> => {
-  const res = await apiRequest.patch<{ data: Order }>(`/orders/admin/${id}`, { paymentMethodId });
-  return res.data;
-};
+  return { blob, filename, count: 0 };
+}

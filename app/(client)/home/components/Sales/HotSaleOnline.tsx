@@ -10,7 +10,7 @@ import Link from "next/link";
 import { FeaturedProduct } from "../../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TYPES (giữ nguyên)
+// TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface SaleScheduleRule {
@@ -63,12 +63,16 @@ interface CachedDayData {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS — giữ màu gốc
+// DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BRAND_RED = "#e63946";
-const BRAND_RED_DARK = "#c1121f";
-const BRAND_RED_DEEPER = "#8b1a22";
+const ACCENT_RED = "#e63946";
+const ACCENT_RED_DARK = "#c1121f";
+
+// Header navy — sync với site header xanh đậm
+const HEADER_BG_FROM = "#293b4f";
+const HEADER_BG_MID = "#203142";
+const HEADER_BG_TO = "#1e2d45";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -76,9 +80,7 @@ const BRAND_RED_DEEPER = "#8b1a22";
 
 function formatDateTab(dateStr: string): string {
   const d = new Date(dateStr);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  return `${day}/${month}`;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function formatTime(dateStr: string | null): string {
@@ -87,7 +89,7 @@ function formatTime(dateStr: string | null): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COUNTDOWN
+// COUNTDOWN — pill nổi, dấu ":" đỏ accent
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DigitBox = memo(function DigitBox({ value }: { value: string }) {
@@ -95,16 +97,15 @@ const DigitBox = memo(function DigitBox({ value }: { value: string }) {
     <span
       className="inline-flex items-center justify-center font-black tabular-nums"
       style={{
-        background: "rgba(0,0,0,0.35)",
-        color: "#fff",
-        fontSize: "clamp(15px, 3.5vw, 20px)",
-        minWidth: "clamp(26px, 5.5vw, 34px)",
-        height: "clamp(28px, 6vw, 38px)",
-        borderRadius: 6,
-        letterSpacing: "-0.02em",
-        /* Chiều sâu: bóng trong + viền mờ */
-        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.08)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "rgba(0,0,0,0.55)",
+        color: "#ffffff",
+        fontSize: "clamp(14px, 3vw, 20px)",
+        minWidth: "clamp(28px, 5.5vw, 36px)",
+        height: "clamp(30px, 6vw, 40px)",
+        borderRadius: 7,
+        letterSpacing: "-0.01em",
+        // ✅ Ring trắng mỏng → digit cell nổi rõ trên nền navy
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.15)",
       }}
     >
       {value}
@@ -131,14 +132,32 @@ const Countdown = memo(function Countdown({ endDate, label }: { endDate: string 
 
   const pad = (n: number) => n.toString().padStart(2, "0");
 
+  // ✅ Separator đỏ accent thay vì trắng mờ → "bắn lửa" giữa các số
+  const Sep = () => (
+    <span className="font-black select-none" style={{ color: ACCENT_RED, fontSize: "clamp(16px, 3vw, 22px)", lineHeight: 1, marginBottom: 1 }}>
+      :
+    </span>
+  );
+
   return (
-    <div className="flex items-center gap-2 flex-wrap" suppressHydrationWarning>
-      <span className="text-[11px] font-semibold text-white/60 uppercase tracking-widest">{label}</span>
+    // ✅ Bọc trong pill tối + border trắng → cả khối countdown nổi như badge
+    <div
+      className="flex items-center gap-2 flex-wrap px-3 py-1.5 rounded-xl"
+      style={{
+        background: "rgba(0,0,0,0.35)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+      }}
+      suppressHydrationWarning
+    >
+      <span className="text-[10px] font-semibold uppercase tracking-widest whitespace-nowrap" style={{ color: "rgba(255,255,255,0.5)" }}>
+        {label}
+      </span>
       <div className="flex items-center gap-1">
         <DigitBox value={pad(timeLeft.hours)} />
-        <span className="font-black text-white/40 text-sm leading-none mx-0.5">:</span>
+        <Sep />
         <DigitBox value={pad(timeLeft.minutes)} />
-        <span className="font-black text-white/40 text-sm leading-none mx-0.5">:</span>
+        <Sep />
         <DigitBox value={pad(timeLeft.seconds)} />
       </div>
     </div>
@@ -146,25 +165,23 @@ const Countdown = memo(function Countdown({ endDate, label }: { endDate: string 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TAB ITEM — tab active "nổi lên" bằng background sáng + underline trắng
+// TAB ITEM
 // ─────────────────────────────────────────────────────────────────────────────
 
 function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; isActive: boolean; isLoading: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="shrink-0 min-w-[100px] px-4 py-2.5 text-center transition-all cursor-pointer relative"
+      className="shrink-0 min-w-[100px] px-4 py-2.5 text-center transition-all cursor-pointer"
       style={{
-        background: isActive ? "rgba(255,255,255,0.15)" : "transparent",
-        /* Phân cách dưới tab active = đường trắng */
-        borderBottom: isActive ? "2.5px solid rgba(255,255,255,0.9)" : "2.5px solid transparent",
+        background: isActive ? "rgba(230, 57, 70, 0.15)" : "transparent",
+        borderBottom: isActive ? `2.5px solid ${ACCENT_RED}` : "2.5px solid transparent",
         opacity: !day.hasActiveSale && !day.isToday ? 0.4 : 1,
       }}
     >
-      {/* Label chính */}
       <div className="font-bold text-white text-sm leading-tight flex items-center justify-center gap-1.5">
         {day.isToday ? (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-black tracking-wider uppercase" style={{ background: "rgba(255,255,255,0.22)", color: "#fff" }}>
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-black tracking-wider uppercase" style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}>
             Hôm nay
           </span>
         ) : (
@@ -173,17 +190,15 @@ function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; 
         {isLoading && <span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />}
       </div>
 
-      {/* Sub: giờ kết thúc hôm nay */}
       {day.isToday && day.promotions[0]?.endDate && (
-        <div className="text-[10px] mt-0.5 text-white/65">
-          Kết thúc: <span className="font-semibold text-white">{formatTime(day.promotions[0].endDate)}</span>
+        <div className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+          Kết thúc: <span style={{ color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{formatTime(day.promotions[0].endDate)}</span>
         </div>
       )}
 
-      {/* Sub: nhãn sắp mở */}
       {!day.isToday && day.hasActiveSale && (
         <div className="mt-1">
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" style={{ background: "rgba(255,255,255,0.10)", color: "#fff" }}>
             Sắp mở
           </span>
         </div>
@@ -199,7 +214,7 @@ function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; 
 function EmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-6" style={{ minHeight: 320 }}>
-      <Flame style={{ width: 72, height: 72, color: BRAND_RED, opacity: 0.18 }} strokeWidth={1.5} />
+      <Flame style={{ width: 72, height: 72, color: ACCENT_RED, opacity: 0.18 }} strokeWidth={1.5} />
       <p className="text-sm font-semibold" style={{ color: "rgb(var(--neutral-dark))" }}>
         {isUpcoming ? "Chương trình sale sắp diễn ra" : "Sản phẩm Sale đang được cập nhật..."}
       </p>
@@ -311,9 +326,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
       if (productsCache[date] !== undefined) return;
       setLoadingDate(date);
       try {
-        const res = await apiRequest.get<any>("/home/sale-by-date", {
-          params: { date, limit: 20 },
-        });
+        const res = await apiRequest.get<any>("/home/sale-by-date", { params: { date, limit: 20 } });
         const result = res.data;
         setProductsCache((prev) => ({
           ...prev,
@@ -360,68 +373,100 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
   const isCountingDown = activeDate === todayDate && !!countdownEndDate;
 
   return (
-    <section className="py-6 md:py-8 bg-neutral-light-active">
+    <section className="py-6 md:py-8 bg-neutral-light">
       <div className="container">
         {/*
-         * ── Outer shell ──────────────────────────────────────────────────────
-         * Viền đỏ gốc + shadow có màu → tạo "hào quang" nhẹ quanh khối
+         * ✅ Outer shell:
+         * - Left border đỏ 3px → signature nhận dạng sale
+         * - Bottom border đỏ → "ngưỡng cửa" chuyển sang content
+         * - Box shadow có tint đỏ rất nhẹ → glow ambient sale
          */}
         <div
           className="rounded-2xl overflow-hidden"
           style={{
-            border: `2px solid ${BRAND_RED_DARK}`,
-            boxShadow: `0 2px 0 ${BRAND_RED_DEEPER}, 0 4px 0 ${BRAND_RED_DEEPER}cc, 0 6px 24px ${BRAND_RED}30`,
+            borderTop: "1.5px solid rgba(255,255,255,0.05)",
+            borderLeft: `3px solid ${ACCENT_RED_DARK}`,
+            borderRight: "1.5px solid rgba(255,255,255,0.05)",
+            borderBottom: `2px solid ${ACCENT_RED}`,
+            boxShadow: `
+              0 4px 32px rgba(13,27,42,0.22),
+              0 0 0 1px rgba(230,57,70,0.07),
+              0 8px 24px rgba(230,57,70,0.06)
+            `,
           }}
         >
-          {/* ════════════════════════════════════════════════════════════════
-           *  HEADER — gradient đỏ gốc
-           * ════════════════════════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════
+           *  HEADER — navy + glow đỏ từ dưới (lửa bốc)
+           * ════════════════════════════════════════════════════════════ */}
           <div
             className="relative overflow-hidden"
             style={{
-              background: `linear-gradient(135deg, ${BRAND_RED_DARK} 0%, ${BRAND_RED} 70%, #ff6b6b 100%)`,
+              background: `linear-gradient(160deg, ${HEADER_BG_FROM} 0%, ${HEADER_BG_MID} 55%, ${HEADER_BG_TO} 100%)`,
             }}
           >
-            {/* Radial glow trang trí */}
+            {/* ✅ Glow đỏ từ dưới-trái + dưới-phải → hiệu ứng "lửa bốc lên" */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                background: "radial-gradient(ellipse at 80% 50%, rgba(255,180,0,0.10) 0%, transparent 70%)",
+                background: `
+                  radial-gradient(ellipse at 12% 130%, rgba(230,57,70,0.25) 0%, transparent 48%),
+                  radial-gradient(ellipse at 88% 130%, rgba(230,57,70,0.12) 0%, transparent 38%)
+                `,
               }}
             />
 
-            {/* ── Title + Countdown ── */}
-            <div className="relative z-10 flex items-center justify-between px-4 pt-3.5 pb-2.5 gap-3 flex-wrap">
+            {/* Title + Countdown row */}
+            <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap">
               {/* Title */}
-              <div className="flex items-center gap-2">
-                <Flame className="shrink-0" style={{ width: 26, height: 26, color: "#FFD600", fill: "#FFD600" }} />
-                <span className="font-black tracking-[0.1em] uppercase" style={{ fontSize: "clamp(18px, 4vw, 32px)", color: "#FFD600" }}>
-                  Flash Sale
-                </span>
+              <div className="flex items-center gap-3">
+                {/* ✅ Icon lửa với drop-shadow đỏ-cam → nổi bật */}
+                <div style={{ filter: "drop-shadow(0 0 8px rgba(255,100,50,0.75))" }}>
+                  <Flame style={{ width: 28, height: 28, color: "#FF6B35", fill: "#FF6B35" }} />
+                </div>
+
+                <div className="flex flex-col leading-none gap-1">
+                  <span
+                    className="font-black uppercase tracking-[0.14em] text-white"
+                    style={{
+                      fontSize: "clamp(17px, 3.8vw, 27px)",
+                      // ✅ Text glow đỏ nhẹ → chữ có warmth trên nền lạnh
+                      textShadow: "0 0 20px rgba(230,57,70,0.3)",
+                    }}
+                  >
+                    Flash Sale
+                  </span>
+                  {/* Gạch accent đỏ glow bên dưới chữ */}
+                  <span
+                    className="block rounded-full"
+                    style={{
+                      height: 2.5,
+                      width: "55%",
+                      background: `linear-gradient(90deg, ${ACCENT_RED} 0%, rgba(230,57,70,0.3) 70%, transparent 100%)`,
+                      boxShadow: `0 0 6px rgba(230,57,70,0.5)`,
+                    }}
+                  />
+                </div>
               </div>
 
-              {/* Countdown — bên phải title */}
+              {/* ✅ Countdown pill */}
               {isCountingDown && <Countdown endDate={countdownEndDate} label="Kết thúc sau" />}
             </div>
 
-            {/*
-             * ── Divider phân cách title ↔ tabs ───────────────────────────
-             * Đường kẻ mờ trắng tạo nhịp thở, không dùng màu lạ
-             */}
+            {/* Divider mờ */}
             <div
-              className="relative z-10 mx-0"
+              className="relative z-10"
               style={{
                 height: "1px",
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2) 20%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.2) 80%, transparent)",
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.07) 80%, transparent)",
               }}
             />
 
-            {/* ── Tabs ── */}
+            {/* Tabs */}
             <div className="relative z-10 flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {hasSaleDays ? (
                 schedule.map((day) => <TabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={() => handleTabClick(day.date)} />)
               ) : (
-                <div className="flex items-center gap-2 px-4 py-3 text-[13px] text-white/60">
+                <div className="flex items-center gap-2 px-4 py-3 text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>
                   <Calendar size={14} />
                   Không có chương trình sale nào sắp diễn ra
                 </div>
@@ -429,20 +474,16 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             </div>
           </div>
 
-          {/*
-           * ── Phân cách header ↔ body ───────────────────────────────────────
-           * Strip đỏ đậm hơn = "ngưỡng cửa" rõ ràng, tạo chiều sâu
-           */}
+          {/* ✅ Phân cách header ↔ body: đường đỏ có glow */}
           <div
             style={{
-              height: 3,
-              background: `linear-gradient(90deg, ${BRAND_RED_DEEPER}, ${BRAND_RED_DARK} 40%, ${BRAND_RED_DEEPER})`,
+              height: 2,
+              background: `linear-gradient(90deg, transparent 0%, ${ACCENT_RED_DARK} 15%, ${ACCENT_RED} 50%, ${ACCENT_RED_DARK} 85%, transparent 100%)`,
+              boxShadow: `0 0 10px rgba(230,57,70,0.45)`,
             }}
           />
 
-          {/* ════════════════════════════════════════════════════════════════
-           *  BODY — products
-           * ════════════════════════════════════════════════════════════════ */}
+          {/* Body */}
           <div className="px-2 pt-3" style={{ background: "rgb(var(--neutral-light))" }}>
             {loadingDate === activeDate ? (
               <SkeletonGrid />
@@ -453,16 +494,14 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             )}
           </div>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           {products.length > 0 && (
-            <div
-              className="px-4 py-2.5 flex justify-end border-t"
-              style={{
-                background: "rgb(var(--neutral-light))",
-                borderColor: "rgb(var(--neutral))",
-              }}
-            >
-              <Link href={`/flash-sale?date=${activeDate}`} className="flex items-center gap-1 text-[12px] font-semibold hover:underline" style={{ color: BRAND_RED }}>
+            <div className="px-4 py-2.5 flex justify-end border-t" style={{ background: "rgb(var(--neutral-light))", borderColor: "rgb(var(--neutral))" }}>
+              <Link
+                href={`/flash-sale?date=${activeDate}`}
+                className="flex items-center gap-1 text-[12px] font-semibold hover:underline transition-opacity hover:opacity-80"
+                style={{ color: ACCENT_RED }}
+              >
                 Xem tất cả <ChevronRight size={13} />
               </Link>
             </div>

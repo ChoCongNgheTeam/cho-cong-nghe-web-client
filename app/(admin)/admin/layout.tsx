@@ -1,14 +1,16 @@
 "use client";
 
+"use client";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Toaster } from "sonner"; // ← Thêm dòng này
+import { Toaster } from "sonner";
 
-import AdminSidebar from "@/components/admin/sidebar";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeaderAuto from "@/components/admin/AdminHeaderAuto";
-import { AdminPreferencesProvider } from "@/contexts/AdminPreferencesContext";
 import { AdminNotificationProvider } from "@/contexts/AdminNotificationContext";
+import { AdminPrefixProvider } from "@/contexts/AdminPrefixContext";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -19,18 +21,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (!user) {
         router.replace("/account");
       } else if (user.role !== "ADMIN") {
-        router.replace("/");
+        if (user.role === "STAFF") {
+          router.replace("/staff/dashboard");
+        } else {
+          router.replace("/");
+        }
       }
     }
   }, [user, loading, router]);
 
   if (loading) return <div>Loading...</div>;
-
   if (!user || user.role !== "ADMIN") return null;
 
   return (
-    <AdminNotificationProvider>
-      <AdminPreferencesProvider>
+    <AdminPrefixProvider prefix="/admin">
+      <AdminNotificationProvider>
         <div className="flex h-screen bg-neutral-light text-primary">
           <div className="shrink-0 h-full">
             <AdminSidebar />
@@ -41,15 +46,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        <Toaster
-          position="top-right"
-          richColors
-          closeButton
-          duration={3000}
-          theme="light" // hoặc "dark" nếu bạn dùng dark mode
-        />
-        {/* ============================================================ */}
-      </AdminPreferencesProvider>
-    </AdminNotificationProvider>
+        <Toaster position="top-right" richColors closeButton duration={3000} theme="light" />
+      </AdminNotificationProvider>
+    </AdminPrefixProvider>
   );
 }
