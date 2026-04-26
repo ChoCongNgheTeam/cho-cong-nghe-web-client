@@ -540,6 +540,7 @@ export default function CheckoutPage() {
         shippingAddressId: addressId,
         contactName,
         phone: contactPhone,
+        cartItemIds: cartItemIds,
         ...(voucherId ? { voucherId } : {}),
       });
 
