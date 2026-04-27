@@ -30,9 +30,7 @@ export interface GetUsersResponse {
 
 export async function getAllUsers(query: GetUsersQuery = {}): Promise<GetUsersResponse> {
   // Lọc bỏ undefined — không gửi param rỗng lên server
-  const params = Object.fromEntries(
-    Object.entries(query).filter(([, v]) => v !== undefined && v !== "")
-  );
+  const params = Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined && v !== ""));
 
   const res = await apiRequest.get<GetUsersResponse>("/users/admin", { params });
 
@@ -46,4 +44,33 @@ export async function getAllUsers(query: GetUsersQuery = {}): Promise<GetUsersRe
   };
 
   return { data, pagination, message: res.message };
+}
+
+export type ExportUserFormat = "excel" | "csv";
+
+export interface ExportUsersParams {
+  format: ExportUserFormat;
+  search?: string;
+  role?: "CUSTOMER" | "ADMIN" | "STAFF";
+  isActive?: boolean;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  /** Có kèm số đơn hàng + tổng chi tiêu không (chậm hơn một chút) */
+  withOrderStats?: boolean;
+}
+
+export async function exportUsers(params: ExportUsersParams): Promise<{ blob: Blob; filename: string; count: number }> {
+  const qs = new URLSearchParams();
+  qs.set("format", params.format);
+  if (params.search) qs.set("search", params.search);
+  if (params.role) qs.set("role", params.role);
+  if (params.isActive !== undefined) qs.set("isActive", String(params.isActive));
+  if (params.gender) qs.set("gender", params.gender);
+  if (params.withOrderStats) qs.set("withOrderStats", "true");
+
+  const blob = await apiRequest.get<Blob>(`/users/admin/export?${qs.toString()}`, {
+    responseType: "blob",
+  });
+
+  const ext = params.format === "excel" ? "xlsx" : "csv";
+  return { blob, filename: `users_export_${Date.now()}.${ext}`, count: 0 };
 }

@@ -19,7 +19,7 @@ const MobileHeader = ({ isDarkMode }: MobileHeaderProps) => {
   // Avatar: dùng ảnh user nếu đã đăng nhập, fallback về robot mascot
   const avatarSrc = user?.avatarImage || "/images/Robot-mascot-v2.png";
   const avatarAlt = user ? user.fullName || "Tài khoản" : "Linh vật";
-  const avatarHref = user ? "/profile" : "/auth/login";
+  const avatarHref = user ? "/profile" : "/account";
 
   return (
     <div className="flex md:hidden flex-col gap-2 py-2">
