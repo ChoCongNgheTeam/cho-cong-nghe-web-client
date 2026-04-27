@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import BlogCategoryBar from "../components/BlogCategoryBar";
-import CommentSection from "../../products/product-comment/Commentsection";
-import { getComments, getReplies, postComment } from "../../products/_lib";
-import type { Comment } from "../../products/product-comment/Productreview";
+import BlogCommentSection from "./BlogCommentSection";
+import { getBlogComments, getBlogReplies, postBlogComment } from "../_lib/blog-comments";
+import { buildBlogCommentTree, type BlogComment } from "./blog-comment.types";
 import { BlogDetail } from "../types/blog.type";
 
 type Props = {
@@ -39,11 +39,7 @@ function createExcerptFromHtml(value: string, maxLength = 220): string {
 
 function extractHeadingList(html: string, limit = 10): string[] {
   const matches = html.match(/<h[1-3][^>]*>[\s\S]*?<\/h[1-3]>/gi) ?? [];
-
-  return matches
-    .map((item) => stripHtml(item))
-    .filter(Boolean)
-    .slice(0, limit);
+  return matches.map((item) => stripHtml(item)).filter(Boolean).slice(0, limit);
 }
 
 function formatDateTime(value: string): string {
@@ -62,30 +58,20 @@ function formatDateTime(value: string): string {
 export default function BlogDetailClient({ blog }: Props) {
   const [fontSize, setFontSize] = useState<FontSize>("base");
 
-  const contentSections = useMemo(
-    () => extractHeadingList(blog.content),
-    [blog.content]
-  );
-
-  const excerpt = useMemo(
-    () => createExcerptFromHtml(blog.content),
-    [blog.content]
-  );
-
-  const articleHtml = blog.content?.trim()
-    ? blog.content
-    : "<p>Nội dung bài viết đang được cập nhật.</p>";
-
+  const contentSections = useMemo(() => extractHeadingList(blog.content), [blog.content]);
+  const excerpt = useMemo(() => createExcerptFromHtml(blog.content), [blog.content]);
+  const articleHtml = blog.content?.trim() ? blog.content : "<p>Nội dung bài viết đang được cập nhật.</p>";
   const publishedAtLabel = formatDateTime(blog.publishedAt || blog.createdAt);
 
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<BlogComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
 
   const fetchComments = useCallback(async () => {
     setLoadingComments(true);
     try {
-      const result = await getComments("BLOG", blog.id);
-      setComments(result?.data ?? []);
+      const result = await getBlogComments(blog.id);
+      const relevant = (result?.data ?? []).filter((c) => c.targetId === blog.id);
+      setComments(buildBlogCommentTree(relevant));
     } catch (error) {
       console.error("Lỗi khi lấy bình luận blog:", error);
       setComments([]);
@@ -96,13 +82,9 @@ export default function BlogDetailClient({ blog }: Props) {
 
   const fetchReplies = useCallback(async (commentId: string) => {
     try {
-      const result = await getReplies(commentId);
+      const result = await getBlogReplies(commentId);
       const replies = result?.data ?? [];
-      setComments((prev) =>
-        prev.map((c) =>
-          c.id === commentId ? { ...c, replies, _repliesCount: replies.length } : c,
-        ),
-      );
+      setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, replies, _repliesCount: replies.length } : c)));
     } catch (error) {
       console.error("Lỗi khi lấy replies:", error);
     }
@@ -110,11 +92,7 @@ export default function BlogDetailClient({ blog }: Props) {
 
   const handleCommentSubmit = useCallback(
     async (content: string) => {
-      const response = await postComment({
-        content,
-        targetType: "BLOG",
-        targetId: blog.id,
-      });
+      const response = await postBlogComment(blog.id, content);
       await fetchComments();
       return response?.data;
     },
@@ -123,12 +101,7 @@ export default function BlogDetailClient({ blog }: Props) {
 
   const handleReplySubmit = useCallback(
     async (parentId: string, content: string) => {
-      const response = await postComment({
-        content,
-        targetType: "BLOG",
-        targetId: blog.id,
-        parentId,
-      });
+      const response = await postBlogComment(blog.id, content, parentId);
       await fetchReplies(parentId);
       return response?.data;
     },
@@ -152,38 +125,22 @@ export default function BlogDetailClient({ blog }: Props) {
         {blog.category?.name ? (
           <>
             /{" "}
-            <Link
-              href={`/blog?category=${blog.category.slug}&page=1`}
-              className="hover:text-primary"
-            >
+            <Link href={`/blog?category=${blog.category.slug}&page=1`} className="hover:text-primary">
               {blog.category.name}
             </Link>{" "}
           </>
         ) : null}
-        /{" "}
-        <span className="text-primary line-clamp-1 inline-block align-bottom">
-          {blog.title}
-        </span>
+        / <span className="inline-block line-clamp-1 align-bottom text-primary">{blog.title}</span>
       </div>
 
       <section className="mb-8">
-        <BlogCategoryBar
-          active={blog.category?.slug}
-          className="gap-5 border-b border-neutral pb-2 text-[14px]"
-          itemClassName="pb-1 font-medium"
-        />
+        <BlogCategoryBar active={blog.category?.slug} className="gap-5 border-b border-neutral pb-2 text-[14px]" itemClassName="pb-1 font-medium" />
       </section>
 
       <section className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="overflow-hidden rounded-xl bg-neutral-light lg:col-span-5">
           <div className="relative aspect-[5/4] w-full">
-            <Image
-              src={blog.thumbnail || "/images/avatar.png"}
-              alt={blog.title}
-              fill
-              className="object-cover"
-              sizes="(min-width: 1024px) 520px, 100vw"
-            />
+            <Image src={blog.thumbnail || "/images/avatar.png"} alt={blog.title} fill className="object-cover" sizes="(min-width: 1024px) 520px, 100vw" />
           </div>
         </div>
 
@@ -191,14 +148,8 @@ export default function BlogDetailClient({ blog }: Props) {
           <div className="mb-2 text-[14px] text-primary-light">
             {blog.author.fullName || "Tác giả"} • {publishedAtLabel}
           </div>
-          <h1 className="text-[34px] font-bold leading-[1.15] text-primary xl:text-[52px]">
-            {blog.title}
-          </h1>
-          {excerpt ? (
-            <p className="mt-4 max-w-[640px] text-[16px] leading-[1.7] text-primary-light">
-              {excerpt}
-            </p>
-          ) : null}
+          <h1 className="text-[34px] font-bold leading-[1.15] text-primary xl:text-[52px]">{blog.title}</h1>
+          {excerpt ? <p className="mt-4 max-w-[640px] text-[16px] leading-[1.7] text-primary-light">{excerpt}</p> : null}
         </div>
       </section>
 
@@ -210,9 +161,7 @@ export default function BlogDetailClient({ blog }: Props) {
                 type="button"
                 onClick={() => setFontSize("small")}
                 className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-                  fontSize === "small"
-                    ? "border-primary bg-primary text-white"
-                    : "border-neutral bg-white text-primary hover:border-primary-light"
+                  fontSize === "small" ? "border-primary bg-primary text-white" : "border-neutral bg-white text-primary hover:border-primary-light"
                 }`}
               >
                 Nhỏ
@@ -221,9 +170,7 @@ export default function BlogDetailClient({ blog }: Props) {
                 type="button"
                 onClick={() => setFontSize("base")}
                 className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-                  fontSize === "base"
-                    ? "border-primary bg-primary text-white"
-                    : "border-neutral bg-white text-primary hover:border-primary-light"
+                  fontSize === "base" ? "border-primary bg-primary text-white" : "border-neutral bg-white text-primary hover:border-primary-light"
                 }`}
               >
                 Vừa
@@ -232,9 +179,7 @@ export default function BlogDetailClient({ blog }: Props) {
                 type="button"
                 onClick={() => setFontSize("large")}
                 className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-                  fontSize === "large"
-                    ? "border-primary bg-primary text-white"
-                    : "border-neutral bg-white text-primary hover:border-primary-light"
+                  fontSize === "large" ? "border-primary bg-primary text-white" : "border-neutral bg-white text-primary hover:border-primary-light"
                 }`}
               >
                 Lớn
@@ -242,20 +187,13 @@ export default function BlogDetailClient({ blog }: Props) {
             </div>
 
             <div className="overflow-hidden rounded-md bg-[#f3f4f6] text-sm">
-              <div className="border-b border-[#e5e7eb] px-4 py-3 font-semibold text-primary">
-                Nội dung bài viết
-              </div>
+              <div className="border-b border-[#e5e7eb] px-4 py-3 font-semibold text-primary">Nội dung bài viết</div>
               <ul className="px-4 py-2">
-                {(contentSections.length > 0
-                  ? contentSections
-                  : ["Nội dung chính đang được cập nhật."]
-                ).map((item, index) => (
+                {(contentSections.length > 0 ? contentSections : ["Nội dung chính đang được cập nhật."]).map((item, index) => (
                   <li
                     key={`${blog.id}-${index}-${item}`}
                     className={`border-l py-2 pl-3 text-[13px] leading-5 ${
-                      index === 0
-                        ? "border-primary font-medium text-primary"
-                        : "border-transparent text-primary-light"
+                      index === 0 ? "border-primary font-medium text-primary" : "border-transparent text-primary-light"
                     }`}
                   >
                     {item}
@@ -275,18 +213,15 @@ export default function BlogDetailClient({ blog }: Props) {
       </section>
 
       <section className="mt-12">
-        <div className="bg-neutral-light rounded-xl p-6">
-          <CommentSection
-            productId={blog.id}
+        <div className="rounded-xl bg-neutral-light p-6">
+          <BlogCommentSection
+            blogId={blog.id}
+            imageSrc={blog.thumbnail || "/images/avatar.png"}
             comments={comments}
             loading={loadingComments}
             onCommentSubmit={handleCommentSubmit}
             onReplySubmit={handleReplySubmit}
             onFetchReplies={fetchReplies}
-            title="Hãy để lại ý kiến của bạn"
-            description="Bình luận của bạn sẽ giúp độc giả khác và tác giả cải thiện nội dung."
-            placeholder="Viết bình luận của bạn..."
-            submitLabel="Gửi bình luận"
           />
         </div>
       </section>

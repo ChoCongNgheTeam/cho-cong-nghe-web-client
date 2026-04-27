@@ -3,54 +3,50 @@
 import { useState, useCallback, useContext, useRef, memo } from "react";
 import { AiOutlineLike } from "react-icons/ai";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import UserAvatar from "@/components/ui/UserAvatar";
-import type { Comment, Reply, CommentUser } from "./Productreview";
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 import Image from "next/image";
+import UserAvatar from "@/components/ui/UserAvatar";
+import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useToasty } from "@/components/Toast";
+import type { BlogComment, BlogCommentUser, BlogReply } from "./blog-comment.types";
 
 const PAGE_SIZE = 5;
 const AVATAR_SIZES = [36, 32];
 
 type SubmitResult = { isApproved: boolean; status?: string } | undefined;
-type CommentNodeData = Comment | Reply;
+type BlogCommentNodeData = BlogComment | BlogReply;
 
-interface CommentSectionProps {
-  productId: string;
-  comments: Comment[];
+interface BlogCommentSectionProps {
+  blogId: string;
+  imageSrc: string;
+  comments: BlogComment[];
   loading: boolean;
   onCommentSubmit: (content: string) => Promise<SubmitResult>;
   onReplySubmit: (parentId: string, content: string) => Promise<SubmitResult>;
   onFetchReplies: (commentId: string) => Promise<void>;
-  onFetchNestedReplies: (replyId: string, parentCommentId: string) => Promise<void>;
 }
 
-interface CommentNodeProps {
-  node: CommentNodeData;
+interface BlogCommentNodeProps {
+  node: BlogCommentNodeData;
   depth: number;
   replyTargetId: string | null;
   replyContents: Record<string, string>;
   replySubmitting: string | null;
   expandedIds: Record<string, boolean>;
   loadingIds: Record<string, boolean>;
-  onToggleExpand: (id: string, node: CommentNodeData) => Promise<void>;
+  onToggleExpand: (id: string, node: BlogCommentNodeData) => Promise<void>;
   onSetReplyTarget: (id: string | null) => void;
   onReplyContentChange: (id: string, value: string) => void;
   onSubmitReply: (id: string) => Promise<void>;
   onKeyPress: (e: React.KeyboardEvent<HTMLInputElement>, id: string) => void;
 }
 
-function Avatar({ user, size }: { user: CommentUser; size: number }) {
+function Avatar({ user, size }: { user: BlogCommentUser; size: number }) {
   const validAvatar = user?.avatarImage && !user.avatarImage.startsWith("./") ? user.avatarImage : undefined;
   return <UserAvatar avatarImage={validAvatar} fullName={user?.fullName ?? ""} size={size} />;
 }
 
-function findTopLevelParent(comments: Comment[], replyId: string): string | undefined {
-  return comments.find((c) => (c.replies ?? []).some((r) => r.id === replyId))?.id;
-}
-
-const CommentNode = memo(function CommentNode({
+const BlogCommentNode = memo(function BlogCommentNode({
   node,
   depth,
   replyTargetId,
@@ -63,7 +59,7 @@ const CommentNode = memo(function CommentNode({
   onReplyContentChange,
   onSubmitReply,
   onKeyPress,
-}: CommentNodeProps) {
+}: BlogCommentNodeProps) {
   const avatarSize = AVATAR_SIZES[Math.min(depth, AVATAR_SIZES.length - 1)];
   const hasChildren = (node._repliesCount ?? node.replies?.length ?? 0) > 0;
   const isExpanded = expandedIds[node.id];
@@ -115,7 +111,7 @@ const CommentNode = memo(function CommentNode({
           <div className="mt-3 flex gap-2">
             <input
               type="text"
-              placeholder="Nhập phản hồi..."
+              placeholder="Viết phản hồi của bạn..."
               value={replyContents[node.id] || ""}
               onChange={(e) => onReplyContentChange(node.id, e.target.value)}
               onKeyDown={(e) => onKeyPress(e, node.id)}
@@ -144,7 +140,7 @@ const CommentNode = memo(function CommentNode({
         {depth === 0 && isExpanded && (node.replies?.length ?? 0) > 0 && (
           <div className="mt-3 space-y-3 border-l-2 border-neutral pl-3 sm:mt-4 sm:space-y-4 sm:pl-4">
             {node.replies?.map((child) => (
-              <CommentNode
+              <BlogCommentNode
                 key={child.id}
                 node={child}
                 depth={1}
@@ -162,21 +158,14 @@ const CommentNode = memo(function CommentNode({
             ))}
           </div>
         )}
-
-        {depth === 0 && isSubmittingReply && (
-          <div className="mt-3 flex items-center gap-2 border-l-2 border-neutral pl-3 text-xs text-neutral-darker sm:pl-4">
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <span>Đang gửi phản hồi...</span>
-          </div>
-        )}
       </div>
     </div>
   );
 });
 
-CommentNode.displayName = "CommentNode";
+BlogCommentNode.displayName = "BlogCommentNode";
 
-export default function CommentSection({ productId, comments: initialComments, loading, onCommentSubmit, onReplySubmit, onFetchReplies }: CommentSectionProps) {
+export default function BlogCommentSection({ blogId, imageSrc, comments: initialComments, loading, onCommentSubmit, onReplySubmit, onFetchReplies }: BlogCommentSectionProps) {
   const auth = useContext(AuthContext);
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const toast = useToasty();
@@ -210,7 +199,7 @@ export default function CommentSection({ productId, comments: initialComments, l
 
   const handleSubmitComment = async () => {
     if (!isAuthenticated) {
-      toast.warning("Vui lòng đăng nhập để đặt câu hỏi", {
+      toast.warning("Vui lòng đăng nhập để tham gia thảo luận", {
         title: "Chưa đăng nhập",
         duration: 3000,
         showProgress: true,
@@ -225,18 +214,18 @@ export default function CommentSection({ productId, comments: initialComments, l
       setComment("");
 
       if (result?.isApproved === false || result?.status === "pending") {
-        toast.info("Bình luận của bạn đã được gửi và đang chờ quản trị viên phê duyệt.", {
+        toast.info("Bình luận của bạn đã được gửi và đang chờ kiểm duyệt.", {
           title: "Đang chờ duyệt",
           duration: 5000,
         });
       } else {
-        toast.success("Câu hỏi của bạn đã được gửi thành công!", {
+        toast.success("Bình luận của bạn đã được gửi thành công.", {
           title: "Gửi thành công",
           duration: 3000,
         });
       }
     } catch {
-      toast.error("Gửi câu hỏi thất bại, vui lòng thử lại.");
+      toast.error("Gửi bình luận thất bại, vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -245,32 +234,29 @@ export default function CommentSection({ productId, comments: initialComments, l
   const handleSubmitReply = useCallback(
     async (parentId: string) => {
       if (!isAuthenticated) {
-        toast.warning("Vui lòng đăng nhập để trả lời");
+        toast.warning("Vui lòng đăng nhập để tham gia thảo luận");
         return;
       }
 
       const content = replyContents[parentId];
       if (!content?.trim() || replySubmitting === parentId) return;
 
-      const isTopLevel = initialComments.some((c) => c.id === parentId);
-      const actualParentId = isTopLevel ? parentId : (findTopLevelParent(initialComments, parentId) ?? parentId);
-
-      setReplySubmitting(actualParentId);
+      setReplySubmitting(parentId);
 
       try {
-        const result = await onReplySubmit(actualParentId, content);
+        const result = await onReplySubmit(parentId, content);
 
         setReplyContents((prev) => ({ ...prev, [parentId]: "" }));
         setReplyTargetId(null);
-        setExpandedIds((prev) => ({ ...prev, [actualParentId]: true }));
+        setExpandedIds((prev) => ({ ...prev, [parentId]: true }));
 
         if (result?.isApproved === false || result?.status === "pending") {
-          toast.info("Phản hồi của bạn đã được gửi và đang chờ quản trị viên phê duyệt.", {
+          toast.info("Phản hồi của bạn đã được gửi và đang chờ kiểm duyệt.", {
             title: "Đang chờ duyệt",
             duration: 5000,
           });
         } else {
-          toast.success("Phản hồi của bạn đã được gửi thành công!", {
+          toast.success("Phản hồi của bạn đã được gửi thành công.", {
             title: "Thành công",
             duration: 3000,
           });
@@ -281,11 +267,11 @@ export default function CommentSection({ productId, comments: initialComments, l
         setReplySubmitting(null);
       }
     },
-    [replyContents, replySubmitting, initialComments, onReplySubmit, isAuthenticated, toast],
+    [isAuthenticated, onReplySubmit, replyContents, replySubmitting, toast],
   );
 
   const handleToggleExpand = useCallback(
-    async (id: string, node: CommentNodeData) => {
+    async (id: string, node: BlogCommentNodeData) => {
       if (expandedIds[id]) {
         setExpandedIds((prev) => ({ ...prev, [id]: false }));
         return;
@@ -311,31 +297,25 @@ export default function CommentSection({ productId, comments: initialComments, l
   );
 
   return (
-    <div ref={commentListRef} data-product-id={productId}>
-      <h4 className="mb-6 text-lg font-semibold text-primary sm:mb-8 sm:text-2xl">Bình luận</h4>
+    <div ref={commentListRef} data-blog-id={blogId}>
+      <h4 className="mb-6 text-lg font-semibold text-primary sm:mb-8 sm:text-2xl">Thảo luận</h4>
 
       <div className="mb-6 flex flex-col gap-4 border-b border-neutral pb-6 sm:flex-row sm:gap-6">
         <div className="hidden shrink-0 items-start justify-center xs:flex sm:justify-start">
-          <Image
-            src="https://cdn2.cellphones.com.vn/insecure/rs:fill:160:0/q:90/plain/https://cellphones.com.vn/media/wysiwyg/ant-hello-2025.png"
-            alt="Sản phẩm"
-            width={100}
-            height={100}
-            className="h-auto object-contain sm:w-[120px] lg:w-[160px]"
-          />
+          <Image src={imageSrc} alt="Bài viết" width={100} height={100} className="h-auto object-contain sm:w-[120px] lg:w-[160px]" />
         </div>
 
         <div className="min-w-0 flex-1">
-          <h4 className="mb-1 text-base font-semibold text-primary opacity-80 sm:text-lg">Hãy đặt câu hỏi cho chúng tôi</h4>
+          <h4 className="mb-1 text-base font-semibold text-primary opacity-80 sm:text-lg">Chia sẻ ý kiến của bạn về bài viết này</h4>
           <p className="text-xs leading-relaxed text-primary opacity-60 sm:text-sm">
-            ChoCongNghe sẽ phản hồi trong vòng 1 giờ. Nếu Quý khách gửi câu hỏi sau 22h, chúng tôi sẽ trả lời vào sáng hôm sau.
+            Bình luận của bạn giúp cuộc thảo luận rõ hơn. Nội dung sẽ hiển thị sau khi được kiểm duyệt.
           </p>
 
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <div className="relative min-w-0 flex-1">
               <input
                 type="text"
-                placeholder={isAuthenticated ? "Viết câu hỏi của bạn tại đây..." : "Đăng nhập để đặt câu hỏi..."}
+                placeholder={isAuthenticated ? "Viết bình luận của bạn..." : "Đăng nhập để tham gia thảo luận..."}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && void handleSubmitComment()}
@@ -363,11 +343,10 @@ export default function CommentSection({ productId, comments: initialComments, l
 
           {!isAuthenticated && (
             <p className="mt-2 text-xs text-neutral-darker">
-              Bạn cần{" "}
               <a href="/account?login" className="text-primary underline transition-opacity hover:opacity-80">
-                đăng nhập
+                Đăng nhập
               </a>{" "}
-              để đặt câu hỏi hoặc trả lời bình luận.
+              để tham gia thảo luận về bài viết này.
             </p>
           )}
         </div>
@@ -383,14 +362,14 @@ export default function CommentSection({ productId, comments: initialComments, l
           </div>
         ) : initialComments.length === 0 ? (
           <div className="py-8 text-center text-neutral-darker">
-            <p className="text-base sm:text-lg">Chưa có bình luận nào</p>
+            <p className="text-base sm:text-lg">Chưa có bình luận nào cho bài viết này</p>
           </div>
         ) : (
           <>
-            {visibleComments.map((c) => (
-              <div key={c.id} className="border-b border-neutral pb-4 last:border-0 sm:pb-5">
-                <CommentNode
-                  node={c}
+            {visibleComments.map((item) => (
+              <div key={item.id} className="border-b border-neutral pb-4 last:border-0 sm:pb-5">
+                <BlogCommentNode
+                  node={item}
                   depth={0}
                   replyTargetId={replyTargetId}
                   replyContents={replyContents}
