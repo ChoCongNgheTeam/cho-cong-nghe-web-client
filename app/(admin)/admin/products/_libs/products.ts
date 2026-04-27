@@ -1,6 +1,23 @@
 import apiRequest from "@/lib/api";
 import type { ProductsResponse, ProductDetailResponse, GetProductsParams, ProductCard } from "../product.types";
 
+export type ExportProductFormat = "excel" | "csv";
+
+export interface ExportProductsParams {
+  format: ExportProductFormat;
+  brandId?: string | string[];
+  categoryId?: string;
+  isActive?: boolean;
+  inStock?: boolean;
+  search?: string;
+}
+
+export interface ImportResult {
+  updated: number;
+  skipped: number;
+  errors: { row: number; variantId: string; reason: string }[];
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LIST
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,3 +295,47 @@ export interface CategoryOption {
 export const getCategories = async (): Promise<{ data: CategoryOption[] }> => {
   return apiRequest.get("/categories", { params: { isActive: true, limit: 200 } });
 };
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+
+export async function exportProducts(params: ExportProductsParams): Promise<{ blob: Blob; filename: string; count: number }> {
+  const qs = new URLSearchParams();
+  qs.set("format", params.format);
+  if (params.brandId) {
+    const ids = Array.isArray(params.brandId) ? params.brandId : [params.brandId];
+    ids.forEach((id) => qs.append("brandId", id));
+  }
+  if (params.categoryId) qs.set("categoryId", params.categoryId);
+  if (params.isActive !== undefined) qs.set("isActive", String(params.isActive));
+  if (params.inStock !== undefined) qs.set("inStock", String(params.inStock));
+  if (params.search) qs.set("search", params.search);
+
+  const blob = await apiRequest.get<Blob>(`/products/admin/export?${qs.toString()}`, {
+    responseType: "blob",
+  });
+
+  const ext = params.format === "excel" ? "xlsx" : "csv";
+  return { blob, filename: `products_export_${Date.now()}.${ext}`, count: 0 };
+}
+
+// ─── Download import template ──────────────────────────────────────────────────
+
+export async function downloadImportTemplate(): Promise<{ blob: Blob; filename: string }> {
+  const blob = await apiRequest.get<Blob>("/products/admin/import/template", {
+    responseType: "blob",
+  });
+  return { blob, filename: "product_import_template.xlsx" };
+}
+
+// ─── Import ───────────────────────────────────────────────────────────────────
+
+export async function importProducts(file: File): Promise<{ data: ImportResult; message: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiRequest.post<{ data: ImportResult; message: string }>(
+    "/products/admin/import",
+    formData,
+    // apiRequest tự detect FormData và không set Content-Type (browser tự thêm boundary)
+  );
+}

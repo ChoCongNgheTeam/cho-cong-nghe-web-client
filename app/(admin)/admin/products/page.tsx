@@ -21,11 +21,15 @@ import {
   type LowStockProductInfo,
   type AdminProductStats,
   CategoryOption,
+  exportProducts,
+  downloadImportTemplate,
+  importProducts,
 } from "./_libs/products";
 import { getProductColumns } from "./components/TableProducts";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { StockAlertBanner } from "./components/StockAlertBanner";
-import { Filter } from "lucide-react";
+import { ExportButton } from "@/components/admin/ExportButton";
+import { ImportButton } from "@/components/admin/ImportButton";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -453,7 +457,7 @@ export default function ProductsPage() {
             <p className="text-[13px] text-primary">Quản lý toàn bộ sản phẩm trong hệ thống</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleRefresh}
             disabled={loading}
@@ -461,6 +465,31 @@ export default function ProductsPage() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
+          <ExportButton
+            onExport={(fmt) =>
+              exportProducts({
+                format: fmt,
+                categoryId: categoryId || undefined,
+                isActive: activeTab === "active" ? true : activeTab === "inactive" ? false : undefined,
+                inStock: activeTab === "low_stock" ? true : undefined,
+                search: search || undefined,
+              })
+            }
+            label="Export"
+            disabled={loading}
+            onSuccess={(count, fmt) => console.log(`Đã export ${count} biến thể dạng ${fmt.toUpperCase()}`)}
+            onError={(err) => setError(err)}
+          />
+          <ImportButton
+            onImport={importProducts}
+            onDownloadTemplate={downloadImportTemplate}
+            disabled={loading}
+            onSuccess={(result) => {
+              // Sau import xong → reload lại data + stats
+              fetchProducts();
+              fetchStats();
+            }}
+          />
           <Link
             href="/admin/products/create"
             className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer"

@@ -48,10 +48,17 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
     </div>
   );
 }
+
+// value có thể là string hoặc number (dùng cho cả id string lẫn code number)
 interface SO {
-  value: string;
+  value: string | number;
   label: string;
 }
+
+// Validators (đồng bộ với create page)
+const phoneRe = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+const isValidPhone = (v: string) => phoneRe.test(v.trim());
+const addressInvalidChar = (v: string) => /[^a-zA-ZÀ-ỹ0-9\s\/,.]/.test(v);
 
 export default function EditOrderPage() {
   const params = useParams();
@@ -66,13 +73,27 @@ export default function EditOrderPage() {
   const [showManual, setShowManual] = useState(false);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [manual, setManual] = useState({ contactName: "", phone: "", provinceId: "", wardId: "", detailAddress: "", provinceName: "", wardName: "" });
+  const [loadingWards, setLoadingWards] = useState(false);
+
+  // ── manual state đồng bộ với AddrState của create page ──────────────────
+  const [manual, setManual] = useState({
+    contactName: "",
+    phone: "",
+    provinceCode: "" as number | "",
+    provinceName: "",
+    wardCode: "" as number | "",
+    wardName: "",
+    houseNumber: "",
+    streetName: "",
+  });
+
   const [shippingFee, setShippingFee] = useState("0");
   const [voucherDiscount, setVoucherDiscount] = useState("0");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // ── Load order + provinces ───────────────────────────────────────────────
   useEffect(() => {
     if (!id) return;
     Promise.all([getOrderById(id), getProvinces()])
@@ -81,20 +102,27 @@ export default function EditOrderPage() {
         setOrder(o);
         setShippingFee(String(Number(o.shippingFee)));
         setVoucherDiscount(String(Number(o.voucherDiscount)));
-        // getProvinces() returns Province[] directly
         setProvinces(Array.isArray(pRes) ? pRes : ((pRes as any).data ?? []));
+
+        // Parse shippingDetail → houseNumber + streetName (split theo ", " đầu tiên)
+        const detail = o.shippingDetail ?? "";
+        const commaIdx = detail.indexOf(", ");
+        const houseNumber = commaIdx !== -1 ? detail.slice(0, commaIdx) : detail;
+        const streetName = commaIdx !== -1 ? detail.slice(commaIdx + 2) : "";
+
         setManual({
-          contactName: o.shippingContactName,
-          phone: o.shippingPhone,
-          provinceId: "",
-          wardId: "",
-          detailAddress: o.shippingDetail,
-          provinceName: o.shippingProvince,
-          wardName: o.shippingWard,
+          contactName: o.shippingContactName ?? "",
+          phone: o.shippingPhone ?? "",
+          provinceCode: "",
+          provinceName: o.shippingProvince ?? "",
+          wardCode: "",
+          wardName: o.shippingWard ?? "",
+          houseNumber,
+          streetName,
         });
+
         if (o.userId) {
           try {
-            // getUserAddresses() returns UserAddress[] directly
             const ar = await getUserAddresses(o.userId);
             setAddresses(Array.isArray(ar) ? ar : ((ar as any).data ?? []));
           } catch {}
@@ -104,49 +132,62 @@ export default function EditOrderPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // ── Load wards khi chọn tỉnh ─────────────────────────────────────────────
   useEffect(() => {
-    if (!manual.provinceId) {
+    if (!manual.provinceCode) {
       setWards([]);
       return;
     }
-    getWards(manual.provinceId)
+    setLoadingWards(true);
+    getWards(manual.provinceCode as number)
       .then((r) => setWards(r))
-      .catch(console.error);
-  }, [manual.provinceId]);
+      .catch(console.error)
+      .finally(() => setLoadingWards(false));
+  }, [manual.provinceCode]);
 
   const canEdit = order?.orderStatus === "PENDING" || order?.orderStatus === "PROCESSING";
 
+  // ── Validate ─────────────────────────────────────────────────────────────
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (showManual) {
+    if (showManual || addresses.length === 0) {
       if (!manual.contactName.trim()) errs.contactName = "Họ tên không được trống";
-      if (!manual.phone.trim()) errs.phone = "SĐT không được trống";
-      if (!manual.detailAddress.trim()) errs.detailAddress = "Địa chỉ chi tiết không được trống";
+      if (!isValidPhone(manual.phone)) errs.phone = "SĐT không hợp lệ (VD: 0912345678)";
+      if (!manual.houseNumber.trim()) errs.houseNumber = "Số nhà không được trống";
+      if (manual.houseNumber.trim() && addressInvalidChar(manual.houseNumber)) errs.houseNumber = "Chỉ nhập chữ, số và / , .";
+      if (!manual.streetName.trim()) errs.streetName = "Tên đường không được trống";
+      if (manual.streetName.trim() && addressInvalidChar(manual.streetName)) errs.streetName = "Chỉ nhập chữ, số và / , .";
     }
     if (Number(shippingFee) < 0) errs.shippingFee = "Phí ship không được âm";
     setErrors(errs);
     return !Object.keys(errs).length;
   };
 
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!order || !validate()) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await updateOrderAdmin(order.id, { shippingFee: Number(shippingFee), voucherDiscount: Number(voucherDiscount) });
+      await updateOrderAdmin(order.id, {
+        shippingFee: Number(shippingFee),
+        voucherDiscount: Number(voucherDiscount),
+      });
+
       if (selectedAddrId) {
         await updateOrderShipping(order.id, { shippingAddressId: selectedAddrId });
-      } else if (showManual) {
-        const prov = manual.provinceId ? provinces.find((p) => p.id === manual.provinceId) : null;
-        const ward = manual.wardId ? wards.find((w) => w.id === manual.wardId) : null;
+      } else if (showManual || addresses.length === 0) {
+        const prov = manual.provinceCode ? provinces.find((p) => p.code === manual.provinceCode) : null;
+        const ward = manual.wardCode ? wards.find((w) => w.code === manual.wardCode) : null;
         await updateOrderShipping(order.id, {
           shippingContactName: manual.contactName.trim(),
           shippingPhone: manual.phone.trim(),
-          shippingDetail: manual.detailAddress.trim(),
-          shippingProvince: prov?.fullName ?? manual.provinceName,
-          shippingWard: ward?.fullName ?? manual.wardName,
+          shippingDetail: [manual.houseNumber.trim(), manual.streetName.trim()].filter(Boolean).join(", "),
+          shippingProvince: prov?.name ?? manual.provinceName,
+          shippingWard: ward?.name ?? manual.wardName,
         });
       }
+
       router.push(`/admin/orders/${order.id}`);
     } catch (e: any) {
       setSubmitError(e?.message ?? "Đã xảy ra lỗi");
@@ -155,6 +196,7 @@ export default function EditOrderPage() {
     }
   };
 
+  // ── Loading / Error states ────────────────────────────────────────────────
   if (loading)
     return (
       <div className="flex items-center justify-center h-64">
@@ -184,6 +226,13 @@ export default function EditOrderPage() {
 
   const newTotal = Number(order.subtotalAmount) + (Number(shippingFee) || 0) - (Number(voucherDiscount) || 0);
 
+  // ── Province / Ward options ───────────────────────────────────────────────
+  const provinceOptions = provinces.map((p) => ({ value: p.code, label: p.name }));
+  const wardOptions = wards.map((w) => ({ value: w.code, label: w.name }));
+  const selectedProvinceOption = manual.provinceCode ? (provinceOptions.find((o) => o.value === manual.provinceCode) ?? null) : null;
+  const selectedWardOption = manual.wardCode ? (wardOptions.find((o) => o.value === manual.wardCode) ?? null) : null;
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-neutral-light">
       <div className="flex items-center gap-3 px-6 pt-5 pb-3">
@@ -208,8 +257,9 @@ export default function EditOrderPage() {
           <p className="text-[13px] text-neutral-dark mt-1">Trạng thái: {order.orderStatus === "PENDING" ? "Chờ duyệt" : "Đang xử lý"}</p>
         </div>
 
-        {/* Địa chỉ */}
+        {/* ── Địa chỉ giao hàng ── */}
         <SectionCard title="Địa chỉ giao hàng" icon={<MapPin size={15} />}>
+          {/* Hiển thị địa chỉ hiện tại */}
           <div className="p-3 rounded-xl bg-neutral-light-active border border-neutral">
             <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">Hiện tại</p>
             <p className="text-[13px] font-medium text-primary">
@@ -219,11 +269,14 @@ export default function EditOrderPage() {
               {order.shippingDetail}, {order.shippingWard}, {order.shippingProvince}
             </p>
           </div>
+
           <div className="flex items-center gap-2">
             <div className="h-px flex-1 bg-neutral" />
             <span className="text-[11px] text-neutral-dark px-2">Cập nhật sang</span>
             <div className="h-px flex-1 bg-neutral" />
           </div>
+
+          {/* Địa chỉ đã lưu của khách */}
           {addresses.length > 0 && !showManual && (
             <div className="space-y-2">
               <Label>Địa chỉ đã lưu của khách hàng</Label>
@@ -239,7 +292,7 @@ export default function EditOrderPage() {
                       {a.isDefault && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent">Mặc định</span>}
                     </p>
                     <p className="text-[12px] text-neutral-dark mt-0.5">
-                      {a.detailAddress}, {a.ward.name}, {a.province.name}
+                      {a.detailAddress}, {a.wardName}, {a.provinceName}
                     </p>
                   </div>
                 </label>
@@ -255,64 +308,109 @@ export default function EditOrderPage() {
               </button>
             </div>
           )}
+
+          {/* Form nhập thủ công — đồng bộ với create page */}
           {(showManual || addresses.length === 0) && (
-            <div className="space-y-3">
+            <div className="space-y-3 p-4 rounded-xl border border-accent/20 bg-accent/5">
               {addresses.length > 0 && (
-                <button onClick={() => setShowManual(false)} className="text-[12px] text-accent hover:underline cursor-pointer">
+                <button
+                  onClick={() => {
+                    setShowManual(false);
+                    setSelectedAddrId(null);
+                  }}
+                  className="text-[12px] text-accent hover:underline cursor-pointer"
+                >
                   ← Dùng địa chỉ đã lưu
                 </button>
               )}
+
+              {/* Họ tên + SĐT */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label required>Họ tên</Label>
-                  <input value={manual.contactName} onChange={(e) => setManual((p) => ({ ...p, contactName: e.target.value }))} className={inputCls(!!errors.contactName)} />
+                  <Label required>Họ tên người nhận</Label>
+                  <input value={manual.contactName} onChange={(e) => setManual((p) => ({ ...p, contactName: e.target.value }))} placeholder="Nguyễn Văn A" className={inputCls(!!errors.contactName)} />
                   {errors.contactName && <p className="text-[11px] text-promotion mt-1">{errors.contactName}</p>}
                 </div>
                 <div>
-                  <Label required>Số điện thoại</Label>
-                  <input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} className={inputCls(!!errors.phone)} />
+                  <Label required>SĐT người nhận</Label>
+                  <input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} placeholder="0912345678" className={inputCls(!!errors.phone)} />
                   {errors.phone && <p className="text-[11px] text-promotion mt-1">{errors.phone}</p>}
                 </div>
               </div>
+
+              {/* Tỉnh + Phường/xã */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Tỉnh / Thành phố</Label>
+                  <Label required>Tỉnh / Thành phố</Label>
                   <Select
-                    options={provinces.map((p) => ({ value: p.id, label: p.fullName }))}
-                    value={manual.provinceId ? { value: manual.provinceId, label: provinces.find((p) => p.id === manual.provinceId)?.fullName ?? "" } : null}
-                    onChange={(o: SO | null) => setManual((p) => ({ ...p, provinceId: o?.value ?? "", provinceName: o?.label ?? "", wardId: "", wardName: "" }))}
-                    placeholder={manual.provinceName || "— Chọn —"}
+                    options={provinceOptions}
+                    value={selectedProvinceOption}
+                    onChange={(o: SO | null) =>
+                      setManual((p) => ({
+                        ...p,
+                        provinceCode: (o?.value as number) ?? "",
+                        provinceName: o?.label ?? "",
+                        wardCode: "",
+                        wardName: "",
+                      }))
+                    }
+                    placeholder={manual.provinceName || "— Chọn tỉnh —"}
                     isSearchable
                     styles={rsStyles()}
                     noOptionsMessage={() => "Không tìm thấy"}
                   />
-                  <p className="text-[11px] text-neutral-dark mt-1">Hiện tại: {manual.provinceName || order.shippingProvince}</p>
+                  {manual.provinceName && !manual.provinceCode && <p className="text-[11px] text-neutral-dark mt-1">Hiện tại: {manual.provinceName}</p>}
                 </div>
                 <div>
-                  <Label>Phường / Xã</Label>
+                  <Label required>Phường / Xã</Label>
                   <Select
-                    options={wards.map((w) => ({ value: w.id, label: w.fullName }))}
-                    value={manual.wardId ? { value: manual.wardId, label: wards.find((w) => w.id === manual.wardId)?.fullName ?? "" } : null}
-                    onChange={(o: SO | null) => setManual((p) => ({ ...p, wardId: o?.value ?? "", wardName: o?.label ?? "" }))}
-                    placeholder={manual.wardName || "— Chọn —"}
-                    isDisabled={!manual.provinceId}
+                    options={wardOptions}
+                    value={selectedWardOption}
+                    onChange={(o: SO | null) =>
+                      setManual((p) => ({
+                        ...p,
+                        wardCode: (o?.value as number) ?? "",
+                        wardName: o?.label ?? "",
+                      }))
+                    }
+                    placeholder={loadingWards ? "Đang tải..." : manual.wardName || (manual.provinceCode ? "— Chọn phường/xã —" : "Chọn tỉnh trước")}
+                    isDisabled={!manual.provinceCode || loadingWards}
                     isSearchable
                     styles={rsStyles()}
                     noOptionsMessage={() => "Không tìm thấy"}
                   />
-                  <p className="text-[11px] text-neutral-dark mt-1">Hiện tại: {manual.wardName || order.shippingWard}</p>
+                  {manual.wardName && !manual.wardCode && <p className="text-[11px] text-neutral-dark mt-1">Hiện tại: {manual.wardName}</p>}
                 </div>
               </div>
-              <div>
-                <Label required>Địa chỉ chi tiết</Label>
-                <input value={manual.detailAddress} onChange={(e) => setManual((p) => ({ ...p, detailAddress: e.target.value }))} className={inputCls(!!errors.detailAddress)} />
-                {errors.detailAddress && <p className="text-[11px] text-promotion mt-1">{errors.detailAddress}</p>}
+
+              {/* Số nhà + Tên đường — tách 2 ô như create page */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label required>Số nhà / Tòa nhà</Label>
+                  <input
+                    value={manual.houseNumber}
+                    onChange={(e) => setManual((p) => ({ ...p, houseNumber: e.target.value }))}
+                    placeholder="VD: 42, 42B, Lô 5"
+                    className={inputCls(!!errors.houseNumber)}
+                  />
+                  {errors.houseNumber && <p className="text-[11px] text-promotion mt-1">{errors.houseNumber}</p>}
+                </div>
+                <div>
+                  <Label required>Tên đường / Khu vực</Label>
+                  <input
+                    value={manual.streetName}
+                    onChange={(e) => setManual((p) => ({ ...p, streetName: e.target.value }))}
+                    placeholder="VD: Nguyễn Trãi, KDC Vạn Phúc"
+                    className={inputCls(!!errors.streetName)}
+                  />
+                  {errors.streetName && <p className="text-[11px] text-promotion mt-1">{errors.streetName}</p>}
+                </div>
               </div>
             </div>
           )}
         </SectionCard>
 
-        {/* Tài chính */}
+        {/* ── Tài chính ── */}
         <SectionCard title="Tài chính" icon={<DollarSign size={15} />}>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -326,6 +424,7 @@ export default function EditOrderPage() {
               <p className="text-[11px] text-neutral-dark mt-1">Hiện tại: {formatVND(Number(order.voucherDiscount))}</p>
             </div>
           </div>
+
           <div className="p-3 rounded-xl bg-accent/5 border border-accent/20 space-y-1.5">
             <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Tổng mới</p>
             <div className="flex justify-between text-[13px]">
