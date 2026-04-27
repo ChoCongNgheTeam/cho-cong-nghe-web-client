@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Camera, Check, ChevronDown, Eye, EyeOff, KeyRound, Loader2, Pencil, ShieldCheck, Trash2, UserCircle, X } from "lucide-react";
+import { Camera, ChevronDown, Loader2, Pencil, Trash2, UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
@@ -17,14 +17,7 @@ type ProfileForm = {
   avatarImage: string;
 };
 type Dob = { day: string; month: string; year: string };
-type PasswordForm = {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-};
 type ProfileErrors = Partial<Record<keyof ProfileForm | "dob", string>>;
-type PwdErrors = Partial<Record<keyof PasswordForm, string>>;
-
 /* ────────────────────────── style helpers ────────────────────────── */
 const inputCls =
   "w-full rounded-xl border border-neutral bg-neutral-light px-3.5 py-2.5 text-sm text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors";
@@ -36,15 +29,6 @@ const selectCls =
   "w-full rounded-xl border border-neutral bg-neutral-light px-3.5 py-2.5 text-sm text-primary appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors cursor-pointer";
 
 const readonlyCls = "w-full rounded-xl border border-neutral bg-neutral-light-active px-3.5 py-2.5 text-sm text-primary/60 cursor-not-allowed";
-
-/* ── Password validation rules ── */
-const validatePwdRules = (password: string) => ({
-  length: password.length >= 8,
-  uppercase: /[A-Z]/.test(password),
-  lowercase: /[a-z]/.test(password),
-  number: /[0-9]/.test(password),
-  special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-});
 
 /* ── Phone validation (VN format) ── */
 const isValidPhone = (phone: string) => phone === "" || /^(\+84|0)[0-9]{8,10}$/.test(phone.replace(/\s/g, ""));
@@ -83,15 +67,6 @@ function SectionCard({ icon: Icon, title, desc, children }: { icon: React.Elemen
   );
 }
 
-function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      {met ? <Check className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <X className="h-3.5 w-3.5 text-neutral-dark/50 shrink-0" />}
-      <span className={met ? "text-green-600" : "text-neutral-dark"}>{text}</span>
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════ */
@@ -119,20 +94,6 @@ export default function ProfileSettingsView() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
-
-  /* ── password state ── */
-  const [pwd, setPwd] = useState<PasswordForm>({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [showPwd, setShowPwd] = useState({
-    current: false,
-    next: false,
-    confirm: false,
-  });
-  const [savingPwd, setSavingPwd] = useState(false);
-  const [pwdErrors, setPwdErrors] = useState<PwdErrors>({});
 
   /* ── date options ── */
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -187,18 +148,6 @@ export default function ProfileSettingsView() {
     [form, dob, initial, initialDob, avatarFile, removeAvatar],
   );
 
-  /* ── password rules & strength ── */
-  const pwdRules = validatePwdRules(pwd.newPassword);
-  const strengthScore = Object.values(pwdRules).filter(Boolean).length;
-  const strengthMeta = [
-    { max: 1, color: "bg-promotion", label: "Yếu", textColor: "text-promotion" },
-    { max: 2, color: "bg-promotion", label: "Yếu", textColor: "text-promotion" },
-    { max: 3, color: "bg-yellow-400", label: "Trung bình", textColor: "text-yellow-500" },
-    { max: 4, color: "bg-accent", label: "Khá", textColor: "text-accent" },
-    { max: 5, color: "bg-green-500", label: "Mạnh", textColor: "text-green-500" },
-  ];
-  const strength = strengthMeta[Math.min(strengthScore, 5) - 1] ?? strengthMeta[0];
-
   /* ═══════════════════ VALIDATION ═══════════════════ */
 
   const validateProfile = (): boolean => {
@@ -231,29 +180,6 @@ export default function ProfileSettingsView() {
     return Object.keys(errs).length === 0;
   };
 
-  const validatePassword = (): boolean => {
-    const errs: PwdErrors = {};
-
-    if (!pwd.currentPassword) {
-      errs.currentPassword = "Vui lòng nhập mật khẩu hiện tại";
-    }
-    if (!pwd.newPassword) {
-      errs.newPassword = "Vui lòng nhập mật khẩu mới";
-    } else if (pwd.newPassword.length < 8) {
-      errs.newPassword = "Mật khẩu phải có ít nhất 8 ký tự";
-    } else if (pwd.newPassword === pwd.currentPassword) {
-      errs.newPassword = "Mật khẩu mới phải khác mật khẩu hiện tại";
-    }
-    if (!pwd.confirmPassword) {
-      errs.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
-    } else if (pwd.newPassword !== pwd.confirmPassword) {
-      errs.confirmPassword = "Mật khẩu xác nhận không khớp";
-    }
-
-    setPwdErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
   /* ═══════════════════ HANDLERS ═══════════════════ */
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -274,18 +200,6 @@ export default function ProfileSettingsView() {
       setProfileErrors((prev) => {
         const n = { ...prev };
         delete n.dob;
-        return n;
-      });
-    }
-  };
-
-  const handlePwdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPwd((prev) => ({ ...prev, [name]: value }));
-    if (pwdErrors[name as keyof PwdErrors]) {
-      setPwdErrors((prev) => {
-        const n = { ...prev };
-        delete n[name as keyof PwdErrors];
         return n;
       });
     }
@@ -352,34 +266,6 @@ export default function ProfileSettingsView() {
       setSaving(false);
     }
   };
-
-  /* ── submit password ── */
-  const handleChangePwd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (savingPwd) return;
-    if (!validatePassword()) return;
-
-    setSavingPwd(true);
-    try {
-      await apiRequest.post("/auth/change-password", {
-        currentPassword: pwd.currentPassword,
-        newPassword: pwd.newPassword,
-        confirmPassword: pwd.confirmPassword,
-      });
-      success("Đổi mật khẩu thành công");
-      setPwd({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      setPwdErrors({});
-    } catch (err: unknown) {
-      const msg = (err as { data?: { message?: string }; message?: string })?.data?.message || (err as { message?: string })?.message || "Đổi mật khẩu thất bại";
-      error(msg);
-      if (msg.toLowerCase().includes("mật khẩu hiện tại") || msg.toLowerCase().includes("current")) {
-        setPwdErrors({ currentPassword: "Mật khẩu hiện tại không đúng" });
-      }
-    } finally {
-      setSavingPwd(false);
-    }
-  };
-
   /* ════════════════════════════════ GUARD ════════════════════════════════ */
   if (loading) {
     return (
@@ -540,136 +426,6 @@ export default function ProfileSettingsView() {
                 <>
                   <Pencil className="h-4 w-4" />
                   Lưu thay đổi
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </SectionCard>
-
-      {/* ══ SECTION 3: Change Password ══ */}
-      <SectionCard icon={KeyRound} title="Đổi mật khẩu" desc="Cập nhật mật khẩu định kỳ để bảo vệ tài khoản">
-        <form onSubmit={handleChangePwd} noValidate className="space-y-5">
-          {/* Current password */}
-          <div>
-            <FieldLabel>Mật khẩu hiện tại</FieldLabel>
-            <div className="relative">
-              <input
-                type={showPwd.current ? "text" : "password"}
-                name="currentPassword"
-                value={pwd.currentPassword}
-                onChange={handlePwdChange}
-                placeholder="Nhập mật khẩu hiện tại"
-                className={`${pwdErrors.currentPassword ? inputErrorCls : inputCls} pr-10`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd((s) => ({ ...s, current: !s.current }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary transition-colors"
-              >
-                {showPwd.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            <FieldError msg={pwdErrors.currentPassword} />
-          </div>
-
-          <div className="border-t border-neutral" />
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* New password */}
-            <div>
-              <FieldLabel>Mật khẩu mới</FieldLabel>
-              <div className="relative">
-                <input
-                  type={showPwd.next ? "text" : "password"}
-                  name="newPassword"
-                  value={pwd.newPassword}
-                  onChange={handlePwdChange}
-                  placeholder="Tối thiểu 8 ký tự"
-                  className={`${pwdErrors.newPassword ? inputErrorCls : inputCls} pr-10`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd((s) => ({ ...s, next: !s.next }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary transition-colors"
-                >
-                  {showPwd.next ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <FieldError msg={pwdErrors.newPassword} />
-            </div>
-
-            {/* Confirm password */}
-            <div>
-              <FieldLabel>Xác nhận mật khẩu mới</FieldLabel>
-              <div className="relative">
-                <input
-                  type={showPwd.confirm ? "text" : "password"}
-                  name="confirmPassword"
-                  value={pwd.confirmPassword}
-                  onChange={handlePwdChange}
-                  placeholder="Nhập lại mật khẩu mới"
-                  className={`${pwdErrors.confirmPassword ? inputErrorCls : inputCls} pr-10`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd((s) => ({ ...s, confirm: !s.confirm }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary transition-colors"
-                >
-                  {showPwd.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <FieldError msg={pwdErrors.confirmPassword} />
-            </div>
-          </div>
-
-          {/* Strength indicator */}
-          {pwd.newPassword.length > 0 && (
-            <div className="space-y-2.5 p-4 rounded-xl border border-neutral bg-neutral-light-active/50">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-neutral-dark font-medium">Độ mạnh mật khẩu</span>
-                <span className={`font-bold ${strength.textColor}`}>{strength.label}</span>
-              </div>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((level) => (
-                  <div key={level} className={["h-1.5 flex-1 rounded-full transition-all duration-300", level <= strengthScore ? strength.color : "bg-neutral"].join(" ")} />
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 pt-1">
-                <PasswordRequirement met={pwdRules.length} text="Ít nhất 8 ký tự" />
-                <PasswordRequirement met={pwdRules.uppercase} text="Chữ hoa (A-Z)" />
-                <PasswordRequirement met={pwdRules.lowercase} text="Chữ thường (a-z)" />
-                <PasswordRequirement met={pwdRules.number} text="Chứa số (0-9)" />
-                <PasswordRequirement met={pwdRules.special} text="Ký tự đặc biệt (!@#...)" />
-              </div>
-            </div>
-          )}
-
-          {/* Security notice */}
-          <div className="flex gap-3 rounded-xl border border-accent/20 bg-accent/5 px-4 py-3">
-            <ShieldCheck className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-            <ul className="text-xs text-primary/70 space-y-0.5 list-none">
-              <li>Không chia sẻ mật khẩu với bất kỳ ai</li>
-              <li>Sử dụng mật khẩu khác nhau cho mỗi tài khoản</li>
-              <li>Thay đổi mật khẩu định kỳ để bảo mật tốt hơn</li>
-            </ul>
-          </div>
-
-          <div className="flex justify-end pt-1">
-            <button
-              type="submit"
-              disabled={savingPwd}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-neutral-light hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {savingPwd ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang đổi...
-                </>
-              ) : (
-                <>
-                  <KeyRound className="h-4 w-4" />
-                  Đổi mật khẩu
                 </>
               )}
             </button>
