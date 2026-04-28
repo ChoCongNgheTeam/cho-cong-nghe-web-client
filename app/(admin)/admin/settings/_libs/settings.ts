@@ -121,12 +121,11 @@ export interface NotificationAdminSettings {
 
 /* ─── Helper: merge BE cast-object vào defaults ─── */
 // BE trả về { key: castedValue } — merge trực tiếp vào defaults
-export function parseSettings<T extends Record<string, unknown>>(data: CastSettingsObject, defaults: T): T {
+export function parseSettings<T extends object>(data: CastSettingsObject, defaults: T): T {
   const result = { ...defaults };
   for (const key of Object.keys(defaults) as (keyof T)[]) {
     const k = key as string;
     if (k in data && data[k] !== undefined && data[k] !== null) {
-      // BE đã cast đúng type (boolean, number, string) — dùng trực tiếp
       (result as Record<string, unknown>)[k] = data[k];
     }
   }

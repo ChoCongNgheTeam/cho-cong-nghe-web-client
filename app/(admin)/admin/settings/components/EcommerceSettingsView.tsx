@@ -95,9 +95,11 @@ function SectionCard({
   );
 }
 
-// ─── Generic hook mỗi group ───────────────────────────────────────────────────
+// ─── Generic hook ─────────────────────────────────────────────────────────────
+// Bỏ constraint phức tạp, dùng cast tại điểm gọi — tránh conflict với interface
 
-function useGroup<T extends Record<string, unknown>>(group: string, defaults: T) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function useGroup<T>(group: string, defaults: T) {
   const [data, setData] = useState<T>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -105,9 +107,14 @@ function useGroup<T extends Record<string, unknown>>(group: string, defaults: T)
 
   useEffect(() => {
     getSettings(group)
-      .then((res) => setData(parseSettings(res.data, defaults)))
+      .then((res) => {
+        // parseSettings nhận Record<string, unknown>, cast defaults sang đó
+        const parsed = parseSettings(res.data, defaults as Record<string, unknown>);
+        setData(parsed as T);
+      })
       .catch(() => error(`Không thể tải cài đặt [${group}]`))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group]);
 
   const set = <K extends keyof T>(key: K, value: T[K]) => setData((prev) => ({ ...prev, [key]: value }));
@@ -115,7 +122,8 @@ function useGroup<T extends Record<string, unknown>>(group: string, defaults: T)
   const save = async () => {
     setSaving(true);
     try {
-      await updateSettings(group, data as Record<string, string | boolean | number>);
+      // cast sang Record để updateSettings nhận được
+      await updateSettings(group, data as unknown as Record<string, string | boolean | number>);
       success("Lưu cài đặt thành công");
     } catch {
       error("Lưu thất bại, thử lại sau");
@@ -142,7 +150,7 @@ const ECOMMERCE_DEFAULTS: EcommerceSettings = {
 };
 
 function ProductsSection() {
-  const { data, loading, saving, set, save } = useGroup("ecommerce", ECOMMERCE_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<EcommerceSettings>("ecommerce", ECOMMERCE_DEFAULTS);
 
   return (
     <SectionCard icon={Star} title="Sản phẩm & Đánh giá" desc="Cài đặt hiển thị sản phẩm và chức năng review" onSave={save} saving={saving} loading={loading}>
@@ -197,7 +205,7 @@ const CHECKOUT_DEFAULTS: CheckoutSettings = {
 };
 
 function CheckoutSection() {
-  const { data, loading, saving, set, save } = useGroup("checkout", CHECKOUT_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<CheckoutSettings>("checkout", CHECKOUT_DEFAULTS);
 
   return (
     <SectionCard icon={ShoppingCart} title="Thanh toán & Checkout" desc="Tuỳ chỉnh luồng thanh toán cho khách hàng" onSave={save} saving={saving} loading={loading}>
@@ -256,7 +264,7 @@ const CUSTOMER_DEFAULTS: CustomerSettings = {
 };
 
 function CustomerSection() {
-  const { data, loading, saving, set, save } = useGroup("customer", CUSTOMER_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<CustomerSettings>("customer", CUSTOMER_DEFAULTS);
 
   return (
     <SectionCard icon={Users} title="Khách hàng" desc="Kiểm soát đăng ký và xác minh tài khoản" onSave={save} saving={saving} loading={loading}>
@@ -283,7 +291,7 @@ const ORDER_DEFAULTS: OrderSettings = {
 };
 
 function OrderSection() {
-  const { data, loading, saving, set, save } = useGroup("order", ORDER_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<OrderSettings>("order", ORDER_DEFAULTS);
 
   return (
     <SectionCard icon={Package} title="Đơn hàng" desc="Định dạng mã đơn, thời hạn hủy và hoàn trả" onSave={save} saving={saving} loading={loading}>
@@ -332,7 +340,7 @@ const WALLET_DEFAULTS: WalletSettings = {
 };
 
 function WalletSection() {
-  const { data, loading, saving, set, save } = useGroup("wallet", WALLET_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<WalletSettings>("wallet", WALLET_DEFAULTS);
 
   return (
     <SectionCard icon={Wallet} title="Ví điện tử" desc="Cho phép khách nạp tiền vào ví để thanh toán" onSave={save} saving={saving} loading={loading}>
@@ -361,7 +369,7 @@ const INVOICE_DEFAULTS: InvoiceSettings = {
 };
 
 function InvoiceSection() {
-  const { data, loading, saving, set, save } = useGroup("invoice", INVOICE_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<InvoiceSettings>("invoice", INVOICE_DEFAULTS);
 
   return (
     <SectionCard icon={FileText} title="Hóa đơn" desc="Thông tin in trên hóa đơn gửi cho khách" onSave={save} saving={saving} loading={loading}>
@@ -391,7 +399,7 @@ const TAX_DEFAULTS: TaxSettings = {
 };
 
 function TaxSection() {
-  const { data, loading, saving, set, save } = useGroup("tax", TAX_DEFAULTS);
+  const { data, loading, saving, set, save } = useGroup<TaxSettings>("tax", TAX_DEFAULTS);
 
   return (
     <SectionCard icon={Receipt} title="Thuế" desc="Áp dụng thuế VAT vào đơn hàng" onSave={save} saving={saving} loading={loading}>
