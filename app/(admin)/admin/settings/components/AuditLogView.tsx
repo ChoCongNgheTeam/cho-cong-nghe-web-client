@@ -1,574 +1,297 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import {
-   ClipboardList,
-   Search,
-   Filter,
-   ChevronDown,
-   AlertTriangle,
-   Check,
-   X,
-   Shield,
-   Package,
-   FileText,
-   Settings,
-   UserCog,
-   Lock,
-   MapPin,
-   Monitor,
-   RefreshCw,
-   Download,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ClipboardList, Search, Filter, AlertTriangle, Check, X, Shield, Package, Settings, UserCog, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Diff } from "lucide-react";
 import { formatRelativeDate } from "@/helpers/formatRelativeDate";
+import { getAuditLogs, type AuditLog, type AuditSeverity, type GetAuditLogsParams } from "../_libs/audit";
 
-/* ─────────────── Types ─────────────── */
-type LogSeverity = "info" | "warning" | "critical";
-type LogModule =
-   | "Sản phẩm"
-   | "Đơn hàng"
-   | "Nội dung"
-   | "Cài đặt"
-   | "Tài khoản"
-   | "Bảo mật";
-type LogStatus = "success" | "fail";
+// ─── Config ───────────────────────────────────────────────────────────────────
 
-type AuditLog = {
-   id: string;
-   who: { name: string; role: string; id: string };
-   when: string;
-   where: { ip: string; device: string; browser: string; location: string };
-   what: string;
-   module: LogModule;
-   status: LogStatus;
-   severity: LogSeverity;
-   detail?: string;
-};
-
-/* ─────────────── Mock data ─────────────── */
-const MOCK_LOGS: AuditLog[] = [
-   {
-      id: "log-001",
-      who: { name: "Nguyễn Văn A", role: "Staff", id: "USR-012" },
-      when: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-      where: {
-         ip: "113.160.12.4",
-         device: "MacBook Pro",
-         browser: "Chrome 124",
-         location: "Biên Hòa, VN",
-      },
-      what: 'Thay đổi giá "iPhone 15 Pro Max": 30.000.000đ → 10.000.000đ',
-      module: "Sản phẩm",
-      status: "success",
-      severity: "critical",
-      detail: "Giảm giá bất thường 67% — Cần xem xét ngay",
-   },
-   {
-      id: "log-002",
-      who: { name: "Unknown", role: "—", id: "—" },
-      when: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-      where: {
-         ip: "194.87.65.2",
-         device: "Unknown",
-         browser: "Unknown",
-         location: "Moscow, RU",
-      },
-      what: "Đăng nhập thất bại liên tiếp 7 lần → Tài khoản bị khóa tạm thời 30 phút",
-      module: "Bảo mật",
-      status: "fail",
-      severity: "critical",
-      detail: "Brute force attack detected — IP đã bị chặn tự động",
-   },
-   {
-      id: "log-003",
-      who: { name: "Trần Thị B", role: "Admin", id: "USR-001" },
-      when: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
-      where: {
-         ip: "113.160.12.4",
-         device: "MacBook Pro",
-         browser: "Safari 17",
-         location: "Biên Hòa, VN",
-      },
-      what: "Xác nhận đơn hàng #ORD-4821 (2.850.000đ)",
-      module: "Đơn hàng",
-      status: "success",
-      severity: "info",
-   },
-   {
-      id: "log-004",
-      who: { name: "Lê Minh C", role: "Staff", id: "USR-034" },
-      when: new Date(Date.now() - 1000 * 60 * 65).toISOString(),
-      where: {
-         ip: "118.70.45.8",
-         device: "Windows PC",
-         browser: "Edge 124",
-         location: "Hà Nội, VN",
-      },
-      what: 'Thêm bài viết mới: "Top 5 laptop văn phòng 2026"',
-      module: "Nội dung",
-      status: "success",
-      severity: "info",
-   },
-   {
-      id: "log-005",
-      who: { name: "Nguyễn Văn A", role: "Staff", id: "USR-012" },
-      when: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-      where: {
-         ip: "113.160.12.4",
-         device: "MacBook Pro",
-         browser: "Chrome 124",
-         location: "Biên Hòa, VN",
-      },
-      what: 'Xóa sản phẩm "Chuột Logitech MX Master 3S" (SKU: LOG-001)',
-      module: "Sản phẩm",
-      status: "success",
-      severity: "warning",
-      detail: "Hành động không thể hoàn tác",
-   },
-   {
-      id: "log-006",
-      who: { name: "Phạm Thị D", role: "Admin", id: "USR-002" },
-      when: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-      where: {
-         ip: "27.65.80.14",
-         device: "iPhone 15",
-         browser: "Safari 17",
-         location: "TP. HCM, VN",
-      },
-      what: 'Thay đổi cấu hình SEO: robots.txt → "noindex, nofollow"',
-      module: "Cài đặt",
-      status: "success",
-      severity: "warning",
-      detail: "Ảnh hưởng toàn bộ khả năng index của Google",
-   },
-   {
-      id: "log-007",
-      who: { name: "Trần Thị B", role: "Admin", id: "USR-001" },
-      when: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-      where: {
-         ip: "113.160.12.4",
-         device: "MacBook Pro",
-         browser: "Chrome 124",
-         location: "Biên Hòa, VN",
-      },
-      what: 'Tạo nhóm người dùng mới: "Telesale team" (8 thành viên)',
-      module: "Tài khoản",
-      status: "success",
-      severity: "info",
-   },
-   {
-      id: "log-008",
-      who: { name: "Lê Minh C", role: "Staff", id: "USR-034" },
-      when: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-      where: {
-         ip: "118.70.45.8",
-         device: "Windows PC",
-         browser: "Edge 124",
-         location: "Hà Nội, VN",
-      },
-      what: "Cố gắng truy cập module Phân quyền (không có quyền)",
-      module: "Bảo mật",
-      status: "fail",
-      severity: "warning",
-      detail: "RBAC: Quyền truy cập bị từ chối",
-   },
+const MODULE_OPTIONS = [
+  { value: "", label: "Tất cả module" },
+  { value: "product", label: "Sản phẩm" },
+  { value: "order", label: "Đơn hàng" },
+  { value: "review", label: "Đánh giá" },
+  { value: "settings", label: "Cài đặt" },
+  { value: "user", label: "Tài khoản" },
+  { value: "auth", label: "Bảo mật" },
 ];
 
-const MODULE_ICON: Record<LogModule, React.ElementType> = {
-   "Sản phẩm": Package,
-   "Đơn hàng": ClipboardList,
-   "Nội dung": FileText,
-   "Cài đặt": Settings,
-   "Tài khoản": UserCog,
-   "Bảo mật": Lock,
-};
-
-const MODULE_COLOR: Record<LogModule, string> = {
-   "Sản phẩm": "bg-accent/10 text-accent",
-   "Đơn hàng": "bg-blue-500/10 text-blue-600",
-   "Nội dung": "bg-purple-500/10 text-purple-600",
-   "Cài đặt": "bg-neutral text-neutral-dark",
-   "Tài khoản": "bg-green-500/10 text-green-600",
-   "Bảo mật": "bg-red-500/10 text-red-600",
-};
-
-const SEVERITY_META: Record<
-   LogSeverity,
-   { label: string; color: string; dot: string }
-> = {
-   info: {
-      label: "Thường",
-      color: "bg-neutral text-neutral-dark",
-      dot: "bg-neutral-dark",
-   },
-   warning: {
-      label: "Cảnh báo",
-      color: "bg-amber-500/10 text-amber-600",
-      dot: "bg-amber-500",
-   },
-   critical: {
-      label: "Nghiêm trọng",
-      color: "bg-red-500/10 text-red-600",
-      dot: "bg-red-500",
-   },
-};
-
-const ALL_MODULES: LogModule[] = [
-   "Sản phẩm",
-   "Đơn hàng",
-   "Nội dung",
-   "Cài đặt",
-   "Tài khoản",
-   "Bảo mật",
+const SEVERITY_OPTIONS = [
+  { value: "" as const, label: "Tất cả mức độ" },
+  { value: "INFO" as const, label: "Info" },
+  { value: "WARNING" as const, label: "Warning" },
+  { value: "CRITICAL" as const, label: "Critical" },
 ];
-const ALL_STATUSES = ["success", "fail"] as const;
-const ALL_SEVERITIES: LogSeverity[] = ["info", "warning", "critical"];
 
-/* ─────────────── Component ─────────────── */
+const SEVERITY_STYLE: Record<AuditSeverity, { badge: string; dot: string }> = {
+  INFO: { badge: "bg-blue-500/10 text-blue-600", dot: "bg-blue-500" },
+  WARNING: { badge: "bg-amber-500/10 text-amber-600", dot: "bg-amber-500" },
+  CRITICAL: { badge: "bg-red-500/10 text-red-500", dot: "bg-red-500" },
+};
+
+const MODULE_ICON: Record<string, React.ElementType> = {
+  product: Package,
+  order: Package,
+  review: ClipboardList,
+  settings: Settings,
+  user: UserCog,
+  auth: Shield,
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function FilterSelect({ value, onChange, options, icon: Icon }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; icon?: React.ElementType }) {
+  return (
+    <div className="relative">
+      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-dark pointer-events-none" />}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={[
+          "rounded-xl border border-neutral bg-neutral-light py-2 pr-8 text-sm text-primary appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors cursor-pointer",
+          Icon ? "pl-8" : "pl-3",
+        ].join(" ")}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-dark pointer-events-none" />
+    </div>
+  );
+}
+
+function DiffViewer({ diff }: { diff: { before?: Record<string, unknown>; after?: Record<string, unknown> } }) {
+  const keys = [...new Set([...Object.keys(diff.before ?? {}), ...Object.keys(diff.after ?? {})])];
+  if (keys.length === 0) return null;
+
+  return (
+    <div className="mt-2 rounded-lg border border-neutral overflow-hidden text-[11px] font-mono">
+      {keys.map((k) => {
+        const before = diff.before?.[k];
+        const after = diff.after?.[k];
+        const changed = JSON.stringify(before) !== JSON.stringify(after);
+        return (
+          <div key={k} className={`flex gap-2 px-3 py-1 ${changed ? "bg-amber-50 dark:bg-amber-950/20" : ""}`}>
+            <span className="text-neutral-dark shrink-0 w-32 truncate">{k}</span>
+            {changed ? (
+              <>
+                <span className="text-red-500 line-through truncate">{String(before ?? "—")}</span>
+                <span className="text-neutral-dark">→</span>
+                <span className="text-green-600 truncate">{String(after ?? "—")}</span>
+              </>
+            ) : (
+              <span className="text-primary truncate">{String(before ?? "—")}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LogRow({ log }: { log: AuditLog }) {
+  const [expanded, setExpanded] = useState(false);
+  const sev = SEVERITY_STYLE[log.severity];
+  const Icon = MODULE_ICON[log.module] ?? ClipboardList;
+
+  return (
+    <div className={`border-b border-neutral last:border-b-0 ${log.severity === "CRITICAL" ? "bg-red-500/[0.03]" : ""}`}>
+      <button type="button" onClick={() => setExpanded((p) => !p)} className="w-full text-left px-4 py-3.5 flex gap-3 items-start hover:bg-neutral-light-active transition-colors">
+        {/* Icon */}
+        <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg shrink-0 mt-0.5 bg-neutral-light-active">
+          <Icon className="h-3.5 w-3.5 text-neutral-dark" />
+        </span>
+
+        {/* Main */}
+        <div className="flex-1 min-w-0 space-y-0.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sev.badge}`}>{log.severity}</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-neutral text-neutral-dark">{log.module}</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-neutral text-neutral-dark">{log.action}</span>
+            {!log.isSuccess && <span className="text-[10px] font-semibold text-red-500">FAILED</span>}
+          </div>
+          <p className="text-[13px] font-medium text-primary leading-snug">{log.description}</p>
+          <p className="text-[11px] text-neutral-dark">
+            {log.userName ?? "Unknown"} · {log.userRole ?? "—"} · {log.ip ?? "—"} · {log.location ?? "—"}
+          </p>
+        </div>
+
+        {/* Time + chevron */}
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          <span className="text-[11px] text-neutral-dark whitespace-nowrap">{formatRelativeDate(log.createdAt)}</span>
+          {(log.diff || log.errorMsg) && <ChevronDown className={`h-3.5 w-3.5 text-neutral-dark transition-transform ${expanded ? "rotate-180" : ""}`} />}
+        </div>
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (log.diff || log.errorMsg) && (
+        <div className="px-4 pb-4 ml-11 space-y-2">
+          {log.errorMsg && (
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 px-3 py-2">
+              <p className="text-xs text-red-600 font-mono">{log.errorMsg}</p>
+            </div>
+          )}
+          {log.diff && <DiffViewer diff={log.diff} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main View ────────────────────────────────────────────────────────────────
+
 export default function AuditLogView() {
-   const [search, setSearch] = useState("");
-   const [moduleFilter, setModuleFilter] = useState<LogModule | "">("");
-   const [statusFilter, setStatusFilter] = useState<LogStatus | "">("");
-   const [severityFilter, setSeverityFilter] = useState<LogSeverity | "">("");
-   const [expanded, setExpanded] = useState<string | null>(null);
-   const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-   const filtered = useMemo(() => {
-      return MOCK_LOGS.filter((log) => {
-         const q = search.trim().toLowerCase();
-         if (
-            q &&
-            !log.who.name.toLowerCase().includes(q) &&
-            !log.what.toLowerCase().includes(q) &&
-            !log.where.ip.includes(q)
-         )
-            return false;
-         if (moduleFilter && log.module !== moduleFilter) return false;
-         if (statusFilter && log.status !== statusFilter) return false;
-         if (severityFilter && log.severity !== severityFilter) return false;
-         return true;
+  const [filters, setFilters] = useState<GetAuditLogsParams>({
+    module: "",
+    severity: "",
+    isSuccess: "",
+    search: "",
+  });
+  const [search, setSearch] = useState("");
+
+  const fetch = useCallback(async (p: number, f: GetAuditLogsParams) => {
+    setLoading(true);
+    try {
+      const res = await getAuditLogs({
+        page: p,
+        limit: 20,
+        ...(f.module ? { module: f.module } : {}),
+        ...(f.severity ? { severity: f.severity as AuditSeverity } : {}),
+        ...(f.isSuccess !== "" ? { isSuccess: f.isSuccess as boolean } : {}),
+        ...(f.search ? { search: f.search } : {}),
       });
-   }, [search, moduleFilter, statusFilter, severityFilter]);
-
-   const criticalCount = filtered.filter(
-      (l) => l.severity === "critical",
-   ).length;
-   const warningCount = filtered.filter((l) => l.severity === "warning").length;
-   const failCount = filtered.filter((l) => l.status === "fail").length;
-
-   const handleRefresh = async () => {
-      setLoading(true);
-      await new Promise((r) => setTimeout(r, 800));
+      setLogs(res.data);
+      setTotal(res.pagination.total);
+      setTotalPages(res.pagination.totalPages);
+    } catch {
+      setLogs([]);
+    } finally {
       setLoading(false);
-   };
+    }
+  }, []);
 
-   return (
-      <div className="space-y-6">
-         {/* ── Summary stats ── */}
-         <div className="grid grid-cols-3 gap-4">
-            {[
-               {
-                  label: "Nghiêm trọng",
-                  count: criticalCount,
-                  color: "text-red-600",
-                  bg: "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/30",
-               },
-               {
-                  label: "Cảnh báo",
-                  count: warningCount,
-                  color: "text-amber-600",
-                  bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/30",
-               },
-               {
-                  label: "Thất bại",
-                  count: failCount,
-                  color: "text-primary",
-                  bg: "bg-neutral-light-active border-neutral",
-               },
-            ].map((s) => (
-               <div
-                  key={s.label}
-                  className={`rounded-xl border ${s.bg} px-4 py-3`}
-               >
-                  <p className="text-xs font-medium text-neutral-dark">
-                     {s.label}
-                  </p>
-                  <p className={`text-2xl font-bold mt-0.5 ${s.color}`}>
-                     {s.count}
-                  </p>
-               </div>
-            ))}
-         </div>
+  useEffect(() => {
+    fetch(page, filters);
+  }, [page, filters]);
 
-         {/* ── Log Board ── */}
-         <section className="rounded-2xl border border-neutral bg-neutral-light shadow-sm overflow-hidden">
-            <div className="border-b border-neutral px-5 py-4 bg-neutral-light-active/40 flex items-center justify-between gap-3 flex-wrap">
-               <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
-                     <ClipboardList className="h-4 w-4 text-accent" />
-                  </div>
-                  <div>
-                     <h2 className="text-sm font-bold text-primary">
-                        Nhật ký hoạt động
-                     </h2>
-                     <p className="text-xs text-neutral-dark mt-0.5">
-                        Truy vết toàn bộ hành động —{" "}
-                        <span className="font-medium">
-                           Who · When · Where · What
-                        </span>
-                     </p>
-                  </div>
-               </div>
-               <div className="flex items-center gap-2">
-                  <button
-                     type="button"
-                     onClick={handleRefresh}
-                     disabled={loading}
-                     className="inline-flex items-center gap-1.5 rounded-xl border border-neutral bg-neutral-light-active px-3 py-2 text-xs font-medium text-primary hover:bg-neutral-light transition-colors disabled:opacity-60"
-                  >
-                     <RefreshCw
-                        className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
-                     />
-                     Làm mới
-                  </button>
-                  <button
-                     type="button"
-                     className="inline-flex items-center gap-1.5 rounded-xl border border-neutral bg-neutral-light-active px-3 py-2 text-xs font-medium text-primary hover:bg-neutral-light transition-colors"
-                  >
-                     <Download className="h-3.5 w-3.5" />
-                     Xuất CSV
-                  </button>
-               </div>
-            </div>
+  const applySearch = () => {
+    setPage(1);
+    setFilters((f) => ({ ...f, search }));
+  };
 
-            {/* Filters */}
-            <div className="border-b border-neutral px-5 py-3 flex flex-wrap gap-2 bg-neutral-light">
-               <div className="relative flex-1 min-w-[200px]">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-dark" />
-                  <input
-                     value={search}
-                     onChange={(e) => setSearch(e.target.value)}
-                     placeholder="Tìm theo tên, hành động, IP..."
-                     className="w-full rounded-xl border border-neutral bg-neutral-light-active pl-9 pr-3 py-2 text-[12px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
-                  />
-               </div>
+  const setFilter = (key: keyof GetAuditLogsParams, value: string) => {
+    setPage(1);
+    setFilters((f) => ({ ...f, [key]: value }));
+  };
 
-               {/* Module filter */}
-               <div className="relative">
-                  <select
-                     value={moduleFilter}
-                     onChange={(e) =>
-                        setModuleFilter(e.target.value as LogModule | "")
-                     }
-                     className="appearance-none rounded-xl border border-neutral bg-neutral-light-active pl-3 pr-8 py-2 text-[12px] text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer"
-                  >
-                     <option value="">Tất cả module</option>
-                     {ALL_MODULES.map((m) => (
-                        <option key={m} value={m}>
-                           {m}
-                        </option>
-                     ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-dark" />
-               </div>
+  return (
+    <div className="space-y-4">
+      {/* ── Filters ── */}
+      <div className="rounded-2xl border border-neutral bg-neutral-light shadow-sm px-4 py-4 flex flex-wrap gap-3 items-center">
+        <Filter className="h-4 w-4 text-neutral-dark shrink-0" />
 
-               {/* Severity filter */}
-               <div className="relative">
-                  <select
-                     value={severityFilter}
-                     onChange={(e) =>
-                        setSeverityFilter(e.target.value as LogSeverity | "")
-                     }
-                     className="appearance-none rounded-xl border border-neutral bg-neutral-light-active pl-3 pr-8 py-2 text-[12px] text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer"
-                  >
-                     <option value="">Tất cả mức độ</option>
-                     {ALL_SEVERITIES.map((s) => (
-                        <option key={s} value={s}>
-                           {SEVERITY_META[s].label}
-                        </option>
-                     ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-dark" />
-               </div>
+        <FilterSelect value={filters.module ?? ""} onChange={(v) => setFilter("module", v)} options={MODULE_OPTIONS} />
 
-               {/* Status filter */}
-               <div className="relative">
-                  <select
-                     value={statusFilter}
-                     onChange={(e) =>
-                        setStatusFilter(e.target.value as LogStatus | "")
-                     }
-                     className="appearance-none rounded-xl border border-neutral bg-neutral-light-active pl-3 pr-8 py-2 text-[12px] text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 cursor-pointer"
-                  >
-                     <option value="">Tất cả trạng thái</option>
-                     <option value="success">Thành công</option>
-                     <option value="fail">Thất bại</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-dark" />
-               </div>
+        <FilterSelect value={filters.severity ?? ""} onChange={(v) => setFilter("severity", v)} options={SEVERITY_OPTIONS} />
 
-               {(search || moduleFilter || statusFilter || severityFilter) && (
-                  <button
-                     type="button"
-                     onClick={() => {
-                        setSearch("");
-                        setModuleFilter("");
-                        setStatusFilter("");
-                        setSeverityFilter("");
-                     }}
-                     className="inline-flex items-center gap-1 rounded-xl border border-neutral bg-neutral-light-active px-3 py-2 text-[12px] font-medium text-neutral-dark hover:bg-neutral-light transition-colors"
-                  >
-                     <X className="h-3.5 w-3.5" />
-                     Xóa bộ lọc
-                  </button>
-               )}
-            </div>
+        <FilterSelect
+          value={String(filters.isSuccess ?? "")}
+          onChange={(v) => setFilter("isSuccess", v === "" ? "" : v)}
+          options={[
+            { value: "", label: "Tất cả trạng thái" },
+            { value: "true", label: "Thành công" },
+            { value: "false", label: "Thất bại" },
+          ]}
+        />
 
-            {/* Log list */}
-            <div className="divide-y divide-neutral">
-               {filtered.length === 0 ? (
-                  <div className="py-12 text-center px-6">
-                     <Filter className="h-8 w-8 text-neutral-dark/40 mx-auto mb-3" />
-                     <p className="text-sm font-medium text-primary">
-                        Không tìm thấy kết quả
-                     </p>
-                     <p className="text-xs text-neutral-dark mt-1">
-                        Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm
-                     </p>
-                  </div>
-               ) : (
-                  filtered.map((log) => {
-                     const ModuleIcon = MODULE_ICON[log.module];
-                     const severity = SEVERITY_META[log.severity];
-                     const isExpanded = expanded === log.id;
+        {/* Search */}
+        <div className="flex flex-1 min-w-48 items-center gap-2 rounded-xl border border-neutral bg-neutral-light-active px-3 py-2">
+          <Search className="h-3.5 w-3.5 text-neutral-dark shrink-0" />
+          <input
+            className="flex-1 bg-transparent text-sm text-primary placeholder:text-neutral-dark focus:outline-none"
+            placeholder="Tìm theo mô tả..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && applySearch()}
+          />
+        </div>
 
-                     return (
-                        <div key={log.id} className="transition-colors">
-                           <button
-                              type="button"
-                              onClick={() =>
-                                 setExpanded(isExpanded ? null : log.id)
-                              }
-                              className={[
-                                 "w-full text-left px-5 py-4 flex gap-3 items-start hover:bg-neutral-light-active transition-colors",
-                                 log.severity === "critical"
-                                    ? "bg-red-50/50 dark:bg-red-950/10"
-                                    : "",
-                              ].join(" ")}
-                           >
-                              {/* Status icon */}
-                              <span
-                                 className={[
-                                    "inline-flex items-center justify-center h-8 w-8 rounded-lg shrink-0 mt-0.5",
-                                    log.status === "success"
-                                       ? "bg-green-500/10 text-green-600"
-                                       : "bg-red-500/10 text-red-500",
-                                 ].join(" ")}
-                              >
-                                 {log.status === "success" ? (
-                                    <Check className="h-3.5 w-3.5" />
-                                 ) : (
-                                    <X className="h-3.5 w-3.5" />
-                                 )}
-                              </span>
-
-                              <div className="flex-1 min-w-0">
-                                 {/* Header row */}
-                                 <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                                    {/* Module badge */}
-                                    <span
-                                       className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${MODULE_COLOR[log.module]}`}
-                                    >
-                                       <ModuleIcon className="h-3 w-3" />
-                                       {log.module}
-                                    </span>
-                                    {/* Severity badge */}
-                                    <span
-                                       className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${severity.color}`}
-                                    >
-                                       <span
-                                          className={`h-1.5 w-1.5 rounded-full ${severity.dot}`}
-                                       />
-                                       {severity.label}
-                                    </span>
-                                    {log.severity === "critical" && (
-                                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500 text-white">
-                                          <AlertTriangle className="h-3 w-3" />
-                                          Xem xét ngay
-                                       </span>
-                                    )}
-                                 </div>
-
-                                 {/* What */}
-                                 <p className="text-[13px] font-semibold text-primary leading-snug">
-                                    {log.what}
-                                 </p>
-
-                                 {/* Who + Where */}
-                                 <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-neutral-dark">
-                                    <span className="flex items-center gap-1">
-                                       <Shield className="h-3 w-3" />
-                                       <span className="font-medium text-primary">
-                                          {log.who.name}
-                                       </span>
-                                       <span className="text-neutral-dark/60">
-                                          ({log.who.role})
-                                       </span>
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                       <Monitor className="h-3 w-3" />
-                                       {log.where.browser} · {log.where.device}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                       <MapPin className="h-3 w-3" />
-                                       {log.where.location} ·{" "}
-                                       <span className="font-mono">
-                                          {log.where.ip}
-                                       </span>
-                                    </span>
-                                 </div>
-                              </div>
-
-                              {/* When */}
-                              <div className="text-[11px] text-neutral-dark whitespace-nowrap shrink-0 text-right">
-                                 {formatRelativeDate(log.when)}
-                              </div>
-                           </button>
-
-                           {/* Expanded detail */}
-                           {isExpanded && log.detail && (
-                              <div className="px-5 pb-4 pl-16 bg-neutral-light-active/30 border-t border-neutral">
-                                 <div className="flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 mt-2">
-                                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                                    <p className="text-[12px] text-amber-700 dark:text-amber-400">
-                                       {log.detail}
-                                    </p>
-                                 </div>
-                              </div>
-                           )}
-                        </div>
-                     );
-                  })
-               )}
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-neutral px-5 py-3 flex items-center justify-between bg-neutral-light-active/30">
-               <p className="text-[11px] text-neutral-dark">
-                  Hiển thị{" "}
-                  <span className="font-semibold text-primary">
-                     {filtered.length}
-                  </span>{" "}
-                  / {MOCK_LOGS.length} bản ghi
-               </p>
-               <button
-                  type="button"
-                  className="text-[11px] text-accent hover:underline"
-               >
-                  Xem thêm bản ghi cũ hơn
-               </button>
-            </div>
-         </section>
+        <button
+          type="button"
+          onClick={() => fetch(page, filters)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-neutral bg-neutral-light-active px-3 py-2 text-sm font-medium text-primary hover:bg-neutral transition-colors cursor-pointer"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Làm mới
+        </button>
       </div>
-   );
+
+      {/* ── Stats bar ── */}
+      <div className="flex items-center gap-2 px-1">
+        <span className="text-xs text-neutral-dark">{loading ? "Đang tải..." : `${total} bản ghi`}</span>
+        {total > 0 && (
+          <span className="text-xs text-neutral-dark">
+            · Trang {page}/{totalPages}
+          </span>
+        )}
+      </div>
+
+      {/* ── Log list ── */}
+      <div className="rounded-2xl border border-neutral bg-neutral-light shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <RefreshCw className="h-5 w-5 animate-spin text-accent" />
+          </div>
+        ) : logs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <ClipboardList className="h-8 w-8 text-neutral-dark/30" />
+            <p className="text-sm text-neutral-dark">Không có bản ghi nào</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-neutral">
+            {logs.map((log) => (
+              <LogRow key={log.id} log={log} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="inline-flex items-center gap-1 rounded-xl border border-neutral px-3 py-2 text-sm font-medium text-primary hover:bg-neutral-light-active disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Trước
+          </button>
+          <span className="text-sm text-neutral-dark px-2">
+            {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="inline-flex items-center gap-1 rounded-xl border border-neutral px-3 py-2 text-sm font-medium text-primary hover:bg-neutral-light-active disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            Sau
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

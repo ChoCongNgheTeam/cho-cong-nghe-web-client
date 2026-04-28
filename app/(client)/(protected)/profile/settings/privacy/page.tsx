@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// TODO: thay bằng dữ liệu thật từ GET /users/me/sessions khi BE có endpoint
 const recentDevices = [
   { device: "iPhone 15 Pro - iOS 17", time: "Hôm nay 09:12", ip: "113.190.12.8" },
   { device: "MacBook Pro - Chrome", time: "Hôm qua 21:40", ip: "113.190.12.8" },
@@ -24,19 +25,7 @@ function ToggleSwitch({ id, defaultChecked }: { id: string; defaultChecked?: boo
   );
 }
 
-function Row({
-  icon: Icon,
-  title,
-  desc,
-  id,
-  defaultChecked,
-}: {
-  icon: React.ElementType;
-  title: string;
-  desc: string;
-  id: string;
-  defaultChecked?: boolean;
-}) {
+function Row({ icon: Icon, title, desc, id, defaultChecked }: { icon: React.ElementType; title: string; desc: string; id: string; defaultChecked?: boolean }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-neutral bg-white/70 p-3 sm:p-4">
       <div className="flex items-start gap-3">
@@ -61,23 +50,13 @@ export default function PrivacySettingsPage() {
         <p className="text-sm text-neutral-dark mt-2">Kiểm soát dữ liệu cá nhân và cách hệ thống sử dụng.</p>
       </div>
 
+      {/* TODO: kết nối PATCH /users/me/privacy khi BE có endpoint */}
       <section className="bg-neutral-light border border-neutral rounded-2xl p-4 sm:p-6 space-y-4">
-        <Row
-          icon={History}
-          title="Lưu lịch sử xem sản phẩm"
-          desc="Giúp bạn xem lại và gợi ý nhanh hơn."
-          id="view-history"
-          defaultChecked
-        />
-        <Row
-          icon={Sparkles}
-          title="Cá nhân hóa gợi ý"
-          desc="Đề xuất sản phẩm phù hợp theo thói quen mua sắm."
-          id="personalization"
-          defaultChecked
-        />
+        <Row icon={History} title="Lưu lịch sử xem sản phẩm" desc="Giúp bạn xem lại và gợi ý nhanh hơn." id="view-history" defaultChecked />
+        <Row icon={Sparkles} title="Cá nhân hóa gợi ý" desc="Đề xuất sản phẩm phù hợp theo thói quen mua sắm." id="personalization" defaultChecked />
       </section>
 
+      {/* TODO: kết nối GET /auth/sessions + DELETE /auth/sessions/:id khi BE có endpoint */}
       <section className="bg-neutral-light border border-neutral rounded-2xl p-4 sm:p-6 space-y-3 mt-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-primary">
           <Monitor className="h-4 w-4 text-accent" />
@@ -100,9 +79,7 @@ export default function PrivacySettingsPage() {
                   <td className="py-2 px-3 whitespace-nowrap">{session.time}</td>
                   <td className="py-2 px-3 whitespace-nowrap">{session.ip}</td>
                   <td className="py-2 px-3">
-                    <button className="rounded-full border border-neutral px-3 py-1 text-xs text-primary hover:bg-neutral-light">
-                      Đăng xuất
-                    </button>
+                    <button className="rounded-full border border-neutral px-3 py-1 text-xs text-primary hover:bg-neutral-light">Đăng xuất</button>
                   </td>
                 </tr>
               ))}
@@ -115,9 +92,7 @@ export default function PrivacySettingsPage() {
       <div className="sticky bottom-0 mt-8">
         <div className="bg-neutral-light/95 backdrop-blur border border-neutral rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs sm:text-sm text-neutral-dark">Lưu thay đổi để áp dụng cài đặt quyền riêng tư.</p>
-          <button className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition">
-            Lưu cài đặt
-          </button>
+          <button className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition">Lưu cài đặt</button>
         </div>
       </div>
     </div>
