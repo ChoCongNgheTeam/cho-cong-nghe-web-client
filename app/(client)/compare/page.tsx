@@ -51,7 +51,7 @@ function StickyCompareHeader({ products, maxSlots, onRemove }: { products: Produ
 
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-neutral-light shadow-lg border-b border-neutral animate-in slide-in-from-top duration-300">
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3">
+      <div className="container mx-auto px-3 sm:px-4 py-3">
         <div className="flex w-full">
           <div className="flex items-center justify-center px-2 sm:px-5" style={{ width: "120px" }}>
             <h2 className="text-[9px] sm:text-[11px] font-medium text-neutral-darker uppercase tracking-widest flex-1">Thuộc tính</h2>
@@ -66,7 +66,7 @@ function StickyCompareHeader({ products, maxSlots, onRemove }: { products: Produ
                     <div className="relative">
                       <button
                         onClick={() => onRemove(product.id)}
-                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-promotion-light hover:bg-promotion-light-hover text-primary border border-promotion-light-active flex items-center justify-center"
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-promotion-light hover:bg-promotion-light-hover text-primary border border-promotion-light-active flex items-center justify-center cursor-pointer"
                       >
                         <X size={8} />
                       </button>
@@ -466,7 +466,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         <p className="text-[15px] font-semibold text-primary mb-1">Chưa có sản phẩm nào</p>
         <p className="text-[13px] text-neutral-darker">Thêm sản phẩm để bắt đầu so sánh tính năng và giá cả</p>
       </div>
-      <button onClick={onAdd} className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors">
+      <button onClick={onAdd} className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors cursor-pointer">
         <Plus size={15} />
         Thêm sản phẩm đầu tiên
       </button>

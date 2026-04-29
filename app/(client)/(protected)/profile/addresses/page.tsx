@@ -1,6 +1,16 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Home, Building2, Plus, Star, Pencil, Trash2, CheckCircle, AlertTriangle } from "lucide-react";
+import {
+  MapPin,
+  Home,
+  Building2,
+  Plus,
+  Star,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react";
 import apiRequest from "@/lib/api";
 import { getProvinces } from "../_lib/get-provice";
 import { getWards } from "../_lib/get-wards";
@@ -165,13 +175,27 @@ export default function AddressesPage() {
 
   // ─── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!contactName || !phone || !provinceCode || !wardCode || !detailAddress) {
+    if (
+      !contactName ||
+      !phone ||
+      !provinceCode ||
+      !wardCode ||
+      !detailAddress
+    ) {
       alert("Vui lòng điền đầy đủ thông tin");
       return;
     }
     setIsSubmitting(true);
     try {
-      const payload = { contactName, phone, provinceCode, wardCode, detailAddress, type, isDefault };
+      const payload = {
+        contactName,
+        phone,
+        provinceCode,
+        wardCode,
+        detailAddress,
+        type,
+        isDefault,
+      };
       if (editingAddress) {
         await apiRequest.patch(`/addresses/${editingAddress.id}`, payload);
       } else {
@@ -225,7 +249,9 @@ export default function AddressesPage() {
       </h2>
 
       <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Thông tin người nhận</label>
+        <label className="block text-sm font-medium text-primary mb-1.5">
+          Tên người nhận
+        </label>
         <input
           className={inputCls}
           value={contactName}
@@ -233,9 +259,64 @@ export default function AddressesPage() {
           placeholder="Nhập họ và tên người nhận"
         />
       </div>
+      <div>
+        <label className="block text-sm font-medium text-primary mb-1.5">
+          Tỉnh/Thành phố
+        </label>
+        <select
+          className={selectCls}
+          value={provinceCode}
+          onChange={(e) => handleProvinceChange(e.target.value)}
+          disabled={isLoadingProvinces}
+        >
+          <option value="">
+            {isLoadingProvinces ? "Đang tải..." : "Chọn Tỉnh/Thành phố"}
+          </option>
+          {provinces.map((p) => (
+            <option key={p.code} value={p.code}>
+              {p.fullName}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Số điện thoại</label>
+        <label className="block text-sm font-medium text-primary mb-1.5">
+          Phường/Xã
+        </label>
+        <select
+          className={selectCls}
+          value={wardCode}
+          onChange={(e) => setWardCode(e.target.value)}
+          disabled={!provinceCode || isLoadingWards}
+        >
+          <option value="">
+            {isLoadingWards ? "Đang tải..." : "Chọn Phường/Xã"}
+          </option>
+          {wards.map((w) => (
+            <option key={w.code} value={w.code}>
+              {w.fullName}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-primary mb-1.5">
+          Địa chỉ cụ thể
+        </label>
+        <input
+          className={inputCls}
+          value={detailAddress}
+          onChange={(e) => setDetailAddress(e.target.value)}
+          placeholder="Số nhà, tên đường..."
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-primary mb-1.5">
+          Số điện thoại
+        </label>
         <input
           className={inputCls}
           value={phone}
@@ -246,47 +327,9 @@ export default function AddressesPage() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Tỉnh/Thành phố</label>
-        <select
-          className={selectCls}
-          value={provinceCode}
-          onChange={(e) => handleProvinceChange(e.target.value)}
-          disabled={isLoadingProvinces}
-        >
-          <option value="">{isLoadingProvinces ? "Đang tải..." : "Chọn Tỉnh/Thành phố"}</option>
-          {provinces.map((p) => (
-            <option key={p.code} value={p.code}>{p.fullName}</option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Phường/Xã</label>
-        <select
-          className={selectCls}
-          value={wardCode}
-          onChange={(e) => setWardCode(e.target.value)}
-          disabled={!provinceCode || isLoadingWards}
-        >
-          <option value="">{isLoadingWards ? "Đang tải..." : "Chọn Phường/Xã"}</option>
-          {wards.map((w) => (
-            <option key={w.code} value={w.code}>{w.fullName}</option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-primary mb-1.5">Địa chỉ cụ thể</label>
-        <input
-          className={inputCls}
-          value={detailAddress}
-          onChange={(e) => setDetailAddress(e.target.value)}
-          placeholder="Số nhà, tên đường..."
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-primary mb-2">Loại địa chỉ</label>
+        <label className="block text-sm font-medium text-primary mb-2">
+          Loại địa chỉ
+        </label>
         <div className="flex gap-2">
           {ADDRESS_TYPES.map(({ value, label, icon: Icon }) => (
             <button
@@ -343,9 +386,13 @@ export default function AddressesPage() {
           <AlertTriangle size={28} className="text-red-500" />
         </div>
         <div>
-          <h2 className="text-base font-semibold text-primary mb-1">Xác nhận xóa địa chỉ</h2>
+          <h2 className="text-base font-semibold text-primary mb-1">
+            Xác nhận xóa địa chỉ
+          </h2>
           <p className="text-sm text-primary opacity-60">
-            Bạn có chắc chắn muốn xóa địa chỉ này không?<br />Hành động này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa địa chỉ này không?
+            <br />
+            Hành động này không thể hoàn tác.
           </p>
         </div>
       </div>
@@ -353,15 +400,22 @@ export default function AddressesPage() {
       {/* Address preview */}
       {deletingAddress && (
         <div className="bg-neutral rounded-lg px-4 py-3 text-sm text-primary">
-          <p className="font-medium mb-0.5">{deletingAddress.contactName} · {deletingAddress.phone}</p>
-          <p className="opacity-60 text-xs leading-relaxed">{deletingAddress.fullAddress}</p>
+          <p className="font-medium mb-0.5">
+            {deletingAddress.contactName} · {deletingAddress.phone}
+          </p>
+          <p className="opacity-60 text-xs leading-relaxed">
+            {deletingAddress.fullAddress}
+          </p>
         </div>
       )}
 
       {/* Actions */}
       <div className="flex gap-3">
         <button
-          onClick={() => { setShowDeleteModal(false); setDeletingAddress(null); }}
+          onClick={() => {
+            setShowDeleteModal(false);
+            setDeletingAddress(null);
+          }}
           className="cursor-pointer flex-1 border border-neutral rounded-lg py-2.5 text-sm font-medium text-primary hover:bg-neutral transition-colors"
         >
           Hủy
@@ -382,7 +436,9 @@ export default function AddressesPage() {
     <div className="bg-neutral-light-active rounded-lg shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-neutral">
-        <h1 className="text-base sm:text-xl font-semibold text-primary">Sổ địa chỉ nhận hàng</h1>
+        <h1 className="text-base sm:text-xl font-semibold text-primary">
+          Sổ địa chỉ nhận hàng
+        </h1>
         {!isLoading && addresses.length > 0 && (
           <button
             onClick={openAddModal}
@@ -400,7 +456,10 @@ export default function AddressesPage() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <div key={i} className="animate-pulse bg-neutral rounded-xl p-4 sm:p-5 space-y-3">
+              <div
+                key={i}
+                className="animate-pulse bg-neutral rounded-xl p-4 sm:p-5 space-y-3"
+              >
                 <div className="flex items-center gap-2">
                   <div className="h-5 w-20 bg-neutral-dark/20 rounded-full" />
                   <div className="h-5 w-24 bg-neutral-dark/20 rounded-full" />
@@ -415,15 +474,22 @@ export default function AddressesPage() {
           <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
             <div className="mb-5">
               <div className="relative inline-flex">
-                <MapPin size={56} className="text-neutral-dark opacity-30" strokeWidth={1.2} />
+                <MapPin
+                  size={56}
+                  className="text-neutral-dark opacity-30"
+                  strokeWidth={1.2}
+                />
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
                   <Plus size={12} className="text-white" strokeWidth={3} />
                 </div>
               </div>
             </div>
-            <p className="text-primary font-semibold text-base mb-1">Bạn chưa có lưu địa chỉ nào</p>
+            <p className="text-primary font-semibold text-base mb-1">
+              Bạn chưa có lưu địa chỉ nào
+            </p>
             <p className="text-sm text-primary opacity-60 mb-6">
-              Cập nhật địa chỉ ngay để có trải nghiệm mua hàng<br className="hidden sm:block" /> nhanh nhất!
+              Cập nhật địa chỉ ngay để có trải nghiệm mua hàng
+              <br className="hidden sm:block" /> nhanh nhất!
             </p>
             <button
               onClick={openAddModal}
@@ -441,7 +507,9 @@ export default function AddressesPage() {
                 <div
                   key={addr.id}
                   className={`rounded-xl border p-4 sm:p-5 transition-colors ${
-                    addr.isDefault ? "border-accent bg-accent-light" : "border-neutral bg-neutral-light"
+                    addr.isDefault
+                      ? "border-accent bg-accent-light"
+                      : "border-neutral bg-neutral-light"
                   }`}
                 >
                   {/* Top row */}
@@ -480,9 +548,13 @@ export default function AddressesPage() {
 
                   {/* Contact */}
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="font-semibold text-sm text-primary">{addr.contactName}</span>
+                    <span className="font-semibold text-sm text-primary">
+                      {addr.contactName}
+                    </span>
                     <span className="text-neutral-dark text-xs">|</span>
-                    <span className="text-sm text-primary opacity-70">{addr.phone}</span>
+                    <span className="text-sm text-primary opacity-70">
+                      {addr.phone}
+                    </span>
                   </div>
 
                   {/* Address */}
@@ -517,7 +589,10 @@ export default function AddressesPage() {
       {/* Delete confirm modal */}
       <Popzy
         isOpen={showDeleteModal}
-        onClose={() => { setShowDeleteModal(false); setDeletingAddress(null); }}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeletingAddress(null);
+        }}
         content={deleteModalContent}
       />
     </div>
