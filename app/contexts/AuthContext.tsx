@@ -3,6 +3,7 @@ import { createContext, useState, useEffect, useRef, useCallback, ReactNode } fr
 import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
 import apiRequest, { performRefresh, resolveAuthInit, resetAuthInit, setAccessToken } from "@/lib/api";
+import { StaffPermissions, UserRole } from "@/(client)/staff-permissions.types";
 
 interface User {
   id: string;
@@ -10,10 +11,11 @@ interface User {
   phone?: string;
   userName: string;
   fullName: string;
-  role: string;
+  role: UserRole;
   avatarImage?: string;
   gender?: string;
   dateOfBirth?: string;
+  permissions?: StaffPermissions;
 }
 
 interface ApiResponse<T> {

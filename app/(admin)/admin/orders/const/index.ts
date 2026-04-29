@@ -8,18 +8,19 @@ export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; pill:
   },
   PAID: {
     label: "Đã thanh toán",
-    pill: "bg-accent-light border-accent-light-active text-accent-dark",
-    dot: "bg-accent",
+    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    dot: "bg-emerald-400",
   },
   REFUND_PENDING: {
     label: "Chờ hoàn tiền",
-    dot: "bg-amber-400",
     pill: "bg-amber-50 text-amber-600 border border-amber-200",
+    dot: "bg-amber-400",
   },
+
   REFUNDED: {
     label: "Đã hoàn tiền",
-    pill: "bg-promotion-light border-promotion-light-active text-promotion",
-    dot: "bg-promotion",
+    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    dot: "bg-emerald-400",
   },
 };
 
@@ -44,38 +45,38 @@ export const ORDER_STATUS_CONFIG: Record<
 > = {
   PENDING: {
     label: "Đang chờ",
-    dot: "bg-accent",
-    pill: "bg-accent-light text-accent border border-accent-light-active",
-    pillSelected: "bg-accent-light text-accent",
-    dropdownHover: "hover:bg-accent-light",
+    dot: "bg-amber-500",
+    pill: "bg-amber-50 text-amber-600 border border-amber-200",
+    pillSelected: "bg-amber-50 text-amber-600",
+    dropdownHover: "hover:bg-amber-50",
   },
   PROCESSING: {
     label: "Đang xử lý",
-    dot: "bg-accent-dark",
-    pill: "bg-accent-light text-accent-dark border border-accent-light-active",
-    pillSelected: "bg-accent-light text-accent-dark",
-    dropdownHover: "hover:bg-accent-light",
+    dot: "bg-blue-500",
+    pill: "bg-blue-50 text-blue-600 border border-blue-200",
+    pillSelected: "bg-blue-50 text-blue-600",
+    dropdownHover: "hover:bg-blue-50",
   },
   SHIPPED: {
     label: "Đang giao hàng",
-    dot: "bg-purple-400",
-    pill: "bg-purple-50 text-purple-600 border border-purple-200",
-    pillSelected: "bg-purple-50 text-purple-600",
-    dropdownHover: "hover:bg-purple-50",
+    dot: "bg-indigo-500",
+    pill: "bg-indigo-50 text-indigo-600 border border-indigo-200",
+    pillSelected: "bg-indigo-50 text-indigo-600",
+    dropdownHover: "hover:bg-indigo-50",
   },
   DELIVERED: {
     label: "Hoàn tất",
-    dot: "bg-accent",
-    pill: "bg-accent-light text-accent-dark border border-accent-light-active",
-    pillSelected: "bg-accent-light text-accent-dark",
-    dropdownHover: "hover:bg-accent-light",
+    dot: "bg-emerald-400",
+    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    pillSelected: "bg-emerald-50 text-emerald-700",
+    dropdownHover: "hover:bg-emerald-50",
   },
   CANCELLED: {
     label: "Hủy đơn",
-    dot: "bg-promotion",
-    pill: "bg-promotion-light text-promotion border border-promotion-light-active",
-    pillSelected: "bg-promotion-light text-promotion",
-    dropdownHover: "hover:bg-promotion-light",
+    dot: "bg-red-500",
+    pill: "bg-red-50 text-red-600 border border-red-200",
+    pillSelected: "bg-red-50 text-red-600",
+    dropdownHover: "hover:bg-red-50",
   },
 };
 

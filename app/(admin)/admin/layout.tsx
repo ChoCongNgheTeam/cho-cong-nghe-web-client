@@ -1,16 +1,14 @@
 "use client";
 
-"use client";
-
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
-
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeaderAuto from "@/components/admin/AdminHeaderAuto";
 import { AdminNotificationProvider } from "@/contexts/AdminNotificationContext";
 import { AdminPrefixProvider } from "@/contexts/AdminPrefixContext";
+import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -21,7 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (!user) {
         router.replace("/account");
       } else if (user.role !== "ADMIN") {
-        if (user.role === "STAFF") {
+        if ((STAFF_ROLES as readonly string[]).includes(user.role)) {
           router.replace("/staff/dashboard");
         } else {
           router.replace("/");
@@ -45,7 +43,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>
           </div>
         </div>
-
         <Toaster position="top-right" richColors closeButton duration={3000} theme="light" />
       </AdminNotificationProvider>
     </AdminPrefixProvider>

@@ -41,12 +41,14 @@ import { useToasty } from "@/components/Toast";
 import { AuthContext } from "@/contexts/AuthContext";
 import apiRequest from "@/lib/api";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { ROLE_LABELS, ROLE_COLORS, STAFF_ROLES } from "./user.types";
+import MobileUserCard from "./components/MobileUserCard";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-type FilterTab = "ALL" | "ACTIVE" | "BLOCKED" | "ADMIN";
+type FilterTab = "ALL" | "ACTIVE" | "BLOCKED" | "ADMIN" | "STAFF";
 type SortField = "createdAt" | "fullName" | "email" | "role" | "orderCount" | "totalSpent";
 type SortDir = "asc" | "desc";
 type StatsMap = Record<FilterTab, number>;
@@ -70,17 +72,18 @@ interface UserWithStats extends User {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const roleColor: Record<UserRole, string> = {
-  ADMIN: "bg-purple-100 text-purple-800 border-purple-200",
-  STAFF: "bg-blue-100 text-blue-800 border-blue-200",
-  CUSTOMER: "bg-emerald-100 text-emerald-800 border-emerald-200",
-};
+// const roleColor: Record<UserRole, string> = {
+//   ADMIN: "bg-purple-100 text-purple-800 border-purple-200",
+//   STAFF: "bg-blue-100 text-blue-800 border-blue-200",
+//   CUSTOMER: "bg-emerald-100 text-emerald-800 border-emerald-200",
+// };
 
 const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "ACTIVE", label: "Hoạt động" },
   { value: "BLOCKED", label: "Bị khóa" },
   { value: "ADMIN", label: "Admin" },
+  { value: "STAFF", label: "Nhân viên" }, // ← Mới: filter toàn bộ staff roles
 ];
 
 const SORT_OPTIONS: {
@@ -457,6 +460,7 @@ export default function UserPage() {
     ACTIVE: 0,
     BLOCKED: 0,
     ADMIN: 0,
+    STAFF: 0,
   });
 
   // ── Sort dropdown: fixed positioning ──
@@ -516,10 +520,7 @@ export default function UserPage() {
     setError(null);
     try {
       const res = await getAllUsers(buildQuery());
-      let normalized: UserWithStats[] = res.data.map((u) => ({
-        ...u,
-        role: (["ADMIN", "STAFF"] as UserRole[]).includes(u.role) ? u.role : "CUSTOMER",
-      }));
+      const normalized: UserWithStats[] = res.data.map((u) => ({ ...u }));
 
       const filtered = dateFilter ? normalized.filter((u) => u.createdAt?.slice(0, 10) === dateFilter) : normalized;
 
@@ -556,11 +557,14 @@ export default function UserPage() {
   const fetchStats = useCallback(async () => {
     try {
       const [all, active, admin] = await Promise.all([getAllUsers({ limit: 1 }), getAllUsers({ limit: 1, isActive: true }), getAllUsers({ limit: 1, role: "ADMIN" })]);
+      // Staff count = total - admin - customer (estimate), hoặc gọi BE với từng role
+      // Nếu BE hỗ trợ role filter cho STAFF group thì gọi thêm 1 request
       setStats({
         ALL: all.pagination.total,
         ACTIVE: active.pagination.total,
         BLOCKED: Math.max(0, all.pagination.total - active.pagination.total),
         ADMIN: admin.pagination.total,
+        STAFF: 0, // Cập nhật nếu BE hỗ trợ filter theo group
       });
     } catch (e) {
       console.error("fetchStats error:", e);
@@ -619,7 +623,7 @@ export default function UserPage() {
     return currentUserRole === "ADMIN";
   }
   function isDeleteAllowed(u: User): boolean {
-    if (normalizeRole(u.role) !== "STAFF") return false;
+    if (!STAFF_ROLES.includes(u.role)) return false; // chỉ xóa được staff roles
     return currentUserRole === "ADMIN";
   }
 
@@ -714,8 +718,8 @@ export default function UserPage() {
       label: "Vai trò",
       align: "center",
       render: (row) => (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${roleColor[row.role] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}>
-          {normalizeRole(row.role) === "ADMIN" ? "Admin" : normalizeRole(row.role) === "STAFF" ? "Nhân viên" : "Khách hàng"}
+        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${ROLE_COLORS[row.role] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}>
+          {ROLE_LABELS[row.role] ?? row.role}
         </span>
       ),
     },
@@ -801,7 +805,7 @@ export default function UserPage() {
             >
               <Pencil size={14} />
             </button>
-            {rowRole === "STAFF" && (
+            {STAFF_ROLES.includes(row.role) && (
               <button
                 onClick={() => {
                   if (canDelete && !isLoadingRow) setDeleteTarget(row);
@@ -936,7 +940,7 @@ export default function UserPage() {
       </div>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <StatsCard label="Tổng người dùng" value={stats.ALL} sub="Tất cả tài khoản" icon={<UserIcon size={18} />} valueClassName="text-accent" />
         <StatsCard label="Hoạt động" value={stats.ACTIVE} sub="Đang hoạt động bình thường" icon={<UserIcon size={18} />} valueClassName="text-emerald-600" />
         <StatsCard label="Bị khóa" value={stats.BLOCKED} sub="Tài khoản bị khóa" icon={<UserIcon size={18} />} valueClassName="text-promotion" />
@@ -946,14 +950,15 @@ export default function UserPage() {
       {/* ── Main card ── */}
       <div className="bg-neutral-light border border-neutral rounded-xl">
         {/* ── Toolbar ── */}
-        <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-neutral overflow-x-auto scrollbar-thin">
-          <div className="flex items-center gap-1 shrink-0">
+        <div className="border-b border-neutral">
+          {/* Hàng 1: Tabs — scroll ngang nếu cần, không bị squeeze */}
+          <div className="flex items-center gap-1 px-3 sm:px-4 pt-2.5 pb-2 overflow-x-auto scrollbar-thin">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => handleTabChange(tab.value)}
                 className={[
-                  "px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer",
+                  "px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0",
                   activeTab === tab.value ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active",
                 ].join(" ")}
               >
@@ -965,57 +970,62 @@ export default function UserPage() {
             ))}
           </div>
 
-          <div className="w-px h-5 bg-neutral shrink-0" />
+          {/* Hàng 2: Search + Sort + Date + Count */}
+          <div className="flex items-center gap-2 px-3 sm:px-4 pb-2.5 flex-wrap sm:flex-nowrap">
+            {/* Search — full width trên mobile, fixed width trên desktop */}
+            <form onSubmit={handleSearch} className="relative w-full sm:w-52 shrink-0">
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Tìm tên, email, username..."
+                className="w-full pl-9 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+              />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
+            </form>
 
-          <form onSubmit={handleSearch} className="relative shrink-0">
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Tìm tên, email, username..."
-              className="w-52 pl-9 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light-active text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-            />
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
-          </form>
+            {/* Sort + Date nằm cùng hàng trên mobile */}
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              {/* Sort button */}
+              <button
+                ref={sortBtnRef}
+                onClick={handleSortToggle}
+                className={[
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap",
+                  isClientSort ? "border-accent bg-accent-light text-accent" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active",
+                ].join(" ")}
+              >
+                {isClientSort ? sortField === "orderCount" ? <ShoppingCart size={13} /> : <DollarSign size={13} /> : <ArrowUpDown size={13} />}
+                {SORT_OPTIONS.find((o) => o.value === sortField)?.label ?? "Sắp xếp"}
+                <ChevronDown size={11} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
+              </button>
 
-          {/* ── Sort button — ref để tính vị trí fixed menu ── */}
-          <div className="shrink-0">
-            <button
-              ref={sortBtnRef}
-              onClick={handleSortToggle}
-              className={[
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap",
-                isClientSort ? "border-accent bg-accent-light text-accent" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active",
-              ].join(" ")}
-            >
-              {isClientSort ? sortField === "orderCount" ? <ShoppingCart size={13} /> : <DollarSign size={13} /> : <ArrowUpDown size={13} />}
-              {SORT_OPTIONS.find((o) => o.value === sortField)?.label ?? "Sắp xếp"}
-              <ChevronDown size={11} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
-            </button>
-          </div>
-
-          <div className="relative shrink-0">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => {
-                setDateFilter(e.target.value);
-                setPage(1);
-              }}
-              className="pl-8 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent transition-all cursor-pointer"
-            />
-            <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
-          </div>
-
-          <div className="flex-1" />
-
-          {statsLoading && (
-            <div className="flex items-center gap-1.5 text-[11px] text-accent shrink-0">
-              <Loader2 size={12} className="animate-spin" />
-              Đang tính toán...
+              {/* Date */}
+              <div className="relative flex-1 sm:flex-none">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full sm:w-auto pl-8 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent transition-all cursor-pointer"
+                />
+                <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+              </div>
             </div>
-          )}
 
-          <span className="text-[12px] text-neutral-dark whitespace-nowrap shrink-0">{total} người dùng</span>
+            {/* Spacer — chỉ hiện trên desktop */}
+            <div className="hidden sm:block flex-1" />
+
+            {/* Loading + Count */}
+            {statsLoading && (
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-accent shrink-0">
+                <Loader2 size={12} className="animate-spin" />
+                Đang tính toán...
+              </div>
+            )}
+            <span className="hidden sm:inline text-[12px] text-neutral-dark whitespace-nowrap shrink-0">{total} người dùng</span>
+          </div>
         </div>
 
         {/* ── Sub-toolbar ── */}
@@ -1059,8 +1069,8 @@ export default function UserPage() {
           <span className="text-[11px] text-accent/80">Click vào tên người dùng để xem lịch sử đơn hàng</span>
         </div>
 
-        {/* ── Table ── */}
-        <div className="overflow-x-auto">
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
           <AdminTable<UserWithStats>
             columns={columns}
             data={users}
@@ -1074,6 +1084,24 @@ export default function UserPage() {
               </div>
             }
             className="border-0 rounded-none"
+          />
+        </div>
+
+        {/* Mobile: card */}
+        <div className="sm:hidden">
+          <MobileUserCard
+            users={users}
+            loading={loading || statsLoading}
+            loadingId={loadingId}
+            isClientSort={isClientSort}
+            onToggleActive={handleToggleActive}
+            onEdit={(u) => router.push(`/admin/users/${u.id}/edit`)}
+            onDelete={(u) => setDeleteTarget(u)}
+            onViewOrders={(u) => setSelectedUser(u)}
+            isBlockAllowed={isBlockAllowed}
+            isEditAllowed={isEditAllowed}
+            isDeleteAllowed={isDeleteAllowed}
+            getBlockTitle={getBlockTitle}
           />
         </div>
 

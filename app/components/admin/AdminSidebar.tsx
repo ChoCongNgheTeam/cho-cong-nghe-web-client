@@ -22,7 +22,6 @@ import {
   Store,
   PanelLeftClose,
   PanelLeftOpen,
-  Palette,
   Layers,
   SlidersHorizontal,
   FileText,
@@ -39,6 +38,8 @@ import {
   Trash2,
   Link2,
   Truck,
+  Menu,
+  X,
 } from "lucide-react";
 import UserAvatar from "../ui/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
@@ -120,7 +121,6 @@ export const adminNavGroups: NavGroup[] = [
   },
 ];
 
-// Tập hợp tất cả hrefs để dùng trong isItemActive
 const allAdminHrefs = new Set(adminNavGroups.flatMap((g) => g.items.map((i) => i.href)));
 
 export function isItemActive(pathname: string, href: string, allHrefs: Set<string>): boolean {
@@ -132,10 +132,9 @@ export function isItemActive(pathname: string, href: string, allHrefs: Set<strin
   return false;
 }
 
-// ── Flyout (collapsed mode) ───────────────────────────────────────────────────
+// ── Flyout (collapsed desktop mode) ──────────────────────────────────────────
 export function CollapsedFlyout({ group, anchorY, pathname, allHrefs, onClose }: { group: NavGroup; anchorY: number; pathname: string; allHrefs: Set<string>; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -172,14 +171,82 @@ export function CollapsedFlyout({ group, anchorY, pathname, allHrefs, onClose }:
   );
 }
 
-// ── Sidebar shell (shared render logic) ──────────────────────────────────────
+// ── Nav content (shared between desktop sidebar & mobile drawer) ──────────────
+function NavContent({
+  navGroups,
+  allHrefs,
+  pathname,
+  openGroups,
+  toggleGroup,
+}: {
+  navGroups: NavGroup[];
+  allHrefs: Set<string>;
+  pathname: string;
+  openGroups: Record<string, boolean>;
+  toggleGroup: (label: string) => void;
+}) {
+  const isGroupActive = (group: NavGroup) => group.items.some((i) => isItemActive(pathname, i.href, allHrefs));
+
+  return (
+    <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 py-2 space-y-0.5">
+      {navGroups.map((group) => {
+        const GroupIcon = group.icon;
+        const isOpen = openGroups[group.label] ?? false;
+        const groupActive = isGroupActive(group);
+
+        return (
+          <div key={group.label} className="mb-0.5">
+            <button
+              onClick={() => toggleGroup(group.label)}
+              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all duration-150 cursor-pointer ${
+                groupActive && !isOpen ? "bg-accent/10 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
+              }`}
+            >
+              <GroupIcon size={16} className={groupActive && !isOpen ? "text-accent" : "text-primary"} />
+              <span className="flex-1 text-[12px] font-semibold uppercase tracking-wider">{group.label}</span>
+              {isOpen ? <ChevronDown size={13} className="text-primary" /> : <ChevronRight size={13} className="text-primary" />}
+            </button>
+
+            {isOpen && (
+              <div className="ml-2 pl-2 border-l border-neutral mt-0.5 space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = isItemActive(pathname, item.href, allHrefs);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all duration-150 ${
+                        active ? "bg-accent text-white font-medium shadow-sm" : "text-primary hover:bg-neutral-light-active"
+                      }`}
+                    >
+                      <Icon size={15} className={active ? "text-white" : "text-primary"} />
+                      <span className="text-[13px]">{item.title}</span>
+                      {item.badge && <span className="ml-auto text-[10px] bg-promotion text-white rounded-full px-1.5 py-0.5 font-semibold">{item.badge}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ── Sidebar shell ─────────────────────────────────────────────────────────────
 export function SidebarShell({ navGroups, allHrefs, homeHref, storeHref }: { navGroups: NavGroup[]; allHrefs: Set<string>; homeHref: string; storeHref?: string }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const router = useRouter();
   const { isDark } = useTheme();
 
+  // Desktop: collapsed/expanded
   const [collapsed, setCollapsed] = useState(false);
+  // Mobile: drawer open
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach((g) => {
@@ -189,7 +256,22 @@ export function SidebarShell({ navGroups, allHrefs, homeHref, storeHref }: { nav
     });
     return init;
   });
+
+  // Collapsed flyout (desktop only)
   const [flyout, setFlyout] = useState<{ group: NavGroup; anchorY: number } | null>(null);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile drawer open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const toggleGroup = (label: string) => setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
 
@@ -205,11 +287,69 @@ export function SidebarShell({ navGroups, allHrefs, homeHref, storeHref }: { nav
 
   const isGroupActive = (group: NavGroup) => group.items.some((i) => isItemActive(pathname, i.href, allHrefs));
 
+  // ── User footer (shared) ────────────────────────────────────────────────────
+  const UserFooter = ({ showStore = true }: { showStore?: boolean }) => (
+    <div className="border-t border-neutral px-3 py-3 space-y-0.5 shrink-0">
+      <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
+        <UserAvatar avatarImage={user?.avatarImage ?? null} fullName={user?.fullName ?? ""} size={32} className="shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-semibold text-primary truncate">{user?.fullName}</div>
+          <div className="text-[11px] text-neutral-dark truncate">{user?.email}</div>
+        </div>
+        <button onClick={handleLogout} title="Đăng xuất" className="text-primary hover:text-promotion transition-colors shrink-0 cursor-pointer">
+          <LogOut size={15} />
+        </button>
+      </div>
+      {showStore && storeHref && (
+        <Link href={storeHref} className="flex items-center gap-2.5 px-2 py-2 text-[13px] text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150">
+          <Store size={15} className="text-primary" />
+          <span>Cửa hàng của tôi</span>
+        </Link>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <div className={`${collapsed ? "w-14" : "w-64"} bg-neutral-light border-r border-neutral h-full flex flex-col transition-all duration-300 relative z-40`}>
+      {/* ── Mobile hamburger button (shown in header area) ── */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-40 w-9 h-9 flex items-center justify-center rounded-xl bg-neutral-light border border-neutral shadow-sm text-primary hover:bg-neutral-light-active transition-all"
+        aria-label="Mở menu"
+      >
+        <Menu size={18} />
+      </button>
+
+      {/* ── Mobile overlay ── */}
+      {mobileOpen && <div className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={() => setMobileOpen(false)} />}
+
+      {/* ── Mobile drawer ── */}
+      <div
+        className={`md:hidden fixed top-0 left-0 z-50 h-full w-72 bg-neutral-light border-r border-neutral flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Drawer header */}
+        <div className="border-b border-neutral flex items-center justify-between px-3 py-3 shrink-0">
+          <Link href={homeHref} onClick={() => setMobileOpen(false)}>
+            <Image src={isDark ? "/logo-dark.png" : "/logo.png"} alt="Logo" width={140} height={40} className="h-9 w-auto object-contain" priority />
+          </Link>
+          <button onClick={() => setMobileOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-primary hover:bg-neutral-light-active transition-all">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Nav */}
+        <NavContent navGroups={navGroups} allHrefs={allHrefs} pathname={pathname} openGroups={openGroups} toggleGroup={toggleGroup} />
+
+        {/* User footer */}
+        {user && <UserFooter />}
+      </div>
+
+      {/* ── Desktop sidebar ── */}
+      <div className={`hidden md:flex ${collapsed ? "w-14" : "w-64"} bg-neutral-light border-r border-neutral h-full flex-col transition-all duration-300 relative z-40`}>
         {/* Logo */}
-        <div className={`border-b border-neutral flex items-center justify-between ${collapsed ? "px-2 py-3" : "px-3 py-3"}`}>
+        <div className={`border-b border-neutral flex items-center justify-between ${collapsed ? "px-2 py-3" : "px-3 py-3"} shrink-0`}>
           {!collapsed && (
             <Link href={homeHref} className="flex-1 min-w-0">
               <Image src={isDark ? "/logo-dark.png" : "/logo.png"} alt="Logo" width={140} height={40} className="h-9 w-auto object-contain" priority />
@@ -243,102 +383,47 @@ export function SidebarShell({ navGroups, allHrefs, homeHref, storeHref }: { nav
           </button>
         )}
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 py-2 space-y-0.5">
-          {navGroups.map((group) => {
-            const GroupIcon = group.icon;
-            const isOpen = openGroups[group.label] ?? false;
-            const groupActive = isGroupActive(group);
-            const isFlyoutOpen = flyout?.group.label === group.label;
-
-            if (collapsed) {
+        {/* Desktop nav */}
+        {collapsed ? (
+          <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 py-2 space-y-0.5">
+            {navGroups.map((group) => {
+              const GroupIcon = group.icon;
+              const groupActive = isGroupActive(group);
+              const isFlyoutOpen = flyout?.group.label === group.label;
               return (
                 <button
                   key={group.label}
                   onClick={(e) => handleIconClick(e, group)}
                   title={group.label}
                   className={`w-full flex justify-center items-center py-2.5 px-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
-                    groupActive || isFlyoutOpen ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active hover:text-primary"
+                    groupActive || isFlyoutOpen ? "bg-accent text-white shadow-sm" : "text-primary hover:bg-neutral-light-active"
                   }`}
                 >
                   <GroupIcon size={20} />
                 </button>
               );
-            }
+            })}
+          </nav>
+        ) : (
+          <NavContent navGroups={navGroups} allHrefs={allHrefs} pathname={pathname} openGroups={openGroups} toggleGroup={toggleGroup} />
+        )}
 
-            return (
-              <div key={group.label} className="mb-0.5">
-                <button
-                  onClick={() => toggleGroup(group.label)}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all duration-150 cursor-pointer ${
-                    groupActive && !isOpen ? "bg-accent/10 text-accent font-semibold" : "text-primary hover:bg-neutral-light-active"
-                  }`}
-                >
-                  <GroupIcon size={16} className={groupActive && !isOpen ? "text-accent" : "text-primary"} />
-                  <span className="flex-1 text-[12px] font-semibold uppercase tracking-wider">{group.label}</span>
-                  {isOpen ? <ChevronDown size={13} className="text-primary" /> : <ChevronRight size={13} className="text-primary" />}
-                </button>
-
-                {isOpen && (
-                  <div className="ml-2 pl-2 border-l border-neutral mt-0.5 space-y-0.5">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const active = isItemActive(pathname, item.href, allHrefs);
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all duration-150 ${
-                            active ? "bg-accent text-white font-medium shadow-sm" : "text-primary hover:bg-neutral-light-active"
-                          }`}
-                        >
-                          <Icon size={15} className={active ? "text-white" : "text-primary"} />
-                          <span className="text-[13px]">{item.title}</span>
-                          {item.badge && <span className="ml-auto text-[10px] bg-promotion text-white rounded-full px-1.5 py-0.5 font-semibold">{item.badge}</span>}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* User profile */}
-        {user && (
-          <div className="border-t border-neutral px-3 py-3 space-y-0.5">
-            <div className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${collapsed ? "justify-center" : ""}`}>
-              <UserAvatar avatarImage={user.avatarImage} fullName={user.fullName} size={32} className="shrink-0" />
-              {!collapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold text-primary truncate">{user.fullName}</div>
-                    <div className="text-[11px] text-primary truncate">{user.email}</div>
-                  </div>
-                  <button onClick={handleLogout} title="Đăng xuất" className="text-primary hover:text-promotion transition-colors shrink-0 cursor-pointer">
-                    <LogOut size={15} />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {!collapsed && storeHref && (
-              <Link href={storeHref} className="flex items-center gap-2.5 px-2 py-2 text-[13px] text-primary hover:text-primary rounded-lg hover:bg-neutral-light-active transition-all duration-150">
-                <Store size={15} className="text-primary" />
-                <span>Cửa hàng của tôi</span>
-              </Link>
-            )}
+        {/* Desktop user footer */}
+        {user && !collapsed && <UserFooter />}
+        {user && collapsed && (
+          <div className="border-t border-neutral px-2 py-3 flex justify-center shrink-0">
+            <UserAvatar avatarImage={user.avatarImage} fullName={user.fullName} size={32} />
           </div>
         )}
       </div>
 
+      {/* Desktop flyout */}
       {collapsed && flyout && <CollapsedFlyout group={flyout.group} anchorY={flyout.anchorY} pathname={pathname} allHrefs={allHrefs} onClose={() => setFlyout(null)} />}
     </>
   );
 }
 
-// ── Admin Sidebar (default export) ───────────────────────────────────────────
+// ── Admin Sidebar ─────────────────────────────────────────────────────────────
 export default function AdminSidebar() {
   return <SidebarShell navGroups={adminNavGroups} allHrefs={allAdminHrefs} homeHref="/admin/dashboard" storeHref="/" />;
 }

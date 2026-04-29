@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { User, UserRole } from "../user.types";
+import { ROLE_LABELS, STAFF_ROLES } from "../user.types";
 import { createUser } from "../_libs/createUser";
 import { updateUserApi } from "../_libs/updateUser";
 import { useToasty } from "@/components/Toast";
@@ -42,6 +43,25 @@ const defaultForm: UserFormState = {
 };
 
 const GENDERS: Gender[] = ["MALE", "FEMALE", "OTHER"];
+
+const ALL_ROLES: { value: UserRole; label: string; group: "staff" | "other" }[] = [
+  { value: "SALES", label: ROLE_LABELS.SALES, group: "staff" },
+  { value: "MARKETING", label: ROLE_LABELS.MARKETING, group: "staff" },
+  { value: "SUPPORT", label: ROLE_LABELS.SUPPORT, group: "staff" },
+  { value: "ACCOUNTING", label: ROLE_LABELS.ACCOUNTING, group: "staff" },
+  { value: "CUSTOMER", label: ROLE_LABELS.CUSTOMER, group: "other" },
+  { value: "ADMIN", label: ROLE_LABELS.ADMIN, group: "other" },
+];
+
+// ── Role badge colors (inline, không dùng dynamic class) ──────────────────────
+const ROLE_BADGE: Record<UserRole, { bg: string; text: string; dot: string }> = {
+  SALES: { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-500" },
+  MARKETING: { bg: "bg-pink-50", text: "text-pink-700", dot: "bg-pink-500" },
+  SUPPORT: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+  ACCOUNTING: { bg: "bg-teal-50", text: "text-teal-700", dot: "bg-teal-500" },
+  CUSTOMER: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+  ADMIN: { bg: "bg-purple-50", text: "text-purple-700", dot: "bg-purple-500" },
+};
 
 function SectionTitle({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
   return (
@@ -90,13 +110,79 @@ function selectCls() {
   ].join(" ");
 }
 
-// Helper: hint note shown below readonly fields
 function ReadonlyNote({ text }: { text: string }) {
   return (
     <p className="text-[11px] text-neutral-dark flex items-center gap-1 mt-0.5">
       <span className="w-1 h-1 rounded-full bg-neutral-dark inline-block" />
       {text}
     </p>
+  );
+}
+
+// ── Role Selector — card grid thay cho select ──────────────────────────────────
+function RoleSelector({ value, onChange, error }: { value: UserRole; onChange: (r: UserRole) => void; error?: string }) {
+  const badge = ROLE_BADGE[value];
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Current badge preview */}
+      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold w-fit ${badge.bg} ${badge.text}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+        {ROLE_LABELS[value]}
+      </div>
+
+      {/* Nhóm Staff */}
+      <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mt-1">Nhân viên</p>
+      <div className="grid grid-cols-2 gap-2">
+        {ALL_ROLES.filter((r) => r.group === "staff").map((r) => {
+          const b = ROLE_BADGE[r.value];
+          const active = value === r.value;
+          return (
+            <button
+              key={r.value}
+              type="button"
+              onClick={() => onChange(r.value)}
+              className={[
+                "flex items-center gap-2 px-3 py-2 rounded-xl border text-[12px] font-medium transition-all cursor-pointer text-left",
+                active ? `${b.bg} ${b.text} border-current shadow-sm` : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active",
+              ].join(" ")}
+            >
+              <span className={`w-2 h-2 rounded-full shrink-0 ${active ? b.dot : "bg-neutral-active"}`} />
+              {r.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Nhóm khác */}
+      <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider mt-1">Khác</p>
+      <div className="grid grid-cols-2 gap-2">
+        {ALL_ROLES.filter((r) => r.group === "other").map((r) => {
+          const b = ROLE_BADGE[r.value];
+          const active = value === r.value;
+          return (
+            <button
+              key={r.value}
+              type="button"
+              onClick={() => onChange(r.value)}
+              className={[
+                "flex items-center gap-2 px-3 py-2 rounded-xl border text-[12px] font-medium transition-all cursor-pointer text-left",
+                active ? `${b.bg} ${b.text} border-current shadow-sm` : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active",
+              ].join(" ")}
+            >
+              <span className={`w-2 h-2 rounded-full shrink-0 ${active ? b.dot : "bg-neutral-active"}`} />
+              {r.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {error && (
+        <p className="text-[11px] text-promotion flex items-center gap-1">
+          <span className="w-1 h-1 rounded-full bg-promotion inline-block" />
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -182,7 +268,6 @@ export default function UserForm({ editingUser }: Props) {
   const validate = (): boolean => {
     const err: FormErrors = {};
 
-    // Only validate editable fields when editing
     if (!isEditing) {
       if (!form.userName.trim()) err.userName = "Nhập username";
       else if (form.userName.length < 3) err.userName = "Tối thiểu 3 ký tự";
@@ -209,7 +294,7 @@ export default function UserForm({ editingUser }: Props) {
       else if (!pwRule.test(form.password)) err.password = "Cần có chữ hoa và số";
     }
 
-    const validRoles: UserRole[] = ["CUSTOMER", "ADMIN", "STAFF"];
+    const validRoles: UserRole[] = ["CUSTOMER", "ADMIN", "SALES", "MARKETING", "SUPPORT", "ACCOUNTING"];
     if (!validRoles.includes(form.role)) err.role = "Role không hợp lệ";
 
     setErrors(err);
@@ -223,28 +308,16 @@ export default function UserForm({ editingUser }: Props) {
     try {
       if (editingUser) {
         const fd = new FormData();
-
-        // Readonly fields — still sent to keep the record intact
         fd.append("userName", form.userName.trim());
         fd.append("email", form.email.trim());
         fd.append("fullName", form.fullName.trim());
         fd.append("phone", form.phone.trim());
-
-        // Editable fields
         fd.append("gender", form.gender);
         fd.append("role", form.role);
         fd.append("isActive", String(form.isActive));
-
-        if (form.password.trim()) {
-          fd.append("password", form.password.trim());
-        }
-
-        if (avatarFile) {
-          fd.append("avatarImage", avatarFile);
-        } else if (removeAvatar) {
-          fd.append("removeAvatar", "true");
-        }
-
+        if (form.password.trim()) fd.append("password", form.password.trim());
+        if (avatarFile) fd.append("avatarImage", avatarFile);
+        else if (removeAvatar) fd.append("removeAvatar", "true");
         await updateUserApi(editingUser.id, fd);
         success("Cập nhật người dùng thành công!");
       } else {
@@ -260,7 +333,6 @@ export default function UserForm({ editingUser }: Props) {
         });
         success("Tạo người dùng thành công!");
       }
-
       router.push("/admin/users");
     } catch (err) {
       console.error("User submit error:", err);
@@ -271,14 +343,14 @@ export default function UserForm({ editingUser }: Props) {
   };
 
   return (
-    <div className="space-y-5 p-5 bg-neutral-light min-h-full">
+    <div className="space-y-5 p-4 sm:p-5 bg-neutral-light min-h-full">
       {/* ── Page header ── */}
       <div>
-        <h1 className="text-xl font-bold text-primary leading-tight">{isEditing ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}</h1>
+        <h1 className="text-lg sm:text-xl font-bold text-primary leading-tight">{isEditing ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}</h1>
         {isEditing ? (
           <p className="text-[13px] text-neutral-dark mt-0.5">
             Đang chỉnh sửa: <span className="font-semibold text-primary">{editingUser.fullName || editingUser.userName}</span>
-            <span className="ml-2 text-[11px] font-mono opacity-60">ID: {editingUser.id}</span>
+            <span className="ml-2 text-[11px] font-mono opacity-60 hidden sm:inline">ID: {editingUser.id}</span>
           </p>
         ) : (
           <p className="text-[13px] text-neutral-dark mt-0.5">Điền thông tin để tạo tài khoản mới</p>
@@ -287,20 +359,15 @@ export default function UserForm({ editingUser }: Props) {
 
       {/* ── Form card ── */}
       <div className="bg-neutral-light rounded-2xl border border-neutral shadow-sm overflow-hidden">
-        <div className="p-7 space-y-8">
-
+        <div className="p-4 sm:p-7 space-y-7">
           {/* ── Avatar ── */}
           <section>
             <SectionTitle icon={<Camera size={16} />} title="Ảnh đại diện" subtitle="Hỗ trợ JPG, PNG – khuyến nghị tỉ lệ 1:1" />
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-5">
               <div className="relative shrink-0">
-                <div className="w-24 h-24 rounded-2xl border-2 border-neutral overflow-hidden bg-neutral-light-active flex items-center justify-center">
-                  {displayAvatar ? (
-                    <Image src={displayAvatar} alt="avatar" className="w-full h-full object-cover" width={96} height={96} />
-                  ) : (
-                    <UserIcon size={32} className="text-neutral-dark" />
-                  )}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-neutral overflow-hidden bg-neutral-light-active flex items-center justify-center">
+                  {displayAvatar ? <Image src={displayAvatar} alt="avatar" className="w-full h-full object-cover" width={96} height={96} /> : <UserIcon size={28} className="text-neutral-dark" />}
                 </div>
                 <button
                   type="button"
@@ -328,12 +395,11 @@ export default function UserForm({ editingUser }: Props) {
                 >
                   <Camera size={13} /> Chọn ảnh
                 </button>
-                {avatarFile && <p className="text-[11px] text-neutral-dark truncate max-w-[200px]">{avatarFile.name}</p>}
+                {avatarFile && <p className="text-[11px] text-neutral-dark truncate max-w-[180px] sm:max-w-[200px]">{avatarFile.name}</p>}
                 {removeAvatar && !avatarFile && <p className="text-[11px] text-red-500">Ảnh sẽ bị xóa khi lưu</p>}
-                <p className="text-[11px] text-neutral-dark">Kích thước tối đa: 5MB</p>
+                <p className="text-[11px] text-neutral-dark">Tối đa 5MB</p>
               </div>
             </div>
-
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </section>
 
@@ -342,9 +408,7 @@ export default function UserForm({ editingUser }: Props) {
           {/* ── Account info ── */}
           <section>
             <SectionTitle icon={<UserIcon size={16} />} title="Thông tin tài khoản" subtitle="Tên đăng nhập và thông tin cơ bản" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-
-              {/* Username */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <Field label="Username" required={!isEditing} error={errors.userName}>
                 <input
                   value={form.userName}
@@ -356,7 +420,6 @@ export default function UserForm({ editingUser }: Props) {
                 {isEditing && <ReadonlyNote text="Username không thể thay đổi" />}
               </Field>
 
-              {/* Họ và tên */}
               <Field label="Họ và tên" required={!isEditing} error={errors.fullName}>
                 <input
                   value={form.fullName}
@@ -368,7 +431,6 @@ export default function UserForm({ editingUser }: Props) {
                 {isEditing && <ReadonlyNote text="Họ tên không thể thay đổi" />}
               </Field>
 
-              {/* Email */}
               <Field label="Email" required={!isEditing} error={errors.email}>
                 <div className="relative">
                   <input
@@ -383,7 +445,6 @@ export default function UserForm({ editingUser }: Props) {
                 {isEditing && <ReadonlyNote text="Email không thể thay đổi" />}
               </Field>
 
-              {/* Phone */}
               <Field label="Số điện thoại" error={errors.phone}>
                 <div className="relative">
                   <input
@@ -395,7 +456,7 @@ export default function UserForm({ editingUser }: Props) {
                       const raw = e.target.value;
                       const digitsOnly = raw.replace(/\D/g, "");
                       if (raw !== digitsOnly) {
-                        setPhoneInputWarning("Chỉ được nhập số, không dùng chữ hoặc ký tự đặc biệt");
+                        setPhoneInputWarning("Chỉ được nhập số");
                         setTimeout(() => setPhoneInputWarning(""), 2500);
                       } else {
                         setPhoneInputWarning("");
@@ -427,12 +488,12 @@ export default function UserForm({ editingUser }: Props) {
 
           <div className="border-t border-neutral" />
 
-          {/* ── Security — chỉ khi tạo mới ── */}
+          {/* ── Security ── */}
           {!isEditing && (
             <>
               <section>
                 <SectionTitle icon={<Lock size={16} />} title="Bảo mật" subtitle="Mật khẩu đăng nhập" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                   <Field label="Mật khẩu" required error={errors.password}>
                     <div className="relative">
                       <input
@@ -454,7 +515,9 @@ export default function UserForm({ editingUser }: Props) {
           {/* ── Permissions & Status ── */}
           <section>
             <SectionTitle icon={<ShieldCheck size={16} />} title="Quyền & Trạng thái" subtitle="Phân quyền và cài đặt tài khoản" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
+              {/* Giới tính */}
               <Field label="Giới tính">
                 <select value={form.gender} onChange={(e) => setField("gender", e.target.value as Gender)} className={selectCls()}>
                   <option value="MALE">Nam</option>
@@ -463,14 +526,7 @@ export default function UserForm({ editingUser }: Props) {
                 </select>
               </Field>
 
-              <Field label="Vai trò" error={errors.role}>
-                <select value={form.role} onChange={(e) => setField("role", e.target.value as UserRole)} className={selectCls()}>
-                  <option value="CUSTOMER">Khách hàng</option>
-                  <option value="STAFF">Nhân viên</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </Field>
-
+              {/* Trạng thái */}
               <Field label="Trạng thái tài khoản">
                 <div
                   onClick={() => setField("isActive", !form.isActive)}
@@ -486,19 +542,28 @@ export default function UserForm({ editingUser }: Props) {
                 </div>
               </Field>
             </div>
+
+            {/* Role selector — full width, dưới hàng trên */}
+            <div className="mt-6">
+              <p className="text-[12px] font-semibold text-primary uppercase tracking-wide mb-3">Vai trò</p>
+              <RoleSelector value={form.role} onChange={(r) => setField("role", r)} error={errors.role} />
+              {STAFF_ROLES.includes(form.role) && (
+                <p className="mt-2 text-[11px] text-accent bg-accent/5 border border-accent/20 rounded-lg px-3 py-2">Quyền chi tiết của nhân viên sẽ được thiết lập sau khi tạo tài khoản.</p>
+              )}
+            </div>
           </section>
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-7 py-4 border-t border-neutral bg-neutral-light-active/60 flex items-center justify-between gap-3">
-          <p className="text-[11px] text-neutral-dark">
+        <div className="px-4 sm:px-7 py-4 border-t border-neutral bg-neutral-light-active/60 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-neutral-dark hidden sm:block">
             <span className="text-promotion">*</span> Các trường bắt buộc
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 ml-auto">
             <button
               type="button"
               onClick={() => router.push("/admin/users")}
-              className="px-5 py-2.5 text-sm font-medium text-primary bg-neutral-light border border-neutral rounded-xl hover:bg-neutral-light-active transition-all cursor-pointer"
+              className="px-4 sm:px-5 py-2.5 text-sm font-medium text-primary bg-neutral-light border border-neutral rounded-xl hover:bg-neutral-light-active transition-all cursor-pointer"
             >
               Hủy
             </button>
@@ -506,7 +571,7 @@ export default function UserForm({ editingUser }: Props) {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-accent rounded-xl hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+              className="px-5 sm:px-6 py-2.5 text-sm font-semibold text-white bg-accent rounded-xl hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm cursor-pointer"
             >
               {loading && (
                 <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
