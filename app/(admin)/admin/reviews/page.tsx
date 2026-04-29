@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Star, Clock, CheckCircle, XCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
-import AdminPagination from "@/components/admin/PaginationAdmin";
 import { getAllReviews, approveReview, deleteReview } from "./_libs/reviews";
 import { getReviewColumns } from "./components/TableReviews";
 import { ReviewDetailDrawer } from "./components/ReviewDetailDrawer";
