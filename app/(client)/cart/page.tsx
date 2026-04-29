@@ -2,12 +2,13 @@
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart, X, LogIn } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import OrderSummary from "@/components/OrderSummary/OrderSummary";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./types/cart.types";
 import { formatVND } from "@/helpers";
@@ -37,7 +38,10 @@ export default function CartPage() {
     rawItems,
   } = useCart();
 
+  const { user } = useAuth();
+
   const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [showLoginHintMobile, setShowLoginHintMobile] = useState(false);
   const toast = useToasty();
 
   const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
@@ -57,6 +61,16 @@ export default function CartPage() {
 
   // Local state cho input số lượng — cho phép xóa trống khi gõ
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({});
+
+  // ── Voucher modal handler — check login trước ────────────────────────────
+
+  const handleOpenVoucherModal = useCallback(() => {
+    if (!user) {
+      setShowLoginHintMobile(true);
+      return;
+    }
+    setShowVoucherModal(true);
+  }, [user]);
 
   // ── Quantity handlers ────────────────────────────────────────────────────
 
@@ -379,13 +393,12 @@ export default function CartPage() {
                 appliedVoucherValue={voucherValue}
                 selectedPromotions={selectedPromotions}
                 promotionValue={promotionValue}
-                onOpenVoucherModal={() => setShowVoucherModal(true)}
+                onOpenVoucherModal={handleOpenVoucherModal}
                 onCheckout={handleCheckout}
                 buttonText="Xác nhận đơn"
                 showTerms={false}
                 isCheckoutPage={false}
-                totalPromotionDiscount={totalDiscount}  // ← THÊM dòng này
-
+                totalPromotionDiscount={totalDiscount}
               />
             </div>
           </div>
@@ -413,7 +426,6 @@ export default function CartPage() {
               value: voucherValue > 0 ? `-${formatVND(voucherValue)}` : "0₫",
               indent: true,
             },
-            // { label: "Phí vận chuyển", value: "Miễn phí" },
             {
               label: "Cần thanh toán",
               value: formatVND(finalTotalWithVoucher),
@@ -422,7 +434,7 @@ export default function CartPage() {
           ]}
           voucherCode={voucherCode}
           voucherValue={voucherValue}
-          onOpenVoucherModal={() => setShowVoucherModal(true)}
+          onOpenVoucherModal={handleOpenVoucherModal}
           rewardPoints={rewardPoints}
           actionLabel="Xác nhận đơn"
           actionDisabled={selectedItems.length === 0}
@@ -456,6 +468,54 @@ export default function CartPage() {
         productName={`${selectedItems.length} sản phẩm đã chọn`}
         isLoading={isDeletingAll}
       />
+
+      {/* Login hint bottom sheet (mobile) */}
+      {showLoginHintMobile && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-[9998]"
+            onClick={() => setShowLoginHintMobile(false)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 bg-neutral-light rounded-t-2xl shadow-2xl z-[9999] flex flex-col">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-neutral" />
+            </div>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
+              <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                Ưu đãi &amp; Voucher
+              </div>
+              <button
+                onClick={() => setShowLoginHintMobile(false)}
+                className="text-neutral-dark hover:text-primary transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex flex-col items-center px-6 py-8 gap-5 text-center">
+              <div className="w-14 h-14 rounded-full bg-accent-light flex items-center justify-center">
+                <LogIn size={24} className="text-accent" />
+              </div>
+              <div>
+                <p className="font-semibold text-primary text-sm mb-1">
+                  Bạn cần đăng nhập trước
+                </p>
+                <p className="text-xs text-neutral-darker leading-relaxed">
+                  Vui lòng đăng nhập để có thể chọn và áp dụng voucher ưu đãi cho đơn hàng.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowLoginHintMobile(false);
+                  router.push("/account?returnUrl=/cart");
+                }}
+                className="w-full py-2.5 bg-primary text-neutral-light text-sm font-semibold rounded-lg hover:bg-primary-hover transition-colors"
+              >
+                Đăng nhập ngay
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

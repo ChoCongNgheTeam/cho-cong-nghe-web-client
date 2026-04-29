@@ -59,9 +59,9 @@ export default function OrderSummary({
     computedTotal ?? Math.max(0, subtotal - totalPromotionDiscount - appliedVoucherValue);
 
   const handleVoucherClick = () => {
+    
     if (!user) {
       setShowLoginHint(true);
-      setTimeout(() => setShowLoginHint(false), 3000);
       return;
     }
     onOpenVoucherModal?.();
@@ -86,9 +86,66 @@ export default function OrderSummary({
 
   return (
     <div className="rounded-xl bg-neutral-light sticky top-4 overflow-hidden border border-neutral">
-      {/* ── Login Hint Sidebar ──────────────────────────────────────────── */}
+
+      {/* ── Backdrop (dùng chung cho cả 2 kiểu) ─────────────────────────── */}
+      {showLoginHint && (
+        <div
+          className="fixed inset-0 bg-black/30 z-[9998]"
+          onClick={() => setShowLoginHint(false)}
+        />
+      )}
+
+      {/* ── Bottom sheet — mobile & iPad portrait (< md) ─────────────────── */}
       <div
-        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-[9999] flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed bottom-0 left-0 right-0 bg-neutral-light rounded-t-2xl shadow-2xl z-[9999] flex flex-col md:hidden transition-transform duration-300 ease-in-out ${
+          showLoginHint ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        {/* drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-neutral" />
+        </div>
+
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
+          <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+            <Tag size={15} className="text-accent" />
+            Ưu đãi & Voucher
+          </div>
+          <button
+            onClick={() => setShowLoginHint(false)}
+            className="text-neutral-dark hover:text-primary transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center px-6 py-8 gap-5 text-center">
+          <div className="w-14 h-14 rounded-full bg-accent-light flex items-center justify-center">
+            <LogIn size={24} className="text-accent" />
+          </div>
+          <div>
+            <p className="font-semibold text-primary text-sm mb-1">
+              Bạn cần đăng nhập trước
+            </p>
+            <p className="text-xs text-neutral-darker leading-relaxed">
+              Vui lòng đăng nhập để có thể chọn và áp dụng voucher ưu đãi cho đơn hàng.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowLoginHint(false);
+              router.push("/account?returnUrl=/cart");
+            }}
+            className="w-full py-2.5 bg-primary text-neutral-light text-sm font-semibold rounded-lg hover:bg-primary-hover transition-colors"
+          >
+            Đăng nhập ngay
+          </button>
+        </div>
+      </div>
+
+      {/* ── Sidebar — tablet landscape & desktop (md+) ───────────────────── */}
+      <div
+        className={`fixed top-0 right-0 h-full w-72 bg-neutral-light shadow-2xl z-[9999] flex-col transition-transform duration-300 ease-in-out hidden md:flex ${
           showLoginHint ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -128,14 +185,6 @@ export default function OrderSummary({
           </button>
         </div>
       </div>
-
-      {/* Backdrop */}
-      {showLoginHint && (
-        <div
-          className="fixed inset-0 bg-black/30 z-[9998]"
-          onClick={() => setShowLoginHint(false)}
-        />
-      )}
 
       {/* ── Voucher ─────────────────────────────────────────────────────── */}
       {onOpenVoucherModal && (
