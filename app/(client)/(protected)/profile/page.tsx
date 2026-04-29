@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { formatDate } from "@/helpers";
-import { Package, Bell, Heart, MapPin, Pencil, ChevronRight, Phone, AlertCircle, Navigation, Settings, LogOut } from "lucide-react";
+import { Package, Bell, Heart, MapPin, Pencil, ChevronRight, Phone, AlertCircle, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 
 const quickMenus = [
@@ -18,7 +18,6 @@ const quickMenus = [
 const contactItems = [
   { icon: Phone, label: "", value: "1800.2097", sub: "(7h30 – 22h00)" },
   { icon: AlertCircle, label: "Khiếu nại", value: "1800.2063", sub: "(8h00 – 21h30)" },
-  { icon: Navigation, label: "Cửa hàng", href: "/profile/stores" },
 ];
 
 // ── Logout Modal ────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
-﻿import Image from "next/image";
+import Image from "next/image";
+import StoreLocatorSection from "@/components/shared/StoreLocatorSection";
 
 export default function About() {
    return (
@@ -189,6 +190,12 @@ export default function About() {
                tử trong ngành công nghệ.
             </p>
          </section>
+
+         <StoreLocatorSection
+            className="mt-10"
+            title="6. Showroom & liên hệ"
+            description="Khách hàng có thể ghé showroom để trải nghiệm dịch vụ, nhận hỗ trợ trực tiếp và tìm đường nhanh qua Google Maps."
+         />
       </div>
    );
 }
