@@ -126,7 +126,7 @@ export default function ShippingSection({
       return (
         <div className="flex flex-col items-center justify-center py-4 gap-3">
           <p className="text-sm text-gray-400">Chưa có địa chỉ nào được lưu</p>
-          <button type="button" onClick={onShowManualForm} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+          <button type="button" onClick={onShowManualForm} className="text-sm text-blue-600 hover:underline flex items-center gap-1 cursor-pointer">
             <Plus size={14} />
             Thêm địa chỉ mới
           </button>

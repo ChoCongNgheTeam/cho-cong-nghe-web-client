@@ -35,6 +35,7 @@ export default function AddToCartButton({
       setLoading(true);
       try {
          await addToCart(productVariantId, quantity, meta);
+         // Chỉ chạy nếu addToCart không throw
          toasty.success(
             meta?.productName
                ? `Đã thêm "${meta.productName}" vào giỏ hàng`

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Star, Clock, CheckCircle, XCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
 import AdminPagination from "@/components/admin/PaginationAdmin";
@@ -39,6 +40,14 @@ export default function ReviewsAdminPage() {
   const [deleting, setDeleting] = useState(false);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // ─── Highlight từ notification ─────────────────────────────────────────
+  const highlightId = searchParams.get("reviewId");
+  const highlightRowRef = useRef<HTMLTableRowElement | null>(null);
+  const hasHandledHighlight = useRef(false);
 
   // ── Fetch ──────────────────────────────────────────────────────────────
   const fetchReviews = useCallback(async () => {
@@ -137,7 +146,76 @@ export default function ReviewsAdminPage() {
     onDeleteClick: (review) => setDeleteTarget(review),
   });
 
+
+    useEffect(() => {
+    if (!highlightId || hasHandledHighlight.current) return;
+
+    const jumpToReview = async () => {
+      try {
+        // Scan từng page để tìm trang chứa review
+        let foundPage = 1;
+        for (let p = 1; p <= 100; p++) {
+          const scan = await getAllReviews({
+            page: p,
+            limit: pageSize,
+            sortOrder: "desc",
+          });
+          if (scan.data.some((r) => r.id === highlightId)) {
+            foundPage = p;
+            break;
+          }
+          if (p >= scan.pagination.totalPages) break;
+        }
+
+        hasHandledHighlight.current = true;
+
+        // Reset filter về mặc định rồi jump đến đúng trang
+        setActiveTab("ALL");
+        setRatingFilter("");
+        setSearch("");
+        setSearchInput("");
+        setDateFrom("");
+        setDateTo("");
+        setSortOrder("desc");
+        setPage(foundPage);
+      } catch (err) {
+        console.error("[highlight] Không tìm thấy review:", err);
+      }
+    };
+
+    jumpToReview();
+  }, [highlightId]);
+
+  // ─── Sau khi data load xong → scroll + mở drawer ──────────────────────
+  useEffect(() => {
+    if (!highlightId || loading || !data) return;
+    if (!data.data.some((r) => r.id === highlightId)) return;
+
+    requestAnimationFrame(() => {
+      highlightRowRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+
+    setOpenDrawerId(highlightId);
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("reviewId");
+      const qs = params.toString();
+      router.replace(`/admin/reviews${qs ? `?${qs}` : ""}`);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, loading, data]);
+
   const allSelected = !!data && data.data.length > 0 && selected.size === data.data.length;
+
+  const rowClassName = (row: Review) =>
+  row.id === highlightId
+    ? "ring-2 ring-inset ring-accent bg-accent/10"
+    : "";
 
   return (
     <div className="min-h-screen bg-neutral-light">
@@ -302,7 +380,7 @@ export default function ReviewsAdminPage() {
               <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} đánh giá trên trang`}</span>
             </div>
           )}
-          <AdminTable columns={columns} data={data?.data ?? []} loading={loading} emptyMessage="Không có đánh giá nào" onRowClick={(review) => setOpenDrawerId(review.id)} />
+          <AdminTable columns={columns} data={data?.data ?? []} loading={loading} emptyMessage="Không có đánh giá nào" onRowClick={(review) => setOpenDrawerId(review.id)} rowClassName={rowClassName} />
 
           {/* Pagination */}
           {!loading && data && data.pagination.total > 0 && (

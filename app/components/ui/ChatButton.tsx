@@ -923,7 +923,7 @@ export default function ChatButton() {
         type="button"
         onClick={isOpen ? closePanel : openPanel}
         aria-label="Chat support"
-        className={`relative rounded-full bg-white border border-neutral-100 flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)] transition-all duration-300 select-none active:scale-90 overflow-visible
+        className={`relative rounded-full bg-white border border-neutral-100 flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)] transition-all duration-300 select-none active:scale-90 overflow-visible cursor-pointer
           ${sheetOpen ? "opacity-0 pointer-events-none" : "opacity-100"}
         `}
         style={{ ...btnStyle, width: size, height: size }}
@@ -934,7 +934,7 @@ export default function ChatButton() {
         {isOpen ? (
           <X size={isOpen ? 16 : 18} strokeWidth={2.5} className="text-neutral-600 transition-all duration-300" />
         ) : (
-          <div className="mascot-float transition-all duration-300 flex items-center justify-center" style={{ width: size + 8, height: size + 8, marginTop: -4 }}>
+          <div className="mascot-float transition-all duration-300 flex items-center justify-center cursor-pointer" style={{ width: size + 8, height: size + 8, marginTop: -4 }}>
             <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={40} height={40} className="object-contain drop-shadow-md" />
           </div>
         )}

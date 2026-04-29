@@ -481,7 +481,6 @@ function TreeRow({
    const hasChildrenCount = (node._count?.children ?? 0) > 0;
    const canDelete = !hasProducts && !hasChildrenCount;
    const indent = DEPTH_INDENT[node.depth] ?? 40;
-   console.log(node);
    return (
       <tr
          className={`border-b border-neutral transition-colors duration-100 hover:bg-neutral-light-active/40 ${DEPTH_BG[node.depth] ?? DEPTH_BG[2]}`}

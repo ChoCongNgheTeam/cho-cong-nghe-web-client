@@ -79,7 +79,9 @@ export default function Slidezy({
   const actualItemsCount = Math.min(itemsCount, slideCount);
   const showNav = slideCount > actualItemsCount;
 
-  const cloneCount = loop && slideCount > actualItemsCount ? Math.max(actualItemsCount, slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1) : 0;
+  const cloneCount = loop && slideCount > actualItemsCount
+  ? Math.max(actualItemsCount, slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1)
+  : 0;
 
   const slides = (() => {
     if (!loop || cloneCount === 0) return originalSlides;
@@ -88,8 +90,12 @@ export default function Slidezy({
     return [...cloneHead, ...originalSlides, ...cloneTail];
   })();
 
-  const maxIndex = loop ? slides.length : slideCount - itemsCount;
-  const slideByValue = slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1;
+  const maxIndex = loop
+    ? slides.length
+    : Math.max(0, slideCount - actualItemsCount); 
+  const slideByValue = slideBy === "page"
+  ? actualItemsCount
+  : typeof slideBy === "number" ? slideBy : 1;
 
   // ─── Position helpers ─────────────────────────────────────────────────────
 
@@ -167,16 +173,17 @@ export default function Slidezy({
   }, [moveSlide]);
 
   const goToSlide = useCallback(
-    (realIndex: number) => {
+    (pageIndex: number) => {
       if (isAnimating || !showNav) return;
       setIsAnimating(true);
-      const targetIndex = loop && cloneCount > 0 ? realIndex + cloneCount : realIndex;
+      const realSlideIndex = pageIndex * slideByValue;
+      const targetIndex = loop && cloneCount > 0 ? realSlideIndex + cloneCount : realSlideIndex;
       setCurrentIndex(targetIndex);
       updatePosition(targetIndex);
-      onSlideChange?.(realIndex);
+      onSlideChange?.(realSlideIndex);
       setTimeout(() => setIsAnimating(false), speed);
     },
-    [isAnimating, showNav, loop, cloneCount, speed, updatePosition, onSlideChange],
+    [isAnimating, showNav, loop, cloneCount, slideByValue, speed, updatePosition, onSlideChange],
   );
 
   // ─── Controls visibility ──────────────────────────────────────────────────
@@ -352,11 +359,14 @@ export default function Slidezy({
   const handleTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX);
   const handleTouchMove = (e: React.TouchEvent) => handleDragMove(e.touches[0].clientX);
   const handleTouchEnd = () => handleDragEnd();
-
+ 
   // ─── Nav dots state ───────────────────────────────────────────────────────
 
-  const pageCount = Math.ceil(slideCount / actualItemsCount);
-  const getActivePage = () => Math.floor(getRealIndex(currentIndex) / actualItemsCount);
+  const pageCount = Math.ceil((slideCount - actualItemsCount + 1) / slideByValue);
+  const getActivePage = () => {
+    const realIdx = getRealIndex(currentIndex);
+    return Math.min(Math.floor(realIdx / slideByValue), pageCount - 1);
+  };
 
   // ─── Resolve effective nav/controls on mobile ─────────────────────────────
 
@@ -365,7 +375,7 @@ export default function Slidezy({
   const showDots = showNav && ((isMobile && mobileNav === "dots") || (!isMobile && nav));
 
   const showArrows = showNav && effectiveShowControls;
-
+  const realCurrentIndex = getRealIndex(currentIndex);
   // ─── Arrow offset (px) ───────────────────────────────────────────────────
 
   const offsetPx = controlsOffset !== "0" ? Math.abs(Number(controlsOffset.replace("-", ""))) : 0;
@@ -380,7 +390,8 @@ export default function Slidezy({
   //  │   └─ /clip-wrapper
   //  │   [prev button]  [next button]             ← không bị clip
   //  └─ /containerRef
-
+  const atStart = !loop && realCurrentIndex <= 0;
+  const atEnd   = !loop && realCurrentIndex >= slideCount - actualItemsCount;
   return (
     <div ref={containerRef} className={`w-full relative ${className}`}>
       {/* Clip wrapper — chỉ bao track, không bao arrow */}
@@ -430,7 +441,7 @@ export default function Slidezy({
         <>
           <button
             onClick={() => moveSlide(-slideByValue)}
-            disabled={isAnimating || (!loop && currentIndex === 0)}
+            disabled={isAnimating || atStart}
             className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
             style={{ left: offsetPx > 0 ? `-${offsetPx + 20}px` : "0px" }}
             aria-label="Previous slide"
@@ -439,7 +450,7 @@ export default function Slidezy({
           </button>
           <button
             onClick={() => moveSlide(slideByValue)}
-            disabled={isAnimating || (!loop && currentIndex >= maxIndex)}
+            disabled={isAnimating || atEnd}
             className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
             style={{ right: offsetPx > 0 ? `-${offsetPx + 20}px` : "0px" }}
             aria-label="Next slide"
@@ -455,10 +466,12 @@ export default function Slidezy({
           {Array.from({ length: pageCount }).map((_, index) => (
             <button
               key={index}
-              onClick={() => goToSlide(index * actualItemsCount)}
+              onClick={() => goToSlide(index)}
               disabled={isAnimating}
-              className={`h-2 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${getActivePage() === index ? "w-8 bg-gray-800" : "w-2 bg-gray-300 hover:bg-gray-400"}`}
-              aria-label={`Go to slide ${index + 1}`}
+              className={`h-2 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${
+                getActivePage() === index ? "w-8 bg-gray-800" : "w-2 bg-gray-300 hover:bg-gray-400"
+              }`}
+              aria-label={`Go to page ${index + 1}`}
             />
           ))}
         </div>

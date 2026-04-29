@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useContext, useRef, memo } from "react";
+import { useState, useCallback, useContext, useRef, memo, useEffect } from "react";
 import { AiOutlineLike } from "react-icons/ai";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -72,7 +72,10 @@ const CommentNode = memo(function CommentNode({
   const isSubmittingReply = replySubmitting === node.id;
 
   return (
-    <div className="flex gap-2 sm:gap-3">
+    <div
+      id={`comment-${node.id}`}
+      className="flex gap-2 sm:gap-3"
+    >
       <Avatar user={node.user} size={avatarSize} />
       <div className="flex-1 min-w-0">
         <div className="mb-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -207,7 +210,6 @@ export default function CommentSection({ productId, comments: initialComments, l
       });
     }, 0);
   };
-
   const handleSubmitComment = async () => {
     if (!isAuthenticated) {
       toast.warning("Vui lòng đăng nhập để đặt câu hỏi", {

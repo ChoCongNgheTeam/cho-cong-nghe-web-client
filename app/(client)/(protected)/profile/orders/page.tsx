@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Order, OrderResponse } from "../type/order";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -11,10 +11,14 @@ import { ErrorState, EmptyState, LoadingState } from "./components/OrderStatesTe
 import OrderCard from "./components/OrderCard";
 import OrderDetailModal from "./components/OrderDetailModal";
 import Pagination from "./components/Pagination";
-
+import { useSearchParams } from "next/navigation";
 const ORDERS_PER_PAGE = 5;
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+   const highlightCode = searchParams.get("highlight");
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, loading: authLoading } = useAuth();
   const { refetchCart } = useCart();
 
@@ -56,6 +60,37 @@ export default function OrdersPage() {
     setActiveTab(tabId);
     setCurrentPage(1);
   };
+
+    useEffect(() => {
+    if (!highlightCode || orders.length === 0) return;
+
+    const target = orders.find((o) => o.orderCode === highlightCode);
+    if (!target) return;
+
+    // Nếu order không nằm ở tab hiện tại, chuyển về "all"
+    setActiveTab("all");
+    setCurrentPage(1);
+
+    // Set highlight sau 1 tick để DOM render kịp
+    setTimeout(() => {
+      setHighlightedOrderId(target.id);
+
+      // Dùng rAF để đảm bảo DOM đã render card trước khi scroll
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const el = document.getElementById(`order-card-${target.id}`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      });
+
+      highlightTimerRef.current = setTimeout(() => {
+        setHighlightedOrderId(null);
+      }, 3000);
+    }, 500);
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, [highlightCode, orders]);
 
   return (
     <div>
@@ -112,7 +147,8 @@ export default function OrdersPage() {
               {paginatedOrders.map((order) => (
                 <OrderCard
                   key={order.id}
-                  order={order}
+                order={order}
+                isHighlighted={highlightedOrderId === order.id}  // ← thêm
                   onViewDetail={() => setSelectedOrder(order)}
                   onCancelSuccess={fetchOrders}
                   onReorderSuccess={fetchOrders}
