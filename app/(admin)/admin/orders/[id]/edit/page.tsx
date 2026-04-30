@@ -8,6 +8,7 @@ import Select from "react-select";
 import { getOrderById, getUserAddresses, getProvinces, getWards, updateOrderAdmin, updateOrderShipping, type UserAddress, type Province, type Ward } from "../../_libs/orders";
 import { formatVND } from "@/helpers";
 import type { Order } from "../../order.types";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -74,6 +75,7 @@ export default function EditOrderPage() {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [loadingWards, setLoadingWards] = useState(false);
+  const href = useAdminHref();
 
   // ── manual state đồng bộ với AddrState của create page ──────────────────
   const [manual, setManual] = useState({
@@ -188,7 +190,7 @@ export default function EditOrderPage() {
         });
       }
 
-      router.push(`/admin/orders/${order.id}`);
+      router.push(href(`/orders/${order.id}`));
     } catch (e: any) {
       setSubmitError(e?.message ?? "Đã xảy ra lỗi");
     } finally {

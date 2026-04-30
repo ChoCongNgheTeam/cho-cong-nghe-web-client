@@ -6,11 +6,13 @@ import Link from "next/link";
 import { ArrowLeft, Megaphone } from "lucide-react";
 import { createCampaign } from "../_libs/campaigns";
 import { CampaignForm, DEFAULT_FORM, formToCreatePayload, type CampaignFormData } from "../components/CampaignForm";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 export default function NewCampaignPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const href = useAdminHref();
 
   const handleSubmit = async (form: CampaignFormData) => {
     setSaving(true);
@@ -18,7 +20,7 @@ export default function NewCampaignPage() {
     try {
       const payload = formToCreatePayload(form);
       const res = await createCampaign(payload);
-      router.push(`/admin/campaigns/${res.data.id}`);
+      router.push(href(`/campaigns/${res.data.id}`));
     } catch (e: any) {
       setError(e?.message ?? "Không thể tạo chiến dịch");
     } finally {
@@ -56,8 +58,7 @@ export default function NewCampaignPage() {
               <p className="text-[12px] text-neutral-dark">Điền thông tin để tạo chiến dịch marketing</p>
             </div>
           </div>
-
-          <CampaignForm initialData={DEFAULT_FORM} onSubmit={handleSubmit} saving={saving} error={error} submitLabel="Tạo chiến dịch" onCancel={() => router.push("/admin/campaigns")} />
+          <CampaignForm initialData={DEFAULT_FORM} onSubmit={handleSubmit} saving={saving} error={error} submitLabel="Tạo chiến dịch" onCancel={() => router.push(href(`/campaigns`))} />
         </div>
       </div>
     </div>

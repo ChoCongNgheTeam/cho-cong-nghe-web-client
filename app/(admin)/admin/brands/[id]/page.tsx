@@ -200,7 +200,7 @@ export default function BrandDetailPage() {
     setDeleteError(null);
     try {
       await deleteBrand(brand.id);
-      router.push("/admin/brands");
+      router.push(href(`/brands`));
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xoá thương hiệu");
     } finally {

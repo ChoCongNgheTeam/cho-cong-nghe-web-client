@@ -25,11 +25,14 @@ import {
   downloadImportTemplate,
   importProducts,
 } from "./_libs/products";
+import { useAuth } from "@/hooks/useAuth";
+import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
 import { getProductColumns } from "./components/TableProducts";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { StockAlertBanner } from "./components/StockAlertBanner";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { ImportButton } from "@/components/admin/ImportButton";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -41,7 +44,7 @@ const STATUS_TABS = [
   { value: "inactive", label: "Đang ẩn" },
   { value: "low_stock", label: "Tồn kho thấp" },
   { value: "featured", label: "Nổi bật" },
-  { value: "deleted", label: "Thùng rác" },
+  // { value: "deleted", label: "Thùng rác" },
 ];
 
 const SORT_OPTIONS = [
@@ -176,6 +179,11 @@ export default function ProductsPage() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkActionType, setBulkActionType] = useState<BulkAction | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
+
+  const href = useAdminHref();
+
+  const { user } = useAuth();
+  const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");
 
   // ── Close dropdowns on outside click ─────────────────────────────────────
   useEffect(() => {
@@ -422,6 +430,8 @@ export default function ProductsPage() {
         toggleOne,
         onStatusChange: handleStatusChange,
         onDeleteClick: handleDeleteClick,
+        href,
+        isStaff,
       }),
     [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
   );
@@ -465,6 +475,7 @@ export default function ProductsPage() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
+
           <ExportButton
             onExport={(fmt) =>
               exportProducts({
@@ -480,22 +491,27 @@ export default function ProductsPage() {
             onSuccess={(count, fmt) => console.log(`Đã export ${count} biến thể dạng ${fmt.toUpperCase()}`)}
             onError={(err) => setError(err)}
           />
-          <ImportButton
-            onImport={importProducts}
-            onDownloadTemplate={downloadImportTemplate}
-            disabled={loading}
-            onSuccess={(result) => {
-              // Sau import xong → reload lại data + stats
-              fetchProducts();
-              fetchStats();
-            }}
-          />
-          <Link
-            href="/admin/products/create"
-            className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer"
-          >
-            <Plus size={15} /> Thêm sản phẩm
-          </Link>
+
+          {!isStaff && (
+            <ImportButton
+              onImport={importProducts}
+              onDownloadTemplate={downloadImportTemplate}
+              disabled={loading}
+              onSuccess={(result) => {
+                // Sau import xong → reload lại data + stats
+                fetchProducts();
+                fetchStats();
+              }}
+            />
+          )}
+          {!isStaff && (
+            <Link
+              href={href(`/products/create`)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all cursor-pointer"
+            >
+              <Plus size={15} /> Thêm sản phẩm
+            </Link>
+          )}
         </div>
       </div>
 
@@ -992,9 +1008,9 @@ export default function ProductsPage() {
               <h3 className="text-[16px] font-bold text-primary text-center mb-1">{(deleteTarget as any).deletedAt ? "Xóa vĩnh viễn?" : "Xóa sản phẩm?"}</h3>
               <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xóa</p>
               <p className="text-[14px] font-semibold text-primary text-center mb-2">"{deleteTarget.name}"</p>
-              <p className="text-[12px] text-primary text-center mb-6">
+              {/* <p className="text-[12px] text-primary text-center mb-6">
                 {(deleteTarget as any).deletedAt ? "Hành động này không thể hoàn tác." : "Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau."}
-              </p>
+              </p> */}
               {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
               <div className="flex gap-2">
                 <button

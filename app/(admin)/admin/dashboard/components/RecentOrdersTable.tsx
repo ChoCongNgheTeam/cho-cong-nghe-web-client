@@ -64,17 +64,21 @@ interface RecentOrdersTableProps {
   orders: RecentOrder[];
   title?: string;
   emptyMessage?: string;
+  href: (path: string) => string;
+  user: any;
 }
 
-export function RecentOrdersTable({ orders, title = "Đơn hàng gần đây", emptyMessage = "Chưa có đơn hàng nào" }: RecentOrdersTableProps) {
+export function RecentOrdersTable({ orders, title = "Đơn hàng gần đây", emptyMessage = "Chưa có đơn hàng nào", href, user }: RecentOrdersTableProps) {
   return (
     <div className="bg-neutral-light rounded-xl border border-neutral shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral">
         <h3 className="font-semibold text-primary">{title}</h3>
-        <Link href="/admin/orders" className="text-[13px] text-accent hover:text-accent-hover font-medium flex items-center gap-0.5">
-          Xem tất cả <ArrowUpRight className="w-3 h-3" />
-        </Link>
+        {(user?.role === "ADMIN" || user?.permissions?.canViewOrders) && (
+          <Link href={href(`/orders`)} className="text-[13px] text-accent hover:text-accent-hover font-medium flex items-center gap-0.5">
+            Xem tất cả <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        )}
       </div>
 
       {orders.length === 0 ? (

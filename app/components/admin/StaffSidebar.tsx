@@ -23,7 +23,7 @@ const ALL_NAV_GROUPS: NavGroupDef[] = [
   {
     label: "Tổng quan",
     icon: LayoutDashboard,
-    items: [{ title: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard }],
+    items: [{ title: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard, perm: "canAnalytics" }],
   },
   {
     label: "Đơn hàng",
@@ -68,7 +68,7 @@ const ALL_NAV_GROUPS: NavGroupDef[] = [
     icon: BarChart3,
     items: [
       { title: "Thống kê", href: "/staff/analytics", icon: BarChart3, perm: "canAnalytics" },
-      { title: "Thanh toán", href: "/staff/payments", icon: CreditCard, perm: "canPaymentView" },
+      { title: "Thanh toán", href: "/staff/payment-methods", icon: CreditCard, perm: "canPaymentView" },
     ],
   },
   {

@@ -7,7 +7,7 @@ import { ROLE_LABELS, STAFF_ROLES } from "../user.types";
 import { createUser } from "../_libs/createUser";
 import { updateUserApi } from "../_libs/updateUser";
 import { useToasty } from "@/components/Toast";
-import { User as UserIcon, Mail, Lock, Phone, ShieldCheck, Camera, X, AlertCircle } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Phone, ShieldCheck, Camera, X, AlertCircle, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
 type Gender = "MALE" | "FEMALE" | "OTHER";
@@ -196,6 +196,7 @@ export default function UserForm({ editingUser }: Props) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [phoneInputWarning, setPhoneInputWarning] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // ← thêm dòng này
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -497,13 +498,22 @@ export default function UserForm({ editingUser }: Props) {
                   <Field label="Mật khẩu" required error={errors.password}>
                     <div className="relative">
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         value={form.password}
                         onChange={(e) => setField("password", e.target.value)}
                         placeholder="Tối thiểu 6 ký tự, có chữ hoa và số"
-                        className={`${inputCls(errors.password)} pl-10`}
+                        className={`${inputCls(errors.password)} pl-10 pr-10`}
                       />
                       <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-dark hover:text-primary transition-colors cursor-pointer"
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      >
+                        {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
                     </div>
                   </Field>
                 </div>

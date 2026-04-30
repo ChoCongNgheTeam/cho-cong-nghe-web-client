@@ -103,7 +103,7 @@ export default function CategoryDetailPage() {
     setActionLoading(true);
     try {
       await softDeleteCategory(category.id);
-      router.push("/admin/categories");
+      router.push(href(`/categories`));
     } catch (e: any) {
       setError(e?.message ?? "Xóa thất bại");
       setConfirmDelete(false);
@@ -253,17 +253,11 @@ export default function CategoryDetailPage() {
                 <Hash size={12} className="text-neutral-dark" /> {category.position}
               </span>
             </InfoRow>
-            <InfoRow label="Ngày tạo">
-              {formatDate(category.createdAt, { withTime: true })}
-            </InfoRow>
-            <InfoRow label="Cập nhật">
-              {formatDate(category.updatedAt, { withTime: true })}
-            </InfoRow>
+            <InfoRow label="Ngày tạo">{formatDate(category.createdAt, { withTime: true })}</InfoRow>
+            <InfoRow label="Cập nhật">{formatDate(category.updatedAt, { withTime: true })}</InfoRow>
             {isDeleted && category.deletedAt && (
               <InfoRow label="Đã xóa lúc">
-                <span className="text-promotion">
-                  {formatDate(category.deletedAt, { withTime: true })}
-                </span>
+                <span className="text-promotion">{formatDate(category.deletedAt, { withTime: true })}</span>
               </InfoRow>
             )}
           </SectionCard>

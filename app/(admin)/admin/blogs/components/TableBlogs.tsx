@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { BlogCard } from "../blog.types";
 import { BlogStatusBadge } from "./BlogStatusBadge";
-import { BLOG_STATUS_LABELS, BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../const";
+import { BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../const";
 import type { BlogType } from "../blog.types";
 import { formatDate, formatNumber } from "@/helpers";
 
@@ -16,6 +16,7 @@ interface GetBlogColumnsParams {
   setOpenStatusId: (id: string | null) => void;
   onChangeStatus: (blog: BlogCard, status: string) => void;
   onDeleteClick: (blog: BlogCard) => void;
+  prefix: string;
 }
 
 const STATUS_DROPDOWN = [
@@ -24,7 +25,7 @@ const STATUS_DROPDOWN = [
   { value: "ARCHIVED", label: "Lưu trữ", color: "text-neutral-dark bg-neutral-light-active" },
 ];
 
-export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onChangeStatus, onDeleteClick }: GetBlogColumnsParams): AdminColumn<BlogCard>[] {
+export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onChangeStatus, onDeleteClick, prefix }: GetBlogColumnsParams): AdminColumn<BlogCard>[] {
   return [
     {
       key: "_select",
@@ -155,14 +156,14 @@ export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleO
       render: (blog) => (
         <div className="flex items-center justify-end gap-2">
           <Link
-            href={`/admin/blogs/${blog.id}`}
+            href={`${prefix}/blogs/${blog.id}`}
             title="Xem chi tiết"
             className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
           >
             <Eye size={14} />
           </Link>
           <Link
-            href={`/admin/blogs/${blog.id}?edit=true`}
+            href={`${prefix}/blogs/${blog.id}?edit=true`}
             title="Chỉnh sửa"
             className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
           >

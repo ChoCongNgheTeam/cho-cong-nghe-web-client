@@ -42,6 +42,7 @@ export async function fetchAllBrands(): Promise<EntityOption[]> {
 export default function NewPromotionPage() {
   const adminRouter = useAdminRouter();
   const href = useAdminHref();
+  const router = useRouter();
   const { success, error: toastError } = useToasty();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

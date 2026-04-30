@@ -15,6 +15,7 @@ interface GetVoucherColumnsParams {
   setOpenStatusId: (id: string | null) => void;
   onToggleActive: (voucher: VoucherCard) => void;
   onDeleteClick: (voucher: VoucherCard) => void;
+  href: (path: string) => string;
 }
 
 const STATUS_DROPDOWN = [
@@ -22,7 +23,7 @@ const STATUS_DROPDOWN = [
   { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" },
 ];
 
-export function getVoucherColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick }: GetVoucherColumnsParams): AdminColumn<VoucherCard>[] {
+export function getVoucherColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick, href }: GetVoucherColumnsParams): AdminColumn<VoucherCard>[] {
   return [
     {
       key: "_select",
@@ -146,14 +147,16 @@ export function getVoucherColumns({ page, pageSize, selected, openStatusId, togg
       render: (voucher) => (
         <div className="flex items-center justify-end gap-2">
           <Link
-            href={`/admin/vouchers/${voucher.id}`}
+            // href={`/admin/vouchers/${voucher.id}`}
+            href={href(`/vouchers/${voucher.id}`)}
             title="Xem"
             className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
           >
             <Eye size={14} />
           </Link>
           <Link
-            href={`/admin/vouchers/${voucher.id}?edit=true`}
+            // href={`/admin/vouchers/${voucher.id}?edit=true`}
+            href={href(`/vouchers/${voucher.id}?edit=true`)}
             title="Chỉnh sửa"
             className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
           >

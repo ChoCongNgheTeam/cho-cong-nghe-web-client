@@ -15,6 +15,7 @@ interface GetCampaignColumnsParams {
   setOpenStatusId: (id: string | null) => void;
   onToggleActive: (campaign: Campaign) => void;
   onDeleteClick: (campaign: Campaign) => void;
+  prefix: string;
 }
 
 const STATUS_DROPDOWN = [
@@ -22,7 +23,7 @@ const STATUS_DROPDOWN = [
   { value: "inactive", label: "Tạm dừng", color: "text-orange-500 bg-orange-50" },
 ];
 
-export function getCampaignColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick }: GetCampaignColumnsParams): AdminColumn<Campaign>[] {
+export function getCampaignColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick, prefix }: GetCampaignColumnsParams): AdminColumn<Campaign>[] {
   return [
     {
       key: "_select",
@@ -81,9 +82,7 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
           <div className="text-[11px] text-neutral-dark">
             {campaign.startDate ? <span>Từ {formatDate(campaign.startDate)}</span> : <span className="italic opacity-60">Không giới hạn bắt đầu</span>}
           </div>
-          <div className="text-[11px] text-neutral-dark">
-            {campaign.endDate ? <span>Đến {formatDate(campaign.endDate)}</span> : <span className="italic opacity-60">Không giới hạn kết thúc</span>}
-          </div>
+          <div className="text-[11px] text-neutral-dark">{campaign.endDate ? <span>Đến {formatDate(campaign.endDate)}</span> : <span className="italic opacity-60">Không giới hạn kết thúc</span>}</div>
         </div>
       ),
     },
@@ -140,14 +139,14 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
         return (
           <div className="flex items-center justify-end gap-2">
             <Link
-              href={`/admin/campaigns/${campaign.id}`}
+              href={`${prefix}/campaigns/${campaign.id}`}
               title="Xem"
               className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
             >
               <Eye size={14} />
             </Link>
             <Link
-              href={`/admin/campaigns/${campaign.id}?edit=true`}
+              href={`${prefix}/campaigns/${campaign.id}?edit=true`}
               title="Chỉnh sửa"
               className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
             >
@@ -158,9 +157,7 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
               onClick={() => canDelete && onDeleteClick(campaign)}
               disabled={!canDelete}
               className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                canDelete
-                  ? "text-neutral-dark hover:bg-promotion-light hover:text-promotion cursor-pointer"
-                  : "text-neutral-dark/25 cursor-not-allowed"
+                canDelete ? "text-neutral-dark hover:bg-promotion-light hover:text-promotion cursor-pointer" : "text-neutral-dark/25 cursor-not-allowed"
               }`}
             >
               <Trash2 size={14} />

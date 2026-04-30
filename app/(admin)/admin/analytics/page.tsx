@@ -14,6 +14,7 @@ import { RevenueChart } from "./components/RevenueChart";
 import { PaymentMethodChart, CategoryChart } from "./components/BreakdownCharts";
 import { ConversionFunnelChart } from "./components/ConversionFunnelChart";
 import { TopCustomersTable } from "./components/TopCustomersTable";
+import { useAuth } from "@/hooks/useAuth";
 
 function Skeleton() {
   return (
@@ -42,6 +43,8 @@ export default function AnalyticsPage() {
   const [preset, setPreset] = useState<QuickRange>("30d");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+
+  const { user } = useAuth();
 
   const { from, to } = resolvePreset(preset, customFrom, customTo);
 
@@ -119,7 +122,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </div>
-            <TopCustomersTable customers={analytics.topCustomers} />
+            <TopCustomersTable customers={analytics.topCustomers} user={user} />
           </div>
         )}
 

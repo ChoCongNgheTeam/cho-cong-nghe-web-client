@@ -24,6 +24,7 @@ import {
   type ProductSearchResult,
   type VariantOption,
 } from "../_libs/orders";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -734,6 +735,7 @@ export default function CreateOrderPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const href = useAdminHref();
 
   // ─────────────────────────────────────────────────────────────────────────
   // INIT
@@ -936,12 +938,12 @@ export default function CreateOrderPage() {
     if (customerTab === "existing") {
       if (!selectedUser) errs.user = "Vui lòng chọn khách hàng";
       if (!selectedAddressId && !showNewAddress) errs.address = "Vui lòng chọn địa chỉ giao hàng";
-      if (showNewAddress && validateAddrFields(newAddr).length) errs.addrForm = "Thông tin địa chỉ chưa hợp lệ";
+      // if (showNewAddress && validateAddrFields(newAddr).length) errs.addrForm = "Thông tin địa chỉ chưa hợp lệ";
     } else {
       if (!newCustomer.fullName.trim()) errs.newFullName = "Họ tên không được trống";
       if (nameHasDigit(newCustomer.fullName)) errs.newFullName = "Họ tên không được chứa số";
       if (!isValidPhone(newCustomer.phone)) errs.newPhone = "SĐT không hợp lệ";
-      if (validateAddrFields(newAddr).length) errs.addrForm = "Thông tin địa chỉ chưa hợp lệ";
+      // if (validateAddrFields(newAddr).length) errs.addrForm = "Thông tin địa chỉ chưa hợp lệ";
     }
     if (cart.length === 0) errs.cart = "Giỏ hàng chưa có sản phẩm";
     if (!selectedPaymentId) errs.payment = "Chọn phương thức thanh toán";
@@ -987,7 +989,7 @@ export default function CreateOrderPage() {
         };
       }
       const res = await createOrderAdmin(payload);
-      router.push(`/admin/orders/${res.data.id}`);
+      router.push(href(`/orders/${res.data.id}`));
     } catch (e: any) {
       setSubmitError(e?.message ?? "Đã xảy ra lỗi");
     } finally {

@@ -11,6 +11,7 @@ import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from
 import { SORT_OPTIONS, STATUS_TABS } from "./const";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -69,6 +70,7 @@ export default function VouchersPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const href = useAdminHref();
 
   // ── Close dropdown on outside click ──────────────────────────────────────────
   useEffect(() => {
@@ -202,8 +204,9 @@ export default function VouchersPage() {
         setOpenStatusId,
         onToggleActive: handleToggleActive,
         onDeleteClick: setDeleteTarget,
+        href,
       }),
-    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive],
+    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, setDeleteTarget, href],
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -231,7 +234,7 @@ export default function VouchersPage() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
-          <Link href="/admin/vouchers/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl">
+          <Link href={href("/vouchers/new")} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl">
             <Plus size={15} /> Tạo voucher
           </Link>
         </div>

@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Search, Plus, RefreshCw, BookOpen, Loader2, XCircle, Filter, ChevronDown, ChevronUp, X, Trash2, Eye, FileText, Archive } from "lucide-react";
 import Link from "next/link";
-import AdminPagination from "@/components/admin/PaginationAdmin";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/Modal";
 import type { BlogCard, BlogAuthor } from "./blog.types";
@@ -12,6 +11,7 @@ import { BLOG_STATUS_TABS, SORT_OPTIONS } from "./const";
 import { getBlogColumns } from "./components/TableBlogs";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { formatNumber } from "@/helpers";
+import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
 
 export default function BlogsPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
@@ -45,6 +45,7 @@ export default function BlogsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const prefix = useAdminPrefix();
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
   const fetchBlogs = useCallback(async () => {
@@ -192,6 +193,7 @@ export default function BlogsPage() {
         setOpenStatusId,
         onChangeStatus: handleChangeStatus,
         onDeleteClick: setDeleteTarget,
+        prefix,
       }),
     [page, pageSize, selected, openStatusId, toggleOne, handleChangeStatus],
   );
@@ -217,7 +219,7 @@ export default function BlogsPage() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
-          <Link href="/admin/blogs/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl">
+          <Link href={`${prefix}/blogs/new`} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl">
             <Plus size={15} /> Viết bài mới
           </Link>
         </div>
