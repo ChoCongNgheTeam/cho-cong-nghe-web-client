@@ -5,9 +5,6 @@ import RatingSummary from "./Ratingsummary";
 import CommentSection from "./Commentsection";
 import { getComments, getReplies, postComment } from "../_lib";
 import { ProductDetail } from "@/lib/types/product";
-// import { reviewApi, Comment, Reply } from "../_lib/review";
-
-// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface CommentUser {
   id: string;
@@ -56,8 +53,6 @@ interface ProductReviewProps {
   currentVariant?: { name?: string; [key: string]: unknown };
 }
 
-// ── Helper ─────────────────────────────────────────────────────────────────
-
 function buildTree(flatList: Comment[]): Comment[] {
   const map = new Map<string, Comment>();
   const roots: Comment[] = [];
@@ -80,13 +75,10 @@ function buildTree(flatList: Comment[]): Comment[] {
   return roots;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
-
 export default function ProductReview({ productId, rating, slug, product, currentVariant }: ProductReviewProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ── Fetch comments ─────────────────────────────────────────────
   const fetchComments = useCallback(async () => {
     if (!productId) return;
     setLoading(true);
@@ -160,10 +152,10 @@ export default function ProductReview({ productId, rating, slug, product, curren
 
   return (
     <div>
-      <div className="bg-neutral-light py-6 sm:py-4 lg:py-6 rounded-lg px-6">
+      <div className="rounded-lg bg-neutral-light px-6 py-6 sm:py-4 lg:py-6">
         <RatingSummary rating={rating} slug={slug} product={product} currentVariant={currentVariant} />
       </div>
-      <div className="bg-neutral-light py-6 sm:py-4 lg:py-6 rounded-lg px-6 mt-6">
+      <div className="mt-6 rounded-lg bg-neutral-light px-6 py-6 sm:py-4 lg:py-6">
         <CommentSection
           productId={productId}
           comments={comments}

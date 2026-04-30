@@ -146,7 +146,6 @@ export default function OrderPaymentPage() {
                success: boolean;
                data: OrderData;
             }>(`/orders/by-code/${orderCode}/payment-info`);
-            console.log(res);
             if (res?.success && res.data) setData(res.data);
             else setError("Không tìm thấy thông tin đơn hàng.");
          } catch {

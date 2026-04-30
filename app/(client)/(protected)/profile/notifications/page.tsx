@@ -4,6 +4,7 @@ import { useCallback, useRef } from "react";
 import Link from "next/link";
 import { CheckCheck, Package, Tag, Megaphone, RefreshCw } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useRoleNavigation } from "@/hooks/useRoleNavigation";
 
 import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 import { NotificationItem } from "@/hooks/useNotificationStore";
@@ -39,8 +40,13 @@ function EmptyState() {
         className="w-36 h-36 sm:w-52 sm:h-52 object-contain mb-1 opacity-90"
       />
       <h3 className="text-sm sm:text-base font-semibold text-primary mt-2 mb-1">Bạn chưa có thông báo nào</h3>
-      <p className="text-xs sm:text-sm text-neutral-darker/60 text-center mb-6 max-w-xs leading-relaxed">Cùng khám các dịch vụ tại ChoCongNghe Shop nhé!</p>
-      <Link href="/" className="bg-accent hover:bg-accent-hover active:scale-[0.98] text-neutral-light text-sm font-semibold px-7 py-2.5 rounded-full transition-all duration-150 shadow-sm hover:shadow-md">
+      <p className="text-xs sm:text-sm text-neutral-darker/60 text-center mb-6 max-w-xs leading-relaxed">
+        Cùng khám các dịch vụ tại ChoCongNghe Shop nhé!
+      </p>
+      <Link
+        href="/"
+        className="bg-accent hover:bg-accent-hover active:scale-[0.98] text-neutral-light text-sm font-semibold px-7 py-2.5 rounded-full transition-all duration-150 shadow-sm hover:shadow-md"
+      >
         Khám phá ngay
       </Link>
     </div>
@@ -62,58 +68,115 @@ function SkeletonRow() {
 }
 
 // ─── Notification Row ──────────────────────────────────────────────────────────
-function NotificationRow({ item, onRead }: { item: NotificationItem; onRead: (id: string) => void }) {
+function NotificationRow({
+  item,
+  onRead,
+  onNavigate,
+}: {
+  item: NotificationItem;
+  onRead: (id: string) => Promise<void> | void;
+  onNavigate: (item: NotificationItem) => void;
+}) {
   const cfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.system;
 
+  const handleClick = useCallback(async () => {
+    if (!item.isRead) await onRead(item.id);
+    onNavigate(item);
+  }, [item, onRead, onNavigate]);
+
   return (
-    // NotificationRow
-<div
-  onClick={() => !item.isRead && onRead(item.id)}
-  className={`
-    group flex gap-3 sm:gap-3.5 px-4 sm:px-5 py-2 sm:py-2.5
-    transition-all duration-150
-    border-b border-neutral last:border-b-0
-    ${!item.isRead
-      ? "bg-accent-light hover:bg-accent-light-hover cursor-pointer"
-      : "bg-neutral-light hover:bg-neutral-light-active cursor-default"
-    }
-  `}
->
-  {/* Icon bubble */}
-  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${cfg.bgClass} ${cfg.textClass}`}>
-    {cfg.icon}
-  </div>
+    <div
+      onClick={handleClick}
+      className={`
+        group flex gap-3 sm:gap-3.5 px-4 sm:px-5 py-2 sm:py-2.5
+        transition-all duration-150
+        border-b border-neutral last:border-b-0
+        cursor-pointer
+        ${!item.isRead
+          ? "bg-accent-light hover:bg-accent-light-hover"
+          : "bg-neutral-light hover:bg-neutral-light-active"
+        }
+      `}
+    >
+      {/* Icon bubble */}
+      <div
+        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${cfg.bgClass} ${cfg.textClass}`}
+      >
+        {cfg.icon}
+      </div>
 
-  {/* Content */}
-  <div className="flex-1 min-w-0">
-    <div className="flex items-start justify-between gap-2 sm:gap-3">
-      <p className={`text-[13px] sm:text-[13.5px] leading-snug flex-1 ${!item.isRead ? "font-semibold text-primary" : "font-normal text-neutral-darker"}`}>
-        {item.title}
-      </p>
-      {!item.isRead && (
-        <span className="mt-1.5 w-2 h-2 rounded-full bg-accent shrink-0 ring-2 ring-accent-light-active" />
-      )}
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <p
+            className={`text-[13px] sm:text-[13.5px] leading-snug flex-1 ${
+              !item.isRead ? "font-semibold text-primary" : "font-normal text-neutral-darker"
+            }`}
+          >
+            {item.title}
+          </p>
+          {!item.isRead && (
+            <span className="mt-1.5 w-2 h-2 rounded-full bg-accent shrink-0 ring-2 ring-accent-light-active" />
+          )}
+        </div>
+
+        <p className="text-[12px] sm:text-[13px] text-neutral-dark mt-0.5 line-clamp-2 leading-relaxed">
+          {item.body}
+        </p>
+
+        <div className="flex items-center gap-2 mt-1.5 sm:mt-2">
+          <span className="text-[10px] sm:text-[11px] text-neutral-dark tabular-nums">
+            Khoảng {formatRelativeDate(item.createdAt)}
+          </span>
+        </div>
+      </div>
     </div>
-
-    <p className="text-[12px] sm:text-[13px] text-neutral-dark mt-0.5 line-clamp-2 leading-relaxed">
-      {item.body}
-    </p>
-
-    <div className="flex items-center gap-2 mt-1.5 sm:mt-2">
-      <span className="text-[10px] sm:text-[11px] text-neutral-dark tabular-nums">
-        Khoảng {formatRelativeDate(item.createdAt)}
-      </span>
-    </div>
-  </div>
-</div>
   );
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function NotificationsPage() {
-  const { notifications, unreadCount, isLoading, hasMore, fetchNextPage, markAsRead, markAllAsRead, refresh } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    hasMore,
+    fetchNextPage,
+    markAsRead,
+    markAllAsRead,
+    refresh,
+  } = useNotifications();
+
+  const { navigateToOrders, navigateToComment, navigateToReview } = useRoleNavigation();
+
+  // Navigation handler — mirror logic từ NotificationBell
+  const handleItemClick = useCallback(
+    (item: NotificationItem) => {
+      if (item.type === "ORDER_STATUS") {
+        const data = item.data as { orderCode?: string };
+        navigateToOrders(data?.orderCode);
+        return;
+      }
+
+      if (item.type === "COMMENT_NEW") {
+        const data = item.data as { productSlug?: string; commentId?: string };
+        navigateToComment(data?.commentId, data?.productSlug);
+        return;
+      }
+
+      if (item.type === "REVIEW_NEW") {
+        const data = item.data as { productSlug?: string; reviewId?: string };
+        navigateToReview(data?.reviewId, data?.productSlug);
+        return;
+      }
+
+      // promotion / system / WELCOME_VOUCHER / v.v. → không navigate
+    },
+    [navigateToOrders, navigateToComment, navigateToReview],
+  );
 
   const listRef = useRef<HTMLDivElement>(null);
+
   const handleScroll = useCallback(() => {
     const el = listRef.current;
     if (!el || isLoading || !hasMore) return;
@@ -132,12 +195,10 @@ export default function NotificationsPage() {
             <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-accent text-neutral-light rounded-full leading-none">
               {unreadCount}
             </span>
-
           )}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Mobile: chỉ icon, desktop: icon + text */}
           <button
             onClick={refresh}
             disabled={isLoading}
@@ -174,8 +235,8 @@ export default function NotificationsPage() {
         </div>
       )}
 
-        {/* ── List Card ── */}
-<div className="rounded-xl sm:rounded-2xl border border-neutral overflow-hidden shadow-sm bg-neutral-light">
+      {/* ── List Card ── */}
+      <div className="rounded-xl sm:rounded-2xl border border-neutral overflow-hidden shadow-sm bg-neutral-light">
         {isLoading && notifications.length === 0 ? (
           <div className="divide-y divide-neutral/40">
             {[...Array(5)].map((_, i) => (
@@ -185,9 +246,18 @@ export default function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <EmptyState />
         ) : (
-          <div ref={listRef} onScroll={handleScroll} className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-260px)] min-h-[200px] divide-y divide-neutral/90 scrollbar-thin">
+          <div
+            ref={listRef}
+            onScroll={handleScroll}
+            className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-260px)] min-h-[200px] divide-y divide-neutral/90 scrollbar-thin"
+          >
             {notifications.map((item) => (
-              <NotificationRow key={item.id} item={item} onRead={markAsRead} />
+              <NotificationRow
+                key={item.id}
+                item={item}
+                onRead={markAsRead}
+                onNavigate={handleItemClick}
+              />
             ))}
 
             {/* Load more spinner */}
