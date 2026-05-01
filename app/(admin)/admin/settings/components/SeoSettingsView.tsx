@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Globe, BarChart2, Share2, Save, Loader2, ExternalLink } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Globe, BarChart2, Share2, Save, Loader2, ExternalLink, Image as ImageIcon, Upload, X } from "lucide-react";
 import { useToasty } from "@/components/Toast";
-import { getSettings, updateSettings, parseSettings } from "../_libs/settings";
+import { getSettings, updateSettingsFormData, parseSettings } from "../_libs/settings";
 import type { SeoSettings } from "../_libs/settings";
 
 const inputCls =
@@ -81,7 +81,6 @@ function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: stri
   );
 }
 
-// Live SERP preview
 function SerpPreview({ title, desc, url }: { title: string; desc: string; url: string }) {
   return (
     <div className="rounded-xl border border-neutral bg-neutral-light-active px-5 py-4 space-y-1">
@@ -93,6 +92,62 @@ function SerpPreview({ title, desc, url }: { title: string; desc: string; url: s
   );
 }
 
+function OgImageUpload({ preview, onFile, onClear }: { preview: string; onFile: (f: File) => void; onClear: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div className="space-y-2">
+      {/* Preview lớn — tỉ lệ 1200×630 (OG standard) */}
+      <div
+        className="relative w-full rounded-xl border-2 border-dashed border-neutral bg-neutral-light-active overflow-hidden cursor-pointer hover:border-accent/50 transition-colors"
+        style={{ aspectRatio: "1200/630" }}
+        onClick={() => ref.current?.click()}
+      >
+        {preview ? (
+          <img src={preview} alt="OG Image" className="w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-neutral-dark/50">
+            <ImageIcon className="h-8 w-8" />
+            <span className="text-xs">Click để tải lên — 1200×630px</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => ref.current?.click()}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-neutral bg-neutral-light-active px-3 py-1.5 text-xs font-medium text-primary hover:bg-neutral transition-colors cursor-pointer"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Tải lên ảnh OG
+        </button>
+        {preview && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral bg-neutral-light-active px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5" />
+            Xóa
+          </button>
+        )}
+      </div>
+
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onFile(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
 export default function SeoSettingsView() {
   const { success, error } = useToasty();
   const [form, setForm] = useState<SeoSettings>(DEFAULTS);
@@ -100,9 +155,16 @@ export default function SeoSettingsView() {
   const [savingMeta, setSavingMeta] = useState(false);
   const [savingTracking, setSavingTracking] = useState(false);
 
+  const [ogImageFile, setOgImageFile] = useState<File | null>(null);
+  const [ogImagePreview, setOgImagePreview] = useState("");
+
   useEffect(() => {
     getSettings("seo")
-      .then((res) => setForm(parseSettings(res.data, DEFAULTS)))
+      .then((res) => {
+        const parsed = parseSettings(res.data, DEFAULTS);
+        setForm(parsed);
+        setOgImagePreview(parsed.og_image_url);
+      })
       .catch(() => error("Không thể tải cài đặt SEO"))
       .finally(() => setLoading(false));
   }, []);
@@ -112,11 +174,23 @@ export default function SeoSettingsView() {
   const saveMeta = async () => {
     setSavingMeta(true);
     try {
-      await updateSettings("seo", {
-        meta_title: form.meta_title,
-        meta_description: form.meta_description,
-        og_image_url: form.og_image_url,
-      });
+      const res = await updateSettingsFormData(
+        "seo",
+        {
+          meta_title: form.meta_title,
+          meta_description: form.meta_description,
+        },
+        { og_image_url: ogImageFile },
+      );
+
+      // Cập nhật preview từ URL BE trả về
+      const updated = res.data as Partial<SeoSettings>;
+      if (updated.og_image_url) {
+        setOgImagePreview(updated.og_image_url);
+        setForm((prev) => ({ ...prev, og_image_url: updated.og_image_url! }));
+      }
+      setOgImageFile(null);
+
       success("Lưu cài đặt SEO thành công");
     } catch {
       error("Lưu thất bại, thử lại sau");
@@ -128,7 +202,7 @@ export default function SeoSettingsView() {
   const saveTracking = async () => {
     setSavingTracking(true);
     try {
-      await updateSettings("seo", {
+      await updateSettingsFormData("seo", {
         google_analytics_id: form.google_analytics_id,
         facebook_pixel_id: form.facebook_pixel_id,
       });
@@ -150,12 +224,12 @@ export default function SeoSettingsView() {
 
   return (
     <div className="space-y-6">
-      {/* ── Meta Tags ── */}
+      {/* ── Meta Tags & OG ── */}
       <SectionCard icon={Globe} title="Meta Tags & OG" desc="Thông tin hiển thị khi chia sẻ hoặc tìm kiếm" onSave={saveMeta} saving={savingMeta}>
         <div className="space-y-4">
           <div>
             <FieldLabel hint={`${form.meta_title.length}/60 ký tự`}>Meta Title mặc định</FieldLabel>
-            <input className={inputCls} value={form.meta_title} onChange={(e) => set("meta_title", e.target.value)} maxLength={60} placeholder="My Shop — Mua sắm dễ dàng" />
+            <input className={inputCls} value={form.meta_title} onChange={(e) => set("meta_title", e.target.value)} maxLength={60} placeholder="ChoCongNghe — Điện thoại, Laptop chính hãng" />
           </div>
           <div>
             <FieldLabel hint={`${form.meta_description.length}/160 ký tự`}>Meta Description mặc định</FieldLabel>
@@ -165,12 +239,24 @@ export default function SeoSettingsView() {
               value={form.meta_description}
               onChange={(e) => set("meta_description", e.target.value)}
               maxLength={160}
-              placeholder="Mô tả ngắn về shop của bạn..."
+              placeholder="Chuyên cung cấp điện thoại, laptop, phụ kiện chính hãng. Giá tốt, giao hàng nhanh."
             />
           </div>
+
           <div>
-            <FieldLabel hint="URL ảnh OG dùng khi share Facebook/Zalo">OG Image URL</FieldLabel>
-            <input className={inputCls} value={form.og_image_url} onChange={(e) => set("og_image_url", e.target.value)} placeholder="https://myshop.vn/og-image.jpg" />
+            <FieldLabel hint="Ảnh hiển thị khi share lên Facebook/Zalo — 1200×630px">OG Image</FieldLabel>
+            <OgImageUpload
+              preview={ogImagePreview}
+              onFile={(f) => {
+                setOgImageFile(f);
+                setOgImagePreview(URL.createObjectURL(f));
+              }}
+              onClear={() => {
+                setOgImageFile(null);
+                setOgImagePreview("");
+                set("og_image_url", "");
+              }}
+            />
           </div>
         </div>
 
@@ -189,6 +275,7 @@ export default function SeoSettingsView() {
               </a>
             </div>
             <input className={inputCls} value={form.google_analytics_id} onChange={(e) => set("google_analytics_id", e.target.value)} placeholder="G-XXXXXXXXXX" />
+            <p className="mt-1.5 text-[11px] text-neutral-dark/60">Lấy tại: GA4 → Admin → Data Streams → chọn web stream → Measurement ID</p>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -199,6 +286,7 @@ export default function SeoSettingsView() {
               </a>
             </div>
             <input className={inputCls} value={form.facebook_pixel_id} onChange={(e) => set("facebook_pixel_id", e.target.value)} placeholder="1234567890123456" />
+            <p className="mt-1.5 text-[11px] text-neutral-dark/60">Lấy tại: Meta Business Suite → Events Manager → Pixel → Pixel ID</p>
           </div>
         </div>
 

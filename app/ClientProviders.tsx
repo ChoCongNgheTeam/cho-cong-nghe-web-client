@@ -10,6 +10,10 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { useEffect } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import SettingsPrefetcher from "@/components/SettingsPrefetcher";
+import DynamicFavicon from "@/components/DynamicFavicon";
+import DynamicSeoMeta from "@/components/DynamicSeoMeta";
+import MaintenanceGuard from "@/components/MaintenanceGuard";
 
 function FcmInitializer() {
   useFcmToken();
@@ -40,6 +44,10 @@ function LocaleInitializer() {
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProvider>
+      <SettingsPrefetcher />
+      <DynamicFavicon />
+      <DynamicSeoMeta />
+
       <ToastyProvider>
         <AuthProvider>
           <NotificationProvider>
@@ -48,9 +56,8 @@ export default function ClientProviders({ children }: { children: React.ReactNod
                 <CartProvider>
                   <FcmInitializer />
                   <LocaleInitializer />
-
-                  {children}
-
+                  {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
+                  <MaintenanceGuard>{children}</MaintenanceGuard>
                   <Analytics />
                 </CartProvider>
               </ThemeProvider>

@@ -11,6 +11,7 @@ interface NavItemDef {
   href: string;
   icon: React.ElementType;
   perm?: PermissionKey;
+  roles?: string[];
 }
 
 interface NavGroupDef {
@@ -67,7 +68,13 @@ const ALL_NAV_GROUPS: NavGroupDef[] = [
     label: "Báo cáo",
     icon: BarChart3,
     items: [
-      { title: "Thống kê", href: "/staff/analytics", icon: BarChart3, perm: "canAnalytics" },
+      {
+        title: "Thống kê",
+        href: "/staff/analytics",
+        icon: BarChart3,
+        perm: "canAnalytics",
+        roles: ["admin", "accounting"],
+      },
       { title: "Thanh toán", href: "/staff/payment-methods", icon: CreditCard, perm: "canPaymentView" },
     ],
   },
@@ -85,8 +92,12 @@ export default function StaffSidebar() {
   // Filter: giữ item nếu không có perm (always show) hoặc có permission = true
   const filteredGroups: NavGroup[] = ALL_NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.perm || perms?.[item.perm] === true),
-  })).filter((group) => group.items.length > 0); // bỏ group rỗng
+    items: group.items.filter((item) => {
+      const hasPermission = !item.perm || perms?.[item.perm] === true;
+      const hasRole = !item.roles || item.roles.includes(user?.role || "");
+      return hasPermission && hasRole;
+    }),
+  })).filter((group) => group.items.length > 0);
 
   const allHrefs = new Set(filteredGroups.flatMap((g) => g.items.map((i) => i.href)));
 

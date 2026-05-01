@@ -12,12 +12,20 @@ import SearchBar from "./SearchBar";
 import NotificationBell from "@/components/ui/NotificationBell";
 import { useRouter } from "next/navigation";
 import { useCompareStore } from "@/(client)/compare/compareStore";
+import { useGeneralSettings } from "@/hooks/useGeneralSettings";
+
+// Logo local làm fallback khi chưa load xong hoặc chưa có logo trong DB
+const FALLBACK_LOGO = "/logo-dark-5.png";
 
 const DesktopHeader = memo(
   ({ isDarkMode, isAuthenticated, isLoading, user, showUserMenu, onUserMenuToggle, onUserMenuClose, onLogout }: Omit<DesktopHeaderProps, "searchQuery" | "onSearchChange">) => {
     const userMenuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const { items } = useCompareStore();
+    const { logoUrl, siteName, isLoading: settingsLoading } = useGeneralSettings();
+
+    // Dùng logo local khi đang load hoặc DB chưa có logo
+    const resolvedLogo = !settingsLoading && logoUrl ? logoUrl : FALLBACK_LOGO;
 
     useEffect(() => {
       if (!showUserMenu) return;
@@ -30,15 +38,24 @@ const DesktopHeader = memo(
       return () => document.removeEventListener("mousedown", handler);
     }, [showUserMenu, onUserMenuClose]);
 
-    // Icon button: hover bg trắng trong suốt, active đậm hơn
-    // Badge counter: nền trắng + text navy để tương phản rõ
     const iconBtn = "p-2 rounded-lg relative cursor-pointer transition-colors duration-150 text-white hover:bg-white/10 active:bg-white/20";
 
     return (
       <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
-        {/* Logo — luôn dùng logo sáng (light) vì nền navy */}
+        {/* Logo */}
         <Link href="/" className="shrink-0 pr-10">
-          <Image src="/logo-dark-5.png" width={180} height={60} alt="Logo" className="h-12 lg:h-15 w-auto hover:opacity-80 transition-opacity" priority />
+          <Image
+            src={resolvedLogo}
+            width={180}
+            height={60}
+            alt={siteName || "Logo"}
+            className="h-12 lg:h-15 w-auto hover:opacity-80 transition-opacity"
+            priority
+            // Nếu Cloudinary URL lỗi thì fallback về logo local
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
+            }}
+          />
         </Link>
 
         {/* Mega menu */}

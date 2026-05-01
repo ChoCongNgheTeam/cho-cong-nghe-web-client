@@ -10,40 +10,51 @@ import { GitCompareArrows } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useAuth } from "@/hooks/useAuth";
+import { useGeneralSettings } from "@/hooks/useGeneralSettings";
+
+const FALLBACK_LOGO = "/logo-dark-5.png";
 
 const MobileHeader = ({ isDarkMode }: MobileHeaderProps) => {
   const router = useRouter();
   const { items } = useCompareStore();
   const { user } = useAuth();
+  const { logoUrl, siteName, isLoading: settingsLoading } = useGeneralSettings();
 
-  // Avatar: dùng ảnh user nếu đã đăng nhập, fallback về robot mascot
+  const resolvedLogo = !settingsLoading && logoUrl ? logoUrl : FALLBACK_LOGO;
+
   const avatarSrc = user?.avatarImage || "/images/Robot-mascot-v2.png";
   const avatarAlt = user ? user.fullName || "Tài khoản" : "Linh vật";
   const avatarHref = user ? "/profile" : "/account";
 
   return (
     <div className="flex md:hidden flex-col gap-2 py-2">
-      {/* TrendingBar — white text */}
       <TrendingBar className="!block mt-0" />
 
-      {/* Row 1: avatar/mascot | Logo | Compare + Cart */}
       <div className="flex items-center justify-between px-1">
         {/* Avatar / Mascot */}
         <Link href={avatarHref} className="p-1 shrink-0">
           {user ? (
-            // Đã đăng nhập → hiển thị avatar với ring + rounded-full
             <div className="w-9 h-9 rounded-full ring-2 ring-white/40 overflow-hidden shrink-0 shadow-md">
               <Image src={avatarSrc} alt={avatarAlt} width={36} height={36} className="w-full h-full object-cover" />
             </div>
           ) : (
-            // Chưa đăng nhập → robot mascot giữ nguyên style cũ
             <Image src={avatarSrc} alt={avatarAlt} width={36} height={36} className="object-contain drop-shadow-md" />
           )}
         </Link>
 
-        {/* Logo — centered, always light version on blue */}
+        {/* Logo — dynamic từ DB */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <Image src="/logo-dark-5.png" width={140} height={44} alt="Logo" className="h-9 w-auto" priority />
+          <Image
+            src={resolvedLogo}
+            width={140}
+            height={44}
+            alt={siteName || "Logo"}
+            className="h-9 w-auto"
+            priority
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
+            }}
+          />
         </Link>
 
         {/* Compare + Cart */}
@@ -60,7 +71,6 @@ const MobileHeader = ({ isDarkMode }: MobileHeaderProps) => {
         </div>
       </div>
 
-      {/* Row 2: SearchBar full width */}
       <div className="px-1">
         <SearchBar isMobile />
       </div>
