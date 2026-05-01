@@ -216,8 +216,8 @@ export default function SystemPreferencesView() {
         site_phone: settings.site_phone,
       };
       const files = {
-        logo: logoFile ?? undefined,
-        favicon: faviconFile ?? undefined,
+        logo_url: logoFile ?? null,
+        favicon_url: faviconFile ?? null,
       };
       const res = await updateSettingsFormData("general", payload, files);
       const updated = parseSettings<GeneralSettings>(res.data, settings);
