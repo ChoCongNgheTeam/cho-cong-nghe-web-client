@@ -1,5 +1,5 @@
 import apiRequest from "@/lib/api";
-import { User } from "../user.types";
+import { User, UserRole } from "../user.types";
 
 export interface CreateUserPayload {
   userName: string;
@@ -8,7 +8,7 @@ export interface CreateUserPayload {
   fullName: string;
   phone: string;
   gender: string;
-  role: "CUSTOMER" | "ADMIN" | "STAFF";
+  role: UserRole;
   isActive: boolean;
 }
 

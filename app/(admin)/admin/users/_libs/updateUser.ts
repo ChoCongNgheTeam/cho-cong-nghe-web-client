@@ -1,6 +1,6 @@
 import apiRequest from "@/lib/api";
 import { ApiResponse } from "./createUser";
-import { User } from "../user.types";
+import { User, UserRole } from "../user.types";
 
 export const updateUserApi = async (
   id: string,
@@ -12,7 +12,7 @@ export const updateUserApi = async (
         fullName?: string;
         phone?: string;
         gender?: string;
-        role?: "CUSTOMER" | "ADMIN" | "STAFF";
+        role?: UserRole;
         isActive?: boolean;
         password?: string;
       },

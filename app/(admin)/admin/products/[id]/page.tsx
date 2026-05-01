@@ -433,6 +433,7 @@ export default function ProductDetailPage() {
   const restoreModal = usePopzy();
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const href = useAdminHref();
 
   const { user } = useAuth();
   const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");

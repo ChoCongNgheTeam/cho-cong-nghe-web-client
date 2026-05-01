@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotificationStore, NotificationItem } from "../hooks/useNotificationStore";
+import { UserRole } from "@/(client)/staff-permissions.types";
 
 interface AdminNotificationContextValue {
   notifications: NotificationItem[];
@@ -30,7 +31,9 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
   const { isAuthenticated, user } = useAuth();
 
   // Chỉ fetch nếu đang là ADMIN hoặc STAFF
-  const isAdminOrStaff = isAuthenticated && (user?.role === "ADMIN" || user?.role === "STAFF");
+  const role = user?.role;
+
+  const isAdminOrStaff = isAuthenticated && (role === "ADMIN" || (!!role && (["SALES", "MARKETING", "SUPPORT", "ACCOUNTING"] as const).includes(role as any)));
 
   const store = useNotificationStore({
     listEndpoint: "/notifications/admin",

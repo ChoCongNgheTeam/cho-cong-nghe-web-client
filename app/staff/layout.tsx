@@ -19,7 +19,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
       if (!user) {
         router.replace("/account");
       } else if (user.role === "ADMIN") {
-        router.replace("/admin/dashboard");
+        router.replace("/staff/dashboard");
       } else if (!(STAFF_ROLES as readonly string[]).includes(user.role)) {
         router.replace("/");
       }

@@ -43,8 +43,11 @@ const ROLE_OPTIONS = ["Owner", "Admin", "Editor", "Reviewer", "Support"];
 
 const ROLE_GROUPS: { role: UserRole; label: string; tag: string }[] = [
   { role: "ADMIN", label: "Quản trị hệ thống", tag: "Admin" },
-  { role: "STAFF", label: "Quản lý nội dung", tag: "Staff" },
   { role: "CUSTOMER", label: "Khách hàng", tag: "Customer" },
+  { role: "SALES", label: "Bán hàng", tag: "Sales" },
+  { role: "MARKETING", label: "Marketing", tag: "Marketing" },
+  { role: "SUPPORT", label: "CSKH", tag: "Support" },
+  { role: "ACCOUNTING", label: "Kế toán", tag: "Accounting" },
 ];
 
 const CUSTOM_GROUPS_KEY = "admin_user_groups_custom";
@@ -91,11 +94,7 @@ export default function PermissionsSettingsView() {
     setGroupsLoading(true);
     setGroupsError(null);
     try {
-      const results = await Promise.all(
-        ROLE_GROUPS.map((item) =>
-          getAllUsers({ page: 1, limit: 8, role: item.role })
-        )
-      );
+      const results = await Promise.all(ROLE_GROUPS.map((item) => getAllUsers({ page: 1, limit: 8, role: item.role })));
 
       const nextGroups: Group[] = results.map((res, idx) => {
         const meta = ROLE_GROUPS[idx];
@@ -146,10 +145,7 @@ export default function PermissionsSettingsView() {
         name: g.name ?? "Nhóm mới",
         roles: Array.isArray(g.roles) ? g.roles : [],
         members: Array.isArray(g.members) ? g.members : [],
-        totalMembers:
-          typeof g.totalMembers === "number"
-            ? g.totalMembers
-            : g.members?.length ?? 0,
+        totalMembers: typeof g.totalMembers === "number" ? g.totalMembers : (g.members?.length ?? 0),
         source: "custom" as const,
       }));
       setCustomGroups(normalized);
@@ -176,10 +172,7 @@ export default function PermissionsSettingsView() {
     setSaveError(null);
   }, [modalOpen, editingGroup]);
 
-  const previewMembers = useMemo(
-    () => draftMembers,
-    [draftMembers]
-  );
+  const previewMembers = useMemo(() => draftMembers, [draftMembers]);
 
   const openCreate = () => {
     setEditingGroup(null);
@@ -192,9 +185,7 @@ export default function PermissionsSettingsView() {
   };
 
   const toggleRole = (role: string) => {
-    setDraftRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
-    );
+    setDraftRoles((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
   };
 
   const addCustomRole = () => {
@@ -306,27 +297,17 @@ export default function PermissionsSettingsView() {
       const nextIds = new Set(draftMembers.map((m) => m.id));
 
       const toPromote = draftMembers.filter((m) => !originalIds.has(m.id));
-      const toDemote =
-        targetRole === "CUSTOMER"
-          ? []
-          : (editingGroup?.members ?? []).filter((m) => !nextIds.has(m.id));
+      const toDemote = targetRole === "CUSTOMER" ? [] : (editingGroup?.members ?? []).filter((m) => !nextIds.has(m.id));
 
       try {
         if (toPromote.length > 0) {
-          await Promise.all(
-            toPromote.map((m) => updateUserApi(m.id, { role: targetRole }))
-          );
+          await Promise.all(toPromote.map((m) => updateUserApi(m.id, { role: targetRole })));
         }
         if (toDemote.length > 0) {
-          await Promise.all(
-            toDemote.map((m) => updateUserApi(m.id, { role: "CUSTOMER" }))
-          );
+          await Promise.all(toDemote.map((m) => updateUserApi(m.id, { role: "CUSTOMER" })));
         }
 
-        persistOverride(
-          editingGroup!.id,
-          editingGroup?.totalMembers
-        );
+        persistOverride(editingGroup!.id, editingGroup?.totalMembers);
         await fetchGroups();
         setModalOpen(false);
         setEditingGroup(null);
@@ -356,27 +337,18 @@ export default function PermissionsSettingsView() {
         <div className="border-b border-neutral px-5 py-4">
           <div className="flex items-center gap-2 text-accent">
             <KeyRound className="h-5 w-5" />
-            <h2 className="text-base font-semibold text-primary">
-              Vai trò và phân quyền
-            </h2>
+            <h2 className="text-base font-semibold text-primary">Vai trò và phân quyền</h2>
           </div>
-          <p className="text-sm text-neutral-dark mt-1">
-            Thiết lập quyền truy cập theo vai trò
-          </p>
+          <p className="text-sm text-neutral-dark mt-1">Thiết lập quyền truy cập theo vai trò</p>
         </div>
         <div className="px-6 py-5 grid gap-3">
           {roles.map((role) => (
-            <div
-              key={role.name}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral bg-neutral-light-active px-4 py-3 text-sm"
-            >
+            <div key={role.name} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral bg-neutral-light-active px-4 py-3 text-sm">
               <div>
                 <p className="font-semibold text-primary">{role.name}</p>
                 <p className="text-neutral-dark">{role.desc}</p>
               </div>
-              <span className="rounded-full bg-accent-light px-3 py-1 text-xs font-semibold text-accent">
-                {role.badge}
-              </span>
+              <span className="rounded-full bg-accent-light px-3 py-1 text-xs font-semibold text-accent">{role.badge}</span>
             </div>
           ))}
         </div>
@@ -387,9 +359,7 @@ export default function PermissionsSettingsView() {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-accent">
               <Users className="h-5 w-5" />
-              <h2 className="text-base font-semibold text-primary">
-                Nhóm người dùng
-              </h2>
+              <h2 className="text-base font-semibold text-primary">Nhóm người dùng</h2>
             </div>
             <button
               onClick={openCreate}
@@ -398,17 +368,12 @@ export default function PermissionsSettingsView() {
               <Plus size={14} /> Tạo nhóm
             </button>
           </div>
-          <p className="text-sm text-neutral-dark mt-1">
-            Gán quyền theo nhóm để quản lý nhanh hơn
-          </p>
+          <p className="text-sm text-neutral-dark mt-1">Gán quyền theo nhóm để quản lý nhanh hơn</p>
         </div>
         <div className="px-6 py-5 grid gap-4 sm:grid-cols-2">
           {groupsLoading ? (
             Array.from({ length: 4 }).map((_, idx) => (
-              <div
-                key={`group-skeleton-${idx}`}
-                className="rounded-2xl border border-neutral bg-neutral-light/80 shadow-sm p-4 animate-pulse"
-              >
+              <div key={`group-skeleton-${idx}`} className="rounded-2xl border border-neutral bg-neutral-light/80 shadow-sm p-4 animate-pulse">
                 <div className="h-4 w-32 bg-neutral rounded mb-2" />
                 <div className="h-3 w-20 bg-neutral rounded mb-4" />
                 <div className="flex gap-2 mb-4">
@@ -417,35 +382,23 @@ export default function PermissionsSettingsView() {
                 </div>
                 <div className="flex -space-x-2">
                   {Array.from({ length: 4 }).map((__, i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 rounded-full bg-neutral border-2 border-neutral-light"
-                    />
+                    <div key={i} className="w-8 h-8 rounded-full bg-neutral border-2 border-neutral-light" />
                   ))}
                 </div>
               </div>
             ))
           ) : groups.length === 0 ? (
-            <div className="col-span-full text-sm text-neutral-dark">
-              {groupsError ?? "Không có nhóm người dùng"}
-            </div>
+            <div className="col-span-full text-sm text-neutral-dark">{groupsError ?? "Không có nhóm người dùng"}</div>
           ) : (
             groups.map((group) => {
               const extraMembers = Math.max(0, group.totalMembers - 4);
               return (
-                <div
-                  key={group.id}
-                  className="rounded-2xl border border-neutral bg-neutral-light/80 shadow-sm hover:shadow-md transition-all"
-                >
+                <div key={group.id} className="rounded-2xl border border-neutral bg-neutral-light/80 shadow-sm hover:shadow-md transition-all">
                   <div className="p-4 pb-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-[14px] font-semibold text-primary">
-                          {group.name}
-                        </h3>
-                        <p className="text-[12px] text-neutral-dark">
-                          {group.totalMembers} thành viên
-                        </p>
+                        <h3 className="text-[14px] font-semibold text-primary">{group.name}</h3>
+                        <p className="text-[12px] text-neutral-dark">{group.totalMembers} thành viên</p>
                       </div>
                       <button
                         onClick={() => openEdit(group)}
@@ -457,10 +410,7 @@ export default function PermissionsSettingsView() {
 
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {group.roles.map((role) => (
-                        <span
-                          key={`${group.id}-${role}`}
-                          className="px-2.5 py-1 rounded-full text-[11px] font-medium border border-neutral/70 bg-neutral-light-active text-primary/80"
-                        >
+                        <span key={`${group.id}-${role}`} className="px-2.5 py-1 rounded-full text-[11px] font-medium border border-neutral/70 bg-neutral-light-active text-primary/80">
                           {role}
                         </span>
                       ))}
@@ -475,23 +425,11 @@ export default function PermissionsSettingsView() {
                           className="w-8 h-8 rounded-full border-2 border-neutral-light bg-neutral-light-active flex items-center justify-center text-[10px] font-semibold text-primary/80 overflow-hidden"
                           title={member.name}
                         >
-                          {member.avatar ? (
-                            <img
-                              src={member.avatar}
-                              alt={member.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            getInitials(member.name)
-                          )}
+                          {member.avatar ? <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" /> : getInitials(member.name)}
                         </div>
                       ))}
                     </div>
-                    {extraMembers > 0 && (
-                      <span className="text-[11px] text-neutral-dark">
-                        +{extraMembers} khác
-                      </span>
-                    )}
+                    {extraMembers > 0 && <span className="text-[11px] text-neutral-dark">+{extraMembers} khác</span>}
                   </div>
                 </div>
               );
@@ -501,10 +439,7 @@ export default function PermissionsSettingsView() {
         {groupsError && (
           <div className="px-6 pb-5 flex items-center gap-3 text-[11px] text-promotion">
             <span>{groupsError}</span>
-            <button
-              onClick={fetchGroups}
-              className="text-[11px] text-accent hover:underline"
-            >
+            <button onClick={fetchGroups} className="text-[11px] text-accent hover:underline">
               Thử lại
             </button>
           </div>
@@ -513,19 +448,12 @@ export default function PermissionsSettingsView() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/25 backdrop-blur-sm"
-            onClick={() => setModalOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/25 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
           <div className="relative w-full max-w-lg mx-4 rounded-2xl border border-neutral bg-neutral-light shadow-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-[15px] font-semibold text-primary">
-                  {isCreate ? "Tạo nhóm người dùng" : "Chỉnh sửa nhóm"}
-                </h2>
-                <p className="text-[12px] text-neutral-dark">
-                  Thiết lập vai trò và thành viên
-                </p>
+                <h2 className="text-[15px] font-semibold text-primary">{isCreate ? "Tạo nhóm người dùng" : "Chỉnh sửa nhóm"}</h2>
+                <p className="text-[12px] text-neutral-dark">Thiết lập vai trò và thành viên</p>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
@@ -537,24 +465,18 @@ export default function PermissionsSettingsView() {
 
             <div className="mt-5 space-y-4">
               <div>
-                <label className="text-[12px] font-medium text-primary">
-                  Tên nhóm
-                </label>
+                <label className="text-[12px] font-medium text-primary">Tên nhóm</label>
                 <input
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
                   placeholder="VD: Quản trị hệ thống"
                   className="mt-2 w-full px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-[13px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
-                {formError && (
-                  <p className="mt-2 text-[11px] text-promotion">{formError}</p>
-                )}
+                {formError && <p className="mt-2 text-[11px] text-promotion">{formError}</p>}
               </div>
 
               <div>
-                <p className="text-[12px] font-medium text-primary">
-                  Vai trò gán cho nhóm
-                </p>
+                <p className="text-[12px] font-medium text-primary">Vai trò gán cho nhóm</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {ROLE_OPTIONS.map((role) => {
                     const active = draftRoles.includes(role);
@@ -564,9 +486,7 @@ export default function PermissionsSettingsView() {
                         onClick={() => toggleRole(role)}
                         className={[
                           "px-3 py-1 rounded-full text-[11px] font-medium border transition-all",
-                          active
-                            ? "bg-accent/10 text-accent border-accent/30"
-                            : "bg-neutral-light-active text-primary/70 border-neutral/70 hover:bg-neutral-light",
+                          active ? "bg-accent/10 text-accent border-accent/30" : "bg-neutral-light-active text-primary/70 border-neutral/70 hover:bg-neutral-light",
                         ].join(" ")}
                       >
                         {role}
@@ -597,21 +517,12 @@ export default function PermissionsSettingsView() {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {draftRoles.length === 0 ? (
-                    <span className="text-[11px] text-neutral-dark">
-                      Chưa gán vai trò
-                    </span>
+                    <span className="text-[11px] text-neutral-dark">Chưa gán vai trò</span>
                   ) : (
                     draftRoles.map((role) => (
-                      <span
-                        key={`selected-role-${role}`}
-                        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-neutral bg-neutral-light-active text-[11px] text-primary"
-                      >
+                      <span key={`selected-role-${role}`} className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-neutral bg-neutral-light-active text-[11px] text-primary">
                         {role}
-                        <button
-                          type="button"
-                          onClick={() => removeRole(role)}
-                          className="text-neutral-dark hover:text-promotion"
-                        >
+                        <button type="button" onClick={() => removeRole(role)} className="text-neutral-dark hover:text-promotion">
                           ×
                         </button>
                       </span>
@@ -630,23 +541,15 @@ export default function PermissionsSettingsView() {
                       placeholder="Tìm theo tên, email hoặc username..."
                       className="w-full px-3 py-2 rounded-lg border border-neutral bg-neutral-light text-[13px] text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/20"
                     />
-                    {memberLoading && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-dark">
-                        Đang tìm...
-                      </span>
-                    )}
+                    {memberLoading && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-dark">Đang tìm...</span>}
                   </div>
 
-                  {memberError && (
-                    <p className="text-[11px] text-promotion">{memberError}</p>
-                  )}
+                  {memberError && <p className="text-[11px] text-promotion">{memberError}</p>}
 
                   {memberResults.length > 0 && (
                     <div className="border border-neutral rounded-lg overflow-hidden bg-neutral-light">
                       {memberResults.map((member) => {
-                        const isSelected = draftMembers.some(
-                          (m) => m.id === member.id
-                        );
+                        const isSelected = draftMembers.some((m) => m.id === member.id);
                         return (
                           <button
                             key={member.id}
@@ -655,28 +558,16 @@ export default function PermissionsSettingsView() {
                             disabled={isSelected}
                             className={[
                               "w-full flex items-center justify-between gap-3 px-3 py-2 text-left text-[12px] border-b border-neutral last:border-b-0 transition-colors",
-                              isSelected
-                                ? "bg-neutral-light-active text-neutral-dark cursor-not-allowed"
-                                : "hover:bg-neutral-light-active text-primary",
+                              isSelected ? "bg-neutral-light-active text-neutral-dark cursor-not-allowed" : "hover:bg-neutral-light-active text-primary",
                             ].join(" ")}
                           >
                             <span className="flex items-center gap-2 min-w-0">
                               <span className="w-7 h-7 rounded-full bg-neutral-light-active border border-neutral flex items-center justify-center text-[10px] font-semibold text-primary/80 overflow-hidden shrink-0">
-                                {member.avatar ? (
-                                  <img
-                                    src={member.avatar}
-                                    alt={member.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  getInitials(member.name)
-                                )}
+                                {member.avatar ? <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" /> : getInitials(member.name)}
                               </span>
                               <span className="truncate">{member.name}</span>
                             </span>
-                            <span className="text-[11px]">
-                              {isSelected ? "Đã chọn" : "Chọn"}
-                            </span>
+                            <span className="text-[11px]">{isSelected ? "Đã chọn" : "Chọn"}</span>
                           </button>
                         );
                       })}
@@ -685,34 +576,15 @@ export default function PermissionsSettingsView() {
 
                   <div className="flex flex-wrap gap-2">
                     {previewMembers.length === 0 ? (
-                      <span className="text-[11px] text-neutral-dark">
-                        Chưa có thành viên
-                      </span>
+                      <span className="text-[11px] text-neutral-dark">Chưa có thành viên</span>
                     ) : (
                       previewMembers.map((member) => (
-                        <span
-                          key={`selected-${member.id}`}
-                          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-neutral bg-neutral-light-active text-[11px] text-primary"
-                        >
+                        <span key={`selected-${member.id}`} className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-neutral bg-neutral-light-active text-[11px] text-primary">
                           <span className="w-5 h-5 rounded-full bg-neutral-light border border-neutral flex items-center justify-center text-[9px] font-semibold text-primary/80 overflow-hidden">
-                            {member.avatar ? (
-                              <img
-                                src={member.avatar}
-                                alt={member.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              getInitials(member.name)
-                            )}
+                            {member.avatar ? <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" /> : getInitials(member.name)}
                           </span>
-                          <span className="max-w-[140px] truncate">
-                            {member.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeMember(member.id)}
-                            className="text-neutral-dark hover:text-promotion"
-                          >
+                          <span className="max-w-[140px] truncate">{member.name}</span>
+                          <button type="button" onClick={() => removeMember(member.id)} className="text-neutral-dark hover:text-promotion">
                             ×
                           </button>
                         </span>
@@ -724,10 +596,7 @@ export default function PermissionsSettingsView() {
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-2">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="px-3.5 py-2 rounded-lg border border-neutral text-[12px] font-medium text-primary hover:bg-neutral-light-active transition-all"
-              >
+              <button onClick={() => setModalOpen(false)} className="px-3.5 py-2 rounded-lg border border-neutral text-[12px] font-medium text-primary hover:bg-neutral-light-active transition-all">
                 Hủy
               </button>
               <button
@@ -735,19 +604,13 @@ export default function PermissionsSettingsView() {
                 disabled={saving}
                 className={[
                   "px-3.5 py-2 rounded-lg text-[12px] font-medium transition-all shadow-sm",
-                  saving
-                    ? "bg-neutral text-neutral-dark cursor-not-allowed"
-                    : "bg-primary text-neutral-light hover:bg-primary-hover",
+                  saving ? "bg-neutral text-neutral-dark cursor-not-allowed" : "bg-primary text-neutral-light hover:bg-primary-hover",
                 ].join(" ")}
               >
                 {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
-            {saveError && (
-              <p className="mt-3 text-[11px] text-promotion text-right">
-                {saveError}
-              </p>
-            )}
+            {saveError && <p className="mt-3 text-[11px] text-promotion text-right">{saveError}</p>}
           </div>
         </div>
       )}

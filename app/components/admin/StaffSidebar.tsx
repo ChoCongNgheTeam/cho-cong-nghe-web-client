@@ -23,7 +23,7 @@ const ALL_NAV_GROUPS: NavGroupDef[] = [
   {
     label: "Tổng quan",
     icon: LayoutDashboard,
-    items: [{ title: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard, perm: "canAnalytics" }],
+    items: [{ title: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard }],
   },
   {
     label: "Đơn hàng",

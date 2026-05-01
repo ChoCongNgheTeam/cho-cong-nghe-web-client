@@ -291,7 +291,7 @@ export function SidebarShell({ navGroups, allHrefs, homeHref, storeHref }: { nav
   const UserFooter = ({ showStore = true }: { showStore?: boolean }) => (
     <div className="border-t border-neutral px-3 py-3 space-y-0.5 shrink-0">
       <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
-        <UserAvatar avatarImage={user?.avatarImage ?? null} fullName={user?.fullName ?? ""} size={32} className="shrink-0" />
+        <UserAvatar avatarImage={user?.avatarImage ?? undefined} fullName={user?.fullName ?? ""} size={32} className="shrink-0" />{" "}
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-semibold text-primary truncate">{user?.fullName}</div>
           <div className="text-[11px] text-neutral-dark truncate">{user?.email}</div>
