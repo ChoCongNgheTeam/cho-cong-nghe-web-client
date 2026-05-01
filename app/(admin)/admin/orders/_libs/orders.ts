@@ -164,6 +164,21 @@ export interface ProductSearchResult {
   };
 }
 
+export interface OrderPreviewResult {
+  shippingFee: number;
+  subtotal: number;
+  voucherDiscount: number;
+  total: number;
+  // Một số BE còn trả thêm:
+  shippingMethod?: string;
+  estimatedDays?: number;
+}
+
+export interface VoucherValidateResult {
+  discount: number;
+  voucher: { id: string; code: string };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ORDER APIS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -354,4 +369,87 @@ export async function exportOrders(params: {
   const filename = `orders_export_${Date.now()}.${ext}`;
 
   return { blob, filename, count: 0 };
+}
+
+/**
+ * Gọi /checkout/preview với các params của admin order.
+ * Dùng khi:
+ *  - Đã chọn shippingAddressId (địa chỉ có sẵn của user)
+ *  - Đã có ít nhất 1 item trong cart
+ *
+ * NOTE: API này dùng cartItemIds (cart DB ids) — phía admin không có.
+ * Thay vào đó, ta dùng endpoint riêng /orders/admin/preview nếu BE có,
+ * hoặc fallback về /checkout/preview với variantIds + qty.
+ */
+export async function getOrderPreviewAdmin(params: {
+  shippingAddressId: string;
+  paymentMethodId: string;
+  variantIds: string[]; // dùng thay cartItemIds cho admin flow
+  voucherId?: string;
+}): Promise<OrderPreviewResult | null> {
+  try {
+    const searchParams = new URLSearchParams({
+      paymentMethodId: params.paymentMethodId,
+      shippingAddressId: params.shippingAddressId,
+      ...(params.voucherId ? { voucherId: params.voucherId } : {}),
+    });
+    // Admin gửi variantIds thay cho cartItemIds
+    params.variantIds.forEach((id) => searchParams.append("variantIds[]", id));
+
+    const res = await apiRequest.get<{ success: boolean; data: OrderPreviewResult }>(`/checkout/preview?${searchParams.toString()}`);
+    return res?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Validate voucher code cho admin order.
+ * Trả về discount amount thực tế từ server, hoặc null nếu không hợp lệ.
+ */
+export async function validateVoucherAdmin(params: {
+  code: string;
+  orderTotal: number;
+  cartItems: Array<{
+    productId: string;
+    categoryId?: string;
+    brandId?: string;
+    categoryPath?: string[];
+    itemTotal?: number;
+  }>;
+}): Promise<{ discount: number; voucherId: string; message?: string } | null> {
+  try {
+    const res = await apiRequest.post<{
+      data: { discount: number; voucher: { id: string } } | null;
+      message?: string;
+    }>("/vouchers/validate", {
+      code: params.code.trim().toUpperCase(),
+      orderTotal: params.orderTotal,
+      cartItems: params.cartItems,
+    });
+
+    if (!res.data) return null;
+    return {
+      discount: res.data.discount,
+      voucherId: res.data.voucher.id,
+      message: res.message,
+    };
+  } catch (err: any) {
+    const msg = err?.response?.data?.message ?? "Mã voucher không hợp lệ";
+    throw new Error(msg);
+  }
+}
+
+export async function checkEmailExists(email: string): Promise<{ exists: boolean; user?: UserResult }> {
+  try {
+    const res = await apiRequest.get<{ data: UserResult[]; pagination: any }>("/users/admin", {
+      params: { search: email, limit: 1, role: "CUSTOMER" },
+    });
+    const users = Array.isArray(res.data) ? res.data : [];
+    // So khớp chính xác email (search có thể trả về partial match)
+    const matched = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    return { exists: !!matched, user: matched };
+  } catch {
+    return { exists: false };
+  }
 }

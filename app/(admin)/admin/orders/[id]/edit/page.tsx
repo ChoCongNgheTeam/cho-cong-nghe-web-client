@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Package, MapPin, AlertCircle, CheckCircle2, Plus, DollarSign } from "lucide-react";
+import { ArrowLeft, Loader2, Package, MapPin, AlertCircle, CheckCircle2, Plus, DollarSign, Tag, X } from "lucide-react";
 import Select from "react-select";
-import { getOrderById, getUserAddresses, getProvinces, getWards, updateOrderAdmin, updateOrderShipping, type UserAddress, type Province, type Ward } from "../../_libs/orders";
+import { getOrderById, getUserAddresses, getProvinces, getWards, updateOrderAdmin, updateOrderShipping, type UserAddress, type Province, type Ward, validateVoucherAdmin } from "../../_libs/orders";
 import { formatVND } from "@/helpers";
 import type { Order } from "../../order.types";
 import { useAdminHref } from "@/hooks/useAdminHref";
@@ -75,6 +75,11 @@ export default function EditOrderPage() {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [loadingWards, setLoadingWards] = useState(false);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherValid, setVoucherValid] = useState(false);
+  const [voucherValidating, setVoucherValidating] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [voucherDiscountFromServer, setVoucherDiscountFromServer] = useState(0);
   const href = useAdminHref();
 
   // ── manual state đồng bộ với AddrState của create page ──────────────────
@@ -104,6 +109,10 @@ export default function EditOrderPage() {
         setOrder(o);
         setShippingFee(String(Number(o.shippingFee)));
         setVoucherDiscount(String(Number(o.voucherDiscount)));
+        if (o.voucherCode) {
+          setVoucherCode(o.voucherCode);
+          setVoucherValid(true); // đã từng valid
+        }
         setProvinces(Array.isArray(pRes) ? pRes : ((pRes as any).data ?? []));
 
         // Parse shippingDetail → houseNumber + streetName (split theo ", " đầu tiên)
@@ -134,6 +143,49 @@ export default function EditOrderPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const handleValidateVoucher = async () => {
+    const code = voucherCode.trim().toUpperCase();
+    if (!code) {
+      setVoucherError("Nhập mã voucher trước");
+      return;
+    }
+    const subtotal = Number(order?.subtotalAmount ?? 0);
+
+    setVoucherValidating(true);
+    setVoucherError(null);
+    setVoucherValid(false);
+
+    try {
+      const result = await validateVoucherAdmin({
+        code,
+        orderTotal: subtotal,
+        cartItems: [], // edit page không có cartItems chi tiết → server validate theo orderTotal
+      });
+      if (!result) {
+        setVoucherError("Mã không hợp lệ hoặc không áp dụng được");
+        setVoucherDiscountFromServer(0);
+        return;
+      }
+      setVoucherDiscountFromServer(result.discount);
+      setVoucherDiscount(String(result.discount)); // tự điền vào ô voucherDiscount
+      setVoucherValid(true);
+      setVoucherError(null);
+    } catch (err: any) {
+      setVoucherError(err.message ?? "Mã voucher không hợp lệ");
+      setVoucherDiscountFromServer(0);
+    } finally {
+      setVoucherValidating(false);
+    }
+  };
+
+  const handleClearVoucher = () => {
+    setVoucherCode("");
+    setVoucherValid(false);
+    setVoucherDiscountFromServer(0);
+    setVoucherError(null);
+    setVoucherDiscount(String(Number(order?.voucherDiscount ?? 0))); // revert về giá trị gốc
+  };
+
   // ── Load wards khi chọn tỉnh ─────────────────────────────────────────────
   useEffect(() => {
     if (!manual.provinceCode) {
@@ -154,7 +206,7 @@ export default function EditOrderPage() {
     const errs: Record<string, string> = {};
     if (showManual || addresses.length === 0) {
       if (!manual.contactName.trim()) errs.contactName = "Họ tên không được trống";
-      if (!isValidPhone(manual.phone)) errs.phone = "SĐT không hợp lệ (VD: 0912345678)";
+      if (!isValidPhone(manual.phone)) errs.phone = "SĐT không hợp lệ (VD: 0999999999)";
       if (!manual.houseNumber.trim()) errs.houseNumber = "Số nhà không được trống";
       if (manual.houseNumber.trim() && addressInvalidChar(manual.houseNumber)) errs.houseNumber = "Chỉ nhập chữ, số và / , .";
       if (!manual.streetName.trim()) errs.streetName = "Tên đường không được trống";
@@ -335,7 +387,17 @@ export default function EditOrderPage() {
                 </div>
                 <div>
                   <Label required>SĐT người nhận</Label>
-                  <input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} placeholder="0912345678" className={inputCls(!!errors.phone)} />
+                  <input
+                    value={manual.phone}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                      setManual((p) => ({ ...p, phone: digits }));
+                    }}
+                    placeholder="0999999999"
+                    inputMode="numeric"
+                    maxLength={10}
+                    className={inputCls(!!errors.phone)}
+                  />
                   {errors.phone && <p className="text-[11px] text-promotion mt-1">{errors.phone}</p>}
                 </div>
               </div>
@@ -421,9 +483,75 @@ export default function EditOrderPage() {
               {errors.shippingFee && <p className="text-[11px] text-promotion mt-1">{errors.shippingFee}</p>}
             </div>
             <div>
-              <Label>Giảm voucher (override)</Label>
-              <input type="number" value={voucherDiscount} onChange={(e) => setVoucherDiscount(e.target.value)} placeholder="0" className={inputCls()} />
-              <p className="text-[11px] text-neutral-dark mt-1">Hiện tại: {formatVND(Number(order.voucherDiscount))}</p>
+              <Label>Mã giảm giá</Label>
+              {voucherValid ? (
+                <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="text-[13px] font-semibold text-emerald-700 font-mono">{voucherCode}</p>
+                      <p className="text-[11px] text-emerald-600">Giảm {formatVND(voucherDiscountFromServer)}</p>
+                    </div>
+                  </div>
+                  <button onClick={handleClearVoucher} className="p-1 hover:bg-emerald-100 rounded-lg cursor-pointer text-emerald-600">
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Tag size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+                      <input
+                        value={voucherCode}
+                        onChange={(e) => {
+                          setVoucherCode(e.target.value.toUpperCase());
+                          setVoucherError(null);
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleValidateVoucher()}
+                        placeholder="VOUCHER2026"
+                        className={inputCls(!!voucherError) + " pl-8 font-mono"}
+                        disabled={voucherValidating}
+                      />
+                    </div>
+                    <button
+                      onClick={handleValidateVoucher}
+                      disabled={voucherValidating || !voucherCode.trim()}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-hover text-white text-[12px] font-medium rounded-xl cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {voucherValidating ? <Loader2 size={12} className="animate-spin" /> : "Áp dụng"}
+                    </button>
+                  </div>
+                  {voucherError && (
+                    <p className="text-[11px] text-promotion flex items-center gap-1">
+                      <AlertCircle size={11} /> {voucherError}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-neutral-dark">
+                    Voucher hiện tại: <span className="font-mono font-medium">{formatVND(Number(order?.voucherDiscount ?? 0))}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+            <div>
+              <Label>Giảm giá thủ công (override)</Label>
+              <input
+                type="number"
+                value={voucherDiscount}
+                onChange={(e) => {
+                  setVoucherDiscount(e.target.value);
+                  // Nếu sửa tay thì invalidate voucher auto
+                  if (voucherValid && e.target.value !== String(voucherDiscountFromServer)) {
+                    setVoucherValid(false);
+                  }
+                }}
+                placeholder="0"
+                className={inputCls()}
+              />
+              <p className="text-[11px] text-neutral-dark mt-1">
+                Gốc: {formatVND(Number(order?.voucherDiscount ?? 0))}
+                {voucherValid && <span className="text-emerald-600 ml-2">← từ mã {voucherCode}</span>}
+              </p>
             </div>
           </div>
 

@@ -23,6 +23,9 @@ import {
   type PaymentMethod,
   type ProductSearchResult,
   type VariantOption,
+  getOrderPreviewAdmin,
+  validateVoucherAdmin,
+  checkEmailExists,
 } from "../_libs/orders";
 import { useAdminHref } from "@/hooks/useAdminHref";
 
@@ -127,6 +130,11 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
   );
 }
 
+const validatePhone = (phone: string): string => {
+  if (!phone) return "Số điện thoại không được để trống";
+  if (!/^0[3578][0-9]{8}$/.test(phone)) return "Số điện thoại không hợp lệ (VD: 0999999999)";
+  return "";
+};
 // ─────────────────────────────────────────────────────────────────────────────
 // ADDRESS FORM
 // ─────────────────────────────────────────────────────────────────────────────
@@ -169,12 +177,17 @@ function AddressForm({ provinces, wards, addr, setAddr, errors, showNamePhone, t
             <Label required>SĐT người nhận</Label>
             <input
               value={addr.phone}
-              onChange={(e) => setAddr((p) => ({ ...p, phone: e.target.value }))}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setAddr((p) => ({ ...p, phone: digits }));
+              }}
               onBlur={() => onTouch("addrPhone")}
-              placeholder="0912345678"
+              placeholder="0999999999"
+              inputMode="numeric"
+              maxLength={10}
               className={inputCls(touched.has("addrPhone") && !isValidPhone(addr.phone))}
             />
-            {touched.has("addrPhone") && !isValidPhone(addr.phone) && <p className="text-[11px] text-promotion mt-1">SĐT không hợp lệ (VD: 0912345678)</p>}
+            {touched.has("addrPhone") && !isValidPhone(addr.phone) && <p className="text-[11px] text-promotion mt-1">SĐT không hợp lệ (VD: 0999999999)</p>}
           </div>
         </div>
       )}
@@ -299,31 +312,21 @@ function isBundleMode(variants: VariantOption[], attrCodes: string[]): boolean {
 }
 
 function VariantPriceRow({ variant, addQty, setAddQty, onAdd }: { variant: VariantOption; addQty: number; setAddQty: (q: number) => void; onAdd: () => void }) {
-  const finalPrice = (variant as any).finalPrice ?? variant.price;
-  const hasDiscount = ((variant as any).discountPercentage ?? 0) > 0;
+  const priceObj = (variant as any).price;
+  const finalPrice = priceObj?.final ?? variant.price;
+  const basePrice = priceObj?.base ?? variant.price;
+  const discountPct = priceObj?.discountPercentage ?? 0;
+  const hasDiscount = priceObj?.hasPromotion ?? discountPct > 0;
+
   return (
     <div className="flex items-end gap-3 pt-1">
       <div className="flex-1 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50">
         <p className="text-[11px] text-emerald-600 font-mono truncate">{variant.code}</p>
-        <p className="text-[15px] font-bold text-accent">{formatVND(finalPrice)}</p>
-        {hasDiscount && <p className="text-[11px] text-neutral-dark line-through">{formatVND(variant.price)}</p>}
-      </div>
-      <div>
-        <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider mb-1.5">Số lượng</p>
-        <div className="flex items-center border border-neutral rounded-xl overflow-hidden w-28">
-          <button onClick={() => setAddQty(Math.max(1, addQty - 1))} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">
-            −
-          </button>
-          <input
-            type="number"
-            value={addQty}
-            onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
-            className="flex-1 text-center text-[13px] bg-transparent border-none outline-none py-2 min-w-0"
-          />
-          <button onClick={() => setAddQty(addQty + 1)} className="px-3 py-2 hover:bg-neutral-light-active text-[14px] cursor-pointer">
-            +
-          </button>
+        <div className="flex items-baseline gap-2">
+          <p className="text-[15px] font-bold text-accent">{formatVND(finalPrice)}</p>
+          {hasDiscount && <span className="text-[11px] font-semibold text-white bg-red-500 px-1.5 py-0.5 rounded-md">-{discountPct}%</span>}
         </div>
+        {hasDiscount && <p className="text-[11px] text-neutral-dark line-through">{formatVND(basePrice)}</p>}
       </div>
       <button onClick={onAdd} className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-[13px] font-medium rounded-xl cursor-pointer mb-0.5">
         <ShoppingCart size={14} /> Thêm vào đơn
@@ -457,7 +460,7 @@ function IndependentAttrSelector({
       {matchedVariant ? (
         <VariantPriceRow variant={matchedVariant} addQty={addQty} setAddQty={setAddQty} onAdd={() => onAddToCart(matchedVariant)} />
       ) : (
-        <p className="text-[12px] text-neutral-dark/60 italic">Chọn đủ thuộc tính để xem biến thể.</p>
+        <p className="text-[12px] text-neutral-dark/60 italic">Sản phẩm hết hàng</p>
       )}
     </div>
   );
@@ -730,12 +733,45 @@ export default function CreateOrderPage() {
   const [orderStatus, setOrderStatus] = useState<"PENDING" | "PROCESSING">("PENDING");
   const [shippingFee, setShippingFee] = useState("0");
   const [voucherCode, setVoucherCode] = useState("");
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherId, setVoucherId] = useState("");
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [voucherValidating, setVoucherValidating] = useState(false);
+  const [voucherValid, setVoucherValid] = useState(false);
+
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [shippingFeeFromServer, setShippingFeeFromServer] = useState<number | null>(null);
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [emailCheckStatus, setEmailCheckStatus] = useState<"idle" | "checking" | "exists" | "available">("idle");
+  const [emailCheckUser, setEmailCheckUser] = useState<UserResult | null>(null);
   const href = useAdminHref();
+
+  useEffect(() => {
+    const email = newCustomer.email.trim();
+    if (!email) {
+      setEmailCheckStatus("idle");
+      setEmailCheckUser(null);
+      return;
+    }
+    // Validate format trước
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(email)) {
+      setEmailCheckStatus("idle");
+      return;
+    }
+    setEmailCheckStatus("checking");
+    const t = setTimeout(async () => {
+      const result = await checkEmailExists(email);
+      setEmailCheckStatus(result.exists ? "exists" : "available");
+      setEmailCheckUser(result.user ?? null);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [newCustomer.email]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // INIT
@@ -786,6 +822,37 @@ export default function CreateOrderPage() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    // Chỉ preview khi có địa chỉ có sẵn (có ID) + payment method + cart
+    const canPreview = customerTab === "existing" && selectedAddressId && !showNewAddress && selectedPaymentId && cart.length > 0;
+
+    if (!canPreview) {
+      setShippingFeeFromServer(null);
+      return;
+    }
+
+    const variantIds = cart.map((c) => c.variantId);
+
+    setPreviewLoading(true);
+    getOrderPreviewAdmin({
+      shippingAddressId: selectedAddressId!,
+      paymentMethodId: selectedPaymentId!,
+      variantIds,
+      voucherId: voucherId || undefined,
+    })
+      .then((preview) => {
+        if (preview) {
+          setShippingFeeFromServer(preview.shippingFee);
+          setShippingFee(String(preview.shippingFee));
+          // Nếu server trả lại voucher discount (preview có voucher)
+          if (voucherId && preview.voucherDiscount != null) {
+            setVoucherDiscount(preview.voucherDiscount);
+          }
+        }
+      })
+      .finally(() => setPreviewLoading(false));
+  }, [selectedAddressId, selectedPaymentId, cart, voucherId, customerTab, showNewAddress]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // SEARCH
@@ -884,7 +951,7 @@ export default function CreateOrderPage() {
             variantId: variant.id,
             variantLabel: label,
             variantCode: variant.code,
-            unitPrice: (variant as any).finalPrice ?? variant.price,
+            unitPrice: (variant as any).price?.final ?? (variant as any).price ?? variant.price,
             quantity: addQty,
           },
         ]);
@@ -911,7 +978,7 @@ export default function CreateOrderPage() {
 
   const subtotal = cart.reduce((s, c) => s + c.unitPrice * c.quantity, 0);
   const shippingFeeNum = Number(shippingFee) || 0;
-  const total = subtotal + shippingFeeNum;
+  const total = Math.max(0, subtotal + shippingFeeNum - voucherDiscount);
   const selectedAddress = userAddresses.find((a) => a.id === selectedAddressId);
   const buildDetailAddress = (addr: AddrState) => [addr.houseNumber.trim(), addr.streetName.trim()].filter(Boolean).join(", ");
 
@@ -932,6 +999,62 @@ export default function CreateOrderPage() {
     if (!addr.streetName.trim() || addressInvalidChar(addr.streetName)) errs.push("streetName");
     return errs;
   };
+
+  const handleValidateVoucher = useCallback(async () => {
+    const code = voucherCode.trim().toUpperCase();
+    if (!code) {
+      setVoucherError("Nhập mã voucher trước");
+      return;
+    }
+    if (cart.length === 0) {
+      setVoucherError("Thêm sản phẩm vào đơn trước khi áp mã");
+      return;
+    }
+
+    // Build cartItems cho validate API
+    const cartItemsPayload = cart.map((c) => ({
+      productId: c.productId,
+      itemTotal: c.unitPrice * c.quantity,
+    }));
+
+    setVoucherValidating(true);
+    setVoucherError(null);
+    setVoucherValid(false);
+
+    try {
+      const result = await validateVoucherAdmin({
+        code,
+        orderTotal: subtotal,
+        cartItems: cartItemsPayload,
+      });
+
+      if (!result) {
+        setVoucherError("Mã không hợp lệ hoặc không áp dụng được");
+        setVoucherDiscount(0);
+        setVoucherId("");
+        return;
+      }
+
+      setVoucherDiscount(result.discount);
+      setVoucherId(result.voucherId);
+      setVoucherValid(true);
+      setVoucherError(null);
+    } catch (err: any) {
+      setVoucherError(err.message ?? "Mã voucher không hợp lệ");
+      setVoucherDiscount(0);
+      setVoucherId("");
+    } finally {
+      setVoucherValidating(false);
+    }
+  }, [voucherCode, cart, subtotal]);
+
+  const handleClearVoucher = useCallback(() => {
+    setVoucherCode("");
+    setVoucherDiscount(0);
+    setVoucherId("");
+    setVoucherError(null);
+    setVoucherValid(false);
+  }, []);
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -962,7 +1085,7 @@ export default function CreateOrderPage() {
         paymentMethodId: selectedPaymentId!,
         paymentStatus,
         orderStatus,
-        ...(voucherCode.trim() ? { voucherCode: voucherCode.trim() } : {}),
+        ...(voucherValid && voucherCode.trim() ? { voucherCode: voucherCode.trim(), voucherDiscount } : {}),
       };
       if (customerTab === "existing" && selectedUser) {
         payload.userId = selectedUser.id;
@@ -1160,13 +1283,71 @@ export default function CreateOrderPage() {
                     </div>
                     <div>
                       <Label required>Số điện thoại</Label>
-                      <input value={newCustomer.phone} onChange={(e) => setNewCustomer((p) => ({ ...p, phone: e.target.value }))} placeholder="0912345678" className={inputCls(!!errors.newPhone)} />
+                      <input
+                        value={newCustomer.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                          setNewCustomer((p) => ({ ...p, phone: digits }));
+                        }}
+                        onBlur={() => {
+                          const error = validatePhone(newCustomer.phone);
+                          setErrors((p) => ({ ...p, newPhone: error }));
+                        }}
+                        placeholder="0999999999"
+                        inputMode="numeric"
+                        maxLength={10}
+                        className={inputCls(!!errors.newPhone)}
+                      />
                       {errors.newPhone && <p className="text-[11px] text-promotion mt-1">{errors.newPhone}</p>}
                     </div>
                   </div>
                   <div>
                     <Label>Email (tùy chọn)</Label>
-                    <input type="email" value={newCustomer.email} onChange={(e) => setNewCustomer((p) => ({ ...p, email: e.target.value }))} placeholder="email@example.com" className={inputCls()} />
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={newCustomer.email}
+                        onChange={(e) => setNewCustomer((p) => ({ ...p, email: e.target.value }))}
+                        placeholder="email@example.com"
+                        className={inputCls(emailCheckStatus === "exists") + " pr-8"}
+                      />
+                      {/* Status icon */}
+                      {emailCheckStatus === "checking" && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-neutral-dark" />}
+                      {emailCheckStatus === "exists" && <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-promotion" />}
+                      {emailCheckStatus === "available" && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
+                    </div>
+
+                    {/* Thông báo đã tồn tại — gợi ý chuyển sang tab khách cũ */}
+                    {emailCheckStatus === "exists" && emailCheckUser && (
+                      <div className="mt-1.5 flex items-start gap-2 px-3 py-2 rounded-xl border border-amber-300 bg-amber-50 text-[12px]">
+                        <AlertCircle size={13} className="text-amber-500 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-amber-700 font-medium">
+                            Email này đã được đăng ký bởi <span className="font-semibold">{emailCheckUser.fullName}</span>
+                            {emailCheckUser.phone ? ` · ${emailCheckUser.phone}` : ""}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomerTab("existing");
+                              setSelectedUser(emailCheckUser);
+                              setNewCustomer({ fullName: "", phone: "", email: "" });
+                              setEmailCheckStatus("idle");
+                              setEmailCheckUser(null);
+                            }}
+                            className="mt-1 text-accent underline underline-offset-2 hover:text-accent-hover cursor-pointer"
+                          >
+                            Chuyển sang chọn khách hàng này →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {emailCheckStatus === "available" && (
+                      <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+                        <CheckCircle2 size={11} /> Email chưa được đăng ký
+                      </p>
+                    )}
                   </div>
                   <div>
                     <p className="text-[12px] font-semibold text-primary mb-2">Địa chỉ giao hàng</p>
@@ -1384,17 +1565,128 @@ export default function CreateOrderPage() {
                   ))}
                 </div>
               </div>
+              {/* Phí vận chuyển */}
               <div>
-                <Label>Phí vận chuyển</Label>
-                <input type="number" value={shippingFee} onChange={(e) => setShippingFee(e.target.value)} placeholder="0" className={inputCls()} />
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label>Phí vận chuyển</Label>
+                  {previewLoading && (
+                    <span className="flex items-center gap-1 text-[11px] text-neutral-dark">
+                      <Loader2 size={11} className="animate-spin" /> Đang tính...
+                    </span>
+                  )}
+                  {shippingFeeFromServer !== null && !previewLoading && <span className="text-[11px] text-emerald-600 font-medium">✓ Tự động từ hệ thống</span>}
+                  {shippingFeeFromServer === null &&
+                    !previewLoading &&
+                    (() => {
+                      const cantPreview =
+                        customerTab === "new" || // khách mới — không có addressId
+                        showNewAddress || // khách cũ + địa chỉ mới — chưa lưu DB
+                        !selectedAddressId || // chưa chọn địa chỉ
+                        cart.length === 0; // chưa có hàng
+                      return cantPreview ? <span className="text-[11px] text-amber-500">Nhập thủ công</span> : null;
+                    })()}
+                </div>
+                <input
+                  type="number"
+                  value={shippingFee}
+                  onChange={(e) => {
+                    setShippingFee(e.target.value);
+                    setShippingFeeFromServer(null); // override manual
+                  }}
+                  placeholder="0"
+                  className={inputCls()}
+                  disabled={previewLoading}
+                />
+                {shippingFeeFromServer === null &&
+                  !previewLoading &&
+                  (() => {
+                    if (customerTab === "new") {
+                      return (
+                        <p className="text-[11px] text-neutral-dark mt-1 flex items-center gap-1">
+                          <AlertCircle size={10} className="shrink-0" />
+                          Khách mới chưa có địa chỉ lưu — nhập phí ship thủ công.
+                        </p>
+                      );
+                    }
+                    if (showNewAddress) {
+                      return (
+                        <p className="text-[11px] text-neutral-dark mt-1 flex items-center gap-1">
+                          <AlertCircle size={10} className="shrink-0" />
+                          Địa chỉ mới chưa lưu — nhập phí ship thủ công.
+                        </p>
+                      );
+                    }
+                    if (!selectedAddressId && customerTab === "existing") {
+                      return (
+                        <p className="text-[11px] text-neutral-dark mt-1 flex items-center gap-1">
+                          <AlertCircle size={10} className="shrink-0" />
+                          Chọn khách hàng và địa chỉ để tự động tính phí ship.
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
               </div>
+
+              {/* Voucher */}
               <div>
+                <Label>Mã giảm giá</Label>
+                {voucherValid ? (
+                  // Trạng thái đã áp mã thành công
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-[13px] font-semibold text-emerald-700 font-mono">{voucherCode}</p>
+                        <p className="text-[11px] text-emerald-600">Giảm {formatVND(voucherDiscount)}</p>
+                      </div>
+                    </div>
+                    <button onClick={handleClearVoucher} className="p-1 hover:bg-emerald-100 rounded-lg cursor-pointer text-emerald-600">
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  // Input nhập mã
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Tag size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
+                        <input
+                          value={voucherCode}
+                          onChange={(e) => {
+                            setVoucherCode(e.target.value.toUpperCase());
+                            setVoucherError(null);
+                            setVoucherValid(false);
+                          }}
+                          onKeyDown={(e) => e.key === "Enter" && handleValidateVoucher()}
+                          placeholder="VOUCHER2026"
+                          className={inputCls(!!voucherError) + " pl-8 font-mono"}
+                          disabled={voucherValidating}
+                        />
+                      </div>
+                      <button
+                        onClick={handleValidateVoucher}
+                        disabled={voucherValidating || !voucherCode.trim()}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-hover text-white text-[12px] font-medium rounded-xl cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {voucherValidating ? <Loader2 size={12} className="animate-spin" /> : "Áp dụng"}
+                      </button>
+                    </div>
+                    {voucherError && (
+                      <p className="text-[11px] text-promotion flex items-center gap-1">
+                        <AlertCircle size={11} /> {voucherError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* <div>
                 <Label>Voucher</Label>
                 <div className="relative">
                   <Tag size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark pointer-events-none" />
                   <input value={voucherCode} onChange={(e) => setVoucherCode(e.target.value.toUpperCase())} placeholder="VOUCHER2026" className={inputCls() + " pl-8 font-mono"} />
                 </div>
-              </div>
+              </div> */}
             </SectionCard>
 
             {/* Summary */}
@@ -1408,6 +1700,16 @@ export default function CreateOrderPage() {
                 <span className="text-neutral-dark">Phí ship</span>
                 <span>{shippingFeeNum > 0 ? formatVND(shippingFeeNum) : <span className="text-emerald-600 font-medium">Miễn phí</span>}</span>
               </div>
+
+              {voucherDiscount > 0 && (
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-neutral-dark flex items-center gap-1">
+                    <Tag size={11} />
+                    Mã <span className="font-mono text-accent">{voucherCode}</span>
+                  </span>
+                  <span className="text-emerald-600 font-medium">-{formatVND(voucherDiscount)}</span>
+                </div>
+              )}
               <div className="border-t border-neutral pt-2.5 flex justify-between">
                 <span className="text-[14px] font-bold text-primary">Tổng cộng</span>
                 <span className="text-[16px] font-bold text-accent">{formatVND(total)}</span>
