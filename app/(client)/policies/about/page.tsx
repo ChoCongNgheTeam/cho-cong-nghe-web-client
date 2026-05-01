@@ -1,5 +1,5 @@
+import StoreLocatorSection from "@/(client)/stores/page";
 import Image from "next/image";
-import StoreLocatorSection from "@/components/shared/StoreLocatorSection";
 
 export default function About() {
    return (

@@ -227,7 +227,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       */}
 
       {/* a) Far grid — perspective nhẹ, mờ */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: "600px" }}>
+      {/* <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: "600px" }}>
         <div
           style={{
             position: "absolute",
@@ -244,7 +244,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
             WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.7) 65%, black 100%)",
           }}
         />
-      </div>
+      </div> */}
 
       {/* b) Near grid — đậm + tối, tạo "điểm nhấn mạnh mẽ" ở vùng bên phải-dưới */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: "400px" }}>

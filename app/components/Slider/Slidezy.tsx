@@ -395,7 +395,7 @@ export default function Slidezy({
   return (
     <div ref={containerRef} className={`w-full relative ${className}`}>
       {/* Clip wrapper — chỉ bao track, không bao arrow */}
-      <div className="overflow-hidden p-1">
+      <div className="overflow-hidden">
         {/* Track */}
         <div
           ref={trackRef}
