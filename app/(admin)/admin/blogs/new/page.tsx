@@ -7,12 +7,14 @@ import { ArrowLeft, BookOpen } from "lucide-react";
 import { createBlog } from "../_libs/blogs";
 import { BlogForm, DEFAULT_FORM } from "../components/BlogForm";
 import { useToasty } from "@/components/Toast";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 export default function NewBlogPage() {
   const router = useRouter();
   const { success: toastSuccess, error: toastError } = useToasty();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const href = useAdminHref();
 
   const handleSubmit = async (formData: FormData) => {
     setSaving(true);
@@ -20,7 +22,7 @@ export default function NewBlogPage() {
     try {
       const res = await createBlog(formData);
       toastSuccess("Bài viết đã được tạo thành công!", { title: "Tạo bài viết" });
-      router.push(`/admin/blogs/${res.data.id}`);
+      router.push(href(`/blogs/${res.data.id}`));
     } catch (e: any) {
       const msg = e?.message ?? "Không thể tạo bài viết";
       setError(msg);

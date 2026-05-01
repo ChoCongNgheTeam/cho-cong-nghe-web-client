@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Building2, Globe, Phone, Mail, FileImage, Loader2, Save, ShieldAlert, Image as ImageIcon, X, Upload } from "lucide-react";
+import { Building2, Phone, Mail, ShieldAlert, Image as ImageIcon, X, Upload, Loader2, Save } from "lucide-react";
 import { useToasty } from "@/components/Toast";
 import { getSettings, updateSettingsFormData, parseSettings } from "../_libs/settings";
 import type { GeneralSettings } from "../_libs/settings";
@@ -137,10 +137,11 @@ export default function GeneralSettingsView() {
   const [savingBrand, setSavingBrand] = useState(false);
   const [savingMaintenance, setSavingMaintenance] = useState(false);
 
-  // File objects for upload
+  // File objects — key khớp với SETTINGS_IMAGE_FIELDS bên BE
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
-  // Preview URLs (either from DB or local blob)
+
+  // Preview: blob URL khi chọn file mới, hoặc URL từ DB
   const [logoPreview, setLogoPreview] = useState("");
   const [faviconPreview, setFaviconPreview] = useState("");
 
@@ -162,6 +163,7 @@ export default function GeneralSettingsView() {
     setLogoFile(f);
     setLogoPreview(URL.createObjectURL(f));
   };
+
   const handleFaviconFile = (f: File) => {
     setFaviconFile(f);
     setFaviconPreview(URL.createObjectURL(f));
@@ -170,17 +172,29 @@ export default function GeneralSettingsView() {
   const saveBrand = async () => {
     setSavingBrand(true);
     try {
-      await updateSettingsFormData(
+      const res = await updateSettingsFormData(
         "general",
         {
           site_name: form.site_name,
           site_email: form.site_email,
           site_phone: form.site_phone,
         },
-        { logo: logoFile ?? undefined, favicon: faviconFile ?? undefined },
+        {
+          // Field name = key trong DB = tên field multer bên BE
+          logo_url: logoFile,
+          favicon_url: faviconFile,
+        },
       );
+
+      // Cập nhật preview từ URL BE trả về sau upload
+      const updated = res.data as Partial<GeneralSettings>;
+      if (updated.logo_url) setLogoPreview(updated.logo_url);
+      if (updated.favicon_url) setFaviconPreview(updated.favicon_url);
+
+      // Reset file objects sau khi upload thành công
       setLogoFile(null);
       setFaviconFile(null);
+
       success("Lưu nhận diện thương hiệu thành công");
     } catch {
       error("Lưu thất bại, thử lại sau");
@@ -237,10 +251,10 @@ export default function GeneralSettingsView() {
           </div>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 pt-2 border-t border-neutral">
+        <div className="grid gap-5 sm:grid-cols-2 pt-4 border-t border-neutral">
           <ImageUploadBox
             label="Logo"
-            hint="PNG, SVG — tối đa 2MB"
+            hint="PNG, SVG — tối đa 5MB"
             preview={logoPreview}
             onFile={handleLogoFile}
             onClear={() => {
@@ -251,7 +265,7 @@ export default function GeneralSettingsView() {
           />
           <ImageUploadBox
             label="Favicon"
-            hint=".ico, PNG 32×32"
+            hint=".ico, PNG 32×32 — tối đa 5MB"
             preview={faviconPreview}
             onFile={handleFaviconFile}
             onClear={() => {

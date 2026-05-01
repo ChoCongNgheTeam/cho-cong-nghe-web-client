@@ -1,15 +1,5 @@
 "use client";
 
-/**
- * /admin/products/[id]/edit/page.tsx
- *
- * Edit page — load product data rồi truyền vào ProductForm.
- * ProductForm đã có đầy đủ: CKEditor, quản lý ảnh per-image,
- * auto SKU, color sync.
- *
- * Tạo file này tại: app/admin/products/[id]/edit/page.tsx
- */
-
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";

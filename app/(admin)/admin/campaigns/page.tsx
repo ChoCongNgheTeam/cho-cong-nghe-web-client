@@ -12,6 +12,8 @@ import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
 import { getCampaignColumns } from "./components/TableCampaigns";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { getCampaignStatus } from "./components/CampaignStatusBadge";
+import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface CampaignMeta {
@@ -67,6 +69,7 @@ export default function CampaignsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const prefix = useAdminPrefix();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -222,8 +225,9 @@ export default function CampaignsPage() {
         setOpenStatusId,
         onToggleActive: handleToggleActive,
         onDeleteClick: setDeleteTarget,
+        prefix,
       }),
-    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive],
+    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, setDeleteTarget, prefix],
   );
 
   return (
@@ -247,7 +251,7 @@ export default function CampaignsPage() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
-          <Link href="/admin/campaigns/new" className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all">
+          <Link href={`${prefix}/campaigns/new`} className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-[13px] font-semibold rounded-xl transition-all">
             <Plus size={15} /> Tạo chiến dịch
           </Link>
         </div>

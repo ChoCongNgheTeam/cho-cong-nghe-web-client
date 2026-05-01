@@ -4,17 +4,21 @@ import Link from "next/link";
 import { ArrowUpRight, Crown } from "lucide-react";
 import type { TopCustomer } from "../analytics.types";
 import { formatDate, formatVND } from "@/helpers";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
-export function TopCustomersTable({ customers }: { customers: TopCustomer[] }) {
+export function TopCustomersTable({ customers, user }: { customers: TopCustomer[]; user: any }) {
   const maxSpent = customers[0]?.totalSpent ?? 1;
+  const href = useAdminHref();
 
   return (
     <div className="bg-neutral-light rounded-xl border border-neutral shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral">
         <h3 className="font-semibold text-primary">Top khách hàng chi tiêu</h3>
-        <Link href="/admin/users" className="text-[13px] text-accent hover:text-accent-hover font-medium flex items-center gap-0.5">
-          Xem tất cả <ArrowUpRight className="w-3 h-3" />
-        </Link>
+        {(user?.role === "ADMIN" || user?.permissions?.canViewOrders) && (
+          <Link href={href(`/users`)} className="text-[13px] text-accent hover:text-accent-hover font-medium flex items-center gap-0.5">
+            Xem tất cả <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        )}
       </div>
 
       {customers.length === 0 ? (

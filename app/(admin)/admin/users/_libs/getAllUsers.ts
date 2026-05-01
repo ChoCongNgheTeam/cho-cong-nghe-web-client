@@ -51,7 +51,7 @@ export type ExportUserFormat = "excel" | "csv";
 export interface ExportUsersParams {
   format: ExportUserFormat;
   search?: string;
-  role?: "CUSTOMER" | "ADMIN" | "STAFF";
+  role?: UserRole;
   isActive?: boolean;
   gender?: "MALE" | "FEMALE" | "OTHER";
   /** Có kèm số đơn hàng + tổng chi tiêu không (chậm hơn một chút) */

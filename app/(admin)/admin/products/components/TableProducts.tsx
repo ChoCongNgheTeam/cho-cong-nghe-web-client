@@ -13,27 +13,34 @@ interface GetProductColumnsParams {
   toggleOne: (id: string) => void;
   onStatusChange: (productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => void;
   onDeleteClick: (product: ProductCard) => void;
+  href: (path: string) => string;
+  isStaff?: boolean; // ← thêm
 }
 
-export function getProductColumns({ page, pageSize, selected, toggleOne, onStatusChange, onDeleteClick }: GetProductColumnsParams): AdminColumn<ProductCard>[] {
+export function getProductColumns({ page, pageSize, selected, toggleOne, onStatusChange, onDeleteClick, href, isStaff = false }: GetProductColumnsParams): AdminColumn<ProductCard>[] {
   return [
-    {
-      key: "_select",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (product) => (
-        <input
-          type="checkbox"
-          checked={selected.has(product.id)}
-          onChange={(e) => {
-            e.stopPropagation();
-            toggleOne(product.id);
-          }}
-          className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-        />
-      ),
-    },
+    // Ẩn checkbox bulk-select với staff (không có bulk action)
+    ...(!isStaff
+      ? [
+          {
+            key: "_select",
+            label: "",
+            width: "w-10",
+            align: "center" as const,
+            render: (product: ProductCard) => (
+              <input
+                type="checkbox"
+                checked={selected.has(product.id)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleOne(product.id);
+                }}
+                className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
+              />
+            ),
+          },
+        ]
+      : []),
     {
       key: "_stt",
       label: "STT",
@@ -70,9 +77,7 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
       align: "center",
       render: (product) => {
         const rating = product.rating;
-
         const hasRating = rating && rating.count > 0 && rating.average !== undefined;
-
         return (
           <div className="text-center">
             {hasRating ? (
@@ -106,19 +111,39 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
         );
       },
     },
-    {
-      key: "isActive",
-      label: "Trạng thái",
-      render: (product) =>
-        product.deletedAt ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-neutral-light-active text-neutral-dark border-neutral">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark shrink-0" />
-            Đã xóa
-          </span>
-        ) : (
-          <ProductStatusCell productId={product.id} isActive={product.isActive} isFeatured={product.isFeatured} onStatusChange={onStatusChange} />
-        ),
-    },
+    // Ẩn cột trạng thái toggle với staff (họ không được đổi isActive/isFeatured)
+    ...(!isStaff
+      ? [
+          {
+            key: "isActive",
+            label: "Trạng thái",
+            render: (product: ProductCard) =>
+              product.deletedAt ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-neutral-light-active text-neutral-dark border-neutral">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-dark shrink-0" />
+                  Đã xóa
+                </span>
+              ) : (
+                <ProductStatusCell productId={product.id} isActive={product.isActive} isFeatured={product.isFeatured} onStatusChange={onStatusChange} />
+              ),
+          },
+        ]
+      : [
+          // Staff chỉ thấy badge tĩnh, không toggle được
+          {
+            key: "isActive",
+            label: "Trạng thái",
+            render: (product: ProductCard) => (
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border
+            ${product.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-neutral-light-active text-neutral-dark border-neutral"}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${product.isActive ? "bg-emerald-500" : "bg-neutral-dark"}`} />
+                {product.isActive ? "Hiển thị" : "Ẩn"}
+              </span>
+            ),
+          },
+        ]),
     {
       key: "createdAt",
       label: "Ngày tạo",
@@ -130,32 +155,39 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
       align: "right",
       render: (product) => (
         <div className="flex items-center justify-end gap-1.5">
+          {/* Xem chi tiết — staff xem nhưng href trỏ đúng prefix /staff */}
           <Link
-            href={`/admin/products/${product.id}`}
+            href={href(`/products/${product.id}`)}
             title="Xem"
             className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
           >
             <Eye size={14} />
           </Link>
-          {!product.deletedAt && (
+
+          {/* Edit — chỉ admin */}
+          {!isStaff && !product.deletedAt && (
             <Link
-              href={`/admin/products/${product.id}/edit`}
+              href={href(`/products/${product.id}/edit`)}
               title="Chỉnh sửa"
               className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
             >
               <Pencil size={14} />
             </Link>
           )}
-          <button
-            title={product.deletedAt ? "Xóa vĩnh viễn" : "Xóa"}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteClick(product);
-            }}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-          >
-            <Trash2 size={14} />
-          </button>
+
+          {/* Xóa — chỉ admin */}
+          {!isStaff && (
+            <button
+              title={product.deletedAt ? "Xóa vĩnh viễn" : "Xóa"}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteClick(product);
+              }}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       ),
     },

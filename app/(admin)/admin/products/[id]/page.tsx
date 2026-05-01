@@ -30,7 +30,10 @@ import { usePopzy } from "@/components/Modal/usePopzy";
 import { Popzy } from "@/components/Modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
 import { formatDate, formatVND, formatNumber } from "@/helpers";
+import { useAuth } from "@/hooks/useAuth";
+import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
 import apiRequest from "@/lib/api";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -430,6 +433,10 @@ export default function ProductDetailPage() {
   const restoreModal = usePopzy();
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const href = useAdminHref();
+
+  const { user } = useAuth();
+  const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");
 
   useEffect(() => {
     if (!id) return;
@@ -470,7 +477,7 @@ export default function ProductDetailPage() {
     setDeleteError(null);
     try {
       await softDeleteProduct(product.id);
-      router.push("/admin/products");
+      router.push(href(`/products`));
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xóa sản phẩm");
     } finally {
@@ -512,6 +519,7 @@ export default function ProductDetailPage() {
     );
 
   const isDeleted = !!product.deletedAt;
+
   const defaultVariant = product.variants.find((v) => v.isDefault) ?? product.variants[0];
 
   return (
@@ -614,11 +622,7 @@ export default function ProductDetailPage() {
                 },
                 {
                   label: "Lượt xem",
-                  value: (
-                    <span className="font-semibold">
-                      {formatNumber(Number(product.viewsCount))}
-                    </span>
-                  ),
+                  value: <span className="font-semibold">{formatNumber(Number(product.viewsCount))}</span>,
                 },
                 { label: "Tổng đã bán", value: <span className="font-semibold">{product.totalSoldCount}</span> },
                 { label: "Ngày tạo", value: <span className="text-[12px]">{formatDate(product.createdAt)}</span> },
@@ -692,7 +696,7 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               </div>
-              {!isDeleted && (
+              {!isDeleted && !isStaff && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Link
                     href={`/admin/products/${product.id}/edit`}
@@ -742,7 +746,7 @@ export default function ProductDetailPage() {
                       title="Mô tả sản phẩm"
                       defaultOpen={false}
                       action={
-                        !isDeleted && !product.description ? (
+                        !isDeleted && !isStaff && !product.description ? (
                           <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
                             <Pencil size={11} /> Thêm mô tả
                           </Link>
@@ -767,7 +771,7 @@ export default function ProductDetailPage() {
                       title={`Biến thể (${product.variants.length})`}
                       defaultOpen={true}
                       action={
-                        !isDeleted ? (
+                        !isDeleted && !isStaff ? (
                           <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
                             <Pencil size={11} /> Sửa
                           </Link>

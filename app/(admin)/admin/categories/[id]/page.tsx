@@ -8,6 +8,7 @@ import { ArrowLeft, Pencil, Trash2, RotateCcw, Loader2, ImageOff, FolderTree, St
 import type { CategoryDetail, CategoryChild } from "../category.types";
 import { getCategoryDetail, softDeleteCategory, restoreCategory } from "../_libs/categories";
 import { formatDate } from "@/helpers";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -88,6 +89,7 @@ export default function CategoryDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const href = useAdminHref();
 
   useEffect(() => {
     if (!id) return;
@@ -103,7 +105,7 @@ export default function CategoryDetailPage() {
     setActionLoading(true);
     try {
       await softDeleteCategory(category.id);
-      router.push("/admin/categories");
+      router.push(href(`/categories`));
     } catch (e: any) {
       setError(e?.message ?? "Xóa thất bại");
       setConfirmDelete(false);
@@ -253,17 +255,11 @@ export default function CategoryDetailPage() {
                 <Hash size={12} className="text-neutral-dark" /> {category.position}
               </span>
             </InfoRow>
-            <InfoRow label="Ngày tạo">
-              {formatDate(category.createdAt, { withTime: true })}
-            </InfoRow>
-            <InfoRow label="Cập nhật">
-              {formatDate(category.updatedAt, { withTime: true })}
-            </InfoRow>
+            <InfoRow label="Ngày tạo">{formatDate(category.createdAt, { withTime: true })}</InfoRow>
+            <InfoRow label="Cập nhật">{formatDate(category.updatedAt, { withTime: true })}</InfoRow>
             {isDeleted && category.deletedAt && (
               <InfoRow label="Đã xóa lúc">
-                <span className="text-promotion">
-                  {formatDate(category.deletedAt, { withTime: true })}
-                </span>
+                <span className="text-promotion">{formatDate(category.deletedAt, { withTime: true })}</span>
               </InfoRow>
             )}
           </SectionCard>

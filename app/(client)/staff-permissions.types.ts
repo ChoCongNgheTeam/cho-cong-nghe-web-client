@@ -1,5 +1,3 @@
-// Mirror từ BE staff-permissions.types.ts — không import Prisma
-
 export interface StaffPermissions {
   // Đơn hàng
   canViewOrders: boolean;

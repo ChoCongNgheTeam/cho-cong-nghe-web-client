@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Loader2, ImagePlus, AlertCircle } from "lucide-react";
 import type { Category } from "../category.types";
 import { getAllCategories, createCategory, updateCategory } from "../_libs/categories";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -89,6 +90,7 @@ export default function CategoryForm({ initialData, defaultParentId, mode }: Cat
   const [imagePreview, setImagePreview] = useState<string>(initialData?.imageUrl ?? initialData?.imagePath ?? "");
   const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const href = useAdminHref();
 
   // ── categories for parent select ─────────────────────────────────────────────
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -155,10 +157,10 @@ export default function CategoryForm({ initialData, defaultParentId, mode }: Cat
 
       if (mode === "create") {
         const res: any = await createCategory(fd);
-        router.push(`/admin/categories/${res?.data?.id ?? ""}`);
+        router.push(href(`/categories/${res?.data?.id ?? ""}`));
       } else {
         const res: any = await updateCategory(initialData!.id, fd);
-        router.push(`/admin/categories/${initialData!.id}`);
+        router.push(href(`/categories/${initialData!.id}`));
       }
     } catch (e: any) {
       setSubmitError(e?.message ?? "Đã xảy ra lỗi, vui lòng thử lại");

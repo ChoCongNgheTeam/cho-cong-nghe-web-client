@@ -11,6 +11,7 @@ import { BlogStatusBadge } from "../components/BlogStatusBadge";
 import type { BlogDetail } from "../blog.types";
 import { formatDate, formatNumber } from "@/helpers";
 import { useToasty } from "@/components/Toast";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 export default function BlogDetailPage() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function BlogDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const href = useAdminHref();
 
   const fetchBlog = useCallback(async () => {
     setLoading(true);
@@ -71,7 +73,7 @@ export default function BlogDetailPage() {
     try {
       await deleteBlog(id);
       toastSuccess("Đã xoá bài viết thành công", { title: "Xoá bài viết" });
-      router.push("/admin/blogs");
+      router.push(href(`/blogs`));
     } catch (e: any) {
       const msg = e?.message ?? "Không thể xoá bài viết";
       setDeleteError(msg);
@@ -125,7 +127,7 @@ export default function BlogDetailPage() {
               </div>
               <div className="flex gap-2">
                 <Link
-                  href={`/admin/blogs/${blog.id}?edit=true`}
+                  href={href(`/blogs/${blog.id}?edit=true`)}
                   className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
                   title="Chỉnh sửa"
                 >
@@ -207,13 +209,13 @@ export default function BlogDetailPage() {
               <div className="flex items-center gap-2">
                 {!isEditMode ? (
                   <Link
-                    href={`/admin/blogs/${blog.id}?edit=true`}
+                    href={href(`/blogs/${blog.id}?edit=true`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[12px] text-primary hover:bg-neutral-light-active"
                   >
                     <Pencil size={13} /> Chỉnh sửa
                   </Link>
                 ) : (
-                  <Link href={`/admin/blogs/${blog.id}`} className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[12px] text-primary hover:bg-neutral-light-active">
+                  <Link href={href(`/blogs/${blog.id}`)} className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[12px] text-primary hover:bg-neutral-light-active">
                     <Eye size={13} /> Xem
                   </Link>
                 )}
@@ -227,7 +229,7 @@ export default function BlogDetailPage() {
                 saving={saving}
                 error={saveError}
                 submitLabel="Lưu thay đổi"
-                onCancel={() => router.push(`/admin/blogs/${blog.id}`)}
+                onCancel={() => router.push(href(`/blogs/${blog.id}`))}
                 layout="panel"
                 isEdit
               />

@@ -10,6 +10,7 @@ import { usePopzy } from "@/components/Modal/usePopzy";
 import { Popzy } from "@/components/Modal";
 import type { Brand } from "../brand.types";
 import { formatDate } from "@/helpers";
+import { useAdminHref } from "@/hooks/useAdminHref";
 
 // ── Toggle switch ──────────────────────────────────────────────────────────────
 function Toggle({ value, onChange, color = "bg-accent" }: { value: boolean; onChange: (v: boolean) => void; color?: string }) {
@@ -121,6 +122,7 @@ export default function BrandDetailPage() {
   const deleteModal = usePopzy();
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const href = useAdminHref();
 
   // ── Load brand ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -200,7 +202,7 @@ export default function BrandDetailPage() {
     setDeleteError(null);
     try {
       await deleteBrand(brand.id);
-      router.push("/admin/brands");
+      router.push(href(`/brands`));
     } catch (e: any) {
       setDeleteError(e?.message ?? "Không thể xoá thương hiệu");
     } finally {

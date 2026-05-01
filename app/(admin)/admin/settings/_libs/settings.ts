@@ -13,12 +13,9 @@ export interface SettingEntry {
   updatedAt: string;
 }
 
-// BE getGroup() trả về Record<string, unknown> đã cast (không phải SettingEntry[])
-// Ví dụ: { meta_title: "My Shop", enable_tax: false, tax_rate: 10 }
 export type CastSettingsObject = Record<string, unknown>;
 
 export interface GetSettingsResponse {
-  // data là object đã cast từ BE service.getGroup()
   data: CastSettingsObject;
   message: string;
 }
@@ -28,7 +25,6 @@ export interface UpdateSettingsPayload {
 }
 
 export interface UpdateSettingsResponse {
-  // BE trả về object đã cast sau khi update
   data: CastSettingsObject;
   message: string;
 }
@@ -120,7 +116,6 @@ export interface NotificationAdminSettings {
 }
 
 /* ─── Helper: merge BE cast-object vào defaults ─── */
-// BE trả về { key: castedValue } — merge trực tiếp vào defaults
 export function parseSettings<T extends object>(data: CastSettingsObject, defaults: T): T {
   const result = { ...defaults };
   for (const key of Object.keys(defaults) as (keyof T)[]) {
@@ -142,37 +137,51 @@ export const getAllSettings = async (): Promise<{ data: Record<string, CastSetti
   return apiRequest.get("/settings");
 };
 
-// FIX: BE updateSettingsSchema expect { settings: { key: value } }
-// → phải wrap payload trong key "settings"
 export const updateSettings = async (group: string, payload: UpdateSettingsPayload): Promise<UpdateSettingsResponse> => {
   return apiRequest.patch<UpdateSettingsResponse>(`/settings/${group}`, {
     settings: payload,
   });
 };
 
-// Variant với file upload — wrap text fields trong settings key
+/**
+ * Upload settings có kèm ảnh.
+ *
+ * files: key phải khớp với SETTINGS_IMAGE_FIELDS bên BE:
+ *   - logo_url    → general/logo
+ *   - favicon_url → general/favicon
+ *   - og_image_url → seo/og image
+ *
+ * Khi không có file nào → gửi JSON bình thường (không tạo FormData).
+ */
 export const updateSettingsFormData = async (
   group: string,
   payload: UpdateSettingsPayload,
-  files?: { logo?: File; favicon?: File; og_image?: File; invoice_logo?: File },
+  files?: {
+    logo_url?: File | null;
+    favicon_url?: File | null;
+    og_image_url?: File | null;
+  },
 ): Promise<UpdateSettingsResponse> => {
   const hasFile = files && Object.values(files).some(Boolean);
 
   if (!hasFile) {
-    // Không có file → JSON bình thường, wrap settings
     return apiRequest.patch<UpdateSettingsResponse>(`/settings/${group}`, {
       settings: payload,
     });
   }
 
-  // Có file → FormData. BE cần parse settings từ FormData.
-  // Gửi settings dưới dạng JSON string trong field "settings"
+  // FormData: text fields phẳng + file fields đúng tên key BE
   const fd = new FormData();
-  fd.append("settings", JSON.stringify(payload));
-  if (files?.logo) fd.append("logo", files.logo);
-  if (files?.favicon) fd.append("favicon", files.favicon);
-  if (files?.og_image) fd.append("og_image", files.og_image);
-  if (files?.invoice_logo) fd.append("invoice_logo", files.invoice_logo);
+
+  // Gửi từng text field phẳng để BE controller parse rawSettings từ req.body
+  for (const [key, value] of Object.entries(payload)) {
+    fd.append(key, String(value));
+  }
+
+  // File fields — field name = key trong DB (khớp SETTINGS_IMAGE_FIELDS)
+  if (files?.logo_url) fd.append("logo_url", files.logo_url);
+  if (files?.favicon_url) fd.append("favicon_url", files.favicon_url);
+  if (files?.og_image_url) fd.append("og_image_url", files.og_image_url);
 
   return apiRequest.patch<UpdateSettingsResponse>(`/settings/${group}`, fd);
 };

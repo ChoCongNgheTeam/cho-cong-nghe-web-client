@@ -296,6 +296,7 @@ export default function PromotionsPage() {
         setOpenStatusId,
         onToggleActive: handleToggleActive,
         onDeleteClick: handleDeleteClick,
+        href,
       }),
     [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, handleDeleteClick],
   );
