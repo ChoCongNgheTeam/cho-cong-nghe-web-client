@@ -60,6 +60,7 @@ export interface Order {
   userId: string;
   paymentMethodId: string;
   voucherId: string | null;
+  voucherCode?: string | null;
   shippingAddressId: string | null;
   // ── Shipping snapshot (lưu trực tiếp trên order) ──
   shippingContactName: string;

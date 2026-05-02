@@ -19,23 +19,12 @@ const PAYMENT_TRANSITIONS: Record<PaymentStatus, PaymentStatus[]> = {
   REFUNDED: [],
 };
 
-// ─── Mini-modal xác nhận hoàn tiền ───────────────────────────────────────────
-function RefundConfirmModal({
-  orderId,
-  anchorRect, // null = render ở giữa màn hình (dùng cho detail)
-  onClose,
-  onConfirmed,
-}: {
-  orderId: string;
-  anchorRect: DOMRect | null;
-  onClose: () => void;
-  onConfirmed: () => void;
-}) {
+// ─── Refund Confirm Modal ─────────────────────────────────────────────────────
+function RefundConfirmModal({ orderId, anchorRect, onClose, onConfirmed }: { orderId: string; anchorRect: DOMRect | null; onClose: () => void; onConfirmed: () => void }) {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Đóng khi click ngoài
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -44,12 +33,11 @@ function RefundConfirmModal({
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
-  // Tính vị trí: nếu có anchorRect thì hiện gần icon, không thì center màn hình
   const style: React.CSSProperties = anchorRect
     ? {
         position: "fixed",
-        top: anchorRect.bottom + 6,
-        left: Math.min(anchorRect.left, window.innerWidth - 312),
+        top: anchorRect.bottom + 8,
+        left: Math.min(anchorRect.left, window.innerWidth - 320),
         zIndex: 9999,
       }
     : {
@@ -74,28 +62,29 @@ function RefundConfirmModal({
 
   return createPortal(
     <>
-      {/* Backdrop mờ nhẹ */}
-      <div className="fixed inset-0 z-[9998] bg-black/20" onClick={onClose} />
-      {/* Modal box */}
-      <div ref={ref} style={style} className="w-[300px] bg-neutral-light border border-neutral rounded-2xl shadow-xl p-5 space-y-4">
+      <div className="fixed inset-0 z-[9998] bg-black/25 backdrop-blur-[1px]" onClick={onClose} />
+      <div ref={ref} style={style} className="w-[308px] bg-neutral-light border border-neutral rounded-2xl shadow-2xl p-5 space-y-4">
         {/* Icon */}
-        <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
-          <RotateCcw size={17} className="text-amber-700" />
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+            <RotateCcw size={16} className="text-amber-600" />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold text-primary">Xác nhận hoàn tiền</p>
+            <p className="text-[11px] text-neutral-dark">Thao tác không thể hoàn tác</p>
+          </div>
         </div>
 
-        <div>
-          <p className="text-[14px] font-semibold text-primary">Xác nhận đã hoàn tiền?</p>
-          <p className="text-[12px] text-neutral-dark mt-1 leading-relaxed">
-            Xác nhận bạn đã chuyển tiền hoàn lại cho khách. Trạng thái sẽ cập nhật sang <span className="font-medium text-primary">Đã hoàn tiền</span>.
-          </p>
-        </div>
+        <p className="text-[12px] text-neutral-dark leading-relaxed">
+          Xác nhận bạn đã chuyển tiền hoàn lại cho khách. Trạng thái sẽ cập nhật sang <span className="font-medium text-emerald-600">Đã hoàn tiền</span>.
+        </p>
 
         <input
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Ghi chú: mã GD, ngân hàng... (tuỳ chọn)"
-          className="w-full px-3 py-2 text-[12px] rounded-xl border border-neutral bg-neutral-light-active text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-3 py-2 text-[12px] rounded-xl border border-neutral bg-neutral-light-active text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
         />
 
         <div className="flex gap-2">
@@ -117,7 +106,7 @@ function RefundConfirmModal({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export function PaymentStatusCell({ orderId, status, onStatusChange }: PaymentStatusCellProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -133,7 +122,6 @@ export function PaymentStatusCell({ orderId, status, onStatusChange }: PaymentSt
   const isRefundPending = status === "REFUND_PENDING";
   const isDisabled = loading || (nextStatuses.length === 0 && !isRefundPending);
 
-  // Đóng dropdown khi click ngoài
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -149,7 +137,7 @@ export function PaymentStatusCell({ orderId, status, onStatusChange }: PaymentSt
     if (isDisabled || isRefundPending) return;
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 4, left: rect.left });
+      setPos({ top: rect.bottom + 6, left: rect.left });
     }
     setOpen((v) => !v);
   };
@@ -162,6 +150,7 @@ export function PaymentStatusCell({ orderId, status, onStatusChange }: PaymentSt
       await updatePaymentStatus(orderId, next);
       onStatusChange(next);
     } catch {
+      // silent
     } finally {
       setLoading(false);
     }
@@ -176,48 +165,49 @@ export function PaymentStatusCell({ orderId, status, onStatusChange }: PaymentSt
   return (
     <>
       <div className="inline-flex items-center gap-1.5">
-        {/* Badge trạng thái */}
+        {/* Status badge */}
         <button
           ref={btnRef}
           onClick={handleOpen}
           disabled={isDisabled}
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all select-none ${cfg.pill} ${
-            isDisabled ? "opacity-60 cursor-not-allowed" : "hover:opacity-80 cursor-pointer"
+            isDisabled ? "opacity-60 cursor-not-allowed" : "hover:opacity-80 cursor-pointer active:scale-95"
           }`}
         >
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
           {loading ? "..." : cfg.label}
-          {!isDisabled && nextStatuses.length > 0 && <ChevronDown size={11} className={`transition-transform ${open ? "rotate-180" : ""}`} />}
+          {!isDisabled && nextStatuses.length > 0 && <ChevronDown size={10} className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`} />}
         </button>
 
-        {/* Icon trigger hoàn tiền — chỉ hiện khi REFUND_PENDING */}
+        {/* Refund action button */}
         {isRefundPending && (
           <button
             ref={refundBtnRef}
             onClick={openRefundModal}
             title="Xác nhận đã hoàn tiền thủ công"
-            className="w-[22px] h-[22px] rounded-md bg-amber-50 border border-amber-300 flex items-center justify-center hover:bg-amber-100 transition-colors cursor-pointer"
+            className="w-[22px] h-[22px] rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center hover:bg-amber-100 transition-colors cursor-pointer"
           >
-            <RotateCcw size={11} className="text-amber-700" />
+            <RotateCcw size={11} className="text-amber-600" />
           </button>
         )}
       </div>
 
-      {/* Dropdown chuyển trạng thái */}
+      {/* Status dropdown */}
       {open &&
         typeof document !== "undefined" &&
         createPortal(
-          <div ref={dropdownRef} style={{ top: pos.top, left: pos.left }} className="fixed z-[9999] bg-neutral-light border border-neutral rounded-xl shadow-lg py-1 min-w-[170px]">
+          <div ref={dropdownRef} style={{ top: pos.top, left: pos.left }} className="fixed z-[9999] bg-neutral-light border border-neutral rounded-xl shadow-xl py-1.5 min-w-[170px]">
+            <p className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral mb-1">Cập nhật thanh toán</p>
             {nextStatuses.map((s) => {
               const c = PAYMENT_STATUS_CONFIG[s];
               return (
                 <button
                   key={s}
                   onClick={() => handleSelect(s)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
                 >
                   <span className={`w-2 h-2 rounded-full shrink-0 ${c.dot}`} />
-                  {c.label}
+                  <span className="font-medium">{c.label}</span>
                 </button>
               );
             })}
@@ -225,7 +215,7 @@ export function PaymentStatusCell({ orderId, status, onStatusChange }: PaymentSt
           document.body,
         )}
 
-      {/* Refund confirm modal */}
+      {/* Refund modal */}
       {showRefundModal && (
         <RefundConfirmModal
           orderId={orderId}

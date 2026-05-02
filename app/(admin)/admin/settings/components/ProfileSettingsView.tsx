@@ -163,7 +163,7 @@ export default function ProfileSettingsView() {
     }
 
     if (form.phone && !isValidPhone(form.phone)) {
-      errs.phone = "Số điện thoại không hợp lệ (VD: 0912345678)";
+      errs.phone = "Số điện thoại không hợp lệ (VD: 0999999999)";
     }
 
     const dobFilled = [dob.day, dob.month, dob.year].filter(Boolean).length;

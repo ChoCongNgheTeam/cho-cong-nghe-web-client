@@ -464,7 +464,7 @@ export default function UserForm({ editingUser }: Props) {
                       }
                       setField("phone", digitsOnly);
                     }}
-                    placeholder="vd: 0912345678"
+                    placeholder="vd: 0999999999"
                     className={`${inputCls(errors.phone, isEditing)} pl-10`}
                     maxLength={isEditing ? undefined : 10}
                   />
