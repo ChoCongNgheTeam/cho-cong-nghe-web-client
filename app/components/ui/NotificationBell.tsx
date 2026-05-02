@@ -196,6 +196,7 @@ export default function NotificationBell({
          if (n.type === "COMMENT_NEW") {
             const data = n.data as { productSlug?: string; commentId?: string };
             setOpen(false);
+            console.log(data);
             navigateToComment(data?.commentId, data?.productSlug);
             return;
          }
