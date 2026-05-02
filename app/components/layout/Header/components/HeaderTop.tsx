@@ -15,7 +15,7 @@ const HeaderTop: React.FC<HeaderTopProps> = ({ isAuthenticated }) => {
             <span className="hidden sm:inline" style={{ color: "rgba(255,255,255,0.2)" }}>
               |
             </span>
-            <LinkWithIcon href="#" icon={<ShoppingBag strokeWidth={1} className="h-4 w-4" />} text="Cửa hàng" mobileText="Shop" />
+            <LinkWithIcon href="/stores" icon={<ShoppingBag strokeWidth={1} className="h-4 w-4" />} text="Cửa hàng" mobileText="Shop" />
             <span className="hidden sm:inline" style={{ color: "rgba(255,255,255,0.2)" }}>
               |
             </span>
