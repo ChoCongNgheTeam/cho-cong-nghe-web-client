@@ -263,7 +263,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (isAuthenticated) {
         if (!variantId) throw new Error("Thiếu variantId");
-       const res = (await apiAddToCart(variantId, quantity)) as ApiResponse;
+
+        // ── Validate existing qty in cart before calling API ──
+        const existing = itemsRef.current.find(
+          (i) => i.productVariantId === variantId,
+        );
+        if (existing) {
+          const err = validateQtyChange(existing.quantity, quantity, avail);
+          if (err) throw new Error(err);
+        }
+
+        const res = (await apiAddToCart(variantId, quantity)) as ApiResponse;
         if (res.success) await refetchCart();
         return;
       }

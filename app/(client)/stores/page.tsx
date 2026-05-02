@@ -47,7 +47,7 @@ export default function StoreLocatorSection({
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },
-          { label: "Cửa hàng" },
+          { label: "Cửa hàng" , href: "/stores"},
         ]}
       />
 
