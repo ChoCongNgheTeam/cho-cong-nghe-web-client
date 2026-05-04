@@ -1,7 +1,19 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { MapPin, Home, Building2, Plus, Star, Pencil, Trash2, CheckCircle, AlertTriangle, ChevronDown, X, LogIn, Tag } from "lucide-react";
+import {
+  MapPin,
+  Home,
+  Building2,
+  Plus,
+  Star,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  AlertTriangle,
+  ChevronDown,
+  Search,
+} from "lucide-react";
 import apiRequest from "@/lib/api";
 import { getProvinces } from "../_lib/get-provice";
 import { getWards } from "../_lib/get-wards";
@@ -43,7 +55,7 @@ const inputCls =
 const selectTriggerCls =
   "w-full px-3 py-2.5 rounded-lg text-sm bg-neutral-light border border-neutral text-primary focus:outline-none focus:border-accent focus:ring-0 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-left flex items-center justify-between";
 
-// ─── Custom select — luôn render xuống dưới qua Portal ────────────────────────
+// ─── Custom searchable select — renders dropdown via Portal ───────────────────
 function SelectDown({
   value,
   onChange,
@@ -58,22 +70,29 @@ function SelectDown({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [dropStyle, setDropStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const selected = options.find((o) => o.value === value);
 
-  // Tính toán vị trí dropdown — luôn xuống dưới, không flip
+  const filteredOptions = search.trim()
+    ? options.filter((o) =>
+        o.label.toLowerCase().includes(search.toLowerCase())
+      )
+    : options;
+
   const calcPosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     setDropStyle({
       position: "fixed",
-      top: rect.bottom + 4,   // luôn ngay dưới trigger
+      top: rect.bottom + 4,
       left: rect.left,
       width: rect.width,
-      maxHeight: 240,
+      maxHeight: 280,
       zIndex: 99999,
     });
   }, []);
@@ -81,10 +100,17 @@ function SelectDown({
   const openDropdown = () => {
     if (disabled) return;
     calcPosition();
+    setSearch("");
     setOpen(true);
   };
 
-  // Recalculate khi scroll/resize để dropdown không lệch
+  // Focus search input when opened
+  useEffect(() => {
+    if (open && searchRef.current) {
+      setTimeout(() => searchRef.current?.focus(), 50);
+    }
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const update = () => calcPosition();
@@ -96,7 +122,6 @@ function SelectDown({
     };
   }, [open, calcPosition]);
 
-  // Đóng khi click ra ngoài
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -125,43 +150,62 @@ function SelectDown({
         </span>
         <ChevronDown
           size={14}
-          className={`text-neutral-dark shrink-0 ml-2 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`text-neutral-dark shrink-0 ml-2 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
         />
       </button>
 
-      {/* Portal ra body — tránh bị clip bởi overflow của modal */}
       {open &&
         createPortal(
-          <ul
+          <div
             ref={listRef}
             style={dropStyle}
-            className="bg-white border border-neutral rounded-lg shadow-2xl overflow-y-auto"
+            className="bg-white border border-neutral rounded-lg shadow-2xl flex flex-col overflow-hidden"
           >
-            {options.length === 0 ? (
-              <li className="px-3 py-3 text-sm text-neutral-dark text-center">
-                Không có dữ liệu
-              </li>
-            ) : (
-              options.map((o) => (
-                <li
-                  key={o.value}
-                  onMouseDown={(e) => {
-                    // dùng mousedown thay click để tránh blur đóng dropdown trước
-                    e.preventDefault();
-                    onChange(o.value);
-                    setOpen(false);
-                  }}
-                  className={`px-3 py-2.5 text-sm cursor-pointer hover:bg-accent-light transition-colors ${
-                    o.value === value
-                      ? "text-accent font-semibold bg-accent-light"
-                      : "text-primary"
-                  }`}
-                >
-                  {o.label}
+            {/* Search input */}
+            <div className="p-2 border-b border-neutral shrink-0">
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-neutral bg-neutral-light">
+                <Search size={13} className="text-neutral-dark shrink-0" />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Tìm kiếm..."
+                  className="flex-1 text-sm bg-transparent outline-none text-primary placeholder:text-neutral-dark"
+                />
+              </div>
+            </div>
+
+            {/* Options list */}
+            <ul className="overflow-y-auto flex-1">
+              {filteredOptions.length === 0 ? (
+                <li className="px-3 py-3 text-sm text-neutral-dark text-center">
+                  Không tìm thấy kết quả
                 </li>
-              ))
-            )}
-          </ul>,
+              ) : (
+                filteredOptions.map((o) => (
+                  <li
+                    key={o.value}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onChange(o.value);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                    className={`px-3 py-2.5 text-sm cursor-pointer hover:bg-accent-light transition-colors ${
+                      o.value === value
+                        ? "text-accent font-semibold bg-accent-light"
+                        : "text-primary"
+                    }`}
+                  >
+                    {o.label}
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>,
           document.body
         )}
     </>
@@ -211,19 +255,27 @@ export default function AddressesPage() {
     }
   }, []);
 
-  useEffect(() => { fetchAddresses(); }, [fetchAddresses]);
+  useEffect(() => {
+    fetchAddresses();
+  }, [fetchAddresses]);
 
   useEffect(() => {
     const load = async () => {
       setIsLoadingProvinces(true);
-      try { setProvinces(await getProvinces()); }
-      finally { setIsLoadingProvinces(false); }
+      try {
+        setProvinces(await getProvinces());
+      } finally {
+        setIsLoadingProvinces(false);
+      }
     };
     load();
   }, []);
 
   useEffect(() => {
-    if (!wardLoadTrigger?.code) { setWards([]); return; }
+    if (!wardLoadTrigger?.code) {
+      setWards([]);
+      return;
+    }
     const { code, afterLoad } = wardLoadTrigger;
     const load = async () => {
       setIsLoadingWards(true);
@@ -231,44 +283,80 @@ export default function AddressesPage() {
         const loaded = await getWards(code);
         setWards(loaded);
         if (afterLoad) setWardCode(afterLoad);
-      } finally { setIsLoadingWards(false); }
+      } finally {
+        setIsLoadingWards(false);
+      }
     };
     load();
   }, [wardLoadTrigger]);
 
+  // ─── Phone: chỉ số, tối đa 10 ký tự ──────────────────────────────────────
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digitsOnly = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+    setPhone(digitsOnly);
+  };
+
   // ─── Form handlers ─────────────────────────────────────────────────────────
   const openAddModal = () => {
     setEditingAddress(null);
-    setContactName(""); setPhone(""); setProvinceCode("");
-    setWardCode(""); setDetailAddress(""); setType("HOME");
-    setIsDefault(false); setWards([]); setWardLoadTrigger(null);
+    setContactName("");
+    setPhone("");
+    setProvinceCode("");
+    setWardCode("");
+    setDetailAddress("");
+    setType("HOME");
+    setIsDefault(false);
+    setWards([]);
+    setWardLoadTrigger(null);
     setShowModal(true);
   };
 
   const openEditModal = (addr: Address) => {
     setEditingAddress(addr);
-    setContactName(addr.contactName); setPhone(addr.phone);
-    setProvinceCode(addr.province.code); setWardCode("");
-    setDetailAddress(addr.detailAddress); setType(addr.type);
-    setIsDefault(addr.isDefault); setWards([]);
-    setWardLoadTrigger({ code: addr.province.code, afterLoad: addr.ward.code });
+    setContactName(addr.contactName);
+    setPhone(addr.phone);
+    setProvinceCode(addr.province.code);
+    setWardCode("");
+    setDetailAddress(addr.detailAddress);
+    setType(addr.type);
+    setIsDefault(addr.isDefault);
+    setWards([]);
+    setWardLoadTrigger({
+      code: addr.province.code,
+      afterLoad: addr.ward.code,
+    });
     setShowModal(true);
   };
 
   const handleProvinceChange = (code: string) => {
     setProvinceCode(code);
-    setWardCode(""); setWards([]);
+    setWardCode("");
+    setWards([]);
     setWardLoadTrigger(code ? { code } : null);
   };
 
   const handleSubmit = async () => {
-    if (!contactName || !phone || !provinceCode || !wardCode || !detailAddress) {
+    if (
+      !contactName ||
+      !phone ||
+      !provinceCode ||
+      !wardCode ||
+      !detailAddress
+    ) {
       alert("Vui lòng điền đầy đủ thông tin");
       return;
     }
     setIsSubmitting(true);
     try {
-      const payload = { contactName, phone, provinceCode, wardCode, detailAddress, type, isDefault };
+      const payload = {
+        contactName,
+        phone,
+        provinceCode,
+        wardCode,
+        detailAddress,
+        type,
+        isDefault,
+      };
       if (editingAddress) {
         await apiRequest.patch(`/addresses/${editingAddress.id}`, payload);
       } else {
@@ -283,14 +371,18 @@ export default function AddressesPage() {
     }
   };
 
-  const openDeleteModal = (addr: Address) => { setDeletingAddress(addr); setShowDeleteModal(true); };
+  const openDeleteModal = (addr: Address) => {
+    setDeletingAddress(addr);
+    setShowDeleteModal(true);
+  };
 
   const handleConfirmDelete = async () => {
     if (!deletingAddress) return;
     setIsDeleting(true);
     try {
       await apiRequest.delete(`/addresses/${deletingAddress.id}`);
-      setShowDeleteModal(false); setDeletingAddress(null);
+      setShowDeleteModal(false);
+      setDeletingAddress(null);
       await fetchAddresses();
     } catch (err: any) {
       alert(err?.message ?? "Có lỗi xảy ra");
@@ -334,9 +426,10 @@ export default function AddressesPage() {
         <input
           className={inputCls}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={handlePhoneChange}
           placeholder="Nhập số điện thoại"
           inputMode="numeric"
+          maxLength={10}
         />
       </div>
 
@@ -348,7 +441,9 @@ export default function AddressesPage() {
           value={provinceCode}
           onChange={handleProvinceChange}
           disabled={isLoadingProvinces}
-          placeholder={isLoadingProvinces ? "Đang tải..." : "Chọn Tỉnh/Thành phố"}
+          placeholder={
+            isLoadingProvinces ? "Đang tải..." : "Chọn Tỉnh/Thành phố"
+          }
           options={provinces.map((p) => ({ value: p.code, label: p.fullName }))}
         />
       </div>
@@ -437,23 +532,34 @@ export default function AddressesPage() {
           <AlertTriangle size={28} className="text-red-500" />
         </div>
         <div>
-          <h2 className="text-base font-semibold text-primary mb-1">Xác nhận xóa địa chỉ</h2>
+          <h2 className="text-base font-semibold text-primary mb-1">
+            Xác nhận xóa địa chỉ
+          </h2>
           <p className="text-sm text-primary opacity-60">
-            Bạn có chắc chắn muốn xóa địa chỉ này không?<br />Hành động này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa địa chỉ này không?
+            <br />
+            Hành động này không thể hoàn tác.
           </p>
         </div>
       </div>
 
       {deletingAddress && (
         <div className="bg-neutral rounded-lg px-4 py-3 text-sm text-primary">
-          <p className="font-medium mb-0.5">{deletingAddress.contactName} · {deletingAddress.phone}</p>
-          <p className="opacity-60 text-xs leading-relaxed">{deletingAddress.fullAddress}</p>
+          <p className="font-medium mb-0.5">
+            {deletingAddress.contactName} · {deletingAddress.phone}
+          </p>
+          <p className="opacity-60 text-xs leading-relaxed">
+            {deletingAddress.fullAddress}
+          </p>
         </div>
       )}
 
       <div className="flex gap-3">
         <button
-          onClick={() => { setShowDeleteModal(false); setDeletingAddress(null); }}
+          onClick={() => {
+            setShowDeleteModal(false);
+            setDeletingAddress(null);
+          }}
           className="cursor-pointer flex-1 border border-neutral rounded-lg py-2.5 text-sm font-medium text-primary hover:bg-neutral transition-colors"
         >
           Hủy
@@ -473,7 +579,9 @@ export default function AddressesPage() {
   return (
     <div className="bg-neutral-light-active rounded-lg shadow-sm">
       <div className="flex items-center justify-between px-5 py-4 border-b border-neutral">
-        <h1 className="text-base sm:text-xl font-semibold text-primary">Sổ địa chỉ nhận hàng</h1>
+        <h1 className="text-base sm:text-xl font-semibold text-primary">
+          Sổ địa chỉ nhận hàng
+        </h1>
         {!isLoading && addresses.length > 0 && (
           <button
             onClick={openAddModal}
@@ -490,7 +598,10 @@ export default function AddressesPage() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <div key={i} className="animate-pulse bg-neutral rounded-xl p-4 sm:p-5 space-y-3">
+              <div
+                key={i}
+                className="animate-pulse bg-neutral rounded-xl p-4 sm:p-5 space-y-3"
+              >
                 <div className="flex items-center gap-2">
                   <div className="h-5 w-20 bg-neutral-dark/20 rounded-full" />
                   <div className="h-5 w-24 bg-neutral-dark/20 rounded-full" />
@@ -505,15 +616,22 @@ export default function AddressesPage() {
           <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
             <div className="mb-5">
               <div className="relative inline-flex">
-                <MapPin size={56} className="text-neutral-dark opacity-30" strokeWidth={1.2} />
+                <MapPin
+                  size={56}
+                  className="text-neutral-dark opacity-30"
+                  strokeWidth={1.2}
+                />
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
                   <Plus size={12} className="text-white" strokeWidth={3} />
                 </div>
               </div>
             </div>
-            <p className="text-primary font-semibold text-base mb-1">Bạn chưa có lưu địa chỉ nào</p>
+            <p className="text-primary font-semibold text-base mb-1">
+              Bạn chưa có lưu địa chỉ nào
+            </p>
             <p className="text-sm text-primary opacity-60 mb-6">
-              Cập nhật địa chỉ ngay để có trải nghiệm mua hàng<br className="hidden sm:block" /> nhanh nhất!
+              Cập nhật địa chỉ ngay để có trải nghiệm mua hàng
+              <br className="hidden sm:block" /> nhanh nhất!
             </p>
             <button
               onClick={openAddModal}
@@ -531,7 +649,9 @@ export default function AddressesPage() {
                 <div
                   key={addr.id}
                   className={`rounded-xl border p-4 sm:p-5 transition-colors ${
-                    addr.isDefault ? "border-accent bg-accent-light" : "border-neutral bg-neutral-light"
+                    addr.isDefault
+                      ? "border-accent bg-accent-light"
+                      : "border-neutral bg-neutral-light"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
@@ -568,9 +688,13 @@ export default function AddressesPage() {
                   </div>
 
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="font-semibold text-sm text-primary">{addr.contactName}</span>
+                    <span className="font-semibold text-sm text-primary">
+                      {addr.contactName}
+                    </span>
                     <span className="text-neutral-dark text-xs">|</span>
-                    <span className="text-sm text-primary opacity-70">{addr.phone}</span>
+                    <span className="text-sm text-primary opacity-70">
+                      {addr.phone}
+                    </span>
                   </div>
 
                   <p className="text-sm text-primary opacity-70 leading-relaxed mb-3">
@@ -593,10 +717,17 @@ export default function AddressesPage() {
         )}
       </div>
 
-      <Popzy isOpen={showModal} onClose={() => setShowModal(false)} content={formModalContent} />
+      <Popzy
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        content={formModalContent}
+      />
       <Popzy
         isOpen={showDeleteModal}
-        onClose={() => { setShowDeleteModal(false); setDeletingAddress(null); }}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeletingAddress(null);
+        }}
         content={deleteModalContent}
       />
     </div>
