@@ -66,9 +66,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                   <p className="text-sm mb-0.5">Quý khách chưa là</p>
                   <p className="font-bold text-base mb-0.5">thành viên tại ChoCongNghe</p>
                   <p className="text-xs mb-3 opacity-90">Quét mã Zalo ChoCongNghe Shop để kích hoạt điểm thưởng</p>
-                  <Link href="/membership" className="text-white text-sm hover:underline flex items-center gap-1">
+                  {/* <Link href="/membership" className="text-white text-sm hover:underline flex items-center gap-1">
                     Xem thể lệ <span className="text-xs">›</span>
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
             </div>

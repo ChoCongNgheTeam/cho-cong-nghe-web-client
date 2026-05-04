@@ -525,7 +525,8 @@ export default function CheckoutPage() {
         return;
       }
 
-      // ✅ Truyền cartItemIds để BE chỉ xử lý các sản phẩm đã chọn
+      // ✅ Bỏ cartItemIds khỏi body — BE schema optional, tự lấy cart của user
+      // Tránh lỗi 400 do BE validate cartItemIds phải là UUID nhưng Prisma dùng CUID
       const res = await apiRequest.post<{
         success: boolean;
         data: {
@@ -539,7 +540,6 @@ export default function CheckoutPage() {
         shippingAddressId: addressId,
         contactName,
         phone: contactPhone,
-        cartItemIds,          // ← FIX: truyền đúng danh sách item đã chọn
         ...(voucherId ? { voucherId } : {}),
       });
 
