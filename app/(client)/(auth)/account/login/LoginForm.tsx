@@ -32,16 +32,26 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
       password?: string;
       general?: string;
    }>({});
+   const LOGIN_REDIRECT_INTENT_KEY = "loginRedirectIntent";
 
    const handleLoginSuccess = useCallback(
       async (user: AuthUser, accessToken: string) => {
-         const redirectPath =
-            user.role === "ADMIN" ? "/admin/dashboard" : returnUrl;
+         // ── Đọc và clear intent trước khi redirect ──
+         const savedIntent = sessionStorage.getItem(LOGIN_REDIRECT_INTENT_KEY);
+         if (savedIntent) {
+            sessionStorage.removeItem(LOGIN_REDIRECT_INTENT_KEY);
+         }
+
          toast.success("Đăng nhập thành công 👋", {
             duration: 1000,
             id: "login-success",
          });
          await login(user, accessToken);
+
+         const redirectPath =
+            savedIntent ??
+            (user.role === "ADMIN" ? "/admin/dashboard" : returnUrl);
+
          router.push(redirectPath);
       },
       [login, router, toast, returnUrl],
