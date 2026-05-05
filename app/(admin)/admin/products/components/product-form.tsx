@@ -12,6 +12,7 @@ import { CKEditorWrapper } from "@/(admin)/admin/blogs/components/CKEditorWrappe
 import { AiContentPanel } from "@/(admin)/admin/ai-content/AiContentPanel";
 import { AiSpecSuggestButton } from "@/(admin)/admin/ai-content/AiSpecSuggestButton";
 import { ChipAttributeSelector } from "./Chipattributeselector";
+import { SpecImportPanel } from "../../ai-content/SpecImportPanel";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -1981,7 +1982,7 @@ export default function ProductForm({ product }: ProductFormProps) {
           <Section icon={<Package size={13} />} title="Thông số kỹ thuật" badge={`${filledSpecsCount}/${totalSpecsCount}`} defaultOpen={false}>
             <div className="space-y-5">
               {/* ── AI SUGGEST BUTTON ── */}
-              <AiSpecSuggestButton
+              {/* <AiSpecSuggestButton
                 productName={name}
                 categoryId={categoryId}
                 specGroups={template.specifications.map((group) => ({
@@ -1999,8 +2000,28 @@ export default function ProductForm({ product }: ProductFormProps) {
                     updateSpec(specId, value);
                   });
                 }}
+              /> */}
+              {/* ── SPEC IMPORT PANEL ── */}
+              <SpecImportPanel
+                productName={name}
+                categoryId={categoryId}
+                specGroups={template.specifications.map((group) => ({
+                  groupName: group.groupName,
+                  items: group.items.map((spec) => ({
+                    id: spec.id,
+                    name: spec.name,
+                    group: group.groupName,
+                    unit: spec.unit,
+                  })),
+                }))}
+                specs={specs}
+                onApply={(updates) => {
+                  Object.entries(updates).forEach(([specId, { value, isHighlight }]) => {
+                    updateSpec(specId, value);
+                    if (isHighlight) toggleHighlight(specId);
+                  });
+                }}
               />
-
               {template.specifications.map((group) => (
                 <div key={group.groupName}>
                   <div className="flex items-center gap-3 mb-3">
