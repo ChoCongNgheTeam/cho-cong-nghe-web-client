@@ -371,9 +371,7 @@ export default function AdminBrandsPage() {
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                {tab.count}
-              </span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>{tab.count}</span>
             </button>
           ))}
 
@@ -505,29 +503,23 @@ export default function AdminBrandsPage() {
         ) : (
           <AdminTable<Brand> columns={columns} data={brands} rowKey="id" className="mx-0" rowClassName={(brand) => (selected.has(brand.id) ? "bg-accent/5" : "")} />
         )}
-
         {/* ── Pagination ── */}
+
         {!loading && !error && meta.total > 0 && (
-          <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-primary">Hiển thị</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  resetPage();
-                }}
-                className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
-              >
-                {[10, 20, 50].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <span className="text-[12px] text-primary">/ {meta.total} thương hiệu</span>
-            </div>
-            {/* <AdminPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} /> */}
+          <div className="px-5 py-4 border-t border-neutral">
+            <AdminPagination
+              currentPage={meta.page} // ← từ BE, không phải state page
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={pageSize} // ← dùng state pageSize, không phải meta.limit
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              pageSizeOptions={[10, 20, 50]}
+              siblingCount={1}
+            />
           </div>
         )}
       </div>
