@@ -6,6 +6,7 @@ import Image from "next/image";
 // Đã thêm Import useCart và useToasty từ hệ thống của bạn
 import { useCart } from "@/hooks/useCart";
 import { useToasty } from "@/components/Toast";
+import { ChatBubble } from "./ChatBubble";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES & CONSTANTS
@@ -14,12 +15,12 @@ import { useToasty } from "@/components/Toast";
 interface Message {
   role: "user" | "assistant";
   content: string;
-  products?: Product[]; 
+  products?: Product[];
 }
 
 interface ChatResponse {
   success: boolean;
-  data: { 
+  data: {
     reply: string;
     products?: Product[];
   };
@@ -133,13 +134,11 @@ function parseProductCards(text: string): ProductCard[] | null {
 }
 
 function cleanContent(text: string): string {
-  return (
-    text
-      .replace(/\\n/g, "\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .replace(/[ \t]+$/gm, "")
-      .trim()
-  );
+  return text
+    .replace(/\\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
 }
 
 function renderMarkdown(text: string): string {
@@ -195,16 +194,14 @@ function applyInline(text: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StructuredProductCard({ product }: { product: Product }) {
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(price);
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0]?.id || product.defaultVariantId || "");
 
   // Lấy các hàm context của dự án
   const { addToCart } = useCart();
   const { toast } = useToasty();
 
-  const priceDisplay = product.priceMin === product.priceMax
-    ? formatPrice(product.priceMin)
-    : `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax)}`;
+  const priceDisplay = product.priceMin === product.priceMax ? formatPrice(product.priceMin) : `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax)}`;
 
   const originalPriceDisplay = product.originalPriceMin ? formatPrice(product.originalPriceMin) : "";
   const hasDiscount = !!(product.originalPriceMin && product.originalPriceMin > product.priceMin);
@@ -217,7 +214,7 @@ function StructuredProductCard({ product }: { product: Product }) {
       await addToCart(selectedVariant, 1, {
         productId: product.id,
         productName: product.name,
-        productSlug: product.slug || "", 
+        productSlug: product.slug || "",
         price: product.priceMin,
         originalPrice: product.originalPriceMin || product.priceMin,
         imageUrl: product.thumbnail,
@@ -230,7 +227,7 @@ function StructuredProductCard({ product }: { product: Product }) {
       });
     } catch (error: Error | unknown) {
       const errorMsg = error instanceof Error ? error.message : "Không thể thêm vào giỏ hàng";
-      
+
       // FIX TOAST: Thêm type: "error"
       toast({
         type: "error",
@@ -244,11 +241,7 @@ function StructuredProductCard({ product }: { product: Product }) {
     <div className="bg-white border border-neutral rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
       <div className="flex gap-2.5 p-2.5">
         <div className="w-[76px] shrink-0 bg-neutral-50 rounded-lg flex items-center justify-center p-1.5 relative border border-black/5">
-          {hasDiscount && (
-            <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg z-10 shadow-sm">
-              -{discountPercent}%
-            </div>
-          )}
+          {hasDiscount && <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg z-10 shadow-sm">-{discountPercent}%</div>}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={product.thumbnail} alt={product.name} className="w-full h-[64px] object-contain mix-blend-multiply" loading="lazy" />
           {!product.inStock && (
@@ -278,18 +271,33 @@ function StructuredProductCard({ product }: { product: Product }) {
                 value={selectedVariant}
                 onChange={(e) => setSelectedVariant(e.target.value)}
                 className="w-full text-[11.5px] font-medium px-2.5 py-1.5 rounded-lg border border-neutral bg-neutral-50 text-gray-900 focus:outline-none focus:border-accent appearance-none cursor-pointer shadow-sm"
-                style={{ backgroundImage: `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px top 50%', backgroundSize: '8px auto' }}
+                style={{
+                  backgroundImage: `url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 8px top 50%",
+                  backgroundSize: "8px auto",
+                }}
               >
                 {product.variants.map((v: Variant) => (
-                  <option key={v.id} value={v.id}>{v.label}</option>
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
                 ))}
               </select>
               <div className="flex items-center gap-1.5">
-               <button onClick={handleAddToCart} className="flex-1 flex items-center justify-center gap-1.5 text-[11.5px] px-2 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors active:scale-95 shadow-sm">
-                <ShoppingCart size={13} strokeWidth={2.5} />
-              </button>
+                <button
+                  onClick={handleAddToCart}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-[11.5px] px-2 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors active:scale-95 shadow-sm"
+                >
+                  <ShoppingCart size={13} strokeWidth={2.5} />
+                </button>
                 {product.productUrl && (
-                  <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="w-[30px] h-[30px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors shrink-0 shadow-sm">
+                  <a
+                    href={product.productUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-[30px] h-[30px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors shrink-0 shadow-sm"
+                  >
                     <ExternalLink size={15} />
                   </a>
                 )}
@@ -297,11 +305,19 @@ function StructuredProductCard({ product }: { product: Product }) {
             </div>
           ) : product.defaultVariantId ? (
             <div className="flex items-center gap-1.5 mt-2">
-              <button onClick={handleAddToCart} className="flex-1 flex items-center justify-center gap-1 text-[11.5px] px-2 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 font-semibold hover:bg-sky-100 transition-colors active:scale-95 shadow-sm">
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 flex items-center justify-center gap-1 text-[11.5px] px-2 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 font-semibold hover:bg-sky-100 transition-colors active:scale-95 shadow-sm"
+              >
                 <ShoppingCart size={13} /> Mua ngay
               </button>
               {product.productUrl && (
-                <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="w-[30px] h-[30px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors shrink-0 shadow-sm">
+                <a
+                  href={product.productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-[30px] h-[30px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors shrink-0 shadow-sm"
+                >
                   <ExternalLink size={15} />
                 </a>
               )}
@@ -309,7 +325,12 @@ function StructuredProductCard({ product }: { product: Product }) {
           ) : (
             <div className="flex items-center gap-1.5 mt-2">
               {product.productUrl && (
-                <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1 text-[11.5px] px-2 py-1.5 rounded-lg bg-accent/10 border border-accent/20 text-accent font-semibold hover:bg-accent/20 transition-colors shadow-sm">
+                <a
+                  href={product.productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-1 text-[11.5px] px-2 py-1.5 rounded-lg bg-accent/10 border border-accent/20 text-accent font-semibold hover:bg-accent/20 transition-colors shadow-sm"
+                >
                   Xem tuỳ chọn
                 </a>
               )}
@@ -335,7 +356,9 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
                   alt={card.imageAlt ?? card.name ?? "Product"}
                   className="w-full h-[60px] object-contain"
                   loading="lazy"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
                 />
               </div>
             )}
@@ -355,7 +378,11 @@ function ProductCardGrid({ cards }: { cards: ProductCard[] }) {
               )}
 
               <div className="flex items-center justify-between gap-2 mt-1.5">
-                {card.promo ? <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">{card.promo}</span> : <span></span>}
+                {card.promo ? (
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">{card.promo}</span>
+                ) : (
+                  <span></span>
+                )}
                 {card.link && (
                   <a
                     href={card.link}
@@ -390,11 +417,11 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
     const cleanedContent = cleanContent(msg.content);
     if (hasStructuredProducts) {
       if (cleanedContent.match(/^\d+\.\s/m)) {
-        introText = cleanedContent.split('\n\n')[0] || cleanedContent.substring(0, 100);
+        introText = cleanedContent.split("\n\n")[0] || cleanedContent.substring(0, 100);
       } else {
         introText = cleanedContent;
       }
-      introText = introText.replace(/^\d+\.\s.+/gm, '').trim();
+      introText = introText.replace(/^\d+\.\s.+/gm, "").trim();
     } else {
       productCards = parseProductCards(cleanedContent);
       if (productCards) {
@@ -410,11 +437,7 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
   return (
     <div className={`flex items-end gap-1.5 ${isUser ? "flex-row-reverse" : "flex-row"} ${isNew ? "chat-msg-enter" : ""}`}>
       <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center ${isUser ? "bg-accent/20" : "bg-accent/10"} mb-1`}>
-        {isUser ? (
-          <User size={12} className="text-accent" />
-        ) : (
-          <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={16} height={16} className="object-contain rounded-full" />
-        )}
+        {isUser ? <User size={12} className="text-accent" /> : <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={16} height={16} className="object-contain rounded-full" />}
       </div>
 
       {isUser ? (
@@ -428,7 +451,9 @@ function MessageBubble({ msg, isNew }: { msg: Message; isNew?: boolean }) {
             />
           )}
           <div className="flex flex-col gap-2.5 w-full mt-1">
-            {msg.products!.map((p, i) => <StructuredProductCard key={i} product={p} />)}
+            {msg.products!.map((p, i) => (
+              <StructuredProductCard key={i} product={p} />
+            ))}
           </div>
         </div>
       ) : productCards ? (
@@ -923,20 +948,28 @@ export default function ChatButton() {
         type="button"
         onClick={isOpen ? closePanel : openPanel}
         aria-label="Chat support"
-        className={`relative rounded-full bg-white border border-neutral-100 flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)] transition-all duration-300 select-none active:scale-90 overflow-visible cursor-pointer
-          ${sheetOpen ? "opacity-0 pointer-events-none" : "opacity-100"}
-        `}
+        className={`relative rounded-full bg-white border border-neutral-100 flex items-center justify-center
+    shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)]
+    transition-all duration-300 select-none active:scale-90 overflow-visible cursor-pointer
+    ${sheetOpen ? "opacity-0 pointer-events-none" : "opacity-100"}
+  `}
         style={{ ...btnStyle, width: size, height: size }}
       >
-        {hasUnread && <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white z-10 unread-pulse" />}
+        {hasUnread && <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white z-10 animate-[unreadPulse_1.8s_ease-in-out_infinite]" />}
         {!hasUnread && !isOpen && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white z-10" />}
 
         {isOpen ? (
-          <X size={isOpen ? 16 : 18} strokeWidth={2.5} className="text-neutral-600 transition-all duration-300" />
+          <X size={16} strokeWidth={2.5} className="text-neutral-600" />
         ) : (
-          <div className="mascot-float transition-all duration-300 flex items-center justify-center cursor-pointer" style={{ width: size + 8, height: size + 8, marginTop: -4 }}>
-            <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={40} height={40} className="object-contain drop-shadow-md" />
-          </div>
+          <>
+            {/* Bubble nằm TRÊN button, dùng absolute */}
+            <ChatBubble />
+
+            {/* Mascot — giữ nguyên trong button, không wrap flex ngang nữa */}
+            <div className="animate-[mascotFloat_3s_ease-in-out_infinite] flex items-center justify-center" style={{ width: size, height: size }}>
+              <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={40} height={40} className="object-contain drop-shadow-md" />
+            </div>
+          </>
         )}
       </button>
     </>
