@@ -1,60 +1,96 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-const MESSAGES = ["👋 Xin chào, cần mình hỗ trợ gì không?", "💬 Mình luôn sẵn sàng giúp bạn!", "🛒 Tìm sản phẩm? Mình tư vấn ngay!"];
+const MESSAGES = ["Xin chào, cần mình hỗ trợ gì không?", "Mình luôn sẵn sàng giúp bạn!", "Tìm sản phẩm? Mình tư vấn ngay!"];
+
+const DISPLAY_TIME = 7000;
+const HIDDEN_TIME = 15000;
+const FADE_TIME = 300;
 
 export function ChatBubble() {
-  const [visible, setVisible] = useState(true);
   const [exiting, setExiting] = useState(false);
   const [chars, setChars] = useState<string[]>([]);
   const [typing, setTyping] = useState(true);
-  const idxRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const [visible, setVisible] = useState(true);
 
-  function type(text: string, onDone: () => void) {
-    const letters = [...text];
+  const idxRef = useRef(0);
+
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cycleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function fadeOut() {
+    setExiting(true);
+
+    cycleTimerRef.current = setTimeout(() => {
+      setVisible(false);
+
+      idxRef.current = (idxRef.current + 1) % MESSAGES.length;
+
+      cycleTimerRef.current = setTimeout(() => {
+        setVisible(true);
+
+        startMessage(idxRef.current);
+      }, HIDDEN_TIME);
+    }, FADE_TIME);
+  }
+
+  function startMessage(index: number) {
+    const letters = [...MESSAGES[index]];
+
     let i = 0;
+
     setChars([]);
+
     setTyping(true);
+
+    setExiting(false);
+
     function next() {
       if (i < letters.length) {
-        const c = letters[i++];
-        setChars((p) => [...p, c]);
-        timerRef.current = setTimeout(next, i === 1 ? 80 : 44);
-      } else {
-        setTyping(false);
-        timerRef.current = setTimeout(onDone, 120);
+        setChars((prev) => [...prev, letters[i]]);
+
+        i++;
+
+        typingTimerRef.current = setTimeout(next, i === 1 ? 80 : 44);
+
+        return;
       }
+
+      setTyping(false);
+
+      cycleTimerRef.current = setTimeout(() => {
+        fadeOut();
+      }, DISPLAY_TIME);
     }
+
     next();
   }
 
-  function hide() {
-    setExiting(true);
-    timerRef.current = setTimeout(() => {
-      setVisible(false);
-      setExiting(false);
-      idxRef.current = (idxRef.current + 1) % MESSAGES.length;
-      timerRef.current = setTimeout(show, 7000);
-    }, 300);
-  }
-
-  function show() {
-    setVisible(true);
-    type(MESSAGES[idxRef.current], () => {
-      timerRef.current = setTimeout(hide, 7000);
-    });
-  }
-
   useEffect(() => {
-    show();
-    return () => clearTimeout(timerRef.current);
+    startMessage(0);
+
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+
+      if (cycleTimerRef.current) {
+        clearTimeout(cycleTimerRef.current);
+      }
+    };
   }, []);
 
   if (!visible) return null;
 
   return (
-    <div className="absolute bottom-[calc(100%+14px)] right-[-4px] pointer-events-none z-20" style={{ width: "max-content", maxWidth: 180 }}>
+    <div
+      className="hidden md:block absolute bottom-[calc(100%+14px)] right-[-4px] pointer-events-none z-20"
+      style={{
+        width: "max-content",
+        maxWidth: 180,
+      }}
+    >
       {/* Cloud body */}
       <div
         className={`
