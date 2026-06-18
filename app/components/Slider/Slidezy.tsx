@@ -320,44 +320,58 @@ export default function Slidezy({
   // ─── Autoplay ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!autoplay || !showNav || !isInitializedRef.current) return;
+    if (!autoplay || !showNav) return;
 
-    const startAutoplay = () => {
-      if (autoplayTimerRef.current) return;
-      autoplayTimerRef.current = setInterval(() => {
-        const _loop = loopRef.current;
-        const _maxIndex = maxIndexRef.current;
-        const _slideByValue = slideByValueRef.current;
-        if (!_loop && currentIndexRef.current >= _maxIndex) {
-          setCurrentIndex(0);
-          updatePositionRef.current(0);
-        } else {
-          moveSlideRef.current(_slideByValue);
+    // Chờ initialization xong (setTimeout 0 trong init effect) rồi mới start
+    const initDelay = setTimeout(() => {
+      const stopAutoplay = () => {
+        if (autoplayTimerRef.current !== null) {
+          clearInterval(autoplayTimerRef.current);
+          autoplayTimerRef.current = null;
         }
-      }, autoplayTimeout);
-    };
+      };
 
-    const stopAutoplay = () => {
+      const startAutoplay = () => {
+        // Luôn clear timer cũ trước khi tạo mới — tránh duplicate interval
+        // và tránh closure cũ bị giữ lại sau hover/resume
+        stopAutoplay();
+        autoplayTimerRef.current = setInterval(() => {
+          const _loop = loopRef.current;
+          const _maxIndex = maxIndexRef.current;
+          const _slideByValue = slideByValueRef.current;
+          if (!_loop && currentIndexRef.current >= _maxIndex) {
+            setCurrentIndex(0);
+            updatePositionRef.current(0);
+          } else {
+            moveSlideRef.current(_slideByValue);
+          }
+        }, autoplayTimeout);
+      };
+
+      startAutoplay();
+
+      if (autoplayHoverPause && containerRef.current) {
+        const container = containerRef.current;
+        container.addEventListener("mouseenter", stopAutoplay);
+        container.addEventListener("mouseleave", startAutoplay);
+        // cleanup được gọi khi effect re-run hoặc unmount
+        return () => {
+          container.removeEventListener("mouseenter", stopAutoplay);
+          container.removeEventListener("mouseleave", startAutoplay);
+          stopAutoplay();
+        };
+      }
+
+      return () => stopAutoplay();
+    }, 0);
+
+    return () => {
+      clearTimeout(initDelay);
       if (autoplayTimerRef.current !== null) {
         clearInterval(autoplayTimerRef.current);
         autoplayTimerRef.current = null;
       }
     };
-
-    startAutoplay();
-
-    if (autoplayHoverPause && containerRef.current) {
-      const container = containerRef.current;
-      container.addEventListener("mouseenter", stopAutoplay);
-      container.addEventListener("mouseleave", startAutoplay);
-      return () => {
-        container.removeEventListener("mouseenter", stopAutoplay);
-        container.removeEventListener("mouseleave", startAutoplay);
-        stopAutoplay();
-      };
-    }
-
-    return () => stopAutoplay();
   }, [autoplay, autoplayTimeout, autoplayHoverPause, showNav]);
   // ↑ deps tối giản — tất cả giá trị thay đổi được đọc qua refs bên trong
 
