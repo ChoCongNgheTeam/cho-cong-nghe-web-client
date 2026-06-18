@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const ZALO_URL = "https://zalo.me/YOUR_ZALO_NUMBER";
+const ZALO_URL = "https://zalo.me/0815934934";
 
 export default function ZaloButton() {
   return (
