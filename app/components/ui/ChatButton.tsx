@@ -3,14 +3,9 @@ import apiRequest from "@/lib/api";
 import { X, Send, User, RotateCcw, Maximize2, Minimize2, CornerDownLeft, ShoppingCart, ExternalLink, Tag } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-// Đã thêm Import useCart và useToasty từ hệ thống của bạn
 import { useCart } from "@/hooks/useCart";
 import { useToasty } from "@/components/Toast";
 import { ChatBubble } from "./ChatBubble";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES & CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface Message {
   role: "user" | "assistant";
@@ -40,7 +35,7 @@ const MAX_H = 700;
 // Button
 const BTN_SIZE = 48;
 const BTN_RIGHT = 10;
-const BTN_BOTTOM_MOBILE = 170;
+const BTN_BOTTOM_MOBILE = 220;
 const BTN_BOTTOM_DESKTOP = 125;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -512,17 +507,21 @@ export default function ChatButton() {
 
   useEffect(() => {
     const checkMobile = () => setMobile(window.innerWidth <= 768);
-    checkMobile();
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed: Message[] = JSON.parse(stored);
-        if (Array.isArray(parsed)) setMessages(parsed);
+
+    // Đẩy tất cả state cập nhật xuống sau render hiện tại
+    setTimeout(() => {
+      checkMobile();
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed: Message[] = JSON.parse(stored);
+          if (Array.isArray(parsed)) setMessages(parsed);
+        }
+      } catch {
+        // Ignore parsing errors
       }
-    } catch {
-      // Ignore parsing errors
-    }
-    setReady(true);
+      setReady(true);
+    }, 0);
 
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -546,8 +545,10 @@ export default function ChatButton() {
 
   useEffect(() => {
     if (isOpen) {
-      setHasUnread(false);
-      setTimeout(() => inputRef.current?.focus(), 150);
+      setTimeout(() => {
+        setHasUnread(false);
+        inputRef.current?.focus();
+      }, 150);
     }
   }, [isOpen]);
 
