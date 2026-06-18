@@ -10,9 +10,6 @@ import { useUserMenu } from "@/hooks/useUserMenu";
 import { useTheme } from "@/hooks/useTheme";
 import { TrendingBar } from "./components/TrendingBar";
 
-// ── Dark navy premium gradient ─────────────────────────────────────────────────
-// Top → bottom: #0a1628 (rất tối) → #0f1f4a (navy) → #1a3580 (xanh đậm)
-// Tạo chiều sâu rõ ràng, HeaderTop tối hơn main bar một bậc
 const HEADER_BG = "linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%)";
 
 const Header = () => {

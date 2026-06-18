@@ -2,8 +2,6 @@ import { ShoppingBag, Truck, User } from "lucide-react";
 import LinkWithIcon from "./LinkWithIcon";
 import { HeaderTopProps } from "../types";
 
-// HeaderTop dùng nền trong suốt (overlay rgba(0,0,0,0.25) được set ở header.tsx)
-// Text/icon giảm opacity thêm để tạo cảm giác "phụ" so với main bar bên dưới
 const HeaderTop: React.FC<HeaderTopProps> = ({ isAuthenticated }) => {
   return (
     <div className="hidden md:block">
