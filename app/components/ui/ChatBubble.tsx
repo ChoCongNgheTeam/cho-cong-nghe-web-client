@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-const MESSAGES = ["Xin chào, cần mình hỗ trợ gì không?", "Mình luôn sẵn sàng giúp bạn!", "Tìm sản phẩm? Mình tư vấn ngay!"];
+const MESSAGES = ["👋 Xin chào, cần mình hỗ trợ gì không?", "💬 Mình luôn sẵn sàng giúp bạn!", "🛒 Tìm sản phẩm? Mình tư vấn ngay!"];
 
 const DISPLAY_TIME = 7000;
 const HIDDEN_TIME = 15000;
