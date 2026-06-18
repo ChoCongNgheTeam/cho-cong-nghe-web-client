@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Menu, ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, Sparkles, Zap, Watch, Monitor, Apple } from "lucide-react";
+import React, { useState, useEffect, useRef, memo, useCallback } from "react";
+import { Menu, ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, Sparkles, Zap, Monitor, Apple } from "lucide-react";
 import apiRequest from "@/lib/api";
 import Link from "next/link";
 
@@ -17,8 +17,8 @@ interface ApiResponse {
   message: string;
 }
 
-const BrandGrid = ({ brands }: { brands: Category[] }) => {
-  const brandIcons: Record<string, any> = {
+const BrandGrid = memo(({ brands }: { brands: Category[] }) => {
+  const brandIcons: Record<string, React.ElementType> = {
     "apple-iphone": Apple,
     samsung: Zap,
     xiaomi: Sparkles,
@@ -50,9 +50,11 @@ const BrandGrid = ({ brands }: { brands: Category[] }) => {
       </div>
     </div>
   );
-};
+});
 
-const HotItemList = ({ items }: { items: { name: string; badge?: string }[] }) => (
+BrandGrid.displayName = "BrandGrid";
+
+const HotItemList = memo(({ items }: { items: { name: string; badge?: string }[] }) => (
   <div className="mb-6">
     <h4 className="text-sm font-semibold text-primary mb-4 flex items-center gap-2">
       <Zap className="w-4 h-4 text-promotion" />
@@ -67,9 +69,11 @@ const HotItemList = ({ items }: { items: { name: string; badge?: string }[] }) =
       ))}
     </div>
   </div>
-);
+));
 
-const PriceRangeList = ({ priceCategories }: { priceCategories: Category[] }) => (
+HotItemList.displayName = "HotItemList";
+
+const PriceRangeList = memo(({ priceCategories }: { priceCategories: Category[] }) => (
   <div className="pt-6 border-t border-neutral">
     <h4 className="text-sm font-semibold text-primary-light mb-4 flex items-center gap-2">💰 Theo mức giá</h4>
     <div className="flex flex-wrap gap-2">
@@ -80,11 +84,12 @@ const PriceRangeList = ({ priceCategories }: { priceCategories: Category[] }) =>
       ))}
     </div>
   </div>
-);
+));
+PriceRangeList.displayName = "PriceRangeList";
 
-const CategoryList = ({ categories, activeCategory, onHover }: { categories: Category[]; activeCategory: Category | null; onHover: (category: Category) => void }) => {
+const CategoryList = memo(({ categories, activeCategory, onHover }: { categories: Category[]; activeCategory: Category | null; onHover: (category: Category) => void }) => {
   const getIcon = (slug: string) => {
-    const icons: Record<string, any> = {
+    const icons: Record<string, React.ElementType> = {
       "dien-thoai": Smartphone,
       laptop: Laptop,
       "dien-may": Tv,
@@ -122,9 +127,10 @@ const CategoryList = ({ categories, activeCategory, onHover }: { categories: Cat
       })}
     </div>
   );
-};
+});
+CategoryList.displayName = "CategoryList";
 
-const MegaPanel = ({ category }: { category: Category | null }) => {
+const MegaPanel = memo(({ category }: { category: Category | null }) => {
   if (!category) return null;
 
   const brands = category.children?.filter((child) => ["apple-iphone", "samsung", "xiaomi", "oppo", "honor"].includes(child.slug));
@@ -175,7 +181,8 @@ const MegaPanel = ({ category }: { category: Category | null }) => {
       {priceCategory && priceCategory.children && <PriceRangeList priceCategories={priceCategory.children} />}
     </div>
   );
-};
+});
+MegaPanel.displayName = "MegaPanel";
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
@@ -188,28 +195,42 @@ export default function CategoryMegaMenu() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const fetchCategories = async () => {
+      try {
+        const result = await apiRequest.get<ApiResponse>("/categories/tree", { noAuth: true });
+        if (cancelled) return; // tránh setState sau khi unmount
+        setCategories(result.data);
+        if (result.data[0]) setActiveCategory(result.data[0]);
+      } catch (error) {
+        if (!cancelled) console.error("Error fetching categories:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     fetchCategories();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const fetchCategories = async () => {
-    try {
-      const result = await apiRequest.get<ApiResponse>("/categories/tree", { noAuth: true });
-      setCategories(result.data);
-      if (result.data[0]) setActiveCategory(result.data[0]);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     setIsOpen(true);
-  };
-  const handleMouseLeave = () => {
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
     closeTimer.current = setTimeout(() => setIsOpen(false), 120);
-  };
+  }, []);
+
+  // useCallback để CategoryList không re-render khi CategoryMegaMenu re-render
+  const handleCategoryHover = useCallback((category: Category) => {
+    setActiveCategory(category);
+  }, []);
+
+  const handlePanelClick = useCallback(() => setIsOpen(false), []);
 
   if (loading) {
     return (
@@ -237,9 +258,11 @@ export default function CategoryMegaMenu() {
           isOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
         ].join(" ")}
         style={{ height: "520px", width: "1264px" }}
-        onClick={() => setIsOpen(false)}
+        onClick={handlePanelClick}
       >
-        <CategoryList categories={categories} activeCategory={activeCategory} onHover={setActiveCategory} />
+        {/* CategoryList nhận categories là stable ref → memo có tác dụng */}
+        <CategoryList categories={categories} activeCategory={activeCategory} onHover={handleCategoryHover} />
+        {/* MegaPanel chỉ re-render khi activeCategory thực sự thay đổi */}
         <MegaPanel category={activeCategory} />
       </div>
 
