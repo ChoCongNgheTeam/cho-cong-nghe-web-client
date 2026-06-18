@@ -29,7 +29,7 @@ interface ChatResponse {
 const STORAGE_KEY = "cho-cong-nghe:chat-history";
 const MAX_STORED = 20;
 
-const QUICK_REPLIES = ["Có iPhone 15 không?", "Laptop dưới 15 triệu?", "Tai nghe không dây tốt?", "Chuột gaming giá rẻ?"];
+const QUICK_REPLIES = ["Có iPhone 16 không?", "Laptop dưới 15 triệu?", "Tai nghe không dây tốt?", "Chuột gaming giá rẻ?"];
 
 // Panel sizes
 const NORMAL_W = 380;
@@ -38,10 +38,10 @@ const MAX_W = 580;
 const MAX_H = 700;
 
 // Button
-const BTN_SIZE = 56;
-const BTN_RIGHT = 22;
-const BTN_BOTTOM_MOBILE = 130;
-const BTN_BOTTOM_DESKTOP = 80;
+const BTN_SIZE = 48;
+const BTN_RIGHT = 10;
+const BTN_BOTTOM_MOBILE = 170;
+const BTN_BOTTOM_DESKTOP = 125;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCT CARD PARSER (Markdown Fallback)
