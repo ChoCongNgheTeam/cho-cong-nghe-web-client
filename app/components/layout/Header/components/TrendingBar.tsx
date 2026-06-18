@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useRef, useState, useLayoutEffect, memo } from "react";
 import { fetchTrendingKeywords, TrendingKeyword } from "../_libs/getTopKeywords";
 
 function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
@@ -101,7 +101,7 @@ function Skeleton() {
   );
 }
 
-export const TrendingBar = ({ className }: { className?: string }) => {
+export const TrendingBar = memo(({ className }: { className?: string }) => {
   const [keywords, setKeywords] = useState<TrendingKeyword[]>([]);
   const [loading, setLoading] = useState(true);
   const [marginLeft, setMarginLeft] = useState<number | null>(null);
@@ -143,4 +143,6 @@ export const TrendingBar = ({ className }: { className?: string }) => {
       </div>
     </div>
   );
-};
+});
+
+TrendingBar.displayName = "TrendingBar";

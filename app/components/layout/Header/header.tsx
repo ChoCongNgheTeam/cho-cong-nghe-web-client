@@ -7,7 +7,6 @@ import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
 import MobileBottomNav from "./components/MobileBottomNav";
 import { useUserMenu } from "@/hooks/useUserMenu";
-import { useTheme } from "@/hooks/useTheme";
 import { TrendingBar } from "./components/TrendingBar";
 
 const HEADER_BG = "linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%)";
@@ -15,9 +14,6 @@ const HEADER_BG = "linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%
 const Header = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [isPastTop, setIsPastTop] = useState(false);
-
-  const headerRef = useRef<HTMLDivElement>(null);
-  const placeholderRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
   const scrollAccum = useRef(0);
@@ -26,27 +22,6 @@ const Header = () => {
 
   const { user, logout, isAuthenticated, loading } = useAuth();
   const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
-  const { isDark } = useTheme();
-
-  // ResizeObserver — sync placeholder height & CSS var
-  useEffect(() => {
-    if (!headerRef.current) return;
-    const updateHeight = () => {
-      const h = headerRef.current?.offsetHeight;
-      if (!h) return;
-      if (placeholderRef.current) placeholderRef.current.style.height = `${h}px`;
-      document.documentElement.style.setProperty("--header-height", `${h}px`);
-    };
-    updateHeight();
-    const ro = new ResizeObserver(updateHeight);
-    ro.observe(headerRef.current);
-    return () => ro.disconnect();
-  }, []);
-
-  // Sync --header-visible CSS var
-  useEffect(() => {
-    document.documentElement.style.setProperty("--header-visible", isVisible ? "1" : "0");
-  }, [isVisible]);
 
   // Hide-on-scroll
   useEffect(() => {
@@ -106,11 +81,7 @@ const Header = () => {
 
   return (
     <>
-      <div ref={placeholderRef} aria-hidden="true" />
-
-      {/* ── Fixed Top Header ─────────────────────────────────── */}
       <div
-        ref={headerRef}
         className={[
           "fixed top-0 left-0 right-0 z-50",
           "w-full transition-transform duration-300 ease-in-out",
@@ -132,12 +103,11 @@ const Header = () => {
 
         <div className="container">
           {/* Mobile */}
-          <MobileHeader isDarkMode={isDark} mobileMenuOpen={false} mobileSearchOpen={false} searchQuery="" onMenuToggle={() => {}} onSearchToggle={() => {}} onSearchChange={() => {}} />
+          <MobileHeader />
 
           {/* Desktop */}
           <div className="py-2">
             <DesktopHeader
-              isDarkMode={isDark}
               isAuthenticated={isAuthenticated}
               isLoading={loading}
               user={user}
@@ -155,7 +125,6 @@ const Header = () => {
         <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
       </div>
 
-      {/* ── Mobile Bottom Tab Bar ──────────────────────────── */}
       <MobileBottomNav />
     </>
   );

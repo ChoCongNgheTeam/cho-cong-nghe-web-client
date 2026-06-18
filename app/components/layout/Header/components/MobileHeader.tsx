@@ -14,7 +14,7 @@ import { useGeneralSettings } from "@/hooks/useGeneralSettings";
 
 const FALLBACK_LOGO = "/logo-dark-5.png";
 
-const MobileHeader = ({ isDarkMode }: MobileHeaderProps) => {
+const MobileHeader = () => {
   const router = useRouter();
   const { items } = useCompareStore();
   const { user } = useAuth();

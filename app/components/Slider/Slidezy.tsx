@@ -1,4 +1,3 @@
-// components/Slidezy/Slidezy.tsx
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback, Children } from "react";
@@ -79,9 +78,7 @@ export default function Slidezy({
   const actualItemsCount = Math.min(itemsCount, slideCount);
   const showNav = slideCount > actualItemsCount;
 
-  const cloneCount = loop && slideCount > actualItemsCount
-  ? Math.max(actualItemsCount, slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1)
-  : 0;
+  const cloneCount = loop && slideCount > actualItemsCount ? Math.max(actualItemsCount, slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1) : 0;
 
   const slides = (() => {
     if (!loop || cloneCount === 0) return originalSlides;
@@ -90,12 +87,8 @@ export default function Slidezy({
     return [...cloneHead, ...originalSlides, ...cloneTail];
   })();
 
-  const maxIndex = loop
-    ? slides.length
-    : Math.max(0, slideCount - actualItemsCount); 
-  const slideByValue = slideBy === "page"
-  ? actualItemsCount
-  : typeof slideBy === "number" ? slideBy : 1;
+  const maxIndex = loop ? slides.length : Math.max(0, slideCount - actualItemsCount);
+  const slideByValue = slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1;
 
   // ─── Position helpers ─────────────────────────────────────────────────────
 
@@ -359,7 +352,7 @@ export default function Slidezy({
   const handleTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX);
   const handleTouchMove = (e: React.TouchEvent) => handleDragMove(e.touches[0].clientX);
   const handleTouchEnd = () => handleDragEnd();
- 
+
   // ─── Nav dots state ───────────────────────────────────────────────────────
 
   const pageCount = Math.ceil((slideCount - actualItemsCount + 1) / slideByValue);
@@ -391,7 +384,7 @@ export default function Slidezy({
   //  │   [prev button]  [next button]             ← không bị clip
   //  └─ /containerRef
   const atStart = !loop && realCurrentIndex <= 0;
-  const atEnd   = !loop && realCurrentIndex >= slideCount - actualItemsCount;
+  const atEnd = !loop && realCurrentIndex >= slideCount - actualItemsCount;
   return (
     <div ref={containerRef} className={`w-full relative ${className}`}>
       {/* Clip wrapper — chỉ bao track, không bao arrow */}
@@ -468,9 +461,7 @@ export default function Slidezy({
               key={index}
               onClick={() => goToSlide(index)}
               disabled={isAnimating}
-              className={`h-2 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${
-                getActivePage() === index ? "w-8 bg-gray-800" : "w-2 bg-gray-300 hover:bg-gray-400"
-              }`}
+              className={`h-2 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${getActivePage() === index ? "w-8 bg-gray-800" : "w-2 bg-gray-300 hover:bg-gray-400"}`}
               aria-label={`Go to page ${index + 1}`}
             />
           ))}

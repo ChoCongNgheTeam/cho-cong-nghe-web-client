@@ -4,7 +4,6 @@ export interface HeaderTopProps {
 
 export interface DesktopHeaderProps {
   searchQuery: string;
-  isDarkMode: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
   user: {
@@ -30,7 +29,6 @@ export interface MobileHeaderProps {
   mobileMenuOpen: boolean;
   mobileSearchOpen: boolean;
   searchQuery: string;
-  isDarkMode: boolean;
   onMenuToggle: () => void;
   onSearchToggle: () => void;
   onSearchChange: (query: string) => void;
