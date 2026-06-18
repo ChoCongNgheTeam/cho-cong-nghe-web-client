@@ -102,21 +102,15 @@ const KEYFRAMES = `
     from { width: 0% }
     to   { width: 100% }
   }
-
-  /* Float chính — lên xuống */
   @keyframes hsFloat {
     0%, 100% { transform: translateY(0px) rotate(0deg); }
     30%       { transform: translateY(-10px) rotate(0.4deg); }
     60%       { transform: translateY(-6px) rotate(-0.3deg); }
   }
-
-  /* Glow orb pulse — mạnh hơn cũ */
   @keyframes hsGlowPulse {
     0%, 100% { opacity: 0.7;  transform: translate(-50%, -50%) scale(1); }
     50%       { opacity: 1;    transform: translate(-50%, -50%) scale(1.18); }
   }
-
-  /* Ring rotate chậm để tạo cảm giác 3D sống */
   @keyframes hsRingRotate {
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to   { transform: translate(-50%, -50%) rotate(360deg); }
@@ -125,14 +119,10 @@ const KEYFRAMES = `
     from { transform: translate(-50%, -50%) rotate(0deg); }
     to   { transform: translate(-50%, -50%) rotate(-360deg); }
   }
-
-  /* Perspective grid scroll — tạo cảm giác lướt về phía trước */
   @keyframes hsPerspGridScroll {
     from { background-position: 50% 0%; }
     to   { background-position: 50% 100%; }
   }
-
-  /* Accent dot blink trên grid 3D */
   @keyframes hsDotBlink {
     0%, 90%, 100% { opacity: 0; }
     45%            { opacity: 1; }
@@ -208,45 +198,22 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
 
   return (
     <div
-      className="relative w-full overflow-hidden aspect-video md:aspect-[21/8]"
+      className="relative w-full overflow-hidden aspect-video md:aspect-21/8"
       style={{
-        background: "linear-gradient(160deg, #f0f5ff 0%, #dce8fb 40%, #eef3fd 70%, #f5f0ff 100%)",
+        // Dùng CSS vars để tự động đổi theo light/dark mode
+        background: `linear-gradient(160deg,
+          rgb(var(--neutral-light)) 0%,
+          rgb(var(--accent-light)) 40%,
+          rgb(var(--neutral-light-hover)) 70%,
+          rgb(var(--neutral-light-active)) 100%)`,
+        transition: "background 0.3s ease",
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       <style>{KEYFRAMES}</style>
 
-      {/* ── Layer 1: Perspective 3D grid ─────────────────────────────────────── */}
-      {/*
-        Kỹ thuật: dùng perspective + rotateX để tạo lưới "đổ về phía trước".
-        Vùng cuối (gần viewer) đậm + đen hơn → điểm nhấn mạnh mẽ như yêu cầu.
-        Chia làm 2 lớp:
-          a) Grid nền (mờ, xa)
-          b) Grid đậm foreground (gần, tối) — đây là "đoạn grid đậm màu đen"
-      */}
-
-      {/* a) Far grid — perspective nhẹ, mờ */}
-      {/* <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: "600px" }}>
-        <div
-          style={{
-            position: "absolute",
-            inset: "-20% -10% -10% -10%",
-            transform: "rotateX(55deg)",
-            transformOrigin: "50% 0%",
-            backgroundImage: `
-              linear-gradient(rgba(73,121,228,0.18) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(73,121,228,0.18) 1px, transparent 1px)
-            `,
-            backgroundSize: "52px 52px",
-            animation: "hsPerspGridScroll 8s linear infinite",
-            maskImage: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.7) 65%, black 100%)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.7) 65%, black 100%)",
-          }}
-        />
-      </div> */}
-
-      {/* b) Near grid — đậm + tối, tạo "điểm nhấn mạnh mẽ" ở vùng bên phải-dưới */}
+      {/* ── Layer 1: Perspective grid ─────────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: "400px" }}>
         <div
           style={{
@@ -255,8 +222,8 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
             transform: "rotateX(48deg) rotateZ(-4deg)",
             transformOrigin: "50% 0%",
             backgroundImage: `
-              linear-gradient(rgba(10,20,60,0.45) 1.5px, transparent 1.5px),
-              linear-gradient(90deg, rgba(10,20,60,0.45) 1.5px, transparent 1.5px)
+              linear-gradient(rgb(var(--accent) / 0.3) 1.5px, transparent 1.5px),
+              linear-gradient(90deg, rgb(var(--accent) / 0.3) 1.5px, transparent 1.5px)
             `,
             backgroundSize: "38px 38px",
             animation: "hsPerspGridScroll 6s linear infinite",
@@ -264,7 +231,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
             WebkitMaskImage: "linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.6) 40%, black 75%, transparent 100%)",
           }}
         />
-        {/* Accent: vài intersection dot sáng lên — hiệu ứng "circuit" */}
+        {/* Accent dots (circuit feel) — dùng CSS var accent */}
         {[
           { top: "52%", left: "62%", delay: "0s" },
           { top: "64%", left: "70%", delay: "1.2s" },
@@ -281,8 +248,8 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
               width: "4px",
               height: "4px",
               borderRadius: "50%",
-              background: "rgba(73,121,228,0.9)",
-              boxShadow: "0 0 6px 2px rgba(73,121,228,0.5)",
+              background: "rgb(var(--accent))",
+              boxShadow: "0 0 6px 2px rgb(var(--accent) / 0.5)",
               animation: `hsDotBlink 3s ease-in-out ${dot.delay} infinite`,
             }}
           />
@@ -294,9 +261,9 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         className="pointer-events-none absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse 55% 80% at 78% 50%, rgba(73,121,228,0.16) 0%, transparent 65%),
-            radial-gradient(ellipse 40% 55% at 15% 28%, rgba(123,94,167,0.1) 0%, transparent 65%),
-            radial-gradient(ellipse 28% 38% at 52% 90%, rgba(73,121,228,0.1) 0%, transparent 60%)
+            radial-gradient(ellipse 55% 80% at 78% 50%, rgb(var(--accent) / 0.12) 0%, transparent 65%),
+            radial-gradient(ellipse 40% 55% at 15% 28%, rgb(var(--accent-dark) / 0.08) 0%, transparent 65%),
+            radial-gradient(ellipse 28% 38% at 52% 90%, rgb(var(--accent) / 0.08) 0%, transparent 60%)
           `,
         }}
       />
@@ -310,12 +277,15 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         }}
       />
 
-      {/* ── Layer 4: Bottom fade ─────────────────────────────────────────────── */}
+      {/* ── Layer 4: Bottom fade — dùng var để đổi theo theme ───────────────── */}
       <div
         className="pointer-events-none absolute bottom-0 left-0 right-0 z-10"
         style={{
           height: "28%",
-          background: "linear-gradient(to bottom, transparent 0%, rgba(247,247,247,0.55) 60%, #f7f7f7 100%)",
+          background: `linear-gradient(to bottom,
+            transparent 0%,
+            rgb(var(--neutral-light) / 0.55) 60%,
+            rgb(var(--neutral-light)) 100%)`,
         }}
       />
 
@@ -324,7 +294,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         key={`prog-${current}`}
         className="absolute bottom-0 left-0 h-[3px] z-20"
         style={{
-          background: "linear-gradient(90deg, #4979E4, #7b5ea7)",
+          background: `linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent-dark)))`,
           animation: visible ? "hsProgress 5.5s linear forwards" : "none",
           width: visible ? undefined : "0%",
           borderRadius: "0 2px 2px 0",
@@ -336,29 +306,32 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       <div className="container relative z-10 grid grid-cols-2 items-center h-full gap-[3%]">
         {/* LEFT: text */}
         <div className="flex flex-col pl-4">
-          <h2 className="font-extrabold leading-tight py-1 tracking-tight text-[clamp(18px,3.6vw,56px)]" style={{ color: "#0f1f4a", ...textStyle(1) }}>
+          {/* Title — dùng primary-dark để đủ contrast cả sáng lẫn tối */}
+          <h2 className="font-extrabold leading-tight py-1 tracking-tight text-[clamp(18px,3.6vw,56px)] text-primary-dark" style={textStyle(1)}>
             {slide.title}
           </h2>
 
-          <p key={`sub-${current}`} className="leading-relaxed max-w-[34ch] text-[clamp(10px,1.1vw,17px)] mb-4 md:mb-[clamp(12px,2.2vw,30px)] mt-2" style={{ color: "#475fa8", ...textStyle(2) }}>
+          {/* Subtitle — dùng accent-dark */}
+          <p key={`sub-${current}`} className="leading-relaxed max-w-[34ch] text-[clamp(10px,1.1vw,17px)] mb-4 md:mb-[clamp(12px,2.2vw,30px)] mt-2 text-accent-dark" style={textStyle(2)}>
             {slide.subTitle}
           </p>
 
+          {/* CTA button — giữ gradient accent, không cần đổi */}
           <Link
             key={`cta-${current}`}
             href={slide.linkUrl ?? "#"}
             className="group inline-flex items-center gap-2 w-fit rounded-full font-semibold text-white px-[clamp(14px,1.8vw,28px)] py-[clamp(8px,1vw,13px)] text-[clamp(10px,0.95vw,15px)] transition-[box-shadow,transform,background-color] duration-200 active:scale-[0.97]"
             style={{
-              background: "linear-gradient(135deg, #4979E4, #6359c8)",
-              boxShadow: "0 4px 22px -4px rgba(73,121,228,0.55)",
+              background: `linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-dark)))`,
+              boxShadow: `0 4px 22px -4px rgb(var(--accent) / 0.55)`,
               ...textStyle(3),
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 30px -4px rgba(73,121,228,0.75)";
+              (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 30px -4px rgb(var(--accent) / 0.75)`;
               (e.currentTarget as HTMLElement).style.transform = "scale(1.03)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 22px -4px rgba(73,121,228,0.55)";
+              (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 22px -4px rgb(var(--accent) / 0.55)`;
               (e.currentTarget as HTMLElement).style.transform = "scale(1)";
             }}
           >
@@ -377,9 +350,9 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
           </Link>
         </div>
 
-        {/* RIGHT: product image with 3-layer glow + animated rings */}
+        {/* RIGHT: product image with glow + animated rings */}
         <div className="relative h-[78%]">
-          {/* Glow layer 1 — base ambient, mạnh hơn cũ (blur 80px) */}
+          {/* Glow layer 1 */}
           <div
             className="pointer-events-none absolute"
             style={{
@@ -387,14 +360,14 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
               left: "50%",
               width: "85%",
               aspectRatio: "1",
-              background: "radial-gradient(circle, rgba(73,121,228,0.30) 0%, rgba(123,94,167,0.14) 45%, transparent 70%)",
+              background: `radial-gradient(circle, rgb(var(--accent) / 0.28) 0%, rgb(var(--accent-dark) / 0.12) 45%, transparent 70%)`,
               borderRadius: "50%",
               filter: "blur(28px)",
               animation: "hsGlowPulse 3.5s ease-in-out infinite",
             }}
           />
 
-          {/* Glow layer 2 — inner hot spot, màu trắng xanh */}
+          {/* Glow layer 2 */}
           <div
             className="pointer-events-none absolute"
             style={{
@@ -402,14 +375,14 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
               left: "50%",
               width: "45%",
               aspectRatio: "1",
-              background: "radial-gradient(circle, rgba(180,210,255,0.35) 0%, transparent 70%)",
+              background: `radial-gradient(circle, rgb(var(--accent-light-active) / 0.35) 0%, transparent 70%)`,
               borderRadius: "50%",
               filter: "blur(16px)",
               animation: "hsGlowPulse 2.8s ease-in-out 0.4s infinite",
             }}
           />
 
-          {/* Ring 1 — xoay chậm, đậm hơn cũ */}
+          {/* Ring 1 */}
           <span
             className="pointer-events-none absolute"
             style={{
@@ -418,12 +391,12 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
               width: "86%",
               aspectRatio: "1",
               borderRadius: "50%",
-              border: "1.5px solid rgba(73,121,228,0.28)",
+              border: `1.5px solid rgb(var(--accent) / 0.28)`,
               animation: "hsRingRotate 18s linear infinite",
             }}
           />
 
-          {/* Ring 2 — ngược chiều, to hơn */}
+          {/* Ring 2 */}
           <span
             className="pointer-events-none absolute"
             style={{
@@ -432,13 +405,13 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
               width: "112%",
               aspectRatio: "1",
               borderRadius: "50%",
-              border: "1px solid rgba(73,121,228,0.13)",
-              borderTopColor: "rgba(73,121,228,0.35)",
+              border: `1px solid rgb(var(--accent) / 0.13)`,
+              borderTopColor: `rgb(var(--accent) / 0.35)`,
               animation: "hsRingRotateReverse 28s linear infinite",
             }}
           />
 
-          {/* Ring 3 — nhỏ, nhanh, dashed feel */}
+          {/* Ring 3 */}
           <span
             className="pointer-events-none absolute"
             style={{
@@ -447,7 +420,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
               width: "64%",
               aspectRatio: "1",
               borderRadius: "50%",
-              border: "1px dashed rgba(73,121,228,0.18)",
+              border: `1px dashed rgb(var(--accent) / 0.18)`,
               animation: "hsRingRotate 10s linear infinite",
             }}
           />
@@ -462,8 +435,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
                 sizes="(max-width: 768px) 90vw, 45vw"
                 className="object-contain object-center"
                 style={{
-                  // Shadow mạnh hơn nhiều — sản phẩm "nổi lên" thay vì "dán lên nền"
-                  filter: "drop-shadow(0 28px 55px rgba(30,60,180,0.22)) drop-shadow(0 8px 20px rgba(0,0,0,0.18))",
+                  filter: "drop-shadow(0 28px 55px rgb(var(--accent-dark) / 0.22)) drop-shadow(0 8px 20px rgb(var(--primary-dark) / 0.18))",
                 }}
                 quality={80}
                 priority={current === 0}
@@ -481,9 +453,9 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         disabled={animating}
         className="hidden md:flex cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-10 h-10 rounded-full shadow-md text-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          color: "#0f1f4a",
-          border: "0.5px solid rgba(73,121,228,0.2)",
+          background: `rgb(var(--neutral-light) / 0.88)`,
+          color: `rgb(var(--primary-dark))`,
+          border: `0.5px solid rgb(var(--accent) / 0.2)`,
           backdropFilter: "blur(6px)",
         }}
       >
@@ -497,9 +469,9 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         disabled={animating}
         className="hidden md:flex cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-10 h-10 rounded-full shadow-md text-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
         style={{
-          background: "rgba(255,255,255,0.88)",
-          color: "#0f1f4a",
-          border: "0.5px solid rgba(73,121,228,0.2)",
+          background: `rgb(var(--neutral-light) / 0.88)`,
+          color: `rgb(var(--primary-dark))`,
+          border: `0.5px solid rgb(var(--accent) / 0.2)`,
           backdropFilter: "blur(6px)",
         }}
       >
@@ -516,7 +488,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
             className="h-1.5 rounded-full border-none cursor-pointer transition-all duration-300"
             style={{
               width: i === current ? "24px" : "6px",
-              background: i === current ? "#4979E4" : "rgba(73,121,228,0.25)",
+              background: i === current ? `rgb(var(--accent))` : `rgb(var(--accent) / 0.25)`,
             }}
           />
         ))}

@@ -373,7 +373,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
   const isCountingDown = activeDate === todayDate && !!countdownEndDate;
 
   return (
-    <section className="py-6 md:py-8 bg-neutral-light">
+    <section className="py-1 md:py-3 bg-neutral-light">
       <div className="container">
         {/*
          * ✅ Outer shell:

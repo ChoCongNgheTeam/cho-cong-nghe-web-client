@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation"; // thêm useRouter
+import { usePathname, useRouter } from "next/navigation";
 import { Home, LayoutGrid, ShoppingBag, Bell, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -10,6 +10,21 @@ import MobileCategorySheet from "./MobileCategorySheet";
 import MobileNotificationSheet from "./MobileNotificationSheet";
 
 type SheetType = "category" | "notification" | null;
+
+type Tab =
+  | {
+      key: string;
+      href: string;
+      icon: typeof Home;
+      label: string;
+    }
+  | {
+      key: string;
+      icon: typeof Home;
+      label: string;
+      onTap: () => void;
+      badge?: number;
+    };
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -27,18 +42,37 @@ export default function MobileBottomNav() {
 
   const closeSheet = () => setOpenSheet(null);
 
-  const tabs = [
+  const tabs: Tab[] = [
     { key: "home", href: "/", icon: Home, label: "Trang chủ" },
-    { key: "category", icon: LayoutGrid, label: "Danh mục", onTap: () => setOpenSheet((s) => (s === "category" ? null : "category")) },
-    { key: "store", href: "/category/dien-thoai", icon: ShoppingBag, label: "Cửa hàng" },
+
+    {
+      key: "category",
+      icon: LayoutGrid,
+      label: "Danh mục",
+      onTap: () => setOpenSheet((s) => (s === "category" ? null : "category")),
+    },
+
+    {
+      key: "store",
+      href: "/category/dien-thoai",
+      icon: ShoppingBag,
+      label: "Cửa hàng",
+    },
+
     {
       key: "notification",
       icon: Bell,
       label: "Thông báo",
       badge: isAuthenticated ? unreadCount : 0,
-      onTap: () => (isAuthenticated ? setOpenSheet((s) => (s === "notification" ? null : "notification")) : router.push("/account")), // dùng router.push thay vì window.location.href
+      onTap: () => (isAuthenticated ? setOpenSheet((s) => (s === "notification" ? null : "notification")) : router.push("/account")),
     },
-    { key: "account", href: isAuthenticated ? "/profile" : "/account", icon: User, label: "Tài khoản" },
+
+    {
+      key: "account",
+      href: isAuthenticated ? "/profile" : "/account",
+      icon: User,
+      label: "Tài khoản",
+    },
   ];
 
   const commonClass = "flex-1 flex flex-col items-center justify-center gap-0.5 relative select-none active:scale-90 transition-transform duration-100 cursor-pointer";
@@ -47,9 +81,6 @@ export default function MobileBottomNav() {
     <>
       <MobileCategorySheet isOpen={openSheet === "category"} onClose={closeSheet} />
       <MobileNotificationSheet isOpen={openSheet === "notification"} onClose={closeSheet} />
-
-      {/* Spacer */}
-      {/* <div className="md:hidden h-[60px]" aria-hidden="true" /> */}
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[90] bg-neutral-light/95 backdrop-blur-md border-t border-neutral" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-stretch h-[60px]">
@@ -66,7 +97,7 @@ export default function MobileBottomNav() {
                     : false;
 
             const Icon = tab.icon;
-            const badge = (tab as any).badge ?? 0;
+            const badge = "badge" in tab ? (tab.badge ?? 0) : 0;
 
             const inner = (
               <>
@@ -83,16 +114,16 @@ export default function MobileBottomNav() {
               </>
             );
 
-            if ((tab as any).onTap) {
+            if ("onTap" in tab) {
               return (
-                <button key={tab.key} onClick={(tab as any).onTap} className={commonClass}>
+                <button key={tab.key} onClick={tab.onTap} className={commonClass}>
                   {inner}
                 </button>
               );
             }
 
             return (
-              <Link key={tab.key} href={(tab as any).href} className={commonClass}>
+              <Link key={tab.key} href={tab.href} className={commonClass}>
                 {inner}
               </Link>
             );

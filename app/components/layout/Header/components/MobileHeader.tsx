@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MobileHeaderProps } from "../types";
 import CartIcon from "@/(client)/cart/components/CartIcon";
 import SearchBar from "./SearchBar";
 import { TrendingBar } from "./TrendingBar";
