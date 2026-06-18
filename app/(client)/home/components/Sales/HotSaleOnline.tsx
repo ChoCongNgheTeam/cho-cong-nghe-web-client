@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, memo, useMemo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from "react";
 import { Slidezy } from "@/components/Slider";
 import { Flame, ChevronRight, Calendar } from "lucide-react";
 import HotSaleProductCard from "./HotSaleProductCard";
@@ -8,59 +8,7 @@ import apiRequest from "@/lib/api";
 import { formatTime as formatLocaleTime } from "@/helpers";
 import Link from "next/link";
 import { FeaturedProduct } from "../../types";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface SaleScheduleRule {
-  actionType: string;
-  discountValue: number | null;
-}
-
-interface SaleSchedulePromotion {
-  id: string;
-  name: string;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  priority: number;
-  targetsCount: number;
-  rules: SaleScheduleRule[];
-}
-
-interface SaleScheduleDay {
-  date: string;
-  isToday: boolean;
-  hasActiveSale: boolean;
-  promotions: SaleSchedulePromotion[];
-}
-
-export interface SaleProduct {
-  card: any;
-  pricingContext: any;
-}
-
-interface TodayProducts {
-  products: FeaturedProduct[];
-  total: number;
-  date: string;
-  startDate: string | null;
-  endDate: string | null;
-  promotions: Array<{ id: string; name: string; description: string | null; priority: number }>;
-}
-
-export interface HomeSaleScheduleData {
-  schedule: SaleScheduleDay[];
-  todayProducts: TodayProducts;
-}
-
-interface CachedDayData {
-  products: FeaturedProduct[];
-  total: number;
-  promotions: Array<{ id: string; name: string; description: string | null; priority: number }>;
-  endDate: string | null;
-}
+import type { SaleScheduleDay, SaleScheduleRule, HomeSaleScheduleData, CachedDayData, TodayProductPromotion, SaleByDateApiResponse } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -68,8 +16,6 @@ interface CachedDayData {
 
 const ACCENT_RED = "#e63946";
 const ACCENT_RED_DARK = "#c1121f";
-
-// Header navy — sync với site header xanh đậm
 const HEADER_BG_FROM = "#293b4f";
 const HEADER_BG_MID = "#203142";
 const HEADER_BG_TO = "#1e2d45";
@@ -89,7 +35,7 @@ function formatTime(dateStr: string | null): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COUNTDOWN — pill nổi, dấu ":" đỏ accent
+// COUNTDOWN
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DigitBox = memo(function DigitBox({ value }: { value: string }) {
@@ -104,11 +50,18 @@ const DigitBox = memo(function DigitBox({ value }: { value: string }) {
         height: "clamp(30px, 6vw, 40px)",
         borderRadius: 7,
         letterSpacing: "-0.01em",
-        // ✅ Ring trắng mỏng → digit cell nổi rõ trên nền navy
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.15)",
       }}
     >
       {value}
+    </span>
+  );
+});
+
+const Sep = memo(function Sep() {
+  return (
+    <span className="font-black select-none" style={{ color: ACCENT_RED, fontSize: "clamp(16px, 3vw, 22px)", lineHeight: 1, marginBottom: 1 }}>
+      :
     </span>
   );
 });
@@ -132,15 +85,7 @@ const Countdown = memo(function Countdown({ endDate, label }: { endDate: string 
 
   const pad = (n: number) => n.toString().padStart(2, "0");
 
-  // ✅ Separator đỏ accent thay vì trắng mờ → "bắn lửa" giữa các số
-  const Sep = () => (
-    <span className="font-black select-none" style={{ color: ACCENT_RED, fontSize: "clamp(16px, 3vw, 22px)", lineHeight: 1, marginBottom: 1 }}>
-      :
-    </span>
-  );
-
   return (
-    // ✅ Bọc trong pill tối + border trắng → cả khối countdown nổi như badge
     <div
       className="flex items-center gap-2 flex-wrap px-3 py-1.5 rounded-xl"
       style={{
@@ -165,10 +110,10 @@ const Countdown = memo(function Countdown({ endDate, label }: { endDate: string 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TAB ITEM
+// TAB ITEM — memo để không re-render khi Countdown tick
 // ─────────────────────────────────────────────────────────────────────────────
 
-function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; isActive: boolean; isLoading: boolean; onClick: () => void }) {
+const TabItem = memo(function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; isActive: boolean; isLoading: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -205,13 +150,13 @@ function TabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; 
       )}
     </button>
   );
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EMPTY STATE
 // ─────────────────────────────────────────────────────────────────────────────
 
-function EmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?: string }) {
+const EmptyState = memo(function EmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-6" style={{ minHeight: 320 }}>
       <Flame style={{ width: 72, height: 72, color: ACCENT_RED, opacity: 0.18 }} strokeWidth={1.5} />
@@ -225,20 +170,13 @@ function EmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?
       )}
     </div>
   );
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRODUCT GRID
+// PRODUCT GRID — memo + stable flashPromoRule để không re-render theo Countdown
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ProductGrid({ products, activeDay }: { products: FeaturedProduct[]; activeDay: SaleScheduleDay | undefined }) {
-  const flashPromoRule = useMemo(
-    () => activeDay?.promotions?.flatMap((p) => p.rules).find((r) => (r.actionType === "DISCOUNT_PERCENT" || r.actionType === "DISCOUNT_FIXED") && r.discountValue != null) ?? null,
-    [activeDay],
-  );
-
-  const isUpcoming = !!activeDay && !activeDay.isToday;
-
+const ProductGrid = memo(function ProductGrid({ products, flashPromoRule, isUpcoming }: { products: FeaturedProduct[]; flashPromoRule: SaleScheduleRule | null; isUpcoming: boolean }) {
   const renderCard = (item: FeaturedProduct, index: number) => {
     const product = {
       ...item,
@@ -267,17 +205,20 @@ function ProductGrid({ products, activeDay }: { products: FeaturedProduct[]; act
         items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }}
         gap={16}
         speed={300}
-        loop={false}
+        loop={true}
         nav={true}
         controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
         slideBy={1}
         draggable={true}
+        autoplay={true}
+        autoplayTimeout={7000}
+        autoplayHoverPause={true}
       >
         {products.map(renderCard)}
       </Slidezy>
     </div>
   );
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SKELETON
@@ -321,41 +262,64 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
     };
   });
 
-  const fetchProductsForDate = useCallback(
-    async (date: string) => {
-      if (productsCache[date] !== undefined) return;
-      setLoadingDate(date);
-      try {
-        const res = await apiRequest.get<any>("/home/sale-by-date", { params: { date, limit: 20 } });
-        const result = res.data;
-        setProductsCache((prev) => ({
-          ...prev,
-          [date]: {
-            products: result.data ?? [],
-            total: result.total ?? 0,
-            promotions: result.promotions ?? [],
-            endDate: result.endDate ?? null,
-          },
-        }));
-      } catch {
-        setProductsCache((prev) => ({
-          ...prev,
-          [date]: { products: [], total: 0, promotions: [], endDate: null },
-        }));
-      } finally {
-        setLoadingDate(null);
+  // Dùng ref để fetchProductsForDate không cần productsCache trong deps
+  // → tránh function tạo lại mỗi lần cache update
+  const productsCacheRef = useRef(productsCache);
+  useEffect(() => {
+    productsCacheRef.current = productsCache;
+  }, [productsCache]);
+
+  const fetchProductsForDate = useCallback(async (date: string) => {
+    // Đọc từ ref thay vì closure → deps [] stable
+    if (productsCacheRef.current[date] !== undefined) return;
+    setLoadingDate(date);
+    try {
+      // Truyền Generic chỉ định thẳng kiểu dữ liệu cho 'res'
+      const res = await apiRequest.get<SaleByDateApiResponse>("/home/sale-by-date", {
+        params: { date, limit: 20 },
+      });
+
+      // Vì apiRequest đã tự bóc tách, nên 'res' CHÍNH LÀ object chứa các thuộc tính đó.
+      // Bạn gán thẳng 'result = res' luôn.
+      const result = res;
+
+      setProductsCache((prev) => ({
+        ...prev,
+        [date]: {
+          // Chấm trực tiếp từ result mà không cần qua .data nào nữa
+          products: result.data ?? [],
+          total: result.total ?? 0,
+          promotions: result.promotions ?? [],
+          endDate: result.endDate ?? null, // Nếu API không trả về trường này, bạn để null hoặc sài toán tử ?? null như cũ
+        },
+      }));
+    } catch {
+      setProductsCache((prev) => ({
+        ...prev,
+        [date]: { products: [], total: 0, promotions: [] as TodayProductPromotion[], endDate: null },
+      }));
+    } finally {
+      setLoadingDate(null);
+    }
+  }, []); // stable — không deps vào productsCache
+
+  // Mỗi tab cần onClick stable riêng → dùng Map ref thay vì tạo inline
+  const tabClickHandlers = useRef<Record<string, () => void>>({});
+  const getTabClickHandler = useCallback(
+    (date: string) => {
+      if (!tabClickHandlers.current[date]) {
+        tabClickHandlers.current[date] = () => {
+          setActiveDate(date);
+          fetchProductsForDate(date);
+        };
       }
+      return tabClickHandlers.current[date];
     },
-    [productsCache],
+    [fetchProductsForDate],
   );
 
-  const handleTabClick = (date: string) => {
-    setActiveDate(date);
-    fetchProductsForDate(date);
-  };
-
   const currentData = productsCache[activeDate];
-  const activeDay = schedule.find((d) => d.date === activeDate);
+  const activeDay = useMemo(() => schedule.find((d) => d.date === activeDate), [schedule, activeDate]);
 
   const products = useMemo(
     () =>
@@ -367,6 +331,14 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
     [currentData],
   );
 
+  // Tính flashPromoRule ở đây, truyền xuống ProductGrid như stable prop
+  // → ProductGrid không tự tính, không re-render khi activeDay ref thay đổi nhưng rule không đổi
+  const flashPromoRule = useMemo(
+    () => activeDay?.promotions?.flatMap((p) => p.rules).find((r) => (r.actionType === "DISCOUNT_PERCENT" || r.actionType === "DISCOUNT_FIXED") && r.discountValue != null) ?? null,
+    [activeDay],
+  );
+
+  const isUpcoming = !!activeDay && !activeDay.isToday;
   const hasSaleDays = schedule.some((d) => d.hasActiveSale);
   const todayPromotion = schedule.find((d) => d.isToday)?.promotions[0] ?? null;
   const countdownEndDate = currentData?.endDate ?? todayPromotion?.endDate ?? null;
@@ -375,12 +347,6 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
   return (
     <section className="py-1 md:py-3 bg-neutral-light">
       <div className="container">
-        {/*
-         * ✅ Outer shell:
-         * - Left border đỏ 3px → signature nhận dạng sale
-         * - Bottom border đỏ → "ngưỡng cửa" chuyển sang content
-         * - Box shadow có tint đỏ rất nhẹ → glow ambient sale
-         */}
         <div
           className="rounded-2xl overflow-hidden"
           style={{
@@ -395,16 +361,13 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             `,
           }}
         >
-          {/* ════════════════════════════════════════════════════════════
-           *  HEADER — navy + glow đỏ từ dưới (lửa bốc)
-           * ════════════════════════════════════════════════════════════ */}
+          {/* HEADER */}
           <div
             className="relative overflow-hidden"
             style={{
               background: `linear-gradient(160deg, ${HEADER_BG_FROM} 0%, ${HEADER_BG_MID} 55%, ${HEADER_BG_TO} 100%)`,
             }}
           >
-            {/* ✅ Glow đỏ từ dưới-trái + dưới-phải → hiệu ứng "lửa bốc lên" */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
@@ -415,27 +378,15 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
               }}
             />
 
-            {/* Title + Countdown row */}
             <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap">
-              {/* Title */}
               <div className="flex items-center gap-3">
-                {/* ✅ Icon lửa với drop-shadow đỏ-cam → nổi bật */}
                 <div style={{ filter: "drop-shadow(0 0 8px rgba(255,100,50,0.75))" }}>
                   <Flame style={{ width: 28, height: 28, color: "#FF6B35", fill: "#FF6B35" }} />
                 </div>
-
                 <div className="flex flex-col leading-none gap-1">
-                  <span
-                    className="font-black uppercase tracking-[0.14em] text-white"
-                    style={{
-                      fontSize: "clamp(17px, 3.8vw, 27px)",
-                      // ✅ Text glow đỏ nhẹ → chữ có warmth trên nền lạnh
-                      textShadow: "0 0 20px rgba(230,57,70,0.3)",
-                    }}
-                  >
+                  <span className="font-black uppercase tracking-[0.14em] text-white" style={{ fontSize: "clamp(17px, 3.8vw, 27px)", textShadow: "0 0 20px rgba(230,57,70,0.3)" }}>
                     Flash Sale
                   </span>
-                  {/* Gạch accent đỏ glow bên dưới chữ */}
                   <span
                     className="block rounded-full"
                     style={{
@@ -448,11 +399,10 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
                 </div>
               </div>
 
-              {/* ✅ Countdown pill */}
+              {/* Countdown tách biệt hoàn toàn — chỉ nó tự re-render mỗi giây */}
               {isCountingDown && <Countdown endDate={countdownEndDate} label="Kết thúc sau" />}
             </div>
 
-            {/* Divider mờ */}
             <div
               className="relative z-10"
               style={{
@@ -461,10 +411,10 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
               }}
             />
 
-            {/* Tabs */}
+            {/* Tabs — TabItem memo + stable onClick handler */}
             <div className="relative z-10 flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {hasSaleDays ? (
-                schedule.map((day) => <TabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={() => handleTabClick(day.date)} />)
+                schedule.map((day) => <TabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={() => getTabClickHandler(day.date)} />)
               ) : (
                 <div className="flex items-center gap-2 px-4 py-3 text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>
                   <Calendar size={14} />
@@ -474,7 +424,6 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             </div>
           </div>
 
-          {/* ✅ Phân cách header ↔ body: đường đỏ có glow */}
           <div
             style={{
               height: 2,
@@ -488,13 +437,13 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
             {loadingDate === activeDate ? (
               <SkeletonGrid />
             ) : products.length > 0 ? (
-              <ProductGrid products={products} activeDay={activeDay} />
+              // ProductGrid nhận props đã tính sẵn → memo có hiệu quả
+              <ProductGrid products={products} flashPromoRule={flashPromoRule} isUpcoming={isUpcoming} />
             ) : (
-              <EmptyState isUpcoming={!!activeDay && !activeDay.isToday} dateLabel={activeDay && !activeDay.isToday ? formatDateTab(activeDay.date) : undefined} />
+              <EmptyState isUpcoming={isUpcoming} dateLabel={activeDay && !activeDay.isToday ? formatDateTab(activeDay.date) : undefined} />
             )}
           </div>
 
-          {/* Footer */}
           {products.length > 0 && (
             <div className="px-4 py-2.5 flex justify-end border-t" style={{ background: "rgb(var(--neutral-light))", borderColor: "rgb(var(--neutral))" }}>
               <Link

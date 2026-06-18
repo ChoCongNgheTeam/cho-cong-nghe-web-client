@@ -5,19 +5,7 @@ import { SlidezyOptions } from "./types";
 
 interface SlidezyProps extends SlidezyOptions {
   children: React.ReactNode;
-  /**
-   * Offset for prev/next arrow buttons.
-   * e.g. controlsOffset="-4" → left-[-16px] / right-[-16px] (đè ra ngoài container)
-   * Default: "0" (nằm sát mép)
-   */
   controlsOffset?: string;
-  /**
-   * Điều khiển navigation trên mobile (< 480px).
-   * - "dots"   → hiển thị dot indicator (phù hợp banner)
-   * - "none"   → ẩn hoàn toàn, chỉ drag (phù hợp product grid)
-   * - "arrows" → giữ nguyên arrow (mặc định khi không set)
-   * Khi set mobileNav, prop nav/controls trên mobile sẽ bị override.
-   */
   mobileNav?: "dots" | "none" | "arrows";
 }
 
@@ -53,6 +41,29 @@ export default function Slidezy({
   const didDragRef = useRef(false);
 
   const [showControls, setShowControls] = useState(true);
+
+  // ─── Refs để tránh stale closure mà không cần thêm vào deps ───────────────
+  // Đây là pattern chuẩn để React Compiler có thể tự optimize mà không cần
+
+  const currentIndexRef = useRef(currentIndex);
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  const isAnimatingRef = useRef(isAnimating);
+  useEffect(() => {
+    isAnimatingRef.current = isAnimating;
+  }, [isAnimating]);
+
+  const isDraggingRef = useRef(isDragging);
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+
+  const dragOffsetRef = useRef(dragOffset);
+  useEffect(() => {
+    dragOffsetRef.current = dragOffset;
+  }, [dragOffset]);
 
   // ─── Responsive items count ───────────────────────────────────────────────
 
@@ -90,6 +101,53 @@ export default function Slidezy({
   const maxIndex = loop ? slides.length : Math.max(0, slideCount - actualItemsCount);
   const slideByValue = slideBy === "page" ? actualItemsCount : typeof slideBy === "number" ? slideBy : 1;
 
+  // ─── Refs cho các giá trị dùng trong autoplay/drag callbacks ─────────────
+
+  const loopRef = useRef(loop);
+  useEffect(() => {
+    loopRef.current = loop;
+  }, [loop]);
+
+  const cloneCountRef = useRef(cloneCount);
+  useEffect(() => {
+    cloneCountRef.current = cloneCount;
+  }, [cloneCount]);
+
+  const slideCountRef = useRef(slideCount);
+  useEffect(() => {
+    slideCountRef.current = slideCount;
+  }, [slideCount]);
+
+  const maxIndexRef = useRef(maxIndex);
+  useEffect(() => {
+    maxIndexRef.current = maxIndex;
+  }, [maxIndex]);
+
+  const slideByValueRef = useRef(slideByValue);
+  useEffect(() => {
+    slideByValueRef.current = slideByValue;
+  }, [slideByValue]);
+
+  const actualItemsCountRef = useRef(actualItemsCount);
+  useEffect(() => {
+    actualItemsCountRef.current = actualItemsCount;
+  }, [actualItemsCount]);
+
+  const showNavRef = useRef(showNav);
+  useEffect(() => {
+    showNavRef.current = showNav;
+  }, [showNav]);
+
+  const speedRef = useRef(speed);
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
+
+  const onSlideChangeRef = useRef(onSlideChange);
+  useEffect(() => {
+    onSlideChangeRef.current = onSlideChange;
+  }, [onSlideChange]);
+
   // ─── Position helpers ─────────────────────────────────────────────────────
 
   const getTranslateX = useCallback(
@@ -123,44 +181,55 @@ export default function Slidezy({
     [loop, cloneCount, slideCount],
   );
 
-  // ─── Move / GoTo ──────────────────────────────────────────────────────────
+  // ─── updatePosition ref (stable) ─────────────────────────────────────────
 
-  // Dùng ref để tránh stale closure trong handleDragEnd mà không cần
-  // đưa moveSlide vào dependency array (fix React Compiler warning)
-  const moveSlideRef = useRef<(step: number) => void>(() => {});
+  const updatePositionRef = useRef(updatePosition);
+  useEffect(() => {
+    updatePositionRef.current = updatePosition;
+  }, [updatePosition]);
 
-  const moveSlide = useCallback(
-    (step: number) => {
-      if (isAnimating || !showNav) return;
-      setIsAnimating(true);
+  const getRealIndexRef = useRef(getRealIndex);
+  useEffect(() => {
+    getRealIndexRef.current = getRealIndex;
+  }, [getRealIndex]);
 
-      let newIndex = currentIndex + step;
-      if (!loop) newIndex = Math.max(0, Math.min(newIndex, maxIndex));
+  // ─── moveSlide — dùng hoàn toàn qua refs, không có deps nào cần eslint-disable ──
 
-      setCurrentIndex(newIndex);
-      updatePosition(newIndex);
+  const moveSlide = useCallback((step: number) => {
+    if (isAnimatingRef.current || !showNavRef.current) return;
+    setIsAnimating(true);
 
-      setTimeout(() => {
-        if (loop && cloneCount > 0) {
-          let resetIndex: number | null = null;
-          if (newIndex < cloneCount) resetIndex = newIndex + slideCount;
-          else if (newIndex >= cloneCount + slideCount) resetIndex = newIndex - slideCount;
+    const _loop = loopRef.current;
+    const _cloneCount = cloneCountRef.current;
+    const _slideCount = slideCountRef.current;
+    const _maxIndex = maxIndexRef.current;
+    const _speed = speedRef.current;
 
-          if (resetIndex !== null) {
-            setCurrentIndex(resetIndex);
-            requestAnimationFrame(() => updatePosition(resetIndex!, true));
-          }
+    let newIndex = currentIndexRef.current + step;
+    if (!_loop) newIndex = Math.max(0, Math.min(newIndex, _maxIndex));
+
+    setCurrentIndex(newIndex);
+    updatePositionRef.current(newIndex);
+
+    setTimeout(() => {
+      if (_loop && _cloneCount > 0) {
+        let resetIndex: number | null = null;
+        if (newIndex < _cloneCount) resetIndex = newIndex + _slideCount;
+        else if (newIndex >= _cloneCount + _slideCount) resetIndex = newIndex - _slideCount;
+
+        if (resetIndex !== null) {
+          setCurrentIndex(resetIndex);
+          requestAnimationFrame(() => updatePositionRef.current(resetIndex!, true));
         }
-        setIsAnimating(false);
-      }, speed);
+      }
+      setIsAnimating(false);
+    }, _speed);
 
-      onSlideChange?.(getRealIndex(newIndex));
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentIndex, isAnimating, showNav, loop, cloneCount, slideCount, maxIndex, speed, updatePosition, getRealIndex, onSlideChange],
-  );
+    onSlideChangeRef.current?.(getRealIndexRef.current(newIndex));
+  }, []); // deps rỗng — đọc tất cả qua refs, stable hoàn toàn
 
-  // Sync ref mỗi lần moveSlide thay đổi
+  // Sync moveSlide ref cho autoplay dùng
+  const moveSlideRef = useRef(moveSlide);
   useEffect(() => {
     moveSlideRef.current = moveSlide;
   }, [moveSlide]);
@@ -256,11 +325,14 @@ export default function Slidezy({
     const startAutoplay = () => {
       if (autoplayTimerRef.current) return;
       autoplayTimerRef.current = setInterval(() => {
-        if (!loop && currentIndex >= maxIndex) {
+        const _loop = loopRef.current;
+        const _maxIndex = maxIndexRef.current;
+        const _slideByValue = slideByValueRef.current;
+        if (!_loop && currentIndexRef.current >= _maxIndex) {
           setCurrentIndex(0);
-          updatePosition(0);
+          updatePositionRef.current(0);
         } else {
-          moveSlideRef.current(slideByValue);
+          moveSlideRef.current(_slideByValue);
         }
       }, autoplayTimeout);
     };
@@ -286,8 +358,8 @@ export default function Slidezy({
     }
 
     return () => stopAutoplay();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoplay, autoplayTimeout, autoplayHoverPause, showNav, slideByValue, loop, currentIndex, maxIndex, updatePosition]);
+  }, [autoplay, autoplayTimeout, autoplayHoverPause, showNav]);
+  // ↑ deps tối giản — tất cả giá trị thay đổi được đọc qua refs bên trong
 
   // ─── Drag ─────────────────────────────────────────────────────────────────
 
@@ -314,29 +386,35 @@ export default function Slidezy({
     [isDragging, startX, currentIndex, getTranslateX],
   );
 
-  // Fix React Compiler warning: handleDragEnd không còn phụ thuộc vào
-  // moveSlide trực tiếp — gọi qua moveSlideRef thay thế.
+  // handleDragEnd — dùng refs hoàn toàn, deps rỗng → React Compiler tối ưu được
   const handleDragEnd = useCallback(() => {
-    if (!isDragging || !trackRef.current) return;
+    if (!isDraggingRef.current || !trackRef.current) return;
     setIsDragging(false);
 
     const containerWidth = trackRef.current.offsetWidth;
-    const threshold = containerWidth / actualItemsCount / 3;
+    const _actualItemsCount = actualItemsCountRef.current;
+    const _dragOffset = dragOffsetRef.current;
+    const _currentIndex = currentIndexRef.current;
+    const _maxIndex = maxIndexRef.current;
+    const _loop = loopRef.current;
+    const _slideByValue = slideByValueRef.current;
 
-    if (Math.abs(dragOffset) > threshold) {
-      if (dragOffset < 0) {
-        if (loop || currentIndex < maxIndex) moveSlideRef.current(slideByValue);
-        else updatePosition(currentIndex);
+    const threshold = containerWidth / _actualItemsCount / 3;
+
+    if (Math.abs(_dragOffset) > threshold) {
+      if (_dragOffset < 0) {
+        if (_loop || _currentIndex < _maxIndex) moveSlideRef.current(_slideByValue);
+        else updatePositionRef.current(_currentIndex);
       } else {
-        if (loop || currentIndex > 0) moveSlideRef.current(-slideByValue);
-        else updatePosition(currentIndex);
+        if (_loop || _currentIndex > 0) moveSlideRef.current(-_slideByValue);
+        else updatePositionRef.current(_currentIndex);
       }
     } else {
-      updatePosition(currentIndex);
+      updatePositionRef.current(_currentIndex);
     }
 
     setDragOffset(0);
-  }, [isDragging, dragOffset, currentIndex, maxIndex, actualItemsCount, loop, slideByValue, updatePosition]);
+  }, []); // deps rỗng — stable hoàn toàn, React Compiler happy
 
   // ─── Event handlers ───────────────────────────────────────────────────────
 
@@ -366,28 +444,17 @@ export default function Slidezy({
   const effectiveShowControls = isMobile && mobileNav === "dots" ? false : isMobile && mobileNav === "none" ? false : isMobile && mobileNav === "arrows" ? showControls : showControls;
 
   const showDots = showNav && ((isMobile && mobileNav === "dots") || (!isMobile && nav));
-
   const showArrows = showNav && effectiveShowControls;
   const realCurrentIndex = getRealIndex(currentIndex);
-  // ─── Arrow offset (px) ───────────────────────────────────────────────────
 
   const offsetPx = controlsOffset !== "0" ? Math.abs(Number(controlsOffset.replace("-", ""))) : 0;
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-  //
-  // Cấu trúc 3 lớp để giải quyết xung đột overflow-hidden vs arrow nổi ra ngoài:
-  //
-  //  ┌─ containerRef (w-full, relative)           ← arrow absolute ở đây
-  //  │   ┌─ clip-wrapper (overflow-hidden)        ← chỉ clip track
-  //  │   │   └─ trackRef (flex)
-  //  │   └─ /clip-wrapper
-  //  │   [prev button]  [next button]             ← không bị clip
-  //  └─ /containerRef
   const atStart = !loop && realCurrentIndex <= 0;
   const atEnd = !loop && realCurrentIndex >= slideCount - actualItemsCount;
+
   return (
     <div ref={containerRef} className={`w-full relative ${className}`}>
-      {/* Clip wrapper — chỉ bao track, không bao arrow */}
+      {/* Clip wrapper */}
       <div className="overflow-hidden p-1">
         {/* Track */}
         <div
@@ -429,7 +496,7 @@ export default function Slidezy({
         </div>
       </div>
 
-      {/* Arrow controls — nằm ngoài clip-wrapper, absolute so với containerRef */}
+      {/* Arrow controls */}
       {showArrows && (
         <>
           <button
@@ -453,7 +520,7 @@ export default function Slidezy({
         </>
       )}
 
-      {/* Dots - hiện khi nav=true (desktop) hoặc mobileNav="dots" (mobile) */}
+      {/* Dots */}
       {showDots && (
         <div className="flex items-center justify-center gap-2 my-4">
           {Array.from({ length: pageCount }).map((_, index) => (

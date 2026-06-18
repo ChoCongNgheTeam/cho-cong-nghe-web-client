@@ -17,21 +17,6 @@ function SmallBannerCard({ item }: { item: CampaignCategory }) {
             <Image src={item.imageUrl} alt={item.title ?? ""} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
           </div>
         )}
-        {/* Content */}
-        {/* <div className="relative h-full p-4 md:p-5 flex flex-col justify-between">
-               <div>
-                  <p className="text-white/80 text-[10px] md:text-xs font-semibold mb-1 line-clamp-1">
-                     {item.description}
-                  </p>
-                  <h3 className="text-sm md:text-base lg:text-lg font-black text-white leading-tight drop-shadow-lg line-clamp-2">
-                     {item.title}
-                  </h3>
-               </div>
-
-               <span className="inline-block self-start bg-white text-primary font-bold text-[10px] md:text-xs px-3 py-1.5 rounded-full shadow-lg group-hover:scale-105 transform duration-300 transition-transform">
-                  Xem ngay
-               </span>
-            </div> */}
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -46,21 +31,6 @@ function LargeBannerCard({ item }: { item: CampaignCategory }) {
       <div className="relative aspect-square">
         {/* Background Image */}
         <Image src={item.imageUrl ?? ""} alt={item.title ?? ""} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover duration-700" />
-        {/* Content */}
-        {/* <div className="relative h-full flex items-center justify-center p-6 md:p-8 lg:p-12">
-               <div className="text-center max-w-lg">
-                  <p className="text-white/90 text-lg md:text-xl lg:text-2xl font-semibold mb-3">
-                     {item.description}
-                  </p>
-                  <h3 className="text-4xl md:text-5xl lg:text-7xl font-black text-white mb-8 leading-tight drop-shadow-2xl">
-                     {item.title}
-                  </h3>
-
-                  <span className="inline-block bg-white text-primary font-bold text-base md:text-lg px-8 py-4 rounded-full shadow-2xl group-hover:scale-105 transform duration-300 transition-transform">
-                     Khám phá ngay
-                  </span>
-               </div>
-            </div> */}
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
