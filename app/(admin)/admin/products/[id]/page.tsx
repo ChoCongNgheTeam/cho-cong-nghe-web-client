@@ -31,7 +31,7 @@ import { Popzy } from "@/components/Modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
 import { formatDate, formatVND, formatNumber } from "@/helpers";
 import { useAuth } from "@/hooks/useAuth";
-import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
+import { STAFF_ROLES } from "@/types/staff-permissions.types";
 import apiRequest from "@/lib/api";
 import { useAdminHref } from "@/hooks/useAdminHref";
 

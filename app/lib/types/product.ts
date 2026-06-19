@@ -102,11 +102,6 @@ export type ProductDetail = {
   availablePromotions?: Promotion[];
 };
 
-export type compareCategory = {
-  id: string;
-  category: Category;
-};
-
 export type Price = {
   base: number;
   final: number;

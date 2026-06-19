@@ -1,7 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { compareCategory } from "@/lib/types/product";
+import { ProductDetail } from "@/lib/types/product";
 
 interface Category {
   id: string;
@@ -10,21 +10,21 @@ interface Category {
 }
 
 interface CompareStore {
-  items: compareCategory[];
+  items: ProductDetail[];
   rootCategorySlug: string | null;
   maxCompare: (isMobile: boolean) => number;
   add: (
-    product: compareCategory,
+    product: ProductDetail,
     isMobile?: boolean,
   ) => {
     success: boolean;
     reason?: "full" | "duplicate" | "wrong_category";
   };
   remove: (id: string) => void;
-  toggle: (product: compareCategory, isMobile?: boolean) => void;
+  toggle: (product: ProductDetail, isMobile?: boolean) => void;
   clear: () => void;
   isInCompare: (id: string) => boolean;
-  isSameCategory: (product: compareCategory) => boolean;
+  isSameCategory: (product: ProductDetail) => boolean;
 }
 
 function getRootSlug(category: Category | null): string | null {

@@ -1,6 +1,6 @@
 "use client";
 
-import { PermissionKey, STAFF_ROLES } from "@/(client)/staff-permissions.types";
+import { PermissionKey, STAFF_ROLES } from "@/types/staff-permissions.types";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";

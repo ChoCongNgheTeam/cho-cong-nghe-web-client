@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotificationStore, NotificationItem } from "../hooks/useNotificationStore";
-import { UserRole } from "@/(client)/staff-permissions.types";
+import { UserRole } from "@/types/staff-permissions.types";
 
 interface AdminNotificationContextValue {
   notifications: NotificationItem[];

@@ -1,4 +1,4 @@
-import { UserRole } from "@/(client)/staff-permissions.types";
+import { UserRole } from "@/types/staff-permissions.types";
 
 export interface User {
   id: string;

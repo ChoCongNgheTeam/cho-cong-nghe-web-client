@@ -26,7 +26,7 @@ import {
   importProducts,
 } from "./_libs/products";
 import { useAuth } from "@/hooks/useAuth";
-import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
+import { STAFF_ROLES } from "@/types/staff-permissions.types";
 import { getProductColumns } from "./components/TableProducts";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { StockAlertBanner } from "./components/StockAlertBanner";

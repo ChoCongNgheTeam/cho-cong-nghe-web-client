@@ -3,7 +3,13 @@ import { createContext, useState, useEffect, useRef, useCallback, ReactNode } fr
 import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
 import apiRequest, { performRefresh, resolveAuthInit, resetAuthInit, setAccessToken } from "@/lib/api";
-import { StaffPermissions, UserRole } from "@/(client)/staff-permissions.types";
+import { StaffPermissions, UserRole } from "@/types/staff-permissions.types";
+
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success?: boolean;
+}
 
 interface User {
   id: string;
@@ -16,12 +22,6 @@ interface User {
   gender?: string;
   dateOfBirth?: string;
   permissions?: StaffPermissions;
-}
-
-interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success?: boolean;
 }
 
 interface AuthContextType {
@@ -88,12 +88,9 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
           if (meError?.status === 401) {
             setUser(null);
           }
-          // /users/me lỗi 401 → refresh token đã bị revoke → đây mới là logout thật
           if (meError?.status === 401) {
             setUser(null);
           }
-          // Lỗi khác (500, network) → KHÔNG logout, giữ session
-          // user vẫn null nhưng accessToken vẫn còn trong memory
         }
       } catch {
         setUser(null);
@@ -118,28 +115,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     }
   }, []);
 
-  // const login = async (userData: User, accessToken: string) => {
-  //   setAccessToken(accessToken);
-  //   setUser(userData);
-  //   setShowWelcome(true);
-
-  //   // Sync user mới nhất từ server (ảnh, role, v.v.)
-  //   await refreshUser();
-
-  //   // window.dispatchEvent(new Event("auth-login-success"));
-
-  //   const redirectPath = userData.role === "ADMIN" ? "/admin/dashboard" : "/";
-
-  //   toast.success("Đăng nhập thành công", {
-  //     title: "Chào mừng trở lại!",
-  //     duration: 3000,
-  //     showProgress: true,
-  //   });
-
-  //   router.refresh();
-  //   await new Promise((resolve) => setTimeout(resolve, 100));
-  //   router.push(redirectPath);
-  // };
   const login = async (userData: User, accessToken: string) => {
     setAccessToken(accessToken);
     setUser(userData); // isAuthenticated = true ngay

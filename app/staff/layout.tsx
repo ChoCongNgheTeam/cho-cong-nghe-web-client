@@ -8,7 +8,7 @@ import StaffSidebar from "@/components/admin/StaffSidebar";
 import AdminHeaderAuto from "@/components/admin/AdminHeaderAuto";
 import { AdminNotificationProvider } from "@/contexts/AdminNotificationContext";
 import { AdminPrefixProvider } from "@/contexts/AdminPrefixContext";
-import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
+import { STAFF_ROLES } from "@/types/staff-permissions.types";
 
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
