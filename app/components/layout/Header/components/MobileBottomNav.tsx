@@ -79,9 +79,8 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <MobileCategorySheet isOpen={openSheet === "category"} onClose={closeSheet} />
+      <MobileCategorySheet key={openSheet === "category" ? "open" : "closed"} isOpen={openSheet === "category"} onClose={closeSheet} />{" "}
       <MobileNotificationSheet isOpen={openSheet === "notification"} onClose={closeSheet} />
-
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[90] bg-neutral-light/95 backdrop-blur-md border-t border-neutral" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-stretch h-[60px]">
           {tabs.map((tab) => {

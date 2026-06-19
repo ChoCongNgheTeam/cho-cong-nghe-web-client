@@ -57,11 +57,6 @@ export default function MobileCategorySheet({ isOpen, onClose }: MobileCategoryS
       .finally(() => setLoading(false));
   }, []);
 
-  // Reset drill-down when sheet reopens
-  useEffect(() => {
-    if (isOpen) setSelected(null);
-  }, [isOpen]);
-
   // Lock body scroll + dispatch event cho ChatButton ẩn/hiện
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
