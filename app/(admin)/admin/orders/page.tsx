@@ -18,7 +18,7 @@ import { ExportButton } from "@/components/admin/ExportButton";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
+import { STAFF_ROLES } from "@/types/staff-permissions.types";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface OrderMeta {

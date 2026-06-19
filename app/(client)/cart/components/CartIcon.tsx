@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
-export default function CartIcon() {
+export const CartIcon = () => {
   const { totalItemCount } = useCart();
 
   return (
@@ -23,4 +23,4 @@ export default function CartIcon() {
       )}
     </Link>
   );
-}
+};

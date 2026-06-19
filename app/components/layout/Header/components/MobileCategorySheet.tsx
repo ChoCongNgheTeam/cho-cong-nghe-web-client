@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, Sparkles, X, ArrowLeft } from "lucide-react";
+import { ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import apiRequest from "@/lib/api";
 
@@ -56,11 +56,6 @@ export default function MobileCategorySheet({ isOpen, onClose }: MobileCategoryS
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
-
-  // Reset drill-down when sheet reopens
-  useEffect(() => {
-    if (isOpen) setSelected(null);
-  }, [isOpen]);
 
   // Lock body scroll + dispatch event cho ChatButton ẩn/hiện
   useEffect(() => {

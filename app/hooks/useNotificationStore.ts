@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import apiRequest from "@/lib/api";
 
 export interface NotificationItem {
@@ -8,7 +8,7 @@ export interface NotificationItem {
   type: string;
   title: string;
   body: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   isRead: boolean;
   readAt?: string;
   createdAt: string;
@@ -23,13 +23,9 @@ interface NotificationMeta {
 }
 
 interface UseNotificationStoreOptions {
-  /** Endpoint lấy danh sách thông báo, vd: "/notifications" hoặc "/notifications/admin" */
   listEndpoint: string;
-  /** Endpoint đánh dấu tất cả đã đọc, vd: "/notifications/read-all" hoặc "/notifications/admin/read-all" */
   markAllEndpoint: string;
-  /** Endpoint đánh dấu 1 thông báo đã đọc — luôn là PATCH /notifications/:id/read */
   markOneEndpoint: (id: string) => string;
-  /** Có fetch không (false khi chưa login) */
   enabled: boolean;
   pageSize?: number;
   pollInterval?: number;
@@ -88,14 +84,15 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
 
   // ── Auto fetch + poll ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (!enabled) {
-      setNotifications([]);
-      setUnreadCount(0);
-      return;
-    }
-    fetchPage(1, true);
+    if (!enabled) return;
+
+    const timeoutId = setTimeout(() => fetchPage(1, true), 0);
     const interval = setInterval(() => fetchPage(1, true), pollInterval);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
   }, [enabled, fetchPage, pollInterval]);
 
   // ── Actions ─────────────────────────────────────────────────────────────────
@@ -126,14 +123,17 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
     }
   }, [markAllEndpoint, notifications, unreadCount]);
 
-  return {
-    notifications,
-    unreadCount,
-    isLoading,
-    hasMore,
-    fetchNextPage,
-    markAsRead,
-    markAllAsRead,
-    refresh,
-  };
+  return useMemo(
+    () => ({
+      notifications: enabled ? notifications : [],
+      unreadCount: enabled ? unreadCount : 0,
+      isLoading,
+      hasMore: enabled ? hasMore : false,
+      fetchNextPage,
+      markAsRead,
+      markAllAsRead,
+      refresh,
+    }),
+    [enabled, notifications, unreadCount, isLoading, hasMore, fetchNextPage, markAsRead, markAllAsRead, refresh],
+  );
 }

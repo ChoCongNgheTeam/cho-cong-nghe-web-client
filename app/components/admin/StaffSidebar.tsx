@@ -3,7 +3,7 @@
 import { ShoppingCart, Star, MessageSquare, Bell, LayoutDashboard, Package, BarChart3, BookOpen, Image as ImageIcon, Ticket, Megaphone, Tag, Users, CreditCard, Wand2 } from "lucide-react";
 import { SidebarShell, NavGroup } from "./AdminSidebar";
 import { useAuth } from "@/hooks/useAuth";
-import { PermissionKey } from "@/(client)/staff-permissions.types";
+import { PermissionKey } from "@/types/staff-permissions.types";
 
 // Mỗi item có thể gắn permission — nếu không có perm thì luôn hiển thị
 interface NavItemDef {

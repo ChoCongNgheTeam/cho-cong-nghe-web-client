@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import CartIcon from "@/(client)/cart/components/CartIcon";
-import SearchBar from "./SearchBar";
-import { TrendingBar } from "./TrendingBar";
-import { GitCompareArrows } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { CartIcon } from "@/(client)/cart/components/CartIcon";
 import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useAuth } from "@/hooks/useAuth";
 import { useGeneralSettings } from "@/hooks/useGeneralSettings";
+import SearchBar from "./SearchBar";
+import { TrendingBar } from "./TrendingBar";
+import { GitCompareArrows } from "lucide-react";
 
 const FALLBACK_LOGO = "/logo-dark-5.png";
 

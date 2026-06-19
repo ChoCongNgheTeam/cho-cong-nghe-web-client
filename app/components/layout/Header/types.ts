@@ -2,6 +2,13 @@ export interface HeaderTopProps {
   isAuthenticated: boolean;
 }
 
+export interface LinkWithIconProps {
+  href: string;
+  icon: React.ReactNode;
+  text: string;
+  mobileText: string;
+}
+
 export interface DesktopHeaderProps {
   searchQuery: string;
   isAuthenticated: boolean;

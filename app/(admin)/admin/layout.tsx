@@ -8,7 +8,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeaderAuto from "@/components/admin/AdminHeaderAuto";
 import { AdminNotificationProvider } from "@/contexts/AdminNotificationContext";
 import { AdminPrefixProvider } from "@/contexts/AdminPrefixContext";
-import { STAFF_ROLES } from "@/(client)/staff-permissions.types";
+import { STAFF_ROLES } from "@/types/staff-permissions.types";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
