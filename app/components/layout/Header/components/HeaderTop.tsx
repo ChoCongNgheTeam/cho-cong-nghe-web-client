@@ -2,7 +2,7 @@ import { ShoppingBag, Truck, User } from "lucide-react";
 import LinkWithIcon from "./LinkWithIcon";
 import { HeaderTopProps } from "../types";
 
-const HeaderTop: React.FC<HeaderTopProps> = ({ isAuthenticated }) => {
+const HeaderTop = ({ isAuthenticated }: HeaderTopProps) => {
   return (
     <div className="hidden md:block">
       <div className="container py-1.5">

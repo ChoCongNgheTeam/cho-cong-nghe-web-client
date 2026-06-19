@@ -1,14 +1,7 @@
 import Link from "next/link";
+import { LinkWithIconProps } from "../types";
 
-interface LinkWithIconProps {
-  href: string;
-  icon: React.ReactNode;
-  text: string;
-  mobileText: string;
-}
-
-// Opacity thấp hơn cũ (0.55 → hover 0.85) để phù hợp với HeaderTop navy tối
-const LinkWithIcon: React.FC<LinkWithIconProps> = ({ href, icon, text, mobileText }) => {
+const LinkWithIcon = ({ href, icon, text, mobileText }: LinkWithIconProps) => {
   return (
     <Link
       href={href}

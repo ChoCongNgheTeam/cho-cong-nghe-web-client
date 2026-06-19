@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useEffect, useRef, memo } from "react";
 import { DesktopHeaderProps } from "../types";
 import UserAvatar from "@/components/ui/UserAvatar";
-import CartIcon from "@/(client)/cart/components/CartIcon";
+import { CartIcon } from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
 import NotificationBell from "@/components/ui/NotificationBell";

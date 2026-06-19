@@ -1,34 +1,35 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { ProductDetail } from "@/lib/types/product";
+import { compareCategory } from "@/lib/types/product";
 
-function getRootSlug(category: any): string | null {
-  if (!category) return null;
-  return (
-    category?.parent?.parent?.slug ??
-    category?.parent?.slug ??
-    category?.slug ??
-    null
-  );
+interface Category {
+  id: string;
+  slug: string;
+  parent?: Category | null;
 }
 
 interface CompareStore {
-  items: ProductDetail[];
+  items: compareCategory[];
   rootCategorySlug: string | null;
   maxCompare: (isMobile: boolean) => number;
   add: (
-    product: ProductDetail,
+    product: compareCategory,
     isMobile?: boolean,
   ) => {
     success: boolean;
     reason?: "full" | "duplicate" | "wrong_category";
   };
   remove: (id: string) => void;
-  toggle: (product: ProductDetail, isMobile?: boolean) => void;
+  toggle: (product: compareCategory, isMobile?: boolean) => void;
   clear: () => void;
   isInCompare: (id: string) => boolean;
-  isSameCategory: (product: ProductDetail) => boolean;
+  isSameCategory: (product: compareCategory) => boolean;
+}
+
+function getRootSlug(category: Category | null): string | null {
+  if (!category) return null;
+  return category?.parent?.parent?.slug ?? category?.parent?.slug ?? category?.slug ?? null;
 }
 
 export const useCompareStore = create<CompareStore>()(
@@ -45,13 +46,11 @@ export const useCompareStore = create<CompareStore>()(
 
         if (items.length >= MAX) return { success: false, reason: "full" };
 
-        if (isInCompare(product.id))
-          return { success: false, reason: "duplicate" };
+        if (isInCompare(product.id)) return { success: false, reason: "duplicate" };
 
         const productRootSlug = getRootSlug(product.category);
 
-        if (rootCategorySlug && productRootSlug !== rootCategorySlug)
-          return { success: false, reason: "wrong_category" };
+        if (rootCategorySlug && productRootSlug !== rootCategorySlug) return { success: false, reason: "wrong_category" };
 
         set((s) => ({
           items: [...s.items, product],
@@ -72,7 +71,11 @@ export const useCompareStore = create<CompareStore>()(
 
       toggle: (product, isMobile = false) => {
         const { isInCompare, remove, add } = get();
-        isInCompare(product.id) ? remove(product.id) : add(product, isMobile);
+        if (isInCompare(product.id)) {
+          remove(product.id);
+        } else {
+          add(product, isMobile);
+        }
       },
 
       clear: () => set({ items: [], rootCategorySlug: null }),
@@ -88,7 +91,7 @@ export const useCompareStore = create<CompareStore>()(
     {
       name: "compare-store",
       version: 4,
-      migrate: (_persistedState: any) => {
+      migrate: () => {
         return { items: [], rootCategorySlug: null };
       },
       partialize: (state) => ({

@@ -1,11 +1,9 @@
-/** ===== Brand ===== */
 export type Brand = {
   id: string;
   name: string;
   slug: string;
 };
 
-/** ===== Category ===== */
 export type Category = {
   id: string;
   name: string;
@@ -13,14 +11,12 @@ export type Category = {
   parent: Category;
 };
 
-/** ===== Inventory ===== */
 export type Inventory = {
   quantity: number;
   reservedQuantity: number;
   available: number;
 };
 
-/** ===== Product Image ===== */
 export type ProductImage = {
   id: string;
   imageUrl: string;
@@ -28,7 +24,6 @@ export type ProductImage = {
   position: number;
 };
 
-/** ===== Option Value ===== */
 export type OptionValue = {
   id: string;
   value: string;
@@ -36,19 +31,16 @@ export type OptionValue = {
   variantIds: string[];
 };
 
-/** ===== Product Option ===== */
 export type ProductOption = {
   type: "color" | "storage" | string;
   values: OptionValue[];
 };
 
-/** ===== Price Range ===== */
 export type PriceRange = {
   min: number;
   max: number;
 };
 
-/** ===== Current Variant ===== */
 export type CurrentVariant = {
   id: string;
   code: string;
@@ -63,7 +55,6 @@ export type CurrentVariant = {
   quantity: number;
 };
 
-/** ===== Rating ===== */
 export type Rating = {
   average: number;
   total: number;
@@ -76,7 +67,6 @@ export type Rating = {
   };
 };
 
-/** ===== Highlight ===== */
 export type Highlight = {
   id: string;
   key: string;
@@ -86,7 +76,6 @@ export type Highlight = {
   value: string;
 };
 
-/** ===== Product Detail ===== */
 export type ProductDetail = {
   id: string;
   name: string;
@@ -113,6 +102,11 @@ export type ProductDetail = {
   availablePromotions?: Promotion[];
 };
 
+export type compareCategory = {
+  id: string;
+  category: Category;
+};
+
 export type Price = {
   base: number;
   final: number;
@@ -120,14 +114,12 @@ export type Price = {
   hasPromotion: boolean;
 };
 
-/** ===== API Response ===== */
 export type ProductDetailResponse = {
   success: boolean;
   data: ProductDetail;
   message: string;
 };
 
-// Thông số kỹ thuật - từng item
 export interface SpecificationItem {
   id: string;
   key: string;
@@ -137,7 +129,6 @@ export interface SpecificationItem {
   value: string;
 }
 
-/** ===== Promotion ===== */
 export type Promotion = {
   id: string;
   name: string;
@@ -148,13 +139,11 @@ export type Promotion = {
   discountValue: number;
 };
 
-// Nhóm thông số kỹ thuật
 export interface SpecificationGroup {
   groupName: string;
   items: SpecificationItem[];
 }
 
-// Response API trả về
 export interface SpecificationsData {
   name: string;
   image: string;
