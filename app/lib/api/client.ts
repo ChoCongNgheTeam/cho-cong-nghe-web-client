@@ -7,7 +7,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
 const DEFAULT_TIMEOUT_MS = 15000;
 
 type ApiResponseType = "json" | "blob" | "text";
-type QueryParams = Record<string, string | number | boolean | undefined | null>;
+type QueryParams = object;
 
 interface RequestOptions extends Omit<RequestInit, "signal" | "body"> {
   noAuth?: boolean;
@@ -47,12 +47,12 @@ async function safeJson(response: Response) {
 }
 
 class ApiRequest {
-  private buildUrl(endpoint: string, params?: QueryParams) {
+  private buildUrl(endpoint: string, params?: object) {
     let url = `${BASE_URL}/api/v1${endpoint}`;
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && typeof value !== "object") {
           searchParams.append(key, String(value));
         }
       });
