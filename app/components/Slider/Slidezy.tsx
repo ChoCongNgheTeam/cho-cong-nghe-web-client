@@ -40,7 +40,30 @@ export default function Slidezy({
   const isInitializedRef = useRef(false);
   const didDragRef = useRef(false);
 
+  const arrowsWrapperRef = useRef<HTMLDivElement>(null);
+  const [safeOffsetPx, setSafeOffsetPx] = useState(0);
+
   const [showControls, setShowControls] = useState(true);
+
+  useEffect(() => {
+    const desiredOffsetPx = controlsOffset !== "0" ? Math.abs(Number(controlsOffset.replace("-", ""))) : 0;
+
+    const recompute = () => {
+      if (!arrowsWrapperRef.current) return;
+      const rect = arrowsWrapperRef.current.getBoundingClientRect();
+      const desiredProtrusion = desiredOffsetPx + 20; // 20 = phần button tự nhô qua mép trong code render
+      const buffer = 4; // chừa thêm chút để tránh chạm sát viền
+      const spaceLeft = rect.left;
+      const spaceRight = window.innerWidth - rect.right;
+      const minSpace = Math.max(0, Math.min(spaceLeft, spaceRight) - buffer);
+      const safeProtrusion = Math.min(desiredProtrusion, minSpace);
+      setSafeOffsetPx(Math.max(0, safeProtrusion - 20));
+    };
+
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, [controlsOffset]);
 
   // ─── Refs để tránh stale closure mà không cần thêm vào deps ───────────────
   // Đây là pattern chuẩn để React Compiler có thể tự optimize mà không cần
@@ -69,17 +92,17 @@ export default function Slidezy({
 
   const getItemsCount = useCallback(() => {
     if (typeof items === "number") return items;
-    if (typeof window === "undefined") return typeof items === "object" ? (items.desktop ?? 3) : 1;
+    if (typeof window === "undefined") return typeof items === "object" ? (items.desktop ?? 2) : 1;
     const width = window.innerWidth;
     if (width < 480) return items.mobile ?? 1;
     if (width < 768) return items.tablet ?? 2;
-    if (width < 1024) return items.lg ?? 3;
-    return items.desktop ?? 4;
+    if (width < 1024) return items.lg ?? 2;
+    return items.desktop ?? 2;
   }, [items]);
 
   const [itemsCount, setItemsCount] = useState(() => {
     if (typeof items === "number") return items;
-    return typeof items === "object" ? (items.desktop ?? 3) : 1;
+    return typeof items === "object" ? (items.desktop ?? 2) : 1;
   });
 
   // ─── Derived values ───────────────────────────────────────────────────────
@@ -461,80 +484,83 @@ export default function Slidezy({
   const showArrows = showNav && effectiveShowControls;
   const realCurrentIndex = getRealIndex(currentIndex);
 
-  const offsetPx = controlsOffset !== "0" ? Math.abs(Number(controlsOffset.replace("-", ""))) : 0;
+  const offsetPx = safeOffsetPx;
 
   const atStart = !loop && realCurrentIndex <= 0;
   const atEnd = !loop && realCurrentIndex >= slideCount - actualItemsCount;
 
   return (
-    <div ref={containerRef} className={`w-full relative ${className}`}>
-      {/* Clip wrapper */}
-      <div className="overflow-hidden p-1">
-        {/* Track */}
-        <div
-          ref={trackRef}
-          className="flex"
-          style={{
-            gap: `${gap}px`,
-            cursor: draggable ? (isDragging ? "grabbing" : "grab") : "default",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            touchAction: "pan-y",
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onClickCapture={(e) => {
-            if (didDragRef.current) {
-              e.preventDefault();
-              e.stopPropagation();
-              didDragRef.current = false;
-            }
-          }}
-        >
-          {slides.map((slide, index) => (
-            <div
-              key={`slide-${index}`}
-              className="shrink-0"
-              style={{
-                width: `calc((100% - ${gap * (actualItemsCount - 1)}px) / ${actualItemsCount})`,
-              }}
-            >
-              {slide}
-            </div>
-          ))}
+    <div ref={containerRef} className={`w-full ${className}`}>
+      {/* Wrapper riêng cho ảnh + arrow — đây là anchor duy nhất cho absolute arrow */}
+      <div className="relative">
+        {/* Clip wrapper */}
+        <div className="overflow-hidden p-1">
+          {/* Track */}
+          <div
+            ref={trackRef}
+            className="flex"
+            style={{
+              gap: `${gap}px`,
+              cursor: draggable ? (isDragging ? "grabbing" : "grab") : "default",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              touchAction: "pan-y",
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onClickCapture={(e) => {
+              if (didDragRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                didDragRef.current = false;
+              }
+            }}
+          >
+            {slides.map((slide, index) => (
+              <div
+                key={`slide-${index}`}
+                className="shrink-0"
+                style={{
+                  width: `calc((100% - ${gap * (actualItemsCount - 1)}px) / ${actualItemsCount})`,
+                }}
+              >
+                {slide}
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Arrow controls — giờ chỉ tính theo chiều cao ảnh, không dính Dots */}
+        {showArrows && (
+          <>
+            <button
+              onClick={() => moveSlide(-slideByValue)}
+              disabled={isAnimating || atStart}
+              className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
+              style={{ left: offsetPx > 0 ? `-${offsetPx + 20}px` : "0px" }}
+              aria-label="Previous slide"
+            >
+              {controlsText[0]}
+            </button>
+            <button
+              onClick={() => moveSlide(slideByValue)}
+              disabled={isAnimating || atEnd}
+              className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
+              style={{ right: offsetPx > 0 ? `-${offsetPx + 20}px` : "0px" }}
+              aria-label="Next slide"
+            >
+              {controlsText[1]}
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Arrow controls */}
-      {showArrows && (
-        <>
-          <button
-            onClick={() => moveSlide(-slideByValue)}
-            disabled={isAnimating || atStart}
-            className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
-            style={{ left: offsetPx > 0 ? `-${offsetPx + 20}px` : "0px" }}
-            aria-label="Previous slide"
-          >
-            {controlsText[0]}
-          </button>
-          <button
-            onClick={() => moveSlide(slideByValue)}
-            disabled={isAnimating || atEnd}
-            className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl text-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-10 cursor-pointer"
-            style={{ right: offsetPx > 0 ? `-${offsetPx + 20}px` : "0px" }}
-            aria-label="Next slide"
-          >
-            {controlsText[1]}
-          </button>
-        </>
-      )}
-
-      {/* Dots */}
+      {/* Dots — nằm ngoài wrapper ảnh+arrow, không còn ảnh hưởng tới việc canh tâm arrow */}
       {showDots && (
         <div className="flex items-center justify-center gap-2 my-4">
           {Array.from({ length: pageCount }).map((_, index) => (

@@ -16,7 +16,7 @@ export function BannersSection1({ banners }: BannersSection1Props) {
     <section className="py-1 md:py-3 bg-neutral-light">
       <div className="container px-4">
         <Slidezy
-          items={{ mobile: 1, tablet: 2, desktop: 2 }}
+          items={{ mobile: 1, tablet: 2, lg: 2, desktop: 3 }}
           gap={24}
           speed={400}
           loop={false}
