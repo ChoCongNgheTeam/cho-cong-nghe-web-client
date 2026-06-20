@@ -1,10 +1,8 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Images, Loader2 } from "lucide-react";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { ProductDetail, CurrentVariant } from "@/lib/types/product";
-import { MdVerified } from "react-icons/md";
-import { FaUserCog, FaShippingFast } from "react-icons/fa";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
+import { ProductDetail } from "@/lib/types/product";
 import Image from "next/image";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import clsx from "clsx";
@@ -38,7 +36,7 @@ interface ThumbnailCellProps {
   isExpand?: boolean;
 }
 
-export default function ProductDetailBanner({ product, images, selectedVariant, onColorChange }: ProductDetailLeftProps) {
+const ProductDetailBanner = memo(function ProductDetailBanner({ product, images, selectedVariant, onColorChange }: ProductDetailLeftProps) {
   const validImages = images.filter((img) => !!img?.imageUrl);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -386,7 +384,9 @@ export default function ProductDetailBanner({ product, images, selectedVariant, 
       </div>
     </div>
   );
-}
+});
+
+export default ProductDetailBanner;
 
 function ThumbnailCell({ isActive, onClick, children, isExpand }: ThumbnailCellProps) {
   return (

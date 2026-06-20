@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 
 const TABS = [
   { id: "info", label: "Thông tin sản phẩm" },
@@ -13,7 +13,7 @@ export { TABS };
 
 const TAB_BAR_HEIGHT = 48;
 
-export function useProductSections() {
+export function useProductSections(stickyBarRef: React.RefObject<HTMLDivElement | null>, tabBarRef: React.RefObject<HTMLDivElement | null>) {
   const breadcrumbRef = useRef<HTMLDivElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
   const specificationsRef = useRef<HTMLDivElement>(null);
@@ -21,13 +21,16 @@ export function useProductSections() {
   const reviewsRef = useRef<HTMLDivElement>(null);
   const suggestRef = useRef<HTMLDivElement>(null);
 
-  const sectionRefs: Record<TabId, React.RefObject<HTMLDivElement | null>> = {
-    info: infoRef,
-    specs: specificationsRef,
-    article: articleRef,
-    reviews: reviewsRef,
-    suggest: suggestRef,
-  };
+  const sectionRefs = useMemo(
+    () => ({
+      info: infoRef,
+      specs: specificationsRef,
+      article: articleRef,
+      reviews: reviewsRef,
+      suggest: suggestRef,
+    }),
+    [],
+  ); // refs không thay đổi nên deps rỗng là đúng
 
   /* ── Header height ── */
   const headerHeightRef = useRef(64);
@@ -47,10 +50,6 @@ export function useProductSections() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  /* ── Sticky + active tab ── */
-  const [showStickyHeader, setShowStickyHeader] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>("info");
-
   const showStickyRef = useRef(false);
   const activeTabRef = useRef<TabId>("info");
   const layoutChangingRef = useRef(false);
@@ -63,19 +62,22 @@ export function useProductSections() {
       const scrollY = window.scrollY;
       const totalOffset = headerHeightRef.current + TAB_BAR_HEIGHT + 16;
 
-      // ── Sticky tab bar visibility ──
-      const breadcrumbBottom =
-        breadcrumbRef.current?.getBoundingClientRect().bottom ?? 0;
+      // ── Sticky tab bar visibility — update DOM trực tiếp, không setState ──
+      const breadcrumbBottom = breadcrumbRef.current?.getBoundingClientRect().bottom ?? 0;
       const nextSticky = breadcrumbBottom < 0;
       if (nextSticky !== showStickyRef.current) {
         showStickyRef.current = nextSticky;
-        setShowStickyHeader(nextSticky);
+        if (stickyBarRef.current) {
+          stickyBarRef.current.style.opacity = nextSticky ? "1" : "0";
+          stickyBarRef.current.style.pointerEvents = nextSticky ? "auto" : "none";
+          stickyBarRef.current.style.visibility = nextSticky ? "visible" : "hidden";
+        }
       }
 
       // ── Programmatic scroll gate ──
       if (isScrollingProgrammatically.current) return;
 
-      // ── Active tab ──
+      // ── Active tab — update class trực tiếp trên buttons ──
       let current: TabId = "info";
       let found = false;
       [...TABS].reverse().forEach(({ id }) => {
@@ -90,7 +92,18 @@ export function useProductSections() {
 
       if (current !== activeTabRef.current) {
         activeTabRef.current = current;
-        setActiveTab(current);
+        if (tabBarRef.current) {
+          tabBarRef.current.querySelectorAll<HTMLElement>("[data-tab]").forEach((btn) => {
+            const isActive = btn.dataset.tab === current;
+            btn.classList.toggle("text-accent", isActive);
+            btn.classList.toggle("text-neutral-darker", !isActive);
+            const indicator = btn.querySelector<HTMLElement>("[data-indicator]");
+            if (indicator) indicator.style.opacity = isActive ? "1" : "0";
+            if (isActive) {
+              btn.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+            }
+          });
+        }
       }
     };
 
@@ -107,16 +120,24 @@ export function useProductSections() {
     const target = absoluteTop - headerHeightRef.current - TAB_BAR_HEIGHT - 8;
 
     activeTabRef.current = id;
-    setActiveTab(id);
-    isScrollingProgrammatically.current = true;
+    // Sync DOM ngay lập tức khi click
+    if (tabBarRef.current) {
+      tabBarRef.current.querySelectorAll<HTMLElement>("[data-tab]").forEach((btn) => {
+        const isActive = btn.dataset.tab === id;
+        btn.classList.toggle("text-accent", isActive);
+        btn.classList.toggle("text-neutral-darker", !isActive);
+        const indicator = btn.querySelector<HTMLElement>("[data-indicator]");
+        if (indicator) indicator.style.opacity = isActive ? "1" : "0";
+      });
+    }
 
+    isScrollingProgrammatically.current = true;
     if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current);
     scrollEndTimer.current = setTimeout(() => {
       isScrollingProgrammatically.current = false;
     }, 800);
 
     window.scrollTo({ top: target, behavior: "smooth" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
@@ -127,8 +148,6 @@ export function useProductSections() {
     reviewsRef,
     suggestRef,
     sectionRefs,
-    showStickyHeader,
-    activeTab,
     scrollToSection,
     layoutChangingRef,
   };

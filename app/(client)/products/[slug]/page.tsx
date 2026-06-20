@@ -1,4 +1,3 @@
-import { SITE_URL } from "@/config/site.config";
 import { notFound } from "next/navigation";
 
 import { ProductDetailContent } from "./product-detail-content";

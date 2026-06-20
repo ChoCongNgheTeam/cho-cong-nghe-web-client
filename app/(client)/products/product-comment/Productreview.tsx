@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, startTransition } from "react";
 import RatingSummary from "./Ratingsummary";
 import CommentSection from "./Commentsection";
 import { getComments, getReplies, postComment } from "../_lib";
@@ -98,9 +98,7 @@ export default function ProductReview({ productId, rating, slug, product, curren
     try {
       const result = await getReplies(commentId);
       const replies = result?.data ?? [];
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, replies, _repliesCount: replies.length } : c)),
-      );
+      setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, replies, _repliesCount: replies.length } : c)));
     } catch (error) {
       console.error("Lỗi khi lấy replies:", error);
     }
@@ -149,7 +147,9 @@ export default function ProductReview({ productId, rating, slug, product, curren
   );
 
   useEffect(() => {
-    fetchComments();
+    startTransition(() => {
+      fetchComments();
+    });
   }, [fetchComments]);
 
   return (
