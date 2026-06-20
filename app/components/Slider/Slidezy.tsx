@@ -494,7 +494,7 @@ export default function Slidezy({
       {/* Wrapper riêng cho ảnh + arrow — đây là anchor duy nhất cho absolute arrow */}
       <div className="relative">
         {/* Clip wrapper */}
-        <div className="overflow-hidden p-1">
+        <div className="overflow-hidden pt-4 px-1 pb-3">
           {/* Track */}
           <div
             ref={trackRef}
