@@ -156,9 +156,17 @@ export default function ProductDetailSection1({ product, layoutChangingRef }: Pr
                 </div>
               )}
               {activeTab === "meohay" && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-base sm:text-lg text-primary">Mẹo hay</h3>
-                  <p className="text-neutral-darker leading-relaxed">Đây là nội dung các mẹo hay nhanh chóng...</p>
+                <div className="flex flex-col gap-2">
+                  {product?.highlights && product.highlights.length > 0 ? (
+                    product.highlights.map((highlight, i) => (
+                      <div key={i} className="flex items-center justify-between gap-3 py-2.5 border-b border-neutral last:border-0">
+                        <span className="text-sm text-neutral-darker">{highlight.name}</span>
+                        <span className="text-sm font-semibold text-primary text-right">{highlight.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-neutral-darker">Chưa có thông tin.</p>
+                  )}
                 </div>
               )}
             </div>
