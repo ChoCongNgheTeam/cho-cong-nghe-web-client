@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
 import BlogCard from "@/(client)/blog/components/BlogCard";
 import { Blog } from "@/(client)/blog/types/blog.type";
+import { MoveRight } from "lucide-react";
 
 interface BlogSectionProps {
   blogs: Blog[];
@@ -21,11 +22,10 @@ export function BlogSection({ blogs }: BlogSectionProps) {
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">Bài viết</h2>
             <p className="text-sm text-primary/60 mt-0.5">Tin tức và đánh giá sản phẩm mới nhất</p>
           </div>
-          <Link href="/blog" className="hidden md:flex items-center gap-2 text-accent font-bold hover:gap-3 transition-all duration-300 group">
+          <Link href="/blog" className="hidden md:flex items-center gap-2 text-accent font-bold group">
             <span>Xem tất cả</span>
-            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+
+            <MoveRight size={20} strokeWidth={2.5} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
 
@@ -52,9 +52,7 @@ export function BlogSection({ blogs }: BlogSectionProps) {
             className="flex items-center gap-2 bg-accent text-neutral-light font-bold px-7 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:bg-accent-hover"
           >
             <span>Xem tất cả bài viết</span>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+            <MoveRight size={18} className="transition-all duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
