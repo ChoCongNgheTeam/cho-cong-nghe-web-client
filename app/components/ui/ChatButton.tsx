@@ -32,11 +32,18 @@ const NORMAL_H = 540;
 const MAX_W = 580;
 const MAX_H = 700;
 
-// Button
+// ─────────────────────────────────────────────────────────────────────────────
+// FAB POSITIONING — đồng bộ với FloatingDock (ZaloButton + BackToTopButton)
+// Quy ước chung cho cả 3 nút nổi: breakpoint 768px, right 8px(mobile)/16px(desktop)
+// ChatButton nằm NGOÀI <FloatingDock> vì cần z-index cao hơn panel chat khi mở
+// (làm nút đóng nổi trên panel fullscreen ở mobile). Bottom offset được tính thủ
+// công để luôn nằm phía trên 2 nút trong dock (Zalo + BackToTop), không chồng.
+// ─────────────────────────────────────────────────────────────────────────────
 const BTN_SIZE = 48;
-const BTN_RIGHT = 10;
-const BTN_BOTTOM_MOBILE = 220;
-const BTN_BOTTOM_DESKTOP = 125;
+const FAB_RIGHT_MOBILE = 8; // = dock's right-2
+const FAB_RIGHT_DESKTOP = 16; // = dock's md:right-4
+const BTN_BOTTOM_MOBILE = 200; // trên ZaloButton (160px) + BackToTop (100px), cách đều 60px
+const BTN_BOTTOM_DESKTOP = 125; // trên ZaloButton (72px) + BackToTop (24px), cách đều ~50px
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCT CARD PARSER (Markdown Fallback)
@@ -192,7 +199,6 @@ function StructuredProductCard({ product }: { product: Product }) {
   const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(price);
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0]?.id || product.defaultVariantId || "");
 
-  // Lấy các hàm context của dự án
   const { addToCart } = useCart();
   const { toast } = useToasty();
 
@@ -202,7 +208,6 @@ function StructuredProductCard({ product }: { product: Product }) {
   const hasDiscount = !!(product.originalPriceMin && product.originalPriceMin > product.priceMin);
   const discountPercent = hasDiscount && product.originalPriceMin ? Math.round(((product.originalPriceMin - product.priceMin) / product.originalPriceMin) * 100) : 0;
 
-  // XỬ LÝ THÊM VÀO GIỎ HÀNG CHUẨN KIẾN TRÚC DỰ ÁN
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
     try {
@@ -214,7 +219,6 @@ function StructuredProductCard({ product }: { product: Product }) {
         originalPrice: product.originalPriceMin || product.priceMin,
         imageUrl: product.thumbnail,
       });
-      // Gọi giao diện Toast thành công
       toast({
         type: "success",
         title: "Thành công",
@@ -222,8 +226,6 @@ function StructuredProductCard({ product }: { product: Product }) {
       });
     } catch (error: Error | unknown) {
       const errorMsg = error instanceof Error ? error.message : "Không thể thêm vào giỏ hàng";
-
-      // FIX TOAST: Thêm type: "error"
       toast({
         type: "error",
         title: "Lỗi",
@@ -508,7 +510,6 @@ export default function ChatButton() {
   useEffect(() => {
     const checkMobile = () => setMobile(window.innerWidth <= 768);
 
-    // Đẩy tất cả state cập nhật xuống sau render hiện tại
     setTimeout(() => {
       checkMobile();
       try {
@@ -666,7 +667,7 @@ export default function ChatButton() {
     : {
         position: "fixed",
         bottom: 16,
-        right: BTN_RIGHT,
+        right: FAB_RIGHT_DESKTOP,
         width: isMaximized ? MAX_W : NORMAL_W,
         height: isMaximized ? Math.min(MAX_H, window.innerHeight - 32) : NORMAL_H,
         zIndex: 51,
@@ -675,7 +676,7 @@ export default function ChatButton() {
 
   const btnStyle: React.CSSProperties = {
     position: "fixed",
-    right: BTN_RIGHT,
+    right: mobile ? FAB_RIGHT_MOBILE : FAB_RIGHT_DESKTOP,
     bottom: mobile ? `calc(${BTN_BOTTOM_MOBILE}px + env(safe-area-inset-bottom))` : BTN_BOTTOM_DESKTOP,
     width: BTN_SIZE,
     height: BTN_SIZE,
@@ -963,10 +964,7 @@ export default function ChatButton() {
           <X size={16} strokeWidth={2.5} className="text-neutral-600" />
         ) : (
           <>
-            {/* Bubble nằm TRÊN button, dùng absolute */}
             <ChatBubble />
-
-            {/* Mascot — giữ nguyên trong button, không wrap flex ngang nữa */}
             <div className="animate-[mascotFloat_3s_ease-in-out_infinite] flex items-center justify-center" style={{ width: size, height: size }}>
               <Image src="/images/Robot-mascot-v2.png" alt="Chat bot" width={40} height={40} className="object-contain drop-shadow-md" />
             </div>
