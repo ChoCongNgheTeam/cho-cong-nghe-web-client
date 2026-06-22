@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import apiRequest from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { sortVouchers } from "@/helpers/sortVouchers";
-
-// ─── Types ─────────────────────────────────────────────────────────────────
 
 export interface VoucherTarget {
   id: string;
@@ -18,7 +16,6 @@ interface CartItem {
   categoryId?: string;
   brandId?: string;
   categoryPath?: string[];
-  /** Thành tiền item (unit_price × quantity, sau promotion). Dùng để tính eligible subtotal. */
   itemTotal?: number;
 }
 
@@ -87,31 +84,25 @@ interface UseVoucherOptions {
 }
 
 interface UseVoucherReturn {
-  // ── List state ────────────────────────────────────────────────────────────
   vouchers: Voucher[];
   isLoadingList: boolean;
-  /** true khi đang chạy batch-validate targets sau khi fetch list */
   isValidatingTargets: boolean;
   fetchVouchers: () => Promise<void>;
 
-  // ── Input state ───────────────────────────────────────────────────────────
   inputCode: string;
   setInputCode: (code: string) => void;
   isApplying: boolean;
   error: string;
   isSuccess: boolean;
 
-  // ── Applied voucher ───────────────────────────────────────────────────────
   applied: AppliedVoucher;
   applyByInput: () => Promise<void>;
   applyFromList: (voucher: Voucher) => void;
   clearVoucher: () => void;
 
-  // ── Copy helper ───────────────────────────────────────────────────────────
   copiedCode: string;
   copyCode: (code: string) => void;
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   calculateDiscount: (voucher: Voucher) => number;
   canUseVoucher: (voucher: Voucher) => boolean;
   /** Lý do tại sao voucher bị disable (bao gồm cả "không hợp sản phẩm") */
@@ -120,23 +111,16 @@ interface UseVoucherReturn {
   formatDate: (dateString?: string) => string | null;
 }
 
-// ─── Hook ──────────────────────────────────────────────────────────────────
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback;
+}
 
 export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", initialValue = 0, initialId = "" }: UseVoucherOptions = {}): UseVoucherReturn {
-  // ── List ──────────────────────────────────────────────────────────────────
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [isValidatingTargets, setIsValidatingTargets] = useState(false);
-
-  /**
-   * Map voucherId → kết quả validate target từ server.
-   * Chỉ được set sau khi fetchVouchers() chạy xong batch-validate.
-   * Voucher chưa có trong map → chưa validate xong → coi như ok (lạc quan)
-   * để tránh flash disable ngay khi đang load.
-   */
   const [eligibleMap, setEligibleMap] = useState<Record<string, EligibleResult>>({});
 
-  // ── Input ─────────────────────────────────────────────────────────────────
   const [inputCode, setInputCodeRaw] = useState(initialCode);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState("");
@@ -144,26 +128,13 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
 
   const { isAuthenticated } = useAuth();
 
-  // ── Applied ───────────────────────────────────────────────────────────────
   const [applied, setApplied] = useState<AppliedVoucher>({
     code: initialCode,
     value: initialValue,
     id: initialId,
   });
 
-  // ── Copy ──────────────────────────────────────────────────────────────────
   const [copiedCode, setCopiedCode] = useState("");
-
-  // ── Sync initial values ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (initialCode) {
-      setInputCodeRaw(initialCode);
-      setApplied({ code: initialCode, value: initialValue, id: initialId });
-      setIsSuccess(true);
-    }
-  }, [initialCode, initialValue, initialId]);
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   const formatPrice = useCallback((price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫", []);
 
@@ -272,24 +243,24 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
       // 2. Nếu đã login → fetch thêm private vouchers
       if (isAuthenticated) {
         try {
-          const privateRes = await apiRequest.get<{ data: any[] }>("/vouchers/my-vouchers");
-          const privateVouchers: Voucher[] = (privateRes.data ?? []).map((v: any) => ({
-            id: v.id,
-            code: v.code,
-            description: v.description ?? "",
-            discountType: v.discountType,
+          const privateRes = await apiRequest.get<{ data: Record<string, unknown>[] }>("/vouchers/my-vouchers");
+          const privateVouchers: Voucher[] = (privateRes.data ?? []).map((v: Record<string, unknown>) => ({
+            id: v.id as string,
+            code: v.code as string,
+            description: (v.description as string) ?? "",
+            discountType: v.discountType as Voucher["discountType"],
             discountValue: Number(v.discountValue),
             minOrderValue: Number(v.minOrderValue),
             maxDiscountValue: v.maxDiscountValue ? Number(v.maxDiscountValue) : undefined,
-            maxUses: v.maxUses ?? undefined,
-            maxUsesPerUser: v.maxUsesPerUser ?? undefined,
-            usesCount: v.usedCount ?? v.usesCount ?? 0,
-            remainingUses: v.remainingUses ?? undefined,
-            startDate: v.startDate ?? undefined,
-            endDate: v.endDate ?? undefined,
-            isActive: v.isActive ?? true,
-            isExpired: v.isExpired ?? false,
-            isAvailable: v.canUse ?? v.isAvailable ?? true,
+            maxUses: (v.maxUses as number) ?? undefined,
+            maxUsesPerUser: (v.maxUsesPerUser as number) ?? undefined,
+            usesCount: (v.usedCount as number) ?? (v.usesCount as number) ?? 0,
+            remainingUses: (v.remainingUses as number) ?? undefined,
+            startDate: (v.startDate as string) ?? undefined,
+            endDate: (v.endDate as string) ?? undefined,
+            isActive: (v.isActive as boolean) ?? true,
+            isExpired: (v.isExpired as boolean) ?? false,
+            isAvailable: (v.canUse as boolean) ?? (v.isAvailable as boolean) ?? true,
             isPrivate: true,
           }));
 
@@ -340,7 +311,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
             }
           } else {
             // Network error hoặc 4xx từ server
-            const errMsg = (result.reason as any)?.response?.data?.message ?? "Voucher không áp dụng cho sản phẩm trong giỏ hàng";
+            const errMsg = getApiErrorMessage(result.reason, "Voucher không áp dụng cho sản phẩm trong giỏ hàng");
             newMap[v.id] = { ok: false, reason: errMsg };
           }
         });
@@ -383,8 +354,9 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
       setApplied({ code: normalized, value: res.data.discount, id: res.data.voucher.id });
       setError("");
       setIsSuccess(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? "Mã voucher không tồn tại hoặc không hợp lệ");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Mã voucher không tồn tại hoặc không hợp lệ"));
+
       setIsSuccess(false);
     } finally {
       setIsApplying(false);
@@ -425,8 +397,8 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
         setError("");
         setIsSuccess(true);
         setApplied({ code: voucher.code, value: res.data.discount, id: res.data.voucher.id });
-      } catch (err: any) {
-        setError(err?.response?.data?.message ?? "Không thể áp dụng voucher này");
+      } catch (err: unknown) {
+        setError(getApiErrorMessage(err, "Không thể áp dụng voucher này"));
       } finally {
         setIsApplying(false);
       }
