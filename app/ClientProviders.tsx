@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastyProvider } from "./components/Toast";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { CartProvider } from "@/contexts/CartContext";
+import { CartAuthSync } from "@/components/CartAuthSync";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
@@ -53,13 +53,12 @@ export default function ClientProviders({ children }: { children: React.ReactNod
           <NotificationProvider>
             <WishlistProvider>
               <ThemeProvider>
-                <CartProvider>
-                  <FcmInitializer />
-                  <LocaleInitializer />
-                  {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
-                  <MaintenanceGuard>{children}</MaintenanceGuard>
-                  <Analytics />
-                </CartProvider>
+                <CartAuthSync />
+                <FcmInitializer />
+                <LocaleInitializer />
+                {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
+                <MaintenanceGuard>{children}</MaintenanceGuard>
+                <Analytics />
               </ThemeProvider>
             </WishlistProvider>
           </NotificationProvider>

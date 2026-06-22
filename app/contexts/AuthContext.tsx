@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useState, useEffect, useRef, useCallback, ReactNode } from "react";
+import { createContext, useState, useEffect, useRef, useCallback, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
 import apiRequest, { performRefresh, resolveAuthInit, resetAuthInit, setAccessToken } from "@/lib/api";
@@ -83,12 +83,11 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
           } else {
             setUser(null);
           }
-        } catch (meError: any) {
-          console.error("[checkAuth] /users/me failed:", meError?.status, meError?.message);
-          if (meError?.status === 401) {
-            setUser(null);
-          }
-          if (meError?.status === 401) {
+        } catch (meError: unknown) {
+          const status = (meError as { status?: number })?.status;
+          const message = (meError as { message?: string })?.message;
+          console.error("[checkAuth] /users/me failed:", status, message);
+          if (status === 401) {
             setUser(null);
           }
         }
@@ -115,14 +114,17 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     }
   }, []);
 
-  const login = async (userData: User, accessToken: string) => {
-    setAccessToken(accessToken);
-    setUser(userData); // isAuthenticated = true ngay
-    setShowWelcome(true);
-    // Không await refreshUser() ở đây nữa
-    refreshUser(); // fire-and-forget, chạy nền
-  };
-  const logout = async () => {
+  const login = useCallback(
+    async (userData: User, accessToken: string) => {
+      setAccessToken(accessToken);
+      setUser(userData);
+      setShowWelcome(true);
+      refreshUser();
+    },
+    [refreshUser],
+  );
+
+  const logout = useCallback(async () => {
     try {
       await apiRequest.post("/auth/logout", {}, { timeout: 5000 });
     } catch (error) {
@@ -131,31 +133,33 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       setAccessToken(null);
       setUser(null);
       localStorage.removeItem("cart");
-
       toast.success("Đăng xuất thành công", {
         title: "Hẹn gặp lại!",
         duration: 5000,
         showProgress: true,
       });
-
       setTimeout(() => {
         router.replace("/account?login");
       }, 500);
     }
-  };
+  }, [router, toast]);
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        loading,
-        isAuthenticated: !!user,
-        refreshUser,
-        showWelcome,
-        setShowWelcome,
-      }}
+      value={useMemo(
+        () => ({
+          // ✅ thêm useMemo
+          user,
+          login,
+          logout,
+          loading,
+          isAuthenticated: !!user,
+          refreshUser,
+          showWelcome,
+          setShowWelcome,
+        }),
+        [user, loading, showWelcome, login, logout, refreshUser],
+      )} // ← deps
     >
       {children}
     </AuthContext.Provider>

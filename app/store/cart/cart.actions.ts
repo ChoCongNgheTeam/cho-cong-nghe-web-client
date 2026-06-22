@@ -1,7 +1,7 @@
+import { ApiResponse } from "@/(admin)/admin/media/media.types";
+import { ApiCartData, ApiResult } from "@/(client)/cart/types/cart.types";
 import apiRequest from "@/lib/api";
-import { ApiCartData, ApiResponse, ApiResult } from "../types/cart.types";
 
-// GET /cart
 export async function getCartItems(): Promise<ApiResult> {
   try {
     const response = await apiRequest.get<ApiResponse<ApiCartData>>("/cart", {
@@ -14,7 +14,6 @@ export async function getCartItems(): Promise<ApiResult> {
   }
 }
 
-// POST /cart
 export async function addToCart(productVariantId: string, quantity: number): Promise<ApiResult> {
   try {
     await apiRequest.post<ApiResponse<unknown>>("/cart", {
@@ -28,7 +27,6 @@ export async function addToCart(productVariantId: string, quantity: number): Pro
   }
 }
 
-// PUT /cart/:cartItemId/change-quantity
 export async function updateCartItemQuantity(cartItemId: string, quantity: number): Promise<ApiResult> {
   try {
     await apiRequest.put<ApiResponse<unknown>>(`/cart/${cartItemId}/change-quantity`, {
@@ -41,7 +39,6 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
   }
 }
 
-// DELETE /cart/:cartItemId
 export async function removeCartItem(cartItemId: string): Promise<ApiResult> {
   try {
     await apiRequest.delete<ApiResponse<unknown>>(`/cart/${cartItemId}`);
@@ -52,11 +49,6 @@ export async function removeCartItem(cartItemId: string): Promise<ApiResult> {
   }
 }
 
-/**
- * Batch delete — dùng Promise.allSettled để biết chính xác item nào fail.
- * Trả về { success, failedIds } thay vì chỉ success/fail toàn bộ.
- * Context có thể dùng failedIds để rollback đúng phần bị lỗi.
- */
 export async function removeCartItems(cartItemIds: string[]): Promise<ApiResult & { failedIds?: string[] }> {
   const results = await Promise.allSettled(cartItemIds.map(removeCartItem));
 
@@ -73,7 +65,6 @@ export async function removeCartItems(cartItemIds: string[]): Promise<ApiResult 
   };
 }
 
-// DELETE /cart
 export async function clearCart(): Promise<ApiResult> {
   try {
     await apiRequest.delete<ApiResponse<unknown>>("/cart");
@@ -84,7 +75,6 @@ export async function clearCart(): Promise<ApiResult> {
   }
 }
 
-// POST /cart/sync
 export async function syncGuestCart(
   items: Array<{
     productVariantId: string;
