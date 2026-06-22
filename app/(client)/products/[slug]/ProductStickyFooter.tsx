@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import { ProductDetail } from "@/lib/types/product";
 import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
 import { useToasty } from "@/components/Toast";
 import { useCart } from "@/hooks/useCart";
 import { useRouter } from "next/navigation";
+import QuantityControl from "@/components/shared/QuantityControl";
 
 interface ProductVariant {
   id: string;
@@ -31,29 +32,40 @@ type Price = {
   hasPromotion: boolean;
 };
 
+interface VariantOptionValue {
+  value: string;
+  label?: string;
+}
+
+interface VariantOption {
+  type: string;
+  values?: VariantOptionValue[];
+}
+
 interface ProductStickyFooterProps {
   product: ProductDetail;
   selectedVariant?: ProductVariant;
   selectedPrice?: Price;
-  quantity?: number;
-  /** ref của infoRef (hero section) — khi khuất viewport thì footer hiện (desktop only) */
   infoRef?: React.RefObject<HTMLElement | null>;
-  availableOptions?: any[]; // ← thêm
-  selectedOptions?: Record<string, string>; // ← thêm
+  availableOptions?: VariantOption[];
+  selectedOptions?: Record<string, string>;
 }
 
-export default function ProductStickyFooter({ product, selectedVariant, selectedPrice, quantity = 1, infoRef, availableOptions = [], selectedOptions = {} }: ProductStickyFooterProps) {
+export default function ProductStickyFooter({ product, selectedVariant, selectedPrice, infoRef, availableOptions = [], selectedOptions = {} }: ProductStickyFooterProps) {
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
 
-  const storageLabel = availableOptions.find((opt) => opt.type === "storage")?.values?.find((v: any) => v.value === selectedOptions.storage)?.label ?? "";
+  const quantityRef = useRef(1);
+  const handleQuantityChange = useCallback((qty: number) => {
+    quantityRef.current = qty;
+  }, []);
 
-  /**
-   * visible logic:
-   * - mobile (< lg): luôn hiện (visible = true)
-   * - desktop (>= lg): hiện khi hero section khuất khỏi viewport
-   */
+  const storageLabel = useMemo(
+    () => availableOptions.find((opt) => opt.type === "storage")?.values?.find((v) => v.value === selectedOptions.storage)?.label ?? "",
+    [availableOptions, selectedOptions.storage],
+  );
+
   const [heroHidden, setHeroHidden] = useState(false);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false));
 
@@ -64,7 +76,6 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // IntersectionObserver cho desktop
   useEffect(() => {
     if (!infoRef?.current) return;
     const observer = new IntersectionObserver(([entry]) => setHeroHidden(!entry.isIntersecting), { threshold: 0 });
@@ -74,7 +85,6 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
 
   const visible = isMobile ? true : heroHidden;
 
-  /* ── Price ─────────────────────────────────────────────────────────── */
   const activePrice = selectedPrice || product.price;
   const displayPrice = activePrice?.hasPromotion ? activePrice.final : (activePrice?.base ?? 0);
   const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
@@ -83,18 +93,15 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
   const availQty = selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? selectedVariant?.quantity ?? 0;
   const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || availQty === 0;
 
-  /* ── Image ─────────────────────────────────────────────────────────── */
-  const imageUrl = selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? (product as any)?.img?.[0]?.imageUrl ?? "";
+  const imageUrl = selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? "";
 
-  /* ── Buy now ───────────────────────────────────────────────────────── */
-  const handleBuyNow = async () => {
+  const handleBuyNow = useCallback(async () => {
     if (!selectedVariant?.id) {
       toasty.warning("Vui lòng chọn phiên bản sản phẩm");
       return;
     }
-
     try {
-      await addToCart(selectedVariant.id, quantity, {
+      await addToCart(selectedVariant.id, quantityRef.current, {
         productName: product.name,
         productId: product.id,
         productSlug: product.slug,
@@ -112,9 +119,26 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
     } catch {
       toasty.error("Không thể thêm vào giỏ hàng, vui lòng thử lại");
     }
-  };
+  }, [selectedVariant, product, finalPrice, basePrice, imageUrl, availQty, storageLabel, addToCart, router, toasty]);
 
-  /* ── Render ─────────────────────────────────────────────────────────── */
+  const cartMeta = useMemo(
+    () => ({
+      productName: product.name,
+      productId: product.id,
+      productSlug: product.slug,
+      brandName: product.brand.name,
+      variantName: selectedVariant?.sku ?? "",
+      price: finalPrice,
+      originalPrice: basePrice,
+      imageUrl,
+      availableQuantity: availQty,
+      color: selectedVariant?.color ?? "",
+      colorValue: selectedVariant?.colorValue ?? "",
+      storageLabel,
+    }),
+    [product, selectedVariant, finalPrice, basePrice, imageUrl, availQty, storageLabel],
+  );
+
   return (
     <div
       className={`fixed bottom-0 left-0 right-0 z-10
@@ -151,45 +175,33 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
             <span className="shrink-0 px-3 py-2 rounded-lg bg-neutral text-primary text-xs font-medium whitespace-nowrap">Hết hàng</span>
           ) : (
             <div className="flex items-center gap-1.5 shrink-0">
+              <QuantityControl maxStock={availQty} onChange={handleQuantityChange} />
               <AddToCartButton
                 productVariantId={selectedVariant?.id || ""}
-                quantity={quantity}
+                getQuantity={() => quantityRef.current}
                 disabled={!selectedVariant?.id}
-                meta={{
-                  productName: product.name,
-                  productId: product.id,
-                  productSlug: product.slug,
-                  brandName: product.brand.name,
-                  variantName: selectedVariant?.sku ?? "",
-                  price: finalPrice,
-                  originalPrice: basePrice,
-                  imageUrl,
-                  availableQuantity: selectedVariant?.availableQuantity ?? selectedVariant?.stock ?? selectedVariant?.quantity ?? 0,
-                  color: selectedVariant?.color ?? "",
-                  colorValue: selectedVariant?.colorValue ?? "",
-                  storageLabel,
-                }}
+                meta={cartMeta}
                 label=""
                 iconSize={20}
                 className={`
-          !h-9 !w-9 sm:!w-auto sm:!px-3
-          !rounded-lg
-          !border !border-neutral-dark
-          !bg-neutral-light !text-primary
-          hover:!bg-neutral
-          active:scale-95
-          transition-all duration-200
-          disabled:!opacity-50 disabled:!cursor-not-allowed
-        `}
+                  !h-9 !w-9 sm:!w-auto sm:!px-3
+                  !rounded-lg
+                  !border !border-neutral-dark
+                  !bg-neutral-light !text-primary
+                  hover:!bg-neutral
+                  active:scale-95
+                  transition-all duration-200
+                  disabled:!opacity-50 disabled:!cursor-not-allowed
+                `}
               />
               <button
                 onClick={handleBuyNow}
                 disabled={!selectedVariant?.id}
                 className="h-9 px-3 sm:px-5 rounded-lg bg-primary text-neutral-light
-          text-xs sm:text-sm font-semibold whitespace-nowrap
-          hover:bg-primary-hover active:scale-95
-          transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  text-xs sm:text-sm font-semibold whitespace-nowrap
+                  hover:bg-primary-hover active:scale-95
+                  transition-all duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Mua ngay
               </button>

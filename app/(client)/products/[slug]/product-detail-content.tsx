@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback, startTransition } from "react";
+import { useRef, useState, useEffect, useCallback, startTransition, useMemo, memo } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 
 import ProductDetailBanner from "../components/product-detail/product-detail-banner";
@@ -71,6 +71,51 @@ function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOp
   return result;
 }
 
+// Tạo component riêng cho phần static sections
+const StaticSections = memo(function StaticSections({
+  slug,
+  product,
+  layoutChangingRef,
+  specificationsRef,
+  articleRef,
+  reviewsRef,
+  suggestRef,
+}: {
+  slug: string;
+  product: ProductDetail;
+  layoutChangingRef: React.MutableRefObject<boolean>;
+  specificationsRef: React.RefObject<HTMLDivElement | null>;
+  articleRef: React.RefObject<HTMLDivElement | null>;
+  reviewsRef: React.RefObject<HTMLDivElement | null>;
+  suggestRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={specificationsRef}>
+        <div className="container !px-0">
+          <ProductDetailSection slug={slug} product={product} />
+        </div>
+      </div>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={articleRef}>
+        <div className="container !px-0">
+          <ProductDetailSection1 product={product} layoutChangingRef={layoutChangingRef} />
+        </div>
+      </div>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={reviewsRef}>
+        <div className="container !px-0">
+          <ProductReview productId={product.id} rating={product.rating} slug={product.slug} product={product} />
+        </div>
+      </div>
+      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={suggestRef}>
+        <div className="container !px-0">
+          <ProductDetailSuggest slug={slug} />
+        </div>
+      </div>
+      <TrustBadges className="!bg-gray-400/10" />
+    </>
+  );
+});
+
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
   const stickyBarRef = useRef<HTMLDivElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
@@ -88,13 +133,9 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   );
   const [availableOptions, setAvailableOptions] = useState<VariantOption[]>((product.availableOptions as VariantOption[]) || []);
   const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(product.currentVariant as unknown as ProductVariant);
-  const [variantImages, setVariantImages] = useState<{ imageUrl: string }[]>(product.currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) || []);
+  const variantImages = useMemo(() => currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) ?? [], [currentVariant?.id]);
   const [price, setPrice] = useState<ProductPrice | undefined>(product.price);
-  const [quantity, setQuantity] = useState(1);
 
-  /* ─────────────────────────────────────────────────────────────────────────
-   * fetchVariantByParams — batch tất cả state update sau khi có data API
-   * ───────────────────────────────────────────────────────────────────────── */
   const fetchVariantByParams = useCallback(
     async (params: Record<string, string>) => {
       try {
@@ -102,9 +143,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
 
         setAvailableOptions(data.availableOptions as VariantOption[]);
         setCurrentVariant(data.currentVariant);
-        setVariantImages(data.currentVariant.images ?? []);
         setPrice(data.price);
-        setQuantity(1);
 
         const synced = syncOptionsFromVariant(data.currentVariant, data.availableOptions as VariantOption[]);
         if (Object.keys(synced).length > 0) {
@@ -117,9 +156,6 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
     [product.slug],
   );
 
-  /* ─────────────────────────────────────────────────────────────────────────
-   * Mount: đọc ?bundle từ URL → load đúng variant từ card navigate
-   * ───────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     const bundleId = searchParams.get("bundle");
 
@@ -142,13 +178,6 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ─────────────────────────────────────────────────────────────────────────
-   * handleOptionChange
-   *
-   * - type="bundle": gọi ?bundle=<variantId> trực tiếp
-   * - type khác (color/storage/ram): gộp options, loại bỏ key "bundle" nếu có
-   *   để tránh conflict khi sản phẩm chuyển từ bundle → individual mode
-   * ───────────────────────────────────────────────────────────────────────── */
   const handleOptionChange = useCallback(
     async (type: string, value: string) => {
       if (type === "bundle") {
@@ -228,7 +257,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
       <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container" ref={infoRef}>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit pr-6">
-            <ProductDetailBanner product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
+            <ProductDetailBanner key={currentVariant?.id} product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
           </div>
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-16 lg:h-fit">
@@ -247,40 +276,17 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           </div>
         </div>
       </div>
-      {/* ── Thông số kỹ thuật ── */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={specificationsRef}>
-        <div className="container !px-0">
-          <ProductDetailSection slug={slug} product={product} />
-        </div>
-      </div>
-      {/* ── Bài viết đánh giá ── */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={articleRef}>
-        <div className="container !px-0">
-          <ProductDetailSection1 product={product} layoutChangingRef={layoutChangingRef} />
-        </div>
-      </div>
-      {/* ── Đánh giá & Hỏi đáp ── */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={reviewsRef}>
-        <div className="container !px-0">
-          <ProductReview productId={product.id} rating={product.rating} slug={product.slug} product={product} currentVariant={currentVariant} />
-        </div>
-      </div>
-      {/* ── Sản phẩm liên quan ── */}
-      <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={suggestRef}>
-        <div className="container !px-0">
-          <ProductDetailSuggest slug={slug} />
-        </div>
-      </div>
-      <TrustBadges className="!bg-gray-400/10" />
-      <ProductStickyFooter
+      <StaticSections
+        slug={slug}
         product={product}
-        selectedVariant={currentVariant}
-        selectedPrice={price}
-        quantity={quantity}
-        infoRef={infoRef}
-        availableOptions={availableOptions}
-        selectedOptions={selectedOptions}
+        layoutChangingRef={layoutChangingRef}
+        specificationsRef={specificationsRef}
+        articleRef={articleRef}
+        reviewsRef={reviewsRef}
+        suggestRef={suggestRef}
       />
+
+      <ProductStickyFooter product={product} selectedVariant={currentVariant} selectedPrice={price} infoRef={infoRef} availableOptions={availableOptions} selectedOptions={selectedOptions} />
     </div>
   );
 }

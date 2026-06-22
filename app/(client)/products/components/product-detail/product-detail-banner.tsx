@@ -81,11 +81,6 @@ const ProductDetailBanner = memo(function ProductDetailBanner({ product, images,
   };
 
   useEffect(() => {
-    setCurrentImageIndex(0);
-    setGalleryIndex(0);
-  }, [images]);
-
-  useEffect(() => {
     if (selectedVariant?.id) {
       lastSyncedVariantId.current = selectedVariant.id;
     }

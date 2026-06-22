@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment, memo } from "react";
+import { useState, useEffect, Fragment, memo, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import OptionValues from "@/(client)/products/components/OptionValues/OptionValues";
 import { FaStar, FaGift, FaCog, FaTruck, FaPlus, FaMinus, FaUndoAlt } from "react-icons/fa";
@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { HighlightIcon } from "@/components/product/HighlightIcon";
 import type { ProductVariant, VariantOption, VariantOptionValue, ProductPrice } from "../../types";
 import type { Highlight } from "@/lib/types/product";
+import QuantityControl from "@/components/shared/QuantityControl";
 
 const TYPE_LABELS: Record<string, string> = {
   color: "Màu sắc",
@@ -125,43 +126,33 @@ const ProductDetailRight = memo(function ProductDetailRight({
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
-  const [quantity, setQuantity] = useState(1);
+  const quantityRef = useRef(1);
 
-  // useEffect(() => {
-  //   setQuantity(1);
-  // }, [selectedVariant?.id]);
-
-  if (!product) return <div className="text-primary">Loading...</div>;
-
-  const activePrice = selectedPrice || product.price;
-  const displayPrice = activePrice?.hasPromotion ? activePrice.final : (activePrice?.base ?? 0);
+  const activePrice = selectedPrice || product?.price;
   const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
   const basePrice = activePrice?.base ?? 0;
 
-  const maxStock = selectedVariant?.quantity ?? 0;
-  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
-  const isInStock = !isOutOfStock && maxStock > 0;
+  const storageLabel = useMemo(
+    () => availableOptions.find((opt) => opt.type === "storage")?.values?.find((v: VariantOptionValue) => v.value === selectedOptions?.storage)?.label ?? "",
+    [availableOptions, selectedOptions?.storage],
+  );
 
-  const handleQuantityChange = (newQuantity: number) => {
-    setQuantity(Math.min(Math.max(1, newQuantity), maxStock));
-  };
+  const handleQuantityChange = useCallback((qty: number) => {
+    quantityRef.current = qty;
+  }, []);
 
-  const getStorageLabel = () => availableOptions.find((opt) => opt.type === "storage")?.values?.find((v: VariantOptionValue) => v.value === selectedOptions?.storage)?.label ?? "";
-
-  const handleBuyNow = async () => {
+  const handleBuyNow = useCallback(async () => {
     if (!selectedVariant?.id) {
       toasty.warning("Vui lòng chọn phiên bản sản phẩm");
       return;
     }
-
     const availQty = selectedVariant.availableQuantity ?? selectedVariant.stock ?? selectedVariant.quantity ?? 0;
-
     try {
       await addToCart(selectedVariant.id, 1, {
-        productName: product.name,
-        productId: product.id,
-        productSlug: product.slug,
-        brandName: product.brand.name,
+        productName: product!.name,
+        productId: product!.id,
+        productSlug: product!.slug,
+        brandName: product!.brand.name,
         variantName: selectedVariant.sku ?? "",
         price: finalPrice,
         originalPrice: basePrice,
@@ -169,14 +160,21 @@ const ProductDetailRight = memo(function ProductDetailRight({
         availableQuantity: availQty,
         color: selectedVariant.color ?? "",
         colorValue: selectedVariant.colorValue ?? "",
-        storageLabel: getStorageLabel(),
+        storageLabel,
       });
       router.push("/cart");
     } catch {
       toasty.error("Không thể thêm vào giỏ hàng, vui lòng thử lại");
     }
-  };
+  }, [selectedVariant, product, finalPrice, basePrice, storageLabel, addToCart, router, toasty]);
 
+  if (!product) return <div className="text-primary">Loading...</div>;
+
+  const displayPrice = activePrice?.hasPromotion ? activePrice.final : (activePrice?.base ?? 0);
+
+  const maxStock = selectedVariant?.quantity ?? 0;
+  const isOutOfStock = selectedVariant?.stockStatus === "out_of_stock" || maxStock === 0;
+  const isInStock = !isOutOfStock && maxStock > 0;
   const highlights = product.highlights || [];
 
   return (
@@ -238,33 +236,7 @@ const ProductDetailRight = memo(function ProductDetailRight({
         {isInStock && (
           <>
             <span className="font-medium text-primary text-xs sm:text-sm flex items-center">Số lượng:</span>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border border-neutral rounded-lg overflow-hidden">
-                <button
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={quantity <= 1}
-                  className="w-10 h-10 flex items-center justify-center bg-neutral-light hover:bg-neutral transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <FaMinus className="text-primary text-sm" />
-                </button>
-                <input
-                  type="number"
-                  min="1"
-                  max={maxStock}
-                  value={quantity}
-                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                  className="w-16 h-10 text-center border-x border-neutral focus:outline-none bg-neutral-light text-primary font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={quantity >= maxStock}
-                  className="w-10 h-10 flex items-center justify-center bg-neutral-light hover:bg-neutral transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <FaPlus className="text-primary text-sm" />
-                </button>
-              </div>
-              <span className="text-xs sm:text-sm text-neutral-dark">Còn {maxStock} sản phẩm</span>
-            </div>
+            <QuantityControl maxStock={maxStock} onChange={handleQuantityChange} />
           </>
         )}
       </div>
@@ -341,10 +313,11 @@ const ProductDetailRight = memo(function ProductDetailRight({
           </div>
 
           {/* Action Buttons — desktop only */}
+          {/* Action Buttons — desktop only */}
           <div className="hidden lg:flex gap-2 sm:gap-3">
             <AddToCartButton
               productVariantId={selectedVariant?.id || ""}
-              quantity={quantity}
+              getQuantity={() => quantityRef.current}
               disabled={!selectedVariant?.id}
               meta={{
                 productName: product.name,
@@ -356,20 +329,20 @@ const ProductDetailRight = memo(function ProductDetailRight({
                 imageUrl: selectedVariant?.image ?? selectedVariant?.images?.[0]?.imageUrl ?? "",
                 availableQuantity: maxStock ?? 0,
                 color: selectedVariant?.color ?? "",
-                storageLabel: getStorageLabel(),
+                storageLabel,
                 colorValue: selectedVariant?.colorValue ?? "",
                 brandName: product.brand.name,
               }}
               label=""
               iconSize={26}
               className={`
-                !flex-1 !py-3 !rounded-lg
-                !border !border-neutral-dark
-                !bg-neutral-light !text-primary
-                hover:!bg-neutral active:scale-95
-                transition-all duration-200
-                disabled:!opacity-50 disabled:!cursor-not-allowed
-              `}
+      !flex-1 !py-3 !rounded-lg
+      !border !border-neutral-dark
+      !bg-neutral-light !text-primary
+      hover:!bg-neutral active:scale-95
+      transition-all duration-200
+      disabled:!opacity-50 disabled:!cursor-not-allowed
+    `}
             />
             <button
               onClick={handleBuyNow}

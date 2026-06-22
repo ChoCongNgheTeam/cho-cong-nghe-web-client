@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/components/product/types";
@@ -56,7 +56,7 @@ function toProduct(item: Record<string, unknown>): Product {
   };
 }
 
-export default function ProductDetailSuggest({ slug }: { slug: string }) {
+export default memo(function ProductDetailSuggest({ slug }: { slug: string }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(4);
@@ -215,4 +215,4 @@ export default function ProductDetailSuggest({ slug }: { slug: string }) {
       )}
     </div>
   );
-}
+});

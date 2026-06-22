@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { ProductDetail } from "@/lib/types/product";
 
 interface ProductDetailSection1Props {
@@ -11,7 +11,7 @@ interface ProductDetailSection1Props {
 const COLLAPSED_HEIGHT = 600;
 const TRANSITION_MS = 350;
 
-export default function ProductDetailSection1({ product, layoutChangingRef }: ProductDetailSection1Props) {
+export default memo(function ProductDetailSection1({ product, layoutChangingRef }: ProductDetailSection1Props) {
   const [activeTab, setActiveTab] = useState<"baiviet" | "meohay">("baiviet");
   const [expanded, setExpanded] = useState(false);
   const [maxHeight, setMaxHeight] = useState<number>(COLLAPSED_HEIGHT);
@@ -175,4 +175,4 @@ export default function ProductDetailSection1({ product, layoutChangingRef }: Pr
       </div>
     </div>
   );
-}
+});

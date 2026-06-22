@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { SpecificationGroup, SpecificationItem, ProductDetail } from "@/lib/types/product";
 import ProductSpecsModal, { type ProductSpecsModalRef } from "./ProductSpecsModal";
 import { getProductBySpecifications } from "../../_lib/index";
@@ -10,7 +10,7 @@ interface ProductDetailSectionProps {
   product?: ProductDetail;
 }
 
-export default function ProductDetailSection({ slug, product }: ProductDetailSectionProps) {
+export default memo(function ProductDetailSection({ slug, product }: ProductDetailSectionProps) {
   const [modalSpecs, setModalSpecs] = useState<SpecificationGroup[]>([]);
   const [modalProductName, setModalProductName] = useState<string | undefined>();
   const [modalProductImage, setModalProductImage] = useState<string | undefined>();
@@ -105,4 +105,4 @@ export default function ProductDetailSection({ slug, product }: ProductDetailSec
       <ProductSpecsModal ref={modalRef} specifications={modalSpecs} isLoading={loadingModal} productName={modalProductName} productImage={modalProductImage} />
     </>
   );
-}
+});
