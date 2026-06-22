@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useRef, 
 import { X } from "lucide-react";
 import { SpecificationGroup } from "@/lib/types/product";
 import Image from "next/image";
+import { toId } from "@/helpers/toId";
 
 export interface ProductSpecsModalRef {
   open: () => void;
@@ -16,22 +17,6 @@ interface ProductSpecsModalProps {
   productName?: string;
   productImage?: string;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Slug hóa groupName để dùng làm id scroll target */
-function toId(name: string) {
-  return `spec-group-${name
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]/g, "")}`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
@@ -83,10 +68,6 @@ function SkeletonLoading() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOBILE VIEW — scroll liên tục, tab sticky highlight theo section đang xem
-// ─────────────────────────────────────────────────────────────────────────────
-
 function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label: string; value: string }[] }[] }) {
   const [activeId, setActiveId] = useState<string>(tabs[0]?.id ?? "");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -110,9 +91,9 @@ function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label
             best = { id: entry.target.id, ratio: entry.intersectionRatio };
           }
         });
-        if (best && (best as any).ratio > 0.15) {
+        if (best && (best as unknown as { ratio: number }).ratio > 0.15) {
           // id = toId(groupName) → extract groupName back
-          const matched = tabs.find((t) => toId(t.id) === (best as any).id);
+          const matched = tabs.find((t) => toId(t.id) === (best as unknown as { id: string }).id);
           if (matched) setActiveId(matched.id);
         }
       },
@@ -205,10 +186,6 @@ function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DESKTOP VIEW — sidebar tabs, active rõ ràng
-// ─────────────────────────────────────────────────────────────────────────────
-
 function DesktopView({ tabs }: { tabs: { id: string; label: string; data: { label: string; value: string }[] }[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -260,10 +237,6 @@ function DesktopView({ tabs }: { tabs: { id: string; label: string; data: { labe
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 
 const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProps>(function ProductSpecsModal({ specifications, isLoading = false, productName, productImage }, ref) {
   const [open, setOpen] = useState(false);

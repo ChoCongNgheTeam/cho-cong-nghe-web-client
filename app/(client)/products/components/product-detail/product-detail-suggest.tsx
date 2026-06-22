@@ -134,7 +134,7 @@ export default memo(function ProductDetailSuggest({ slug }: { slug: string }) {
     <div className="w-full px-3 sm:px-6 lg:px-12 py-5 lg:py-10 bg-neutral-light rounded-xl">
       <h2 className="text-base sm:text-lg md:text-2xl font-semibold text-primary mb-4 sm:mb-6 md:mb-8">Sản phẩm liên quan</h2>
 
-      <div>
+      <div className="overflow-hidden">
         <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4" style={{ willChange: "transform, opacity" }}>
           {paged.map((p) => (
             <ProductCard key={p.id} product={p} />

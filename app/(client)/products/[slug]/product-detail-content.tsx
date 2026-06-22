@@ -256,7 +256,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
       {/* ── Hero / Thông tin sản phẩm ── */}
       <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container" ref={infoRef}>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
-          <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit pr-6">
+          <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit">
             <ProductDetailBanner key={currentVariant?.id} product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
           </div>
           <div className="w-full lg:w-[40%]">
