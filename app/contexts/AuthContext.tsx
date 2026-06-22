@@ -148,7 +148,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     <AuthContext.Provider
       value={useMemo(
         () => ({
-          // ✅ thêm useMemo
           user,
           login,
           logout,
