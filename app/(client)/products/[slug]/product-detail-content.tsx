@@ -9,7 +9,6 @@ import ProductDetailSection from "../components/product-detail/product-detail-se
 import ProductDetailSection1 from "../components/product-detail/product-detail-section-1";
 import ProductDetailSuggest from "../components/product-detail/product-detail-suggest";
 import ProductReview from "../product-comment/Productreview";
-import Breadcrumb from "../../../components/layout/Breadcrumb/Breadcrumb";
 import ProductStickyFooter from "./ProductStickyFooter";
 import { TrustBadges } from "@/(client)/home/components";
 
@@ -29,14 +28,6 @@ interface VariantOptionValueWithSelected {
   selected?: boolean;
 }
 
-/**
- * Sync selectedOptions từ currentVariant + availableOptions sau khi API trả về.
- *
- * Xử lý 2 mode:
- *   - Bundle mode (type="bundle"): đọc selected=true từ availableOptions
- *     (BE set đúng field này cho bundle), fallback về variant.id
- *   - Individual mode (color/storage/ram): đọc trực tiếp từ variant fields
- */
 function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOptions: VariantOption[]): Record<string, string> {
   if (!variant) return {};
 
@@ -44,7 +35,6 @@ function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOp
 
   for (const opt of availableOptions) {
     if (opt.type === "bundle") {
-      // BE trả về selected=true cho bundle đang active
       const selected = opt.values?.find((v) => (v as VariantOptionValueWithSelected).selected === true);
       const activeValue = selected?.value ?? variant.id;
       if (activeValue) result["bundle"] = activeValue;
@@ -63,7 +53,6 @@ function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOp
       const val = (variant.ram as string | undefined) ?? opt.values?.[0]?.value;
       if (val) result["ram"] = val;
     } else {
-      // Generic fallback cho các option type khác
       if (opt.values?.[0]) result[opt.type] = opt.values[0].value;
     }
   }
@@ -71,7 +60,7 @@ function syncOptionsFromVariant(variant: ProductVariant | undefined, availableOp
   return result;
 }
 
-// Tạo component riêng cho phần static sections
+// StaticSections nhận refs trực tiếp thay vì destructure từ object mới mỗi lần
 const StaticSections = memo(function StaticSections({
   slug,
   product,
@@ -119,11 +108,14 @@ const StaticSections = memo(function StaticSections({
 export function ProductDetailContent({ product, slug }: ProductDetailContentProps) {
   const stickyBarRef = useRef<HTMLDivElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
+
+  // useProductSections giờ return stable object (useMemo deps=[])
   const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, scrollToSection, layoutChangingRef } = useProductSections(stickyBarRef, tabBarRef);
 
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
+  // Stable callbacks — scrollToSection từ hook đã stable
   const handleReviewClick = useCallback(() => scrollToSection("reviews"), [scrollToSection]);
   const handleSpecClick = useCallback(() => scrollToSection("specs"), [scrollToSection]);
 
@@ -133,9 +125,27 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   );
   const [availableOptions, setAvailableOptions] = useState<VariantOption[]>((product.availableOptions as VariantOption[]) || []);
   const [currentVariant, setCurrentVariant] = useState<ProductVariant | undefined>(product.currentVariant as unknown as ProductVariant);
-  const variantImages = useMemo(() => currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) ?? [], [currentVariant?.id]);
   const [price, setPrice] = useState<ProductPrice | undefined>(product.price);
 
+  // Dùng refs để đọc latest value trong callbacks mà không tạo deps
+  const selectedOptionsRef = useRef(selectedOptions);
+  useEffect(() => {
+    selectedOptionsRef.current = selectedOptions;
+  }, [selectedOptions]);
+
+  const currentVariantRef = useRef(currentVariant);
+  useEffect(() => {
+    currentVariantRef.current = currentVariant;
+  }, [currentVariant]);
+
+  // variantImages stable theo currentVariant.id
+  const variantImages = useMemo(
+    () => currentVariant?.images?.map((img) => ({ imageUrl: img.imageUrl })) ?? [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentVariant?.id],
+  );
+
+  // fetchVariantByParams chỉ depend product.slug — stable
   const fetchVariantByParams = useCallback(
     async (params: Record<string, string>) => {
       try {
@@ -178,26 +188,28 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // handleOptionChange không còn depend selectedOptions
+  // Đọc giá trị latest qua selectedOptionsRef thay vì closure
   const handleOptionChange = useCallback(
     async (type: string, value: string) => {
       if (type === "bundle") {
         await fetchVariantByParams({ bundle: value });
       } else {
-        // Loại bỏ key "bundle" khỏi selectedOptions khi gọi individual params
-        const { bundle: _drop, ...restOptions } = selectedOptions;
-        const newOptions = { ...restOptions, [type]: value };
-        await fetchVariantByParams(newOptions);
+        const { bundle: _drop, ...restOptions } = selectedOptionsRef.current;
+        await fetchVariantByParams({ ...restOptions, [type]: value });
       }
     },
-    [selectedOptions, fetchVariantByParams],
+    [fetchVariantByParams], // ← không còn selectedOptions trong deps
   );
 
+  // handleColorChangeFromGallery không còn depend currentVariant?.id
+  // Đọc giá trị latest qua currentVariantRef
   const handleColorChangeFromGallery = useCallback(
     async (variantId: string) => {
-      if (variantId === currentVariant?.id) return;
+      if (variantId === currentVariantRef.current?.id) return;
       await fetchVariantByParams({ bundle: variantId });
     },
-    [currentVariant?.id, fetchVariantByParams],
+    [fetchVariantByParams], // ← không còn currentVariant?.id trong deps
   );
 
   return (
@@ -211,7 +223,7 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           transform: `translateY(var(--header-translate, 0px))`,
           transition: "opacity 0.2s ease, transform 0.3s ease-in-out",
           height: 48,
-          opacity: 0, // initial ẩn
+          opacity: 0,
           pointerEvents: "none",
           visibility: "hidden",
         }}
@@ -224,45 +236,35 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
                 data-tab={tab.id}
                 onClick={() => scrollToSection(tab.id)}
                 className={`
-            relative px-4 py-3 text-sm font-medium whitespace-nowrap h-full
-            transition-colors cursor-pointer flex-shrink-0
-            ${tab.id === "info" ? "text-accent" : "text-neutral-darker"}
-          `}
+                  relative px-4 py-3 text-sm font-medium whitespace-nowrap h-full
+                  transition-colors cursor-pointer flex-shrink-0
+                  ${tab.id === "info" ? "text-accent" : "text-neutral-darker"}
+                `}
               >
                 {tab.label}
-                <span
-                  data-indicator // ← hook dùng selector này
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full transition-opacity duration-200"
-                  style={{ opacity: tab.id === "info" ? 1 : 0 }}
-                />
+                <span data-indicator className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full transition-opacity duration-200" style={{ opacity: tab.id === "info" ? 1 : 0 }} />
               </button>
             ))}
           </div>
         </div>
       </div>
+
       {/* ── Breadcrumb ── */}
       <div className="container sm:px-6 mt-4" ref={breadcrumbRef}>
-        <Breadcrumb
-          items={[
-            { label: "Trang chủ", href: "/" },
-            {
-              label: product.category.parent.name,
-              href: `/category/${product.category?.slug}`,
-            },
-            { label: product.name },
-          ]}
-        />
+        {/* <Breadcrumb items={[...]} /> */}
       </div>
+
       {/* ── Hero / Thông tin sản phẩm ── */}
       <div className="sm:px-6 mt-4 sm:mt-6 lg:mt-8 container" ref={infoRef}>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit">
-            <ProductDetailBanner key={currentVariant?.id} product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
+            {/* Bỏ key={currentVariant?.id} — tránh unmount/remount toàn bộ component */}
+            <ProductDetailBanner product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
           </div>
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-16 lg:h-fit">
+              {/* Bỏ key={currentVariant?.id} — props thay đổi sẽ trigger update bên trong */}
               <ProductDetailRight
-                key={currentVariant?.id}
                 product={product}
                 selectedVariant={currentVariant}
                 selectedPrice={price}
@@ -276,6 +278,8 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
           </div>
         </div>
       </div>
+
+      {/* StaticSections nhận props stable — sẽ không re-render khi variant thay đổi */}
       <StaticSections
         slug={slug}
         product={product}

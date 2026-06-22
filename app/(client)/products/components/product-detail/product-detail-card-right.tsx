@@ -11,12 +11,12 @@ import { ProductDetail } from "@/lib/types/product";
 import Link from "next/link";
 import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
 import { useToasty } from "@/components/Toast";
-import { useCart } from "@/hooks/useCart";
 import { useRouter } from "next/navigation";
 import { HighlightIcon } from "@/components/product/HighlightIcon";
 import type { ProductVariant, VariantOption, VariantOptionValue, ProductPrice } from "../../types";
 import type { Highlight } from "@/lib/types/product";
 import QuantityControl from "@/components/shared/QuantityControl";
+import { useCartActions } from "@/hooks/useCartActions";
 
 const TYPE_LABELS: Record<string, string> = {
   color: "Màu sắc",
@@ -123,14 +123,19 @@ const ProductDetailRight = memo(function ProductDetailRight({
   onSpecificationClick,
   availableOptions = [],
 }: ProductDetailRightProps = {}) {
-  const toasty = useToasty();
-  const { addToCart } = useCart();
+  const { addToCart } = useCartActions();
   const router = useRouter();
   const quantityRef = useRef(1);
 
   const activePrice = selectedPrice || product?.price;
   const finalPrice = activePrice?.final ?? activePrice?.base ?? 0;
   const basePrice = activePrice?.base ?? 0;
+
+  const toastyInstance = useToasty();
+  const toasty = useRef(toastyInstance);
+  useEffect(() => {
+    toasty.current = toastyInstance;
+  });
 
   const storageLabel = useMemo(
     () => availableOptions.find((opt) => opt.type === "storage")?.values?.find((v: VariantOptionValue) => v.value === selectedOptions?.storage)?.label ?? "",
@@ -143,7 +148,7 @@ const ProductDetailRight = memo(function ProductDetailRight({
 
   const handleBuyNow = useCallback(async () => {
     if (!selectedVariant?.id) {
-      toasty.warning("Vui lòng chọn phiên bản sản phẩm");
+      toasty.current.warning("Vui lòng chọn phiên bản sản phẩm");
       return;
     }
     const availQty = selectedVariant.availableQuantity ?? selectedVariant.stock ?? selectedVariant.quantity ?? 0;
@@ -164,7 +169,7 @@ const ProductDetailRight = memo(function ProductDetailRight({
       });
       router.push("/cart");
     } catch {
-      toasty.error("Không thể thêm vào giỏ hàng, vui lòng thử lại");
+      toasty.current.error("Không thể thêm vào giỏ hàng, vui lòng thử lại");
     }
   }, [selectedVariant, product, finalPrice, basePrice, storageLabel, addToCart, router, toasty]);
 

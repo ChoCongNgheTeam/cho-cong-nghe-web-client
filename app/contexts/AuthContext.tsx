@@ -48,7 +48,12 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   // loading=true cho đến khi checkAuth xong hoàn toàn
   const [loading, setLoading] = useState(!initialUser);
   const router = useRouter();
+
   const toast = useToasty();
+  const toastRef = useRef(toast);
+  useEffect(() => {
+    toastRef.current = toast;
+  });
 
   const authChecked = useRef(false);
 
@@ -133,7 +138,8 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       setAccessToken(null);
       setUser(null);
       localStorage.removeItem("cart");
-      toast.success("Đăng xuất thành công", {
+      toastRef.current.success("Đăng xuất thành công", {
+        // ← dùng ref
         title: "Hẹn gặp lại!",
         duration: 5000,
         showProgress: true,
@@ -142,7 +148,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         router.replace("/account?login");
       }, 500);
     }
-  }, [router, toast]);
+  }, [router]);
 
   return (
     <AuthContext.Provider

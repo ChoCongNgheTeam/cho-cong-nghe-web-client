@@ -30,9 +30,8 @@ export function useProductSections(stickyBarRef: React.RefObject<HTMLDivElement 
       suggest: suggestRef,
     }),
     [],
-  ); // refs không thay đổi nên deps rỗng là đúng
+  );
 
-  /* ── Header height ── */
   const headerHeightRef = useRef(64);
 
   useEffect(() => {
@@ -62,7 +61,6 @@ export function useProductSections(stickyBarRef: React.RefObject<HTMLDivElement 
       const scrollY = window.scrollY;
       const totalOffset = headerHeightRef.current + TAB_BAR_HEIGHT + 16;
 
-      // ── Sticky tab bar visibility — update DOM trực tiếp, không setState ──
       const breadcrumbBottom = breadcrumbRef.current?.getBoundingClientRect().bottom ?? 0;
       const nextSticky = breadcrumbBottom < 0;
       if (nextSticky !== showStickyRef.current) {
@@ -74,10 +72,8 @@ export function useProductSections(stickyBarRef: React.RefObject<HTMLDivElement 
         }
       }
 
-      // ── Programmatic scroll gate ──
       if (isScrollingProgrammatically.current) return;
 
-      // ── Active tab — update class trực tiếp trên buttons ──
       let current: TabId = "info";
       let found = false;
       [...TABS].reverse().forEach(({ id }) => {
@@ -120,7 +116,6 @@ export function useProductSections(stickyBarRef: React.RefObject<HTMLDivElement 
     const target = absoluteTop - headerHeightRef.current - TAB_BAR_HEIGHT - 8;
 
     activeTabRef.current = id;
-    // Sync DOM ngay lập tức khi click
     if (tabBarRef.current) {
       tabBarRef.current.querySelectorAll<HTMLElement>("[data-tab]").forEach((btn) => {
         const isActive = btn.dataset.tab === id;
@@ -138,17 +133,25 @@ export function useProductSections(stickyBarRef: React.RefObject<HTMLDivElement 
     }, 800);
 
     window.scrollTo({ top: target, behavior: "smooth" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return {
-    breadcrumbRef,
-    infoRef,
-    specificationsRef,
-    articleRef,
-    reviewsRef,
-    suggestRef,
-    sectionRefs,
-    scrollToSection,
-    layoutChangingRef,
-  };
+  // FIX: wrap toàn bộ return trong useMemo với deps rỗng
+  // Tất cả values bên trong đều là refs hoặc callbacks stable
+  // → object này chỉ tạo 1 lần duy nhất, không bao giờ thay đổi reference
+  return useMemo(
+    () => ({
+      breadcrumbRef,
+      infoRef,
+      specificationsRef,
+      articleRef,
+      reviewsRef,
+      suggestRef,
+      sectionRefs,
+      scrollToSection,
+      layoutChangingRef,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 }

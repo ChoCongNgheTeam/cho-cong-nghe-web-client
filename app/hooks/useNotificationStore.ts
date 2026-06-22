@@ -55,15 +55,24 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
         const res = await apiRequest.get<{
           data: NotificationItem[];
           meta: NotificationMeta;
-        }>(listEndpoint, {
-          params: { page: pageNum, limit: pageSize },
-        });
+        }>(listEndpoint, { params: { page: pageNum, limit: pageSize } });
 
         if (!isMounted.current) return;
 
         const items = res.data ?? [];
-        setNotifications((prev) => (replace ? items : [...prev, ...items]));
-        setUnreadCount(res.meta?.unreadCount ?? 0);
+        const newUnread = res.meta?.unreadCount ?? 0;
+
+        setNotifications((prev) => {
+          if (replace) {
+            // Chỉ update nếu data thực sự thay đổi
+            const same = prev.length === items.length && items.every((item, i) => prev[i]?.id === item.id && prev[i]?.isRead === item.isRead);
+            return same ? prev : items; // ← giữ reference cũ nếu không đổi
+          }
+          return [...prev, ...items];
+        });
+
+        // Tương tự với unreadCount
+        setUnreadCount((prev) => (prev === newUnread ? prev : newUnread));
         setHasMore(pageNum < (res.meta?.totalPages ?? 1));
         setPage(pageNum);
       } catch {
@@ -111,17 +120,26 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
   );
 
   const markAllAsRead = useCallback(async () => {
-    const prevNotifications = notifications;
-    const prevCount = unreadCount;
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
+    // Dùng functional update để không cần capture state vào deps
+    let prevNotifications: NotificationItem[] = [];
+    let prevCount = 0;
+
+    setNotifications((prev) => {
+      prevNotifications = prev;
+      return prev.map((n) => ({ ...n, isRead: true }));
+    });
+    setUnreadCount((prev) => {
+      prevCount = prev;
+      return 0;
+    });
+
     try {
       await apiRequest.patch(markAllEndpoint, {});
     } catch {
       setNotifications(prevNotifications);
       setUnreadCount(prevCount);
     }
-  }, [markAllEndpoint, notifications, unreadCount]);
+  }, [markAllEndpoint]);
 
   return useMemo(
     () => ({

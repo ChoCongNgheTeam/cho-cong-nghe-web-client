@@ -1,7 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, memo } from "react";
 import { useToasty } from "@/components/Toast";
 import ReviewModal from "@/(client)/(protected)/profile/orders/components/ReviewModal";
 import { ProductDetail } from "@/lib/types/product";
@@ -27,12 +27,17 @@ interface ReviewPermission {
   orderItemId?: string;
 }
 
-export default function RatingSummary({ slug, rating, product, currentVariant }: RatingSummaryProps) {
-  const toasty = useToasty();
+const RatingSummary = memo(function RatingSummary({ slug, rating, product, currentVariant }: RatingSummaryProps) {
   const [showModal, setShowModal] = useState(false);
   const [permission, setPermission] = useState<ReviewPermission>({ canReview: false });
   const [permissionLoaded, setPermissionLoaded] = useState(false);
   const hasTriggeredReview = useRef(false);
+
+  const toastyInstance = useToasty();
+  const toasty = useRef(toastyInstance);
+  useEffect(() => {
+    toasty.current = toastyInstance;
+  });
 
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -53,7 +58,7 @@ export default function RatingSummary({ slug, rating, product, currentVariant }:
     try {
       const data = await getReviewPermission(slug);
       setPermission({ canReview: data.canReview, orderItemId: data.orderItemId });
-      if (data.rating) setLocalRating(data.rating);
+      if (data.rating) setLocalRating(data.rating); // chỉ update khi có data mới
     } catch {
       setPermission({ canReview: false });
     } finally {
@@ -84,14 +89,14 @@ export default function RatingSummary({ slug, rating, product, currentVariant }:
       return;
     }
     if (!permission.orderItemId) {
-      toasty.warning("Bạn cần mua sản phẩm này để có thể đánh giá", {
+      toasty.current.warning("Bạn cần mua sản phẩm này để có thể đánh giá", {
         duration: 3000,
         showProgress: true,
       });
       return;
     }
     if (!permission.canReview) {
-      toasty.info("Bạn đã đánh giá sản phẩm này rồi", { duration: 3000, showProgress: true });
+      toasty.current.warning("Bạn đã đánh giá sản phẩm này rồi", { duration: 3000, showProgress: true });
       return;
     }
     setShowModal(true);
@@ -263,4 +268,8 @@ export default function RatingSummary({ slug, rating, product, currentVariant }:
       <ReviewSuccessModal isOpen={reviewedStars !== null} stars={reviewedStars ?? 5} onClose={() => setReviewedStars(null)} />
     </>
   );
-}
+});
+
+export default RatingSummary;
+
+RatingSummary.displayName = "RatingSummary";

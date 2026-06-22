@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, startTransition } from "react";
+import { useEffect, useState, useCallback, startTransition, useMemo } from "react";
 import RatingSummary from "./Ratingsummary";
 import CommentSection from "./Commentsection";
 import { getComments, getReplies, postComment } from "../_lib";
@@ -146,6 +146,9 @@ export default function ProductReview({ productId, rating, slug, product, curren
     [productId, fetchReplies],
   );
 
+  const memoizedProduct = useMemo(() => product, [product]);
+  const memoizedVariant = useMemo(() => currentVariant, [currentVariant]);
+
   useEffect(() => {
     startTransition(() => {
       fetchComments();
@@ -155,7 +158,7 @@ export default function ProductReview({ productId, rating, slug, product, curren
   return (
     <div>
       <div className="rounded-lg bg-neutral-light px-6 py-6 sm:py-4 lg:py-6">
-        <RatingSummary rating={rating} slug={slug} product={product} currentVariant={currentVariant} />
+        <RatingSummary rating={rating} slug={slug} product={memoizedProduct} currentVariant={memoizedVariant} />
       </div>
       <div className="mt-6 rounded-lg bg-neutral-light px-6 py-6 sm:py-4 lg:py-6">
         <CommentSection
