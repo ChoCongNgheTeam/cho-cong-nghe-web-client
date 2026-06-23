@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useRef } from "react";
 import HeaderTop from "./components/HeaderTop";
 import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
@@ -14,15 +13,11 @@ const Header = () => {
   const headerRef = useRef<HTMLDivElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
   const headerTopWrapRef = useRef<HTMLDivElement>(null);
-
-  // Scroll state — dùng ref, KHÔNG dùng useState
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
   const scrollAccum = useRef(0);
   const isPastTopRef = useRef(false);
   const isVisibleRef = useRef(true);
-
-  // const { user, logout, isAuthenticated, loading } = useAuth();
 
   // ResizeObserver — sync placeholder height & CSS var
   useEffect(() => {

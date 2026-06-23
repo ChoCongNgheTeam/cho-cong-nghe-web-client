@@ -2,7 +2,6 @@
 
 import { GitCompareArrows, Heart, User, ChevronDown, Package, MapPin, LogOut } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useRef, memo, useState, useCallback } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { CartIcon } from "@/(client)/cart/components/CartIcon";
@@ -11,14 +10,12 @@ import SearchBar from "./SearchBar";
 import NotificationBell from "@/components/ui/NotificationBell";
 import { useRouter } from "next/navigation";
 import { useCompareStore } from "@/(client)/compare/compareStore";
-import { useGeneralSettings } from "@/hooks/useGeneralSettings";
 import { useAuth } from "@/hooks/useAuth";
-
-// Logo local làm fallback khi chưa load xong hoặc chưa có logo trong DB
-const FALLBACK_LOGO = "/logo-dark-5.png";
+import HeaderLogo from "@/components/HeaderLogo";
 
 const DesktopHeader = memo(() => {
   const { user, logout, isAuthenticated, loading } = useAuth();
+  console.log("[DesktopHeader] render");
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -28,10 +25,8 @@ const DesktopHeader = memo(() => {
 
   const router = useRouter();
   const { items } = useCompareStore();
-  const { logoUrl, siteName, isLoading: settingsLoading } = useGeneralSettings();
 
   // Dùng logo local khi đang load hoặc DB chưa có logo
-  const resolvedLogo = !settingsLoading && logoUrl ? logoUrl : FALLBACK_LOGO;
 
   useEffect(() => {
     if (!showUserMenu) return;
@@ -49,19 +44,7 @@ const DesktopHeader = memo(() => {
   return (
     <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
       {/* Logo */}
-      <Link href="/" className="shrink-0 pr-10">
-        <Image
-          src={resolvedLogo}
-          width={180}
-          height={60}
-          alt={siteName || "Logo"}
-          className="h-12 lg:h-15 w-auto hover:opacity-80 transition-opacity"
-          priority
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
-          }}
-        />
-      </Link>
+      <HeaderLogo />
 
       <CategoryMegaMenu />
 

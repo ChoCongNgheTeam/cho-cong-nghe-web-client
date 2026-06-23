@@ -150,23 +150,10 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     }
   }, [router]);
 
-  return (
-    <AuthContext.Provider
-      value={useMemo(
-        () => ({
-          user,
-          login,
-          logout,
-          loading,
-          isAuthenticated: !!user,
-          refreshUser,
-          showWelcome,
-          setShowWelcome,
-        }),
-        [user, loading, showWelcome, login, logout, refreshUser],
-      )}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const contextValue = useMemo(() => {
+    console.log("[AuthContext] value recreated, loading:", loading, "user:", !!user, "showWelcome:", showWelcome);
+    return { user, login, logout, loading, isAuthenticated: !!user, refreshUser, showWelcome, setShowWelcome };
+  }, [user, loading, showWelcome, login, logout, refreshUser]);
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

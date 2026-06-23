@@ -6,20 +6,15 @@ import { useRouter } from "next/navigation";
 import { CartIcon } from "@/(client)/cart/components/CartIcon";
 import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useAuth } from "@/hooks/useAuth";
-import { useGeneralSettings } from "@/hooks/useGeneralSettings";
 import SearchBar from "./SearchBar";
 import { TrendingBar } from "./TrendingBar";
 import { GitCompareArrows } from "lucide-react";
-
-const FALLBACK_LOGO = "/logo-dark-5.png";
+import MobileLogo from "@/components/MobileHeader";
 
 const MobileHeader = () => {
   const router = useRouter();
   const { items } = useCompareStore();
   const { user } = useAuth();
-  const { logoUrl, siteName, isLoading: settingsLoading } = useGeneralSettings();
-
-  const resolvedLogo = !settingsLoading && logoUrl ? logoUrl : FALLBACK_LOGO;
 
   const avatarSrc = user?.avatarImage || "/images/Robot-mascot-v2.png";
   const avatarAlt = user ? user.fullName || "Tài khoản" : "Linh vật";
@@ -41,20 +36,7 @@ const MobileHeader = () => {
           )}
         </Link>
 
-        {/* Logo — dynamic từ DB */}
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <Image
-            src={resolvedLogo}
-            width={140}
-            height={44}
-            alt={siteName || "Logo"}
-            className="h-9 w-auto"
-            priority
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
-            }}
-          />
-        </Link>
+        <MobileLogo />
 
         {/* Compare + Cart */}
         <div className="flex items-center shrink-0">

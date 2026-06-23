@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const HeaderTop = memo(() => {
   const { isAuthenticated } = useAuth();
+  console.log("[HeaderTop] render, isAuthenticated:", isAuthenticated);
 
   return (
     <div className="hidden md:block">

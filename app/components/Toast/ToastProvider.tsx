@@ -20,6 +20,7 @@ const generateId = () => `toast-${++toastId}-${Date.now()}`;
 
 export function ToastyProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  console.log("[ToastyProvider] render");
 
   const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

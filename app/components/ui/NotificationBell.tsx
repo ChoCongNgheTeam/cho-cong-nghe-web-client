@@ -7,7 +7,6 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { useAdminNotifications } from "@/contexts/AdminNotificationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { formatRelativeDate } from "@/helpers/formatRelativeDate";
-import { useRouter } from "next/navigation";
 import { useRoleNavigation } from "@/hooks/useRoleNavigation";
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; ring: string }> = {
@@ -81,7 +80,7 @@ type NotificationBellProps = {
 
 const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, headerLabel }: NotificationBellProps) => {
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
+  console.log("[NotificationBell] render");
 
   const resolvedFooterHref = footerHref ?? (variant === "admin" ? "/admin/notifications" : "/profile/notifications");
   const resolvedFooterLabel = footerLabel ?? "Xem tất cả thông báo";
@@ -166,7 +165,7 @@ const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, head
         return;
       }
     },
-    [markAsRead, navigateToComment, navigateToOrders, router],
+    [markAsRead, navigateToComment, navigateToOrders, navigateToReview],
   );
 
   if (!isAuthenticated) return null;
