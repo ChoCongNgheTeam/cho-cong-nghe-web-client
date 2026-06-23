@@ -50,17 +50,14 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
           alt={siteName || "Logo"}
           className="h-12 lg:h-15 w-auto hover:opacity-80 transition-opacity"
           priority
-          // Nếu Cloudinary URL lỗi thì fallback về logo local
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
           }}
         />
       </Link>
 
-      {/* Mega menu */}
       <CategoryMegaMenu />
 
-      {/* Search — glass style (xử lý trong SearchBar.tsx) */}
       <div className="flex-1 max-w-2xl relative">
         <SearchBar />
       </div>
@@ -85,10 +82,8 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
           )}
         </button>
 
-        {/* Notification */}
         <NotificationBell variant="user" />
 
-        {/* Cart */}
         <CartIcon />
 
         {/* User */}

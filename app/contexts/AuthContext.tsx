@@ -164,7 +164,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
           setShowWelcome,
         }),
         [user, loading, showWelcome, login, logout, refreshUser],
-      )} // ← deps
+      )}
     >
       {children}
     </AuthContext.Provider>

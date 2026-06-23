@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, LayoutGrid, ShoppingBag, Bell, User } from "lucide-react";
@@ -33,14 +33,16 @@ export default function MobileBottomNav() {
   const { unreadCount } = useNotifications();
   const [openSheet, setOpenSheet] = useState<SheetType>(null);
 
+  const closeSheet = useCallback(() => {
+    setOpenSheet(null);
+  }, []);
+
   const exactPaths = ["/", "/profile", "/compare"];
   const prefixPaths = ["/category", "/policies", "/blog", "/flash-sale"];
 
   const shouldShow = exactPaths.includes(pathname) || prefixPaths.some((path) => pathname.startsWith(path));
 
   if (!shouldShow) return null;
-
-  const closeSheet = () => setOpenSheet(null);
 
   const tabs: Tab[] = [
     { key: "home", href: "/", icon: Home, label: "Trang chủ" },
@@ -79,7 +81,7 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <MobileCategorySheet key={openSheet === "category" ? "open" : "closed"} isOpen={openSheet === "category"} onClose={closeSheet} />{" "}
+      <MobileCategorySheet isOpen={openSheet === "category"} onClose={closeSheet} />
       <MobileNotificationSheet isOpen={openSheet === "notification"} onClose={closeSheet} />
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[90] bg-neutral-light/95 backdrop-blur-md border-t border-neutral" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-stretch h-[60px]">

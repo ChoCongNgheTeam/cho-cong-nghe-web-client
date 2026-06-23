@@ -1,14 +1,12 @@
 "use client";
 
-import { useRef, useCallback, useState, useTransition, useDeferredValue, useEffect } from "react";
+import { useRef, useCallback, useState, useTransition, useDeferredValue, useEffect, memo } from "react";
 import { Search, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
-
-// ─── types & helpers ───────────────────────────────────────────────────────────
 
 interface ApiProduct {
   id: string;
@@ -51,13 +49,11 @@ function SkeletonItem() {
 
 const SKELETON_COUNT = 4;
 
-// ─── SearchBar ──────────────────────────────────────────────────────────────────
-
 interface SearchBarProps {
   isMobile?: boolean;
 }
 
-export default function SearchBar({ isMobile = false }: SearchBarProps) {
+const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
   const router = useRouter();
 
   const [query, setQuery] = useState("");
@@ -77,6 +73,8 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const deferredResults = useDeferredValue(results);
   const isStale = results !== deferredResults;
 
+  const [hasStaleResults, setHasStaleResults] = useState(false);
+
   // ── Close on outside click ────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -88,10 +86,6 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  useEffect(() => {
-    setActiveIndex(-1);
-  }, [deferredResults]);
 
   useEffect(() => {
     if (activeIndex < 0 || !listRef.current) return;
@@ -134,8 +128,10 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       });
       const items = res?.data ?? [];
       staleResultsRef.current = items;
+      setHasStaleResults(items.length > 0);
       startTransition(() => {
         setResults(items);
+        setActiveIndex(-1);
         setIsOpen(true);
       });
     } catch {
@@ -154,9 +150,11 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
     if (!val.trim()) {
       abortRef.current?.abort();
       staleResultsRef.current = [];
+      setHasStaleResults(false);
       startTransition(() => {
         setResults([]);
         setIsOpen(false);
+        setActiveIndex(-1);
       });
       setIsSearching(false);
       return;
@@ -195,6 +193,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
   const handleClose = useCallback(() => {
     setQuery("");
     staleResultsRef.current = [];
+    setHasStaleResults(false);
     startTransition(() => {
       setResults([]);
       setIsOpen(false);
@@ -204,7 +203,7 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
 
   const showDropdown = isOpen && query.trim().length > 0;
   const displayResults = deferredResults;
-  const showSkeleton = isSearching && staleResultsRef.current.length === 0;
+  const showSkeleton = isSearching && !hasStaleResults;
 
   // Mobile search bar: nền trắng như cũ (trên nền slider/page)
   if (isMobile) {
@@ -391,9 +390,11 @@ export default function SearchBar({ isMobile = false }: SearchBarProps) {
       </div>
     </>
   );
-}
+});
 
-// ─── Dropdown content (dùng chung mobile & desktop) ───────────────────────────
+SearchBar.displayName = "SearchBar";
+
+export default SearchBar;
 
 interface DropdownContentProps {
   showSkeleton: boolean;

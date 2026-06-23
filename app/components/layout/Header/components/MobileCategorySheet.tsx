@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, use, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import apiRequest from "@/lib/api";
@@ -39,7 +39,7 @@ interface MobileCategorySheetProps {
   onClose: () => void;
 }
 
-export default function MobileCategorySheet({ isOpen, onClose }: MobileCategorySheetProps) {
+export default memo(function MobileCategorySheet({ isOpen, onClose }: MobileCategorySheetProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Category | null>(null);
@@ -257,4 +257,4 @@ export default function MobileCategorySheet({ isOpen, onClose }: MobileCategoryS
       </div>
     </>
   );
-}
+});
