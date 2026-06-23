@@ -3,8 +3,7 @@
 import { GitCompareArrows, Heart, User, ChevronDown, Package, MapPin, LogOut } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, memo } from "react";
-import { DesktopHeaderProps } from "../types";
+import { useEffect, useRef, memo, useState, useCallback } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { CartIcon } from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
@@ -13,12 +12,20 @@ import NotificationBell from "@/components/ui/NotificationBell";
 import { useRouter } from "next/navigation";
 import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useGeneralSettings } from "@/hooks/useGeneralSettings";
+import { useAuth } from "@/hooks/useAuth";
 
 // Logo local làm fallback khi chưa load xong hoặc chưa có logo trong DB
 const FALLBACK_LOGO = "/logo-dark-5.png";
 
-const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, onUserMenuToggle, onUserMenuClose, onLogout }: Omit<DesktopHeaderProps, "searchQuery" | "onSearchChange">) => {
+const DesktopHeader = memo(() => {
+  const { user, logout, isAuthenticated, loading } = useAuth();
+
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = useCallback(() => setShowUserMenu((v) => !v), []);
+  const handleClose = useCallback(() => setShowUserMenu(false), []);
+
   const router = useRouter();
   const { items } = useCompareStore();
   const { logoUrl, siteName, isLoading: settingsLoading } = useGeneralSettings();
@@ -30,12 +37,12 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
     if (!showUserMenu) return;
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        onUserMenuClose();
+        setShowUserMenu(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [showUserMenu, onUserMenuClose]);
+  }, [showUserMenu]);
 
   const iconBtn = "p-2 rounded-lg relative cursor-pointer transition-colors duration-150 text-white hover:bg-white/10 active:bg-white/20";
 
@@ -87,13 +94,13 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
         <CartIcon />
 
         {/* User */}
-        {isLoading ? (
+        {loading ? (
           <div className="w-11 h-9 flex items-center justify-center">
             <div className="w-8 h-8 rounded-full bg-white/15 animate-pulse" />
           </div>
         ) : isAuthenticated && user ? (
           <div className="relative" ref={userMenuRef}>
-            <button onClick={onUserMenuToggle} className="flex items-center gap-1 hover:bg-white/10 active:bg-white/20 rounded-lg transition-colors cursor-pointer p-2">
+            <button onClick={handleToggle} className="flex items-center gap-1 hover:bg-white/10 active:bg-white/20 rounded-lg transition-colors cursor-pointer p-2">
               <UserAvatar avatarImage={user.avatarImage || "/images/avatar.png"} fullName={user.fullName} size={30} />
               <ChevronDown className={`w-4 h-4 text-white/80 transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`} />
             </button>
@@ -102,19 +109,19 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-64 bg-neutral-light border border-neutral rounded-lg shadow-xl z-50 overflow-hidden">
                 <div className="py-2">
-                  <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={onUserMenuClose}>
+                  <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={handleClose}>
                     <User className="w-5 h-5 text-neutral-darker" />
                     <span className="text-sm">Thông tin cá nhân</span>
                   </Link>
-                  <Link href="/profile/orders" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={onUserMenuClose}>
+                  <Link href="/profile/orders" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={handleClose}>
                     <Package className="w-5 h-5 text-neutral-darker" />
                     <span className="text-sm">Đơn hàng của tôi</span>
                   </Link>
-                  <Link href="/profile/wishlist" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={onUserMenuClose}>
+                  <Link href="/profile/wishlist" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={handleClose}>
                     <Heart className="w-5 h-5 text-neutral-darker" />
                     <span className="text-sm">Sản phẩm yêu thích</span>
                   </Link>
-                  <Link href="/profile/addresses" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={onUserMenuClose}>
+                  <Link href="/profile/addresses" className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral transition-colors text-primary" onClick={handleClose}>
                     <MapPin className="w-5 h-5 text-neutral-darker" />
                     <span className="text-sm">Sổ địa chỉ nhận hàng</span>
                   </Link>
@@ -122,8 +129,8 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
                 <div className="border-t border-neutral">
                   <button
                     onClick={() => {
-                      onLogout();
-                      onUserMenuClose();
+                      logout();
+                      handleClose();
                     }}
                     className="flex items-center gap-3 px-4 py-2.5 w-full hover:bg-promotion-light transition-colors text-promotion cursor-pointer"
                   >
@@ -145,4 +152,5 @@ const DesktopHeader = memo(({ isAuthenticated, isLoading, user, showUserMenu, on
 });
 
 DesktopHeader.displayName = "DesktopHeader";
+
 export default DesktopHeader;

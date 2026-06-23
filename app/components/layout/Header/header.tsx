@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import HeaderTop from "./components/HeaderTop";
 import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
 import MobileBottomNav from "./components/MobileBottomNav";
-import { useUserMenu } from "@/hooks/useUserMenu";
 import { TrendingBar } from "./components/TrendingBar";
 
 const HEADER_BG = "linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%)";
@@ -23,8 +22,7 @@ const Header = () => {
   const isPastTopRef = useRef(false);
   const isVisibleRef = useRef(true);
 
-  const { user, logout, isAuthenticated, loading } = useAuth();
-  const { showUserMenu, setShowUserMenu, userMenuRef } = useUserMenu();
+  // const { user, logout, isAuthenticated, loading } = useAuth();
 
   // ResizeObserver — sync placeholder height & CSS var
   useEffect(() => {
@@ -114,16 +112,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Click outside user menu
-  useEffect(() => {
-    if (!showUserMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setShowUserMenu(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showUserMenu, userMenuRef, setShowUserMenu]);
-
   return (
     <>
       <div ref={placeholderRef} aria-hidden="true" />
@@ -135,22 +123,13 @@ const Header = () => {
           className="transition-all duration-300 overflow-hidden opacity-100 max-h-[200px]"
           style={{ background: "rgba(0,0,0,0.25)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <HeaderTop isAuthenticated={isAuthenticated} />
+          <HeaderTop />
         </div>
 
         <div className="container">
           <MobileHeader />
           <div className="py-2">
-            <DesktopHeader
-              isAuthenticated={isAuthenticated}
-              isLoading={loading}
-              user={user}
-              showUserMenu={showUserMenu}
-              userMenuRef={userMenuRef}
-              onUserMenuToggle={() => setShowUserMenu((v) => !v)}
-              onUserMenuClose={() => setShowUserMenu(false)}
-              onLogout={logout}
-            />
+            <DesktopHeader />
             <TrendingBar className="hidden md:block" />
           </div>
         </div>

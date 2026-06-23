@@ -184,7 +184,7 @@ const MegaPanel = memo(({ category }: { category: Category | null }) => {
 });
 MegaPanel.displayName = "MegaPanel";
 
-export default function CategoryMegaMenu() {
+const CategoryMegaMenu = memo(() => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
@@ -272,4 +272,7 @@ export default function CategoryMegaMenu() {
       `}</style>
     </div>
   );
-}
+});
+CategoryMegaMenu.displayName = "CategoryMegaMenu";
+
+export default CategoryMegaMenu;

@@ -310,5 +310,4 @@ const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, head
 });
 
 NotificationBell.displayName = "NotificationBell";
-
 export default NotificationBell;

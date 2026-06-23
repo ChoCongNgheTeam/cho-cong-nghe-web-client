@@ -24,11 +24,7 @@ export interface DesktopHeaderProps {
     gender?: string;
     dateOfBirth?: string;
   } | null;
-  showUserMenu: boolean;
-  userMenuRef: React.RefObject<HTMLDivElement | null>;
   onSearchChange: (value: string) => void;
-  onUserMenuToggle: () => void;
-  onUserMenuClose: () => void;
   onLogout: () => void;
 }
 

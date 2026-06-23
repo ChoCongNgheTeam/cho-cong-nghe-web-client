@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastyProvider } from "./components/Toast";
