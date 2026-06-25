@@ -10,13 +10,13 @@ import { tabs } from "./components/Constants";
 import { ErrorState, EmptyState, LoadingState } from "./components/OrderStatesTemp";
 import OrderCard from "./components/OrderCard";
 import OrderDetailModal from "./components/OrderDetailModal";
-import Pagination from "./components/Pagination";
 import { useSearchParams } from "next/navigation";
+import Pagination from "@/components/shared/Pagination";
 const ORDERS_PER_PAGE = 5;
 
 export default function OrdersPage() {
   const searchParams = useSearchParams();
-   const highlightCode = searchParams.get("highlight");
+  const highlightCode = searchParams.get("highlight");
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, loading: authLoading } = useAuth();
@@ -61,7 +61,7 @@ export default function OrdersPage() {
     setCurrentPage(1);
   };
 
-    useEffect(() => {
+  useEffect(() => {
     if (!highlightCode || orders.length === 0) return;
 
     const target = orders.find((o) => o.orderCode === highlightCode);
@@ -147,8 +147,8 @@ export default function OrdersPage() {
               {paginatedOrders.map((order) => (
                 <OrderCard
                   key={order.id}
-                order={order}
-                isHighlighted={highlightedOrderId === order.id}  // ← thêm
+                  order={order}
+                  isHighlighted={highlightedOrderId === order.id} // ← thêm
                   onViewDetail={() => setSelectedOrder(order)}
                   onCancelSuccess={fetchOrders}
                   onReorderSuccess={fetchOrders}

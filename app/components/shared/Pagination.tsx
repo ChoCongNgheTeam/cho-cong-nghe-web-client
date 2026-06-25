@@ -4,11 +4,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export default function Pagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: PaginationProps) {
+export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   const handlePageChange = (page: number) => {
     onPageChange(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -22,8 +18,7 @@ export default function Pagination({
     const half = Math.floor(maxVisible / 2);
     let start = Math.max(2, currentPage - half + 1);
     let end = Math.min(totalPages - 1, start + maxVisible - 3);
-    if (end - start < maxVisible - 3)
-      start = Math.max(2, end - (maxVisible - 3) + 1);
+    if (end - start < maxVisible - 3) start = Math.max(2, end - (maxVisible - 3) + 1);
 
     const pages: (number | "...")[] = [1];
     if (start > 2) pages.push("...");
@@ -39,12 +34,7 @@ export default function Pagination({
   return (
     <div className="flex items-center justify-center gap-1 pt-3 sm:pt-4">
       {/* Prev */}
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`}
-        aria-label="Trang trước"
-      >
+      <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`} aria-label="Trang trước">
         ‹
       </button>
 
@@ -52,10 +42,7 @@ export default function Pagination({
       <div className="flex sm:hidden items-center gap-1">
         {getPages(3).map((page, i) =>
           page === "..." ? (
-            <span
-              key={`m-dot-${i}`}
-              className="w-7 h-8 flex items-center justify-center text-xs text-neutral-darker"
-            >
+            <span key={`m-dot-${i}`} className="w-7 h-8 flex items-center justify-center text-xs text-neutral-darker">
               …
             </span>
           ) : (
@@ -63,11 +50,7 @@ export default function Pagination({
               key={page}
               onClick={() => handlePageChange(page as number)}
               className={`w-7 h-8 rounded-lg text-xs font-medium transition-colors cursor-pointer
-                ${
-                  currentPage === page
-                    ? "bg-accent text-neutral-light shadow-sm border-transparent"
-                    : "border border-neutral text-primary-dark hover:bg-neutral-light-active"
-                }`}
+                ${currentPage === page ? "bg-accent text-neutral-light shadow-sm border-transparent" : "border border-neutral text-primary-dark hover:bg-neutral-light-active"}`}
             >
               {page}
             </button>
@@ -79,10 +62,7 @@ export default function Pagination({
       <div className="hidden sm:flex items-center gap-1">
         {getPages(7).map((page, i) =>
           page === "..." ? (
-            <span
-              key={`d-dot-${i}`}
-              className="w-9 h-9 flex items-center justify-center text-sm text-neutral-darker"
-            >
+            <span key={`d-dot-${i}`} className="w-9 h-9 flex items-center justify-center text-sm text-neutral-darker">
               …
             </span>
           ) : (
@@ -90,11 +70,7 @@ export default function Pagination({
               key={page}
               onClick={() => handlePageChange(page as number)}
               className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors cursor-pointer
-                ${
-                  currentPage === page
-                    ? "bg-accent text-neutral-light shadow-sm border-transparent"
-                    : "border border-neutral text-primary-dark hover:bg-neutral-light-active"
-                }`}
+                ${currentPage === page ? "bg-accent text-neutral-light shadow-sm border-transparent" : "border border-neutral text-primary-dark hover:bg-neutral-light-active"}`}
             >
               {page}
             </button>
@@ -103,12 +79,7 @@ export default function Pagination({
       </div>
 
       {/* Next */}
-      <button
-        onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`}
-        aria-label="Trang sau"
-      >
+      <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`} aria-label="Trang sau">
         ›
       </button>
     </div>
