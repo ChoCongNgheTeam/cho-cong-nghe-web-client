@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useLayoutEffect, memo } from "react";
-import { fetchTrendingKeywords, TrendingKeyword } from "../_libs/getTopKeywords";
+import { fetchTrendingKeywords } from "../_libs/header";
+import { TrendingKeyword } from "../types";
 
 function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {
   const trackRef = useRef<HTMLDivElement>(null);

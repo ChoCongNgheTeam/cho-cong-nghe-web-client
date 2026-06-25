@@ -1,11 +1,9 @@
 import { ShoppingBag, Truck, User } from "lucide-react";
 import LinkWithIcon from "./LinkWithIcon";
-import { memo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
-const HeaderTop = memo(() => {
+const HeaderTop = () => {
   const { isAuthenticated } = useAuth();
-  console.log("[HeaderTop] render, isAuthenticated:", isAuthenticated);
 
   return (
     <div className="hidden md:block">
@@ -27,7 +25,7 @@ const HeaderTop = memo(() => {
       </div>
     </div>
   );
-});
+};
 
 HeaderTop.displayName = "HeaderTop";
 

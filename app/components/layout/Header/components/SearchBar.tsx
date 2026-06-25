@@ -5,30 +5,9 @@ import { Search, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import apiRequest from "@/lib/api";
 import { formatVND } from "@/helpers";
-
-interface ApiProduct {
-  id: string;
-  name: string;
-  slug: string;
-  thumbnail: string;
-  priceOrigin: number;
-  inStock: boolean;
-  price: { base: number; hasPromotion: boolean };
-  rating: { average: number; count: number };
-}
-
-interface ApiResponse {
-  data: ApiProduct[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  message: string;
-}
+import { fetchSearchResults, resolveSearchCategory } from "../_libs/header";
+import { SearchProduct } from "../types";
 
 function calcDiscount(origin: number, base: number): number {
   if (!origin || origin <= base) return 0;
@@ -57,12 +36,12 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
   const router = useRouter();
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ApiProduct[]>([]);
+  const [results, setResults] = useState<SearchProduct[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const staleResultsRef = useRef<ApiProduct[]>([]);
+  const staleResultsRef = useRef<SearchProduct[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +54,6 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
 
   const [hasStaleResults, setHasStaleResults] = useState(false);
 
-  // ── Close on outside click ────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -93,40 +71,28 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
     el?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   const navigateToSearch = useCallback(
     async (q?: string) => {
       const term = (q ?? query).trim();
       if (!term) return;
       setIsOpen(false);
       setActiveIndex(-1);
-      try {
-        const slugified = term
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^\w-]/g, "");
-        const res = await apiRequest.get<{ data: { slug: string } | null }>("/categories/resolve", { params: { q: slugified }, noAuth: true });
-        if (res?.data?.slug) {
-          router.push(`/category/${res.data.slug}`);
-          return;
-        }
-      } catch {}
+      const slug = await resolveSearchCategory(term);
+      if (slug) {
+        router.push(`/category/${slug}`);
+        return;
+      }
       router.push(`/search?q=${encodeURIComponent(term)}`);
     },
     [query, router],
   );
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
   const search = useCallback(async (q: string) => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     setIsSearching(true);
     try {
-      const res = await apiRequest.get<ApiResponse>("/search", {
-        params: { q, limit: 8 },
-        noAuth: true,
-      });
-      const items = res?.data ?? [];
+      const items = await fetchSearchResults(q, abortRef.current.signal);
       staleResultsRef.current = items;
       setHasStaleResults(items.length > 0);
       startTransition(() => {
@@ -400,7 +366,7 @@ interface DropdownContentProps {
   showSkeleton: boolean;
   isStale: boolean;
   isSearching: boolean;
-  displayResults: ApiProduct[];
+  displayResults: SearchProduct[];
   activeIndex: number;
   query: string;
   listRef: React.RefObject<HTMLUListElement | null>;

@@ -42,10 +42,11 @@ interface AuthProviderProps {
   initialUser?: User | null;
 }
 
+let globalAuthChecked = false;
+
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser || null);
   const [showWelcome, setShowWelcome] = useState(true);
-  // loading=true cho đến khi checkAuth xong hoàn toàn
   const [loading, setLoading] = useState(!initialUser);
   const router = useRouter();
 
@@ -55,33 +56,26 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     toastRef.current = toast;
   });
 
-  const authChecked = useRef(false);
-
   useEffect(() => {
-    // StrictMode guard
-    if (authChecked.current) return;
-    authChecked.current = true;
+    if (globalAuthChecked) return;
+    globalAuthChecked = true;
 
-    // Reset gate mỗi lần AuthProvider mount thật sự
     resetAuthInit();
 
     const checkAuth = async () => {
       try {
         const refreshed = await performRefresh();
-
         if (!refreshed) {
           setUser(null);
           resolveAuthInit();
           setLoading(false);
           return;
         }
-
         resolveAuthInit();
-
         try {
           const response = await apiRequest.get<ApiResponse<User>>("/users/me", {
             noRedirectOn401: true,
-            timeout: 15000, // tăng lên 15s
+            timeout: 15000,
           });
           if (response?.data) {
             setUser(response.data);
@@ -92,9 +86,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
           const status = (meError as { status?: number })?.status;
           const message = (meError as { message?: string })?.message;
           console.error("[checkAuth] /users/me failed:", status, message);
-          if (status === 401) {
-            setUser(null);
-          }
+          if (status === 401) setUser(null);
         }
       } catch {
         setUser(null);
@@ -119,15 +111,12 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     }
   }, []);
 
-  const login = useCallback(
-    async (userData: User, accessToken: string) => {
-      setAccessToken(accessToken);
-      setUser(userData);
-      setShowWelcome(true);
-      refreshUser();
-    },
-    [refreshUser],
-  );
+  const login = useCallback(async (userData: User, accessToken: string) => {
+    setAccessToken(accessToken);
+    setUser(userData);
+    setShowWelcome(true);
+    // refreshUser();
+  }, []);
 
   const logout = useCallback(async () => {
     try {

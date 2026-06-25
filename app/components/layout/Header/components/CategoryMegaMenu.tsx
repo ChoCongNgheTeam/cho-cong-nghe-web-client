@@ -1,30 +1,12 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from "react";
-import { Menu, ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, Sparkles, Zap, Monitor, Apple } from "lucide-react";
-import apiRequest from "@/lib/api";
+import { Menu, ChevronRight, Smartphone, Package, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
+import { Category } from "../types";
+import { fetchCategories } from "../_libs/header";
+import { BRAND_ICONS, CATEGORY_ICONS } from "../_libs/constants";
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  parentId: string | null;
-  position: number;
-  children: Category[];
-}
-
-interface ApiResponse {
-  data: Category[];
-  message: string;
-}
-
-const BrandGrid = memo(({ brands }: { brands: Category[] }) => {
-  const brandIcons: Record<string, React.ElementType> = {
-    "apple-iphone": Apple,
-    samsung: Zap,
-    xiaomi: Sparkles,
-    oppo: Smartphone,
-    honor: Monitor,
-  };
+const BrandGrid = ({ brands }: { brands: Category[] }) => {
+  const brandIcons = { ...BRAND_ICONS };
   return (
     <div className="mb-6">
       <h4 className="text-sm font-semibold text-primary mb-4 flex items-center gap-2">
@@ -50,11 +32,11 @@ const BrandGrid = memo(({ brands }: { brands: Category[] }) => {
       </div>
     </div>
   );
-});
+};
 
 BrandGrid.displayName = "BrandGrid";
 
-const HotItemList = memo(({ items }: { items: { name: string; badge?: string }[] }) => (
+const HotItemList = ({ items }: { items: { name: string; badge?: string }[] }) => (
   <div className="mb-6">
     <h4 className="text-sm font-semibold text-primary mb-4 flex items-center gap-2">
       <Zap className="w-4 h-4 text-promotion" />
@@ -69,11 +51,11 @@ const HotItemList = memo(({ items }: { items: { name: string; badge?: string }[]
       ))}
     </div>
   </div>
-));
+);
 
 HotItemList.displayName = "HotItemList";
 
-const PriceRangeList = memo(({ priceCategories }: { priceCategories: Category[] }) => (
+const PriceRangeList = ({ priceCategories }: { priceCategories: Category[] }) => (
   <div className="pt-6 border-t border-neutral">
     <h4 className="text-sm font-semibold text-primary-light mb-4 flex items-center gap-2">💰 Theo mức giá</h4>
     <div className="flex flex-wrap gap-2">
@@ -84,24 +66,11 @@ const PriceRangeList = memo(({ priceCategories }: { priceCategories: Category[] 
       ))}
     </div>
   </div>
-));
+);
 PriceRangeList.displayName = "PriceRangeList";
 
 const CategoryList = memo(({ categories, activeCategory, onHover }: { categories: Category[]; activeCategory: Category | null; onHover: (category: Category) => void }) => {
-  const getIcon = (slug: string) => {
-    const icons: Record<string, React.ElementType> = {
-      "dien-thoai": Smartphone,
-      laptop: Laptop,
-      "dien-may": Tv,
-      "phu-kien": Headphones,
-      "cong-nghe-thiet-bi-so": Settings,
-      "cham-soc-nha-cua-suc-khoe": Heart,
-      "thiet-bi-gia-dinh-dien-gia-dung": Home,
-      "thiet-bi-nha-bep": Utensils,
-      "ket-noi-tien-ich-giai-tri": Wifi,
-    };
-    return icons[slug] || Package;
-  };
+  const getIcon = (slug: string): React.ElementType => CATEGORY_ICONS[slug] ?? Package;
 
   return (
     <div className="w-64 bg-neutral-light-active border-r border-neutral flex flex-col h-full overflow-y-auto">
@@ -195,12 +164,12 @@ const CategoryMegaMenu = memo(() => {
   useEffect(() => {
     let cancelled = false;
 
-    const fetchCategories = async () => {
+    const load = async () => {
       try {
-        const result = await apiRequest.get<ApiResponse>("/categories/tree", { noAuth: true });
-        if (cancelled) return; // tránh setState sau khi unmount
-        setCategories(result.data);
-        if (result.data[0]) setActiveCategory(result.data[0]);
+        const data = await fetchCategories();
+        if (cancelled) return;
+        setCategories(data);
+        if (data[0]) setActiveCategory(data[0]);
       } catch (error) {
         if (!cancelled) console.error("Error fetching categories:", error);
       } finally {
@@ -208,7 +177,7 @@ const CategoryMegaMenu = memo(() => {
       }
     };
 
-    fetchCategories();
+    load();
     return () => {
       cancelled = true;
     };
@@ -223,7 +192,6 @@ const CategoryMegaMenu = memo(() => {
     closeTimer.current = setTimeout(() => setIsOpen(false), 120);
   }, []);
 
-  // useCallback để CategoryList không re-render khi CategoryMegaMenu re-render
   const handleCategoryHover = useCallback((category: Category) => {
     setActiveCategory(category);
   }, []);

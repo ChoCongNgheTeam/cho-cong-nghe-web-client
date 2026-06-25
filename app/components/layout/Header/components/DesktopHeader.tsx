@@ -1,6 +1,6 @@
 "use client";
 
-import { GitCompareArrows, Heart, User, ChevronDown, Package, MapPin, LogOut } from "lucide-react";
+import { Heart, User, ChevronDown, Package, MapPin, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, memo, useState, useCallback } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -8,25 +8,18 @@ import { CartIcon } from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
 import NotificationBell from "@/components/ui/NotificationBell";
-import { useRouter } from "next/navigation";
-import { useCompareStore } from "@/(client)/compare/compareStore";
 import { useAuth } from "@/hooks/useAuth";
 import HeaderLogo from "@/components/HeaderLogo";
+import { CompareButton } from "./CompareButton";
 
 const DesktopHeader = memo(() => {
   const { user, logout, isAuthenticated, loading } = useAuth();
-  console.log("[DesktopHeader] render");
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = useCallback(() => setShowUserMenu((v) => !v), []);
   const handleClose = useCallback(() => setShowUserMenu(false), []);
-
-  const router = useRouter();
-  const { items } = useCompareStore();
-
-  // Dùng logo local khi đang load hoặc DB chưa có logo
 
   useEffect(() => {
     if (!showUserMenu) return;
@@ -43,7 +36,6 @@ const DesktopHeader = memo(() => {
 
   return (
     <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
-      {/* Logo */}
       <HeaderLogo />
 
       <CategoryMegaMenu />
@@ -54,23 +46,7 @@ const DesktopHeader = memo(() => {
 
       {/* Icons */}
       <div className="flex items-center gap-1">
-        {/* Compare */}
-        <button onClick={() => router.push("/compare")} className={iconBtn} title="So sánh">
-          <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6" />
-          {items.length > 0 && (
-            <span
-              className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px] flex items-center justify-center rounded-full text-[10px] font-bold shadow-sm"
-              style={{
-                background: "#fff",
-                color: "#0f2050",
-                // ring navy thay vì xanh sáng để match header
-                boxShadow: "0 0 0 2px rgba(15,32,80,0.5)",
-              }}
-            >
-              {items.length}
-            </span>
-          )}
-        </button>
+        <CompareButton />
 
         <NotificationBell variant="user" />
 

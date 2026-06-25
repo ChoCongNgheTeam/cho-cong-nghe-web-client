@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
 
 interface ThemeContextType {
   isDark: boolean;
@@ -27,21 +27,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
+  const toggleTheme = useCallback(() => {
+    setIsDark((prev) => {
+      const newIsDark = !prev;
+      const html = document.documentElement;
+      if (newIsDark) {
+        html.classList.add("dark");
+        html.style.colorScheme = "dark";
+        localStorage.setItem("theme", "dark");
+      } else {
+        html.classList.remove("dark");
+        html.style.colorScheme = "light";
+        localStorage.setItem("theme", "light");
+      }
+      return newIsDark;
+    });
+  }, []);
 
-    const html = document.documentElement;
-    if (newIsDark) {
-      html.classList.add("dark");
-      html.style.colorScheme = "dark";
-      localStorage.setItem("theme", "dark");
-    } else {
-      html.classList.remove("dark");
-      html.style.colorScheme = "light";
-      localStorage.setItem("theme", "light");
-    }
-  };
+  const value = useMemo(() => ({ isDark, toggleTheme, mounted }), [isDark, toggleTheme, mounted]);
 
-  return <ThemeContext.Provider value={{ isDark, toggleTheme, mounted }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

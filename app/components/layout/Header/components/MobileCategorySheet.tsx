@@ -1,36 +1,14 @@
 "use client";
 
-import { memo, use, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Smartphone, Laptop, Tv, Headphones, Settings, Home, Heart, Utensils, Wifi, Package, X, ArrowLeft } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import { ChevronRight, Package, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import apiRequest from "@/lib/api";
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  parentId: string | null;
-  position: number;
-  children: Category[];
-}
-
-interface ApiResponse {
-  data: Category[];
-  message: string;
-}
+import { Category } from "../types";
+import { fetchCategories } from "../_libs/header";
+import { CATEGORY_ICONS } from "../_libs/constants";
 
 function getIcon(slug: string) {
-  const icons: Record<string, React.ElementType> = {
-    "dien-thoai": Smartphone,
-    laptop: Laptop,
-    "dien-may": Tv,
-    "phu-kien": Headphones,
-    "cong-nghe-thiet-bi-so": Settings,
-    "cham-soc-nha-cua-suc-khoe": Heart,
-    "thiet-bi-gia-dinh-dien-gia-dung": Home,
-    "thiet-bi-nha-bep": Utensils,
-    "ket-noi-tien-ich-giai-tri": Wifi,
-  };
+  const icons = { ...CATEGORY_ICONS };
   return icons[slug] || Package;
 }
 
@@ -39,20 +17,16 @@ interface MobileCategorySheetProps {
   onClose: () => void;
 }
 
-export default memo(function MobileCategorySheet({ isOpen, onClose }: MobileCategorySheetProps) {
+const MobileCategorySheet = memo(({ isOpen, onClose }: MobileCategorySheetProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Category | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Fetch categories once
   useEffect(() => {
     if (categories.length > 0) return;
-    apiRequest
-      .get<ApiResponse>("/categories/tree", { noAuth: true })
-      .then((res) => {
-        setCategories(res.data ?? []);
-      })
+    fetchCategories()
+      .then((data) => setCategories(data))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -258,3 +232,6 @@ export default memo(function MobileCategorySheet({ isOpen, onClose }: MobileCate
     </>
   );
 });
+
+MobileCategorySheet.displayName = "MobileCategorySheet";
+export default MobileCategorySheet;

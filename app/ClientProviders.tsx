@@ -41,24 +41,38 @@ function LocaleInitializer() {
 }
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
+  console.log("[ClientProviders] render");
+  // return (
+  //   <ReactQueryProvider>
+  //     <SettingsPrefetcher />
+  //     <DynamicFavicon />
+  //     <DynamicSeoMeta />
+
+  //     <ToastyProvider>
+  //       <AuthProvider>
+  //         <NotificationProvider>
+  //           <WishlistProvider>
+  //             <ThemeProvider>
+  //               <CartAuthSync />
+  //               <FcmInitializer />
+  //               <LocaleInitializer />
+  //               {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
+  //               <MaintenanceGuard>{children}</MaintenanceGuard>
+  //               <Analytics />
+  //             </ThemeProvider>
+  //           </WishlistProvider>
+  //         </NotificationProvider>
+  //       </AuthProvider>
+  //     </ToastyProvider>
+  //   </ReactQueryProvider>
+  // );
   return (
     <ReactQueryProvider>
-      <SettingsPrefetcher />
-      <DynamicFavicon />
-      <DynamicSeoMeta />
-
       <ToastyProvider>
         <AuthProvider>
           <NotificationProvider>
             <WishlistProvider>
-              <ThemeProvider>
-                <CartAuthSync />
-                <FcmInitializer />
-                <LocaleInitializer />
-                {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
-                <MaintenanceGuard>{children}</MaintenanceGuard>
-                <Analytics />
-              </ThemeProvider>
+              <ThemeProvider>{children}</ThemeProvider>
             </WishlistProvider>
           </NotificationProvider>
         </AuthProvider>

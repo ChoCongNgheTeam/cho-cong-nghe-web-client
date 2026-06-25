@@ -436,6 +436,16 @@ body {
       color 0.3s ease;
 }
 
+.header-bg {
+  background: linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%);
+}
+
+.header-top-hidden {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Scrollbar mỏng cho aside bộ lọc */
 .scrollbar-thin::-webkit-scrollbar {
    width: 4px;

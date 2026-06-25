@@ -7,8 +7,6 @@ import DesktopHeader from "./components/DesktopHeader";
 import MobileBottomNav from "./components/MobileBottomNav";
 import { TrendingBar } from "./components/TrendingBar";
 
-const HEADER_BG = "linear-gradient(180deg, #0c1a3a 0%, #0f2050 35%, #1a3580 100%)";
-
 const Header = () => {
   const headerRef = useRef<HTMLDivElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
@@ -47,21 +45,11 @@ const Header = () => {
 
     const applyPastTop = (past: boolean) => {
       if (!headerRef.current) return;
-      // Shadow
       headerRef.current.style.boxShadow = past ? "0 4px 24px rgba(0,0,0,0.35)" : "0 2px 12px rgba(0,0,0,0.2)";
-      // HeaderTop ẩn/hiện
+
       if (headerTopWrapRef.current) {
-        if (past) {
-          headerTopWrapRef.current.style.maxHeight = "0";
-          headerTopWrapRef.current.style.opacity = "0";
-          headerTopWrapRef.current.style.pointerEvents = "none";
-          headerTopWrapRef.current.setAttribute("aria-hidden", "true");
-        } else {
-          headerTopWrapRef.current.style.maxHeight = "200px";
-          headerTopWrapRef.current.style.opacity = "1";
-          headerTopWrapRef.current.style.pointerEvents = "auto";
-          headerTopWrapRef.current.removeAttribute("aria-hidden");
-        }
+        headerTopWrapRef.current.classList.toggle("header-top-hidden", past);
+        headerTopWrapRef.current.setAttribute("aria-hidden", past ? "true" : "false");
       }
     };
 
@@ -111,7 +99,7 @@ const Header = () => {
     <>
       <div ref={placeholderRef} aria-hidden="true" />
 
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 w-full transition-transform duration-300 ease-in-out shadow-[0_2px_12px_rgba(0,0,0,0.2)]" style={{ background: HEADER_BG }}>
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 w-full transition-transform duration-300 ease-in-out shadow-[0_2px_12px_rgba(0,0,0,0.2)] header-bg">
         {/* HeaderTop — được control bằng ref, không re-render */}
         <div
           ref={headerTopWrapRef}
