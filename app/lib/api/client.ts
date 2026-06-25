@@ -2,8 +2,9 @@ import { getAccessToken } from "./token";
 import { waitForAuthInit } from "./auth-init";
 import { performRefresh } from "./refresh";
 import { ApiError, type SafeResponse } from "./errors";
+import { API_BASE_URL } from "@/config/api.config";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
+const BASE_URL = API_BASE_URL?.replace(/\/+$/, "");
 const DEFAULT_TIMEOUT_MS = 15000;
 
 type ApiResponseType = "json" | "blob" | "text";
@@ -103,7 +104,7 @@ class ApiRequest {
     const { noAuth = false, params, noRedirectOn401 = false, silentAuth = false, timeout = DEFAULT_TIMEOUT_MS, signal: externalSignal, responseType = "json", ...fetchOptions } = options;
 
     if (!BASE_URL) {
-      throw new Error("NEXT_PUBLIC_API_BASE_URL chưa được cấu hình");
+      throw new Error("API_BASE_URL chưa được cấu hình");
     }
 
     if (!noAuth && !getAccessToken()) {

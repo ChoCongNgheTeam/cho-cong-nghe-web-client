@@ -6,76 +6,71 @@ import WishlistHeart from "@/components/shared/WishlistHeart";
 import { Product } from "./types";
 import { formatVND } from "@/helpers";
 import { thumbnailUrl } from "@/helpers/resizeImage";
-import Badge from "../ui/Badge";
 import { HighlightIcon } from "./HighlightIcon";
 import { StarRating } from "../ui/StarRating";
+import Badge from "./Badge";
 
 interface ProductCardProps {
-   product: Product;
-   index?: number;
-   showWishlist?: boolean;
+  product: Product;
+  index?: number;
+  showWishlist?: boolean;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-   const hasPromotion = product.price?.hasPromotion ?? false;
-   const discountPercentage = product.price?.discountPercentage ?? 0;
-   const highlights = product.highlights ?? [];
-   const visibleHighlights = highlights.slice(0, 2);
+  const hasPromotion = product.price?.hasPromotion ?? false;
+  const discountPercentage = product.price?.discountPercentage ?? 0;
+  const highlights = product.highlights ?? [];
+  const visibleHighlights = highlights.slice(0, 2);
 
-   const productUrl = product.variantId
-      ? `/products/${product.slug}?bundle=${product.variantId}`
-      : `/products/${product.slug}`;
+  const productUrl = product.variantId ? `/products/${product.slug}?bundle=${product.variantId}` : `/products/${product.slug}`;
 
-   return (
-      <Link
-         href={productUrl}
-         className="group relative flex flex-col bg-neutral-light border border-neutral-100
+  return (
+    <Link
+      href={productUrl}
+      className="group relative flex flex-col bg-neutral-light border border-neutral-100
                  rounded-xl h-full
                  transition-all duration-300 ease-out
                  hover:shadow-lg hover:-translate-y-0.5"
+    >
+      {/* ── Badge giảm giá — góc trên trái ── */}
+      {hasPromotion && <Badge discountPercent={discountPercentage} />}
+
+      {/* ── Wishlist — góc trên phải ── */}
+      <div
+        className="absolute top-2 right-2 z-10"
+        onClick={(e) => e.preventDefault()} // chặn Link navigate khi click heart
       >
-         {/* ── Badge giảm giá — góc trên trái ── */}
-         {hasPromotion && <Badge discountPercent={discountPercentage} />}
+        <WishlistHeart productId={product.id} />
+      </div>
 
-         {/* ── Wishlist — góc trên phải ── */}
-         <div
-            className="absolute top-2 right-2 z-10"
-            onClick={(e) => e.preventDefault()} // chặn Link navigate khi click heart
-         >
-            <WishlistHeart productId={product.id} />
-         </div>
+      {/* ── Image ── */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl">
+        {product.thumbnail ? (
+          <Image
+            src={thumbnailUrl(product.thumbnail, 300)}
+            alt={product.name}
+            fill
+            className="object-contain transition-transform duration-500 ease-out group-hover:scale-105 p-4"
+            sizes="(max-width: 640px) 50vw, 300px"
+          />
+        ) : (
+          <div className="w-full h-full bg-neutral-100" />
+        )}
+      </div>
 
-         {/* ── Image ── */}
-         <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl">
-            {product.thumbnail ? (
-               <Image
-                  src={thumbnailUrl(product.thumbnail, 300)}
-                  alt={product.name}
-                  fill
-                  className="object-contain transition-transform duration-500 ease-out group-hover:scale-105 p-4"
-                  sizes="(max-width: 640px) 50vw, 300px"
-               />
-            ) : (
-               <div className="w-full h-full bg-neutral-100" />
-            )}
-         </div>
+      {/* ── Content ── */}
+      <div className="flex flex-col gap-1 sm:gap-1.5 p-2 sm:p-2.5 flex-1">
+        <h3 className="text-xs sm:text-sm font-medium text-primary line-clamp-2 leading-snug" style={{ minHeight: "calc(2 * 1.375em)" }}>
+          {product.name}
+        </h3>
 
-         {/* ── Content ── */}
-         <div className="flex flex-col gap-1 sm:gap-1.5 p-2 sm:p-2.5 flex-1">
-            <h3
-               className="text-xs sm:text-sm font-medium text-primary line-clamp-2 leading-snug"
-               style={{ minHeight: "calc(2 * 1.375em)" }}
-            >
-               {product.name}
-            </h3>
-
-            {visibleHighlights.length > 0 && (
-               <div className="flex gap-1 pt-1 sm:flex-row flex-col">
-                  {visibleHighlights.map((h) => (
-                     <span
-                        key={h.key}
-                        title={h.value}
-                        className="
+        {visibleHighlights.length > 0 && (
+          <div className="flex gap-1 pt-1 sm:flex-row flex-col">
+            {visibleHighlights.map((h) => (
+              <span
+                key={h.key}
+                title={h.value}
+                className="
                   inline-flex items-center gap-1 min-w-0
                   bg-neutral-100 text-neutral-700
                   border border-neutral-200
@@ -84,42 +79,28 @@ export default function ProductCard({ product }: ProductCardProps) {
                   rounded-md font-medium
                   sm:max-w-[48%] sm:shrink
                 "
-                     >
-                        <HighlightIcon
-                           icon={h.icon}
-                           className="w-3 h-3 flex-shrink-0 text-neutral-500 dark:text-neutral-400"
-                        />
-                        <span className="truncate">{h.value}</span>
-                     </span>
-                  ))}
-               </div>
-            )}
+              >
+                <HighlightIcon icon={h.icon} className="w-3 h-3 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
+                <span className="truncate">{h.value}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
-            <div>
-               <p className="text-[10px] sm:text-[11px] text-neutral-400 line-through min-h-[14px]">
-                  {hasPromotion ? formatVND(product.price.base) : ""}
-               </p>
-               <p className="text-xs sm:text-sm font-semibold text-promotion">
-                  {formatVND(
-                     hasPromotion ? product.price.final : product.price.base,
-                  )}
-               </p>
-            </div>
+        <div>
+          <p className="text-[10px] sm:text-[11px] text-neutral-400 line-through min-h-[14px]">{hasPromotion ? formatVND(product.price.base) : ""}</p>
+          <p className="text-xs sm:text-sm font-semibold text-promotion">{formatVND(hasPromotion ? product.price.final : product.price.base)}</p>
+        </div>
 
-            {/* ── Rating — WishlistHeart đã lên trên, chỉ còn rating ── */}
-            <div className="mt-auto pt-1">
-               {product.rating?.count > 0 ? (
-                  <StarRating
-                     average={product.rating.average}
-                     count={product.rating.count}
-                  />
-               ) : (
-                  <span className="text-[9px] sm:text-[11px] text-neutral-400 italic">
-                     Chưa có đánh giá
-                  </span>
-               )}
-            </div>
-         </div>
-      </Link>
-   );
+        {/* ── Rating — WishlistHeart đã lên trên, chỉ còn rating ── */}
+        <div className="mt-auto pt-1">
+          {product.rating?.count > 0 ? (
+            <StarRating average={product.rating.average} count={product.rating.count} />
+          ) : (
+            <span className="text-[9px] sm:text-[11px] text-neutral-400 italic">Chưa có đánh giá</span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
 }

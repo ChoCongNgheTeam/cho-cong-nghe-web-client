@@ -1,6 +1,7 @@
+import { API_BASE_URL } from "@/config/api.config";
 import { setAccessToken } from "./token";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
+const BASE_URL = API_BASE_URL?.replace(/\/+$/, "");
 const REFRESH_TIMEOUT_MS = 15000;
 const MAX_REFRESH_RETRIES = 2;
 

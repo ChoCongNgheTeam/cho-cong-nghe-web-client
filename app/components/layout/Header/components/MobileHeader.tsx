@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import SearchBar from "./SearchBar";
 import { TrendingBar } from "./TrendingBar";
 import { GitCompareArrows } from "lucide-react";
-import MobileLogo from "@/components/MobileHeader";
+import MobileLogo from "@/components/generalSettings/MobileHeader";
 
 const MobileHeader = () => {
   const router = useRouter();

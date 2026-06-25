@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { X, AlertCircle, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "@/config/api.config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
 
     // return_url trỏ về BE return handler
     // BE sẽ query DB theo payment_intent → tìm orderCode → redirect /order/{orderCode}/payment
-    const returnUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payments/stripe/return`;
+    const returnUrl = `${API_BASE_URL}/api/v1/payments/stripe/return`;
 
     const { error } = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,

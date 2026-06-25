@@ -5,7 +5,7 @@ import { CartIcon } from "@/(client)/cart/components/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
 import SearchBar from "./SearchBar";
 import NotificationBell from "@/components/ui/NotificationBell";
-import HeaderLogo from "@/components/HeaderLogo";
+import HeaderLogo from "@/components/generalSettings/HeaderLogo";
 import { CompareButton } from "./CompareButton";
 import { UserMenuButton } from "./UserMenuButton";
 

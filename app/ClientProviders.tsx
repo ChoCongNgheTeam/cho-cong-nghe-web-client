@@ -3,16 +3,16 @@ import { useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastyProvider } from "./components/Toast";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { CartAuthSync } from "@/components/CartAuthSync";
+import { CartAuthSync } from "@/providers/CartAuthSync";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
 import { useFcmToken } from "@/hooks/useFcmToken";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
-import SettingsPrefetcher from "@/components/SettingsPrefetcher";
-import DynamicFavicon from "@/components/DynamicFavicon";
-import DynamicSeoMeta from "@/components/DynamicSeoMeta";
-import MaintenanceGuard from "@/components/MaintenanceGuard";
+import SettingsPrefetcher from "@/components/generalSettings/SettingsPrefetcher";
+import DynamicFavicon from "@/components/generalSettings/DynamicFavicon";
+import DynamicSeoMeta from "@/components/generalSettings/DynamicSeoMeta";
+import MaintenanceGuard from "@/components/generalSettings/MaintenanceGuard";
 
 function FcmInitializer() {
   useFcmToken();

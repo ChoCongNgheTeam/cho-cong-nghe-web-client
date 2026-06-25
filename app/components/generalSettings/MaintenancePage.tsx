@@ -1,7 +1,9 @@
 "use client";
 
-import { Construction, Clock, Mail, Phone } from "lucide-react";
+import { Construction, Mail, Phone } from "lucide-react";
 import { useGeneralSettings } from "@/hooks/useGeneralSettings";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function MaintenancePage() {
   const { settings } = useGeneralSettings();
@@ -12,7 +14,9 @@ export default function MaintenancePage() {
         {/* Logo */}
         {settings.logo_url && (
           <div className="flex justify-center">
-            <img src={settings.logo_url} alt={settings.site_name || "Logo"} className="h-14 w-auto object-contain opacity-90" />
+            <Link href="/">
+              <Image src={settings.logo_url} alt={settings.site_name || "Logo"} width={160} height={56} className="h-14 w-auto object-contain opacity-90" />
+            </Link>
           </div>
         )}
 
