@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,25 +23,21 @@ export function useFcmToken() {
   const { isAuthenticated } = useAuth();
   const { refresh } = useNotifications();
 
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    refreshRef.current = refresh;
+  }, [refresh]);
+
   useEffect(() => {
     if (!isAuthenticated || typeof window === "undefined") return;
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
-    if (!isFirebaseConfigReady || !VAPID_KEY) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("[FCM] Missing firebase config or VAPID key. Skipping setup.");
-      }
-      return;
-    }
+    if (!isFirebaseConfigReady || !VAPID_KEY) return;
 
     const setup = async () => {
       try {
         const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-
         const messaging = getMessaging(app);
-
-        // Register SW
         const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-
         const permission = await Notification.requestPermission();
         if (permission !== "granted") return;
 
@@ -51,17 +47,11 @@ export function useFcmToken() {
         });
 
         if (token) {
-          // Lưu token lên BE
-          await apiRequest.post("/notifications/fcm-token", {
-            token,
-            device: "web",
-          });
+          await apiRequest.post("/notifications/fcm-token", { token, device: "web" });
         }
 
-        // Foreground message handler
         onMessage(messaging, (payload) => {
-          refresh(); // re-fetch để badge + list cập nhật
-          // Optional: show native notification khi tab đang active
+          refreshRef.current(); // ← dùng ref
           if (payload.notification) {
             new Notification(payload.notification.title ?? "", {
               body: payload.notification.body,
@@ -75,5 +65,5 @@ export function useFcmToken() {
     };
 
     setup();
-  }, [isAuthenticated, refresh]);
+  }, [isAuthenticated]);
 }

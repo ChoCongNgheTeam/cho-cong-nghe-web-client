@@ -20,7 +20,6 @@ const generateId = () => `toast-${++toastId}-${Date.now()}`;
 
 export function ToastyProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  console.log("[ToastyProvider] render");
 
   const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -125,9 +124,9 @@ export function ToastyProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ToastyActionsContext.Provider value={actions}>
-      {/* ToastyStateContext bọc ít nhất có thể — chỉ ToastContainer cần */}
+      {children}
+      {/* ToastyStateContext chỉ bọc ToastContainer, không bọc children */}
       <ToastyStateContext.Provider value={toasts}>
-        {children}
         <ToastContainer toasts={toasts} dismiss={dismiss} />
       </ToastyStateContext.Provider>
     </ToastyActionsContext.Provider>

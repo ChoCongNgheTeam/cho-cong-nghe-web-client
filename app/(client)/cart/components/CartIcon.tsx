@@ -6,7 +6,6 @@ import { useCart } from "@/hooks/useCart";
 
 export const CartIcon = () => {
   const { totalItemCount } = useCart();
-  console.log("[CartIcon] render");
 
   return (
     <Link href="/cart" className="inline-flex items-center relative p-2 rounded-lg transition-colors duration-150 cursor-pointer hover:bg-white/10 active:bg-white/20">

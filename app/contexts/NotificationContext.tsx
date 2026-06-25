@@ -26,13 +26,19 @@ const NotificationContext = createContext<NotificationContextValue>({
   refresh: async () => {},
 });
 
+const NOTIFICATION_ENDPOINTS = {
+  list: "/notifications",
+  markAll: "/notifications/read-all",
+  markOne: (id: string) => `/notifications/${id}/read`,
+};
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
 
   const store = useNotificationStore({
-    listEndpoint: "/notifications",
-    markAllEndpoint: "/notifications/read-all",
-    markOneEndpoint: (id) => `/notifications/${id}/read`,
+    listEndpoint: NOTIFICATION_ENDPOINTS.list,
+    markAllEndpoint: NOTIFICATION_ENDPOINTS.markAll,
+    markOneEndpoint: NOTIFICATION_ENDPOINTS.markOne,
     enabled: isAuthenticated,
   });
 

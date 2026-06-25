@@ -80,7 +80,6 @@ type NotificationBellProps = {
 
 const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, headerLabel }: NotificationBellProps) => {
   const { isAuthenticated } = useAuth();
-  console.log("[NotificationBell] render");
 
   const resolvedFooterHref = footerHref ?? (variant === "admin" ? "/admin/notifications" : "/profile/notifications");
   const resolvedFooterLabel = footerLabel ?? "Xem tất cả thông báo";

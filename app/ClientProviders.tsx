@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastyProvider } from "./components/Toast";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartAuthSync } from "@/components/CartAuthSync";
@@ -41,38 +41,24 @@ function LocaleInitializer() {
 }
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
-  console.log("[ClientProviders] render");
-  // return (
-  //   <ReactQueryProvider>
-  //     <SettingsPrefetcher />
-  //     <DynamicFavicon />
-  //     <DynamicSeoMeta />
-
-  //     <ToastyProvider>
-  //       <AuthProvider>
-  //         <NotificationProvider>
-  //           <WishlistProvider>
-  //             <ThemeProvider>
-  //               <CartAuthSync />
-  //               <FcmInitializer />
-  //               <LocaleInitializer />
-  //               {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
-  //               <MaintenanceGuard>{children}</MaintenanceGuard>
-  //               <Analytics />
-  //             </ThemeProvider>
-  //           </WishlistProvider>
-  //         </NotificationProvider>
-  //       </AuthProvider>
-  //     </ToastyProvider>
-  //   </ReactQueryProvider>
-  // );
   return (
     <ReactQueryProvider>
+      <SettingsPrefetcher />
+      <DynamicFavicon />
+      <DynamicSeoMeta />
+
       <ToastyProvider>
         <AuthProvider>
           <NotificationProvider>
             <WishlistProvider>
-              <ThemeProvider>{children}</ThemeProvider>
+              <ThemeProvider>
+                <CartAuthSync />
+                <FcmInitializer />
+                <LocaleInitializer />
+                {/* Guard bảo trì — đặt sau AuthProvider để đọc được user.role */}
+                <MaintenanceGuard>{children}</MaintenanceGuard>
+                <Analytics />
+              </ThemeProvider>
             </WishlistProvider>
           </NotificationProvider>
         </AuthProvider>

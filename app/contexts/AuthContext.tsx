@@ -35,7 +35,18 @@ interface AuthContextType {
   setShowWelcome: (show: boolean) => void;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultValue: AuthContextType = {
+  user: null,
+  login: async () => {},
+  logout: async () => {},
+  loading: true,
+  isAuthenticated: false,
+  refreshUser: async () => {},
+  showWelcome: false,
+  setShowWelcome: () => {},
+};
+
+export const AuthContext = createContext<AuthContextType>(defaultValue);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -43,6 +54,17 @@ interface AuthProviderProps {
 }
 
 let globalAuthChecked = false;
+
+// Module level — chạy 1 lần khi module load
+if (process.env.NODE_ENV === "development") {
+  // @ts-expect-error HMR
+  if (typeof module !== "undefined" && module.hot) {
+    // @ts-expect-error HMR
+    module.hot.dispose(() => {
+      globalAuthChecked = false;
+    });
+  }
+}
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser || null);
@@ -58,6 +80,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
   useEffect(() => {
     if (globalAuthChecked) return;
+
     globalAuthChecked = true;
 
     resetAuthInit();
@@ -140,7 +163,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   }, [router]);
 
   const contextValue = useMemo(() => {
-    console.log("[AuthContext] value recreated, loading:", loading, "user:", !!user, "showWelcome:", showWelcome);
     return { user, login, logout, loading, isAuthenticated: !!user, refreshUser, showWelcome, setShowWelcome };
   }, [user, loading, showWelcome, login, logout, refreshUser]);
 
