@@ -5,7 +5,7 @@ const fetchHomeData = async (): Promise<HomeApiResponse["data"]> => {
   const response = await apiRequest.get<HomeApiResponse>("/home", {
     noAuth: true,
     next: {
-      revalidate: 300,
+      revalidate: 60,
     },
   });
   return response.data;

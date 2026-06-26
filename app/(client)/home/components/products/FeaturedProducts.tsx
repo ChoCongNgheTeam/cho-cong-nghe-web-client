@@ -4,11 +4,7 @@ import ProductCard from "@/components/product/ProductCard";
 import { FeaturedProduct } from "../../_lib/types";
 import { Slidezy } from "@/components/Slider";
 
-interface FeaturedProductsProps {
-  products: FeaturedProduct[];
-}
-
-export function FeaturedProducts({ products }: FeaturedProductsProps) {
+export function FeaturedProducts({ products }: { products: FeaturedProduct[] }) {
   return (
     <section className="py-2 bg-neutral-light">
       <div className="container">
