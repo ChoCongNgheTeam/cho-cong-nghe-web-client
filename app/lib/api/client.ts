@@ -11,6 +11,10 @@ type ApiResponseType = "json" | "blob" | "text";
 type QueryParams = object;
 
 interface RequestOptions extends Omit<RequestInit, "signal" | "body"> {
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
   noAuth?: boolean;
   params?: QueryParams;
   noRedirectOn401?: boolean;

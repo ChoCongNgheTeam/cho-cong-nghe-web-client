@@ -8,7 +8,7 @@ import apiRequest from "@/lib/api";
 import { formatTime as formatLocaleTime } from "@/helpers";
 import Link from "next/link";
 import { FeaturedProduct } from "../../_lib/types";
-import type { SaleScheduleDay, SaleScheduleRule, HomeSaleScheduleData, CachedDayData, TodayProductPromotion, SaleByDateApiResponse } from "./types";
+import type { SaleScheduleDay, SaleScheduleRule, SaleScheduleData, CachedDayData, TodayProductPromotion, SaleByDateApiResponse } from "../../_lib/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -239,7 +239,7 @@ function SkeletonGrid() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface HotSaleOnlineProps {
-  saleSchedule: HomeSaleScheduleData;
+  saleSchedule: SaleScheduleData;
 }
 
 export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {

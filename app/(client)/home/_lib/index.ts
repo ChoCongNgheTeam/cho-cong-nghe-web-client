@@ -1,13 +1,15 @@
 import apiRequest from "@/lib/api";
 import { HomeApiResponse } from "./types";
 
-async function fetchHomeData(): Promise<HomeApiResponse["data"]> {
+const fetchHomeData = async (): Promise<HomeApiResponse["data"]> => {
   const response = await apiRequest.get<HomeApiResponse>("/home", {
     noAuth: true,
-    cache: "no-store",
+    next: {
+      revalidate: 300,
+    },
   });
   return response.data;
-}
+};
 
 export async function getHomePageData() {
   const data = await fetchHomeData();

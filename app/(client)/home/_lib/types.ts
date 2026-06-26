@@ -1,7 +1,8 @@
 import { Blog } from "../../blog/_lib/blog.type";
 
-// ============ Media ============
-
+// ============================================================
+// Slider & Banner
+// ============================================================
 export interface Slider {
   id: string;
   type: string;
@@ -30,8 +31,9 @@ export interface Banner {
   updatedAt: string;
 }
 
-// ============ Category ============
-
+// ============================================================
+// Category
+// ============================================================
 export interface FeaturedCategory {
   id: string;
   name: string;
@@ -40,8 +42,9 @@ export interface FeaturedCategory {
   position: number;
 }
 
-// ============ Product ============
-
+// ============================================================
+// Product
+// ============================================================
 export interface ProductHighlight {
   key: string;
   name: string;
@@ -94,18 +97,9 @@ export interface FeaturedProduct {
   price: ProductPrice;
 }
 
-// ============ Flash Sale ============
-
-export interface FlashSaleData {
-  products: FeaturedProduct[];
-  total: number;
-  date: string;
-  startDate: string | null;
-  endDate: string | null;
-}
-
-// ============ Sale Schedule ============
-
+// ============================================================
+// Sale & Promotion
+// ============================================================
 export interface SaleScheduleRule {
   actionType: string;
   discountValue: number | null;
@@ -129,27 +123,74 @@ export interface SaleScheduleDay {
   promotions: SaleSchedulePromotion[];
 }
 
-export interface TodayProductsPromotion {
+export interface TodayProductPromotion {
   id: string;
   name: string;
   description: string | null;
   priority: number;
 }
 
-export interface SaleScheduleData {
-  schedule: SaleScheduleDay[];
-  todayProducts: {
-    products: FeaturedProduct[];
-    total: number;
-    date: string;
-    startDate: string | null;
-    endDate: string | null;
-    promotions: TodayProductsPromotion[];
-  };
+export interface TodayProducts {
+  products: FeaturedProduct[];
+  total: number;
+  date: string;
+  startDate: string | null;
+  endDate: string | null;
+  promotions: TodayProductPromotion[];
 }
 
-// ============ Campaign ============
+export interface SaleScheduleData {
+  schedule: SaleScheduleDay[];
+  todayProducts: TodayProducts;
+}
 
+export interface FlashSaleData {
+  products: FeaturedProduct[];
+  total: number;
+  date: string;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface SaleProductPricingContext {
+  base: number;
+  final: number;
+  discountAmount: number;
+  discountPercentage: number;
+  hasPromotion: boolean;
+  promotionName?: string;
+}
+
+export interface SaleProductCard {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+  thumbnailUrl?: string | null;
+}
+
+export interface SaleProduct {
+  card: SaleProductCard;
+  pricingContext: SaleProductPricingContext;
+}
+
+export interface CachedDayData {
+  products: FeaturedProduct[];
+  total: number;
+  promotions: TodayProductPromotion[];
+  endDate: string | null;
+}
+
+export interface SaleByDateApiResponse {
+  data: FeaturedProduct[];
+  total: number;
+  promotions: TodayProductPromotion[];
+  endDate: string | null;
+}
+
+// ============================================================
+// Campaign
+// ============================================================
 export interface CampaignCategory {
   id: string;
   campaignId: string;
@@ -182,8 +223,9 @@ export interface Campaign {
   categories: CampaignCategory[];
 }
 
-// ============ Blog ============
-
+// ============================================================
+// Blog
+// ============================================================
 export interface BlogPagination {
   data: Blog[];
   page: number;
@@ -192,8 +234,9 @@ export interface BlogPagination {
   totalPages: number;
 }
 
-// ============ Home API Response ============
-
+// ============================================================
+// Home API
+// ============================================================
 export interface HomeApiResponse {
   data: {
     sliders: Slider[];
