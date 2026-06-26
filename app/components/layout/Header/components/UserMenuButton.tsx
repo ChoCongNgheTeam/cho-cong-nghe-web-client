@@ -37,8 +37,8 @@ export const UserMenuButton = memo(() => {
           onClick={handleToggle}
           className={[
             "flex items-center gap-2 rounded-lg transition-colors duration-150 cursor-pointer p-2 px-3",
-            "backdrop-blur-md ",
-            showUserMenu ? "bg-white/25" : "bg-white/10 hover:bg-white/20 active:bg-white/25",
+            "backdrop-blur-md border border-white/30",
+            showUserMenu ? "bg-white/35" : "bg-white/20 hover:bg-white/30 active:bg-white/35",
           ].join(" ")}
         >
           <UserAvatar avatarImage={user.avatarImage || "/images/avatar.png"} fullName={user.fullName} size={30} />

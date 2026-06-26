@@ -211,7 +211,11 @@ const CategoryMegaMenu = memo(() => {
     <div ref={containerRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {/* Trigger — white text on blue */}
       <button
-        className={["p-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors duration-150 text-white", "backdrop-blur-md", isOpen ? "bg-white/25" : "bg-white/10 hover:bg-white/20"].join(" ")}
+        className={[
+          "p-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors duration-150 text-white",
+          "backdrop-blur-md border border-white/30",
+          isOpen ? "bg-white/35" : "bg-white/20 hover:bg-white/30",
+        ].join(" ")}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={["transition-transform duration-200", isOpen ? "rotate-90" : "rotate-0"].join(" ")}>
           <path d="M4.7041 4H10.7041V10H4.7041V4Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

@@ -9,7 +9,7 @@ const HeaderLogo = memo(() => {
   const resolvedLogo = !isLoading && logoUrl ? logoUrl : FALLBACK_LOGO;
 
   return (
-    <Link href="/" className="shrink-0 pr-10">
+    <Link href="/" className="shrink-0 pr-2">
       <Image
         src={resolvedLogo}
         width={180}

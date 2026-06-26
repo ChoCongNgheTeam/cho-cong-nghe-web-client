@@ -249,51 +249,55 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
         }
         .search-item-active { background-color: var(--color-neutral, #f3f4f6); }
 
-        /* Input glass — nền trong suốt trắng nhẹ trên navy */
+        /* Input glass — đồng bộ với header buttons */
         .search-glass-input {
-          background: rgba(255, 255, 255, 0.92);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.20);
+          border: 1px solid rgba(255, 255, 255, 0.30);
           border-right: none;
-          color: #111827;
-          border-radius: 9999px 0 0 9999px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+          color: #fff;
+          border-radius: 10px 0 0 10px;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           transition: background 0.15s, border-color 0.15s;
         }
         .search-glass-input::placeholder {
-          color: #9ca3af;
+          color: rgba(255, 255, 255, 0.60);
         }
         .search-glass-input:focus {
           outline: none;
-          background: #fff;
-          border-color: rgba(255, 255, 255, 0.38);
+          background: rgba(255, 255, 255, 0.30);
+          border-color: rgba(255, 255, 255, 0.45);
         }
-        /* Wrapper focus-ring via :has */
         .search-glass-wrap:has(.search-glass-input:focus) .search-glass-btn {
-          border-color: rgba(255, 255, 255, 0.38);
+          background: rgba(255, 255, 255, 0.30);
+          border-color: rgba(255, 255, 255, 0.45);
         }
 
-        /* Search button — trắng đặc, nhìn rõ, dễ tap */
+        /* Search button — cùng glass style */
         .search-glass-btn {
-          background: rgba(255, 255, 255, 0.92);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.20);
+          border: 1px solid rgba(255, 255, 255, 0.30);
           border-left: none;
-          border-radius: 0 9999px 9999px 0;
+          border-radius: 0 10px 10px 0;
           padding: 0 14px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: background 0.15s;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          transition: background 0.15s, border-color 0.15s;
           min-width: 44px;
         }
         .search-glass-btn:hover {
-          background: #fff;
+          background: rgba(255, 255, 255, 0.30);
         }
         .search-glass-btn svg {
-          color: #0f2050;
+          color: #fff;
           width: 16px;
           height: 16px;
         }
+
         /* Dropdown giữ nền trắng — đọc dễ hơn */
         .search-glass-dropdown {
           background: var(--color-neutral-light, #fff);
