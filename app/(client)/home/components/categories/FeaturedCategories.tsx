@@ -5,10 +5,6 @@ import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
 import { FeaturedCategory } from "../../_lib/types";
 
-interface CategoryGridProps {
-  featuredCategories: FeaturedCategory[];
-}
-
 function CategoryItem({ category }: { category: FeaturedCategory }) {
   return (
     <Link href={`/category/${category.slug}`} className="group/item block">
@@ -34,7 +30,7 @@ function CategoryItem({ category }: { category: FeaturedCategory }) {
   );
 }
 
-export function FeaturedCategories({ featuredCategories }: CategoryGridProps) {
+export function FeaturedCategories({ featuredCategories }: { featuredCategories: FeaturedCategory[] }) {
   // Chunk thành cặp — chỉ dùng cho mobile/tablet slider
   const pairedCategories = featuredCategories.reduce<FeaturedCategory[][]>((acc, item, i) => {
     if (i % 2 === 0) acc.push([item]);

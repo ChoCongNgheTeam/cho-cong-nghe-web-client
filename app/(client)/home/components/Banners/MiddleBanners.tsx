@@ -2,15 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { Banner } from "../../_lib/types";
 import { Slidezy } from "@/components/Slider";
+import type { Banner } from "../../_lib/types";
 
-interface BannersSection1Props {
-  banners: Banner[];
-}
-
-export function BannersSection1({ banners }: BannersSection1Props) {
-  if (banners.length === 0) return null;
+export function MiddleBanners({ middleBanner }: { middleBanner: Banner[] }) {
+  if (middleBanner.length === 0) return null;
 
   return (
     <section className="py-1 md:py-3 bg-neutral-light">
@@ -22,15 +18,14 @@ export function BannersSection1({ banners }: BannersSection1Props) {
           loop={false}
           nav={true}
           mobileNav="dots"
-          controls={banners.length > 2}
+          controls={middleBanner.length > 2}
           controlsOffset="16"
           slideBy={1}
           draggable={true}
         >
-          {banners.map((banner) => (
+          {middleBanner.map((banner) => (
             <Link key={banner.id} href={banner.linkUrl ?? "#"} className="group relative overflow-hidden rounded-3xl shadow-md hover:shadow-lg transition-all duration-500 block">
-              {/* Aspect ratio thay cho height */}
-              <div className="relative aspect-[2/1] md:aspect-[2.4/1] overflow-hidden">
+              <div className="relative aspect-2/1 md:aspect-[2.4/1] overflow-hidden">
                 {banner.imageUrl && (
                   <Image
                     src={banner.imageUrl}
@@ -43,7 +38,6 @@ export function BannersSection1({ banners }: BannersSection1Props) {
                 )}
               </div>
 
-              {/* Corner effect */}
               <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-neutral-light/30 rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </Link>
           ))}

@@ -1,22 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { MoveRight } from "lucide-react";
 import { Slidezy } from "@/components/Slider";
 import BlogCard from "@/(client)/blog/components/BlogCard";
 import { Blog } from "@/(client)/blog/_lib/blog.type";
-import { MoveRight } from "lucide-react";
 
-interface BlogSectionProps {
-  blogs: Blog[];
-}
-
-export function BlogSection({ blogs }: BlogSectionProps) {
+export function BlogSection({ blogs }: { blogs: Blog[] }) {
   const displayBlogs = blogs.slice(0, 4);
 
   return (
     <section className="py-4 md:py-6 bg-neutral-light">
       <div className="container">
-        {/* header */}
         <div className="flex items-center justify-between mb-5 md:mb-7">
           <div>
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">Bài viết</h2>
@@ -29,14 +24,12 @@ export function BlogSection({ blogs }: BlogSectionProps) {
           </Link>
         </div>
 
-        {/* grid desktop */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {displayBlogs.map((blog) => (
             <BlogCard key={blog.id} blog={blog} variant="home" />
           ))}
         </div>
 
-        {/* mobile slider */}
         <div className="sm:hidden">
           <Slidezy items={{ mobile: 1, tablet: 2, desktop: 2 }} gap={12} speed={400} loop={false} nav={false} mobileNav="dots" controls={false} slideBy={1} draggable>
             {displayBlogs.map((blog) => (

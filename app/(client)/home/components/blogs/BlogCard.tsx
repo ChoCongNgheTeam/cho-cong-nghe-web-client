@@ -1,15 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-
 import { formatDate } from "@/helpers/formatDate";
 import { formatViews } from "@/helpers/formatViews";
 import { Blog } from "@/(client)/blog/_lib/blog.type";
 
-interface BlogCardProps {
-  blog: Blog;
-}
-
-export const BlogCard = ({ blog }: BlogCardProps) => {
+export const BlogCard = ({ blog }: { blog: Blog }) => {
   return (
     <Link href={`/blog/${blog.slug}`} className="group block overflow-hidden rounded-2xl bg-neutral-light shadow-sm hover:shadow-md transition-all duration-300">
       {/* thumbnail */}

@@ -3,14 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
-import { Slider } from "../../_lib/types";
-import { KEYFRAMES, THEMES } from "./HomeSlider.constants";
+import type { Slider } from "../../_lib/types";
+import { THEMES } from "../../_lib/home-slider.themes";
 
-interface HomeSliderProps {
-  sliders: Slider[];
-}
-
-export function HomeSlider({ sliders }: HomeSliderProps) {
+export function HomeSlider({ sliders }: { sliders: Slider[] }) {
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(true);
   const [animating, setAnimating] = useState(false);
@@ -79,9 +75,8 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
 
   return (
     <div
-      className="relative w-full overflow-hidden aspect-video md:aspect-21/8"
+      className="relative w-full overflow-hidden aspect-video md:aspect-[21/8]"
       style={{
-        // Dùng CSS vars để tự động đổi theo light/dark mode
         background: `linear-gradient(160deg,
           rgb(var(--neutral-light)) 0%,
           rgb(var(--accent-light)) 40%,
@@ -92,10 +87,8 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <style>{KEYFRAMES}</style>
-
       {/* ── Layer 1: Perspective grid ─────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ perspective: "400px" }}>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden [perspective:400px]">
         <div
           style={{
             position: "absolute",
@@ -112,7 +105,6 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
             WebkitMaskImage: "linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.6) 40%, black 75%, transparent 100%)",
           }}
         />
-        {/* Accent dots (circuit feel) — dùng CSS var accent */}
         {[
           { top: "52%", left: "62%", delay: "0s" },
           { top: "64%", left: "70%", delay: "1.2s" },
@@ -122,13 +114,10 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         ].map((dot, i) => (
           <div
             key={i}
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute size-1 rounded-full"
             style={{
               top: dot.top,
               left: dot.left,
-              width: "4px",
-              height: "4px",
-              borderRadius: "50%",
               background: "rgb(var(--accent))",
               boxShadow: "0 0 6px 2px rgb(var(--accent) / 0.5)",
               animation: `hsDotBlink 3s ease-in-out ${dot.delay} infinite`,
@@ -149,7 +138,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         }}
       />
 
-      {/* ── Layer 3: Noise texture nhẹ ───────────────────────────────────────── */}
+      {/* ── Layer 3: Noise texture ───────────────────────────────────────────── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.022]"
         style={{
@@ -158,7 +147,7 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         }}
       />
 
-      {/* ── Layer 4: Bottom fade — dùng var để đổi theo theme ───────────────── */}
+      {/* ── Layer 4: Bottom fade ─────────────────────────────────────────────── */}
       <div
         className="pointer-events-none absolute bottom-0 left-0 right-0 z-10"
         style={{
@@ -173,13 +162,11 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       {/* ── Progress bar ─────────────────────────────────────────────────────── */}
       <div
         key={`prog-${current}`}
-        className="absolute bottom-0 left-0 h-[3px] z-20"
+        className="absolute bottom-0 left-0 h-[3px] z-20 rounded-r-sm opacity-85"
         style={{
           background: `linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent-dark)))`,
           animation: visible ? "hsProgress 5.5s linear forwards" : "none",
           width: visible ? undefined : "0%",
-          borderRadius: "0 2px 2px 0",
-          opacity: 0.85,
         }}
       />
 
@@ -187,17 +174,14 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
       <div className="container relative z-10 grid grid-cols-2 items-center h-full gap-[3%]">
         {/* LEFT: text */}
         <div className="flex flex-col pl-4">
-          {/* Title — dùng primary-dark để đủ contrast cả sáng lẫn tối */}
           <h2 className="font-extrabold leading-tight py-1 tracking-tight text-[clamp(18px,3.6vw,56px)] text-primary-dark" style={textStyle(1)}>
             {slide.title}
           </h2>
 
-          {/* Subtitle — dùng accent-dark */}
           <p key={`sub-${current}`} className="leading-relaxed max-w-[34ch] text-[clamp(10px,1.1vw,17px)] mb-4 md:mb-[clamp(12px,2.2vw,30px)] mt-2 text-accent-dark" style={textStyle(2)}>
             {slide.subTitle}
           </p>
 
-          {/* CTA button — giữ gradient accent, không cần đổi */}
           <Link
             key={`cta-${current}`}
             href={slide.linkUrl ?? "#"}
@@ -231,47 +215,42 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
           </Link>
         </div>
 
-        {/* RIGHT: product image with glow + animated rings */}
+        {/* RIGHT: product image */}
         <div className="relative h-[78%]">
           {/* Glow layer 1 */}
           <div
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute rounded-full blur-[28px]"
             style={{
               top: "50%",
               left: "50%",
               width: "85%",
               aspectRatio: "1",
               background: `radial-gradient(circle, rgb(var(--accent) / 0.28) 0%, rgb(var(--accent-dark) / 0.12) 45%, transparent 70%)`,
-              borderRadius: "50%",
-              filter: "blur(28px)",
               animation: "hsGlowPulse 3.5s ease-in-out infinite",
             }}
           />
 
           {/* Glow layer 2 */}
           <div
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute rounded-full blur-[16px]"
             style={{
               top: "50%",
               left: "50%",
               width: "45%",
               aspectRatio: "1",
               background: `radial-gradient(circle, rgb(var(--accent-light-active) / 0.35) 0%, transparent 70%)`,
-              borderRadius: "50%",
-              filter: "blur(16px)",
               animation: "hsGlowPulse 2.8s ease-in-out 0.4s infinite",
             }}
           />
 
           {/* Ring 1 */}
           <span
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute rounded-full"
             style={{
               top: "50%",
               left: "50%",
               width: "86%",
               aspectRatio: "1",
-              borderRadius: "50%",
               border: `1.5px solid rgb(var(--accent) / 0.28)`,
               animation: "hsRingRotate 18s linear infinite",
             }}
@@ -279,13 +258,12 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
 
           {/* Ring 2 */}
           <span
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute rounded-full"
             style={{
               top: "50%",
               left: "50%",
               width: "112%",
               aspectRatio: "1",
-              borderRadius: "50%",
               border: `1px solid rgb(var(--accent) / 0.13)`,
               borderTopColor: `rgb(var(--accent) / 0.35)`,
               animation: "hsRingRotateReverse 28s linear infinite",
@@ -294,13 +272,12 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
 
           {/* Ring 3 */}
           <span
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute rounded-full"
             style={{
               top: "50%",
               left: "50%",
               width: "64%",
               aspectRatio: "1",
-              borderRadius: "50%",
               border: `1px dashed rgb(var(--accent) / 0.18)`,
               animation: "hsRingRotate 10s linear infinite",
             }}
@@ -332,12 +309,11 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         onClick={prev}
         aria-label="Slide trước"
         disabled={animating}
-        className="hidden md:flex cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-10 h-10 rounded-full shadow-md text-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
+        className="hidden md:flex cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center size-10 rounded-full shadow-md text-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90 backdrop-blur-sm"
         style={{
           background: `rgb(var(--neutral-light) / 0.88)`,
           color: `rgb(var(--primary-dark))`,
           border: `0.5px solid rgb(var(--accent) / 0.2)`,
-          backdropFilter: "blur(6px)",
         }}
       >
         ‹
@@ -348,12 +324,11 @@ export function HomeSlider({ sliders }: HomeSliderProps) {
         onClick={next}
         aria-label="Slide tiếp"
         disabled={animating}
-        className="hidden md:flex cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-10 h-10 rounded-full shadow-md text-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
+        className="hidden md:flex cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 items-center justify-center size-10 rounded-full shadow-md text-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-90 backdrop-blur-sm"
         style={{
           background: `rgb(var(--neutral-light) / 0.88)`,
           color: `rgb(var(--primary-dark))`,
           border: `0.5px solid rgb(var(--accent) / 0.2)`,
-          backdropFilter: "blur(6px)",
         }}
       >
         ›

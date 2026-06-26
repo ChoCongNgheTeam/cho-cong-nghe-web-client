@@ -1,10 +1,10 @@
 export { HomeSlider } from "./HomeSlider/HomeSlider";
-export { BannersTop } from "./Banners/BannersTop";
+export { TopBanners } from "./Banners/TopBanners";
 export { FeaturedCategories } from "./Categories/FeaturedCategories";
 export { HotSaleOnline } from "./Sales/HotSaleOnline";
 export { BestSellers } from "./Products/BestSellers";
 export { FeaturedProducts } from "./Products/FeaturedProducts";
-export { BannersSection1 } from "./Banners/BannersSection1";
+export { MiddleBanners } from "./Banners/MiddleBanners";
 export { SeasonalSale } from "./Sales/SeasonalSale";
 export { TrustBadges } from "./TrustBadges";
 export { BlogSection } from "./Blogs/BlogSection";

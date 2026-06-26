@@ -1,5 +1,72 @@
 @import "tailwindcss";
 
+@layer base {
+  @keyframes hsImgZoomIn {
+    from { opacity: 0; transform: scale(0.82); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes hsImgSlideRight {
+    from { opacity: 0; transform: translateX(60px) rotate(3deg); }
+    60%  { transform: translateX(-6px) rotate(-0.5deg); }
+    to   { opacity: 1; transform: translateX(0) rotate(0deg); }
+  }
+  @keyframes hsImgDropBounce {
+    0%   { opacity: 0; transform: translateY(-48px) scale(0.92); }
+    65%  { transform: translateY(10px) scale(1.02); }
+    82%  { transform: translateY(-5px) scale(0.99); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes hsClipDown {
+    from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-10px); }
+    to   { opacity: 1; clip-path: inset(0 0 0% 0);   transform: translateY(0); }
+  }
+  @keyframes hsFadeScale {
+    from { opacity: 0; transform: scale(0.88) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes hsBlurIn {
+    from { opacity: 0; filter: blur(10px); transform: translateY(12px); }
+    to   { opacity: 1; filter: blur(0px);  transform: translateY(0); }
+  }
+  @keyframes hsSlideDown {
+    from { opacity: 0; transform: translateY(-24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes hsSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes hsProgress {
+    from { width: 0%; }
+    to   { width: 100%; }
+  }
+  @keyframes hsFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    30%       { transform: translateY(-10px) rotate(0.4deg); }
+    60%       { transform: translateY(-6px) rotate(-0.3deg); }
+  }
+  @keyframes hsGlowPulse {
+    0%, 100% { opacity: 0.7;  transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;    transform: translate(-50%, -50%) scale(1.18); }
+  }
+  @keyframes hsRingRotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes hsRingRotateReverse {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(-360deg); }
+  }
+  @keyframes hsPerspGridScroll {
+    from { background-position: 50% 0%; }
+    to   { background-position: 50% 100%; }
+  }
+  @keyframes hsDotBlink {
+    0%, 90%, 100% { opacity: 0; }
+    45%            { opacity: 1; }
+  }
+}
+
 /* ===================== INTER 24PT LOCAL ===================== */
 /* Thin - 100 */
 @font-face {
@@ -464,6 +531,7 @@ body {
    background-color: rgba(0, 0, 0, 0.3);
 }
 
+
 @keyframes ticker {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -497,3 +565,5 @@ body {
   0%, 100% { transform: scale(1); opacity: 1; }
   50%       { transform: scale(1.4); opacity: 0.7; }
 }
+
+

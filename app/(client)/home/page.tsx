@@ -1,5 +1,5 @@
 import { getHomePageData } from "./_lib";
-import { BannersTop, HomeSlider, FeaturedCategories, FeaturedProducts, BannersSection1, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
+import { TopBanners, HomeSlider, FeaturedCategories, FeaturedProducts, MiddleBanners, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
 
 export default async function HomePage() {
   const { sliders, featuredCategories, bannersTop, saleSchedule, featuredProducts, bestSellingProducts, activeCampaigns, bannersSection1, blogs } = await getHomePageData();
@@ -9,12 +9,12 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen bg-neutral-light">
       <HomeSlider sliders={sliders} />
-      <BannersTop bannersTop={bannersTop} />
+      <TopBanners topBanner={bannersTop} />
       <FeaturedCategories featuredCategories={featuredCategories} />
       {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
       <FeaturedProducts products={featuredProducts} />
       <BestSellers products={bestSellingProducts} />
-      <BannersSection1 banners={bannersSection1} />
+      <MiddleBanners middleBanner={bannersSection1} />
       <SeasonalSale campaigns={activeCampaigns} />
       <BlogSection blogs={blogs.data} />
       <TrustBadges />

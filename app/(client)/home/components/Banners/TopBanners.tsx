@@ -3,14 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
-import { Banner } from "../../_lib/types";
+import type { Banner } from "../../_lib/types";
 
-interface BannersTopProps {
-  bannersTop: Banner[];
-}
-
-export function BannersTop({ bannersTop }: BannersTopProps) {
-  if (bannersTop.length === 0) return null;
+export function TopBanners({ topBanner }: { topBanner: Banner[] }) {
+  if (topBanner.length === 0) return null;
 
   return (
     <section className="py-1 md:py-3 bg-neutral-light">
@@ -22,14 +18,14 @@ export function BannersTop({ bannersTop }: BannersTopProps) {
           loop={false}
           nav={true}
           mobileNav="dots"
-          controls={bannersTop.length > 2}
+          controls={topBanner.length > 2}
           controlsOffset="16"
           slideBy={1}
           draggable={true}
         >
-          {bannersTop.map((banner) => (
+          {topBanner.map((banner) => (
             <Link key={banner.id} href={banner.linkUrl ?? "#"} className="group relative overflow-hidden rounded-3xl shadow-md hover:shadow-lg transition-all duration-500 block">
-              <div className="relative aspect-[2/1] md:aspect-[2.4/1] overflow-hidden">
+              <div className="relative aspect-2/1 md:aspect-[2.4/1] overflow-hidden">
                 {banner.imageUrl && (
                   <Image
                     src={banner.imageUrl}
