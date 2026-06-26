@@ -4,6 +4,14 @@ const config: Config = {
   content: ["./app/(client)/**/*.{js,ts,jsx,tsx}", "./app/(admin)/**/*.{js,ts,jsx,tsx}", "./app/components/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      colors: {
+        brand: {
+          red: "var(--color-red)",
+          orange: "var(--color-orange)",
+          dark: "var(--color-dark)",
+          cream: "var(--color-cream)",
+        },
+      },
       keyframes: {
         "mascot-float": {
           "0%, 100%": { transform: "translateY(0) rotate(-2deg)" },

@@ -214,21 +214,26 @@
 
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
-   /* ========== ACCENT / INDIGO ========== */
-   /* Light */
-   --accent-light: 233 245 248; /* #e9f8f8 */
-   --accent-light-hover: 224 233 251; /* #e0e9fb */
-   --accent-light-active: 199 215 247; /* #c7d7f7 */
-   /* Normal */
-   --accent: 73 121 228; /* #4970e4 */
-   --accent-hover: 63 106 208; /* #3f6ad0 */
-   --accent-active: 54 92 189; /* #365cbd */
-   /* Dark */
-   --accent-dark: 47 79 163; /* #2f4fa3 */
-   --accent-dark-hover: 38 63 130; /* #263f82 */
-   --accent-dark-active: 29 48 97; /* #1d3061 */
-   /* Darker */
-   --accent-darker: 22 35 73; /* #162349 */
+  --color-red: #c0392b;
+  --color-orange: #e8873a;
+  --color-dark: #1a1a2e;
+  --color-cream: #f8f6f3;
+
+  /* ========== ACCENT → ĐỔI SANG CAM/ĐỎ ========== */
+  /* Light */
+  --accent-light: 252 235 225;        /* #fcebu1 — cam rất nhạt */
+  --accent-light-hover: 249 220 200;  /* #f9dcc8 */
+  --accent-light-active: 244 196 163; /* #f4c4a3 */
+  /* Normal */
+  --accent: 232 135 58;               /* #e8873a — cam chính */
+  --accent-hover: 220 120 45;         /* #dc782d */
+  --accent-active: 205 108 35;        /* #cd6c23 */
+  /* Dark */
+  --accent-dark: 192 57 43;           /* #c0392b — đỏ chính */
+  --accent-dark-hover: 169 50 38;     /* #a93226 */
+  --accent-dark-active: 146 43 33;    /* #922b21 */
+  /* Darker */
+  --accent-darker: 120 35 27;         /* #78231b */
 
    /* ========== NEUTRAL / WHITE ========== */
    /* Light */
@@ -299,21 +304,22 @@
 
 /* ===================== DARK MODE COLORS ===================== */
 :root.dark {
-   /* ========== ACCENT / INDIGO (DARK MODE) ========== */
-   /* Light */
-   --accent-light: 22 35 73; /* #162349 */
-   --accent-light-hover: 29 48 97; /* #1d3061 */
-   --accent-light-active: 38 63 130; /* #263f82 */
-   /* Normal */
-   --accent: 73 121 228; /* #4970e4 */
-   --accent-hover: 63 106 208; /* #3f6ad0 */
-   --accent-active: 54 92 189; /* #365cbd */
-   /* Dark */
-   --accent-dark: 199 215 247; /* #c7d7f7 */
-   --accent-dark-hover: 224 233 251; /* #e0e9fb */
-   --accent-dark-active: 233 245 248; /* #e9f8f8 */
-   /* Darker */
-   --accent-darker: 233 245 248; /* #e9f8f8 */
+  --color-red: #e74c3c;
+  --color-orange: #f09856;
+  --color-dark: #0d0d1a;
+  --color-cream: #1e1e2e;
+
+  /* ACCENT dark mode — sáng hơn để nổi trên nền tối */
+  --accent-light: 74 30 15;           /* #4a1e0f */
+  --accent-light-hover: 96 40 20;     /* #602814 */
+  --accent-light-active: 140 60 30;   /* #8c3c1e */
+  --accent: 240 152 86;               /* #f09856 — cam sáng */
+  --accent-hover: 244 168 108;        /* #f4a86c */
+  --accent-active: 248 184 130;       /* #f8b882 */
+  --accent-dark: 231 76 60;           /* #e74c3c — đỏ sáng */
+  --accent-dark-hover: 236 100 85;    /* #ec6455 */
+  --accent-dark-active: 241 124 110;  /* #f17c6e */
+  --accent-darker: 245 148 135;       /* #f59487 */
 
    /* ========== NEUTRAL / WHITE (DARK MODE) ========== */
    /* Light */
