@@ -27,10 +27,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={productUrl}
-      className="group relative flex flex-col bg-neutral-light border border-neutral-100
-                 rounded-xl h-full
-                 transition-all duration-300 ease-out
-                 hover:shadow-lg hover:-translate-y-0.5"
+      className="group relative flex flex-col bg-surface border border-surface-border
+           rounded-xl h-full shadow-sm
+           transition-all duration-300 ease-out
+           hover:shadow-md hover:-translate-y-0.5 hover:border-accent/40"
     >
       {/* ── Badge giảm giá — góc trên trái ── */}
       {hasPromotion && <Badge discountPercent={discountPercentage} />}

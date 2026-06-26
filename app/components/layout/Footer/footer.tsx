@@ -47,7 +47,7 @@ const Footer = () => {
           <div>
             <Link href="/">
               <Image
-                src="/logo-dark-5.png"
+                src="/logo-ccn.png"
                 width={180}
                 height={60}
                 alt="Logo"

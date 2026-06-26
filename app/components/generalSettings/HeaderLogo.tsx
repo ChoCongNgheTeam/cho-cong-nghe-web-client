@@ -2,7 +2,7 @@ import { useGeneralSettings } from "@/hooks/useGeneralSettings";
 import Link from "next/link";
 import Image from "next/image";
 import { memo } from "react";
-const FALLBACK_LOGO = "/logo-dark-5.png";
+const FALLBACK_LOGO = "/logo-ccn.png";
 
 const HeaderLogo = memo(() => {
   const { logoUrl, siteName, isLoading } = useGeneralSettings();

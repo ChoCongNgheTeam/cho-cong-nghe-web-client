@@ -7,22 +7,15 @@ import { FeaturedCategory } from "../../_lib/types";
 
 function CategoryItem({ category }: { category: FeaturedCategory }) {
   return (
-    <Link href={`/category/${category.slug}`} className="group/item block">
-      <div className="flex flex-col items-center">
-        <div className="relative w-full bg-neutral-light rounded-2xl p-0.5 md:p-4 transition-all duration-300 group-hover/item:scale-105">
-          <div className="relative w-full aspect-square rounded-xl overflow-hidden">
-            {category.imageUrl && (
-              <Image
-                src={category.imageUrl}
-                alt={category.name}
-                fill
-                sizes="(max-width: 1024px) 25vw, 12.5vw"
-                className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-110"
-              />
-            )}
-          </div>
+    <Link href={`/category/${category.slug}`} className="group/item block h-full">
+      <div className="flex flex-col justify-center items-center gap-3 px-4 py-3 h-full transition-colors duration-200 hover:bg-neutral-light/60 rounded-xl">
+        {/* Image */}
+        <div className="shrink-0 w-14 h-14 md:w-16 md:h-16 relative">
+          {category.imageUrl && <Image src={category.imageUrl} alt={category.name} fill sizes="64px" className="object-contain transition-transform duration-300 group-hover/item:scale-110" />}
         </div>
-        <p className="mt-1.5 w-full text-center font-semibold text-primary line-clamp-2 leading-tight" style={{ fontSize: "clamp(9px, 2.5vw, 14px)" }}>
+
+        {/* Label */}
+        <p className="font-semibold text-primary group-hover/item:text-accent transition-colors duration-200 line-clamp-2 leading-snug" style={{ fontSize: "clamp(11px, 2vw, 13px)" }}>
           {category.name}
         </p>
       </div>
@@ -39,18 +32,21 @@ export function FeaturedCategories({ featuredCategories }: { featuredCategories:
   }, []);
 
   return (
-    <section className="py-1 md:py-3 bg-linear-to-b bg-neutral-light">
+    <section className="py-2 md:py-4">
       <div className="container">
-        <div className="bg-neutral-light rounded-3xl p-6 md:p-8">
-          <div className="mb-3">
-            <h2 className="text-xl md:text-3xl font-bold text-primary tracking-tight">Danh mục nổi bật</h2>
+        {/* Section card — shadow thay border */}
+        <div className="bg-surface rounded-2xl shadow-md overflow-hidden">
+          {/* Header */}
+          <div className="px-5 md:px-7 pt-5 md:pt-6 pb-4 border-b border-neutral/40 flex items-center gap-3">
+            <div className="w-1 h-5 rounded-full bg-accent shrink-0" />
+            <h2 className="text-lg md:text-xl font-bold text-primary tracking-tight">Danh mục nổi bật</h2>
           </div>
 
           {/* Mobile & Tablet (< 1024px): 2 rows × 4 cols, kéo được */}
-          <div className="lg:hidden">
-            <Slidezy items={{ mobile: 4, tablet: 4, lg: 4 }} gap={12} speed={300} loop={false} nav={false} mobileNav="none" controls={false} slideBy={2} draggable={true}>
+          <div className="lg:hidden px-3 py-3">
+            <Slidezy items={{ mobile: 4, tablet: 4, lg: 4 }} gap={0} speed={300} loop={false} nav={false} mobileNav="none" controls={false} slideBy={2} draggable={true}>
               {pairedCategories.map((pair, pairIndex) => (
-                <div key={pairIndex} className="flex flex-col gap-3">
+                <div key={pairIndex} className="flex flex-col divide-y divide-neutral/40 border-r border-neutral/40 last:border-r-0">
                   {pair.map((category) => (
                     <CategoryItem key={category.id} category={category} />
                   ))}
@@ -59,11 +55,19 @@ export function FeaturedCategories({ featuredCategories }: { featuredCategories:
             </Slidezy>
           </div>
 
-          {/* Desktop (≥ 1024px): 1 row, slider bình thường */}
-          <div className="hidden lg:block">
-            <Slidezy items={{ desktop: 8 }} gap={12} speed={300} loop={false} nav={false} mobileNav="none" controls={true} slideBy={2} draggable={true}>
-              {featuredCategories.map((category) => (
-                <CategoryItem key={category.id} category={category} />
+          {/* Desktop (≥ 1024px): 1 row, có nút trượt */}
+          <div className="hidden lg:block px-2 py-2">
+            <Slidezy items={{ desktop: 8 }} gap={0} speed={300} loop={false} nav={false} mobileNav="none" controls={true} slideBy={2} draggable={true}>
+              {featuredCategories.map((category, idx) => (
+                <div
+                  key={category.id}
+                  className={[
+                    "border-neutral/40",
+                    idx % 8 !== 7 ? "border-r" : "", // divider giữa các cột trong "hàng ảo"
+                  ].join(" ")}
+                >
+                  <CategoryItem category={category} />
+                </div>
               ))}
             </Slidezy>
           </div>

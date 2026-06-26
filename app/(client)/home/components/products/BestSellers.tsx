@@ -6,27 +6,32 @@ import { FeaturedProduct } from "../../_lib/types";
 
 export function BestSellers({ products }: { products: FeaturedProduct[] }) {
   return (
-    <section className="py-2 bg-neutral-light">
+    <section className="py-2 md:py-4">
       <div className="container">
-        <div className="rounded-2xl sm:p-4 md:p-6">
-          <div className="mb-3">
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">Sản phẩm bán chạy</h2>
+        <div className="bg-surface rounded-2xl overflow-hidden">
+          <div className="px-5 md:px-7 pt-5 md:pt-6 pb-4 border-b border-surface-border flex items-center gap-3">
+            <div className="w-1 h-5 rounded-full bg-accent shrink-0" />
+            <h2 className="text-lg md:text-xl font-bold text-primary tracking-tight">Sản phẩm bán chạy</h2>
           </div>
-          <Slidezy
-            items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }}
-            gap={16}
-            speed={300}
-            loop={false}
-            nav={false}
-            mobileNav="none"
-            controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
-            slideBy={1}
-            draggable={true}
-          >
-            {products.map((product, index) => (
-              <ProductCard key={product.id} product={{ ...product, thumbnail: product.thumbnail ?? "" }} index={index} />
-            ))}
-          </Slidezy>
+
+          {/* Slider */}
+          <div className="px-3 md:px-5 py-4">
+            <Slidezy
+              items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }}
+              gap={16}
+              speed={300}
+              loop={false}
+              nav={false}
+              mobileNav="none"
+              controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
+              slideBy={1}
+              draggable={true}
+            >
+              {products.map((product, index) => (
+                <ProductCard key={product.id} product={{ ...product, thumbnail: product.thumbnail ?? "" }} index={index} />
+              ))}
+            </Slidezy>
+          </div>
         </div>
       </div>
     </section>

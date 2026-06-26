@@ -9,7 +9,7 @@ export const GENERAL_DEFAULTS: GeneralSettings = {
   site_name: "My Shop",
   site_email: "",
   site_phone: "",
-  logo_url: "/logo-dark-5.png",
+  logo_url: "/logo-ccn.png",
   favicon_url: "/favicon.ico",
   maintenance_mode: false,
   maintenance_message: "Hệ thống đang bảo trì, vui lòng quay lại sau.",

@@ -3,7 +3,7 @@ import { memo } from "react";
 import Image from "next/image";
 import { useGeneralSettings } from "@/hooks/useGeneralSettings";
 
-const FALLBACK_LOGO = "/logo-dark-5.png";
+const FALLBACK_LOGO = "/logo-ccn.png";
 
 // Thêm vào đầu file MobileHeader hoặc file riêng
 const MobileLogo = memo(() => {
