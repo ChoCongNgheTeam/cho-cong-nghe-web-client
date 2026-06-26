@@ -7,10 +7,10 @@ import ProductGrid from "../components/ProductGrid";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
 import { Slidezy } from "@/components/Slider";
 import { PageProps } from "@/components/product/types";
-import { fetchProducts, fetchFilters, fetchCategory, fetchBrandsByCategory, fetchBannersByCategory, isRootCategory } from "../_libs";
-import { slugToTitle } from "../components/SlugToTitle";
+import { fetchProducts, fetchFilters, fetchCategory, fetchBrandsByCategory, fetchBannersByCategory, isRootCategory } from "../_lib";
+import { slugToTitle } from "../components/slug-to-title";
 import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
-import { buildCategoryMetadata } from "./buildMetaData";
+import { buildCategoryMetadata } from "./build-metadata";
 import { BrandApiItem, MediaApiItem } from "../types";
 import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
 

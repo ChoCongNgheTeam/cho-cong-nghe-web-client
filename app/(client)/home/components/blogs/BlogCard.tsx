@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { formatDate } from "@/helpers/formatDate";
 import { formatViews } from "@/helpers/formatViews";
-import { Blog } from "@/(client)/blog/types/blog.type";
+import { Blog } from "@/(client)/blog/_lib/blog.type";
 
 interface BlogCardProps {
   blog: Blog;

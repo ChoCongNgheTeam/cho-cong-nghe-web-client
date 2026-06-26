@@ -1,4 +1,4 @@
-import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
+import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
 
 const LOCAL_KEY = "guest_cart";
 

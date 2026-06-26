@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { Banner } from "../../types";
+import type { Banner } from "../../_lib/types";
 import { Slidezy } from "@/components/Slider";
 
 interface BannersSection1Props {

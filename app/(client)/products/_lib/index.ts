@@ -40,7 +40,7 @@ export interface PostCommentPayload {
 
 export async function getComments(targetType: "PRODUCT" | "BLOG" | "PAGE", targetId: string) {
   const response = await apiRequest.get<{
-    data: import("../product-comment/Productreview").Comment[];
+    data: import("../components/ProductComment/ProductReview").Comment[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
     message: string;
   }>("/comments", {
@@ -52,7 +52,7 @@ export async function getComments(targetType: "PRODUCT" | "BLOG" | "PAGE", targe
 
 export async function getReplies(commentId: string) {
   const response = await apiRequest.get<{
-    data: import("../product-comment/Productreview").Reply[];
+    data: import("../components/ProductComment/ProductReview").Reply[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
     message: string;
   }>(`/comments/${commentId}/replies`, {

@@ -4,7 +4,7 @@ import { useTransition, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { addToWishlist, removeFromWishlist } from "@/(client)/(protected)/profile/wishlist/_libs";
+import { addToWishlist, removeFromWishlist } from "@/(client)/(protected)/profile/wishlist/_lib";
 import clsx from "clsx";
 
 interface WishlistHeartProps {

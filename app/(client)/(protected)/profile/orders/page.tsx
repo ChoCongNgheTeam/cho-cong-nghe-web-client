@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Order, OrderResponse } from "../type/order";
+import { Order, OrderResponse } from "../_lib/order";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
 import { Popzy } from "@/components/Modal";
-import { tabs } from "./components/Constants";
+import { tabs } from "./components/constants";
 import { ErrorState, EmptyState, LoadingState } from "./components/OrderStatesTemp";
 import OrderCard from "./components/OrderCard";
 import OrderDetailModal from "./components/OrderDetailModal";

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
-import { Banner } from "../../types";
+import { Banner } from "../../_lib/types";
 
 interface BannersTopProps {
   bannersTop: Banner[];

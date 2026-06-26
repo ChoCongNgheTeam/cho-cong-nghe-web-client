@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FeaturedProduct } from "../../types";
+import { FeaturedProduct } from "../../_lib/types";
 import { formatVND } from "@/helpers";
 import { memo } from "react";
 import { thumbnailUrl } from "@/helpers/resizeImage";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCompareStore } from "@/(client)/compare/compareStore";
+import { useCompareStore } from "@/store/compare/compare.store";
 import { GitCompareArrows } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo } from "react";

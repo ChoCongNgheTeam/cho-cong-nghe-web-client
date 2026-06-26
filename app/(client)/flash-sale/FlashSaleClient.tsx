@@ -3,8 +3,8 @@ import { useSearchParams } from "next/navigation";
 
 import { useState, useMemo, memo, useEffect, useCallback } from "react";
 import { Flame, Search, ChevronDown, X, Tag, ArrowUpDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import HotSaleProductCard from "../home/components/sales/HotSaleProductCard";
-import { FeaturedProduct, SaleScheduleData, TodayProductsPromotion } from "../home/types";
+import HotSaleProductCard from "../home/components/Sales/HotSaleProductCard";
+import { FeaturedProduct, SaleScheduleData, TodayProductsPromotion } from "../home/_lib/types";
 import apiRequest from "@/lib/api";
 
 // ─────────────────────────────────────────────────────────────────────────────

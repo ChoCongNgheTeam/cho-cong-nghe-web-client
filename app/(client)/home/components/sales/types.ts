@@ -1,4 +1,4 @@
-import { FeaturedProduct } from "../../types";
+import { FeaturedProduct } from "../../_lib/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SALE SCHEDULE

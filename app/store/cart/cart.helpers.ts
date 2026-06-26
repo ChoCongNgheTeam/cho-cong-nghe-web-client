@@ -1,4 +1,4 @@
-import { CartItemWithDetails } from "@/(client)/cart/types/cart.types";
+import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
 
 export function clampQty(desired: number, availableQty: number): number {
   const clamped = Math.max(1, desired);

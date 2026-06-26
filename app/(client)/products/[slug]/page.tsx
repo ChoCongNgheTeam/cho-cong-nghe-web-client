@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { ProductDetailContent } from "./product-detail-content";
+import { ProductDetailContent } from "./ProductDetailContent";
 import { generateMetadata } from "./metadata";
 import { getProductBySlug } from "../_lib/index";
 import { ProductDetail } from "@/lib/types/product";

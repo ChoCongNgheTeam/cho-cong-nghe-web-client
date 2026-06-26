@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, startTransition } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { getWishlist } from "@/(client)/(protected)/profile/wishlist/_libs";
+import { getWishlist } from "@/(client)/(protected)/profile/wishlist/_lib";
 
 interface WishlistContextValue {
   count: number;

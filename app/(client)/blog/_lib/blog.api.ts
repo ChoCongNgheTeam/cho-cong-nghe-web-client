@@ -1,5 +1,5 @@
 import apiRequest from "@/lib/api";
-import { Blog, BlogDetail, BlogListResponse, BlogStatus, BlogType } from "../types/blog.type";
+import { Blog, BlogDetail, BlogListResponse, BlogStatus, BlogType } from "./blog.type";
 
 type ApiResponseBase = {
   success?: boolean;

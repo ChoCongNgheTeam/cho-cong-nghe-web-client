@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { VariantOption, VariantOptionValue } from "../../types";
+import type { VariantOption, VariantOptionValue } from "../types";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function OptionValues({
@@ -28,9 +28,7 @@ export default function OptionValues({
         return (
           <span
             key={val.value}
-            onClick={() =>
-              !disabled && onOptionChange?.(option.type, val.value)
-            }
+            onClick={() => !disabled && onOptionChange?.(option.type, val.value)}
             className={`border rounded-sm px-3 py-2 sm:px-4 sm:py-3
               text-xs sm:text-sm font-bold relative overflow-hidden
               transition-colors duration-300 flex items-center gap-2
@@ -43,21 +41,11 @@ export default function OptionValues({
                     : "border-neutral-dark text-primary bg-neutral-light cursor-pointer hover:border-accent hover:bg-accent-light"
               }`}
           >
-            {val.image?.imageUrl && (
-              <Image
-                src={val.image.imageUrl}
-                alt={val.label}
-                width={24}
-                height={24}
-                className="object-contain flex-shrink-0"
-              />
-            )}
+            {val.image?.imageUrl && <Image src={val.image.imageUrl} alt={val.label} width={24} height={24} className="object-contain flex-shrink-0" />}
             <span className="break-words min-w-0">{val.label}</span>
             {active && !disabled && (
               <div className="absolute -top-1 -right-2 w-0 h-0 border-l-[30px] border-l-transparent border-t-[30px] border-t-accent">
-                <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">
-                  ✓
-                </span>
+                <span className="absolute -top-[28px] -right-[-7px] text-white text-xs font-bold">✓</span>
               </div>
             )}
           </span>

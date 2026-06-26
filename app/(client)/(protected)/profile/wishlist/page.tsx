@@ -5,10 +5,10 @@ import { PackageOpen } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import WishlistToolbar from "./components/WishlistToolbar";
 import WishlistPagination from "./components/WishlistPagination";
-import { getWishlist } from "./_libs/wishlist.api";
+import { getWishlist } from "./_lib/wishlist.api";
 import { Product } from "@/components/product/types";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { WishlistItem } from "./types/wishlist";
+import { WishlistItem } from "./_lib/wishlist";
 function mapToProduct(item: WishlistItem): Product {
   const { product, price } = item;
   const thumbnail = product.img.find((i) => i.imageUrl)?.imageUrl ?? "";

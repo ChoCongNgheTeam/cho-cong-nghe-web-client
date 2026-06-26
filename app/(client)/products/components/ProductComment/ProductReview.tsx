@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback, startTransition, useMemo } from "react";
-import RatingSummary from "./Ratingsummary";
-import CommentSection from "./Commentsection";
-import { getComments, getReplies, postComment } from "../_lib";
+import RatingSummary from "./RatingSummary";
+import CommentSection from "./CommentSection";
+import { getComments, getReplies, postComment } from "../../_lib";
 import { ProductDetail } from "@/lib/types/product";
 
 export interface CommentUser {

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { getBlogBySlug } from "../_lib/blog.api";
-import { BlogDetail } from "../types/blog.type";
+import { BlogDetail } from "../_lib/blog.type";
 import BlogDetailClient from "./BlogDetailClient";
 
 type Props = {

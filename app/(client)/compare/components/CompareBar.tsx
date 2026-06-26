@@ -1,5 +1,5 @@
 "use client";
-import { useCompareStore } from "../compareStore";
+import { useCompareStore } from "../../../store/compare/compare.store";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { X, Plus } from "lucide-react";
@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ProductDetail } from "@/lib/types/product";
 import apiRequest from "@/lib/api";
 import { useToasty } from "@/components/Toast";
-import { useIsMobile } from "../Useismobile";
+import { useIsMobile } from "../useIsMobile";
 
 // ── Search Slot ────────────────────────────────────────────────────────────
 function AddSlot() {
@@ -41,10 +41,7 @@ function AddSlot() {
     }
     setLoading(true);
     try {
-      const res = await apiRequest.get<{ data: { items: ProductDetail[] } }>(
-        `/products?search=${encodeURIComponent(q)}&limit=5`,
-        { noAuth: true },
-      );
+      const res = await apiRequest.get<{ data: { items: ProductDetail[] } }>(`/products?search=${encodeURIComponent(q)}&limit=5`, { noAuth: true });
       setResults(res?.data?.items ?? []);
     } catch {
       setResults([]);
@@ -65,19 +62,13 @@ function AddSlot() {
     if (!result.success) {
       switch (result.reason) {
         case "full":
-          warning(
-            isMobile
-              ? "Chỉ được so sánh tối đa 2 sản phẩm trên điện thoại"
-              : "Chỉ được so sánh tối đa 3 sản phẩm",
-          );
+          warning(isMobile ? "Chỉ được so sánh tối đa 2 sản phẩm trên điện thoại" : "Chỉ được so sánh tối đa 3 sản phẩm");
           break;
         case "duplicate":
           info("Sản phẩm đã có trong danh sách");
           break;
         case "wrong_category":
-          error(
-            "Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh!!",
-          );
+          error("Chỉ có thể so sánh các sản phẩm cùng danh mục sản phẩm đầu tiên trong trang so sánh!!");
           break;
       }
       return;
@@ -114,41 +105,15 @@ function AddSlot() {
             />
           </div>
           <div className="max-h-48 overflow-y-auto">
-            {loading && (
-              <p className="text-[11px] text-neutral-dark text-center py-4">
-                Đang tìm...
-              </p>
-            )}
-            {!loading && query && results.length === 0 && (
-              <p className="text-[11px] text-neutral-dark text-center py-4">
-                Không tìm thấy sản phẩm
-              </p>
-            )}
-            {!loading && !query && (
-              <p className="text-[11px] text-neutral-dark text-center py-4">
-                Nhập tên sản phẩm để tìm
-              </p>
-            )}
+            {loading && <p className="text-[11px] text-neutral-dark text-center py-4">Đang tìm...</p>}
+            {!loading && query && results.length === 0 && <p className="text-[11px] text-neutral-dark text-center py-4">Không tìm thấy sản phẩm</p>}
+            {!loading && !query && <p className="text-[11px] text-neutral-dark text-center py-4">Nhập tên sản phẩm để tìm</p>}
             {results.map((p) => {
               const thumb = p.currentVariant.images?.[0]?.imageUrl;
               return (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelect(p)}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral transition-colors border-b border-neutral last:border-0"
-                >
-                  {thumb && (
-                    <Image
-                      src={thumb}
-                      alt={p.name}
-                      width={28}
-                      height={28}
-                      className="object-contain flex-shrink-0"
-                    />
-                  )}
-                  <span className="text-xs text-primary text-left line-clamp-2">
-                    {p.name}
-                  </span>
+                <button key={p.id} onClick={() => handleSelect(p)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral transition-colors border-b border-neutral last:border-0">
+                  {thumb && <Image src={thumb} alt={p.name} width={28} height={28} className="object-contain flex-shrink-0" />}
+                  <span className="text-xs text-primary text-left line-clamp-2">{p.name}</span>
                 </button>
               );
             })}
@@ -181,22 +146,9 @@ export default function CompareBar() {
           {items.map((p) => {
             const thumb = p.currentVariant.images?.[0]?.imageUrl;
             return (
-              <div
-                key={p.id}
-                className="relative flex-shrink-0 w-[120px] h-16 rounded-xl border border-neutral bg-neutral-light flex flex-col items-center justify-center gap-1 px-2"
-              >
-                {thumb && (
-                  <Image
-                    src={thumb}
-                    alt={p.name}
-                    width={28}
-                    height={28}
-                    className="object-contain"
-                  />
-                )}
-                <span className="text-[10px] text-primary text-center leading-tight line-clamp-2 max-w-full">
-                  {p.name}
-                </span>
+              <div key={p.id} className="relative flex-shrink-0 w-[120px] h-16 rounded-xl border border-neutral bg-neutral-light flex flex-col items-center justify-center gap-1 px-2">
+                {thumb && <Image src={thumb} alt={p.name} width={28} height={28} className="object-contain" />}
+                <span className="text-[10px] text-primary text-center leading-tight line-clamp-2 max-w-full">{p.name}</span>
                 <button
                   onClick={() => remove(p.id)}
                   className="absolute top-1 right-1 w-4 h-4 rounded-full bg-neutral flex items-center justify-center text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors"
@@ -213,10 +165,7 @@ export default function CompareBar() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <button
-            onClick={clear}
-            className="text-xs text-neutral-dark hover:text-promotion underline underline-offset-2 transition-colors"
-          >
+          <button onClick={clear} className="text-xs text-neutral-dark hover:text-promotion underline underline-offset-2 transition-colors">
             Xóa tất cả
           </button>
           <button

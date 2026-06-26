@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getHomePageData } from "../home/_libs";
+import { getHomePageData } from "../home/_lib";
 import { FlashSaleClient } from "./FlashSaleClient";
 import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
 

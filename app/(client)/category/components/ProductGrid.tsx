@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { buildQueryString } from "../_libs/index";
+import { buildQueryString } from "../_lib/index";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/components/product/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";

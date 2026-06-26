@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPin, CreditCard, Package, ExternalLink, Landmark, Clock } from "lucide-react";
-import { Order } from "../../type/order";
-import { orderStatusConfig, paymentStatusConfig, REDIRECT_PAYMENT_METHODS, BANK_TRANSFER_METHODS } from "./Constants";
+import { Order } from "../../_lib/order";
+import { orderStatusConfig, paymentStatusConfig, REDIRECT_PAYMENT_METHODS, BANK_TRANSFER_METHODS } from "./constants";
 import { formatDate, formatVND } from "@/helpers";
 
 function getFirstValidImage(imgs: { imageUrl: string | null }[] | undefined): string {

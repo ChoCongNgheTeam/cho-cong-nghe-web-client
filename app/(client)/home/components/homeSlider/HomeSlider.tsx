@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
-import { Slider } from "../../types";
+import { Slider } from "../../_lib/types";
 import { KEYFRAMES, THEMES } from "./HomeSlider.constants";
 
 interface HomeSliderProps {

@@ -7,7 +7,7 @@ import HotSaleProductCard from "./HotSaleProductCard";
 import apiRequest from "@/lib/api";
 import { formatTime as formatLocaleTime } from "@/helpers";
 import Link from "next/link";
-import { FeaturedProduct } from "../../types";
+import { FeaturedProduct } from "../../_lib/types";
 import type { SaleScheduleDay, SaleScheduleRule, HomeSaleScheduleData, CachedDayData, TodayProductPromotion, SaleByDateApiResponse } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────

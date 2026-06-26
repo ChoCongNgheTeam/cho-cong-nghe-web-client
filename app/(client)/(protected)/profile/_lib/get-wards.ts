@@ -1,10 +1,8 @@
-import { Ward } from "../../checkout/types";
+import { Ward } from "../../checkout/_lib";
 
 export async function getWards(provinceCode: string): Promise<Ward[]> {
   try {
-    const res = await fetch(
-      `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
-    );
+    const res = await fetch(`https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`);
     if (!res.ok) return [];
     const data = await res.json();
     return (data?.wards ?? []).map((w: any) => ({

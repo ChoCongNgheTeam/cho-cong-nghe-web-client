@@ -8,8 +8,8 @@ import { ProductDetail } from "@/lib/types/product";
 import { useAuth } from "@/hooks/useAuth";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Popzy } from "@/components/Modal";
-import ReviewSuccessModal from "./ReviewSuccessModal ";
-import { getReviewPermission } from "../_lib";
+import ReviewSuccessModal from "./ReviewSuccessModal";
+import { getReviewPermission } from "../../_lib";
 
 interface RatingSummaryProps {
   slug: string;

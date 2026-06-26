@@ -9,7 +9,7 @@ import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
-import { CartItemWithDetails } from "./types/cart.types";
+import { CartItemWithDetails } from "./_lib/cart.types";
 import { formatVND } from "@/helpers";
 import { useToasty } from "@/components/Toast";
 import CartBottomBar from "./components/CartBottomMobile";

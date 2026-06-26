@@ -1,16 +1,16 @@
 "use client";
-import { useCompareStore } from "@/(client)/compare/compareStore";
+import { useCompareStore } from "@/store/compare/compare.store";
 import Image from "next/image";
 import Link from "next/link";
 import { X, Plus, Search, ArrowLeft, Trash2 } from "lucide-react";
 import { StarRating } from "@/components/product/StarRating";
 import { formatVND } from "@/helpers";
 import { ProductDetail, Category } from "@/lib/types/product";
-import { AICompareSummary } from "./components/Aicomparesummary";
+import { AICompareSummary } from "./components/AiCompareSummary";
 import { useState, useCallback, useRef, useTransition, useDeferredValue, useEffect } from "react";
 import { Popzy } from "@/components/Modal";
 import apiRequest from "@/lib/api";
-import { useIsMobile } from "./Useismobile";
+import { useIsMobile } from "./useIsMobile";
 
 function getRootSlug(category: any): string | null {
   if (!category) return null;
@@ -466,7 +466,10 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         <p className="text-[15px] font-semibold text-primary mb-1">Chưa có sản phẩm nào</p>
         <p className="text-[13px] text-neutral-darker">Thêm sản phẩm để bắt đầu so sánh tính năng và giá cả</p>
       </div>
-      <button onClick={onAdd} className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors cursor-pointer">
+      <button
+        onClick={onAdd}
+        className="inline-flex items-center gap-2 text-[13px] font-medium text-primary border border-neutral rounded-xl px-5 py-2.5 hover:bg-neutral/50 transition-colors cursor-pointer"
+      >
         <Plus size={15} />
         Thêm sản phẩm đầu tiên
       </button>

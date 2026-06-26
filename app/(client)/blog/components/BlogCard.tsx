@@ -3,7 +3,7 @@ import Link from "next/link";
 import { formatDate } from "@/helpers/formatDate";
 import { formatViews } from "@/helpers/formatViews";
 import { getBlogTypeLabel } from "../_lib/blog-category";
-import { Blog } from "../types/blog.type";
+import { Blog } from "../_lib/blog.type";
 
 /**
  * variant="home"  — dùng trên trang chủ (overlay đậm hơn, không có type badge)

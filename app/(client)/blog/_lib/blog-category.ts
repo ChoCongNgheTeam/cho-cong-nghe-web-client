@@ -1,4 +1,4 @@
-﻿import { BlogType, BLOG_TYPE_LABEL } from "../types/blog.type";
+﻿import { BlogType, BLOG_TYPE_LABEL } from "./blog.type";
 
 export type CategoryTab = {
   key: string; // "" = tất cả, hoặc BlogType value

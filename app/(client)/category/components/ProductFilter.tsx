@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, useTransition, useRef, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, SlidersHorizontal, X, Filter, TrendingUp, TrendingDown, Sparkles, ShoppingBag, Star } from "lucide-react";
-import { FilterGroup } from "../_libs/index";
+import { FilterGroup } from "../_lib/index";
 import { formatNumber } from "@/helpers";
 
 // ─── Debounce hook ─────────────────────────────────────────────────────────────
@@ -668,7 +668,7 @@ export default function ProductFilter({ filters }: ProductFilterProps) {
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-2">{filters.map(renderGroupSheet)}</div>
 
         {/* Footer — sticky */}
-      <div className="shrink-0 px-4 pt-2 border-t border-neutral bg-neutral-light" style={{ paddingBottom: "calc(1rem + 60px + env(safe-area-inset-bottom))" }}>
+        <div className="shrink-0 px-4 pt-2 border-t border-neutral bg-neutral-light" style={{ paddingBottom: "calc(1rem + 60px + env(safe-area-inset-bottom))" }}>
           <div className="flex gap-3">
             <button
               type="button"

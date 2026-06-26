@@ -1,4 +1,4 @@
-import { Province } from "../../checkout/types";
+import { Province } from "../../checkout/_lib";
 
 export async function getProvinces(): Promise<Province[]> {
   try {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Slidezy } from "@/components/Slider";
 import BlogCard from "@/(client)/blog/components/BlogCard";
-import { Blog } from "@/(client)/blog/types/blog.type";
+import { Blog } from "@/(client)/blog/_lib/blog.type";
 import { MoveRight } from "lucide-react";
 
 interface BlogSectionProps {

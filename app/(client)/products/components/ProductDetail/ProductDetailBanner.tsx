@@ -7,14 +7,14 @@ import Image from "next/image";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import clsx from "clsx";
 import { GitCompareArrows } from "lucide-react";
-import { useCompareStore } from "@/(client)/compare/compareStore";
+import { useCompareStore } from "@/store/compare/compare.store";
 import { useToasty } from "@/components/Toast";
 import { HighlightIcon } from "@/components/product/HighlightIcon";
-import { useIsMobile } from "@/(client)/compare/Useismobile";
+import { useIsMobile } from "@/(client)/compare/useIsMobile";
 import { getProductGallery } from "../../_lib";
 import type { GalleryImage } from "../../types";
 import { heroUrl, thumbnailUrl } from "@/helpers/resizeImage";
-import { PoliciesBlock } from "./product-detail-card-right";
+import { PoliciesBlock } from "./ProductDetailCardRight";
 
 interface ProductDetailLeftProps {
   product: ProductDetail;

@@ -1,4 +1,4 @@
-import { getHomePageData } from "./_libs";
+import { getHomePageData } from "./_lib";
 import { BannersTop, HomeSlider, FeaturedCategories, FeaturedProducts, BannersSection1, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
 
 export default async function HomePage() {

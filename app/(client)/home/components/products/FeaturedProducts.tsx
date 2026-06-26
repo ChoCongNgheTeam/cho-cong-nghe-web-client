@@ -1,7 +1,7 @@
 "use client";
 
 import ProductCard from "@/components/product/ProductCard";
-import { FeaturedProduct } from "../../types";
+import { FeaturedProduct } from "../../_lib/types";
 import { Slidezy } from "@/components/Slider";
 
 interface FeaturedProductsProps {

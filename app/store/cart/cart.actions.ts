@@ -1,5 +1,5 @@
 import { ApiResponse } from "@/(admin)/admin/media/media.types";
-import { ApiCartData, ApiResult } from "@/(client)/cart/types/cart.types";
+import { ApiCartData, ApiResult } from "@/(client)/cart/_lib/cart.types";
 import apiRequest from "@/lib/api";
 
 export async function getCartItems(): Promise<ApiResult> {

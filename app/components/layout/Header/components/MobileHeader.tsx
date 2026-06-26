@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CartIcon } from "@/(client)/cart/components/CartIcon";
-import { useCompareStore } from "@/(client)/compare/compareStore";
+import { useCompareStore } from "@/store/compare/compare.store";
 import { useAuth } from "@/hooks/useAuth";
 import SearchBar from "./SearchBar";
 import { TrendingBar } from "./TrendingBar";
