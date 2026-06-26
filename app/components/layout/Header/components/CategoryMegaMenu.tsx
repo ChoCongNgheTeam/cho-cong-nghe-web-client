@@ -210,9 +210,25 @@ const CategoryMegaMenu = memo(() => {
   return (
     <div ref={containerRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {/* Trigger — white text on blue */}
-      <button className={["p-2 px-3 rounded-lg flex items-center gap-2 transition-colors duration-150 text-white", isOpen ? "bg-white/20" : "hover:bg-white/15"].join(" ")}>
-        <Menu className={["w-5 h-5 transition-transform duration-200", isOpen ? "rotate-90" : "rotate-0"].join(" ")} />
+      <button
+        className={["p-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors duration-150 text-white", "backdrop-blur-md", isOpen ? "bg-white/25" : "bg-white/10 hover:bg-white/20"].join(" ")}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={["transition-transform duration-200", isOpen ? "rotate-90" : "rotate-0"].join(" ")}>
+          <path d="M4.7041 4H10.7041V10H4.7041V4Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14.7041 4H20.7041V10H14.7041V4Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4.7041 14H10.7041V20H4.7041V14Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M14.7041 17C14.7041 17.7956 15.0202 18.5587 15.5828 19.1213C16.1454 19.6839 16.9085 20 17.7041 20C18.4998 20 19.2628 19.6839 19.8254 19.1213C20.388 18.5587 20.7041 17.7956 20.7041 17C20.7041 16.2044 20.388 15.4413 19.8254 14.8787C19.2628 14.3161 18.4998 14.3161 15.5828 14.8787C15.0202 15.4413 14.7041 16.2044 14.7041 17Z"
+            stroke="white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
         <span className="text-sm font-medium cursor-pointer whitespace-nowrap">Danh mục</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={["transition-transform duration-200", isOpen ? "rotate-180" : "rotate-0"].join(" ")}>
+          <path d="M6 9L12 15L18 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       {/* Dropdown panel — neutral bg, not blue */}

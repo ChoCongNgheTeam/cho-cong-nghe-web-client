@@ -10,8 +10,6 @@ interface UserAvatarProps {
 }
 
 const UserAvatar = memo(({ avatarImage, fullName, size = 48, className = "" }: UserAvatarProps) => {
-  console.log("[UserAvatar] render");
-
   return (
     <div className={`rounded-full overflow-hidden bg-neutral border-2 border-accent shrink-0 flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
       {avatarImage ? (

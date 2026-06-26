@@ -17,7 +17,7 @@ const DesktopHeader = memo(() => {
       <div className="flex-1 max-w-2xl relative">
         <SearchBar />
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <CompareButton />
         <NotificationBell variant="user" />
         <CartIcon />

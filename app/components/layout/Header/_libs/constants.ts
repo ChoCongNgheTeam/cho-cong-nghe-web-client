@@ -83,5 +83,3 @@ export const DEFAULT_NOTIFICATION_ICON = {
   color: "text-neutral-dark",
   bg: "bg-neutral-light-active",
 };
-
-export const ICON_BTN_CLASS = "p-2 rounded-lg relative cursor-pointer transition-colors duration-150 text-white hover:bg-white/10 active:bg-white/20";

@@ -185,28 +185,28 @@ const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, head
 
   return (
     <div ref={wrapperRef} className="relative">
-      <button onClick={() => setOpen((v) => !v)} aria-label={resolvedHeaderLabel} className={triggerClass}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-label={resolvedHeaderLabel}
+        className={
+          variant === "admin"
+            ? `relative w-8 h-8 flex items-center justify-center rounded-lg
+         text-neutral-dark hover:text-primary hover:bg-neutral-light-active
+         transition-all duration-150 cursor-pointer
+         ${open ? "text-primary bg-neutral-light-active" : ""}`
+            : `relative inline-flex items-center p-2 rounded-lg transition-colors duration-150 cursor-pointer text-white
+         ${open ? "bg-white/10" : "hover:bg-white/10 active:bg-white/20"}`
+        }
+      >
         {variant === "admin" ? <Bell size={17} strokeWidth={2.3} /> : <Bell className="w-5 h-5 lg:w-6 lg:h-6" />}
-
         {unreadCount > 0 && (
           <span
             className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px]
-              flex items-center justify-center rounded-full
-              text-[10px] font-bold shadow-sm"
+        flex items-center justify-center rounded-full text-[10px] font-bold shadow-sm"
             style={
               variant === "user"
-                ? {
-                    // Badge trên header navy: nền trắng + text navy, ring navy
-                    background: "#fff",
-                    color: "#0f2050",
-                    boxShadow: "0 0 0 2px rgba(15,32,80,0.5)",
-                  }
-                : {
-                    // Badge ở admin panel: accent như cũ
-                    background: "rgb(var(--accent))",
-                    color: "#fff",
-                    boxShadow: "0 0 0 2px rgb(var(--neutral-light))",
-                  }
+                ? { background: "#fff", color: "#0f2050", boxShadow: "0 0 0 2px rgba(15,32,80,0.5)" }
+                : { background: "rgb(var(--accent))", color: "#fff", boxShadow: "0 0 0 2px rgb(var(--neutral-light))" }
             }
           >
             {unreadCount > 99 ? "99+" : unreadCount}

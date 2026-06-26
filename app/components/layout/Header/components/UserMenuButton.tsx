@@ -23,8 +23,6 @@ export const UserMenuButton = memo(() => {
     return () => document.removeEventListener("mousedown", handler);
   }, [showUserMenu]);
 
-  const iconBtn = "p-2 rounded-lg relative cursor-pointer transition-colors duration-150 text-white hover:bg-white/10 active:bg-white/20";
-
   if (loading)
     return (
       <div className="w-11 h-9 flex items-center justify-center">
@@ -35,9 +33,26 @@ export const UserMenuButton = memo(() => {
   if (isAuthenticated && user)
     return (
       <div className="relative" ref={userMenuRef}>
-        <button onClick={handleToggle} className="flex items-center gap-1 hover:bg-white/10 active:bg-white/20 rounded-lg transition-colors cursor-pointer p-2">
+        <button
+          onClick={handleToggle}
+          className={[
+            "flex items-center gap-2 rounded-lg transition-colors duration-150 cursor-pointer p-2 px-3",
+            "backdrop-blur-md ",
+            showUserMenu ? "bg-white/25" : "bg-white/10 hover:bg-white/20 active:bg-white/25",
+          ].join(" ")}
+        >
           <UserAvatar avatarImage={user.avatarImage || "/images/avatar.png"} fullName={user.fullName} size={30} />
-          <ChevronDown className={`w-4 h-4 text-white/80 transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`} />
+          <span className="text-sm font-medium text-white whitespace-nowrap max-w-[80px] truncate">{user.fullName.split(" ").pop()}</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={["transition-transform duration-200", showUserMenu ? "rotate-180" : "rotate-0"].join(" ")}
+          >
+            <path d="M6 9L12 15L18 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
         {showUserMenu && (
           <div className="absolute right-0 mt-2 w-64 bg-neutral-light border border-neutral rounded-lg shadow-xl z-50 overflow-hidden">
@@ -77,8 +92,17 @@ export const UserMenuButton = memo(() => {
     );
 
   return (
-    <Link href="/account" className={iconBtn} title="Tài khoản">
-      <User className="w-5 h-5" />
+    <Link
+      href="/account"
+      className={[
+        "flex items-center gap-2 rounded-lg transition-colors duration-150 cursor-pointer p-2 px-3",
+        "backdrop-blur-md border border-white/20",
+        "bg-white/10 hover:bg-white/20 active:bg-white/25",
+      ].join(" ")}
+      title="Tài khoản"
+    >
+      <span className="text-sm font-medium text-white whitespace-nowrap">Đăng Nhập</span>
+      <User className="w-5 h-5 text-white" />
     </Link>
   );
 });

@@ -101,11 +101,7 @@ const Header = () => {
 
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 w-full transition-transform duration-300 ease-in-out shadow-[0_2px_12px_rgba(0,0,0,0.2)] header-bg">
         {/* HeaderTop — được control bằng ref, không re-render */}
-        <div
-          ref={headerTopWrapRef}
-          className="transition-all duration-300 overflow-hidden opacity-100 max-h-[200px]"
-          style={{ background: "rgba(0,0,0,0.25)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-        >
+        <div ref={headerTopWrapRef} className="transition-all duration-300 overflow-hidden opacity-100 max-h-[200px]" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <HeaderTop />
         </div>
 

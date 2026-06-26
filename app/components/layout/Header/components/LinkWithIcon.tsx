@@ -6,9 +6,9 @@ const LinkWithIcon = ({ href, icon, text, mobileText }: LinkWithIconProps) => {
     <Link
       href={href}
       className="flex items-center gap-1 whitespace-nowrap transition-colors duration-150"
-      style={{ color: "rgba(255,255,255,0.55)" }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.9)")}
-      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)")}
+      style={{ color: "rgba(255,255,255,0.8)" }}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,2)")}
+      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)")}
     >
       {icon}
       <span className="hidden lg:inline text-[13px]">{text}</span>

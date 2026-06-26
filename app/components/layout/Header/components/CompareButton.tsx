@@ -4,14 +4,18 @@ import { useCompareStore } from "@/store/compare/compare.store";
 import { GitCompareArrows } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
-import { ICON_BTN_CLASS } from "../_libs/constants";
 
 export const CompareButton = memo(() => {
   const router = useRouter();
   const { items } = useCompareStore();
   return (
-    <button onClick={() => router.push("/compare")} className={ICON_BTN_CLASS} title="So sánh">
-      <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6" />
+    <button
+      onClick={() => router.push("/compare")}
+      title="So sánh"
+      className="inline-flex items-center gap-2 relative p-2 rounded-lg transition-colors duration-150 cursor-pointer hover:bg-white/10 active:bg-white/20"
+    >
+      <GitCompareArrows className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+      <span className="text-sm font-medium text-white whitespace-nowrap">So sánh</span>
       {items.length > 0 && (
         <span
           className="absolute -right-0.5 -bottom-0.5 min-w-[18px] h-[18px] px-[3px] flex items-center justify-center rounded-full text-[10px] font-bold shadow-sm"
