@@ -5,8 +5,8 @@ export const flashSale = {
   promotionDarker: "rgb(var(--promotion-darker))",
   accent: "rgb(var(--accent))",
 
-  priceGradient: "linear-gradient(135deg, rgb(var(--promotion)) 0%, rgb(var(--promotion-dark)) 100%)",
-  priceShadow: "0 2px 8px rgb(var(--promotion) / 0.25)",
+  priceGradient: "linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--promotion)) 100%)",
+  priceShadow: "0 3px 14px rgb(var(--accent) / 0.4), 0 0 0 1px rgba(255,255,255,0.1)",
 
   // Đổi sang hệ đỏ-cam ấm, đồng tông với header
   // accent-dark (#c0392b) → promotion-dark (#98151a): gradient warm đỏ đậm, không u tối

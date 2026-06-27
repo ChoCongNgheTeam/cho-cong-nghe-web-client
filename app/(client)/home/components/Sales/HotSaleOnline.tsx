@@ -34,10 +34,16 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
     if (productsCacheRef.current[date] !== undefined) return;
     setLoadingDate(date);
     try {
-      const res = await apiRequest.get<SaleByDateApiResponse>("/home/sale-by-date", { params: { date, limit: 20 } });
+      const res = await apiRequest.get<{ data: SaleByDateApiResponse }>("/home/sale-by-date", { params: { date, limit: 20 } });
+      const payload = res.data;
       setProductsCache((prev) => ({
         ...prev,
-        [date]: { products: res.data ?? [], total: res.total ?? 0, promotions: res.promotions ?? [], endDate: res.endDate ?? null },
+        [date]: {
+          products: payload.data ?? [],
+          total: payload.total ?? 0,
+          promotions: payload.promotions ?? [],
+          endDate: payload.endDate ?? null,
+        },
       }));
     } catch {
       setProductsCache((prev) => ({ ...prev, [date]: { products: [], total: 0, promotions: [] as TodayProductPromotion[], endDate: null } }));
@@ -46,18 +52,18 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
     }
   }, []);
 
-  const tabClickHandlers = useRef<Record<string, () => void>>({});
-  const getTabClickHandler = useCallback(
-    (date: string) => {
-      if (!tabClickHandlers.current[date]) {
-        tabClickHandlers.current[date] = () => {
-          setActiveDate(date);
-          fetchProductsForDate(date);
-        };
-      }
-      return tabClickHandlers.current[date];
-    },
-    [fetchProductsForDate],
+  const tabClickHandlers = useMemo(
+    () =>
+      Object.fromEntries(
+        schedule.map((day) => [
+          day.date,
+          () => {
+            setActiveDate(day.date);
+            fetchProductsForDate(day.date);
+          },
+        ]),
+      ),
+    [schedule, fetchProductsForDate],
   );
 
   const currentData = productsCache[activeDate];
@@ -65,7 +71,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
 
   const products = useMemo(
     () =>
-      [...(currentData?.products ?? [])].sort((a, b) => {
+      (Array.isArray(currentData?.products) ? [...currentData.products] : []).sort((a, b) => {
         const priceA = a.price?.final ?? a.priceOrigin ?? 0;
         const priceB = b.price?.final ?? b.priceOrigin ?? 0;
         return priceA - priceB;
@@ -101,7 +107,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
           <div className="relative overflow-hidden" style={{ background: flashSale.headerGradient }}>
             <div className="absolute inset-0 pointer-events-none" style={{ background: flashSale.headerGlow }} />
 
-            <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap">
+            <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap rounded-2xl">
               <div className="flex items-center gap-3">
                 <div style={{ filter: `drop-shadow(0 0 8px rgb(var(--accent) / 0.75))` }}>
                   <Flame style={{ width: 28, height: 28, color: flashSale.accent, fill: flashSale.accent }} />
@@ -132,9 +138,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
 
             <div className="relative z-10 flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {hasSaleDays ? (
-                schedule.map((day) => (
-                  <FlashSaleTabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={() => getTabClickHandler(day.date)} />
-                ))
+                schedule.map((day) => <FlashSaleTabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={tabClickHandlers[day.date]} />)
               ) : (
                 <div className="flex items-center gap-2 px-4 py-3 text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>
                   <Calendar size={14} />
@@ -153,7 +157,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
           />
 
           {/* Body */}
-          <div className="px-2 pt-3 bg-surface">
+          <div className="px-2 py-3 bg-surface">
             {loadingDate === activeDate ? (
               <FlashSaleSkeletonGrid />
             ) : products.length > 0 ? (
