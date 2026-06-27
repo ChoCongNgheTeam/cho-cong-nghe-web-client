@@ -1,5 +1,6 @@
 import { getHomePageData } from "./_lib";
 import { HomeSliderSection, TopBanners, FeaturedCategories, FeaturedProducts, MiddleBanners, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
+import { CategoryProducts } from "./components/CategoryProducts";
 import { HeroBanner } from "./components/HeroBanner";
 
 export default async function HomePage() {
@@ -10,12 +11,13 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen bg-neutral-light">
       <HomeSliderSection sliders={sliders} categories={rootCategories} />
-      <HeroBanner />
+      {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
       <TopBanners topBanner={bannersTop} />
       <FeaturedCategories featuredCategories={featuredCategories} />
-      {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
       <FeaturedProducts products={featuredProducts} />
+      <HeroBanner />
       <BestSellers products={bestSellingProducts} />
+      <CategoryProducts />
       <MiddleBanners middleBanner={bannersSection1} />
       <SeasonalSale campaigns={activeCampaigns} />
       <BlogSection blogs={blogs.data} />

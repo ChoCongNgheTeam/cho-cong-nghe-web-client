@@ -338,7 +338,7 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
       {/* ── Rabbit-ear tabs — scrollable container ── */}
       <div
         ref={tabsRef}
-        className="relative flex items-end gap-1 px-2 overflow-x-auto"
+        className="relative hidden md:flex items-end gap-1 px-2 overflow-x-auto"
         style={{
           marginTop: -(TAB_H / 2),
           zIndex: 20,

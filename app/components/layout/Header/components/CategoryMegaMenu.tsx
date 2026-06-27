@@ -5,23 +5,24 @@ import { createPortal } from "react-dom";
 
 const CategoryMegaMenu = memo(function CategoryMegaMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false); // ← thêm
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true); // ← chỉ render portal sau khi client mount
+    setMounted(true);
   }, []);
 
   const handleToggle = useCallback(() => {
-    setIsOpen((prev) => {
-      const next = !prev;
-      window.dispatchEvent(new CustomEvent("category-menu-toggle", { detail: { open: next } }));
-      return next;
-    });
+    setIsOpen((prev) => !prev);
   }, []);
+
+  // Sync dispatch theo isOpen state
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("category-menu-toggle", { detail: { open: isOpen } }));
+  }, [isOpen]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    window.dispatchEvent(new CustomEvent("category-menu-toggle", { detail: { open: false } }));
+    // Không cần dispatch ở đây nữa, useEffect trên lo
   }, []);
 
   useEffect(() => {
