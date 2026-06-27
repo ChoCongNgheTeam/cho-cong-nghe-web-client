@@ -290,20 +290,18 @@
 
    /* ========== DARK MODE / BLUE ========== */
    /* Light */
-   --dark-light: 235 236 237; /* #ebecee */
+   --dark-light: 243 245 247;      /* #f3f5f7 */
    --dark-light-hover: 224 226 228; /* #e0e2e4 */
    --dark-light-active: 192 195 198; /* #c0c3c6 */
-   /* Normal */
-   --dark: 51 62 72; /* #333e48 */
-   --dark-hover: 46 56 65; /* #2e3841 */
-   --dark-active: 41 50 58; /* #29323a */
+   --dark: 92 81 77;          /* #5c514d */
+   --dark-hover: 82 72 68;    /* #524844 */
+   --dark-active: 74 64 60;   /* #4a403c */
    /* Dark */
-   --dark-dark: 38 47 54; /* #262f36 */
+   --dark-dark: 70 60 56;     /* #463c38 */
    --dark-dark-hover: 31 37 43; /* #1f252b */
    --dark-dark-active: 23 28 32; /* #171c20 */
    /* Darker */
-   --dark-darker: 18 22 25; /* #121619 */
-
+   --dark-darker: 56 48 45;   /* #38302d */
    --star-color: #fbbf24;
 }
 
