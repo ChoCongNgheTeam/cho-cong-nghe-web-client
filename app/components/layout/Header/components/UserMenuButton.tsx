@@ -26,7 +26,7 @@ const UserMenuPortal = memo(({ isOpen, onClose, anchorTop, anchorRight, onLogout
       <div
         aria-hidden="true"
         onClick={onClose}
-        className={["fixed inset-0 z-40 transition-[opacity] duration-300", isOpen ? "opacity-100 pointer-events-auto bg-black/55 backdrop-blur-[2px]" : "opacity-0 pointer-events-none"].join(" ")}
+        className={["fixed inset-0 z-[60] transition-[opacity] duration-300", isOpen ? "opacity-100 pointer-events-auto bg-black/55 backdrop-blur-[2px]" : "opacity-0 pointer-events-none"].join(" ")}
       />
 
       {/* Dropdown panel */}
@@ -38,7 +38,7 @@ const UserMenuPortal = memo(({ isOpen, onClose, anchorTop, anchorRight, onLogout
           top: anchorTop,
           right: anchorRight,
           width: "256px",
-          zIndex: 50,
+          zIndex: 70,
           transformOrigin: "top right",
         }}
         className={[

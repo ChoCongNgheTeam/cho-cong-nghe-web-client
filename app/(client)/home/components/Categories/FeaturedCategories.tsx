@@ -35,7 +35,7 @@ export function FeaturedCategories({ featuredCategories }: { featuredCategories:
     <section className="py-2 md:py-4">
       <div className="container">
         {/* Section card — shadow thay border */}
-        <div className="bg-surface rounded-2xl shadow-md overflow-hidden">
+        <div className="bg-surface rounded-2xl overflow-hidden">
           {/* Header */}
           <div className="px-5 md:px-7 pt-5 md:pt-6 pb-4 border-b border-neutral/40 flex items-center gap-3">
             <div className="w-1 h-5 rounded-full bg-accent shrink-0" />
