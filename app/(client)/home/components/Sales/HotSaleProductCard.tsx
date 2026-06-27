@@ -190,7 +190,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
               btn.style.boxShadow = "none";
             }}
           >
-            Mua giá sốc
+            Mua ngay
           </button>
         )}
       </div>

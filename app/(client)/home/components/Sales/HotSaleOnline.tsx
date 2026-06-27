@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ChevronRight, Calendar, Flame } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import apiRequest from "@/lib/api";
 import { flashSale } from "./flashSaleTheme";
 import { FlashSaleCountdown } from "./FlashSaleCountdown";
@@ -104,10 +105,10 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
           }}
         >
           {/* HEADER */}
-          <div className="relative overflow-hidden" style={{ background: flashSale.headerGradient }}>
+          <div className="relative overflow-hidden rounded-t-2xl" style={{ background: flashSale.headerGradient }}>
             <div className="absolute inset-0 pointer-events-none" style={{ background: flashSale.headerGlow }} />
 
-            <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap rounded-2xl">
+            <div className="rounded-2xl relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap ">
               <div className="flex items-center gap-3">
                 <div style={{ filter: `drop-shadow(0 0 8px rgb(var(--accent) / 0.75))` }}>
                   <Flame style={{ width: 28, height: 28, color: flashSale.accent, fill: flashSale.accent }} />
@@ -136,9 +137,90 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
               style={{ height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.07) 80%, transparent)" }}
             />
 
-            <div className="relative z-10 flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="relative z-10 flex lg:gap-10 md:gap-8 gap-4 items-center justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {hasSaleDays ? (
-                schedule.map((day) => <FlashSaleTabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={tabClickHandlers[day.date]} />)
+                <>
+                  {/* Left decoration */}
+                  <div className="shrink-0 flex items-center gap-1.5 px-2 pointer-events-none select-none">
+                    <Image src="/2026_left_icon.png" alt="" width={55} height={55} className="animate-bounce" style={{ animationDuration: "4s", animationDelay: "0s" }} />
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {schedule.map((day) => (
+                      <FlashSaleTabItem key={day.date} day={day} isActive={activeDate === day.date} isLoading={loadingDate === day.date} onClick={tabClickHandlers[day.date]} />
+                    ))}
+                  </div>
+
+                  {/* Right decoration */}
+                  {/* Right decoration */}
+                  <div className="shrink-0 flex items-center gap-3 px-2 pointer-events-none select-none">
+                    <Image src="/2026_right_icon.png" alt="" width={55} height={55} className="animate-bounce" style={{ animationDuration: "4s", animationDelay: "0.6s" }} />
+                  </div>
+
+                  {/* Firework — tách riêng, ghim sát phải */}
+                  <div className="absolute right-3 bottom-1 pointer-events-none select-none">
+                    <div className="relative w-20 h-20">
+                      <style>{`
+      @keyframes fw-burst {
+        0%   { transform: scale(0); opacity: 1; }
+        60%  { transform: scale(1); opacity: 1; }
+        100% { transform: scale(1.3); opacity: 0; }
+      }
+      @keyframes fw-particle {
+        0%   { transform: translate(0,0) scale(1); opacity: 1; }
+        100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+      }
+      .fw-dot {
+        position: absolute;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        top: 50%; left: 50%;
+        margin: -3px 0 0 -3px;
+        animation: fw-particle 1.4s ease-out infinite;
+        animation-delay: var(--delay, 0s);
+      }
+      .fw-core {
+        position: absolute;
+        inset: 30%;
+        border-radius: 50%;
+        animation: fw-burst 1.4s ease-out infinite;
+      }
+    `}</style>
+
+                      <span className="fw-core" style={{ background: flashSale.accent }} />
+
+                      {[
+                        { tx: "-22px", ty: "-22px", delay: "0s", color: flashSale.accent },
+                        { tx: "0px", ty: "-28px", delay: "0.1s", color: "#fff" },
+                        { tx: "22px", ty: "-22px", delay: "0s", color: flashSale.promotion },
+                        { tx: "28px", ty: "0px", delay: "0.15s", color: flashSale.accent },
+                        { tx: "22px", ty: "22px", delay: "0.05s", color: "#fff" },
+                        { tx: "0px", ty: "28px", delay: "0.1s", color: flashSale.promotion },
+                        { tx: "-22px", ty: "22px", delay: "0s", color: flashSale.accent },
+                        { tx: "-28px", ty: "0px", delay: "0.15s", color: "#fff" },
+                        { tx: "-16px", ty: "-28px", delay: "0.08s", color: flashSale.promotion },
+                        { tx: "16px", ty: "-28px", delay: "0.12s", color: flashSale.accent },
+                        { tx: "28px", ty: "-16px", delay: "0.06s", color: "#fff" },
+                        { tx: "28px", ty: "16px", delay: "0.14s", color: flashSale.promotion },
+                      ].map((p, i) => (
+                        <span
+                          key={i}
+                          className="fw-dot"
+                          style={
+                            {
+                              "--tx": p.tx,
+                              "--ty": p.ty,
+                              "--delay": p.delay,
+                              background: p.color,
+                              animationDelay: p.delay,
+                            } as React.CSSProperties
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="flex items-center gap-2 px-4 py-3 text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>
                   <Calendar size={14} />

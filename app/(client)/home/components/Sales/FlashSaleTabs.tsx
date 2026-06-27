@@ -14,7 +14,7 @@ export const FlashSaleTabItem = memo(function FlashSaleTabItem({ day, isActive, 
   return (
     <button
       onClick={onClick}
-      className="shrink-0 min-w-27.5 px-2 py-1 text-center transition-all duration-200 cursor-pointer rounded-lg mx-1 my-1.5"
+      className="shrink-0 min-w-25 px-1 py-1 text-center transition-all duration-200 cursor-pointer rounded-lg mx-1 my-1.5"
       style={{
         opacity: !day.hasActiveSale && !day.isToday ? 0.4 : 1,
         backdropFilter: isActive ? "blur(12px)" : "blur(6px)",

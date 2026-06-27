@@ -568,8 +568,7 @@ export default function Slidezy({
               key={index}
               onClick={() => goToSlide(index)}
               disabled={isAnimating}
-              className={`h-2 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${getActivePage() === index ? "w-8 bg-gray-800" : "w-2 bg-gray-300 hover:bg-gray-400"}`}
-              aria-label={`Go to page ${index + 1}`}
+              className={`h-2 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${getActivePage() === index ? "w-8 bg-primary" : "w-2 bg-neutral-dark hover:bg-neutral-dark-hover"}`}
             />
           ))}
         </div>
