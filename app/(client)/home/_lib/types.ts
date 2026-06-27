@@ -1,3 +1,4 @@
+import { Category } from "@/(client)/category/_lib";
 import { Blog } from "../../blog/_lib/blog.type";
 
 // ============================================================
@@ -240,6 +241,7 @@ export interface BlogPagination {
 export interface HomeApiResponse {
   data: {
     sliders: Slider[];
+    categories: Category[];
     featuredCategories: FeaturedCategory[];
     bannersTop: Banner[];
     flashSaleProducts: FlashSaleData;

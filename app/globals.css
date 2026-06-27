@@ -212,6 +212,8 @@
    font-display: swap;
 }
 
+.tabs-scroll::-webkit-scrollbar { display: none; }
+
 /* ===================== RAW COLOR TOKENS ===================== */
 :root {
   --color-red: #c0392b;

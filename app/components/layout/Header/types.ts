@@ -41,9 +41,11 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
-  parentId: string | null;
-  position: number;
-  children: Category[];
+  parentId?: string | null;
+  imageUrl?: string | null;
+  position?: number;
+  _count?: { children: number };
+  children?: Category[];
 }
 
 export interface TrendingKeyword {

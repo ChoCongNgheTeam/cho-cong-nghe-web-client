@@ -1,4 +1,5 @@
-export { HomeSlider } from "./HomeSlider/HomeSlider";
+export { HomeSlider } from "./HomeSlider";
+export { HomeSliderSection } from "./HomeSliderSection";
 export { TopBanners } from "./Banners/TopBanners";
 export { FeaturedCategories } from "./Categories/FeaturedCategories";
 export { HotSaleOnline } from "./Sales/HotSaleOnline";

@@ -24,9 +24,28 @@ interface SearchResponse {
   message: string;
 }
 
+interface RootCategoryResponse {
+  data: Category[];
+  message: string;
+}
+
 export const fetchCategories = async (): Promise<Category[]> => {
   const res = await apiRequest.get<CategoryResponse>("/categories/tree", { noAuth: true });
   return res.data;
+};
+
+export const fetchRootCategories = async (): Promise<Category[]> => {
+  const res = await apiRequest.get<RootCategoryResponse>("/categories/roots", { noAuth: true });
+  return res.data ?? [];
+};
+
+export const fetchCategoryChildren = async (categoryId: string): Promise<Category[]> => {
+  try {
+    const res = await apiRequest.get<{ data: Category[] }>(`/categories/${categoryId}/children`, { noAuth: true });
+    return res.data ?? [];
+  } catch {
+    return [];
+  }
 };
 
 export const fetchTrendingKeywords = async (): Promise<TrendingKeyword[]> => {
