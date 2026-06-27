@@ -51,7 +51,7 @@ export const HomeSliderSection = memo(function HomeSliderSection({ sliders, cate
   const handleClose = useCallback(() => setIsCategoryOpen(false), []);
 
   return (
-    <div className="md:container md:py-3 pb-3">
+    <div className="container md:py-3 pb-3">
       {/* Mobile */}
       <div className="md:hidden">
         <HomeSlider sliders={sliders} />
