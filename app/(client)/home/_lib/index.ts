@@ -1,29 +1,59 @@
 import apiRequest from "@/lib/api";
-import { HomeApiResponse } from "./types";
 import { fetchRootCategories } from "@/components/layout/Header/_libs/header";
+import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomePageData } from "./types";
 
-const fetchHomeData = async (): Promise<HomeApiResponse["data"]> => {
-  const response = await apiRequest.get<HomeApiResponse>("/home", {
+// ============================================================
+// Cache tags — phải khớp với CACHE_TAGS trong BE home.constants.ts
+// ============================================================
+
+export const HOME_CACHE_TAGS = {
+  STATIC: "home-static",
+  PRODUCTS: "home-products",
+  SALE_SCHEDULE: "sale-schedule",
+} as const;
+
+// ============================================================
+// Fetchers
+// ============================================================
+
+const fetchHomeStatic = (): Promise<ApiResponse<HomeStaticData>> =>
+  apiRequest.get("/home/static", {
     noAuth: true,
-    // next: { revalidate: 60 },
+    next: { revalidate: 3600, tags: [HOME_CACHE_TAGS.STATIC] },
   });
-  return response.data;
-};
 
-export async function getHomePageData() {
-  const [data, rootCategories] = await Promise.all([fetchHomeData(), fetchRootCategories()]);
+const fetchHomeProducts = (): Promise<ApiResponse<HomeProductsData>> =>
+  apiRequest.get("/home/products", {
+    noAuth: true,
+    next: { revalidate: 300, tags: [HOME_CACHE_TAGS.PRODUCTS] },
+  });
+
+const fetchHomeSaleSchedule = (): Promise<ApiResponse<HomeSaleScheduleData>> =>
+  apiRequest.get("/home/sale-schedule", {
+    noAuth: true,
+    next: { revalidate: 60, tags: [HOME_CACHE_TAGS.SALE_SCHEDULE] },
+  });
+
+// ============================================================
+// Main
+// ============================================================
+
+export async function getHomePageData(): Promise<HomePageData> {
+  const [staticRes, productsRes, saleRes, rootCategories] = await Promise.all([fetchHomeStatic(), fetchHomeProducts(), fetchHomeSaleSchedule(), fetchRootCategories()]);
 
   return {
-    sliders: data.sliders ?? [],
-    rootCategories,
-    featuredCategories: data.featuredCategories ?? [],
-    bannersTop: data.bannersTop ?? [],
-    bannersSection1: data.bannersSection1 ?? [],
-    featuredProducts: data.featuredProducts ?? [],
-    bestSellingProducts: data.bestSellingProducts ?? [],
-    flashSaleProducts: data.flashSaleProducts ?? null,
-    saleSchedule: data.saleSchedule ?? null,
-    blogs: data.blogs ?? null,
-    activeCampaigns: data.activeCampaigns ?? [],
+    sliders: staticRes.data.sliders ?? [],
+    bannersTop: staticRes.data.bannersTop ?? [],
+    bannersSection1: staticRes.data.bannersSection1 ?? [],
+    featuredCategories: staticRes.data.featuredCategories ?? [],
+    activeCampaigns: staticRes.data.activeCampaigns ?? [],
+    blogs: staticRes.data.blogs,
+
+    featuredProducts: productsRes.data.featuredProducts ?? [],
+    bestSellingProducts: productsRes.data.bestSellingProducts ?? [],
+
+    saleSchedule: saleRes.data,
+
+    rootCategories: rootCategories ?? [],
   };
 }

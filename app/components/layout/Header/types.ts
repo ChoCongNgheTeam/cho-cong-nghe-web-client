@@ -37,17 +37,6 @@ export interface MobileHeaderProps {
   onSearchChange: (query: string) => void;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  parentId?: string | null;
-  imageUrl?: string | null;
-  position?: number;
-  _count?: { children: number };
-  children?: Category[];
-}
-
 export interface TrendingKeyword {
   id: string;
   name: string;

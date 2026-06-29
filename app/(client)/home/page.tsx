@@ -4,9 +4,9 @@ import { CategoryProducts } from "./components/CategoryProducts";
 import { HeroBanner } from "./components/HeroBanner";
 
 export default async function HomePage() {
-  const { sliders, rootCategories, featuredCategories, bannersTop, saleSchedule, featuredProducts, bestSellingProducts, activeCampaigns, bannersSection1, blogs } = await getHomePageData();
+  const { sliders, rootCategories, featuredCategories, bannersTop, bannersSection1, saleSchedule, featuredProducts, bestSellingProducts, activeCampaigns, blogs } = await getHomePageData();
 
-  const hasSale = saleSchedule?.todayProducts?.products.length > 0;
+  const hasSale = (saleSchedule?.todayProducts?.products.length ?? 0) > 0;
 
   return (
     <main className="min-h-screen bg-neutral-light">

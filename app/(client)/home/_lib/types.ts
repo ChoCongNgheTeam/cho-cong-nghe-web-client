@@ -1,10 +1,11 @@
-import { Category } from "@/(client)/category/_lib";
 import { Blog } from "../../blog/_lib/blog.type";
+import { Category } from "@/(client)/category/_lib";
 
 // ============================================================
-// Slider & Banner
+// Media — Slider & Banner dùng chung interface, phân biệt qua position
 // ============================================================
-export interface Slider {
+
+export interface HomeMedia {
   id: string;
   type: string;
   position: string;
@@ -18,23 +19,13 @@ export interface Slider {
   updatedAt: string;
 }
 
-export interface Banner {
-  id: string;
-  type: string;
-  position: string;
-  title: string | null;
-  subTitle: string | null;
-  imageUrl: string | null;
-  linkUrl: string | null;
-  order: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+export type Slider = HomeMedia;
+export type Banner = HomeMedia;
 
 // ============================================================
 // Category
 // ============================================================
+
 export interface FeaturedCategory {
   id: string;
   name: string;
@@ -46,6 +37,7 @@ export interface FeaturedCategory {
 // ============================================================
 // Product
 // ============================================================
+
 export interface ProductHighlight {
   key: string;
   name: string;
@@ -101,6 +93,7 @@ export interface FeaturedProduct {
 // ============================================================
 // Sale & Promotion
 // ============================================================
+
 export interface SaleScheduleRule {
   actionType: string;
   discountValue: number | null;
@@ -145,36 +138,6 @@ export interface SaleScheduleData {
   todayProducts: TodayProducts;
 }
 
-export interface FlashSaleData {
-  products: FeaturedProduct[];
-  total: number;
-  date: string;
-  startDate: string | null;
-  endDate: string | null;
-}
-
-export interface SaleProductPricingContext {
-  base: number;
-  final: number;
-  discountAmount: number;
-  discountPercentage: number;
-  hasPromotion: boolean;
-  promotionName?: string;
-}
-
-export interface SaleProductCard {
-  id: string;
-  name: string;
-  slug: string;
-  imageUrl?: string | null;
-  thumbnailUrl?: string | null;
-}
-
-export interface SaleProduct {
-  card: SaleProductCard;
-  pricingContext: SaleProductPricingContext;
-}
-
 export interface CachedDayData {
   products: FeaturedProduct[];
   total: number;
@@ -192,6 +155,7 @@ export interface SaleByDateApiResponse {
 // ============================================================
 // Campaign
 // ============================================================
+
 export interface CampaignCategory {
   id: string;
   campaignId: string;
@@ -214,7 +178,7 @@ export interface Campaign {
   id: string;
   name: string;
   slug: string;
-  type: string;
+  type: string; // string thay vì CampaignType enum — FE không dùng Prisma
   description: string | null;
   startDate: string;
   endDate: string;
@@ -227,6 +191,7 @@ export interface Campaign {
 // ============================================================
 // Blog
 // ============================================================
+
 export interface BlogPagination {
   data: Blog[];
   page: number;
@@ -236,20 +201,42 @@ export interface BlogPagination {
 }
 
 // ============================================================
-// Home API
+// API Response wrapper — shape { data: T, message: string } từ BE
 // ============================================================
-export interface HomeApiResponse {
-  data: {
-    sliders: Slider[];
-    categories: Category[];
-    featuredCategories: FeaturedCategory[];
-    bannersTop: Banner[];
-    flashSaleProducts: FlashSaleData;
-    saleSchedule: SaleScheduleData;
-    featuredProducts: FeaturedProduct[];
-    bannersSection1: Banner[];
-    bestSellingProducts: FeaturedProduct[];
-    activeCampaigns: Campaign[];
-    blogs: BlogPagination;
-  };
+
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+}
+
+// ============================================================
+// 3 response types — khớp với 3 endpoint mới
+// ============================================================
+
+/** GET /home/static */
+export interface HomeStaticData {
+  sliders: Slider[];
+  bannersTop: Banner[];
+  bannersSection1: Banner[];
+  featuredCategories: FeaturedCategory[];
+  activeCampaigns: Campaign[];
+  blogs: BlogPagination;
+}
+
+/** GET /home/products */
+export interface HomeProductsData {
+  featuredProducts: FeaturedProduct[];
+  bestSellingProducts: FeaturedProduct[];
+}
+
+/** GET /home/sale-schedule */
+export type HomeSaleScheduleData = SaleScheduleData;
+
+// ============================================================
+// Merged — shape sau khi combine 3 response + rootCategories
+// ============================================================
+
+export interface HomePageData extends HomeStaticData, HomeProductsData {
+  saleSchedule: HomeSaleScheduleData;
+  rootCategories: Category[];
 }

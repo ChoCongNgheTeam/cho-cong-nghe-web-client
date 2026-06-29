@@ -1,6 +1,7 @@
 import apiRequest from "@/lib/api";
 import { slugify } from "./utils";
-import { Category, SearchProduct, TrendingKeyword } from "../types";
+import { SearchProduct, TrendingKeyword } from "../types";
+import { Category } from "@/types/category";
 
 interface CategoryResponse {
   data: Category[];
