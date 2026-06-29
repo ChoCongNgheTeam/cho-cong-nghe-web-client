@@ -107,7 +107,7 @@ const Header = () => {
 
         <div className="container">
           <MobileHeader />
-          <div className="py-2">
+          <div className="py-1.5">
             <DesktopHeader />
             <TrendingBar className="hidden md:block" />
           </div>

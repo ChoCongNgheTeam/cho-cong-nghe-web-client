@@ -138,10 +138,8 @@ export const TrendingBar = memo(({ className }: { className?: string }) => {
   }, []);
 
   return (
-    <div className={`mt-2 ${className ?? "hidden md:block"}`}>
-      <div className="max-w-2xl" style={marginLeft !== null ? { marginLeft } : { visibility: "hidden" }}>
-        {loading ? <Skeleton /> : <MarqueeTrack keywords={keywords} />}
-      </div>
+    <div className={className ?? "hidden md:block"}>
+      <div className="max-w-full py-1">{loading ? <Skeleton /> : <MarqueeTrack keywords={keywords} />}</div>
     </div>
   );
 });

@@ -8,15 +8,12 @@ export const flashSale = {
   priceGradient: "linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--promotion)) 100%)",
   priceShadow: "0 3px 14px rgb(var(--accent) / 0.4), 0 0 0 1px rgba(255,255,255,0.1)",
 
-  // Đổi sang hệ đỏ-cam ấm, đồng tông với header
-  // accent-dark (#c0392b) → promotion-dark (#98151a): gradient warm đỏ đậm, không u tối
-  headerGradient: "linear-gradient(160deg, rgb(var(--accent-dark)) 0%, rgb(var(--promotion-dark)) 55%, rgb(var(--promotion-darker)) 100%)",
+  headerGradient: "linear-gradient(160deg, #0c4a6e 0%, #0369a1 55%, #0284c7 100%)",
 
-  // Glow cam nhẹ ở góc thay vì đỏ thuần → tạo cảm giác ấm, liên kết với header cam
   headerGlow: `
-    radial-gradient(ellipse at 12% 130%, rgb(var(--accent) / 0.30) 0%, transparent 48%),
-    radial-gradient(ellipse at 88% 130%, rgb(var(--accent-dark) / 0.20) 0%, transparent 38%)
+    radial-gradient(ellipse at 12% 130%, rgba(3, 105, 161, 0.35) 0%, transparent 48%),
+    radial-gradient(ellipse at 88% 130%, rgba(14, 116, 144, 0.25) 0%, transparent 38%)
   `,
 
-  ctaBorderGlow: "0 2px 8px rgb(var(--promotion) / 0.35)",
+  ctaBorderGlow: "0 2px 8px rgba(3, 105, 161, 0.4)",
 } as const;

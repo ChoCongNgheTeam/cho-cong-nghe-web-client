@@ -6,8 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatVND } from "@/helpers";
-import { fetchSearchResults, resolveSearchCategory } from "../_libs/header";
-import { SearchProduct } from "../types";
+import { fetchSearchResults, fetchTrendingKeywords, resolveSearchCategory } from "../_libs/header";
+import { SearchProduct, TrendingKeyword } from "../types";
+import { addSearchHistory, clearSearchHistory, getSearchHistory, removeSearchHistory } from "../_libs/search-history";
+import { MdClose, MdDeleteSweep, MdHistory, MdTrendingUp } from "react-icons/md";
 
 function calcDiscount(origin: number, base: number): number {
   if (!origin || origin <= base) return 0;
@@ -54,10 +56,27 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
 
   const [hasStaleResults, setHasStaleResults] = useState(false);
 
+  const [isFocused, setIsFocused] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
+  const [trendingKws, setTrendingKws] = useState<TrendingKeyword[]>([]);
+
+  // Load history khi focus
+  const handleFocus = () => {
+    setIsFocused(true);
+    setHistory(getSearchHistory());
+    if (results.length > 0) setIsOpen(true);
+  };
+
+  // Load trending 1 lần
+  useEffect(() => {
+    fetchTrendingKeywords().then(setTrendingKws);
+  }, []);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setIsFocused(false);
         setActiveIndex(-1);
       }
     };
@@ -75,14 +94,16 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
     async (q?: string) => {
       const term = (q ?? query).trim();
       if (!term) return;
+      addSearchHistory(term);
       setIsOpen(false);
+      setIsFocused(false);
       setActiveIndex(-1);
       const slug = await resolveSearchCategory(term);
       if (slug) {
         router.push(`/category/${slug}`);
         return;
       }
-      router.push(`/search?q=${encodeURIComponent(term)}`);
+      router.push(`/search?q=${term}`);
     },
     [query, router],
   );
@@ -143,6 +164,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
         const product = deferredResults[activeIndex];
         setIsOpen(false);
         setActiveIndex(-1);
+        addSearchHistory(query.trim());
         router.push(`/products/${product.slug}`);
       } else if (activeIndex === deferredResults.length) {
         navigateToSearch();
@@ -158,6 +180,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
 
   const handleClose = useCallback(() => {
     setQuery("");
+    setIsFocused(false);
     staleResultsRef.current = [];
     setHasStaleResults(false);
     startTransition(() => {
@@ -168,6 +191,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
   }, []);
 
   const showDropdown = isOpen && query.trim().length > 0;
+  const showIdle = isFocused && query.trim().length === 0;
   const displayResults = deferredResults;
   const showSkeleton = isSearching && !hasStaleResults;
 
@@ -206,7 +230,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              className="w-full pl-4 pr-14 py-2.5 border border-neutral rounded-full focus:outline-none focus:border-accent-hover text-sm bg-neutral-light text-primary placeholder:text-neutral-dark search-input-ios"
+              className="w-full pl-4 pr-14 py-3 lg:py-3.5 text-sm lg:text-base border border-neutral rounded-full focus:outline-none focus:border-accent-hover bg-neutral-light text-primary placeholder:text-neutral-dark search-input-ios"
             />
             <div className="search-addon-m absolute right-0 top-0 bottom-0 flex items-stretch overflow-hidden border border-neutral border-l-0 rounded-r-full transition-colors">
               <button onClick={() => navigateToSearch()} aria-label="Tìm kiếm" className="flex items-center justify-center px-3 bg-neutral hover:bg-neutral-hover transition-colors cursor-pointer">
@@ -316,9 +340,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
             value={query}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onFocus={() => {
-              if (results.length > 0) setIsOpen(true);
-            }}
+            onFocus={handleFocus}
             role="combobox"
             aria-expanded={showDropdown}
             aria-autocomplete="list"
@@ -337,11 +359,41 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
             <Search className={`transition-opacity duration-200 ${isSearching ? "opacity-30" : "opacity-100"}`} />
           </button>
 
+          {/* Idle dropdown — chỉ khi chưa gõ */}
+          <div
+            className={`search-glass-dropdown absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
+              showIdle ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"
+            }`}
+          >
+            <IdleDropdown
+              history={history}
+              trending={trendingKws}
+              onSelectHistory={(term) => {
+                setQuery(term);
+                navigateToSearch(term);
+              }}
+              onRemoveHistory={(term) => {
+                removeSearchHistory(term);
+                setHistory(getSearchHistory());
+              }}
+              onClearHistory={() => {
+                clearSearchHistory();
+                setHistory([]);
+              }}
+              onSelectTrending={(kw) => {
+                router.push(`/products/${kw.slug}`);
+                setIsFocused(false);
+              }}
+            />
+          </div>
+
           {/* Dropdown */}
           <div
             id="search-listbox"
             role="listbox"
-            className={`search-glass-dropdown absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden transition-[opacity,transform] duration-200 ease-out ${showDropdown ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"}`}
+            className={`search-glass-dropdown absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
+              showDropdown ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"
+            }`}
           >
             <DropdownContent
               showSkeleton={showSkeleton}
@@ -406,7 +458,14 @@ function DropdownContent({ showSkeleton, isStale, isSearching, displayResults, a
                   style={{ animationDelay: `${i * 25}ms` }}
                   className={`animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both ${isActive ? "search-item-active" : ""}`}
                 >
-                  <Link href={`/products/${product.slug}`} onClick={handleClose} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group">
+                  <Link
+                    href={`/products/${product.slug}`}
+                    onClick={() => {
+                      addSearchHistory(query.trim());
+                      handleClose();
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group"
+                  >
                     <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
                       {product.thumbnail ? (
                         <Image src={product.thumbnail} alt={product.name} width={48} height={48} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
@@ -456,6 +515,100 @@ function DropdownContent({ showSkeleton, isStale, isSearching, displayResults, a
           Không tìm thấy sản phẩm nào cho <span className="text-primary font-medium">&ldquo;{query}&rdquo;</span>
         </div>
       ) : null}
+    </div>
+  );
+}
+interface IdleDropdownProps {
+  history: string[];
+  trending: TrendingKeyword[];
+  onSelectHistory: (term: string) => void;
+  onRemoveHistory: (term: string) => void;
+  onClearHistory: () => void;
+  onSelectTrending: (kw: TrendingKeyword) => void;
+}
+
+function IdleDropdown({ history, trending, onSelectHistory, onRemoveHistory, onClearHistory, onSelectTrending }: IdleDropdownProps) {
+  const hasHistory = history.length > 0;
+  const hasTrending = trending.length > 0;
+
+  if (!hasHistory && !hasTrending) return null;
+
+  return (
+    <div className="py-2">
+      {/* ── Lịch sử tìm kiếm ── */}
+      {hasHistory && (
+        <section>
+          <div className="flex items-center justify-between px-4 py-1.5">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-darker uppercase tracking-wide">
+              <MdHistory className="w-4 h-4 text-neutral-dark" />
+              Lịch sử tìm kiếm
+            </span>
+            <button onClick={onClearHistory} className="flex items-center gap-1 text-xs text-neutral-dark hover:text-promotion transition-colors">
+              <MdDeleteSweep className="w-3.5 h-3.5" />
+              Xóa tất cả
+            </button>
+          </div>
+
+          <ul>
+            {history.map((term) => (
+              <li key={term} className="flex items-center gap-2 px-4 py-2 hover:bg-neutral transition-colors group">
+                <button onClick={() => onSelectHistory(term)} className="flex-1 flex items-center gap-2.5 text-left min-w-0">
+                  <MdHistory className="w-4 h-4 text-neutral-dark shrink-0" />
+                  <span className="text-sm text-primary truncate">{term}</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveHistory(term);
+                  }}
+                  className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-neutral-active"
+                  aria-label={`Xóa "${term}"`}
+                >
+                  <MdClose className="w-3.5 h-3.5 text-neutral-dark" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Divider */}
+      {hasHistory && hasTrending && <div className="my-1.5 border-t border-neutral" />}
+
+      {/* ── Xu hướng tìm kiếm ── */}
+      {hasTrending && (
+        <section>
+          <div className="px-4 py-1.5">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-darker uppercase tracking-wide">
+              <MdTrendingUp className="w-4 h-4 text-accent" />
+              Xu hướng tìm kiếm
+            </span>
+          </div>
+
+          <ul>
+            {trending.slice(0, 6).map((kw) => (
+              <li key={kw.id}>
+                <button onClick={() => onSelectTrending(kw)} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-neutral transition-colors group text-left">
+                  {/* Thumbnail */}
+                  <div className="shrink-0 w-9 h-9 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
+                    {kw.thumbnail ? (
+                      <Image src={kw.thumbnail} alt={kw.name} width={36} height={36} className="w-full h-full object-contain" />
+                    ) : (
+                      <MdTrendingUp className="w-4 h-4 text-neutral-dark opacity-40" />
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <span className="text-sm text-primary truncate group-hover:text-accent-hover transition-colors flex-1 min-w-0">{kw.name}</span>
+
+                  {/* Trending badge */}
+                  <span className="shrink-0 text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">Hot</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

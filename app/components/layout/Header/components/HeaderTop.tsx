@@ -7,7 +7,7 @@ const HeaderTop = () => {
 
   return (
     <div className="hidden md:block">
-      <div className="container py-1.5">
+      <div className="container py-1">
         <div className="flex items-center justify-between gap-2" style={{ color: "rgba(255,255,255,1)", fontSize: "13px" }}>
           <span className="shrink-0">Chào mừng đến với Cửa hàng điện tử toàn cầu</span>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">

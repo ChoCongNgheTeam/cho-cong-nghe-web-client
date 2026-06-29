@@ -3,9 +3,9 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { ChevronRight, Package, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Category } from "../types";
 import { fetchCategories } from "../_libs/header";
 import { CATEGORY_ICONS } from "../_libs/constants";
+import { Category } from "@/types/category";
 
 function getIcon(slug: string) {
   const icons = { ...CATEGORY_ICONS };

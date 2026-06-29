@@ -31,18 +31,18 @@ interface RootCategoryResponse {
 }
 
 export const fetchCategories = async (): Promise<Category[]> => {
-  const res = await apiRequest.get<CategoryResponse>("/categories/tree", { noAuth: true });
+  const res = await apiRequest.get<CategoryResponse>("/categories/tree", { noAuth: true, next: { revalidate: 3600 } });
   return res.data;
 };
 
 export const fetchRootCategories = async (): Promise<Category[]> => {
-  const res = await apiRequest.get<RootCategoryResponse>("/categories/roots", { noAuth: true });
+  const res = await apiRequest.get<RootCategoryResponse>("/categories/roots", { noAuth: true, next: { revalidate: 3600 } });
   return res.data ?? [];
 };
 
 export const fetchCategoryChildren = async (categoryId: string): Promise<Category[]> => {
   try {
-    const res = await apiRequest.get<{ data: Category[] }>(`/categories/${categoryId}/children`, { noAuth: true });
+    const res = await apiRequest.get<{ data: Category[] }>(`/categories/${categoryId}/children`, { noAuth: true, next: { revalidate: 3600 } });
     return res.data ?? [];
   } catch {
     return [];

@@ -186,9 +186,13 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
         />
 
         {/* Main content */}
-        <div className="container relative z-10 grid grid-cols-2 items-center h-full">
+        <div className="container relative z-10 grid grid-cols-[7fr_5fr] items-center h-full px-8 md:px-12 gap-6">
           {/* LEFT */}
-          <div className="flex flex-col pl-4">
+          <div className="flex flex-col pl-8 md:pl-14 pr-4">
+            {/* Thêm một eyebrow label phía trên title */}
+            <span className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: `rgb(var(--accent))` }}>
+              Khuyến mãi hôm nay
+            </span>
             <h2 className="font-extrabold leading-tight py-1 tracking-tight text-primary-dark" style={{ fontSize: "clamp(15px, 3vw, 35px)", ...textStyle(1) }}>
               {slide.title}
             </h2>
@@ -231,7 +235,7 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
           </div>
 
           {/* RIGHT: image */}
-          <div className="relative h-[80%]">
+          <div className="relative h-[78%] mx-auto w-[88%]">
             {/* Glow blobs */}
             <div
               className="pointer-events-none absolute rounded-full blur-[28px]"

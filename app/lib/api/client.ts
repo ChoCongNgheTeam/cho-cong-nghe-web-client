@@ -55,14 +55,13 @@ class ApiRequest {
   private buildUrl(endpoint: string, params?: object) {
     let url = `${BASE_URL}/api/v1${endpoint}`;
     if (params) {
-      const searchParams = new URLSearchParams();
+      const parts: string[] = [];
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && typeof value !== "object") {
-          searchParams.append(key, String(value));
+          parts.push(`${key}=${String(value)}`);
         }
       });
-      const queryString = searchParams.toString();
-      if (queryString) url += `?${queryString}`;
+      if (parts.length) url += `?${parts.join("&")}`;
     }
     return url;
   }

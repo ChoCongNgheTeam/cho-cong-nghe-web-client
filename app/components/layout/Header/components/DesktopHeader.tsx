@@ -14,7 +14,7 @@ const DesktopHeader = memo(() => {
     <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
       <HeaderLogo />
       <CategoryMegaMenu />
-      <div className="flex-1 max-w-2xl relative">
+      <div className="flex-1 max-w-2xl flex flex-col gap-0.5">
         <SearchBar />
       </div>
       <div className="flex items-center gap-2">

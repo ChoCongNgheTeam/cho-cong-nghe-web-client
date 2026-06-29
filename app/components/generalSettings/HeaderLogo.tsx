@@ -15,7 +15,7 @@ const HeaderLogo = memo(() => {
         width={180}
         height={60}
         alt={siteName || "Logo"}
-        className="h-12 lg:h-15 w-auto hover:opacity-80 transition-opacity"
+        className="h-9 lg:h-11 w-auto hover:opacity-80 transition-opacity"
         priority
         onError={(e) => {
           (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
