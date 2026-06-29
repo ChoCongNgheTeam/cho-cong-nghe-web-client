@@ -10,4 +10,5 @@ export interface Category {
   isActive?: boolean;
   description?: string;
   children?: Category[];
+  _count?: null | { children: number; products: number };
 }

@@ -108,7 +108,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
           <div className="relative overflow-hidden rounded-t-2xl" style={{ background: flashSale.headerGradient }}>
             <div className="absolute inset-0 pointer-events-none" style={{ background: flashSale.headerGlow }} />
 
-            <div className="rounded-2xl relative z-10 flex items-center justify-between px-4 pt-4 pb-3 gap-3 flex-wrap ">
+            <div className="rounded-2xl relative z-10 flex items-center justify-between px-4 pt-2 pb-1 gap-3 flex-wrap ">
               <div className="flex items-center gap-3">
                 <div style={{ filter: `drop-shadow(0 0 8px rgb(var(--accent) / 0.75))` }}>
                   <Flame style={{ width: 28, height: 28, color: flashSale.accent, fill: flashSale.accent }} />

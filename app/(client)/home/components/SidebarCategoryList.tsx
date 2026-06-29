@@ -4,9 +4,9 @@ import { memo, useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, Package } from "lucide-react";
 import Link from "next/link";
-import { Category } from "@/components/layout/Header/types";
 import { fetchCategoryChildren } from "@/components/layout/Header/_libs/header";
 import { CATEGORY_ICONS } from "@/components/layout/Header/_libs/constants";
+import { Category } from "@/types/category";
 
 interface SidebarCategoryListProps {
   categories: Category[];

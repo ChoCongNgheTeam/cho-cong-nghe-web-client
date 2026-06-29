@@ -6,7 +6,7 @@ import Link from "next/link";
 import { HomeSlider } from "./HomeSlider";
 import { SidebarCategoryList } from "./SidebarCategoryList";
 import type { Slider } from "../_lib/types";
-import { Category } from "@/components/layout/Header/types";
+import { Category } from "@/types/category";
 
 const MOCK_PROMOS = [
   { id: 1, image: "https://placehold.co/280x120/e8873a/ffffff?text=Deal+1", label: "Giảm đến 50%", href: "/sale" },
