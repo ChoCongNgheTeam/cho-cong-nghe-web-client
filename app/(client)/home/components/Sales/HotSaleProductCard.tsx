@@ -122,36 +122,21 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
       )}
 
       {/* Price block — dùng gradient promotion từ theme */}
-      <div className="mx-2.5 mb-2 mt-2 rounded-lg px-2.5 py-2" style={{ background: flashSale.priceGradient, boxShadow: flashSale.priceShadow }}>
-        <div className="flex flex-col gap-0.5 sm:hidden">
-          <span className="font-bold leading-tight text-white" style={{ fontSize: "clamp(11px, 3.5vw, 15px)" }}>
-            {isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}
-          </span>
-          {showStrikethrough && (
-            <span className="line-through leading-none text-white/65" style={{ fontSize: "clamp(9px, 2.5vw, 11px)" }}>
-              {formatVND(product.price.base)}
+      <div className="mx-2.5 mb-2 mt-2 rounded-lg px-2.5 py-2 bg-[rgb(var(--surface))] border border-[rgb(var(--surface-border))]">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold leading-tight" style={{ fontSize: "clamp(13px, 3.5vw, 17px)", color: "rgb(var(--promotion))" }}>
+              {isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}
             </span>
-          )}
-          {discountLabel && (
-            <span
-              className="self-start text-[10px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap text-white"
-              style={{ backgroundColor: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)" }}
-            >
-              {isUpcoming ? "-XX%" : discountLabel}
-            </span>
-          )}
-        </div>
-
-        <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex flex-col flex-1 gap-1">
-            <span className="font-bold leading-tight text-lg text-white">{isUpcoming ? "Sắp công bố" : formatVND(finalPrice)}</span>
-            {showStrikethrough && <span className="text-[11px] line-through leading-none mt-0.5 text-white/65">{formatVND(product.price.base)}</span>}
+            {showStrikethrough && (
+              <span className="line-through leading-none text-xs" style={{ color: "rgb(var(--neutral-dark))" }}>
+                {formatVND(product.price.base)}
+              </span>
+            )}
           </div>
+
           {discountLabel && (
-            <span
-              className="shrink-0 text-[11px] font-bold rounded px-1.5 py-0.5 leading-none whitespace-nowrap self-start text-white"
-              style={{ backgroundColor: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)" }}
-            >
+            <span className="shrink-0 text-[11px] font-bold rounded-md px-1.5 py-1 leading-none whitespace-nowrap text-white" style={{ background: "rgb(var(--promotion))" }}>
               {isUpcoming ? "-XX%" : discountLabel}
             </span>
           )}

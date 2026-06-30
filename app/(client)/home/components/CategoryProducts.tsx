@@ -2,24 +2,23 @@
 
 import { useState } from "react";
 import { Slidezy } from "@/components/Slider";
+import { CATEGORY_ICONS } from "@/components/layout/Header/_libs/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type TabKey = "dien-thoai" | "laptop" | "dien-may" | "phu-kien";
 
-interface Tab {
+type Tab = {
   key: TabKey;
   label: string;
-  icon: string;
-}
-
-// ─── Config ──────────────────────────────────────────────────────────────────
+  icon: React.ElementType;
+};
 
 const TABS: Tab[] = [
-  { key: "dien-thoai", label: "Điện thoại", icon: "📱" },
-  { key: "laptop", label: "Laptop", icon: "💻" },
-  { key: "dien-may", label: "Điện máy", icon: "📺" },
-  { key: "phu-kien", label: "Phụ kiện", icon: "🎧" },
+  { key: "dien-thoai", label: "Điện thoại", icon: CATEGORY_ICONS["dien-thoai"] },
+  { key: "laptop", label: "Laptop", icon: CATEGORY_ICONS["laptop"] },
+  { key: "dien-may", label: "Điện máy", icon: CATEGORY_ICONS["dien-may"] },
+  { key: "phu-kien", label: "Phụ kiện", icon: CATEGORY_ICONS["phu-kien"] },
 ];
 
 // Placeholder prices per category (giả lập khác nhau)
@@ -148,6 +147,7 @@ export function CategoryProducts() {
               <div className="flex items-center overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0">
                 {TABS.map((tab, idx) => {
                   const isActive = activeTab === tab.key;
+                  const Icon = tab.icon;
                   return (
                     <button
                       key={tab.key}
@@ -159,7 +159,7 @@ export function CategoryProducts() {
                         isActive ? "text-accent" : "text-primary/60 hover:text-primary",
                       ].join(" ")}
                     >
-                      <span className="text-base leading-none">{tab.icon}</span>
+                      <Icon className="w-4 h-4 shrink-0" />
                       <span>{tab.label}</span>
 
                       {/* Active underline */}
