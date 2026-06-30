@@ -1,6 +1,6 @@
 "use client";
 
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { Phone, Clock, MapPin, Navigation, Copy, CheckCheck } from "lucide-react";
 import { useState } from "react";
 
@@ -47,7 +47,7 @@ export default function StoreLocatorSection({
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },
-          { label: "Cửa hàng" , href: "/stores"},
+          { label: "Cửa hàng", href: "/stores" },
         ]}
       />
 

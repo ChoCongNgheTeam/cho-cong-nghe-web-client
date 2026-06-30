@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Plus, Minus, ShoppingCart, X, LogIn } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";

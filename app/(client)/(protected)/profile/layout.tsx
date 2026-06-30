@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Package, Bell, Heart, MapPin, Shield, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 
 const menuItems = [
   { icon: Package, label: "Đơn hàng của tôi", shortLabel: "Đơn hàng", href: "/profile/orders" },

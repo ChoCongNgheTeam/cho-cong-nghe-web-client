@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import LoginForm from "./login/LoginForm";
 import RegisterForm from "./register/RegisterForm";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import apiRequest from "@/lib/api";
 import EmailVerificationModal from "./register/EmailVerificationSuccess";
 

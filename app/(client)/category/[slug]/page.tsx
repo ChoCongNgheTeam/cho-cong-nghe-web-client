@@ -9,7 +9,7 @@ import { Slidezy } from "@/components/Slider";
 import { PageProps } from "@/components/product/types";
 import { fetchProducts, fetchFilters, fetchCategory, fetchBrandsByCategory, fetchBannersByCategory, isRootCategory } from "../_lib";
 import { slugToTitle } from "../components/slug-to-title";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { buildCategoryMetadata } from "./build-metadata";
 import { BrandApiItem, MediaApiItem } from "../types";
 import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";

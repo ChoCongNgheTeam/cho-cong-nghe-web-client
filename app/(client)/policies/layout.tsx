@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import Sidebar from "./components/Sidebar";
 import { menuItems } from "./components/menu-items";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import FontSizeToggle from "./components/FontSizeToggle";
 import PolicyContent from "./components/PolicyContent";
 import { FontSizeProvider } from "./components/FontSizeContext";

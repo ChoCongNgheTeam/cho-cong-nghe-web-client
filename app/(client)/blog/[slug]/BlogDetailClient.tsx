@@ -8,7 +8,7 @@ import BlogCommentSection from "./BlogCommentSection";
 import { getBlogComments, getBlogReplies, postBlogComment } from "../_lib/blog-comments";
 import { buildBlogCommentTree, type BlogComment } from "./blog-comment.types";
 import { BlogDetail } from "../_lib/blog.type";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 
 type Props = {
   blog: BlogDetail;

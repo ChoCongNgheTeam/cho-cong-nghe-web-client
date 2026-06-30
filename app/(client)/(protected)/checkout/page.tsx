@@ -8,7 +8,7 @@ import AddressSidebar, { ApiAddress } from "./components/AddressSidebar";
 import VoucherPromotionModal from "@/(client)/cart/components/VoucherPromotionModal";
 import CartItems from "./components/CartItems";
 import PaymentMethods from "./components/PaymentMethods";
-import Breadcrumb from "@/components/layout/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import apiRequest from "@/lib/api";
