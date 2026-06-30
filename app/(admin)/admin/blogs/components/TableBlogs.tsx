@@ -5,7 +5,7 @@ import { BlogCard } from "../blog.types";
 import { BlogStatusBadge } from "./BlogStatusBadge";
 import { BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../const";
 import type { BlogType } from "../blog.types";
-import { formatDate, formatNumber } from "@/helpers";
+import { formatDate, formatNumber } from "../../../../../helpers";
 
 interface GetBlogColumnsParams {
   page: number;

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ShoppingCart, Loader2, Plus } from "lucide-react";
 import { AddToCartMeta } from "@/store/cart/cart.types";
 import { useToasty } from "@/components/Toast";
-import { useCartActions } from "@/hooks/useCartActions";
+import { useCartActions } from "../../../../hooks/useCartActions";
 
 interface AddToCartButtonProps {
   productVariantId: string;

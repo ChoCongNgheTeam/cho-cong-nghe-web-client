@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useVariantSelector } from "@/hooks/useVariantSelector";
+import { useVariantSelector } from "../../../../hooks/useVariantSelector";
 import VariantDropdown from "./VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
 

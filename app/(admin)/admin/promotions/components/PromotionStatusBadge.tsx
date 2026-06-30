@@ -1,6 +1,6 @@
 "use client";
 import { Promotion } from "../promotion.types";
-import { parseAPIDate } from "@/helpers/timezoneHelpers";
+import { parseAPIDate } from "../../../../../helpers/timezoneHelpers";
 
 export function getPromotionStatus(promotion: Promotion): {
   label: string;

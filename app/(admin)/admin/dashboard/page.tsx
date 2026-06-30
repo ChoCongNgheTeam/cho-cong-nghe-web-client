@@ -13,8 +13,8 @@ import { OrderStatusChart } from "./components/OrderStatusChart";
 import { RecentOrdersTable } from "./components/RecentOrdersTable";
 import { TopProducts } from "./components/TopProducts";
 import { ChatbotPendingBanner } from "./components/ChatbotPendingBanner";
-import { useAdminHref } from "@/hooks/useAdminHref";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminHref } from "../../../../hooks/useAdminHref";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function Skeleton() {
   return (

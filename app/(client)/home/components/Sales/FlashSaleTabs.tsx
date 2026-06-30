@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { flashSale } from "./flashSaleTheme";
-import { formatTime as formatLocaleTime } from "@/helpers";
+import { formatTime as formatLocaleTime } from "../../../../../helpers";
 import type { SaleScheduleDay } from "../../_lib/types";
 
 function formatDateTab(dateStr: string): string {

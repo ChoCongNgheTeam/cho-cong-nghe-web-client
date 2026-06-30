@@ -1,7 +1,7 @@
 import { Pencil, ChevronDown } from "lucide-react";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { Attribute } from "../attribute.types";
-import { formatDate } from "@/helpers";
+import { formatDate } from "../../../../../helpers";
 
 interface GetAttributeColumnsParams {
   page: number;

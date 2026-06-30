@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ClipboardList, Search, Filter, AlertTriangle, Check, X, Shield, Package, Settings, UserCog, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Diff } from "lucide-react";
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
+import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
 import { getAuditLogs, type AuditLog, type AuditSeverity, type GetAuditLogsParams } from "../_libs/audit";
 
 // ─── Config ───────────────────────────────────────────────────────────────────

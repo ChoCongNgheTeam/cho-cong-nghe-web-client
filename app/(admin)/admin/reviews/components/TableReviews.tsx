@@ -3,7 +3,7 @@ import { AdminColumn } from "@/components/admin/AdminTables";
 import { Review, ReviewStatus } from "../review.types";
 import { ReviewStatusBadge } from "./ReviewStatusBadge";
 import { StarRating } from "./StarRating";
-import { formatDate } from "@/helpers";
+import { formatDate } from "../../../../../helpers";
 
 interface GetReviewColumnsParams {
   page: number;

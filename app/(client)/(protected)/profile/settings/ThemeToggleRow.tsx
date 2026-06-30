@@ -1,6 +1,6 @@
 ﻿"use client";
 import { Sun, Moon } from "lucide-react";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme } from "../../../../../hooks/useTheme";
 
 export function ThemeToggleRow() {
   const { isDark, toggleTheme, mounted } = useTheme();
@@ -21,11 +21,7 @@ export function ThemeToggleRow() {
         </div>
       </div>
 
-      <button
-        onClick={toggleTheme}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDark ? "bg-accent" : "bg-neutral"}`}
-        aria-label="Chuyển chế độ hiển thị"
-      >
+      <button onClick={toggleTheme} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDark ? "bg-accent" : "bg-neutral"}`} aria-label="Chuyển chế độ hiển thị">
         <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${isDark ? "translate-x-5" : "translate-x-1"}`} />
       </button>
     </div>

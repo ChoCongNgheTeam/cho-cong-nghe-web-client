@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/config/site.config";
+import { SITE_URL } from "../../../../config/site.config";
 import Link from "next/link";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";

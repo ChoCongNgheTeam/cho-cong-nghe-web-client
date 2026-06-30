@@ -1,5 +1,5 @@
 "use client";
-import { useCompareStore } from "../../../store/compare/compare.store";
+import { useCompareStore } from "../../../../store/compare/compare.store";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { X, Plus } from "lucide-react";

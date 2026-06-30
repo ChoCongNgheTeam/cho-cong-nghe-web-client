@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatDate } from "@/helpers/formatDate";
-import { formatViews } from "@/helpers/formatViews";
+import { formatDate } from "../../../../../helpers/formatDate";
+import { formatViews } from "../../../../../helpers/formatViews";
 import { Blog } from "@/(client)/blog/_lib/blog.type";
 
 export const BlogCard = ({ blog }: { blog: Blog }) => {

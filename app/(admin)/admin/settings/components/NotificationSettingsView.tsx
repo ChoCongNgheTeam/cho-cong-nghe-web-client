@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell, Mail, MessageSquare, Inbox, CheckCheck, Package, UserX, Star, Loader2, Save } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
+import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
 import { getMyNotifPreferences, updateMyNotifPreferences, type NotifPreferences } from "../_libs/settings";
 import { useToasty } from "@/components/Toast";
 

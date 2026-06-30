@@ -8,9 +8,9 @@ import { PromotionForm, DEFAULT_FORM, formToPayload, type PromotionFormData, typ
 import type { EntityOption } from "../components/MultiSelectDropdown";
 import apiRequest from "@/lib/api";
 import { useToasty } from "@/components/Toast";
-import useDebouncedCallback from "@/hooks/useDebouncedCallback";
-import { useAdminRouter } from "@/hooks/useAdminRouter";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import useDebouncedCallback from "../../../../../hooks/useDebouncedCallback";
+import { useAdminRouter } from "../../../../../hooks/useAdminRouter";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export async function fetchProductSearch(term: string): Promise<EntityOption[]> {
   const res = await apiRequest.get<{ data: any[] }>("/products", {

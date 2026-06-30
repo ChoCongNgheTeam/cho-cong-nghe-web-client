@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ChevronRight, Truck, Tag, Gift, LogIn, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../../hooks/useAuth";
 import Link from "next/link";
 
 interface OrderSummaryProps {

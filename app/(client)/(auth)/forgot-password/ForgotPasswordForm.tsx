@@ -4,7 +4,7 @@ import { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import apiRequest, { ApiError } from "@/lib/api";
 import { AuthContext } from "@/contexts/AuthContext";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");

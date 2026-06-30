@@ -10,7 +10,7 @@ import { getAllBlogs, deleteBlog, bulkDeleteBlogs, bulkUpdateBlogStatus, getBlog
 import { BLOG_STATUS_TABS, SORT_OPTIONS } from "./const";
 import { getBlogColumns } from "./components/TableBlogs";
 import { StatsCard } from "@/components/admin/StatsCard";
-import { formatNumber } from "@/helpers";
+import { formatNumber } from "../../../../helpers";
 import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
 
 export default function BlogsPage() {

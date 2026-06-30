@@ -35,7 +35,7 @@ import {
   DEFAULT_PAGINATION,
 } from "./_libs/getTrash";
 import { useToasty } from "@/components/Toast";
-import { formatDate } from "@/helpers";
+import { formatDate } from "../../../../helpers";
 
 // ─── Resource config ──────────────────────────────────────────────────────────
 

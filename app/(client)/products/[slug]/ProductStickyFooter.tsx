@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ProductDetail } from "@/lib/types/product";
 import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
 import { useToasty } from "@/components/Toast";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "../../../../hooks/useCart";
 import { useRouter } from "next/navigation";
 import QuantityControl from "@/components/shared/QuantityControl";
 

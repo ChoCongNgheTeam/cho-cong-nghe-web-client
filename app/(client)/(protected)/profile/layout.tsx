@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Package, Bell, Heart, MapPin, Shield, LogOut, User } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 
 const menuItems = [

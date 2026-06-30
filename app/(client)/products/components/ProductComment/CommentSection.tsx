@@ -5,7 +5,7 @@ import { AiOutlineLike } from "react-icons/ai";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import type { Comment, Reply, CommentUser } from "./ProductReview";
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
+import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
 import Image from "next/image";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useToasty } from "@/components/Toast";

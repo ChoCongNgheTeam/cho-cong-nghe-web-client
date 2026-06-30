@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAuth } from "../../../hooks/useAuth";
+import { useAdminHref } from "../../../hooks/useAdminHref";
 import { getDashboard } from "@/(admin)/admin/dashboard/_libs/dashboard";
 import { PeriodSelector } from "@/(admin)/admin/dashboard/components/PeriodSelector";
 import { RecentOrdersTable } from "@/(admin)/admin/dashboard/components/RecentOrdersTable";

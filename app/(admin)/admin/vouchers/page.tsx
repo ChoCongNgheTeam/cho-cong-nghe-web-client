@@ -11,7 +11,7 @@ import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from
 import { SORT_OPTIONS, STATUS_TABS } from "./const";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminHref } from "../../../../hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

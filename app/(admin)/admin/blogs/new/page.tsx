@@ -7,7 +7,7 @@ import { ArrowLeft, BookOpen } from "lucide-react";
 import { createBlog } from "../_libs/blogs";
 import { BlogForm, DEFAULT_FORM } from "../components/BlogForm";
 import { useToasty } from "@/components/Toast";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function NewBlogPage() {
   const router = useRouter();

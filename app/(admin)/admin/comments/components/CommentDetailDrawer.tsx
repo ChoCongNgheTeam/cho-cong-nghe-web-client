@@ -4,7 +4,7 @@ import { X, User, Calendar, Tag, Reply, CheckCircle, XCircle, Loader2, FileText 
 import { Comment } from "../comment.types";
 import { getComment, getCommentReplies, approveComment } from "../_libs/comments";
 import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../const";
-import { formatDate } from "@/helpers";
+import { formatDate } from "../../../../../helpers";
 
 interface CommentDetailDrawerProps {
   commentId: string | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../../hooks/useAuth";
 import { useToasty } from "@/components/Toast";
 import { Pencil, ChevronDown, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";

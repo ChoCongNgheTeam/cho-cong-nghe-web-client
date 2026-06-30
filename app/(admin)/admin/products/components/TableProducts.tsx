@@ -4,7 +4,7 @@ import Image from "next/image";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import type { ProductCard } from "../product.types";
 import { ProductStatusCell } from "./ProductStatusCell";
-import { formatVND, formatDate } from "@/helpers";
+import { formatVND, formatDate } from "../../../../../helpers";
 
 interface GetProductColumnsParams {
   page: number;

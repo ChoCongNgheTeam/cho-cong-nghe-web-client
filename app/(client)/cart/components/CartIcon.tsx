@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "../../../../hooks/useCart";
 
 export const CartIcon = () => {
   const { totalItemCount } = useCart();

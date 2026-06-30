@@ -4,7 +4,7 @@ import { AdminColumn } from "@/components/admin/AdminTables";
 import { Promotion } from "../promotion.types";
 import { PromotionStatusBadge, getPromotionStatus } from "./PromotionStatusBadge";
 import { ACTION_TYPE_LABELS, ACTION_TYPE_COLORS, TARGET_TYPE_LABELS } from "../const";
-import { formatDate, formatVND } from "@/helpers";
+import { formatDate, formatVND } from "../../../../../helpers";
 
 interface GetPromotionColumnsParams {
   page: number;

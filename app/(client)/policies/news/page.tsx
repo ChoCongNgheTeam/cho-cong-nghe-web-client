@@ -1,7 +1,7 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
-import { formatDate as formatLocaleDate } from "@/helpers";
-import { API_BASE_URL } from "@/config/api.config";
+import { formatDate as formatLocaleDate } from "../../../../helpers";
+import { API_BASE_URL } from "../../../../config/api.config";
 
 const BASE_URL = API_BASE_URL?.replace(/\/+$/, "") ?? "";
 

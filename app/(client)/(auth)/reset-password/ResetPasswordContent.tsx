@@ -5,7 +5,7 @@ import { useState, useEffect, useContext } from "react";
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
 
 type ErrorType = "token_expired" | "token_used" | "invalid_token" | "missing_token" | "server_error";
 

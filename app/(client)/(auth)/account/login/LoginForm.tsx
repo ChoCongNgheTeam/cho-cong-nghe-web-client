@@ -1,15 +1,15 @@
 "use client";
 import { useState, useCallback } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useToasty } from "@/components/Toast";
 import Link from "next/link";
 import { handleLoginSubmit } from "./LoginHandler";
 import { SocialLoginButtons } from "./SocialLoginButtons";
 import type { User as AuthUser } from "./types";
-import { useGoogleLogin } from "@/hooks/useGoogleLogin";
-import { useFacebookLogin } from "@/hooks/useFacebookLogin";
+import { useGoogleLogin } from "../../../../../hooks/useGoogleLogin";
+import { useFacebookLogin } from "../../../../../hooks/useFacebookLogin";
 import { validatePassword, validateUserName } from "../validators";
 
 interface LoginFormProps {

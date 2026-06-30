@@ -5,7 +5,7 @@ import { Review, ReviewStatus } from "../review.types";
 import { getReview, approveReview } from "../_libs/reviews";
 import { REVIEW_STATUS_CONFIG } from "../const";
 import { StarRating } from "./StarRating";
-import { formatDate, formatVND } from "@/helpers";
+import { formatDate, formatVND } from "../../../../../helpers";
 
 interface ReviewDetailDrawerProps {
   reviewId: string | null;

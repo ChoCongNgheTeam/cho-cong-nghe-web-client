@@ -7,7 +7,7 @@ import { ArrowLeft, Megaphone, Loader2 } from "lucide-react";
 import { createCampaign, addCampaignCategories } from "../_libs/campaigns";
 import { CampaignForm, DEFAULT_FORM, formToCreatePayload, type CampaignFormData } from "../components/CampaignForm";
 import { CampaignCategoryDraft, type DraftCampaignCategory } from "../components/CampaignCategoryDraft";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 import { getAllCategories } from "../../categories/_libs/categories";
 
 export default function NewCampaignPage() {

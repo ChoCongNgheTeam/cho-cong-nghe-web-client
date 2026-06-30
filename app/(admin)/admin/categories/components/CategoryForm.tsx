@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Loader2, ImagePlus, AlertCircle } from "lucide-react";
 import type { Category } from "../category.types";
 import { getAllCategories, createCategory, updateCategory } from "../_libs/categories";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

@@ -14,7 +14,7 @@ import { RevenueChart } from "./components/RevenueChart";
 import { PaymentMethodChart, CategoryChart } from "./components/BreakdownCharts";
 import { ConversionFunnelChart } from "./components/ConversionFunnelChart";
 import { TopCustomersTable } from "./components/TopCustomersTable";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function Skeleton() {
   return (

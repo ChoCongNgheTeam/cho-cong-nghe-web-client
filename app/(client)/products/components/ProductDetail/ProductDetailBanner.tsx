@@ -13,7 +13,7 @@ import { HighlightIcon } from "@/components/product/HighlightIcon";
 import { useIsMobile } from "@/(client)/compare/useIsMobile";
 import { getProductGallery } from "../../_lib";
 import type { GalleryImage } from "../../types";
-import { heroUrl, thumbnailUrl } from "@/helpers/resizeImage";
+import { heroUrl, thumbnailUrl } from "../../../../../helpers/resizeImage";
 import { PoliciesBlock } from "./ProductDetailCardRight";
 
 interface ProductDetailLeftProps {

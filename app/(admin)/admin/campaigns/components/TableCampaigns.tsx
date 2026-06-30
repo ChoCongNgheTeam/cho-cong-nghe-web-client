@@ -4,7 +4,7 @@ import { AdminColumn } from "@/components/admin/AdminTables";
 import { Campaign } from "../campaign.types";
 import { getCampaignStatus } from "./CampaignStatusBadge";
 import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../const";
-import { formatDate } from "@/helpers";
+import { formatDate } from "../../../../../helpers";
 
 interface GetCampaignColumnsParams {
   page: number;

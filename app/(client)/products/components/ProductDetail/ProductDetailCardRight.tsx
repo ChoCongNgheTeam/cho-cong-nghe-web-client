@@ -16,7 +16,7 @@ import { HighlightIcon } from "@/components/product/HighlightIcon";
 import type { ProductVariant, VariantOption, VariantOptionValue, ProductPrice } from "../../types";
 import type { Highlight } from "@/lib/types/product";
 import QuantityControl from "@/components/shared/QuantityControl";
-import { useCartActions } from "@/hooks/useCartActions";
+import { useCartActions } from "../../../../../hooks/useCartActions";
 
 const TYPE_LABELS: Record<string, string> = {
   color: "Màu sắc",

@@ -5,7 +5,7 @@ import { AiOutlineLike } from "react-icons/ai";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import UserAvatar from "@/components/ui/UserAvatar";
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
+import { formatRelativeDate } from "../../../../helpers/formatRelativeDate";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useToasty } from "@/components/Toast";
 import type { BlogComment, BlogCommentUser, BlogReply } from "./blog-comment.types";
@@ -307,9 +307,7 @@ export default function BlogCommentSection({ blogId, imageSrc, comments: initial
 
         <div className="min-w-0 flex-1">
           <h4 className="mb-1 text-base font-semibold text-primary opacity-80 sm:text-lg">Chia sẻ ý kiến của bạn về bài viết này</h4>
-          <p className="text-xs leading-relaxed text-primary opacity-60 sm:text-sm">
-            Bình luận của bạn giúp cuộc thảo luận rõ hơn. Nội dung sẽ hiển thị sau khi được kiểm duyệt.
-          </p>
+          <p className="text-xs leading-relaxed text-primary opacity-60 sm:text-sm">Bình luận của bạn giúp cuộc thảo luận rõ hơn. Nội dung sẽ hiển thị sau khi được kiểm duyệt.</p>
 
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <div className="relative min-w-0 flex-1">

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { formatVND } from "@/helpers";
+import { formatVND } from "../../../../../helpers";
 import type { Product } from "./ProductCard.types";
 
 interface ProductCardProps {

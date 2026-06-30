@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Order, OrderResponse } from "../_lib/order";
-import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
+import { useAuth } from "../../../../../hooks/useAuth";
+import { useCart } from "../../../../../hooks/useCart";
 import apiRequest from "@/lib/api";
 import { Popzy } from "@/components/Modal";
 import { tabs } from "./components/constants";

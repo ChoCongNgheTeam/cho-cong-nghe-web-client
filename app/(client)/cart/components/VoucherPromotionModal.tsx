@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { X, Tag, Check, Copy, Calendar, Users, Loader2 } from "lucide-react";
-import { useVoucher } from "@/hooks/useVoucher";
+import { useVoucher } from "../../../../hooks/useVoucher";
 
 interface CartItem {
   productId: string;

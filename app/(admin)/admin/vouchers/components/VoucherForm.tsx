@@ -6,7 +6,7 @@ import type { VoucherDetail, CreateVoucherPayload, UpdateVoucherPayload, TargetT
 import { TARGET_TYPE_LABELS } from "../const";
 import { SingleProductSearch, SingleSelectDropdown, type EntityOption } from "./MultiSelectDropdown";
 import { fetchProductSearch, fetchAllCategories, fetchAllBrands, searchUsers } from "../_libs/vouchers";
-import { utcToVNLocal, vnLocalToUtc } from "@/helpers/timezoneHelpers";
+import { utcToVNLocal, vnLocalToUtc } from "../../../../../helpers/timezoneHelpers";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

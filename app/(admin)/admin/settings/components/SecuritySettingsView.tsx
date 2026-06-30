@@ -5,7 +5,7 @@ import { ShieldCheck, Smartphone, Clock, MapPin, Check, X, AlertTriangle, LogOut
 import { useToasty } from "@/components/Toast";
 import apiRequest from "@/lib/api";
 import { getMyLoginHistory, getMySessions, revokeSession, revokeAllSessions, type LoginHistory, type ActiveSession } from "../_libs/audit";
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
+import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 "use client";
 import { Campaign } from "../campaign.types";
-import { parseAPIDate } from "@/helpers/timezoneHelpers";
+import { parseAPIDate } from "../../../../../helpers/timezoneHelpers";
 
 export function getCampaignStatus(campaign: Campaign): {
   label: string;

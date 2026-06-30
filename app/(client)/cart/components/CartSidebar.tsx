@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { X, ChevronRight } from "lucide-react";
-import { formatNumber, formatVND } from "@/helpers";
+import { formatNumber, formatVND } from "../../../../helpers";
 
 interface CartSidebarProps {
   isOpen: boolean;

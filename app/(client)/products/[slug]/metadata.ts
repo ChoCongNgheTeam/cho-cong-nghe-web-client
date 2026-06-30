@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/config/site.config";
+import { SITE_URL } from "../../../../config/site.config";
 import { ProductDetail } from "@/lib/types/product";
 import { getProductBySlug } from "../_lib/index";
 

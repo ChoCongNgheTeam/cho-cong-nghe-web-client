@@ -3,7 +3,7 @@ import { AdminColumn } from "@/components/admin/AdminTables";
 import { Comment } from "../comment.types";
 import { CommentApprovalBadge } from "./CommentApprovalBadge";
 import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../const";
-import { formatDate } from "@/helpers";
+import { formatDate } from "../../../../../helpers";
 import { TbMessageCircleCheck } from "react-icons/tb";
 
 interface GetCommentColumnsParams {

@@ -7,7 +7,7 @@ import { ArrowLeft, Ticket } from "lucide-react";
 import { createVoucher } from "../_libs/vouchers";
 import { VoucherForm, DEFAULT_FORM, formToCreatePayload, type VoucherFormData } from "../components/VoucherForm";
 import { useToasty } from "@/components/Toast";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function NewVoucherPage() {
   const router = useRouter();

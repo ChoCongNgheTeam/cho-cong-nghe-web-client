@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatDate } from "@/helpers/formatDate";
-import { formatViews } from "@/helpers/formatViews";
+import { formatDate } from "../../../../helpers/formatDate";
+import { formatViews } from "../../../../helpers/formatViews";
 import { getBlogTypeLabel } from "../_lib/blog-category";
 import { Blog } from "../_lib/blog.type";
 

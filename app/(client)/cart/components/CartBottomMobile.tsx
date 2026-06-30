@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { X, ChevronUp, ChevronDown, ChevronRight } from "lucide-react";
-import { formatNumber, formatVND } from "@/helpers";
+import { formatNumber, formatVND } from "../../../../helpers";
 
 interface BottomBarSummaryRow {
   label: string;

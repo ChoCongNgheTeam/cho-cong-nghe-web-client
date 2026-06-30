@@ -11,8 +11,8 @@ import { getAllPromotions, updatePromotion, deletePromotion } from "./_libs/prom
 import { SORT_OPTIONS } from "./const";
 import { getPromotionColumns } from "./components/TablePromotions";
 import { StatsCard } from "@/components/admin/StatsCard";
-import { useAdminRouter } from "@/hooks/useAdminRouter";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminRouter } from "../../../../hooks/useAdminRouter";
+import { useAdminHref } from "../../../../hooks/useAdminHref";
 
 // ─── Hook ──────────────────────────────────────────────────────────────────────
 
