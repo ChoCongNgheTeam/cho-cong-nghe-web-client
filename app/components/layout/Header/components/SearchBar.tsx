@@ -69,7 +69,9 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
 
   // Load trending 1 lần
   useEffect(() => {
-    fetchTrendingKeywords().then(setTrendingKws);
+    fetchTrendingKeywords()
+      .then(setTrendingKws)
+      .catch((error) => console.error("Failed to load trending keywords:", error));
   }, []);
 
   useEffect(() => {
@@ -98,11 +100,18 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
       setIsOpen(false);
       setIsFocused(false);
       setActiveIndex(-1);
-      const slug = await resolveSearchCategory(term);
-      if (slug) {
-        router.push(`/category/${slug}`);
-        return;
+
+      try {
+        const slug = await resolveSearchCategory(term);
+        if (slug) {
+          router.push(`/category/${slug}`);
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to resolve search category:", error);
+        // fallback: vẫn cho user search bình thường thay vì đứng im
       }
+
       router.push(`/search?q=${term}`);
     },
     [query, router],

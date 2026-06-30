@@ -108,10 +108,10 @@ export const TrendingBar = memo(({ className }: { className?: string }) => {
   const [marginLeft, setMarginLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchTrendingKeywords().then((kws) => {
-      setKeywords(kws);
-      setLoading(false);
-    });
+    fetchTrendingKeywords()
+      .then((kws) => setKeywords(kws))
+      .catch((error) => console.error("Failed to load trending keywords:", error))
+      .finally(() => setLoading(false));
   }, []);
 
   useLayoutEffect(() => {

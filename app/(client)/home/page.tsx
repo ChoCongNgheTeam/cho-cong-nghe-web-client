@@ -1,4 +1,4 @@
-import { getHomePageData } from "./_lib";
+import { getHomePageData } from "./_lib/home";
 import { HomeSliderSection, TopBanners, FeaturedCategories, FeaturedProducts, MiddleBanners, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
 import { CategoryProducts } from "./components/CategoryProducts";
 import { HeroBanner } from "./components/HeroBanner";

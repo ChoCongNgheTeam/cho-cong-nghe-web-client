@@ -27,9 +27,9 @@ const MobileCategorySheet = memo(({ isOpen, onClose }: MobileCategorySheetProps)
     if (categories.length > 0) return;
     fetchCategories()
       .then((data) => setCategories(data))
-      .catch(() => {})
+      .catch((error) => console.error("Failed to load categories:", error))
       .finally(() => setLoading(false));
-  }, []);
+  }, [categories.length]);
 
   // Lock body scroll + dispatch event cho ChatButton ẩn/hiện
   useEffect(() => {

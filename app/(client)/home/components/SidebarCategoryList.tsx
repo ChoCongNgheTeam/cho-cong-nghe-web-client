@@ -85,9 +85,15 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
       if (childrenCache[cat.id] !== undefined) return;
       if (!cat._count?.children) return;
       setLoadingId(cat.id);
-      const children = await fetchCategoryChildren(cat.id);
-      setChildrenCache((prev) => ({ ...prev, [cat.id]: children }));
-      setLoadingId(null);
+      try {
+        const children = await fetchCategoryChildren(cat.id);
+        setChildrenCache((prev) => ({ ...prev, [cat.id]: children }));
+      } catch (error) {
+        console.error("Failed to load category children:", error);
+        // có thể setChildrenCache với [] để tránh gọi lại liên tục, tuỳ ý
+      } finally {
+        setLoadingId(null);
+      }
     },
     [childrenCache],
   );
