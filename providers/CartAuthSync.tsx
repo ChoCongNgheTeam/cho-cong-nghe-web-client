@@ -26,7 +26,7 @@ export function CartAuthSync() {
     syncLocalToDB().then((n) => {
       if (n > 0) console.info(`[Cart] synced ${n} guest items`);
     });
-  }, [auth?.loading, auth?.isAuthenticated]);
+  }, [auth?.loading, auth?.isAuthenticated, setAuth, refetchCart, syncLocalToDB]);
 
   return null;
 }

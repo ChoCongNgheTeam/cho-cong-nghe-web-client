@@ -7,7 +7,7 @@ import { createBrand, deleteBrand, getAllBrands, updateBrand } from "./_lib/bran
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { getBrandColumns } from "./components/TableBrands";
-import { usePopzy } from "@/components/modal/usePopzy";
+import { usePopzy } from "@/hooks/usePopzy";
 import { Popzy } from "@/components/modal";
 import { StatsCard } from "@/components/admin/StatsCard";
 import Image from "next/image";

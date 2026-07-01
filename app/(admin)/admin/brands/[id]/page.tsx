@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Pencil, Trash2, Upload, X, ImageOff, Package, Star, CheckCircle2, EyeOff, Loader2 } from "lucide-react";
 import { getBrand, updateBrand, deleteBrand } from "../_lib/brands";
-import { usePopzy } from "@/components/modal/usePopzy";
+import { usePopzy } from "@/hooks/usePopzy";
 import { Popzy } from "@/components/modal";
 import type { Brand } from "../brand.types";
 import { formatDate } from "../../../../../helpers";

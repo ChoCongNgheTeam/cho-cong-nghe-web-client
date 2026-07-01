@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 import { getAllMedia, createMedia, updateMedia, deleteMedia, reorderMedia, toggleMediaActive } from "./_lib/media.api";
 import { Media, MediaType, MediaPosition, MEDIA_TYPES, MEDIA_POSITIONS, positionLabel } from "./media.types";
-import { usePopzy } from "@/components/modal/usePopzy";
+import { usePopzy } from "@/hooks/usePopzy";
 import { useToasty } from "@/components/toast";
 import { Popzy } from "@/components/modal";
 

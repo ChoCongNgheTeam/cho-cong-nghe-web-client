@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { VoucherCard } from "../voucher.types";
 import { getVoucherStatus } from "./VoucherStatusBadge";
-import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../const";
+import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../_lib/constants";
 import { formatDate, formatVND } from "../../../../../helpers";
 
 interface GetVoucherColumnsParams {

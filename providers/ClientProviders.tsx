@@ -1,13 +1,13 @@
 "use client";
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ToastyProvider } from "../components/toast";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartAuthSync } from "@/providers/CartAuthSync";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { Analytics } from "@vercel/analytics/next";
-import { useFcmToken } from "../hooks/useFcmToken";
+import { ToastyProvider } from "@/components/toast";
+import { useFcmToken } from "@/hooks/useFcmToken";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import SettingsPrefetcher from "@/components/general/SettingsPrefetcher";
 import DynamicFavicon from "@/components/general/DynamicFavicon";

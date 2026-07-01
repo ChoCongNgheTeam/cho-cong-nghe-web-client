@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Users, Search, X, ChevronLeft, ChevronRight, Trash2, Plus, Loader2, UserCheck } from "lucide-react";
 import { getVoucherUsers, revokeVoucherUser, assignVoucherToUsers, searchUsers } from "../_lib/vouchers";
 import { VoucherUserItem, GetVoucherUsersParams, UserResult } from "../voucher.types";
-import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../const";
+import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../_lib/constants";
 import { formatDate, formatVND } from "../../../../../helpers";
 import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";

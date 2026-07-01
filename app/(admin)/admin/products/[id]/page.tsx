@@ -26,7 +26,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { getProduct, softDeleteProduct, restoreProduct } from "../_lib/products";
-import { usePopzy } from "@/components/modal/usePopzy";
+import { usePopzy } from "@/hooks/usePopzy";
 import { Popzy } from "@/components/modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
 import { formatDate, formatVND, formatNumber } from "../../../../../helpers";

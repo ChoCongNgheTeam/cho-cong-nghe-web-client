@@ -8,7 +8,7 @@ import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
 import type { VoucherCard } from "./voucher.types";
 import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_lib/vouchers";
-import { SORT_OPTIONS, STATUS_TABS } from "./const";
+import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { useAdminHref } from "../../../../hooks/useAdminHref";

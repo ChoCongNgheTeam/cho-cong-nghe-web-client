@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, FileText, Search, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { getVoucherUsages } from "../_lib/vouchers";
 import { VoucherUsageItem, GetVoucherUsagesParams } from "../voucher.types";
-import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../const";
+import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../_lib/constants";
 import { formatDate, formatVND } from "../../../../../helpers";
 import { useToasty } from "@/components/toast";
 

@@ -8,7 +8,7 @@ import { Popzy } from "@/components/modal";
 import { getVoucher, updateVoucher, deleteVoucher } from "../_lib/vouchers";
 import { VoucherForm, voucherToForm, formToUpdatePayload, type VoucherFormData } from "../components/VoucherForm";
 import { VoucherStatusBadge } from "../components/VoucherStatusBadge";
-import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS, TARGET_TYPE_LABELS } from "../const";
+import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS, TARGET_TYPE_LABELS } from "../_lib/constants";
 import type { VoucherDetail } from "../voucher.types";
 import { formatDate, formatVND } from "../../../../../helpers";
 import { useToasty } from "@/components/toast";

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2, AlertCircle, Plus, X, Info, Users, Search, UserCheck, Lock } from "lucide-react";
 import type { VoucherDetail, CreateVoucherPayload, UpdateVoucherPayload, TargetType, UserResult } from "../voucher.types";
-import { TARGET_TYPE_LABELS } from "../const";
+import { TARGET_TYPE_LABELS } from "../_lib/constants";
 import { SingleProductSearch, SingleSelectDropdown, type EntityOption } from "./MultiSelectDropdown";
 import { fetchProductSearch, fetchAllCategories, fetchAllBrands, searchUsers } from "../_lib/vouchers";
 import { utcToVNLocal, vnLocalToUtc } from "../../../../../helpers/timezoneHelpers";
