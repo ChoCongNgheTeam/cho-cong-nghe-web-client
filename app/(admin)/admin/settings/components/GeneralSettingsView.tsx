@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Building2, Phone, Mail, ShieldAlert, Image as ImageIcon, X, Upload, Loader2, Save } from "lucide-react";
-import { useToasty } from "@/components/Toast";
-import { getSettings, updateSettingsFormData, parseSettings } from "../_libs/settings";
-import type { GeneralSettings } from "../_libs/settings";
+import { useToasty } from "@/components/toast";
+import { getSettings, updateSettingsFormData, parseSettings } from "../_lib/settings";
+import type { GeneralSettings } from "../_lib/settings";
 
 const inputCls =
   "w-full rounded-xl border border-neutral bg-neutral-light px-3.5 py-2.5 text-sm text-primary placeholder:text-neutral-dark focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors";

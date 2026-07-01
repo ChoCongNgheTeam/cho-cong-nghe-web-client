@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { X, User, Calendar, Tag, Reply, CheckCircle, XCircle, Loader2, FileText } from "lucide-react";
 import { Comment } from "../comment.types";
-import { getComment, getCommentReplies, approveComment } from "../_libs/comments";
-import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../const";
+import { getComment, getCommentReplies, approveComment } from "../_lib/comments";
+import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../_lib/constants";
 import { formatDate } from "../../../../../helpers";
 
 interface CommentDetailDrawerProps {

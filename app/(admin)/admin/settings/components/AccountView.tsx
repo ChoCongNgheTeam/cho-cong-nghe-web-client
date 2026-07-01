@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Camera, Check, ChevronDown, Eye, EyeOff, KeyRound, Loader2, LogOut, MapPin, Pencil, ShieldCheck, Smartphone, Trash2, UserCircle, X, AlertTriangle, Clock } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";
 
 /* ─── types ─── */

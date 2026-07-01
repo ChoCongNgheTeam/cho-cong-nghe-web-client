@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Loader2, AlertCircle, ImageIcon } from "lucide-react";
 import type { BlogDetail, BlogStatus, BlogType } from "../blog.types";
-import { BLOG_TYPE_LABELS } from "../const";
+import { BLOG_TYPE_LABELS } from "../_lib/constants";
 import { CKEditorWrapper } from "./CKEditorWrapper";
 import { AiContentPanel } from "@/(admin)/admin/ai-content/AiContentPanel";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

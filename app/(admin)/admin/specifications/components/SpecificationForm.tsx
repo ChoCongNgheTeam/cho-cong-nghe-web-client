@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import type { Specification, CreateSpecificationPayload, UpdateSpecificationPayload } from "../specification.types";
-import { FILTER_TYPE_LABELS } from "../const";
+import { FILTER_TYPE_LABELS } from "../_lib/constants";
 
 export interface SpecificationFormData {
   key: string;

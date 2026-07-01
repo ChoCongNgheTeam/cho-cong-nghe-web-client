@@ -5,14 +5,14 @@ import type { Metadata } from "next";
 import ProductFilter from "../components/ProductFilter";
 import ProductGrid from "../components/ProductGrid";
 import ProductGridSkeleton from "../components/ProductGridSkeleton";
-import { Slidezy } from "@/components/Slider";
+import { Slidezy } from "@/components/slider";
 import { PageProps } from "@/components/product/types";
 import { fetchProducts, fetchFilters, fetchCategory, fetchBrandsByCategory, fetchBannersByCategory, isRootCategory } from "../_lib";
-import { slugToTitle } from "../components/slug-to-title";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import { slugToTitle } from "../../../../lib/utils/slug-to-title";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import { buildCategoryMetadata } from "./build-metadata";
 import { BrandApiItem, MediaApiItem } from "../types";
-import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;

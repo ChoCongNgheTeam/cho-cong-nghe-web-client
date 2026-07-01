@@ -1,5 +1,5 @@
 "use client";
-import { BLOG_STATUS_LABELS, BLOG_STATUS_COLORS } from "../const";
+import { BLOG_STATUS_LABELS, BLOG_STATUS_COLORS } from "../_lib/constants";
 import type { BlogStatus } from "../blog.types";
 
 export function BlogStatusBadge({ status }: { status: BlogStatus }) {

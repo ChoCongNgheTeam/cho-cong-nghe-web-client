@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react";
 import { Search, X, Plus, Loader2 } from "lucide-react";
 import type { Specification } from "../../specifications/specification.types";
-import type { CategorySpecItem } from "../category_specification.types";
-import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS } from "../../specifications/const";
+import type { CategorySpecItem } from "../category-specification.types";
+import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS } from "../../specifications/_lib/constants";
 
 interface AddSpecModalProps {
   allSpecs: Specification[];

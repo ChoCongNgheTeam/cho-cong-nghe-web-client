@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { X, User, Calendar, Package, CheckCircle, XCircle, Clock, Loader2 } from "lucide-react";
 import { Review, ReviewStatus } from "../review.types";
-import { getReview, approveReview } from "../_libs/reviews";
-import { REVIEW_STATUS_CONFIG } from "../const";
+import { getReview, approveReview } from "../_lib/reviews";
+import { REVIEW_STATUS_CONFIG } from "../_lib/constants";
 import { StarRating } from "./StarRating";
 import { formatDate, formatVND } from "../../../../../helpers";
 

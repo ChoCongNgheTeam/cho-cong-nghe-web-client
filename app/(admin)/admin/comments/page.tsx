@@ -2,19 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  MessageSquare, Clock, CheckCircle, Search, SlidersHorizontal,
-  ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2,
-} from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
-import {
-  getAllComments, approveComment, bulkApproveComments,
-  deleteComment, getComment,
-} from "./_libs/comments";
+import { getAllComments, approveComment, bulkApproveComments, deleteComment, getComment } from "./_lib/comments";
 import { getCommentColumns } from "./components/TableComments";
 import { CommentDetailDrawer } from "./components/CommentDetailDrawer";
 import { Comment, CommentsResponse, GetCommentsParams } from "./comment.types";
-import { APPROVAL_TABS, TARGET_TYPE_LABELS } from "./const";
+import { APPROVAL_TABS, TARGET_TYPE_LABELS } from "./_lib/constants";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { ReplyCommentModal } from "./components/ReplyCommentModal";
 
@@ -186,11 +180,7 @@ export default function CommentsAdminPage() {
 
   const toggleAll = () => {
     if (!data) return;
-    setSelected(
-      selected.size === data.data.length
-        ? new Set()
-        : new Set(data.data.map((c) => c.id))
-    );
+    setSelected(selected.size === data.data.length ? new Set() : new Set(data.data.map((c) => c.id)));
   };
 
   // ─── Actions ─────────────────────────────────────────────────────────────
@@ -199,12 +189,7 @@ export default function CommentsAdminPage() {
     fetchComments();
   };
 
-  const handleApprovalChange = (id: string, isApproved: boolean) =>
-    setData((prev) =>
-      prev
-        ? { ...prev, data: prev.data.map((c) => (c.id === id ? { ...c, isApproved } : c)) }
-        : prev
-    );
+  const handleApprovalChange = (id: string, isApproved: boolean) => setData((prev) => (prev ? { ...prev, data: prev.data.map((c) => (c.id === id ? { ...c, isApproved } : c)) } : prev));
 
   const handleBulkApprove = async () => {
     if (!selected.size) return;
@@ -242,8 +227,7 @@ export default function CommentsAdminPage() {
     onReplyClick: (id) => setReplyTargetId(id),
   });
 
-  const allSelected =
-    !!data && data.data.length > 0 && selected.size === data.data.length;
+  const allSelected = !!data && data.data.length > 0 && selected.size === data.data.length;
 
   // ─── rowClassName: inject highlight + gắn ref qua callback ref ───────────
   // AdminTable dùng rowClassName(row, idx) => string
@@ -253,10 +237,7 @@ export default function CommentsAdminPage() {
   // bằng cách thêm 1 cột ẩn để gắn ref — KHÔNG cần sửa AdminTable.
   // Ta dùng rowClassName để style, còn scroll thì dùng document.getElementById.
 
-  const rowClassName = (row: Comment) =>
-    row.id === highlightId
-      ? "ring-2 ring-inset ring-accent bg-accent/10 !hover:bg-accent/10"
-      : "";
+  const rowClassName = (row: Comment) => (row.id === highlightId ? "ring-2 ring-inset ring-accent bg-accent/10 !hover:bg-accent/10" : "");
 
   // Gán id cho row để scroll bằng getElementById (không cần sửa AdminTable)
   // Trick: thêm 1 cột width-0 render 1 element có id
@@ -300,21 +281,9 @@ export default function CommentsAdminPage() {
       <div className="px-6 space-y-4 pb-8">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <StatsCard
-            label="Tổng bình luận" value={total} sub="Tất cả bình luận"
-            icon={<MessageSquare size={16} />}
-            valueClassName="text-blue-600" iconClassName="text-blue-600"
-          />
-          <StatsCard
-            label="Đã duyệt" value={approved} sub="Trên trang hiện tại"
-            icon={<CheckCircle size={16} />}
-            valueClassName="text-emerald-600" iconClassName="text-emerald-600"
-          />
-          <StatsCard
-            label="Chờ duyệt" value={pending} sub="Trên trang hiện tại"
-            icon={<Clock size={16} />}
-            valueClassName="text-orange-500" iconClassName="text-orange-500"
-          />
+          <StatsCard label="Tổng bình luận" value={total} sub="Tất cả bình luận" icon={<MessageSquare size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
+          <StatsCard label="Đã duyệt" value={approved} sub="Trên trang hiện tại" icon={<CheckCircle size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
+          <StatsCard label="Chờ duyệt" value={pending} sub="Trên trang hiện tại" icon={<Clock size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
         </div>
 
         {/* Tabs */}
@@ -324,9 +293,7 @@ export default function CommentsAdminPage() {
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={`px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
-                activeTab === tab.value
-                  ? "border-accent text-accent"
-                  : "border-transparent text-primary hover:text-primary"
+                activeTab === tab.value ? "border-accent text-accent" : "border-transparent text-primary hover:text-primary"
               }`}
             >
               {tab.label}
@@ -337,10 +304,7 @@ export default function CommentsAdminPage() {
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search
-              size={13}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
-            />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
@@ -356,16 +320,16 @@ export default function CommentsAdminPage() {
           >
             <option value="">Tất cả loại</option>
             {Object.entries(TARGET_TYPE_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
+              <option key={val} value={val}>
+                {label}
+              </option>
             ))}
           </select>
 
           <button
             onClick={() => setShowFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[13px] transition-colors cursor-pointer ${
-              showFilters || dateFrom || dateTo
-                ? "border-accent text-accent bg-accent/5"
-                : "border-neutral text-primary hover:border-accent hover:text-accent"
+              showFilters || dateFrom || dateTo ? "border-accent text-accent bg-accent/5" : "border-neutral text-primary hover:border-accent hover:text-accent"
             }`}
           >
             <SlidersHorizontal size={13} />
@@ -386,28 +350,29 @@ export default function CommentsAdminPage() {
         {showFilters && (
           <div className="flex items-center gap-3 flex-wrap bg-white border border-neutral rounded-xl px-4 py-3">
             <div className="flex items-center gap-2">
-              <label className="text-[12px] text-primary font-medium whitespace-nowrap">
-                Từ ngày
-              </label>
+              <label className="text-[12px] text-primary font-medium whitespace-nowrap">Từ ngày</label>
               <input
-                type="date" value={dateFrom}
+                type="date"
+                value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="px-2.5 py-1.5 text-[13px] border border-neutral rounded-lg outline-none focus:border-accent transition-colors"
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-[12px] text-primary font-medium whitespace-nowrap">
-                Đến ngày
-              </label>
+              <label className="text-[12px] text-primary font-medium whitespace-nowrap">Đến ngày</label>
               <input
-                type="date" value={dateTo}
+                type="date"
+                value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="px-2.5 py-1.5 text-[13px] border border-neutral rounded-lg outline-none focus:border-accent transition-colors"
               />
             </div>
             {(dateFrom || dateTo) && (
               <button
-                onClick={() => { setDateFrom(""); setDateTo(""); }}
+                onClick={() => {
+                  setDateFrom("");
+                  setDateTo("");
+                }}
                 className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer"
               >
                 <X size={12} /> Xóa lọc
@@ -418,24 +383,17 @@ export default function CommentsAdminPage() {
         {/* Bulk action bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-accent/5 border border-accent/20 rounded-xl">
-            <span className="text-[13px] text-accent font-medium">
-              Đã chọn {selected.size} bình luận
-            </span>
+            <span className="text-[13px] text-accent font-medium">Đã chọn {selected.size} bình luận</span>
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={handleBulkApprove}
                 disabled={bulkLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[12px] font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {bulkLoading
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <CheckCheck size={12} />}
+                {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={12} />}
                 Duyệt tất cả
               </button>
-              <button
-                onClick={() => setSelected(new Set())}
-                className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer"
-              >
+              <button onClick={() => setSelected(new Set())} className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer">
                 <X size={12} /> Bỏ chọn
               </button>
             </div>
@@ -446,17 +404,8 @@ export default function CommentsAdminPage() {
         <div className="rounded-xl overflow-hidden">
           {data && data.data.length > 0 && (
             <div className="px-4 py-2.5 flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={toggleAll}
-                className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-              />
-              <span className="text-[12px] text-primary">
-                {allSelected
-                  ? "Bỏ chọn tất cả"
-                  : `Chọn tất cả ${data.data.length} bình luận trên trang`}
-              </span>
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-3.5 h-3.5 rounded accent-accent cursor-pointer" />
+              <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} bình luận trên trang`}</span>
             </div>
           )}
 
@@ -493,9 +442,7 @@ export default function CommentsAdminPage() {
                     key={pg}
                     onClick={() => setPage(pg)}
                     className={`w-8 h-8 text-[13px] rounded-lg border transition-colors cursor-pointer ${
-                      page === pg
-                        ? "border-accent bg-accent text-white"
-                        : "border-neutral text-primary hover:border-accent hover:text-accent"
+                      page === pg ? "border-accent bg-accent text-white" : "border-neutral text-primary hover:border-accent hover:text-accent"
                     }`}
                   >
                     {pg}
@@ -516,17 +463,9 @@ export default function CommentsAdminPage() {
       </div>
 
       {/* Drawers & Modals */}
-      <CommentDetailDrawer
-        commentId={openDrawerId}
-        onClose={() => setOpenDrawerId(null)}
-        onApprovalChange={handleApprovalChange}
-      />
+      <CommentDetailDrawer commentId={openDrawerId} onClose={() => setOpenDrawerId(null)} onApprovalChange={handleApprovalChange} />
 
-      <ReplyCommentModal
-        commentId={replyTargetId}
-        onClose={() => setReplyTargetId(null)}
-        onReplied={fetchComments}
-      />
+      <ReplyCommentModal commentId={replyTargetId} onClose={() => setReplyTargetId(null)} onReplied={fetchComments} />
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -540,9 +479,7 @@ export default function CommentsAdminPage() {
                 <p className="text-[12px] text-primary">Hành động này không thể hoàn tác</p>
               </div>
             </div>
-            <p className="text-[13px] text-primary bg-neutral-light rounded-xl px-3 py-2.5 line-clamp-3">
-              "{deleteTarget.content}"
-            </p>
+            <p className="text-[13px] text-primary bg-neutral-light rounded-xl px-3 py-2.5 line-clamp-3">"{deleteTarget.content}"</p>
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={() => setDeleteTarget(null)}
@@ -555,9 +492,7 @@ export default function CommentsAdminPage() {
                 disabled={deleting}
                 className="flex items-center gap-1.5 px-4 py-2 text-[13px] bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {deleting
-                  ? <Loader2 size={13} className="animate-spin" />
-                  : <Trash2 size={13} />}
+                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                 Xóa
               </button>
             </div>

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Package } from "lucide-react";
-import { getProduct } from "../../_libs/products";
-import ProductForm from "../../components/product-form";
+import { getProduct } from "../../_lib/products";
+import ProductForm from "../../components/ProductForm";
 import type { ProductDetail } from "../../product.types";
 
 export default function EditProductPage() {

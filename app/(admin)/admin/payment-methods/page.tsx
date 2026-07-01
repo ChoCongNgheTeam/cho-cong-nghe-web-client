@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { CreditCard, Plus, RefreshCw, Pencil, Loader2, AlertCircle, CheckCircle2, EyeOff, CheckCircle, PauseCircle, Infinity } from "lucide-react";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import { formatDate } from "../../../../helpers";
 import type { PaymentMethod, CreatePaymentMethodPayload, UpdatePaymentMethodPayload } from "./payment-method.types";
-import { getAllPaymentMethods, createPaymentMethod, updatePaymentMethod } from "./_libs/payment-methods";
+import { getAllPaymentMethods, createPaymentMethod, updatePaymentMethod } from "./_lib/payment-methods";
 import { StatsCard } from "@/components/admin/StatsCard";
 
 // Các phương thức không phụ thuộc tích hợp bên thứ 3 → luôn khả dụng

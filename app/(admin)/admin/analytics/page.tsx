@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, BarChart3 } from "lucide-react";
 
-import { getAnalytics } from "./_libs/analytics";
+import { getAnalytics } from "./_lib/analytics";
 import type { TimeGranularity } from "./analytics.types";
 import { DateRangePicker, GranularitySelector, resolvePreset, autoGranularity, getValidGranularities, type QuickRange } from "./components/DateRangePicker";
 import { SummaryKPIs } from "./components/SummaryKPIs";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { slugToTitle } from "../components/slug-to-title";
+import { slugToTitle } from "../../../../lib/utils/slug-to-title";
 
 const SITE_NAME = "Cho Cong Nghe";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;

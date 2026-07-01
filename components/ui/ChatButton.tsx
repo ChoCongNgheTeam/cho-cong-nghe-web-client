@@ -4,7 +4,7 @@ import { X, Send, User, RotateCcw, Maximize2, Minimize2, CornerDownLeft, Shoppin
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useCart } from "../../hooks/useCart";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { ChatBubble } from "./ChatBubble";
 
 interface Message {

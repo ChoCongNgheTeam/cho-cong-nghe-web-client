@@ -4,14 +4,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Pencil, Loader2, XCircle, Trash2, Eye, Clock, BarChart2, User, Calendar } from "lucide-react";
-import { Popzy } from "@/components/Modal";
-import { getBlog, updateBlog, deleteBlog } from "../_libs/blogs";
+import { Popzy } from "@/components/modal";
+import { getBlog, updateBlog, deleteBlog } from "../_lib/blogs";
 import { BlogForm, blogToForm } from "../components/BlogForm";
 import { BlogStatusBadge } from "../components/BlogStatusBadge";
 import type { BlogDetail } from "../blog.types";
-import { formatDate, formatNumber } from "@/helpers";
-import { useToasty } from "@/components/Toast";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { formatDate, formatNumber } from "../../../../../helpers";
+import { useToasty } from "@/components/toast";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function BlogDetailPage() {
   const router = useRouter();

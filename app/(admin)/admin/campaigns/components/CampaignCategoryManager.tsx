@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Plus, Trash2, GripVertical, ImageIcon, X, Loader2, ChevronDown, ChevronUp, Check, AlertCircle, Search } from "lucide-react";
-import { addCampaignCategories, removeCampaignCategory, updateCampaignCategory, reorderCampaignCategories } from "../_libs/campaigns";
+import { addCampaignCategories, removeCampaignCategory, updateCampaignCategory, reorderCampaignCategories } from "../_lib/campaigns";
 import type { CampaignCategory } from "../campaign.types";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

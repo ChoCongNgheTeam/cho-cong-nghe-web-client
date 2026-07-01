@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Slidezy } from "@/components/Slider";
-import { CATEGORY_ICONS } from "@/components/layout/Header/_libs/constants";
+import { Slidezy } from "@/components/slider";
+import { CATEGORY_ICONS } from "@/lib/header/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

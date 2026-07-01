@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { Campaign } from "../campaign.types";
 import { getCampaignStatus } from "./CampaignStatusBadge";
-import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../const";
+import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../_lib/constants";
 import { formatDate } from "../../../../../helpers";
 
 interface GetCampaignColumnsParams {

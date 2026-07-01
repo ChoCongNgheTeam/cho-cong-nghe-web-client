@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { BlogCard } from "../blog.types";
 import { BlogStatusBadge } from "./BlogStatusBadge";
-import { BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../const";
+import { BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../_lib/constants";
 import type { BlogType } from "../blog.types";
 import { formatDate, formatNumber } from "../../../../../helpers";
 

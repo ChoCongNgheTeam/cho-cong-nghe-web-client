@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, LayoutDashboard } from "lucide-react";
 
-import { getDashboard } from "./_libs/dashboard";
+import { getDashboard } from "./_lib/dashboard";
 import type { DashboardPeriod } from "./dashboard.types";
 
 import { PeriodSelector } from "./components/PeriodSelector";

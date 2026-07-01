@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, BookOpen } from "lucide-react";
-import { createBlog } from "../_libs/blogs";
+import { createBlog } from "../_lib/blogs";
 import { BlogForm, DEFAULT_FORM } from "../components/BlogForm";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function NewBlogPage() {

@@ -3,7 +3,7 @@ import apiRequest from "@/lib/api";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
 import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
 import { NewVariantData } from "@/store/cart/cart.types";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { useAuth } from "./useAuth";
 import { useCart } from "./useCart";
 

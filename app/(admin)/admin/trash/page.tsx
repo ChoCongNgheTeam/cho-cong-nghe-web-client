@@ -33,8 +33,8 @@ import {
   type TrashResource,
   type TrashItem,
   DEFAULT_PAGINATION,
-} from "./_libs/getTrash";
-import { useToasty } from "@/components/Toast";
+} from "./_lib/getTrash";
+import { useToasty } from "@/components/toast";
 import { formatDate } from "../../../../helpers";
 
 // ─── Resource config ──────────────────────────────────────────────────────────

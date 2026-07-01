@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
-import { formatDate } from "@/helpers";
+import { useAuth } from "../../../../../hooks/useAuth";
+import { formatDate } from "../../../../../helpers";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
 
@@ -11,24 +11,13 @@ export default function ProfilePage() {
   if (loading) return <div className="p-4 text-primary">Đang tải...</div>;
   if (!user) return <div className="p-4 text-primary">Bạn chưa đăng nhập</div>;
 
-  const genderLabel =
-    user.gender === "MALE"
-      ? "Nam"
-      : user.gender === "FEMALE"
-        ? "Nữ"
-        : user.gender === "OTHER"
-          ? "Khác"
-          : "Chưa cập nhật";
+  const genderLabel = user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : user.gender === "OTHER" ? "Khác" : "Chưa cập nhật";
 
-  const dobLabel = user.dateOfBirth
-    ? formatDate(user.dateOfBirth)
-    : "Chưa có";
+  const dobLabel = user.dateOfBirth ? formatDate(user.dateOfBirth) : "Chưa có";
 
   return (
     <div>
-      <h1 className="text-base sm:text-xl font-bold text-primary mb-3 sm:mb-4 mt-1 sm:mt-2">
-        Thông tin cá nhân
-      </h1>
+      <h1 className="text-base sm:text-xl font-bold text-primary mb-3 sm:mb-4 mt-1 sm:mt-2">Thông tin cá nhân</h1>
 
       <div className="px-3 sm:px-6 py-6 sm:py-10 bg-neutral-light rounded-2xl">
         <div className="w-full max-w-md mx-auto">
@@ -38,19 +27,13 @@ export default function ProfilePage() {
               {/* Decorative ring */}
               <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-accent/30 to-primary/20 blur-sm" />
               <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-neutral-light p-1 shadow-lg ring-2 ring-neutral">
-                <img
-                  src={user.avatarImage || "/images/avatar.png"}
-                  alt="Avatar"
-                  className="w-full h-full rounded-full object-cover"
-                />
+                <img src={user.avatarImage || "/images/avatar.png"} alt="Avatar" className="w-full h-full rounded-full object-cover" />
               </div>
             </div>
           </div>
 
           {/* Name below avatar on mobile */}
-          <p className="text-center font-semibold text-primary text-sm sm:hidden mb-5">
-            {user.fullName || "Người dùng"}
-          </p>
+          <p className="text-center font-semibold text-primary text-sm sm:hidden mb-5">{user.fullName || "Người dùng"}</p>
 
           {/* Info rows */}
           <div className="space-y-0 divide-y divide-neutral">
@@ -91,12 +74,8 @@ export default function ProfilePage() {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 sm:py-3.5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4">
-      <span className="text-xs sm:text-sm text-primary opacity-60 sm:opacity-100 shrink-0">
-        {label}
-      </span>
-      <span className="text-sm sm:text-sm text-primary font-medium sm:text-right break-all">
-        {value}
-      </span>
+      <span className="text-xs sm:text-sm text-primary opacity-60 sm:opacity-100 shrink-0">{label}</span>
+      <span className="text-sm sm:text-sm text-primary font-medium sm:text-right break-all">{value}</span>
     </div>
   );
 }

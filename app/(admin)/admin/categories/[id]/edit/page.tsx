@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Loader2, AlertCircle } from "lucide-react";
 import type { CategoryDetail } from "../../category.types";
-import { getCategoryDetail } from "../../_libs/categories";
+import { getCategoryDetail } from "../../_lib/categories";
 import CategoryForm from "../../components/CategoryForm";
 
 export default function EditCategoryPage() {

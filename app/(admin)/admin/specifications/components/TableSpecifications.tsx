@@ -1,7 +1,7 @@
 import { Pencil, ChevronDown } from "lucide-react";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { Specification } from "../specification.types";
-import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS } from "../const";
+import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS } from "../_lib/constants";
 import { formatDate } from "../../../../../helpers";
 
 interface GetSpecificationColumnsParams {

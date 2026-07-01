@@ -2,7 +2,7 @@ import { Eye, Trash2, CheckCircle, XCircle, Reply, MessageCircle, ExternalLink }
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { Comment } from "../comment.types";
 import { CommentApprovalBadge } from "./CommentApprovalBadge";
-import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../const";
+import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../_lib/constants";
 import { formatDate } from "../../../../../helpers";
 import { TbMessageCircleCheck } from "react-icons/tb";
 

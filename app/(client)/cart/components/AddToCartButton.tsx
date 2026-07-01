@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ShoppingCart, Loader2, Plus } from "lucide-react";
 import { AddToCartMeta } from "@/store/cart/cart.types";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { useCartActions } from "../../../../hooks/useCartActions";
 
 interface AddToCartButtonProps {

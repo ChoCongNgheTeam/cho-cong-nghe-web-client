@@ -3,10 +3,10 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Search, RefreshCw, Link2, Loader2, XCircle, X } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { StatsCard } from "@/components/admin/StatsCard";
 import type { CategoryWithAttributes, AttributeSimple } from "./category-variant-attribute.types";
-import { getAllCategoryAttributes, getAttributeOptions, updateCategoryAttributes } from "./_libs/category-variant-attributes";
+import { getAllCategoryAttributes, getAttributeOptions, updateCategoryAttributes } from "./_lib/category-variant-attributes";
 import { getCategoryAttributeColumns } from "./components/TableCategoryAttributes";
 import { CategoryAttributeForm } from "./components/CategoryAttributeForm";
 import { toast } from "sonner";

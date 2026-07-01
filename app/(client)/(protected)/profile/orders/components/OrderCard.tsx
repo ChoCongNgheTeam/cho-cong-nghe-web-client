@@ -11,7 +11,7 @@ import ReorderButton from "./ReorderButton";
 import ReviewModal from "./ReviewModal";
 import ReviewSuccessModal from "@/(client)/products/components/ProductComment/ReviewSuccessModal";
 import Link from "next/link";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { formatDate, formatVND } from "../../../../../../helpers";
 
 interface OrderCardProps {

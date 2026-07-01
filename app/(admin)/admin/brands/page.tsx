@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Search, Plus, RefreshCw, Tag, Trash2, Upload, X, XCircle, Loader2, CalendarDays, ChevronDown, Star } from "lucide-react";
 import { Brand, GetBrandsParams } from "./brand.types";
-import { createBrand, deleteBrand, getAllBrands, updateBrand } from "./_libs/brands";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import { createBrand, deleteBrand, getAllBrands, updateBrand } from "./_lib/brands";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { getBrandColumns } from "./components/TableBrands";
-import { usePopzy } from "@/components/Modal/usePopzy";
-import { Popzy } from "@/components/Modal";
+import { usePopzy } from "@/components/modal/usePopzy";
+import { Popzy } from "@/components/modal";
 import { StatsCard } from "@/components/admin/StatsCard";
 import Image from "next/image";
 

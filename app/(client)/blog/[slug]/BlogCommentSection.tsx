@@ -7,7 +7,7 @@ import Image from "next/image";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { formatRelativeDate } from "../../../../helpers/formatRelativeDate";
 import { AuthContext } from "@/contexts/AuthContext";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import type { BlogComment, BlogCommentUser, BlogReply } from "./blog-comment.types";
 
 const PAGE_SIZE = 5;

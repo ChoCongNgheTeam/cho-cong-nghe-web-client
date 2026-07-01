@@ -13,19 +13,19 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Megaphone, Pencil, Loader2, XCircle, Trash2, CheckCircle2, Clock, Tag, X } from "lucide-react";
-import { Popzy } from "@/components/Modal";
-import { getCampaign, updateCampaign, deleteCampaign } from "../_libs/campaigns";
+import { Popzy } from "@/components/modal";
+import { getCampaign, updateCampaign, deleteCampaign } from "../_lib/campaigns";
 import { CampaignForm, campaignToForm, formToUpdatePayload, type CampaignFormData } from "../components/CampaignForm";
 import { CampaignStatusBadge, getCampaignStatus } from "../components/CampaignStatusBadge";
-import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../const";
+import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../_lib/constants";
 import type { Campaign } from "../campaign.types";
-import { formatDate } from "@/helpers";
-import { useToasty } from "@/components/Toast";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { formatDate } from "../../../../../helpers";
+import { useToasty } from "@/components/toast";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 // 👇 THAY CategoryImageEditor bằng CampaignCategoryManager
 import { CampaignCategoryManager } from "../components/CampaignCategoryManager";
-import { getAllCategories } from "../../categories/_libs/categories";
+import { getAllCategories } from "../../categories/_lib/categories";
 
 export default function CampaignDetailPage() {
   const router = useRouter();

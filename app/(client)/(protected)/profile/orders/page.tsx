@@ -5,7 +5,7 @@ import { Order, OrderResponse } from "../_lib/order";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useCart } from "../../../../../hooks/useCart";
 import apiRequest from "@/lib/api";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import { tabs } from "./components/constants";
 import { ErrorState, EmptyState, LoadingState } from "./components/OrderStatesTemp";
 import OrderCard from "./components/OrderCard";

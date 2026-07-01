@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import { PasswordRequirement } from "./PasswordRequirement";
 export default function ChangePasswordPage() {
   const router = useRouter();

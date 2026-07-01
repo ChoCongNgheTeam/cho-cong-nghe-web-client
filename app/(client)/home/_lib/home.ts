@@ -1,5 +1,5 @@
 import apiRequest from "@/lib/api";
-import { fetchRootCategories } from "@/components/layout/Header/_libs/header";
+import { fetchRootCategories } from "@/lib/header/header";
 import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomePageData } from "./types";
 
 export const HOME_CACHE_TAGS = {

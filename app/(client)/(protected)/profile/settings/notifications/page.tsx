@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Bell, BellRing, BadgePercent, Check, Mail, CalendarDays, UserX, Star, Package, Loader2 } from "lucide-react";
 import { getMyNotifPreferences, updateMyNotifPreferences, NOTIF_KEYS_BY_ROLE, NOTIF_DEFAULTS, type NotifPreferences, type UserRole } from "../_lib/settings";
 import { useAuth } from "../../../../../../hooks/useAuth";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 // ─── Row config per key ────────────────────────────────────────────────────────
 

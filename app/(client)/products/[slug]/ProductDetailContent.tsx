@@ -14,7 +14,7 @@ import { TrustBadges } from "@/(client)/home/components";
 
 import { ProductDetail } from "@/lib/types/product";
 import { getProductVariant } from "../_lib";
-import { useProductSections, TABS } from "./useProductSections";
+import { useProductSections, TABS } from "../../../../hooks/useProductSections";
 import type { ProductVariant, VariantOption, ProductPrice } from "../types";
 
 interface ProductDetailContentProps {

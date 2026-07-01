@@ -3,8 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, RotateCcw, Loader2, Check } from "lucide-react";
 import { PaymentStatus } from "../order.types";
-import { PAYMENT_STATUS_CONFIG } from "../const";
-import { updatePaymentStatus, confirmManualRefund } from "../_libs/orders";
+import { PAYMENT_STATUS_CONFIG } from "../_lib/constants";
+import { updatePaymentStatus, confirmManualRefund } from "../_lib/orders";
 
 interface PaymentStatusCellProps {
   orderId: string;

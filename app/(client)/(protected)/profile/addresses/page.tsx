@@ -5,7 +5,7 @@ import Select from "react-select";
 import apiRequest from "@/lib/api";
 import { getProvinces } from "../_lib/get-provice";
 import { getWards } from "../_lib/get-wards";
-import Popzy from "@/components/Modal/Popzy";
+import Popzy from "@/components/modal/Popzy";
 
 interface Province {
   code: string;

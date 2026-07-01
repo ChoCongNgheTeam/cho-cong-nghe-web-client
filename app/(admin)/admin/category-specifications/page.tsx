@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Layers, ChevronDown, Plus, RefreshCw, Loader2, XCircle, PackageSearch, Info } from "lucide-react";
-import type { CategorySpecItem, SpecGroup } from "./category_specification.types";
+import type { CategorySpecItem, SpecGroup } from "./category-specification.types";
 import type { Specification } from "../specifications/specification.types";
-import { getActiveCategories, getCategorySpecs, upsertCategorySpec, removeCategorySpec, type CategoryOption } from "./_libs/category_specifications";
-import { getAllSpecifications } from "../specifications/_libs/specifications";
+import { getActiveCategories, getCategorySpecs, upsertCategorySpec, removeCategorySpec, type CategoryOption } from "./_lib/category-specifications";
+import { getAllSpecifications } from "../specifications/_lib/specifications";
 import { AddSpecModal } from "./components/AddSpecModal";
 import { SpecGroupCard } from "./components/SpecGroupCard";
 

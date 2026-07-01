@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { KeyRound, Users, Plus, Pencil, X } from "lucide-react";
-import { getAllUsers } from "../../users/_libs/getAllUsers";
-import { updateUserApi } from "../../users/_libs/updateUser";
+import { getAllUsers } from "../../users/_lib/get-all-users";
+import { updateUserApi } from "../../users/_lib/update-user";
 import type { UserRole } from "../../users/user.types";
 
 type Member = {

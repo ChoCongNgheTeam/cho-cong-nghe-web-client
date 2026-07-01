@@ -8,9 +8,9 @@ import { formatVND } from "../../../helpers";
 import { ProductDetail, Category } from "@/lib/types/product";
 import { AICompareSummary } from "./components/AiCompareSummary";
 import { useState, useCallback, useRef, useTransition, useDeferredValue, useEffect } from "react";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import apiRequest from "@/lib/api";
-import { useIsMobile } from "./useIsMobile";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 function getRootSlug(category: any): string | null {
   if (!category) return null;

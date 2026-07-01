@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { ArrowUpRight, Crown } from "lucide-react";
 import type { TopCustomer } from "../analytics.types";
-import { formatDate, formatVND } from "@/helpers";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { formatDate, formatVND } from "../../../../../helpers";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export function TopCustomersTable({ customers, user }: { customers: TopCustomer[]; user: any }) {
   const maxSpent = customers[0]?.totalSpent ?? 1;

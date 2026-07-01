@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, CheckCircle2, EyeOff, Star } from "lucide-react";
-import { toggleProductActive } from "../_libs/products";
+import { toggleProductActive } from "../_lib/products";
 
 export type ProductDisplayStatus = "active" | "inactive" | "featured";
 

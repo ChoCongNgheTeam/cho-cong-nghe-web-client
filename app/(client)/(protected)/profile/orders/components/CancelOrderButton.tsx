@@ -3,18 +3,15 @@
 import { useState } from "react";
 import { X, AlertTriangle } from "lucide-react";
 import apiRequest from "@/lib/api";
-import { useToasty } from "@/components/Toast";
-import { Popzy } from "@/components/Modal";
+import { useToasty } from "@/components/toast";
+import { Popzy } from "@/components/modal";
 
 interface CancelOrderButtonProps {
   orderId: string;
   onCancelSuccess?: () => void;
 }
 
-export default function CancelOrderButton({
-  orderId,
-  onCancelSuccess,
-}: CancelOrderButtonProps) {
+export default function CancelOrderButton({ orderId, onCancelSuccess }: CancelOrderButtonProps) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const { success, error: toastError } = useToasty();
@@ -45,14 +42,8 @@ export default function CancelOrderButton({
           hover:bg-promotion hover:text-white hover:border-promotion hover:shadow-sm
           active:scale-95"
       >
-        {loading ? (
-          <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 border-2 border-promotion border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-        )}
-        <span className="text-xs sm:text-sm font-medium">
-          {loading ? "Đang hủy..." : "Hủy đơn"}
-        </span>
+        {loading ? <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 border-2 border-promotion border-t-transparent rounded-full animate-spin" /> : <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+        <span className="text-xs sm:text-sm font-medium">{loading ? "Đang hủy..." : "Hủy đơn"}</span>
       </button>
 
       {/* Confirm modal — full-width on mobile */}
@@ -69,13 +60,8 @@ export default function CancelOrderButton({
             </div>
 
             <div className="space-y-1 sm:space-y-1.5">
-              <h3 className="text-sm sm:text-base font-semibold text-primary">
-                Xác nhận hủy đơn hàng
-              </h3>
-              <p className="text-xs sm:text-sm text-primary-dark leading-relaxed">
-                Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này
-                không thể hoàn tác.
-              </p>
+              <h3 className="text-sm sm:text-base font-semibold text-primary">Xác nhận hủy đơn hàng</h3>
+              <p className="text-xs sm:text-sm text-primary-dark leading-relaxed">Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.</p>
             </div>
 
             <div className="flex gap-2 sm:gap-3 w-full pt-0.5 sm:pt-1">

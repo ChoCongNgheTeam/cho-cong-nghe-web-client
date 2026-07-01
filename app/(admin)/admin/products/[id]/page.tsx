@@ -25,15 +25,15 @@ import {
   User,
   RefreshCw,
 } from "lucide-react";
-import { getProduct, softDeleteProduct, restoreProduct } from "../_libs/products";
-import { usePopzy } from "@/components/Modal/usePopzy";
-import { Popzy } from "@/components/Modal";
+import { getProduct, softDeleteProduct, restoreProduct } from "../_lib/products";
+import { usePopzy } from "@/components/modal/usePopzy";
+import { Popzy } from "@/components/modal";
 import type { ProductDetail, ColorGroup, SpecGroup, ProductVariant } from "../product.types";
-import { formatDate, formatVND, formatNumber } from "@/helpers";
-import { useAuth } from "@/hooks/useAuth";
+import { formatDate, formatVND, formatNumber } from "../../../../../helpers";
+import { useAuth } from "../../../../../hooks/useAuth";
 import { STAFF_ROLES } from "@/types/staff-permissions.types";
 import apiRequest from "@/lib/api";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

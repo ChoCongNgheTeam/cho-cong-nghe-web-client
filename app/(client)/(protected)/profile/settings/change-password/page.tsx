@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { PasswordRequirement } from "./PasswordRequirement";
 import { changeMyPassword } from "../_lib/settings";

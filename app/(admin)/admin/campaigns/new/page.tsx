@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Megaphone, Loader2 } from "lucide-react";
-import { createCampaign, addCampaignCategories } from "../_libs/campaigns";
+import { createCampaign, addCampaignCategories } from "../_lib/campaigns";
 import { CampaignForm, DEFAULT_FORM, formToCreatePayload, type CampaignFormData } from "../components/CampaignForm";
 import { CampaignCategoryDraft, type DraftCampaignCategory } from "../components/CampaignCategoryDraft";
 import { useAdminHref } from "../../../../../hooks/useAdminHref";
-import { getAllCategories } from "../../categories/_libs/categories";
+import { getAllCategories } from "../../categories/_lib/categories";
 
 export default function NewCampaignPage() {
   const router = useRouter();

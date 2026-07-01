@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import Link from "next/link";
 import { handleLoginSubmit } from "./LoginHandler";
 import { SocialLoginButtons } from "./SocialLoginButtons";

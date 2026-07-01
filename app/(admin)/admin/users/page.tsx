@@ -30,14 +30,14 @@ import {
   TrendingUp,
   DollarSign,
 } from "lucide-react";
-import { exportUsers, getAllUsers, type GetUsersQuery } from "./_libs/getAllUsers";
-import { updateActiveUser } from "./_libs/updateActiveUser";
-import { deleteUser } from "./_libs/deleteUser";
+import { exportUsers, getAllUsers, type GetUsersQuery } from "./_lib/get-all-users";
+import { updateActiveUser } from "./_lib/update-active-user";
+import { deleteUser } from "./_lib/delete-user";
 import type { User, UserRole } from "./user.types";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import { StatsCard } from "@/components/admin/StatsCard";
 import AdminTable, { type AdminColumn } from "@/components/admin/AdminTables";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { AuthContext } from "@/contexts/AuthContext";
 import apiRequest from "@/lib/api";
 import { ExportButton } from "@/components/admin/ExportButton";

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Search, Plus, Trash2, Loader2, User, MapPin, Package, CreditCard, Tag, X, AlertCircle, CheckCircle2, ShoppingCart, UserPlus, Users } from "lucide-react";
 import Select from "react-select";
-import { formatVND } from "@/helpers";
+import { formatVND } from "../../../../../helpers";
 import {
   searchUsers,
   getUserAddresses,
@@ -26,8 +26,8 @@ import {
   getOrderPreviewAdmin,
   validateVoucherAdmin,
   checkEmailExists,
-} from "../_libs/orders";
-import { useAdminHref } from "@/hooks/useAdminHref";
+} from "../_lib/orders";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

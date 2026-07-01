@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Search, Plus, RefreshCw, Ticket, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import type { VoucherCard } from "./voucher.types";
-import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_libs/vouchers";
+import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_lib/vouchers";
 import { SORT_OPTIONS, STATUS_TABS } from "./const";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";

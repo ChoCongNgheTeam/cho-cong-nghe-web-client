@@ -1,6 +1,6 @@
 "use client";
 
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import { Phone, Clock, MapPin, Navigation, Copy, CheckCheck } from "lucide-react";
 import { useState } from "react";
 

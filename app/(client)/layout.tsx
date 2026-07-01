@@ -1,4 +1,4 @@
-import Header from "@/components/layout/Header/header";
+import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ToggleSwitch from "@/components/ui/ThemeToggle";
 import ChatButton from "@/components/ui/ChatButton";

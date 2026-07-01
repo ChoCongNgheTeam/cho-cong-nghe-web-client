@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Search, Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import type { Campaign, CampaignType } from "./campaign.types";
-import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_libs/campaigns";
-import { SORT_OPTIONS, TYPE_OPTIONS } from "./const";
+import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_lib/campaigns";
+import { SORT_OPTIONS, TYPE_OPTIONS } from "./_lib/constants";
 import { getCampaignColumns } from "./components/TableCampaigns";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { getCampaignStatus } from "./components/CampaignStatusBadge";

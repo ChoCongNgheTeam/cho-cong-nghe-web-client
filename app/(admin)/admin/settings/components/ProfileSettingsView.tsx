@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Camera, ChevronDown, Loader2, Pencil, Trash2, UserCircle } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";
 
 /* ─────────────────────────── types ─────────────────────────── */

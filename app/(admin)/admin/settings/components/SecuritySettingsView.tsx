@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Smartphone, Clock, MapPin, Check, X, AlertTriangle, LogOut, Loader2, KeyRound, Eye, EyeOff, RefreshCw } from "lucide-react";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";
-import { getMyLoginHistory, getMySessions, revokeSession, revokeAllSessions, type LoginHistory, type ActiveSession } from "../_libs/audit";
+import { getMyLoginHistory, getMySessions, revokeSession, revokeAllSessions, type LoginHistory, type ActiveSession } from "../_lib/audit";
 import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────

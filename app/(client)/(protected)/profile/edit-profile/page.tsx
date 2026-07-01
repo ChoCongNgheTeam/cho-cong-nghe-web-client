@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuth } from "../../../../../hooks/useAuth";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { Pencil, ChevronDown, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";

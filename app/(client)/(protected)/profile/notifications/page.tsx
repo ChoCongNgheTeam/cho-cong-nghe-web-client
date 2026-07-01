@@ -4,10 +4,10 @@ import { useCallback, useRef } from "react";
 import Link from "next/link";
 import { CheckCheck, Package, Tag, Megaphone, RefreshCw } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { useRoleNavigation } from "@/hooks/useRoleNavigation";
+import { useRoleNavigation } from "../../../../../hooks/useRoleNavigation";
 
-import { formatRelativeDate } from "@/helpers/formatRelativeDate";
-import { NotificationItem } from "@/hooks/useNotificationStore";
+import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
+import { NotificationItem } from "../../../../../hooks/useNotificationStore";
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; bgClass: string; textClass: string; label: string }> = {
   order: {
@@ -40,9 +40,7 @@ function EmptyState() {
         className="w-36 h-36 sm:w-52 sm:h-52 object-contain mb-1 opacity-90"
       />
       <h3 className="text-sm sm:text-base font-semibold text-primary mt-2 mb-1">Bạn chưa có thông báo nào</h3>
-      <p className="text-xs sm:text-sm text-neutral-darker/60 text-center mb-6 max-w-xs leading-relaxed">
-        Cùng khám các dịch vụ tại ChoCongNghe Shop nhé!
-      </p>
+      <p className="text-xs sm:text-sm text-neutral-darker/60 text-center mb-6 max-w-xs leading-relaxed">Cùng khám các dịch vụ tại ChoCongNghe Shop nhé!</p>
       <Link
         href="/"
         className="bg-accent hover:bg-accent-hover active:scale-[0.98] text-neutral-light text-sm font-semibold px-7 py-2.5 rounded-full transition-all duration-150 shadow-sm hover:shadow-md"
@@ -68,15 +66,7 @@ function SkeletonRow() {
 }
 
 // ─── Notification Row ──────────────────────────────────────────────────────────
-function NotificationRow({
-  item,
-  onRead,
-  onNavigate,
-}: {
-  item: NotificationItem;
-  onRead: (id: string) => Promise<void> | void;
-  onNavigate: (item: NotificationItem) => void;
-}) {
+function NotificationRow({ item, onRead, onNavigate }: { item: NotificationItem; onRead: (id: string) => Promise<void> | void; onNavigate: (item: NotificationItem) => void }) {
   const cfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.system;
 
   const handleClick = useCallback(async () => {
@@ -92,42 +82,23 @@ function NotificationRow({
         transition-all duration-150
         border-b border-neutral last:border-b-0
         cursor-pointer
-        ${!item.isRead
-          ? "bg-accent-light hover:bg-accent-light-hover"
-          : "bg-neutral-light hover:bg-neutral-light-active"
-        }
+        ${!item.isRead ? "bg-accent-light hover:bg-accent-light-hover" : "bg-neutral-light hover:bg-neutral-light-active"}
       `}
     >
       {/* Icon bubble */}
-      <div
-        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${cfg.bgClass} ${cfg.textClass}`}
-      >
-        {cfg.icon}
-      </div>
+      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${cfg.bgClass} ${cfg.textClass}`}>{cfg.icon}</div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <p
-            className={`text-[13px] sm:text-[13.5px] leading-snug flex-1 ${
-              !item.isRead ? "font-semibold text-primary" : "font-normal text-neutral-darker"
-            }`}
-          >
-            {item.title}
-          </p>
-          {!item.isRead && (
-            <span className="mt-1.5 w-2 h-2 rounded-full bg-accent shrink-0 ring-2 ring-accent-light-active" />
-          )}
+          <p className={`text-[13px] sm:text-[13.5px] leading-snug flex-1 ${!item.isRead ? "font-semibold text-primary" : "font-normal text-neutral-darker"}`}>{item.title}</p>
+          {!item.isRead && <span className="mt-1.5 w-2 h-2 rounded-full bg-accent shrink-0 ring-2 ring-accent-light-active" />}
         </div>
 
-        <p className="text-[12px] sm:text-[13px] text-neutral-dark mt-0.5 line-clamp-2 leading-relaxed">
-          {item.body}
-        </p>
+        <p className="text-[12px] sm:text-[13px] text-neutral-dark mt-0.5 line-clamp-2 leading-relaxed">{item.body}</p>
 
         <div className="flex items-center gap-2 mt-1.5 sm:mt-2">
-          <span className="text-[10px] sm:text-[11px] text-neutral-dark tabular-nums">
-            Khoảng {formatRelativeDate(item.createdAt)}
-          </span>
+          <span className="text-[10px] sm:text-[11px] text-neutral-dark tabular-nums">Khoảng {formatRelativeDate(item.createdAt)}</span>
         </div>
       </div>
     </div>
@@ -136,16 +107,7 @@ function NotificationRow({
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function NotificationsPage() {
-  const {
-    notifications,
-    unreadCount,
-    isLoading,
-    hasMore,
-    fetchNextPage,
-    markAsRead,
-    markAllAsRead,
-    refresh,
-  } = useNotifications();
+  const { notifications, unreadCount, isLoading, hasMore, fetchNextPage, markAsRead, markAllAsRead, refresh } = useNotifications();
 
   const { navigateToOrders, navigateToComment, navigateToReview } = useRoleNavigation();
 
@@ -192,9 +154,7 @@ export default function NotificationsPage() {
         <div className="flex items-center gap-2 sm:gap-2.5">
           <h1 className="text-lg sm:text-[22px] font-semibold tracking-tight text-primary">Thông báo</h1>
           {unreadCount > 0 && (
-            <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-accent text-neutral-light rounded-full leading-none">
-              {unreadCount}
-            </span>
+            <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-accent text-neutral-light rounded-full leading-none">{unreadCount}</span>
           )}
         </div>
 
@@ -246,18 +206,9 @@ export default function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <EmptyState />
         ) : (
-          <div
-            ref={listRef}
-            onScroll={handleScroll}
-            className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-260px)] min-h-[200px] divide-y divide-neutral/90 scrollbar-thin"
-          >
+          <div ref={listRef} onScroll={handleScroll} className="overflow-y-auto max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-260px)] min-h-[200px] divide-y divide-neutral/90 scrollbar-thin">
             {notifications.map((item) => (
-              <NotificationRow
-                key={item.id}
-                item={item}
-                onRead={markAsRead}
-                onNavigate={handleItemClick}
-              />
+              <NotificationRow key={item.id} item={item} onRead={markAsRead} onNavigate={handleItemClick} />
             ))}
 
             {/* Load more spinner */}

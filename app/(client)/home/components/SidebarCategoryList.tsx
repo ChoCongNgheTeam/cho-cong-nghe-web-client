@@ -4,8 +4,8 @@ import { memo, useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, Package } from "lucide-react";
 import Link from "next/link";
-import { fetchCategoryChildren } from "@/components/layout/Header/_libs/header";
-import { CATEGORY_ICONS } from "@/components/layout/Header/_libs/constants";
+import { fetchCategoryChildren } from "@/lib/header/header";
+import { CATEGORY_ICONS } from "@/lib/header/constants";
 import { Category } from "@/types/category";
 
 interface SidebarCategoryListProps {

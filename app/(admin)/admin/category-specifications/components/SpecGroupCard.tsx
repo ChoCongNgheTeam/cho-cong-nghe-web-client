@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { GripVertical, Trash2, ChevronDown, ChevronUp, Loader2, Pencil, Check, X, AlertTriangle } from "lucide-react";
-import type { CategorySpecItem } from "../category_specification.types";
-import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS } from "../../specifications/const";
+import type { CategorySpecItem } from "../category-specification.types";
+import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS } from "../../specifications/_lib/constants";
 
 interface SpecGroupCardProps {
   groupName: string;

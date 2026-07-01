@@ -4,17 +4,17 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2, Tag, Loader2, CalendarDays, Zap, Target, BarChart3 } from "lucide-react";
-import { getPromotion, updatePromotion, deletePromotion } from "../_libs/promotions";
-import { Popzy } from "@/components/Modal";
+import { getPromotion, updatePromotion, deletePromotion } from "../_lib/promotions";
+import { Popzy } from "@/components/modal";
 import type { Promotion } from "../promotion.types";
-import { formatDate, formatVND } from "@/helpers";
-import { ACTION_TYPE_LABELS, ACTION_TYPE_COLORS, TARGET_TYPE_LABELS } from "../const";
+import { formatDate, formatVND } from "../../../../../helpers";
+import { ACTION_TYPE_LABELS, ACTION_TYPE_COLORS, TARGET_TYPE_LABELS } from "../_lib/constants";
 import { PromotionStatusBadge, getPromotionStatus } from "../components/PromotionStatusBadge";
 import { PromotionForm, promotionToForm, formToPayload, type PromotionFormData } from "../components/PromotionForm";
 import { fetchAllBrands, fetchAllCategories, fetchProductSearch } from "../new/page";
-import { useToasty } from "@/components/Toast";
-import useDebouncedCallback from "@/hooks/useDebouncedCallback";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { useToasty } from "@/components/toast";
+import useDebouncedCallback from "../../../../../hooks/useDebouncedCallback";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function PromotionDetailPage() {
   const params = useParams();

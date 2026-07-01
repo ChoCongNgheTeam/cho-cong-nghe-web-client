@@ -3,8 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { OrderStatus } from "../order.types";
-import { ORDER_STATUS_CONFIG, STATUS_FLOW } from "../const";
-import { updateOrderStatus } from "../_libs/orders";
+import { ORDER_STATUS_CONFIG, STATUS_FLOW } from "../_lib/constants";
+import { updateOrderStatus } from "../_lib/orders";
 
 interface OrderStatusCellProps {
   orderId: string;

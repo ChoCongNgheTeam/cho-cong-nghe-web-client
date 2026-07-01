@@ -1,4 +1,4 @@
-import { PAYMENT_STATUS_CONFIG } from "../const";
+import { PAYMENT_STATUS_CONFIG } from "../_lib/constants";
 import { PaymentStatus } from "../order.types";
 
 interface PaymentBadgeProps {

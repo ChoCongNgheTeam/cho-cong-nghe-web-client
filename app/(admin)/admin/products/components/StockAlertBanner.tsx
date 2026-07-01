@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp, X, Pencil, Package } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import type { LowStockProductInfo } from "../_libs/products";
+import type { LowStockProductInfo } from "../_lib/products";
 
 interface StockAlertBannerProps {
   lowStockProducts: LowStockProductInfo[]; // 0 < quantity <= 5

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Star, ShoppingCart, Users, Package, Wallet, FileText, Receipt, Save, Loader2 } from "lucide-react";
-import { useToasty } from "@/components/Toast";
-import { getSettings, updateSettings, parseSettings } from "../_libs/settings";
-import type { EcommerceSettings, CheckoutSettings, CustomerSettings, OrderSettings, WalletSettings, InvoiceSettings, TaxSettings } from "../_libs/settings";
+import { useToasty } from "@/components/toast";
+import { getSettings, updateSettings, parseSettings } from "../_lib/settings";
+import type { EcommerceSettings, CheckoutSettings, CustomerSettings, OrderSettings, WalletSettings, InvoiceSettings, TaxSettings } from "../_lib/settings";
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 

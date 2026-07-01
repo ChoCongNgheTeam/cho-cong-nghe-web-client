@@ -10,7 +10,7 @@ import { Gift } from "lucide-react";
 import { ProductDetail } from "@/lib/types/product";
 import Link from "next/link";
 import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { useRouter } from "next/navigation";
 import { HighlightIcon } from "@/components/product/HighlightIcon";
 import type { ProductVariant, VariantOption, VariantOptionValue, ProductPrice } from "../../types";

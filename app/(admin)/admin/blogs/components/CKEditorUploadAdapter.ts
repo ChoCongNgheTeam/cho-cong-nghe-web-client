@@ -6,7 +6,7 @@
  * gọi đúng baseURL của apiRequest (http://localhost:5000/api/v1/upload).
  */
 
-import { uploadEditorImage } from "@/(admin)/_lib/api";
+import { uploadEditorImage } from "@/lib/upload";
 
 interface CKLoader {
   file: Promise<File>;

@@ -1,15 +1,7 @@
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import { Star } from "lucide-react";
 
-export default function ReviewSuccessModal({
-  isOpen,
-  stars,
-  onClose,
-}: {
-  isOpen: boolean;
-  stars: number;
-  onClose: () => void;
-}) {
+export default function ReviewSuccessModal({ isOpen, stars, onClose }: { isOpen: boolean; stars: number; onClose: () => void }) {
   if (!isOpen) return null;
 
   return (
@@ -40,24 +32,12 @@ export default function ReviewSuccessModal({
                 width: 60,
                 height: 60,
                 marginBottom: "1rem",
-                animation:
-                  "rsCirclePop .4s .2s cubic-bezier(.34,1.56,.64,1) both",
+                animation: "rsCirclePop .4s .2s cubic-bezier(.34,1.56,.64,1) both",
               }}
               className="sm:!w-[72px] sm:!h-[72px]"
             >
-              <svg
-                viewBox="0 0 72 72"
-                fill="none"
-                style={{ width: "100%", height: "100%" }}
-              >
-                <circle
-                  cx="36"
-                  cy="36"
-                  r="34"
-                  fill="#f2f3f3"
-                  style={{ stroke: "var(--color-accent)" }}
-                  strokeWidth="1.5"
-                />
+              <svg viewBox="0 0 72 72" fill="none" style={{ width: "100%", height: "100%" }}>
+                <circle cx="36" cy="36" r="34" fill="#f2f3f3" style={{ stroke: "var(--color-accent)" }} strokeWidth="1.5" />
                 <polyline
                   points="22,37 32,47 50,27"
                   strokeWidth="3.5"
@@ -65,8 +45,7 @@ export default function ReviewSuccessModal({
                   strokeLinejoin="round"
                   style={{
                     strokeDasharray: "60",
-                    animation:
-                      "rsCheckDraw .4s .38s cubic-bezier(.4,0,.2,1) both",
+                    animation: "rsCheckDraw .4s .38s cubic-bezier(.4,0,.2,1) both",
                     stroke: "var(--color-accent)",
                   }}
                 />
@@ -74,18 +53,12 @@ export default function ReviewSuccessModal({
             </div>
 
             {/* Title */}
-            <p
-              className="text-base sm:text-lg font-semibold text-primary mb-1 sm:mb-1.5"
-              style={{ animation: "rsFadeUp .35s .45s both" }}
-            >
+            <p className="text-base sm:text-lg font-semibold text-primary mb-1 sm:mb-1.5" style={{ animation: "rsFadeUp .35s .45s both" }}>
               Đánh giá thành công!
             </p>
 
             {/* Subtitle */}
-            <p
-              className="text-xs sm:text-sm text-neutral-darker mb-4 sm:mb-5 leading-relaxed"
-              style={{ animation: "rsFadeUp .35s .5s both" }}
-            >
+            <p className="text-xs sm:text-sm text-neutral-darker mb-4 sm:mb-5 leading-relaxed" style={{ animation: "rsFadeUp .35s .5s both" }}>
               Cảm ơn bạn đã chia sẻ nhận xét.
               <br />
               Đánh giá của bạn giúp ích cho nhiều người.

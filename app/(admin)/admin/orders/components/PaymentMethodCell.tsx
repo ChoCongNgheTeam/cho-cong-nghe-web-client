@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Loader2, ArrowRightLeft } from "lucide-react";
-import { updatePaymentMethod, getActivePaymentMethods, PaymentMethod } from "../_libs/orders";
+import { updatePaymentMethod, getActivePaymentMethods, PaymentMethod } from "../_lib/orders";
 import { OrderStatus, PaymentStatus } from "../order.types";
 
 interface Props {

@@ -8,7 +8,7 @@ import type { Comment, Reply, CommentUser } from "./ProductReview";
 import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
 import Image from "next/image";
 import { AuthContext } from "@/contexts/AuthContext";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 const PAGE_SIZE = 5;
 const AVATAR_SIZES = [36, 32];

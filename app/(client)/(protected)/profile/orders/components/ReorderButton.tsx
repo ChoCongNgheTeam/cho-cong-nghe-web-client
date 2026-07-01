@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RotateCcw } from "lucide-react";
 import apiRequest from "@/lib/api";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 interface ReorderButtonProps {
   orderId: string;
@@ -55,10 +55,7 @@ export default function ReorderButton({ orderId, onReorderSuccess, onBeforeNavig
         disabled:opacity-50 disabled:cursor-not-allowed
         active:scale-95"
     >
-      {loading
-        ? <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        : <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      }
+      {loading ? <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
       {loading ? "Đang xử lý..." : "Mua lại"}
     </button>
   );

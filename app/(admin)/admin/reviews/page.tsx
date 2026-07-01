@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Star, Clock, CheckCircle, XCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
-import { getAllReviews, approveReview, deleteReview } from "./_libs/reviews";
+import { getAllReviews, approveReview, deleteReview } from "./_lib/reviews";
 import { getReviewColumns } from "./components/TableReviews";
 import { ReviewDetailDrawer } from "./components/ReviewDetailDrawer";
 import { Review, ReviewsResponse, GetReviewsParams, ReviewStatus } from "./review.types";
-import { REVIEW_STATUS_TABS, RATING_OPTIONS } from "./const";
+import { REVIEW_STATUS_TABS, RATING_OPTIONS } from "./_lib/constants";
 import { StatsCard } from "@/components/admin/StatsCard";
 
 export default function ReviewsAdminPage() {
@@ -145,8 +145,7 @@ export default function ReviewsAdminPage() {
     onDeleteClick: (review) => setDeleteTarget(review),
   });
 
-
-    useEffect(() => {
+  useEffect(() => {
     if (!highlightId || hasHandledHighlight.current) return;
 
     const jumpToReview = async () => {
@@ -211,10 +210,7 @@ export default function ReviewsAdminPage() {
 
   const allSelected = !!data && data.data.length > 0 && selected.size === data.data.length;
 
-  const rowClassName = (row: Review) =>
-  row.id === highlightId
-    ? "ring-2 ring-inset ring-accent bg-accent/10"
-    : "";
+  const rowClassName = (row: Review) => (row.id === highlightId ? "ring-2 ring-inset ring-accent bg-accent/10" : "");
 
   return (
     <div className="min-h-screen bg-neutral-light">
@@ -379,7 +375,14 @@ export default function ReviewsAdminPage() {
               <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} đánh giá trên trang`}</span>
             </div>
           )}
-          <AdminTable columns={columns} data={data?.data ?? []} loading={loading} emptyMessage="Không có đánh giá nào" onRowClick={(review) => setOpenDrawerId(review.id)} rowClassName={rowClassName} />
+          <AdminTable
+            columns={columns}
+            data={data?.data ?? []}
+            loading={loading}
+            emptyMessage="Không có đánh giá nào"
+            onRowClick={(review) => setOpenDrawerId(review.id)}
+            rowClassName={rowClassName}
+          />
 
           {/* Pagination */}
           {!loading && data && data.pagination.total > 0 && (

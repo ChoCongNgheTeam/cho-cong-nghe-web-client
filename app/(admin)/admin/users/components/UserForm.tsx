@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { User, UserRole } from "../user.types";
 import { ROLE_LABELS, STAFF_ROLES } from "../user.types";
-import { createUser } from "../_libs/createUser";
-import { updateUserApi } from "../_libs/updateUser";
-import { useToasty } from "@/components/Toast";
+import { createUser } from "../_lib/create-user";
+import { updateUserApi } from "../_lib/update-user";
+import { useToasty } from "@/components/toast";
 import { User as UserIcon, Mail, Lock, Phone, ShieldCheck, Camera, X, AlertCircle, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 

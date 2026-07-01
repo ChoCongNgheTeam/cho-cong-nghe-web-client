@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Ticket } from "lucide-react";
-import { createVoucher } from "../_libs/vouchers";
+import { createVoucher } from "../_lib/vouchers";
 import { VoucherForm, DEFAULT_FORM, formToCreatePayload, type VoucherFormData } from "../components/VoucherForm";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function NewVoucherPage() {

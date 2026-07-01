@@ -1,11 +1,11 @@
 import { headers } from "next/headers";
 import Sidebar from "./components/Sidebar";
 import { menuItems } from "./components/menu-items";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 import FontSizeToggle from "./components/FontSizeToggle";
 import PolicyContent from "./components/PolicyContent";
 import { FontSizeProvider } from "./components/FontSizeContext";
-import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 function getBreadcrumbItems(pathname: string) {
   const match = menuItems.find((item) => item.href === pathname);

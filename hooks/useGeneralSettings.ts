@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchGeneralSettings, fetchSeoSettings, fetchAllSettings, GENERAL_DEFAULTS, SEO_DEFAULTS } from "@/lib/site-settings.api";
-import type { GeneralSettings, SeoSettings } from "@/lib/site-settings.api";
+import { fetchGeneralSettings, fetchSeoSettings, fetchAllSettings, GENERAL_DEFAULTS, SEO_DEFAULTS } from "@/lib/api/site-settings.api";
+import type { GeneralSettings, SeoSettings } from "@/lib/api/site-settings.api";
 
 /* ─── Query keys ─── */
 export const settingsKeys = {

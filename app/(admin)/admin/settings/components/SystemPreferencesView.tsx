@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Building2, Upload, AlertTriangle, FileImage, Loader2, Save, X, ShieldAlert, ChevronDown } from "lucide-react";
-import { useToasty } from "@/components/Toast";
-import { getSettings, updateSettingsFormData, parseSettings, type GeneralSettings } from "../_libs/settings";
+import { useToasty } from "@/components/toast";
+import { getSettings, updateSettingsFormData, parseSettings, type GeneralSettings } from "../_lib/settings";
 
 /* ─── Defaults ─── */
 const GENERAL_DEFAULTS: GeneralSettings = {

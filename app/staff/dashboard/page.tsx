@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../../hooks/useAuth";
 import { useAdminHref } from "../../../hooks/useAdminHref";
-import { getDashboard } from "@/(admin)/admin/dashboard/_libs/dashboard";
+import { getDashboard } from "@/app/(admin)/admin/dashboard/_lib/dashboard";
 import { PeriodSelector } from "@/(admin)/admin/dashboard/components/PeriodSelector";
 import { RecentOrdersTable } from "@/(admin)/admin/dashboard/components/RecentOrdersTable";
 import { OrderStatusChart } from "@/(admin)/admin/dashboard/components/OrderStatusChart";

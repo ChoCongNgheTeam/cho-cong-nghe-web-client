@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, MapPin, Plus, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,12 +36,7 @@ interface AddressSidebarProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AddressSidebar({
-  isOpen,
-  onClose,
-  selectedAddressId,
-  onSelect,
-}: AddressSidebarProps) {
+export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onSelect }: AddressSidebarProps) {
   const toast = useToasty();
   const router = useRouter();
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
@@ -91,7 +86,10 @@ export default function AddressSidebar({
 
   const handleConfirm = () => {
     const addr = addresses.find((a) => a.id === selected);
-    if (!addr) { toast.error("Vui lòng chọn địa chỉ giao hàng"); return; }
+    if (!addr) {
+      toast.error("Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
     onSelect(addr);
     onClose();
   };
@@ -101,9 +99,7 @@ export default function AddressSidebar({
     router.push("/profile/addresses?redirect=checkout");
   };
 
-  const formatAddress = (addr: ApiAddress) =>
-    addr.fullAddress ??
-    [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
+  const formatAddress = (addr: ApiAddress) => addr.fullAddress ?? [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
 
   const formatType = (type?: string) => {
     if (!type) return null;
@@ -115,19 +111,13 @@ export default function AddressSidebar({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-40 transition-all cursor-pointer backdrop-blur-sm bg-neutral-light/70"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 transition-all cursor-pointer backdrop-blur-sm bg-neutral-light/70" onClick={onClose} />
 
       <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] lg:w-[520px] bg-neutral-light shadow-2xl z-50 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral shrink-0">
           <h2 className="text-base sm:text-lg font-semibold text-primary">Chọn địa chỉ nhận hàng</h2>
-          <button
-            onClick={onClose}
-            className="text-neutral-dark hover:text-neutral-darker w-8 h-8 flex items-center justify-center cursor-pointer transition-colors hover:bg-neutral rounded-full"
-          >
+          <button onClick={onClose} className="text-neutral-dark hover:text-neutral-darker w-8 h-8 flex items-center justify-center cursor-pointer transition-colors hover:bg-neutral rounded-full">
             <X size={20} />
           </button>
         </div>
@@ -169,10 +159,7 @@ export default function AddressSidebar({
                 <AlertCircle size={15} className="text-accent-dark shrink-0 mt-0.5" />
                 <p className="text-xs text-accent-dark leading-relaxed">
                   Chọn địa chỉ giao hàng hoặc{" "}
-                  <button
-                    onClick={handleGoToAddAddress}
-                    className="font-semibold underline underline-offset-2 hover:opacity-80 cursor-pointer"
-                  >
+                  <button onClick={handleGoToAddAddress} className="font-semibold underline underline-offset-2 hover:opacity-80 cursor-pointer">
                     thêm địa chỉ mới
                   </button>
                 </p>
@@ -183,9 +170,7 @@ export default function AddressSidebar({
                   key={addr.id}
                   onClick={() => setSelected(addr.id)}
                   className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                    selected === addr.id
-                      ? "border-accent bg-accent-light shadow-sm"
-                      : "border-neutral hover:border-neutral-darker hover:shadow-sm"
+                    selected === addr.id ? "border-accent bg-accent-light shadow-sm" : "border-neutral hover:border-neutral-darker hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -194,9 +179,7 @@ export default function AddressSidebar({
                         selected === addr.id ? "border-accent bg-accent" : "border-neutral-dark"
                       }`}
                     >
-                      {selected === addr.id && (
-                        <div className="w-2 h-2 rounded-full bg-primary-darker" />
-                      )}
+                      {selected === addr.id && <div className="w-2 h-2 rounded-full bg-primary-darker" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -209,9 +192,7 @@ export default function AddressSidebar({
                           </span>
                         )}
                       </div>
-                      {addr.type && (
-                        <p className="text-xs text-neutral-darker mb-1">{formatType(addr.type)}</p>
-                      )}
+                      {addr.type && <p className="text-xs text-neutral-darker mb-1">{formatType(addr.type)}</p>}
                       <p className="text-sm text-primary leading-relaxed">{formatAddress(addr)}</p>
                     </div>
                   </div>

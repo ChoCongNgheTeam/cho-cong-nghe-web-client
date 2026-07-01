@@ -2,12 +2,12 @@
 
 import { Star } from "lucide-react";
 import { useState, useEffect, useMemo, useRef, memo } from "react";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 import ReviewModal from "@/(client)/(protected)/profile/orders/components/ReviewModal";
 import { ProductDetail } from "@/lib/types/product";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import ReviewSuccessModal from "./ReviewSuccessModal";
 import { getReviewPermission } from "../../_lib";
 

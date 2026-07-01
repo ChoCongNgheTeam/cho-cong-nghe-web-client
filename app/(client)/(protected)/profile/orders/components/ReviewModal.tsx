@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Star } from "lucide-react";
-import { Popzy } from "@/components/Modal";
-import { useToasty } from "@/components/Toast";
+import { Popzy } from "@/components/modal";
+import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";
 
 interface ReviewModalProps {

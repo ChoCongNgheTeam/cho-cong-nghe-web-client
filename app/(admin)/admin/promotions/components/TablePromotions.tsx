@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
 import { Promotion } from "../promotion.types";
 import { PromotionStatusBadge, getPromotionStatus } from "./PromotionStatusBadge";
-import { ACTION_TYPE_LABELS, ACTION_TYPE_COLORS, TARGET_TYPE_LABELS } from "../const";
+import { ACTION_TYPE_LABELS, ACTION_TYPE_COLORS, TARGET_TYPE_LABELS } from "../_lib/constants";
 import { formatDate, formatVND } from "../../../../../helpers";
 
 interface GetPromotionColumnsParams {

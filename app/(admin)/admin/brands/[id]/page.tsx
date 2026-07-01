@@ -5,12 +5,12 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Pencil, Trash2, Upload, X, ImageOff, Package, Star, CheckCircle2, EyeOff, Loader2 } from "lucide-react";
-import { getBrand, updateBrand, deleteBrand } from "../_libs/brands";
-import { usePopzy } from "@/components/Modal/usePopzy";
-import { Popzy } from "@/components/Modal";
+import { getBrand, updateBrand, deleteBrand } from "../_lib/brands";
+import { usePopzy } from "@/components/modal/usePopzy";
+import { Popzy } from "@/components/modal";
 import type { Brand } from "../brand.types";
-import { formatDate } from "@/helpers";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { formatDate } from "../../../../../helpers";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 // ── Toggle switch ──────────────────────────────────────────────────────────────
 function Toggle({ value, onChange, color = "bg-accent" }: { value: boolean; onChange: (v: boolean) => void; color?: string }) {

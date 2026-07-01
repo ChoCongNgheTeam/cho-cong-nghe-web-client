@@ -6,9 +6,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2, RotateCcw, Loader2, ImageOff, FolderTree, Star, ChevronRight, AlertCircle, Hash, Layers, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
 import type { CategoryDetail, CategoryChild } from "../category.types";
-import { getCategoryDetail, softDeleteCategory, restoreCategory } from "../_libs/categories";
-import { formatDate } from "@/helpers";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { getCategoryDetail, softDeleteCategory, restoreCategory } from "../_lib/categories";
+import { formatDate } from "../../../../../helpers";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS

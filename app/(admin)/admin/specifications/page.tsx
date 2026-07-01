@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Search, Plus, RefreshCw, SlidersHorizontal, Loader2, XCircle, X, Filter, Check, AlertCircle } from "lucide-react";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import type { Specification } from "./specification.types";
-import { getAllSpecifications, toggleSpecificationActive, createSpecification, updateSpecification } from "./_libs/specifications";
-import { SORT_OPTIONS, STATUS_TABS } from "./const";
+import { getAllSpecifications, toggleSpecificationActive, createSpecification, updateSpecification } from "./_lib/specifications";
+import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getSpecificationColumns } from "./components/TableSpecifications";
 import { SpecificationForm, DEFAULT_FORM, specToForm, formToCreatePayload, formToUpdatePayload, type SpecificationFormData } from "./components/SpecificationForm";
 import { StatsCard } from "@/components/admin/StatsCard";
@@ -240,9 +240,7 @@ export default function SpecificationsPage() {
               }`}
             >
               {tab.label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                {tab.count}
-              </span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>{tab.count}</span>
             </button>
           ))}
 

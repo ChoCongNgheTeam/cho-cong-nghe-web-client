@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Search, Plus, RefreshCw, Zap, Clock, XCircle, Loader2, Trash2, X, Tag, CalendarDays, ChevronDown, ArrowUpDown, ShieldAlert, EyeOff } from "lucide-react";
 import Link from "next/link";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import type { Promotion, PromotionStatus } from "./promotion.types";
-import { getAllPromotions, updatePromotion, deletePromotion } from "./_libs/promotions";
-import { SORT_OPTIONS } from "./const";
+import { getAllPromotions, updatePromotion, deletePromotion } from "./_lib/promotions";
+import { SORT_OPTIONS } from "./_lib/constants";
 import { getPromotionColumns } from "./components/TablePromotions";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { useAdminRouter } from "../../../../hooks/useAdminRouter";

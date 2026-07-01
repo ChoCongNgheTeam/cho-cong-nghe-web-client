@@ -2,14 +2,14 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Search, Filter, CalendarDays, Eye, Package, RefreshCw, Plus, X, ChevronDown } from "lucide-react";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import type { Order, OrderStatus, PaymentStatus } from "./order.types";
-import { cancelOrder, exportOrders, getAllOrders, updatePaymentStatus } from "./_libs/orders";
-import { STATUS_TABS } from "./const";
+import { cancelOrder, exportOrders, getAllOrders, updatePaymentStatus } from "./_lib/orders";
+import { STATUS_TABS } from "./_lib/constants";
 import { OrderStatusCell, PaymentStatusCell, PaymentBadge, TableSkeleton } from "./components";
-import { formatDate, formatVND } from "@/helpers";
+import { formatDate, formatVND } from "../../../../helpers";
 import Link from "next/link";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import { Ban, ShoppingCart, Clock, CheckCircle, Truck } from "lucide-react";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { PaymentMethodCell } from "./components/PaymentMethodCell";
@@ -17,7 +17,7 @@ import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
 import { STAFF_ROLES } from "@/types/staff-permissions.types";
 
 // ─── Types ───────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { ORDER_STATUS_CONFIG } from "../const";
+import { ORDER_STATUS_CONFIG } from "../_lib/constants";
 import { OrderStatus } from "../order.types";
 
 interface OrderStatusBadgeProps {

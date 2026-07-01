@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "../../../../config/site.config";
 import Link from "next/link";
 import ForgotPasswordForm from "./ForgotPasswordForm";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import Breadcrumb from "@/components/shared/Breadcrumb";
 
 export const metadata: Metadata = {
   title: "Quên mật khẩu",

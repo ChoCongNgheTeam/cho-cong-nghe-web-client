@@ -6,8 +6,8 @@ import { X, Plus } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ProductDetail } from "@/lib/types/product";
 import apiRequest from "@/lib/api";
-import { useToasty } from "@/components/Toast";
-import { useIsMobile } from "../useIsMobile";
+import { useToasty } from "@/components/toast";
+import { useIsMobile } from "../../../../hooks/useIsMobile";
 
 // ── Search Slot ────────────────────────────────────────────────────────────
 function AddSlot() {

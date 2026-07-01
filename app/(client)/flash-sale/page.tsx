@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getHomePageData } from "../home/_lib/home";
 import { FlashSaleClient } from "./FlashSaleClient";
-import MobileBottomNav from "@/components/layout/Header/components/MobileBottomNav";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 export default async function FlashSalePage() {
   const { saleSchedule } = await getHomePageData();

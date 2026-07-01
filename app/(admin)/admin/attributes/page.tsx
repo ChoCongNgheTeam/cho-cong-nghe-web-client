@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Search, Plus, RefreshCw, Tag, Loader2, XCircle, X, Layers, CheckCircle2 } from "lucide-react";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import type { Attribute, CreateOptionPayload, UpdateOptionPayload } from "./attribute.types";
-import { getAllAttributes, toggleAttributeActive, createAttribute, updateAttribute, createOption, updateOption, getAttribute } from "./_libs/attributes";
-import { SORT_OPTIONS, STATUS_TABS } from "./const/index";
+import { getAllAttributes, toggleAttributeActive, createAttribute, updateAttribute, createOption, updateOption, getAttribute } from "./_lib/attributes";
+import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getAttributeColumns } from "./components/TableAttributes";
 import { AttributeForm, DEFAULT_FORM, attrToForm, formToCreatePayload, formToUpdatePayload, type AttributeFormData } from "./components/AttributeForm";
 import { StatsCard } from "@/components/admin/StatsCard";

@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { Reply, Send, Loader2, User } from "lucide-react";
 import { Comment } from "../comment.types";
-import { createCommentReply, getComment, getCommentReplies } from "../_libs/comments";
+import { createCommentReply, getComment, getCommentReplies } from "../_lib/comments";
 import { formatDate } from "../../../../../helpers";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 
 interface ReplyCommentModalProps {
   commentId: string | null;

@@ -4,15 +4,15 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Ticket, Pencil, Loader2, XCircle, Trash2, Check, X, Clock, Target, BarChart2 } from "lucide-react";
-import { Popzy } from "@/components/Modal";
-import { getVoucher, updateVoucher, deleteVoucher } from "../_libs/vouchers";
+import { Popzy } from "@/components/modal";
+import { getVoucher, updateVoucher, deleteVoucher } from "../_lib/vouchers";
 import { VoucherForm, voucherToForm, formToUpdatePayload, type VoucherFormData } from "../components/VoucherForm";
 import { VoucherStatusBadge } from "../components/VoucherStatusBadge";
 import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS, TARGET_TYPE_LABELS } from "../const";
 import type { VoucherDetail } from "../voucher.types";
-import { formatDate, formatVND } from "@/helpers";
-import { useToasty } from "@/components/Toast";
-import { useAdminHref } from "@/hooks/useAdminHref";
+import { formatDate, formatVND } from "../../../../../helpers";
+import { useToasty } from "@/components/toast";
+import { useAdminHref } from "../../../../../hooks/useAdminHref";
 
 export default function VoucherDetailPage() {
   const router = useRouter();

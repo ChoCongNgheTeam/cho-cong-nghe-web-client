@@ -1,6 +1,6 @@
 "use client";
 import { Review } from "../review.types";
-import { REVIEW_STATUS_CONFIG } from "../const";
+import { REVIEW_STATUS_CONFIG } from "../_lib/constants";
 
 export function ReviewStatusBadge({ review }: { review: Review }) {
   const config = REVIEW_STATUS_CONFIG[review.isApproved];

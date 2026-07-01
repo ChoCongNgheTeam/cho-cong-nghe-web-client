@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, Trash2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle, ArchiveRestore } from "lucide-react";
 import Link from "next/link";
-import AdminPagination from "@/components/admin/PaginationAdmin";
+import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/Modal";
+import { Popzy } from "@/components/modal";
 import type { ProductCard } from "./product.types";
 import {
   getAllProducts,
@@ -24,7 +24,7 @@ import {
   exportProducts,
   downloadImportTemplate,
   importProducts,
-} from "./_libs/products";
+} from "./_lib/products";
 import { useAuth } from "../../../../hooks/useAuth";
 import { STAFF_ROLES } from "@/types/staff-permissions.types";
 import { getProductColumns } from "./components/TableProducts";

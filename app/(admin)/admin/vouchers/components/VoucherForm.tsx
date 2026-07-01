@@ -5,7 +5,7 @@ import { Loader2, AlertCircle, Plus, X, Info, Users, Search, UserCheck, Lock } f
 import type { VoucherDetail, CreateVoucherPayload, UpdateVoucherPayload, TargetType, UserResult } from "../voucher.types";
 import { TARGET_TYPE_LABELS } from "../const";
 import { SingleProductSearch, SingleSelectDropdown, type EntityOption } from "./MultiSelectDropdown";
-import { fetchProductSearch, fetchAllCategories, fetchAllBrands, searchUsers } from "../_libs/vouchers";
+import { fetchProductSearch, fetchAllCategories, fetchAllBrands, searchUsers } from "../_lib/vouchers";
 import { utcToVNLocal, vnLocalToUtc } from "../../../../../helpers/timezoneHelpers";
 
 // ── Types ─────────────────────────────────────────────────────────────────────

@@ -17,7 +17,7 @@ export default function EditUserPage() {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const { getAllUsers } = await import("../../_libs/getAllUsers");
+        const { getAllUsers } = await import("../../_lib/get-all-users");
         const res = await getAllUsers();
         const found = res.data.find((u: User) => u.id === id);
         if (!found) throw new Error("Không tìm thấy người dùng");
@@ -43,8 +43,7 @@ export default function EditUserPage() {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4">
         <p className="text-primary">{error || "Không tìm thấy người dùng"}</p>
-        <button onClick={() => router.push("/admin/users")}
-          className="px-4 py-2 text-sm bg-accent text-white rounded-xl hover:bg-accent-hover transition cursor-pointer">
+        <button onClick={() => router.push("/admin/users")} className="px-4 py-2 text-sm bg-accent text-white rounded-xl hover:bg-accent-hover transition cursor-pointer">
           ← Quay lại
         </button>
       </div>

@@ -4,10 +4,10 @@ import { useState, useCallback, useEffect } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, Info, Loader2, AlertCircle } from "lucide-react";
 import type { Promotion, PromotionActionType, TargetType } from "../promotion.types";
 import type { CreatePromotionPayload } from "../promotion.types";
-import { ACTION_TYPE_LABELS, TARGET_TYPE_LABELS } from "../const";
+import { ACTION_TYPE_LABELS, TARGET_TYPE_LABELS } from "../_lib/constants";
 import { ProductSearch, MultiSelectDropdown, type EntityOption } from "./MultiSelectDropdown";
 import { utcToVNLocal, vnLocalToUtc } from "../../../../../helpers/timezoneHelpers";
-import { useToasty } from "@/components/Toast";
+import { useToasty } from "@/components/toast";
 
 export interface TargetSearchAPIs {
   searchProducts: (term: string) => Promise<EntityOption[]>;
