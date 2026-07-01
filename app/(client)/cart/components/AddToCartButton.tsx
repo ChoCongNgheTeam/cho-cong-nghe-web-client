@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ShoppingCart, Loader2, Plus } from "lucide-react";
 import { AddToCartMeta } from "@/store/cart/cart.types";
 import { useToasty } from "@/components/toast";
-import { useCartActions } from "../../../../hooks/useCartActions";
+import { useCart } from "@/hooks/useCart";
 
 interface AddToCartButtonProps {
   productVariantId: string;
@@ -29,7 +29,7 @@ export default function AddToCartButton({
   iconSize = 24,
   meta,
 }: AddToCartButtonProps) {
-  const { addToCart } = useCartActions();
+  const { addToCart } = useCart();
   const toasty = useToasty();
   const [loading, setLoading] = useState(false);
   const handleClick = async () => {

@@ -9,7 +9,7 @@ import { orderStatusConfig, paymentStatusConfig, REDIRECT_PAYMENT_METHODS, BANK_
 import CancelOrderButton from "./CancelOrderButton";
 import ReorderButton from "./ReorderButton";
 import ReviewModal from "./ReviewModal";
-import ReviewSuccessModal from "@/(client)/products/components/ProductComment/ReviewSuccessModal";
+import ReviewSuccessModal from "@/app/(client)/products/components/product-comment/ReviewSuccessModal";
 import Link from "next/link";
 import { useToasty } from "@/components/toast";
 import { formatDate, formatVND } from "../../../../../../helpers";

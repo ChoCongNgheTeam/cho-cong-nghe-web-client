@@ -5,11 +5,11 @@ import Link from "next/link";
 import { FeaturedProduct } from "../../_lib/types";
 import { formatVND } from "../../../../../helpers";
 import { memo } from "react";
-import { thumbnailUrl } from "../../../../../helpers/resizeImage";
+import { thumbnailUrl } from "../../../../../helpers/cloudinaryImage";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../../../../hooks/useCart";
 import { HighlightIcon } from "@/components/product/HighlightIcon";
-import { StarRating } from "@/components/ui/StarRating";
+import { StarRating } from "@/components/ui/StarRatingText";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import { flashSale } from "./flashSaleTheme";
 

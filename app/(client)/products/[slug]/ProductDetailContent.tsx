@@ -3,12 +3,12 @@
 import { useRef, useState, useEffect, useCallback, startTransition, useMemo, memo } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 
-import ProductDetailBanner from "../components/ProductDetail/ProductDetailBanner";
-import ProductDetailRight from "../components/ProductDetail/ProductDetailCardRight";
-import ProductDetailSection from "../components/ProductDetail/ProductSpecifications";
-import ProductDetailSection1 from "../components/ProductDetail/ProductDescription";
-import ProductDetailSuggest from "../components/ProductDetail/ProductDetailSuggest";
-import ProductReview from "../components/ProductComment/ProductReview";
+import ProductDetailBanner from "../components/product-detail/ProductDetailBanner";
+import ProductDetailRight from "../components/product-detail/ProductDetailCardRight";
+import ProductDetailSection from "../components/product-detail/ProductSpecifications";
+import ProductDetailSection1 from "../components/product-detail/ProductDescription";
+import ProductDetailSuggest from "../components/product-detail/ProductDetailSuggest";
+import ProductReview from "../components/product-comment/ProductReview";
 import ProductStickyFooter from "./ProductStickyFooter";
 import { TrustBadges } from "@/(client)/home/components";
 

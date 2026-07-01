@@ -3,7 +3,9 @@
 import { useState, useCallback } from "react";
 import apiRequest from "@/lib/api";
 import { useAuth } from "./useAuth";
-import { sortVouchers } from "../helpers/sortVouchers";
+import { sortVouchers } from "@/app/(client)/cart/_lib/sortVouchers";
+import { formatDate } from "@/helpers/formatDate";
+import { formatVND } from "@/helpers/formatVND";
 
 export interface VoucherTarget {
   id: string;
@@ -107,7 +109,7 @@ interface UseVoucherReturn {
   canUseVoucher: (voucher: Voucher) => boolean;
   /** Lý do tại sao voucher bị disable (bao gồm cả "không hợp sản phẩm") */
   getDisabledReason: (voucher: Voucher) => string | null;
-  formatPrice: (price: number) => string;
+  formatVND: (price: number) => string;
   formatDate: (dateString?: string) => string | null;
 }
 
@@ -135,13 +137,6 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
   });
 
   const [copiedCode, setCopiedCode] = useState("");
-
-  const formatPrice = useCallback((price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫", []);
-
-  const formatDate = useCallback((dateString?: string): string | null => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString("vi-VN");
-  }, []);
 
   /**
    * Tính discount client-side (chỉ dùng cho hiển thị preview trong list).
@@ -215,7 +210,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
       if (voucher.isExpired) return "Mã đã hết hạn";
       if (!voucher.isActive) return "Mã không còn hiệu lực";
       if (!voucher.isAvailable) return "Mã đã hết lượt";
-      if (cartTotal < voucher.minOrderValue) return `Cần thêm ${formatPrice(voucher.minOrderValue - cartTotal)} để dùng mã`;
+      if (cartTotal < voucher.minOrderValue) return `Cần thêm ${formatVND(voucher.minOrderValue - cartTotal)} để dùng mã`;
 
       // Check target eligibility từ server
       const eligible = eligibleMap[voucher.id];
@@ -225,7 +220,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
 
       return null;
     },
-    [cartTotal, eligibleMap, formatPrice],
+    [cartTotal, eligibleMap],
   );
 
   // ── Fetch list + batch-validate targets ───────────────────────────────────
@@ -445,7 +440,7 @@ export function useVoucher({ cartTotal = 0, cartItems = [], initialCode = "", in
     calculateDiscount,
     canUseVoucher,
     getDisabledReason,
-    formatPrice,
     formatDate,
+    formatVND,
   };
 }

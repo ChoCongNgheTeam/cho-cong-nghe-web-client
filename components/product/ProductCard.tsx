@@ -5,9 +5,9 @@ import Link from "next/link";
 import WishlistHeart from "@/components/shared/WishlistHeart";
 import { Product } from "./types";
 import { formatVND } from "../../helpers";
-import { thumbnailUrl } from "../../helpers/resizeImage";
+import { thumbnailUrl } from "../../helpers/cloudinaryImage";
 import { HighlightIcon } from "./HighlightIcon";
-import { StarRating } from "../ui/StarRating";
+import { StarRating } from "../ui/StarRatingText";
 import Badge from "./Badge";
 
 interface ProductCardProps {

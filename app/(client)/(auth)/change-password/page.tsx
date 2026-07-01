@@ -6,7 +6,7 @@ import { useToasty } from "@/components/toast";
 import apiRequest from "@/lib/api";
 import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import Breadcrumb from "@/components/shared/Breadcrumb";
-import { PasswordRequirement } from "./PasswordRequirement";
+import { PasswordRequirement } from "@/components/shared/PasswordRequirement";
 export default function ChangePasswordPage() {
   const router = useRouter();
   const toast = useToasty();

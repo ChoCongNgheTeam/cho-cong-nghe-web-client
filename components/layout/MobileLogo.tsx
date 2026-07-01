@@ -5,7 +5,6 @@ import { useGeneralSettings } from "../../hooks/useGeneralSettings";
 
 const FALLBACK_LOGO = "/logo-ccn.png";
 
-// Thêm vào đầu file MobileHeader hoặc file riêng
 const MobileLogo = memo(() => {
   const { logoUrl, siteName, isLoading: settingsLoading } = useGeneralSettings();
   const resolvedLogo = !settingsLoading && logoUrl ? logoUrl : FALLBACK_LOGO;

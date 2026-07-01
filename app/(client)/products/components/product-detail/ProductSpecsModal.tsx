@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useRef, 
 import { X } from "lucide-react";
 import { SpecificationGroup } from "@/lib/types/product";
 import Image from "next/image";
-import { toId } from "../../../../../helpers/toId";
+import { toId } from "../../../../../helpers/toSpecGroupId";
 
 export interface ProductSpecsModalRef {
   open: () => void;

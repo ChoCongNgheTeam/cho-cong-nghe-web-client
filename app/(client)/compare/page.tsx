@@ -3,7 +3,7 @@ import { useCompareStore } from "@/store/compare/compare.store";
 import Image from "next/image";
 import Link from "next/link";
 import { X, Plus, Search, ArrowLeft, Trash2 } from "lucide-react";
-import { StarRating } from "@/components/product/StarRating";
+import { StarRating } from "@/components/product/StarRatingIcon";
 import { formatVND } from "../../../helpers";
 import { ProductDetail, Category } from "@/lib/types/product";
 import { AICompareSummary } from "./components/AiCompareSummary";

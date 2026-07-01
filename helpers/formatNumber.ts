@@ -1,4 +1,4 @@
-import { getAdminLocale } from "./adminIntl";
+import { getAdminLocale } from "./localeSettings";
 
 export const formatNumber = (value: number, locale?: string) => {
   const resolvedLocale = locale ?? getAdminLocale();

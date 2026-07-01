@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { menuItems } from "./menu-items";
+import { menuItems } from "../constants/menu-items";
 
 export default function Sidebar() {
   const pathname = usePathname();

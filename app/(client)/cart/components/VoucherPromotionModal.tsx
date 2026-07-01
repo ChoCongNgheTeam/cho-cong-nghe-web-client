@@ -52,7 +52,7 @@ export default function VoucherPromotionModal({
     copyCode,
     canUseVoucher,
     getDisabledReason,
-    formatPrice,
+    formatVND,
     formatDate,
   } = useVoucher({
     cartTotal,
@@ -147,7 +147,7 @@ export default function VoucherPromotionModal({
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-600 shrink-0" />
                     <span className="text-xs text-green-700">
-                      Mã <strong>{applied.code}</strong> đã áp dụng — Giảm <strong>{formatPrice(applied.value)}</strong>
+                      Mã <strong>{applied.code}</strong> đã áp dụng — Giảm <strong>{formatVND(applied.value)}</strong>
                     </span>
                   </div>
                   <button onClick={clearVoucher} className="shrink-0 p-1 hover:bg-green-100 rounded transition-colors cursor-pointer">
@@ -219,9 +219,9 @@ export default function VoucherPromotionModal({
                               {voucher.discountType === "DISCOUNT_PERCENT" ? (
                                 <span className="px-2 py-0.5 bg-promotion-light text-promotion font-semibold rounded">-{voucher.discountValue}%</span>
                               ) : voucher.discountValue > 0 ? (
-                                <span className="px-2 py-0.5 bg-promotion-light text-promotion font-semibold rounded">-{formatPrice(voucher.discountValue)}</span>
+                                <span className="px-2 py-0.5 bg-promotion-light text-promotion font-semibold rounded">-{formatVND(voucher.discountValue)}</span>
                               ) : null}
-                              <span className="text-neutral-dark">Đơn tối thiểu {formatPrice(voucher.minOrderValue)}</span>
+                              <span className="text-neutral-dark">Đơn tối thiểu {formatVND(voucher.minOrderValue)}</span>
                             </div>
 
                             <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-dark">
@@ -258,7 +258,7 @@ export default function VoucherPromotionModal({
           <div className="border-t border-neutral p-4 bg-neutral-light shrink-0">
             <div className="flex items-center justify-between mb-3 text-sm">
               <span className="text-neutral-darker">{isSuccess && applied.value > 0 ? "1 mã đang áp dụng" : "Chưa áp dụng mã nào"}</span>
-              {isSuccess && applied.value > 0 && <span className="text-lg font-bold text-accent-dark">-{formatPrice(applied.value)}</span>}
+              {isSuccess && applied.value > 0 && <span className="text-lg font-bold text-accent-dark">-{formatVND(applied.value)}</span>}
             </div>
             <button onClick={onClose} className="w-full bg-primary hover:bg-primary-hover text-neutral-light font-semibold py-3 rounded-lg transition-colors cursor-pointer">
               Xác nhận

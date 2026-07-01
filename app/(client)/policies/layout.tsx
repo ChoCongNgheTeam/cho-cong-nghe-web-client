@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import Sidebar from "./components/Sidebar";
-import { menuItems } from "./components/menu-items";
+import { menuItems } from "./constants/menu-items";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import FontSizeToggle from "./components/FontSizeToggle";
 import PolicyContent from "./components/PolicyContent";

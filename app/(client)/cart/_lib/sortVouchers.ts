@@ -1,4 +1,4 @@
-import { Voucher } from "../hooks/useVoucher";
+import { Voucher } from "@/hooks/useVoucher";
 
 export const sortVouchers = (vouchers: Voucher[], cartTotal: number): Voucher[] => {
   const getGroup = (v: Voucher): number => {

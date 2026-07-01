@@ -1,9 +1,6 @@
-import { getAdminLocale, getAdminTimeZone } from "./adminIntl";
+import { getAdminLocale, getAdminTimeZone } from "./localeSettings";
 
-export const formatTime = (
-  date: string,
-  options?: { locale?: string; timeZone?: string },
-) => {
+export const formatTime = (date: string, options?: { locale?: string; timeZone?: string }) => {
   const { locale, timeZone } = options || {};
   const resolvedLocale = locale ?? getAdminLocale();
   const resolvedTimeZone = timeZone ?? getAdminTimeZone();

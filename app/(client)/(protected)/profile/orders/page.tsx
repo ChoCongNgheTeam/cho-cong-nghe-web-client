@@ -7,7 +7,7 @@ import { useCart } from "../../../../../hooks/useCart";
 import apiRequest from "@/lib/api";
 import { Popzy } from "@/components/modal";
 import { tabs } from "./components/constants";
-import { ErrorState, EmptyState, LoadingState } from "./components/OrderStatesTemp";
+import { ErrorState, EmptyState, LoadingState } from "./components/OrderStates";
 import OrderCard from "./components/OrderCard";
 import OrderDetailModal from "./components/OrderDetailModal";
 import { useSearchParams } from "next/navigation";

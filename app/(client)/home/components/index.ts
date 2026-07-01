@@ -8,4 +8,4 @@ export { FeaturedProducts } from "./products/FeaturedProducts";
 export { MiddleBanners } from "./banners/MiddleBanners";
 export { SeasonalSale } from "./sales/SeasonalSale";
 export { TrustBadges } from "./TrustBadges";
-export { BlogSection } from "./blogs/BlogSection";
+export { BlogSection } from "./blogs/HomeBlogSection";

@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { Loader2, Plus, Pencil } from "lucide-react";
-import { ShippingSectionProps } from "../_lib";
-import { inputCls } from "../_lib/styles";
+import { ShippingSectionProps } from "../../_lib";
+import { inputCls } from "../../_lib/styles";
 import Select from "react-select";
 
 // ─── Validators ──────────────────────────────────────────────────────────────

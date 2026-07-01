@@ -16,7 +16,7 @@ import { HighlightIcon } from "@/components/product/HighlightIcon";
 import type { ProductVariant, VariantOption, VariantOptionValue, ProductPrice } from "../../types";
 import type { Highlight } from "@/lib/types/product";
 import QuantityControl from "@/components/shared/QuantityControl";
-import { useCartActions } from "../../../../../hooks/useCartActions";
+import { useCart } from "@/hooks/useCart";
 
 const TYPE_LABELS: Record<string, string> = {
   color: "Màu sắc",
@@ -123,7 +123,7 @@ const ProductDetailRight = memo(function ProductDetailRight({
   onSpecificationClick,
   availableOptions = [],
 }: ProductDetailRightProps = {}) {
-  const { addToCart } = useCartActions();
+  const { addToCart } = useCart();
   const router = useRouter();
   const quantityRef = useRef(1);
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { X, AlertCircle, Loader2 } from "lucide-react";
-import { API_BASE_URL } from "../../../../../config/api.config";
+import { API_BASE_URL } from "../../../../../../config/api.config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
