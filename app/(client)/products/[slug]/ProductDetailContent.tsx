@@ -10,7 +10,7 @@ import ProductDetailSection1 from "../components/product-detail/ProductDescripti
 import ProductDetailSuggest from "../components/product-detail/ProductDetailSuggest";
 import ProductReview from "../components/product-comment/ProductReview";
 import ProductStickyFooter from "./ProductStickyFooter";
-import { TrustBadges } from "@/(client)/home/components";
+import { TrustBadges } from "@/app/(client)/home/_components";
 
 import { ProductDetail } from "@/lib/types/product";
 import { getProductVariant } from "../_lib";

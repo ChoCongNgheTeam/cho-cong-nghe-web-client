@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
+/* ======================================================================
+   1. KEYFRAMES — tất cả animation gộp về 1 chỗ, chia nhóm theo mục đích
+   ====================================================================== */
 @layer base {
+  /* ---------- Home slider (hs*) ---------- */
   @keyframes hsImgZoomIn {
     from { opacity: 0; transform: scale(0.82); }
     to   { opacity: 1; transform: scale(1); }
@@ -65,9 +69,39 @@
     0%, 90%, 100% { opacity: 0; }
     45%            { opacity: 1; }
   }
+
+  /* ---------- Chat / notification bubble ---------- */
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: scale(0.85) translateX(8px); }
+    to   { opacity: 1; transform: scale(1) translateX(0); }
+  }
+  @keyframes charIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dotBounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40%           { transform: translateY(-4px); opacity: 1; }
+  }
+  @keyframes mascotFloat {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-5px); }
+  }
+  @keyframes unreadPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.4); opacity: 0.7; }
+  }
+
+  /* ---------- Misc ---------- */
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 }
 
-/* ===================== INTER 24PT LOCAL ===================== */
+/* ======================================================================
+   2. FONT FACE — Inter 24pt local
+   ====================================================================== */
 /* Thin - 100 */
 @font-face {
    font-family: "Inter";
@@ -212,18 +246,18 @@
    font-display: swap;
 }
 
-.tabs-scroll::-webkit-scrollbar { display: none; }
-
-/* ===================== RAW COLOR TOKENS ===================== */
+/* ======================================================================
+   3. COLOR TOKENS (LIGHT) — raw RGB triplet, dùng với rgb(var(--x))
+   ====================================================================== */
 :root {
   --color-red: #c0392b;
   --color-orange: #e8873a;
   --color-dark: #1a1a2e;
   --color-cream: #f8f6f3;
 
-  /* ========== ACCENT → ĐỔI SANG CAM/ĐỎ ========== */
+  /* ========== ACCENT / CAM-ĐỎ ========== */
   /* Light */
-  --accent-light: 252 235 225;        /* #fcebu1 — cam rất nhạt */
+  --accent-light: 252 235 225;        /* #fcebe1 — cam rất nhạt */
   --accent-light-hover: 249 220 200;  /* #f9dcc8 */
   --accent-light-active: 244 196 163; /* #f4c4a3 */
   /* Normal */
@@ -253,7 +287,7 @@
    /* Darker */
    --neutral-darker: 81 81 81; /* #515151 */
 
-      /* ========== SURFACE (nền card/section, nổi trên background) ========== */
+   /* ========== SURFACE (nền card/section, nổi trên background) ========== */
    --surface: 255 255 255;       /* #ffffff */
    --surface-hover: 250 250 250; /* #fafafa */
    --surface-border: 230 230 230;/* dùng cho border card, đồng bộ --neutral */
@@ -304,10 +338,14 @@
    --dark-dark-active: 23 28 32; /* #171c20 */
    /* Darker */
    --dark-darker: 56 48 45;   /* #38302d */
-   --star-color: #fbbf24;
+
+   /* ========== STAR (RGB triplet, đồng bộ format với các token khác) ========== */
+   --star-color: 251 191 36; /* #fbbf24 */
 }
 
-/* ===================== DARK MODE COLORS ===================== */
+/* ======================================================================
+   4. COLOR TOKENS (DARK MODE)
+   ====================================================================== */
 :root.dark {
   --color-red: #e74c3c;
   --color-orange: #f09856;
@@ -342,7 +380,7 @@
    /* Darker */
    --neutral-darker: 226 232 240; /* #e2e8f0 */
 
-      /* ========== SURFACE (DARK MODE) ========== */
+   /* ========== SURFACE (DARK MODE) ========== */
    --surface: 30 41 59;          /* #1e293b — nổi hơn nền --neutral-light tối #0f172a */
    --surface-hover: 38 51 71;    /* hơi sáng hơn khi hover */
    --surface-border: 51 65 85;   /* #334155 — đồng bộ --neutral dark */
@@ -395,10 +433,13 @@
    /* Darker */
    --dark-darker: 235 236 237; /* #ebecee */
 
-   --star-color: #f4a000;
+   /* ========== STAR (RGB triplet, đồng bộ format với các token khác) ========== */
+   --star-color: 244 160 0; /* #f4a000 */
 }
 
-/* ===================== THEME TOKENS (SEMANTIC) ===================== */
+/* ======================================================================
+   5. SEMANTIC THEME TOKENS — map raw tokens vào Tailwind @theme
+   ====================================================================== */
 @theme {
    /* ========== ACCENT ========== */
    --color-accent-light: rgb(var(--accent-light));
@@ -448,7 +489,7 @@
    --color-neutral-dark-active: rgb(var(--neutral-dark-active));
    --color-neutral-darker: rgb(var(--neutral-darker));
 
-      /* ========== SURFACE ========== */
+   /* ========== SURFACE ========== */
    --color-surface: rgb(var(--surface));
    --color-surface-hover: rgb(var(--surface-hover));
    --color-surface-border: rgb(var(--surface-border));
@@ -465,12 +506,15 @@
    --color-dark-dark-active: rgb(var(--dark-dark-active));
    --color-dark-darker: rgb(var(--dark-darker));
 
-   --color-star: var(--star-color);
+   --color-star: rgb(var(--star-color));
+
    /* ========== FONT ========== */
    --font-inters: "Inter", sans-serif;
 }
 
-/* ===================== UTILITIES ===================== */
+/* ======================================================================
+   6. LAYOUT UTILITIES — .container
+   ====================================================================== */
 @layer utilities {
    .container {
       width: 100%;
@@ -514,7 +558,9 @@
    }
 }
 
-/* ===================== GLOBAL ===================== */
+/* ======================================================================
+   7. GLOBAL STYLES
+   ====================================================================== */
 body {
    background-color: rgb(var(--neutral-light));
    color: rgb(var(--primary));
@@ -525,6 +571,8 @@ body {
 }
 
 .header-bg {
+  /* Gradient cố định, không đổi theo theme.
+     Trùng ngẫu nhiên với --color-red light (#c0392b) → dark (#e74c3c). */
   background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
 }
 
@@ -534,7 +582,10 @@ body {
   pointer-events: none !important;
 }
 
-/* Scrollbar mỏng cho aside bộ lọc */
+/* ======================================================================
+   8. SCROLLBAR UTILITIES
+   ====================================================================== */
+/* Scrollbar mỏng, có thể nhìn thấy — dùng cho aside bộ lọc */
 .scrollbar-thin::-webkit-scrollbar {
    width: 4px;
 }
@@ -552,12 +603,7 @@ body {
    background-color: rgba(0, 0, 0, 0.3);
 }
 
-
-@keyframes ticker {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
+/* Ẩn scrollbar hoàn toàn — dùng chung cho mọi trường hợp cần ẩn (kể cả tabs-scroll) */
 .scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -565,26 +611,3 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
-
-@keyframes bubbleIn {
-  from { opacity: 0; transform: scale(0.85) translateX(8px); }
-  to   { opacity: 1; transform: scale(1) translateX(0); }
-}
-@keyframes charIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes dotBounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40%           { transform: translateY(-4px); opacity: 1; }
-}
-@keyframes mascotFloat {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-5px); }
-}
-@keyframes unreadPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50%       { transform: scale(1.4); opacity: 0.7; }
-}
-
-

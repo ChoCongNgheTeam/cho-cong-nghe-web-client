@@ -1,5 +1,6 @@
 export { HomeSlider } from "./HomeSlider";
 export { HomeSliderSection } from "./HomeSliderSection";
+export { HeroBanner } from "./HeroBanner";
 export { TopBanners } from "./banners/TopBanners";
 export { FeaturedCategories } from "./categories/FeaturedCategories";
 export { HotSaleOnline } from "./sales/HotSaleOnline";

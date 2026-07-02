@@ -1,7 +1,6 @@
 import { getHomePageData } from "./_lib/home.api";
-import { HomeSliderSection, TopBanners, FeaturedCategories, FeaturedProducts, MiddleBanners, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale } from "./components";
-import { CategoryProducts } from "./components/CategoryProducts";
-import { HeroBanner } from "./components/HeroBanner";
+import { HomeSliderSection, TopBanners, FeaturedCategories, FeaturedProducts, MiddleBanners, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale, HeroBanner } from "./_components";
+import { CategoryProducts } from "./_components/CategoryProducts";
 
 export default async function HomePage() {
   const { sliders, rootCategories, featuredCategories, bannersTop, bannersSection1, saleSchedule, featuredProducts, bestSellingProducts, activeCampaigns, blogs } = await getHomePageData();

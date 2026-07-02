@@ -1,6 +1,7 @@
 import apiRequest from "@/lib/api";
 import { fetchRootCategories } from "@/lib/header/header";
 import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomePageData } from "./types";
+import { logError } from "@/lib/monitoring/log-error";
 
 export const HOME_CACHE_TAGS = {
   STATIC: "home-static",
@@ -29,10 +30,10 @@ const fetchHomeSaleSchedule = (): Promise<ApiResponse<HomeSaleScheduleData>> =>
 export async function getHomePageData(): Promise<HomePageData> {
   const [staticRes, productsRes, saleRes, rootCategoriesRes] = await Promise.allSettled([fetchHomeStatic(), fetchHomeProducts(), fetchHomeSaleSchedule(), fetchRootCategories()]);
 
-  if (staticRes.status === "rejected") console.error("getHomePageData: fetchHomeStatic failed:", staticRes.reason);
-  if (productsRes.status === "rejected") console.error("getHomePageData: fetchHomeProducts failed:", productsRes.reason);
-  if (saleRes.status === "rejected") console.error("getHomePageData: fetchHomeSaleSchedule failed:", saleRes.reason);
-  if (rootCategoriesRes.status === "rejected") console.error("getHomePageData: fetchRootCategories failed:", rootCategoriesRes.reason);
+  if (staticRes.status === "rejected") logError("getHomePageData: fetchHomeStatic failed", staticRes.reason);
+  if (productsRes.status === "rejected") logError("getHomePageData: fetchHomeProducts failed", productsRes.reason);
+  if (saleRes.status === "rejected") logError("getHomePageData: fetchHomeSaleSchedule failed", saleRes.reason);
+  if (rootCategoriesRes.status === "rejected") logError("getHomePageData: fetchRootCategories failed", rootCategoriesRes.reason);
 
   const staticData = staticRes.status === "fulfilled" ? staticRes.value.data : undefined;
   const productsData = productsRes.status === "fulfilled" ? productsRes.value.data : undefined;
