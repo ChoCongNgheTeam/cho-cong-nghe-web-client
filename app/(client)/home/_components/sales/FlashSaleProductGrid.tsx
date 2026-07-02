@@ -5,7 +5,7 @@ import { Flame } from "lucide-react";
 import { Slidezy } from "@/components/slider";
 import HotSaleProductCard from "./HotSaleProductCard";
 import { flashSale } from "./flashSaleTheme";
-import type { FeaturedProduct, SaleScheduleRule } from "../../_lib/types";
+import type { FeaturedProduct, SaleScheduleRule } from "@/(client)/home/_lib/types";
 
 export const FlashSaleEmptyState = memo(function FlashSaleEmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?: string }) {
   return (

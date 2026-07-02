@@ -2,7 +2,7 @@
 
 import ProductCard from "@/components/product/ProductCard";
 import { Slidezy } from "@/components/slider";
-import { FeaturedProduct } from "../../_lib/types";
+import { FeaturedProduct } from "@/(client)/home/_lib/types";
 
 export function BestSellers({ products }: { products: FeaturedProduct[] }) {
   return (

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Slidezy } from "@/components/slider";
-import { FeaturedCategory } from "../../_lib/types";
+import { FeaturedCategory } from "@/(client)/home/_lib/types";
 
 function CategoryItem({ category }: { category: FeaturedCategory }) {
   return (

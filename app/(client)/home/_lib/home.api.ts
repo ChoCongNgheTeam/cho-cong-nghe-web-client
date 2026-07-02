@@ -1,6 +1,6 @@
 import apiRequest from "@/lib/api";
 import { fetchRootCategories } from "@/lib/header/header";
-import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomePageData } from "./types";
+import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomePageData, SaleByDateApiResponse } from "./types";
 import { logError } from "@/lib/monitoring/log-error";
 
 export const HOME_CACHE_TAGS = {
@@ -24,6 +24,13 @@ const fetchHomeProducts = (): Promise<ApiResponse<HomeProductsData>> =>
 const fetchHomeSaleSchedule = (): Promise<ApiResponse<HomeSaleScheduleData>> =>
   apiRequest.get("/home/sale-schedule", {
     noAuth: true,
+    next: { revalidate: 60, tags: [HOME_CACHE_TAGS.SALE_SCHEDULE] },
+  });
+
+export const fetchSaleByDate = (date: string, limit = 20): Promise<ApiResponse<SaleByDateApiResponse>> =>
+  apiRequest.get("/home/sale-by-date", {
+    noAuth: true,
+    params: { date, limit },
     next: { revalidate: 60, tags: [HOME_CACHE_TAGS.SALE_SCHEDULE] },
   });
 

@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FeaturedProduct } from "../../_lib/types";
-import { formatVND } from "../../../../../helpers";
+import { FeaturedProduct } from "@/(client)/home/_lib/types";
+import { formatVND } from "@/helpers";
 import { memo } from "react";
-import { thumbnailUrl } from "../../../../../helpers/cloudinaryImage";
+import { thumbnailUrl } from "@/helpers/cloudinaryImage";
 import { useRouter } from "next/navigation";
-import { useCart } from "../../../../../hooks/useCart";
+import { useCart } from "@/hooks/useCart";
 import { HighlightIcon } from "@/components/product/HighlightIcon";
 import { StarRating } from "@/components/ui/StarRatingText";
 import WishlistHeart from "@/components/shared/WishlistHeart";

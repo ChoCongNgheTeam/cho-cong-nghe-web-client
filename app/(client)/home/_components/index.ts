@@ -1,6 +1,6 @@
-export { HomeSlider } from "./HomeSlider";
-export { HomeSliderSection } from "./HomeSliderSection";
-export { HeroBanner } from "./HeroBanner";
+export { HomeSlider } from "./slider/HomeSlider";
+export { HomeSliderSection } from "./slider/HomeSliderSection";
+export { HeroBanner } from "./banners/HeroBanner";
 export { TopBanners } from "./banners/TopBanners";
 export { FeaturedCategories } from "./categories/FeaturedCategories";
 export { HotSaleOnline } from "./sales/HotSaleOnline";
@@ -9,4 +9,4 @@ export { FeaturedProducts } from "./products/FeaturedProducts";
 export { MiddleBanners } from "./banners/MiddleBanners";
 export { SeasonalSale } from "./sales/SeasonalSale";
 export { TrustBadges } from "./TrustBadges";
-export { BlogSection } from "./blogs/HomeBlogSection";
+export { BlogSection } from "./HomeBlogSection";

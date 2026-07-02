@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Campaign, CampaignCategory } from "../../_lib/types";
+import { Campaign, CampaignCategory } from "@/(client)/home/_lib/types";
 
 interface SeasonalSaleProps {
   campaigns: Campaign[];

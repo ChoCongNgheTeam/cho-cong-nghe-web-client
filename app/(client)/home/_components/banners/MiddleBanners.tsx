@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Slidezy } from "@/components/slider";
-import type { Banner } from "../../_lib/types";
+import type { Banner } from "@/(client)/home/_lib/types";
 
 export function MiddleBanners({ middleBanner }: { middleBanner: Banner[] }) {
   if (middleBanner.length === 0) return null;

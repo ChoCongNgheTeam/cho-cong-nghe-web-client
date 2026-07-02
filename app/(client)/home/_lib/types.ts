@@ -1,9 +1,7 @@
 import { Blog } from "../../blog/_lib/blog.type";
 import { Category } from "@/(client)/category/_lib";
 
-// ============================================================
 // Media — Slider & Banner dùng chung interface, phân biệt qua position
-// ============================================================
 
 export interface HomeMedia {
   id: string;
@@ -22,9 +20,7 @@ export interface HomeMedia {
 export type Slider = HomeMedia;
 export type Banner = HomeMedia;
 
-// ============================================================
 // Category
-// ============================================================
 
 export interface FeaturedCategory {
   id: string;
@@ -34,9 +30,7 @@ export interface FeaturedCategory {
   position: number;
 }
 
-// ============================================================
 // Product
-// ============================================================
 
 export interface ProductHighlight {
   key: string;
@@ -90,9 +84,7 @@ export interface FeaturedProduct {
   price: ProductPrice;
 }
 
-// ============================================================
 // Sale & Promotion
-// ============================================================
 
 export interface SaleScheduleRule {
   actionType: string;
@@ -152,9 +144,7 @@ export interface SaleByDateApiResponse {
   endDate: string | null;
 }
 
-// ============================================================
 // Campaign
-// ============================================================
 
 export interface CampaignCategory {
   id: string;
@@ -188,9 +178,7 @@ export interface Campaign {
   categories: CampaignCategory[];
 }
 
-// ============================================================
 // Blog
-// ============================================================
 
 export interface BlogPagination {
   data: Blog[];
@@ -200,18 +188,14 @@ export interface BlogPagination {
   totalPages: number;
 }
 
-// ============================================================
 // API Response wrapper — shape { data: T, message: string } từ BE
-// ============================================================
 
 export interface ApiResponse<T> {
   data: T;
   message: string;
 }
 
-// ============================================================
 // 3 response types — khớp với 3 endpoint mới
-// ============================================================
 
 /** GET /home/static */
 export interface HomeStaticData {
@@ -232,9 +216,7 @@ export interface HomeProductsData {
 /** GET /home/sale-schedule */
 export type HomeSaleScheduleData = SaleScheduleData;
 
-// ============================================================
 // Merged — shape sau khi combine 3 response + rootCategories
-// ============================================================
 
 export interface HomePageData extends HomeStaticData, HomeProductsData {
   saleSchedule: HomeSaleScheduleData;

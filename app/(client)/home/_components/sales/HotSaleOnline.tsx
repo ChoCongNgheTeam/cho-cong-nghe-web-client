@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ChevronRight, Calendar, Flame } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import apiRequest from "@/lib/api";
 import { flashSale } from "./flashSaleTheme";
 import { FlashSaleCountdown } from "./FlashSaleCountdown";
 import { FlashSaleTabItem, formatDateTab } from "./FlashSaleTabs";
 import { FlashSaleProductGrid, FlashSaleSkeletonGrid, FlashSaleEmptyState } from "./FlashSaleProductGrid";
-import type { SaleScheduleData, SaleScheduleRule, CachedDayData, TodayProductPromotion, SaleByDateApiResponse } from "../../_lib/types";
+import type { SaleScheduleData, SaleScheduleRule, CachedDayData, TodayProductPromotion } from "@/(client)/home/_lib/types";
+import { logError } from "@/lib/monitoring/log-error";
+import { fetchSaleByDate } from "@/(client)/home/_lib/home.api";
 
 interface HotSaleOnlineProps {
   saleSchedule: SaleScheduleData;
@@ -35,7 +36,7 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
     if (productsCacheRef.current[date] !== undefined) return;
     setLoadingDate(date);
     try {
-      const res = await apiRequest.get<{ data: SaleByDateApiResponse }>("/home/sale-by-date", { params: { date, limit: 20 } });
+      const res = await fetchSaleByDate(date, 20);
       const payload = res.data;
       setProductsCache((prev) => ({
         ...prev,
@@ -46,8 +47,12 @@ export function HotSaleOnline({ saleSchedule }: HotSaleOnlineProps) {
           endDate: payload.endDate ?? null,
         },
       }));
-    } catch {
-      setProductsCache((prev) => ({ ...prev, [date]: { products: [], total: 0, promotions: [] as TodayProductPromotion[], endDate: null } }));
+    } catch (error) {
+      logError("HotSaleOnline: fetchSaleByDate failed", error, { date });
+      setProductsCache((prev) => ({
+        ...prev,
+        [date]: { products: [], total: 0, promotions: [] as TodayProductPromotion[], endDate: null },
+      }));
     } finally {
       setLoadingDate(null);
     }

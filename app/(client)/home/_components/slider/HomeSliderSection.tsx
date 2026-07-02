@@ -4,8 +4,8 @@ import { memo, useState, useCallback, useEffect, startTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { HomeSlider } from "./HomeSlider";
-import { SidebarCategoryList } from "./SidebarCategoryList";
-import type { Slider } from "../_lib/types";
+import { SidebarCategoryList } from "../categories/SidebarCategoryList";
+import type { Slider } from "../../_lib/types";
 import { Category } from "@/types/category";
 
 const MOCK_PROMOS = [

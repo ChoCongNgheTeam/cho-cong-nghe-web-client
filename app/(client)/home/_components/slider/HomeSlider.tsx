@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
-import type { Slider } from "../_lib/types";
-import { THEMES } from "../_lib/home-slider.themes";
+import type { Slider } from "../../_lib/types";
+import { THEMES } from "../../_lib/home-slider.themes";
 
 export function HomeSlider({ sliders }: { sliders: Slider[] }) {
   const [current, setCurrent] = useState(0);

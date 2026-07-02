@@ -1,8 +1,8 @@
 "use client";
 
 import ProductCard from "@/components/product/ProductCard";
-import { FeaturedProduct } from "../../_lib/types";
 import { Slidezy } from "@/components/slider";
+import { FeaturedProduct } from "@/(client)/home/_lib/types";
 
 export function FeaturedProducts({ products }: { products: FeaturedProduct[] }) {
   return (
