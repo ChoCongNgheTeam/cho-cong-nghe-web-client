@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { memo } from "react";
 import Image from "next/image";
-import { useGeneralSettings } from "../../hooks/useGeneralSettings";
+import { useGeneralSettings } from "../../../../hooks/useGeneralSettings";
 
 const FALLBACK_LOGO = "/logo-ccn.png";
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Slidezy } from "@/components/slider";
-import { CATEGORY_ICONS } from "@/lib/header/constants";
+import { CATEGORY_ICONS } from "@/lib/api/header/constants";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

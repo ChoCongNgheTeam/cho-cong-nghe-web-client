@@ -3,7 +3,7 @@
 import { memo, useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-const CategoryMegaMenu = memo(function CategoryMegaMenu() {
+const CategoryMegaMenu = memo(() => {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -70,12 +70,14 @@ const CategoryMegaMenu = memo(function CategoryMegaMenu() {
           <div
             aria-hidden="true"
             onClick={handleClose}
-            className={["fixed inset-0 z-40 transition-[opacity] duration-300 bg-black/50 backdrop-blur-[2px]", isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"].join(" ")}
+            className={["fixed inset-0 z-40 transition-opacity duration-300 bg-black/50 backdrop-blur-[2px]", isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"].join(" ")}
           />,
           document.body,
         )}
     </>
   );
 });
+
+CategoryMegaMenu.displayName = "CategoryMegaMenu";
 
 export default CategoryMegaMenu;

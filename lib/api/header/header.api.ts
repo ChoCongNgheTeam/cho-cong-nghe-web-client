@@ -2,7 +2,7 @@ import apiRequest from "@/lib/api";
 import { slugify } from "./utils";
 import { CategoryResponse, RootCategoryResponse, SearchResponse, TrendingResponse } from "./type";
 import { Category } from "@/types/category";
-import { SearchProduct, TrendingKeyword } from "../../components/layout/type";
+import { SearchProduct, TrendingKeyword } from "../../../components/layout/header/type";
 
 export const fetchCategories = async (): Promise<Category[]> => {
   const res = await apiRequest.get<CategoryResponse>("/categories/tree", { noAuth: true, next: { revalidate: 3600 } });

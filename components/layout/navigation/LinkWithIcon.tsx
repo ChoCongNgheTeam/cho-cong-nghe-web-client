@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LinkWithIconProps } from "./type";
+import { LinkWithIconProps } from "../header/type";
 
 const LinkWithIcon = ({ href, icon, text, mobileText }: LinkWithIconProps) => {
   return (

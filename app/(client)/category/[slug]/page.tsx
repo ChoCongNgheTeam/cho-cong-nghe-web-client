@@ -12,7 +12,7 @@ import { slugToTitle } from "../../../../lib/utils/slug-to-title";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import { buildCategoryMetadata } from "./build-metadata";
 import { BrandApiItem, MediaApiItem } from "../types";
-import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import MobileBottomNav from "@/components/layout/navigation/MobileBottomNav";
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;

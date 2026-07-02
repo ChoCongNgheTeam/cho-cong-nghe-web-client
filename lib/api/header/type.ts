@@ -1,5 +1,5 @@
 import { Category } from "@/types/category";
-import { SearchProduct, TrendingKeyword } from "../../components/layout/type";
+import { SearchProduct, TrendingKeyword } from "../../../components/layout/header/type";
 
 export interface CategoryResponse {
   data: Category[];

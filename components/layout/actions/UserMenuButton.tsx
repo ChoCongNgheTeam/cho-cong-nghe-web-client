@@ -1,5 +1,5 @@
 import UserAvatar from "@/components/ui/UserAvatar";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 import { Heart, LogOut, MapPin, Package, User } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -81,7 +81,7 @@ UserMenuPortal.displayName = "UserMenuPortal";
 /* ════════════════════════════════════════════════════════════
    MAIN COMPONENT
 ════════════════════════════════════════════════════════════ */
-export const UserMenuButton = memo(() => {
+const UserMenuButton = memo(() => {
   const { user, logout, isAuthenticated, loading } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [anchorTop, setAnchorTop] = useState(0);
@@ -171,4 +171,7 @@ export const UserMenuButton = memo(() => {
     </Link>
   );
 });
+
 UserMenuButton.displayName = "UserMenuButton";
+
+export default UserMenuButton;

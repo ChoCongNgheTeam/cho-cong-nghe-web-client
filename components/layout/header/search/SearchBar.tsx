@@ -1,34 +1,14 @@
 "use client";
 
 import { useRef, useCallback, useState, useTransition, useDeferredValue, useEffect, memo } from "react";
-import { Search, ArrowRight } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { formatVND } from "../../helpers";
-import { fetchSearchResults, fetchTrendingKeywords, resolveSearchCategory } from "../../lib/header/header";
-import { SearchProduct, TrendingKeyword } from "./type";
-import { addSearchHistory, clearSearchHistory, getSearchHistory, removeSearchHistory } from "../../lib/header/search-history";
-import { MdClose, MdDeleteSweep, MdHistory, MdTrendingUp } from "react-icons/md";
-
-function calcDiscount(origin: number, base: number): number {
-  if (!origin || origin <= base) return 0;
-  return Math.round(((origin - base) / origin) * 100);
-}
-
-function SkeletonItem() {
-  return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <div className="shrink-0 w-12 h-12 rounded-lg bg-neutral animate-pulse" />
-      <div className="flex-1 space-y-2">
-        <div className="h-3.5 w-3/4 rounded-full bg-neutral animate-pulse" />
-        <div className="h-3 w-1/3 rounded-full bg-neutral animate-pulse" />
-      </div>
-    </li>
-  );
-}
-
-const SKELETON_COUNT = 4;
+import { fetchSearchResults, fetchTrendingKeywords, resolveSearchCategory } from "@/lib/api/header/header.api";
+import { addSearchHistory, clearSearchHistory, getSearchHistory, removeSearchHistory } from "@/lib/api/header/search-history";
+import { logError } from "@/lib/monitoring/log-error";
+import { SearchProduct, TrendingKeyword } from "../type";
+import { DropdownContent } from "./DropdownContent";
+import { IdleDropdown } from "./IdleDropdown";
 
 interface SearchBarProps {
   isMobile?: boolean;
@@ -71,7 +51,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
   useEffect(() => {
     fetchTrendingKeywords()
       .then(setTrendingKws)
-      .catch((error) => console.error("Failed to load trending keywords:", error));
+      .catch((error) => logError("SearchBar: fetchTrendingKeywords failed", error));
   }, []);
 
   useEffect(() => {
@@ -108,8 +88,8 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
           return;
         }
       } catch (error) {
-        console.error("Failed to resolve search category:", error);
         // fallback: vẫn cho user search bình thường thay vì đứng im
+        logError("SearchBar: resolveSearchCategory failed", error, { term });
       }
 
       router.push(`/search?q=${term}`);
@@ -130,15 +110,16 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
         setActiveIndex(-1);
         setIsOpen(true);
       });
-    } catch {
+    } catch (error) {
       if (abortRef.current?.signal.aborted) return;
+      logError("SearchBar: fetchSearchResults failed", error, { query: q });
       startTransition(() => setResults([]));
     } finally {
       if (!abortRef.current?.signal.aborted) setIsSearching(false);
     }
   }, []);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
@@ -198,6 +179,33 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
     });
     setActiveIndex(-1);
   }, []);
+
+  // Handlers cho IdleDropdown — useCallback vì IdleDropdown đã memo()
+  const handleSelectHistory = useCallback(
+    (term: string) => {
+      setQuery(term);
+      navigateToSearch(term);
+    },
+    [navigateToSearch],
+  );
+
+  const handleRemoveHistory = useCallback((term: string) => {
+    removeSearchHistory(term);
+    setHistory(getSearchHistory());
+  }, []);
+
+  const handleClearHistory = useCallback(() => {
+    clearSearchHistory();
+    setHistory([]);
+  }, []);
+
+  const handleSelectTrending = useCallback(
+    (kw: TrendingKeyword) => {
+      router.push(`/products/${kw.slug}`);
+      setIsFocused(false);
+    },
+    [router],
+  );
 
   const showDropdown = isOpen && query.trim().length > 0;
   const showIdle = isFocused && query.trim().length === 0;
@@ -272,7 +280,7 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
     );
   }
 
-  // ── Desktop: glass style trên nền navy ────────────────────────────────────
+  // Desktop: glass style trên nền navy
   return (
     <>
       <style>{`
@@ -377,22 +385,10 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
             <IdleDropdown
               history={history}
               trending={trendingKws}
-              onSelectHistory={(term) => {
-                setQuery(term);
-                navigateToSearch(term);
-              }}
-              onRemoveHistory={(term) => {
-                removeSearchHistory(term);
-                setHistory(getSearchHistory());
-              }}
-              onClearHistory={() => {
-                clearSearchHistory();
-                setHistory([]);
-              }}
-              onSelectTrending={(kw) => {
-                router.push(`/products/${kw.slug}`);
-                setIsFocused(false);
-              }}
+              onSelectHistory={handleSelectHistory}
+              onRemoveHistory={handleRemoveHistory}
+              onClearHistory={handleClearHistory}
+              onSelectTrending={handleSelectTrending}
             />
           </div>
 
@@ -426,198 +422,3 @@ const SearchBar = memo(({ isMobile = false }: SearchBarProps) => {
 SearchBar.displayName = "SearchBar";
 
 export default SearchBar;
-
-interface DropdownContentProps {
-  showSkeleton: boolean;
-  isStale: boolean;
-  isSearching: boolean;
-  displayResults: SearchProduct[];
-  activeIndex: number;
-  query: string;
-  listRef: React.RefObject<HTMLUListElement | null>;
-  handleClose: () => void;
-  navigateToSearch: (q?: string) => void;
-  idPrefix: string;
-}
-
-function DropdownContent({ showSkeleton, isStale, isSearching, displayResults, activeIndex, query, listRef, handleClose, navigateToSearch, idPrefix }: DropdownContentProps) {
-  return (
-    <div className={`transition-opacity duration-150 ${isStale ? "opacity-50" : "opacity-100"}`}>
-      {showSkeleton ? (
-        <ul aria-label="Đang tìm kiếm">
-          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <SkeletonItem key={i} />
-          ))}
-        </ul>
-      ) : displayResults.length > 0 ? (
-        <>
-          <ul ref={listRef} className="max-h-[420px] overflow-y-auto scrollbar-thin">
-            {displayResults.map((product, i) => {
-              const salePrice = product.price.base;
-              const originPrice = product.priceOrigin;
-              const discount = calcDiscount(originPrice, salePrice);
-              const isActive = i === activeIndex;
-
-              return (
-                <li
-                  key={`${product.id}-${i}`}
-                  id={`${idPrefix}-${i}`}
-                  role="option"
-                  aria-selected={isActive}
-                  style={{ animationDelay: `${i * 25}ms` }}
-                  className={`animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both ${isActive ? "search-item-active" : ""}`}
-                >
-                  <Link
-                    href={`/products/${product.slug}`}
-                    onClick={() => {
-                      addSearchHistory(query.trim());
-                      handleClose();
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-neutral transition-colors group"
-                  >
-                    <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
-                      {product.thumbnail ? (
-                        <Image src={product.thumbnail} alt={product.name} width={48} height={48} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-neutral rounded-lg text-neutral-dark">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
-                            <circle cx="12" cy="13" r="3" strokeWidth={1.5} />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-primary font-medium truncate group-hover:text-accent-hover transition-colors duration-150">{product.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-sm font-semibold text-primary">{formatVND(salePrice)}</span>
-                        {discount > 0 && (
-                          <>
-                            <span className="text-xs text-promotion font-medium">-{discount}%</span>
-                            <span className="text-xs text-neutral-darker line-through">{formatVND(originPrice)}</span>
-                          </>
-                        )}
-                        {!product.inStock && <span className="text-xs text-neutral-darker">Hết hàng</span>}
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className={`border-t border-neutral ${activeIndex === displayResults.length ? "search-item-active" : ""}`}>
-            <button
-              id={`${idPrefix}-${displayResults.length}`}
-              role="option"
-              aria-selected={activeIndex === displayResults.length}
-              onClick={() => navigateToSearch()}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-accent-hover hover:bg-neutral transition-colors cursor-pointer"
-            >
-              Xem tất cả kết quả cho &ldquo;{query}&rdquo;
-              <ArrowRight size={13} strokeWidth={2.5} />
-            </button>
-          </div>
-        </>
-      ) : !isSearching ? (
-        <div className="py-6 text-center text-neutral-darker text-sm">
-          Không tìm thấy sản phẩm nào cho <span className="text-primary font-medium">&ldquo;{query}&rdquo;</span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-interface IdleDropdownProps {
-  history: string[];
-  trending: TrendingKeyword[];
-  onSelectHistory: (term: string) => void;
-  onRemoveHistory: (term: string) => void;
-  onClearHistory: () => void;
-  onSelectTrending: (kw: TrendingKeyword) => void;
-}
-
-function IdleDropdown({ history, trending, onSelectHistory, onRemoveHistory, onClearHistory, onSelectTrending }: IdleDropdownProps) {
-  const hasHistory = history.length > 0;
-  const hasTrending = trending.length > 0;
-
-  if (!hasHistory && !hasTrending) return null;
-
-  return (
-    <div className="py-2">
-      {/* ── Lịch sử tìm kiếm ── */}
-      {hasHistory && (
-        <section>
-          <div className="flex items-center justify-between px-4 py-1.5">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-darker uppercase tracking-wide">
-              <MdHistory className="w-4 h-4 text-neutral-dark" />
-              Lịch sử tìm kiếm
-            </span>
-            <button onClick={onClearHistory} className="flex items-center gap-1 text-xs text-neutral-dark hover:text-promotion transition-colors">
-              <MdDeleteSweep className="w-3.5 h-3.5" />
-              Xóa tất cả
-            </button>
-          </div>
-
-          <ul>
-            {history.map((term) => (
-              <li key={term} className="flex items-center gap-2 px-4 py-2 hover:bg-neutral transition-colors group">
-                <button onClick={() => onSelectHistory(term)} className="flex-1 flex items-center gap-2.5 text-left min-w-0">
-                  <MdHistory className="w-4 h-4 text-neutral-dark shrink-0" />
-                  <span className="text-sm text-primary truncate">{term}</span>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveHistory(term);
-                  }}
-                  className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-neutral-active"
-                  aria-label={`Xóa "${term}"`}
-                >
-                  <MdClose className="w-3.5 h-3.5 text-neutral-dark" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Divider */}
-      {hasHistory && hasTrending && <div className="my-1.5 border-t border-neutral" />}
-
-      {/* ── Xu hướng tìm kiếm ── */}
-      {hasTrending && (
-        <section>
-          <div className="px-4 py-1.5">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-darker uppercase tracking-wide">
-              <MdTrendingUp className="w-4 h-4 text-accent" />
-              Xu hướng tìm kiếm
-            </span>
-          </div>
-
-          <ul>
-            {trending.slice(0, 6).map((kw) => (
-              <li key={kw.id}>
-                <button onClick={() => onSelectTrending(kw)} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-neutral transition-colors group text-left">
-                  {/* Thumbnail */}
-                  <div className="shrink-0 w-9 h-9 rounded-lg overflow-hidden border border-neutral bg-white flex items-center justify-center">
-                    {kw.thumbnail ? (
-                      <Image src={kw.thumbnail} alt={kw.name} width={36} height={36} className="w-full h-full object-contain" />
-                    ) : (
-                      <MdTrendingUp className="w-4 h-4 text-neutral-dark opacity-40" />
-                    )}
-                  </div>
-
-                  {/* Name */}
-                  <span className="text-sm text-primary truncate group-hover:text-accent-hover transition-colors flex-1 min-w-0">{kw.name}</span>
-
-                  {/* Trending badge */}
-                  <span className="shrink-0 text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">Hot</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
-  );
-}

@@ -4,10 +4,10 @@ import { useEffect, useRef, useCallback } from "react";
 import { X, CheckCheck, Loader2, Inbox, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { useAuth } from "../../hooks/useAuth";
-import { formatRelativeDate } from "../../helpers/formatRelativeDate";
-import { useRoleNavigation } from "../../hooks/useRoleNavigation";
-import { DEFAULT_NOTIFICATION_ICON, NOTIFICATION_ICONS } from "../../lib/header/constants";
+import { useAuth } from "../../../hooks/useAuth";
+import { formatRelativeDate } from "../../../helpers/formatRelativeDate";
+import { useRoleNavigation } from "../../../hooks/useRoleNavigation";
+import { DEFAULT_NOTIFICATION_ICON, NOTIFICATION_ICONS } from "../../../lib/api/header/constants";
 
 interface MobileNotificationSheetProps {
   isOpen: boolean;

@@ -3,15 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { CartIcon } from "@/(client)/cart/components/CartIcon";
+import CartIcon from "@/components/ui/CartIcon";
 import { useCompareStore } from "@/store/compare/compare.store";
-import { useAuth } from "../../hooks/useAuth";
-import SearchBar from "./SearchBar";
-import { TrendingBar } from "./TrendingBar";
+import { useAuth } from "../../../../hooks/useAuth";
+import SearchBar from "../search/SearchBar";
+import { TrendingBar } from "../TrendingBar";
 import { GitCompareArrows } from "lucide-react";
-import MobileLogo from "@/components/layout/MobileLogo";
+import MobileLogo from "@/components/layout/header/mobile/Logo";
 
-const MobileHeader = () => {
+const DesktopNav = () => {
   const router = useRouter();
   const { items } = useCompareStore();
   const { user } = useAuth();
@@ -59,4 +59,6 @@ const MobileHeader = () => {
   );
 };
 
-export default MobileHeader;
+DesktopNav.displayName = "DesktopNav";
+
+export default DesktopNav;

@@ -5,7 +5,7 @@ import Breadcrumb from "@/components/shared/Breadcrumb";
 import FontSizeToggle from "./components/FontSizeToggle";
 import PolicyContent from "./components/PolicyContent";
 import { FontSizeProvider } from "./components/FontSizeContext";
-import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import MobileBottomNav from "@/components/layout/navigation/MobileBottomNav";
 
 function getBreadcrumbItems(pathname: string) {
   const match = menuItems.find((item) => item.href === pathname);

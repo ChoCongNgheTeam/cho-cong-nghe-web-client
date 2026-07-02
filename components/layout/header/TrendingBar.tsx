@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useLayoutEffect, memo } from "react";
-import { fetchTrendingKeywords } from "../../lib/header/header";
+import { fetchTrendingKeywords } from "../../../lib/api/header/header.api";
 import { TrendingKeyword } from "./type";
 
 function MarqueeTrack({ keywords }: { keywords: TrendingKeyword[] }) {

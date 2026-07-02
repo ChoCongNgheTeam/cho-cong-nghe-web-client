@@ -3,8 +3,8 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { ChevronRight, Package, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { fetchCategories } from "../../lib/header/header";
-import { CATEGORY_ICONS } from "../../lib/header/constants";
+import { fetchCategories } from "@/lib/api/header/header.api";
+import { CATEGORY_ICONS } from "@/lib/api/header/constants";
 import { Category } from "@/types/category";
 
 function getIcon(slug: string) {

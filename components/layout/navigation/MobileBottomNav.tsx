@@ -4,10 +4,10 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, LayoutGrid, ShoppingBag, Bell, User } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 import { useNotifications } from "@/contexts/NotificationContext";
-import MobileCategorySheet from "./MobileCategorySheet";
-import MobileNotificationSheet from "./MobileNotificationSheet";
+import MobileCategorySheet from "../header/mobile/CategorySheet";
+import MobileNotificationSheet from "../actions/MobileNotificationSheet";
 
 type SheetType = "category" | "notification" | null;
 

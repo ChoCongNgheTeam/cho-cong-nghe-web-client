@@ -1,6 +1,6 @@
 import { ShoppingBag, Truck, User } from "lucide-react";
-import LinkWithIcon from "./LinkWithIcon";
-import { useAuth } from "../../hooks/useAuth";
+import LinkWithIcon from "../navigation/LinkWithIcon";
+import { useAuth } from "../../../hooks/useAuth";
 
 const HeaderTop = () => {
   const { isAuthenticated } = useAuth();

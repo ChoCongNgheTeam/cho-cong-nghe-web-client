@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import HeaderTop from "./HeaderTop";
-import MobileHeader from "./MobileHeader";
-import DesktopHeader from "./DesktopHeader";
-import MobileBottomNav from "./MobileBottomNav";
+import DesktopNav from "./desktop/Nav";
+import MobileNav from "./mobile/Nav";
+import MobileBottomNav from "../navigation/MobileBottomNav";
 import { TrendingBar } from "./TrendingBar";
 
 const Header = () => {
@@ -106,9 +106,9 @@ const Header = () => {
         </div>
 
         <div className="container">
-          <MobileHeader />
+          <MobileNav />
           <div className="py-1.5">
-            <DesktopHeader />
+            <DesktopNav />
             <TrendingBar className="hidden md:block" />
           </div>
         </div>

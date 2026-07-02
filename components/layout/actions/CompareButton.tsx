@@ -5,7 +5,7 @@ import { GitCompareArrows } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
 
-export const CompareButton = memo(() => {
+const CompareButton = memo(() => {
   const router = useRouter();
   const { items } = useCompareStore();
   return (
@@ -28,3 +28,5 @@ export const CompareButton = memo(() => {
   );
 });
 CompareButton.displayName = "CompareButton";
+
+export default CompareButton;

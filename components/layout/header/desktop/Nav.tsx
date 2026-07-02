@@ -1,15 +1,15 @@
 "use client";
 
 import { memo } from "react";
-import { CartIcon } from "@/(client)/cart/components/CartIcon";
+import CartIcon from "@/components/ui/CartIcon";
 import CategoryMegaMenu from "./CategoryMegaMenu";
-import SearchBar from "./SearchBar";
+import SearchBar from "@/components/layout/header/search/SearchBar";
 import NotificationBell from "@/components/ui/NotificationBell";
 import HeaderLogo from "@/components/general/HeaderLogo";
-import { CompareButton } from "./CompareButton";
-import { UserMenuButton } from "./UserMenuButton";
+import CompareButton from "@/components/layout/actions/CompareButton";
+import UserMenuButton from "@/components/layout/actions/UserMenuButton";
 
-const DesktopHeader = memo(() => {
+const DesktopNav = memo(() => {
   return (
     <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
       <HeaderLogo />
@@ -27,6 +27,6 @@ const DesktopHeader = memo(() => {
   );
 });
 
-DesktopHeader.displayName = "DesktopHeader";
+DesktopNav.displayName = "DesktopNav";
 
-export default DesktopHeader;
+export default DesktopNav;

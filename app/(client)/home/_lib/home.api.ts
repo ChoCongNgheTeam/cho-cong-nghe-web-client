@@ -1,5 +1,5 @@
 import apiRequest from "@/lib/api";
-import { fetchRootCategories } from "@/lib/header/header";
+import { fetchRootCategories } from "@/lib/api/header/header.api";
 import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomePageData, SaleByDateApiResponse } from "./types";
 import { logError } from "@/lib/monitoring/log-error";
 
