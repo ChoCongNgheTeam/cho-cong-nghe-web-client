@@ -12,11 +12,6 @@ export interface ResponsiveControls {
   desktop?: boolean;
 }
 
-export interface SlideProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
 export interface SlidezyOptions {
   items?: number | ResponsiveBreakpoints;
   speed?: number;
@@ -32,4 +27,10 @@ export interface SlidezyOptions {
   draggable?: boolean;
   className?: string;
   onSlideChange?: (index: number) => void;
+}
+
+export interface SlidezyProps extends SlidezyOptions {
+  children: React.ReactNode;
+  controlsOffset?: string;
+  mobileNav?: "dots" | "none" | "arrows";
 }
