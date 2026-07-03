@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useNotificationStore, NotificationItem } from "../hooks/useNotificationStore";
-import { UserRole } from "@/types/staff-permissions.types";
+import { STAFF_ROLES } from "@/types/staff-permissions.types";
 
 interface AdminNotificationContextValue {
   notifications: NotificationItem[];
@@ -27,18 +27,23 @@ const AdminNotificationContext = createContext<AdminNotificationContextValue>({
   refresh: async () => {},
 });
 
+const ADMIN_NOTIFICATION_ENDPOINTS = {
+  list: "/notifications/admin",
+  markAll: "/notifications/admin/read-all",
+  markOne: (id: string) => `/notifications/${id}/read`,
+};
+
 export function AdminNotificationProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
-
-  // Chỉ fetch nếu đang là ADMIN hoặc STAFF
   const role = user?.role;
 
-  const isAdminOrStaff = isAuthenticated && (role === "ADMIN" || (!!role && (["SALES", "MARKETING", "SUPPORT", "ACCOUNTING"] as const).includes(role as any)));
+  // Chỉ fetch nếu đang là ADMIN hoặc STAFF
+  const isAdminOrStaff = isAuthenticated && !!role && (role === "ADMIN" || (STAFF_ROLES as readonly string[]).includes(role));
 
   const store = useNotificationStore({
-    listEndpoint: "/notifications/admin",
-    markAllEndpoint: "/notifications/admin/read-all",
-    markOneEndpoint: (id) => `/notifications/${id}/read`,
+    listEndpoint: ADMIN_NOTIFICATION_ENDPOINTS.list,
+    markAllEndpoint: ADMIN_NOTIFICATION_ENDPOINTS.markAll,
+    markOneEndpoint: ADMIN_NOTIFICATION_ENDPOINTS.markOne,
     enabled: isAdminOrStaff,
     // Poll nhanh hơn cho admin vì cần biết đơn/comment mới ngay
     pollInterval: 15_000,

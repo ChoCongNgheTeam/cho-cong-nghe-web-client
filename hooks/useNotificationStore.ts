@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import apiRequest from "@/lib/api";
+import { logError } from "@/lib/monitoring/log-error";
 
 export interface NotificationItem {
   id: string;
@@ -46,7 +47,7 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
     };
   }, []);
 
-  // ── Core fetch ──────────────────────────────────────────────────────────────
+  // Core fetch
   const fetchPage = useCallback(
     async (pageNum: number, replace = false) => {
       if (!enabled) return;
@@ -66,7 +67,7 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
           if (replace) {
             // Chỉ update nếu data thực sự thay đổi
             const same = prev.length === items.length && items.every((item, i) => prev[i]?.id === item.id && prev[i]?.isRead === item.isRead);
-            return same ? prev : items; // ← giữ reference cũ nếu không đổi
+            return same ? prev : items; // giữ reference cũ nếu không đổi
           }
           return [...prev, ...items];
         });
@@ -75,8 +76,8 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
         setUnreadCount((prev) => (prev === newUnread ? prev : newUnread));
         setHasMore(pageNum < (res.meta?.totalPages ?? 1));
         setPage(pageNum);
-      } catch {
-        // silent
+      } catch (error) {
+        logError("useNotificationStore: fetchPage failed", error, { listEndpoint, pageNum });
       } finally {
         if (isMounted.current) setIsLoading(false);
       }
@@ -91,7 +92,7 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
     await fetchPage(page + 1, false);
   }, [hasMore, isLoading, page, fetchPage]);
 
-  // ── Auto fetch + poll ───────────────────────────────────────────────────────
+  // Auto fetch + poll
   useEffect(() => {
     if (!enabled) return;
 
@@ -104,14 +105,15 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
     };
   }, [enabled, fetchPage, pollInterval]);
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
+  // Actions
   const markAsRead = useCallback(
     async (id: string) => {
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
       setUnreadCount((c) => Math.max(0, c - 1));
       try {
         await apiRequest.patch(markOneEndpoint(id), {});
-      } catch {
+      } catch (error) {
+        logError("useNotificationStore: markAsRead failed", error, { id });
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
         setUnreadCount((c) => c + 1);
       }
@@ -135,7 +137,8 @@ export function useNotificationStore({ listEndpoint, markAllEndpoint, markOneEnd
 
     try {
       await apiRequest.patch(markAllEndpoint, {});
-    } catch {
+    } catch (error) {
+      logError("useNotificationStore: markAllAsRead failed", error, { markAllEndpoint });
       setNotifications(prevNotifications);
       setUnreadCount(prevCount);
     }

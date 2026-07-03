@@ -11,104 +11,57 @@ import { formatRelativeDate } from "../../helpers/formatRelativeDate";
 import { useRoleNavigation } from "../../hooks/useRoleNavigation";
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; ring: string }> = {
-  WELCOME_VOUCHER: {
-    icon: Gift,
-    color: "text-accent",
-    bg: "bg-accent-light",
-    ring: "ring-accent-light-active",
-  },
-  VOUCHER_EXPIRING: {
-    icon: Clock,
-    color: "text-star",
-    bg: "bg-neutral-light-active",
-    ring: "ring-neutral",
-  },
-  VOUCHER_ASSIGNED: {
-    icon: Tag,
-    color: "text-accent-dark",
-    bg: "bg-accent-light",
-    ring: "ring-accent-light-active",
-  },
-  CAMPAIGN_PROMOTION: {
-    icon: Megaphone,
-    color: "text-promotion",
-    bg: "bg-promotion-light",
-    ring: "ring-promotion-light-active",
-  },
-  ORDER_STATUS: {
-    icon: Package,
-    color: "text-accent",
-    bg: "bg-accent-light",
-    ring: "ring-accent-light-active",
-  },
-  USER_INACTIVE: {
-    icon: UserX,
-    color: "text-neutral-dark",
-    bg: "bg-neutral-light-active",
-    ring: "ring-neutral",
-  },
-  COMMENT_NEW: {
-    icon: MessageSquare,
-    color: "text-accent",
-    bg: "bg-accent-light",
-    ring: "ring-accent-light-active",
-  },
-  REVIEW_NEW: {
-    icon: Star,
-    color: "text-star",
-    bg: "bg-neutral-light-active",
-    ring: "ring-neutral",
-  },
+  WELCOME_VOUCHER: { icon: Gift, color: "text-accent", bg: "bg-accent-light", ring: "ring-accent-light-active" },
+  VOUCHER_EXPIRING: { icon: Clock, color: "text-star", bg: "bg-neutral-light-active", ring: "ring-neutral" },
+  VOUCHER_ASSIGNED: { icon: Tag, color: "text-accent-dark", bg: "bg-accent-light", ring: "ring-accent-light-active" },
+  CAMPAIGN_PROMOTION: { icon: Megaphone, color: "text-promotion", bg: "bg-promotion-light", ring: "ring-promotion-light-active" },
+  ORDER_STATUS: { icon: Package, color: "text-accent", bg: "bg-accent-light", ring: "ring-accent-light-active" },
+  USER_INACTIVE: { icon: UserX, color: "text-neutral-dark", bg: "bg-neutral-light-active", ring: "ring-neutral" },
+  COMMENT_NEW: { icon: MessageSquare, color: "text-accent", bg: "bg-accent-light", ring: "ring-accent-light-active" },
+  REVIEW_NEW: { icon: Star, color: "text-star", bg: "bg-neutral-light-active", ring: "ring-neutral" },
 };
 
-const DEFAULT_CONFIG = {
-  icon: Bell,
-  color: "text-neutral-dark",
-  bg: "bg-neutral-light-active",
-  ring: "ring-neutral",
-};
+const DEFAULT_CONFIG = { icon: Bell, color: "text-neutral-dark", bg: "bg-neutral-light-active", ring: "ring-neutral" };
+
+type NotificationBellVariant = "user" | "admin";
 
 type NotificationBellProps = {
   /**
    * "user"  → dùng NotificationContext  → GET /notifications
    * "admin" → dùng AdminNotificationContext → GET /notifications/admin
    */
-  variant?: "user" | "admin";
+  variant?: NotificationBellVariant;
   footerHref?: string;
   footerLabel?: string;
   headerLabel?: string;
 };
 
-/* ════════════════════════════════════════════════════════════
-   PORTAL: Backdrop + Dropdown — render thẳng vào <body>
-   (giống pattern của CategoryMegaMenu)
-════════════════════════════════════════════════════════════ */
+// Shape chung của store — NotificationContext và AdminNotificationContext cấu trúc giống nhau
+type NotificationStore = ReturnType<typeof useNotifications>;
+type NotificationItemType = NotificationStore["notifications"][number];
+
 interface NotificationPortalProps {
   isOpen: boolean;
   onClose: () => void;
-  variant: "user" | "admin";
-  /** Toạ độ góc trên-phải của dropdown, tính từ getBoundingClientRect() của trigger */
   anchorTop: number;
   anchorRight: number;
-  // nội dung dropdown
   headerLabel: string;
   footerHref: string;
   footerLabel: string;
-  notifications: ReturnType<typeof useNotifications>["notifications"];
+  notifications: NotificationItemType[];
   unreadCount: number;
   isLoading: boolean;
   hasMore: boolean;
   fetchNextPage: () => void;
-  markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => void;
-  onItemClick: (n: NotificationPortalProps["notifications"][number]) => void;
+  onItemClick: (n: NotificationItemType) => void;
 }
 
+// PORTAL: Backdrop + Dropdown, render thẳng vào <body> (giống pattern của CategoryMegaMenu)
 const NotificationPortal = memo(
   ({
     isOpen,
     onClose,
-    variant,
     anchorTop,
     anchorRight,
     headerLabel,
@@ -119,7 +72,6 @@ const NotificationPortal = memo(
     isLoading,
     hasMore,
     fetchNextPage,
-    markAsRead,
     markAllAsRead,
     onItemClick,
   }: NotificationPortalProps) => {
@@ -275,26 +227,29 @@ const NotificationPortal = memo(
 );
 NotificationPortal.displayName = "NotificationPortal";
 
-/* ════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-════════════════════════════════════════════════════════════ */
-const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, headerLabel }: NotificationBellProps) => {
+interface NotificationBellBaseProps {
+  variant: NotificationBellVariant;
+  footerHref?: string;
+  footerLabel?: string;
+  headerLabel?: string;
+  store: NotificationStore;
+}
+
+// BASE: UI + state dùng chung cho cả 2 variant — chỉ nhận store qua props, không tự đọc Context
+function NotificationBellBase({ variant, footerHref, footerLabel, headerLabel, store }: NotificationBellBaseProps) {
   const { isAuthenticated } = useAuth();
+  const { notifications, unreadCount, isLoading, hasMore, fetchNextPage, markAsRead, markAllAsRead } = store;
 
   const resolvedFooterHref = footerHref ?? (variant === "admin" ? "/admin/notifications" : "/profile/notifications");
   const resolvedFooterLabel = footerLabel ?? "Xem tất cả thông báo";
   const resolvedHeaderLabel = headerLabel ?? (variant === "admin" ? "Thông báo hệ thống" : "Thông báo");
-
-  const userStore = useNotifications();
-  const adminStore = useAdminNotifications();
-  const { notifications, unreadCount, isLoading, hasMore, fetchNextPage, markAsRead, markAllAsRead } = variant === "admin" ? adminStore : userStore;
 
   const [open, setOpen] = useState(false);
   const [anchorTop, setAnchorTop] = useState(0);
   const [anchorRight, setAnchorRight] = useState(0);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  /* ESC để đóng */
+  // ESC để đóng
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -321,7 +276,7 @@ const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, head
   const { navigateToComment, navigateToOrders, navigateToReview } = useRoleNavigation();
 
   const handleItemClick = useCallback(
-    async (n: (typeof notifications)[number]) => {
+    async (n: NotificationItemType) => {
       if (!n.isRead) await markAsRead(n.id);
 
       if (n.type === "ORDER_STATUS") {
@@ -389,7 +344,6 @@ const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, head
       <NotificationPortal
         isOpen={open}
         onClose={handleClose}
-        variant={variant}
         anchorTop={anchorTop}
         anchorRight={anchorRight}
         headerLabel={resolvedHeaderLabel}
@@ -400,12 +354,32 @@ const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, head
         isLoading={isLoading}
         hasMore={hasMore}
         fetchNextPage={fetchNextPage}
-        markAsRead={markAsRead}
         markAllAsRead={markAllAsRead}
         onItemClick={handleItemClick}
       />
     </>
   );
+}
+
+type NotificationBellVariantProps = Omit<NotificationBellBaseProps, "variant" | "store">;
+
+// CONTAINER: mỗi variant chỉ subscribe đúng 1 Context — thay vì component gốc
+// luôn đọc cả NotificationContext lẫn AdminNotificationContext dù chỉ dùng 1 trong 2
+const NotificationBellUser = memo((props: NotificationBellVariantProps) => {
+  const store = useNotifications();
+  return <NotificationBellBase {...props} variant="user" store={store} />;
+});
+NotificationBellUser.displayName = "NotificationBellUser";
+
+const NotificationBellAdmin = memo((props: NotificationBellVariantProps) => {
+  const store = useAdminNotifications();
+  return <NotificationBellBase {...props} variant="admin" store={store} />;
+});
+NotificationBellAdmin.displayName = "NotificationBellAdmin";
+
+const NotificationBell = memo(({ variant = "user", footerHref, footerLabel, headerLabel }: NotificationBellProps) => {
+  const props = { footerHref, footerLabel, headerLabel };
+  return variant === "admin" ? <NotificationBellAdmin {...props} /> : <NotificationBellUser {...props} />;
 });
 
 NotificationBell.displayName = "NotificationBell";
