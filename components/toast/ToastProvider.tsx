@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useCallback, useMemo } from
 import { Toast, ToastOptions, ToastContextType } from "./types";
 import ToastContainer from "./ToastContainer";
 
-// ── Tách thành 2 context ──────────────────────────────────────────────────────
 // ActionsContext: stable, không thay đổi khi toast xuất hiện/mất
 // StateContext: chỉ ToastContainer cần, consumer khác không subscribe
 
@@ -13,7 +12,7 @@ type ToastActionsType = Omit<ToastContextType, "toasts">;
 const ToastyActionsContext = createContext<ToastActionsType | undefined>(undefined);
 const ToastyStateContext = createContext<Toast[]>([]);
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+// PROVIDER
 
 let toastId = 0;
 const generateId = () => `toast-${++toastId}-${Date.now()}`;
@@ -133,7 +132,7 @@ export function ToastyProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── Hooks ─────────────────────────────────────────────────────────────────────
+// HOOKS
 
 /** Dùng ở mọi nơi cần gọi toast — KHÔNG re-render khi toast xuất hiện/mất */
 export function useToasty() {
