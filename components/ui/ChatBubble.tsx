@@ -14,22 +14,16 @@ export function ChatBubble() {
   const [visible, setVisible] = useState(true);
 
   const idxRef = useRef(0);
-
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const cycleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function fadeOut() {
     setExiting(true);
-
     cycleTimerRef.current = setTimeout(() => {
       setVisible(false);
-
       idxRef.current = (idxRef.current + 1) % MESSAGES.length;
-
       cycleTimerRef.current = setTimeout(() => {
         setVisible(true);
-
         startMessage(idxRef.current);
       }, HIDDEN_TIME);
     }, FADE_TIME);
@@ -37,61 +31,38 @@ export function ChatBubble() {
 
   function startMessage(index: number) {
     const letters = [...MESSAGES[index]];
-
     let i = 0;
-
     setChars([]);
-
     setTyping(true);
-
     setExiting(false);
 
     function next() {
       if (i < letters.length) {
         setChars((prev) => [...prev, letters[i]]);
-
         i++;
-
         typingTimerRef.current = setTimeout(next, i === 1 ? 80 : 44);
-
         return;
       }
-
       setTyping(false);
-
       cycleTimerRef.current = setTimeout(() => {
         fadeOut();
       }, DISPLAY_TIME);
     }
-
     next();
   }
 
   useEffect(() => {
     startMessage(0);
-
     return () => {
-      if (typingTimerRef.current) {
-        clearTimeout(typingTimerRef.current);
-      }
-
-      if (cycleTimerRef.current) {
-        clearTimeout(cycleTimerRef.current);
-      }
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
     };
   }, []);
 
   if (!visible) return null;
 
   return (
-    <div
-      className="hidden md:block absolute bottom-[calc(100%+14px)] right-[-4px] pointer-events-none z-20"
-      style={{
-        width: "max-content",
-        maxWidth: 180,
-      }}
-    >
-      {/* Cloud body */}
+    <div className="hidden md:block absolute bottom-[calc(100%+14px)] right-[-4px] pointer-events-none z-20" style={{ width: "max-content", maxWidth: 180 }}>
       <div
         className={`
         relative bg-white border border-slate-200
@@ -119,24 +90,11 @@ export function ChatBubble() {
             <span className="w-[5px] h-[5px] rounded-full bg-neutral-400 animate-[dotBounce_1.2s_ease-in-out_400ms_infinite]" />
           </span>
         )}
-
-        {/* Tail hình tam giác */}
         <span
           className="absolute -bottom-[9px] right-3 w-0 h-0 transition-opacity duration-300"
-          style={{
-            borderLeft: "8px solid transparent",
-            borderTop: "10px solid white",
-            filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.07))",
-          }}
+          style={{ borderLeft: "8px solid transparent", borderTop: "10px solid white", filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.07))" }}
         />
-        {/* Tail border */}
-        <span
-          className="absolute -bottom-[10px] right-[10px] w-0 h-0 -z-10"
-          style={{
-            borderLeft: "9px solid transparent",
-            borderTop: "11px solid #e2e8f0",
-          }}
-        />
+        <span className="absolute -bottom-[10px] right-[10px] w-0 h-0 -z-10" style={{ borderLeft: "9px solid transparent", borderTop: "11px solid #e2e8f0" }} />
       </div>
     </div>
   );
