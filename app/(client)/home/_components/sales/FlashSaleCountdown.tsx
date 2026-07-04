@@ -3,7 +3,7 @@
 import { memo, useState, useEffect } from "react";
 import { flashSale } from "./flashSaleTheme";
 
-const DigitBox = memo(function DigitBox({ value }: { value: string }) {
+const DigitBox = memo(({ value }: { value: string }) => {
   return (
     <span
       className="inline-flex items-center justify-center font-black tabular-nums"
@@ -23,7 +23,9 @@ const DigitBox = memo(function DigitBox({ value }: { value: string }) {
   );
 });
 
-const Sep = memo(function Sep() {
+DigitBox.displayName = "DigitBox";
+
+const Sep = memo(() => {
   return (
     <span className="font-black select-none" style={{ color: flashSale.promotion, fontSize: "clamp(16px, 3vw, 22px)", lineHeight: 1, marginBottom: 1 }}>
       :
@@ -31,7 +33,9 @@ const Sep = memo(function Sep() {
   );
 });
 
-export const FlashSaleCountdown = memo(function FlashSaleCountdown({ endDate, label }: { endDate: string | null; label: string }) {
+Sep.displayName = "Sep";
+
+const FlashSaleCountdown = memo(({ endDate, label }: { endDate: string | null; label: string }) => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -69,3 +73,7 @@ export const FlashSaleCountdown = memo(function FlashSaleCountdown({ endDate, la
     </div>
   );
 });
+
+FlashSaleCountdown.displayName = "FlashSaleCountdown";
+
+export default FlashSaleCountdown;

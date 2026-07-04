@@ -5,7 +5,7 @@ import { ChevronRight, Calendar, Flame } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { flashSale } from "./flashSaleTheme";
-import { FlashSaleCountdown } from "./FlashSaleCountdown";
+import FlashSaleCountdown from "./FlashSaleCountdown";
 import { FlashSaleTabItem, formatDateTab } from "./FlashSaleTabs";
 import { FlashSaleProductGrid, FlashSaleSkeletonGrid, FlashSaleEmptyState } from "./FlashSaleProductGrid";
 import type { SaleScheduleData, SaleScheduleRule, CachedDayData, TodayProductPromotion } from "@/(client)/home/_lib/types";

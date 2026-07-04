@@ -43,7 +43,7 @@ function calcDiscountLabel(rule: FlashPromoRule | null | undefined, product: Fea
   return null;
 }
 
-const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0, flashPromoRule, isUpcoming = false }: HotSaleProductCardProps) {
+const HotSaleProductCard = memo(({ product, index = 0, flashPromoRule, isUpcoming = false }: HotSaleProductCardProps) => {
   const previewPrice = calcPreviewPrice(product, flashPromoRule);
   const discountLabel = calcDiscountLabel(flashPromoRule, product);
   const finalPrice = previewPrice ?? (product.price.hasPromotion ? product.price.final : product.price.base);
@@ -191,5 +191,7 @@ const HotSaleProductCard = memo(function HotSaleProductCard({ product, index = 0
     </Link>
   );
 });
+
+HotSaleProductCard.displayName = "HotSaleProductCard";
 
 export default HotSaleProductCard;

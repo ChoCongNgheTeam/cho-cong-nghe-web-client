@@ -10,7 +10,7 @@ function formatDateTab(dateStr: string): string {
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export const FlashSaleTabItem = memo(function FlashSaleTabItem({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; isActive: boolean; isLoading: boolean; onClick: () => void }) {
+export const FlashSaleTabItem = memo(({ day, isActive, isLoading, onClick }: { day: SaleScheduleDay; isActive: boolean; isLoading: boolean; onClick: () => void }) => {
   return (
     <button
       onClick={onClick}
@@ -63,5 +63,7 @@ export const FlashSaleTabItem = memo(function FlashSaleTabItem({ day, isActive, 
     </button>
   );
 });
+
+FlashSaleTabItem.displayName = "FlashSaleTabItem";
 
 export { formatDateTab };

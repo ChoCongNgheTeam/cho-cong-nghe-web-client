@@ -7,7 +7,7 @@ import HotSaleProductCard from "./HotSaleProductCard";
 import { flashSale } from "./flashSaleTheme";
 import type { FeaturedProduct, SaleScheduleRule } from "@/(client)/home/_lib/types";
 
-export const FlashSaleEmptyState = memo(function FlashSaleEmptyState({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?: string }) {
+export const FlashSaleEmptyState = memo(({ isUpcoming, dateLabel }: { isUpcoming: boolean; dateLabel?: string }) => {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-6" style={{ minHeight: 320 }}>
       <Flame style={{ width: 72, height: 72, color: flashSale.promotion, opacity: 0.18 }} strokeWidth={1.5} />
@@ -16,6 +16,8 @@ export const FlashSaleEmptyState = memo(function FlashSaleEmptyState({ isUpcomin
     </div>
   );
 });
+
+FlashSaleEmptyState.displayName = "FlashSaleEmptyState";
 
 export function FlashSaleSkeletonGrid() {
   return (
@@ -27,15 +29,7 @@ export function FlashSaleSkeletonGrid() {
   );
 }
 
-export const FlashSaleProductGrid = memo(function FlashSaleProductGrid({
-  products,
-  flashPromoRule,
-  isUpcoming,
-}: {
-  products: FeaturedProduct[];
-  flashPromoRule: SaleScheduleRule | null;
-  isUpcoming: boolean;
-}) {
+export const FlashSaleProductGrid = memo(({ products, flashPromoRule, isUpcoming }: { products: FeaturedProduct[]; flashPromoRule: SaleScheduleRule | null; isUpcoming: boolean }) => {
   const renderCard = (item: FeaturedProduct, index: number) => {
     const product = {
       ...item,
@@ -72,3 +66,5 @@ export const FlashSaleProductGrid = memo(function FlashSaleProductGrid({
     </div>
   );
 });
+
+FlashSaleProductGrid.displayName = "FlashSaleProductGrid";
