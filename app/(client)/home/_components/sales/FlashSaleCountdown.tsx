@@ -1,11 +1,25 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useEffect, useRef, type RefObject } from "react";
 import { flashSale } from "./flashSaleTheme";
 
-const DigitBox = memo(({ value }: { value: string }) => {
+function pad(n: number): string {
+  return n.toString().padStart(2, "0");
+}
+
+function calcParts(endDate: string | null) {
+  const diff = Math.max(0, endDate ? new Date(endDate).getTime() - Date.now() : 0);
+  return {
+    hours: pad(Math.floor(diff / 3_600_000)),
+    minutes: pad(Math.floor((diff / 60_000) % 60)),
+    seconds: pad(Math.floor((diff / 1_000) % 60)),
+  };
+}
+
+const DigitBox = memo(({ initialValue, digitRef }: { initialValue: string; digitRef: RefObject<HTMLSpanElement | null> }) => {
   return (
     <span
+      ref={digitRef}
       className="inline-flex items-center justify-center font-black tabular-nums"
       style={{
         background: "rgba(0,0,0,0.55)",
@@ -18,7 +32,7 @@ const DigitBox = memo(({ value }: { value: string }) => {
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.15)",
       }}
     >
-      {value}
+      {initialValue}
     </span>
   );
 });
@@ -36,23 +50,21 @@ const Sep = memo(() => {
 Sep.displayName = "Sep";
 
 const FlashSaleCountdown = memo(({ endDate, label }: { endDate: string | null; label: string }) => {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const hoursRef = useRef<HTMLSpanElement>(null);
+  const minutesRef = useRef<HTMLSpanElement>(null);
+  const secondsRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const calc = () => {
-      const diff = Math.max(0, endDate ? new Date(endDate).getTime() - Date.now() : 0);
-      setTimeLeft({
-        hours: Math.floor(diff / 3_600_000),
-        minutes: Math.floor((diff / 60_000) % 60),
-        seconds: Math.floor((diff / 1_000) % 60),
-      });
+    const tick = () => {
+      const { hours, minutes, seconds } = calcParts(endDate);
+      if (hoursRef.current) hoursRef.current.textContent = hours;
+      if (minutesRef.current) minutesRef.current.textContent = minutes;
+      if (secondsRef.current) secondsRef.current.textContent = seconds;
     };
-    calc();
-    const timer = setInterval(calc, 1000);
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [endDate]);
-
-  const pad = (n: number) => n.toString().padStart(2, "0");
 
   return (
     <div
@@ -64,11 +76,11 @@ const FlashSaleCountdown = memo(({ endDate, label }: { endDate: string | null; l
         {label}
       </span>
       <div className="flex items-center gap-1">
-        <DigitBox value={pad(timeLeft.hours)} />
+        <DigitBox initialValue="00" digitRef={hoursRef} />
         <Sep />
-        <DigitBox value={pad(timeLeft.minutes)} />
+        <DigitBox initialValue="00" digitRef={minutesRef} />
         <Sep />
-        <DigitBox value={pad(timeLeft.seconds)} />
+        <DigitBox initialValue="00" digitRef={secondsRef} />
       </div>
     </div>
   );

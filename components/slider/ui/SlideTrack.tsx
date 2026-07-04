@@ -1,4 +1,4 @@
-import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject, TouchEvent as ReactTouchEvent } from "react";
+import { memo, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject, type TouchEvent as ReactTouchEvent } from "react";
 
 interface SlideTrackProps {
   trackRef: RefObject<HTMLDivElement | null>;
@@ -17,7 +17,7 @@ interface SlideTrackProps {
   onTouchEnd: () => void;
 }
 
-export function SlideTrack({
+export const SlideTrack = memo(function SlideTrack({
   trackRef,
   slides,
   gap,
@@ -75,4 +75,4 @@ export function SlideTrack({
       </div>
     </div>
   );
-}
+});

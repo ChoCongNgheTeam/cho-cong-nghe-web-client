@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface SlideDotsProps {
   pageCount: number;
   activePage: number;
@@ -5,7 +7,7 @@ interface SlideDotsProps {
   onSelect: (index: number) => void;
 }
 
-export function SlideDots({ pageCount, activePage, isAnimating, onSelect }: SlideDotsProps) {
+export const SlideDots = memo(function SlideDots({ pageCount, activePage, isAnimating, onSelect }: SlideDotsProps) {
   return (
     <div className="flex items-center justify-center gap-2 my-4">
       {Array.from({ length: pageCount }).map((_, index) => (
@@ -19,4 +21,4 @@ export function SlideDots({ pageCount, activePage, isAnimating, onSelect }: Slid
       ))}
     </div>
   );
-}
+});

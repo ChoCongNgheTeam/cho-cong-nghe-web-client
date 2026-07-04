@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface SlideArrowsProps {
   onPrev: () => void;
   onNext: () => void;
@@ -8,7 +10,7 @@ interface SlideArrowsProps {
   offsetPx: number;
 }
 
-export function SlideArrows({ onPrev, onNext, disabled, atStart, atEnd, controlsText, offsetPx }: SlideArrowsProps) {
+export const SlideArrows = memo(function SlideArrows({ onPrev, onNext, disabled, atStart, atEnd, controlsText, offsetPx }: SlideArrowsProps) {
   return (
     <>
       <button
@@ -31,4 +33,4 @@ export function SlideArrows({ onPrev, onNext, disabled, atStart, atEnd, controls
       </button>
     </>
   );
-}
+});
