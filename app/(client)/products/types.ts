@@ -1,4 +1,3 @@
-// types.ts
 import type { ProductOption, ProductImage, CurrentVariant, Price } from "@/lib/types/product";
 
 // ── Gallery ────────────────────────────────────────────────────────────────
@@ -17,7 +16,7 @@ export interface GalleryResponse {
   colorVariantMap: Record<string, string>;
 }
 
-// ── Variant ────────────────────────────────────────────────────────────────
+//  Variant
 
 /**
  * Re-export từ global để tránh duplicate.
@@ -81,3 +80,17 @@ export interface VariantResponse {
 export type { ProductDetail } from "@/lib/types/product";
 import type { ProductDetail } from "@/lib/types/product";
 export type RelatedProductsResponse = ProductDetail[];
+
+// ── Shared shapes dùng chung giữa ProductReview / RatingSummary ────────────
+// Trước đây 2 file tự định nghĩa inline giống hệt nhau — gộp về đây để tránh lệch nhau
+
+export interface ProductRating {
+  average: number;
+  total: number;
+  distribution: Record<string, number>;
+}
+
+export interface MinimalVariant {
+  name?: string;
+  [key: string]: unknown;
+}

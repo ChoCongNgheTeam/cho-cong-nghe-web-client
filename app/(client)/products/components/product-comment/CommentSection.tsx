@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback, useContext, useRef, memo, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, memo, useEffect, useMemo } from "react";
 import { AiOutlineLike } from "react-icons/ai";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import type { Comment, Reply, CommentUser } from "./ProductReview";
-import { formatRelativeDate } from "../../../../../helpers/formatRelativeDate";
+import { formatRelativeDate } from "@/helpers/formatRelativeDate";
 import Image from "next/image";
-import { AuthContext } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useToasty } from "@/components/toast";
 
 const PAGE_SIZE = 5;
@@ -188,8 +188,7 @@ const CommentNode = memo(function CommentNode({
 CommentNode.displayName = "CommentNode";
 
 export default memo(function CommentSection({ productId, comments: initialComments, loading, onCommentSubmit, onReplySubmit, onFetchReplies }: CommentSectionProps) {
-  const auth = useContext(AuthContext);
-  const isAuthenticated = auth?.isAuthenticated ?? false;
+  const { isAuthenticated } = useAuth();
   const toast = useToasty();
 
   const [comment, setComment] = useState("");
@@ -200,10 +199,10 @@ export default memo(function CommentSection({ productId, comments: initialCommen
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [pendingScrollParentId, setPendingScrollParentId] = useState<string | null>(null);
 
   const commentListRef = useRef<HTMLDivElement>(null);
   const hasScrolledToComment = useRef(false);
+  const fetchTriggeredForRef = useRef<string | null>(null);
 
   const toastRef = useRef(toast);
   useEffect(() => {
@@ -219,65 +218,62 @@ export default memo(function CommentSection({ productId, comments: initialCommen
     setReplyContents((prev) => ({ ...prev, [id]: value }));
   }, []);
 
-  // Bước 1: Khi comments load xong, xử lý scroll
-  useEffect(() => {
-    if (!commentIdFromUrl || hasScrolledToComment.current || initialComments.length === 0) return;
+  // Suy ra vị trí của comment/reply được trỏ tới từ URL (derived state, tính trong render qua useMemo)
+  const targetInfo = useMemo(() => {
+    if (!commentIdFromUrl || initialComments.length === 0) return null;
 
-    // Tìm top-level comment
-    const topLevel = initialComments.find((c) => c.id === commentIdFromUrl);
-    if (topLevel) {
+    const topIndex = initialComments.findIndex((c) => c.id === commentIdFromUrl);
+    if (topIndex !== -1) {
+      return { kind: "top" as const, index: topIndex };
+    }
+
+    const parentIndex = initialComments.findIndex((c) => (c.replies ?? []).some((r) => r.id === commentIdFromUrl));
+    if (parentIndex === -1) return null;
+
+    const parent = initialComments[parentIndex];
+    return {
+      kind: "reply" as const,
+      index: parentIndex,
+      parentId: parent.id,
+      repliesLoaded: (parent.replies?.length ?? 0) > 0,
+      replyLoaded: (parent.replies ?? []).some((r) => r.id === commentIdFromUrl),
+    };
+  }, [initialComments, commentIdFromUrl]);
+
+  // Tự động expand comment cha chứa reply target — gộp lúc render, không setState trong effect
+  const effectiveExpandedIds = useMemo(() => {
+    if (targetInfo?.kind === "reply" && !expandedIds[targetInfo.parentId]) {
+      return { ...expandedIds, [targetInfo.parentId]: true };
+    }
+    return expandedIds;
+  }, [expandedIds, targetInfo]);
+
+  // Đảm bảo comment/reply target nằm trong phạm vi hiển thị — derived, không setState trong effect
+  const effectiveVisibleCount = useMemo(() => {
+    if (!targetInfo) return visibleCount;
+    return targetInfo.index >= visibleCount ? targetInfo.index + 1 : visibleCount;
+  }, [targetInfo, visibleCount]);
+
+  // Effect chỉ còn lại phần side-effect thật sự: fetch API khi cần + scroll tới phần tử DOM
+  useEffect(() => {
+    if (!targetInfo || hasScrolledToComment.current || !commentIdFromUrl) return;
+
+    if (targetInfo.kind === "top" || (targetInfo.kind === "reply" && targetInfo.replyLoaded)) {
       hasScrolledToComment.current = true;
-      setTimeout(() => scrollToComment(commentIdFromUrl), 350);
-      return;
+      const timer = setTimeout(() => scrollToComment(commentIdFromUrl), 350);
+      return () => clearTimeout(timer);
     }
 
-    // Tìm parent của reply
-    const parentComment = initialComments.find((c) => (c.replies ?? []).some((r) => r.id === commentIdFromUrl));
-
-    if (!parentComment) return;
-
-    // Expand parent
-    setExpandedIds((prev) => ({ ...prev, [parentComment.id]: true }));
-
-    if (parentComment.replies && parentComment.replies.length > 0) {
-      // Replies đã có sẵn → scroll ngay
-      hasScrolledToComment.current = true;
-      setTimeout(() => scrollToComment(commentIdFromUrl), 350);
-    } else {
-      // Cần fetch replies trước → đánh dấu pending
-      setPendingScrollParentId(parentComment.id);
-      void onFetchReplies(parentComment.id);
+    if (targetInfo.kind === "reply" && !targetInfo.repliesLoaded && fetchTriggeredForRef.current !== targetInfo.parentId) {
+      fetchTriggeredForRef.current = targetInfo.parentId;
+      void onFetchReplies(targetInfo.parentId);
     }
-  }, [initialComments, commentIdFromUrl, onFetchReplies]);
+  }, [targetInfo, commentIdFromUrl, onFetchReplies]);
 
-  // Bước 2: Sau khi fetch replies xong (initialComments update), scroll
-  useEffect(() => {
-    if (!pendingScrollParentId || !commentIdFromUrl) return;
+  const visibleComments = useMemo(() => initialComments.slice(0, effectiveVisibleCount), [initialComments, effectiveVisibleCount]);
 
-    const parent = initialComments.find((c) => c.id === pendingScrollParentId);
-    const replyExists = parent?.replies?.some((r) => r.id === commentIdFromUrl);
-    if (!replyExists) return;
-
-    setPendingScrollParentId(null);
-    hasScrolledToComment.current = true;
-    setTimeout(() => scrollToComment(commentIdFromUrl), 350);
-  }, [initialComments, pendingScrollParentId, commentIdFromUrl]);
-
-  // Đảm bảo comment target nằm trong visibleComments (không bị ẩn sau trang 1)
-  useEffect(() => {
-    if (!commentIdFromUrl || initialComments.length === 0) return;
-
-    const idx = initialComments.findIndex((c) => c.id === commentIdFromUrl || (c.replies ?? []).some((r) => r.id === commentIdFromUrl));
-
-    if (idx !== -1 && idx >= visibleCount) {
-      setVisibleCount(idx + 1);
-    }
-  }, [initialComments, commentIdFromUrl, visibleCount]);
-
-  const visibleComments = useMemo(() => initialComments.slice(0, visibleCount), [initialComments, visibleCount]);
-
-  const hasMore = visibleCount < initialComments.length;
-  const remaining = initialComments.length - visibleCount;
+  const hasMore = effectiveVisibleCount < initialComments.length;
+  const remaining = initialComments.length - effectiveVisibleCount;
 
   const handleLoadMore = () => setVisibleCount((prev) => prev + PAGE_SIZE);
 
@@ -369,7 +365,7 @@ export default memo(function CommentSection({ productId, comments: initialCommen
 
   const handleToggleExpand = useCallback(
     async (id: string, node: CommentNodeData) => {
-      if (expandedIds[id]) {
+      if (effectiveExpandedIds[id]) {
         setExpandedIds((prev) => ({ ...prev, [id]: false }));
         return;
       }
@@ -380,7 +376,7 @@ export default memo(function CommentSection({ productId, comments: initialCommen
       }
       setExpandedIds((prev) => ({ ...prev, [id]: true }));
     },
-    [expandedIds, onFetchReplies],
+    [effectiveExpandedIds, onFetchReplies],
   );
 
   const handleKeyPress = useCallback(
@@ -478,7 +474,7 @@ export default memo(function CommentSection({ productId, comments: initialCommen
                   replyTargetId={replyTargetId}
                   replyContents={replyContents}
                   replySubmitting={replySubmitting}
-                  expandedIds={expandedIds}
+                  expandedIds={effectiveExpandedIds}
                   loadingIds={loadingIds}
                   onToggleExpand={handleToggleExpand}
                   onSetReplyTarget={setReplyTargetId}

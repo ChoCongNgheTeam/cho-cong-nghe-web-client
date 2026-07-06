@@ -4,6 +4,7 @@ import { ProductDetailContent } from "./ProductDetailContent";
 import { generateMetadata } from "./metadata";
 import { getProductBySlug } from "../_lib/index";
 import { ProductDetail } from "@/lib/types/product";
+import { logError } from "@/lib/monitoring/log-error";
 
 type ProductDetailProps = {
   params: Promise<{
@@ -19,16 +20,10 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
 
   try {
     product = await getProductBySlug(slug);
-    // console.log(product);
-    const sizeKB = Buffer.byteLength(JSON.stringify(product), "utf8") / 1024;
-
-    // console.log(`Product size: ${sizeKB.toFixed(2)} KB`);
   } catch (error) {
-    notFound();
-  }
-
-  // Extra safety (optional)
-  if (!product) {
+    // Log lại để phân biệt "sản phẩm không tồn tại" thật với lỗi API/network —
+    // trước đây nuốt hoàn toàn nên 500/lỗi mạng cũng hiện y hệt 404, khó debug production
+    logError("ProductDetailPage: getProductBySlug failed", error, { slug });
     notFound();
   }
 

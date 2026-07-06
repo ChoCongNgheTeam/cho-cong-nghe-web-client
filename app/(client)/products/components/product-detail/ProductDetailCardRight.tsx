@@ -85,7 +85,6 @@ export const PoliciesBlock = memo(function PoliciesBlock() {
     <div className="mt-5">
       <div className="flex justify-between items-center gap-2 mb-3">
         <h2 className="text-sm sm:text-base font-semibold text-primary">Chính sách sản phẩm</h2>
-        {/* <button className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">Tìm hiểu thêm</button> */}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -253,7 +252,7 @@ const ProductDetailRight = memo(function ProductDetailRight({
             <h3 className="text-2xl sm:text-3xl font-bold text-promotion">{displayPrice.toLocaleString("vi-VN")}₫</h3>
             {activePrice?.hasPromotion && (
               <div className="flex gap-2 items-center mt-1">
-                <span className="text-xs sm:text-sm line-through text-neutral-500">{basePrice.toLocaleString("vi-VN")}₫</span>
+                <span className="text-xs sm:text-sm line-through text-neutral-dark">{basePrice.toLocaleString("vi-VN")}₫</span>
                 <span className="text-xs font-bold text-white bg-promotion px-2 py-0.5 rounded">-{activePrice.discountPercentage}%</span>
               </div>
             )}
@@ -293,12 +292,6 @@ const ProductDetailRight = memo(function ProductDetailRight({
                 <FaGift className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
                 <div className="flex flex-col min-w-0">
                   <span className="break-words text-primary">Tặng phiếu mua hàng 50,000đ khi mua sim FPT kèm máy</span>
-                  {/* <Link
-                    href="#"
-                    className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer inline-block w-fit"
-                  >
-                    Xem chi tiết
-                  </Link> */}
                 </div>
               </div>
               <div className="flex items-center gap-3 mb-3">
@@ -307,17 +300,11 @@ const ProductDetailRight = memo(function ProductDetailRight({
               </div>
               <div className="flex items-start gap-3 mb-3">
                 <FaCog className="text-primary text-base sm:text-lg shrink-0 mt-0.5" />
-                <span className="break-words text-primary">
-                  Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu{" "}
-                  {/* <Link href="#" className="text-xs sm:text-sm font-medium text-primary hover:text-primary underline underline-offset-2 transition-all active:scale-95 cursor-pointer">
-                    Xem chi tiết
-                  </Link> */}
-                </span>
+                <span className="break-words text-primary">Giảm 5% mua camera cho đơn hàng Điện thoại/ Tablet từ 1 triệu</span>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons — desktop only */}
           {/* Action Buttons — desktop only */}
           <div className="hidden lg:flex gap-2 sm:gap-3">
             <AddToCartButton

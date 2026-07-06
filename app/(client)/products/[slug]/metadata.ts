@@ -1,6 +1,7 @@
 import { SITE_URL } from "../../../../config/site.config";
 import { ProductDetail } from "@/lib/types/product";
 import { getProductBySlug } from "../_lib/index";
+import { logError } from "@/lib/monitoring/log-error";
 
 type ProductDetailProps = {
   params: Promise<{
@@ -11,12 +12,13 @@ type ProductDetailProps = {
 export async function generateMetadata({ params }: ProductDetailProps) {
   const { slug } = await params;
 
-  // Fetch product data
   let product: ProductDetail;
   try {
     product = await getProductBySlug(slug);
   } catch (error) {
-    // Fallback nếu không fetch được
+    // Fallback nếu không fetch được — vẫn log lại để phân biệt với case sản phẩm
+    // thật sự không tồn tại (page.tsx sẽ tự notFound() riêng cho case đó)
+    logError("generateMetadata: getProductBySlug failed", error, { slug });
     return {
       title: "Sản phẩm | Cho Công Nghệ",
       description: "Mua sắm công nghệ chính hãng",

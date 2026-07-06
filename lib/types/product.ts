@@ -102,6 +102,26 @@ export type ProductDetail = {
   availablePromotions?: Promotion[];
 };
 
+interface ProductRating {
+  average: number;
+  count: number;
+}
+
+// Todo check sau
+export type ProductRelated = {
+  id: string;
+  name: string;
+  slug: string;
+  thumbnail: string | null;
+  priceOrigin: number;
+  inStock: boolean;
+  rating: ProductRating;
+  isFeatured: boolean;
+  isNew: boolean;
+  highlights: Highlight[];
+  price: Price;
+};
+
 export type Price = {
   base: number;
   final: number;

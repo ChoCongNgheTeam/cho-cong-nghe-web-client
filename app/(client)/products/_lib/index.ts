@@ -1,13 +1,17 @@
+import { cache } from "react";
 import apiRequest from "@/lib/api";
 import { ProductDetail, SpecificationsData } from "@/lib/types/product";
 import type { GalleryResponse, VariantResponse, RelatedProductsResponse } from "../types";
 
-// ── Product ────────────────────────────────────────────────────────────────
+// Product
 
-export async function getProductBySlug(slug: string): Promise<ProductDetail> {
+// cache() giúp page.tsx và metadata.ts (cùng gọi getProductBySlug cho cùng 1 slug
+// trong cùng 1 request) dùng chung 1 kết quả thay vì bắn 2 request HTTP giống hệt
+// nhau — apiRequest dùng axios nên không tự động dedupe như fetch() gốc của Next.js
+export const getProductBySlug = cache(async (slug: string): Promise<ProductDetail> => {
   const response = await apiRequest.get<{ data: ProductDetail }>(`/products/slug/${slug}`, { noAuth: true });
   return response.data;
-}
+});
 
 export async function getProductBySpecifications(slug: string): Promise<SpecificationsData> {
   const response = await apiRequest.get<{ data: SpecificationsData }>(`/products/slug/${slug}/specifications`, { noAuth: true });
@@ -29,7 +33,7 @@ export async function getRelatedProducts(slug: string): Promise<RelatedProductsR
   return response.data;
 }
 
-// ── Comments ───────────────────────────────────────────────────────────────
+// Comments
 
 export interface PostCommentPayload {
   content: string;
@@ -66,7 +70,7 @@ export async function postComment(payload: PostCommentPayload) {
   return response;
 }
 
-// ── Rating / Review permission ─────────────────────────────────────────────
+// Rating / Review permission
 
 export async function getReviewPermission(slug: string): Promise<{
   canReview: boolean;

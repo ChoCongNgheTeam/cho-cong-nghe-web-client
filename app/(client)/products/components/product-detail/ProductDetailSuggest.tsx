@@ -4,7 +4,9 @@ import { useEffect, useState, useRef, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/components/product/types";
+import type { ProductDetail, ProductRelated } from "@/lib/types/product";
 import { getRelatedProducts } from "../../_lib";
+import { logError } from "@/lib/monitoring/log-error";
 
 function getPageSize() {
   if (typeof window === "undefined") return 4;
@@ -13,7 +15,7 @@ function getPageSize() {
   return 4;
 }
 
-// ── Moved outside component to avoid "created during render" error ──────────
+// Đặt ngoài component để tránh lỗi "created during render"
 interface DotIndicatorsProps {
   totalPages: number;
   page: number;
@@ -39,19 +41,23 @@ function DotIndicators({ totalPages, page, animating, onNavigate }: DotIndicator
   );
 }
 
-// ── Helper: map ProductDetail → Product safely ───────────────────────────────
-function toProduct(item: Record<string, unknown>): Product {
+// Map ProductDetail (type thật getRelatedProducts trả về) → Product (type ProductCard cần).
+// Trước đây ép kiểu qua Record<string, unknown> rồi cast tay từng field — bỏ hẳn cách
+// này vì nó âm thầm che các field không khớp/đổi tên. Dùng thẳng ProductDetail: nếu
+// TypeScript báo lỗi ở field nào bên dưới, đó là tín hiệu thật để kiểm tra lại tên field
+// trên @/lib/types/product, thay vì bug ẩn không ai biết tới khi chạy production.
+function toProduct(item: ProductRelated): Product {
   return {
-    id: item.id as string,
-    name: item.name as string,
-    slug: item.slug as string,
-    thumbnail: (item.thumbnail as string | null) ?? "",
-    priceOrigin: (item.priceOrigin as number) ?? 0,
-    inStock: (item.inStock as boolean) ?? true,
+    id: item.id,
+    name: item.name,
+    slug: item.slug,
+    thumbnail: item.thumbnail ?? "",
+    priceOrigin: item.priceOrigin ?? 0,
+    inStock: item.inStock ?? true,
     rating: item.rating as Product["rating"],
-    isFeatured: (item.isFeatured as boolean) ?? false,
-    isNew: (item.isNew as boolean) ?? false,
-    highlights: (item.highlights as Product["highlights"]) ?? [],
+    isFeatured: item.isFeatured ?? false,
+    isNew: item.isNew ?? false,
+    highlights: item.highlights ?? [],
     price: item.price as Product["price"],
   };
 }
@@ -79,14 +85,13 @@ export default memo(function ProductDetailSuggest({ slug }: { slug: string }) {
     if (!slug) return;
     const fetchRelated = async () => {
       try {
-        const data = await getRelatedProducts(slug);
-        const raw = (data || []) as Record<string, unknown>[];
-        const unique = Array.from(new Map(raw.map((item) => [item.id as string, item])).values()).map(toProduct);
+        const data = (await getRelatedProducts(slug)) as unknown as ProductRelated[];
+        const unique = Array.from(new Map(data.map((item) => [item.id, item])).values()).map(toProduct);
         setProducts(unique);
         setPage(0);
         setDisplayPage(0);
       } catch (err) {
-        console.error("Lỗi gọi API:", err);
+        logError("ProductDetailSuggest: getRelatedProducts failed", err, { slug });
       }
     };
     fetchRelated();

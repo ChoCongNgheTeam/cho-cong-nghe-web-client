@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, memo } from "react";
+import { useState, useRef, useMemo, memo } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { ProductDetail } from "@/lib/types/product";
 
 interface ProductDetailSection1Props {
@@ -11,7 +12,7 @@ interface ProductDetailSection1Props {
 const COLLAPSED_HEIGHT = 600;
 const TRANSITION_MS = 350;
 
-export default memo(function ProductDetailSection1({ product, layoutChangingRef }: ProductDetailSection1Props) {
+const ProductDetailSection1 = memo(({ product, layoutChangingRef }: ProductDetailSection1Props) => {
   const [activeTab, setActiveTab] = useState<"baiviet" | "meohay">("baiviet");
   const [expanded, setExpanded] = useState(false);
   const [maxHeight, setMaxHeight] = useState<number>(COLLAPSED_HEIGHT);
@@ -20,6 +21,10 @@ export default memo(function ProductDetailSection1({ product, layoutChangingRef 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearedRef = useRef(false);
+
+  // Mô tả sản phẩm là rich-text do admin soạn, render qua dangerouslySetInnerHTML —
+  // sanitize trước khi render để chặn XSS nếu nội dung từng bị chèn script/onerror...
+  const sanitizedDescription = useMemo(() => DOMPurify.sanitize(product?.description || ""), [product?.description]);
 
   const clearLayoutChanging = () => {
     if (clearedRef.current) return;
@@ -116,7 +121,7 @@ export default memo(function ProductDetailSection1({ product, layoutChangingRef 
                 [&_img]:mx-auto [&_img]:rounded-lg [&_img]:max-w-full
                 [&_figcaption]:mt-2 [&_figcaption]:text-xs [&_figcaption]:text-neutral-dark [&_figcaption]:text-center
               "
-              dangerouslySetInnerHTML={{ __html: product?.description || "" }}
+              dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
             />
             <div
               className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-neutral-light to-transparent"
@@ -152,6 +157,7 @@ export default memo(function ProductDetailSection1({ product, layoutChangingRef 
             <div className="text-sm sm:text-base overflow-y-auto pr-1">
               {activeTab === "baiviet" && (
                 <div className="w-full aspect-video rounded-lg overflow-hidden">
+                  {/* TODO: video hardcode chung cho mọi sản phẩm — cần xác nhận có nối theo từng sản phẩm không */}
                   <iframe className="w-full h-full" src="https://www.youtube.com/embed/NmF82mn0oS8" title="Video sản phẩm" allowFullScreen />
                 </div>
               )}
@@ -176,3 +182,6 @@ export default memo(function ProductDetailSection1({ product, layoutChangingRef 
     </div>
   );
 });
+
+ProductDetailSection1.displayName = "ProductDetailSection1";
+export default ProductDetailSection1;

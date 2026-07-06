@@ -4,6 +4,7 @@ import { useState, useRef, memo } from "react";
 import { SpecificationGroup, SpecificationItem, ProductDetail } from "@/lib/types/product";
 import ProductSpecsModal, { type ProductSpecsModalRef } from "./ProductSpecsModal";
 import { getProductBySpecifications } from "../../_lib/index";
+import { logError } from "@/lib/monitoring/log-error";
 
 interface ProductDetailSectionProps {
   slug?: string;
@@ -34,7 +35,7 @@ export default memo(function ProductDetailSection({ slug, product }: ProductDeta
       setModalProductName(data?.name);
       setModalProductImage(data?.image);
     } catch (err) {
-      console.error("Error fetching specifications:", err);
+      logError("ProductSpecifications: getProductBySpecifications failed", err, { slug });
     } finally {
       setLoadingModal(false);
     }

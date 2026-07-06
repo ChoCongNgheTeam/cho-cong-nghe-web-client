@@ -18,15 +18,18 @@ interface ProductSpecsModalProps {
   productImage?: string;
 }
 
+// Dùng chung cho cả MobileView và DesktopView — trước đây định nghĩa inline lặp lại 2 lần
+interface SpecTab {
+  id: string;
+  label: string;
+  data: { label: string; value: string }[];
+}
+
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-3 py-3 border-b border-neutral last:border-none">
-      <span className="text-sm w-2/5 shrink-0 leading-snug" style={{ color: "rgb(var(--neutral-dark))" }}>
-        {label}
-      </span>
-      <span className="text-sm font-medium leading-snug flex-1" style={{ color: "rgb(var(--primary))" }}>
-        {value}
-      </span>
+      <span className="text-sm w-2/5 shrink-0 leading-snug text-neutral-dark">{label}</span>
+      <span className="text-sm font-medium leading-snug flex-1 text-primary">{value}</span>
     </div>
   );
 }
@@ -35,9 +38,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
       <div className="w-14 h-14 rounded-full bg-neutral flex items-center justify-center text-2xl">📄</div>
-      <p className="text-sm font-medium" style={{ color: "rgb(var(--neutral-dark))" }}>
-        Không có thông số kỹ thuật
-      </p>
+      <p className="text-sm font-medium text-neutral-dark">Không có thông số kỹ thuật</p>
     </div>
   );
 }
@@ -68,7 +69,7 @@ function SkeletonLoading() {
   );
 }
 
-function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label: string; value: string }[] }[] }) {
+function MobileView({ tabs }: { tabs: SpecTab[] }) {
   const [activeId, setActiveId] = useState<string>(tabs[0]?.id ?? "");
   const scrollRef = useRef<HTMLDivElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
@@ -84,16 +85,18 @@ function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (isManualScrollRef.current) return;
-        // Lấy section có ratio cao nhất đang visible
-        let best: { id: string; ratio: number } | null = null;
-        entries.forEach((entry) => {
-          if (!best || entry.intersectionRatio > best.ratio) {
-            best = { id: entry.target.id, ratio: entry.intersectionRatio };
-          }
-        });
-        if (best && (best as unknown as { ratio: number }).ratio > 0.15) {
-          // id = toId(groupName) → extract groupName back
-          const matched = tabs.find((t) => toId(t.id) === (best as unknown as { id: string }).id);
+
+        // Tìm entry có ratio cao nhất đang visible bằng .reduce()
+        // Cách này giúp TypeScript hiểu rõ kiểu dữ liệu mà không bị "lú" ở phạm vi biến (scope)
+        const bestEntry = entries.reduce<IntersectionObserverEntry | null>((highest, current) => {
+          if (highest === null) return current;
+          return current.intersectionRatio > highest.intersectionRatio ? current : highest;
+        }, null);
+
+        // Kiểm tra nếu tìm được entry hợp lệ và vượt ngưỡng tỉ lệ hiển thị (ratio > 0.15)
+        if (bestEntry && bestEntry.intersectionRatio > 0.15) {
+          // bestEntry.target.id chính là id của phần tử đang được quan sát
+          const matched = tabs.find((t) => toId(t.id) === bestEntry.target.id);
           if (matched) setActiveId(matched.id);
         }
       },
@@ -138,7 +141,7 @@ function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label
 
   return (
     <div className="flex flex-col h-[75vh]">
-      {/* ── Sticky tab bar ── */}
+      {/* Sticky tab bar */}
       <div ref={tabBarRef} className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0 border-b border-neutral bg-neutral-light sticky top-0 z-10">
         {tabs.map((tab) => {
           const isActive = activeId === tab.id;
@@ -147,32 +150,20 @@ function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label
               key={tab.id}
               data-tab-id={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              className="shrink-0 px-4 py-3 text-[13px] font-medium whitespace-nowrap transition-colors relative cursor-pointer"
-              style={{
-                color: isActive ? "rgb(var(--accent))" : "rgb(var(--neutral-dark))",
-              }}
+              className={`shrink-0 px-4 py-3 text-[13px] font-medium whitespace-nowrap transition-colors relative cursor-pointer ${isActive ? "text-accent" : "text-neutral-dark"}`}
             >
               {tab.label}
-              {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ background: "rgb(var(--accent))" }} />}
+              {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-accent" />}
             </button>
           );
         })}
       </div>
 
-      {/* ── Scrollable content ── */}
+      {/* Scrollable content */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {tabs.map((tab) => (
           <section key={tab.id} id={toId(tab.id)} className="px-4 pt-5 pb-2">
-            {/* Group header */}
-            <h3
-              className="text-[13px] font-bold uppercase tracking-wider mb-1 pb-2 border-b-2"
-              style={{
-                color: "rgb(var(--accent))",
-                borderColor: "rgb(var(--accent))",
-              }}
-            >
-              {tab.label}
-            </h3>
+            <h3 className="text-[13px] font-bold uppercase tracking-wider mb-1 pb-2 border-b-2 text-accent border-accent">{tab.label}</h3>
 
             {tab.data.map((row, idx) => (
               <SpecRow key={idx} {...row} />
@@ -186,7 +177,7 @@ function MobileView({ tabs }: { tabs: { id: string; label: string; data: { label
   );
 }
 
-function DesktopView({ tabs }: { tabs: { id: string; label: string; data: { label: string; value: string }[] }[] }) {
+function DesktopView({ tabs }: { tabs: SpecTab[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
 
   if (tabs.length === 0) return <EmptyState />;
@@ -201,14 +192,12 @@ function DesktopView({ tabs }: { tabs: { id: string; label: string; data: { labe
             <button
               key={tab.id}
               onClick={() => setActiveIdx(index)}
-              className="relative w-full text-left px-4 py-3 cursor-pointer text-sm font-medium border-b border-neutral/50 transition-all duration-150 last:border-none"
-              style={{
-                color: isActive ? "rgb(var(--accent))" : "rgb(var(--primary))",
-                background: isActive ? "rgb(var(--accent) / 0.06)" : "transparent",
-              }}
+              className={`relative w-full text-left px-4 py-3 cursor-pointer text-sm font-medium border-b border-neutral/50 transition-all duration-150 last:border-none ${
+                isActive ? "text-accent bg-accent/[0.06]" : "text-primary bg-transparent"
+              }`}
             >
               {/* Active indicator bar */}
-              {isActive && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full" style={{ background: "rgb(var(--accent))" }} />}
+              {isActive && <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-accent" />}
               <span className={isActive ? "pl-2" : ""}>{tab.label}</span>
             </button>
           );
@@ -218,15 +207,7 @@ function DesktopView({ tabs }: { tabs: { id: string; label: string; data: { labe
       {/* Content */}
       <div className="col-span-3 overflow-y-auto [scrollbar-width:thin] px-6 py-4">
         {/* Group title */}
-        <h3
-          className="text-base font-bold mb-4 pb-3 border-b-2"
-          style={{
-            color: "rgb(var(--accent))",
-            borderColor: "rgb(var(--accent) / 0.3)",
-          }}
-        >
-          {tabs[activeIdx]?.label}
-        </h3>
+        <h3 className="text-base font-bold mb-4 pb-3 border-b-2 text-accent border-accent/30">{tabs[activeIdx]?.label}</h3>
 
         <div>
           {tabs[activeIdx]?.data.map((row, idx) => (
@@ -264,7 +245,7 @@ const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProp
     };
   }, [open]);
 
-  const tabs = useMemo(() => {
+  const tabs = useMemo<SpecTab[]>(() => {
     return (specifications ?? []).map((group) => ({
       id: group.groupName,
       label: group.groupName,
@@ -283,7 +264,7 @@ const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProp
         className="bg-neutral-light w-full md:max-w-4xl rounded-none md:rounded-2xl shadow-2xl overflow-hidden border-0 md:border border-neutral flex flex-col"
         style={{ maxHeight: "calc(100dvh - 0px)" }}
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-neutral shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             {/* Product thumbnail */}
@@ -293,19 +274,17 @@ const ProductSpecsModal = forwardRef<ProductSpecsModalRef, ProductSpecsModalProp
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wider mb-0.5" style={{ color: "rgb(var(--neutral-dark))" }}>
-                Thông số kỹ thuật
-              </p>
+              <p className="text-[11px] font-medium uppercase tracking-wider mb-0.5 text-neutral-dark">Thông số kỹ thuật</p>
               {productName && <h2 className="text-sm font-semibold text-primary truncate leading-tight">{productName}</h2>}
             </div>
           </div>
 
           <button onClick={() => setOpen(false)} className="p-2 rounded-full hover:bg-neutral transition-colors cursor-pointer shrink-0 ml-2" aria-label="Đóng">
-            <X className="w-5 h-5" style={{ color: "rgb(var(--neutral-dark))" }} />
+            <X className="w-5 h-5 text-neutral-dark" />
           </button>
         </div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         {isLoading ? (
           <SkeletonLoading />
         ) : (

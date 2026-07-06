@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, startTransition, useMemo } from "react";
+import { useEffect, useState, useCallback, startTransition } from "react";
 import RatingSummary from "./RatingSummary";
 import CommentSection from "./CommentSection";
 import { getComments, getReplies, postComment } from "../../_lib";
 import { ProductDetail } from "@/lib/types/product";
+import type { ProductRating, MinimalVariant } from "../../types";
+import { logError } from "@/lib/monitoring/log-error";
 
 export interface CommentUser {
   id: string;
@@ -43,14 +45,10 @@ export interface Comment {
 
 interface ProductReviewProps {
   productId: string;
-  rating: {
-    average: number;
-    total: number;
-    distribution: Record<string, number>;
-  };
+  rating: ProductRating;
   slug: string;
   product: ProductDetail;
-  currentVariant?: { name?: string; [key: string]: unknown };
+  currentVariant?: MinimalVariant;
 }
 
 function buildTree(flatList: Comment[]): Comment[] {
@@ -75,7 +73,7 @@ function buildTree(flatList: Comment[]): Comment[] {
   return roots;
 }
 
-export default function ProductReview({ productId, rating, slug, product, currentVariant }: ProductReviewProps) {
+const ProductReview = ({ productId, rating, slug, product, currentVariant }: ProductReviewProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -87,7 +85,7 @@ export default function ProductReview({ productId, rating, slug, product, curren
       const relevant = (result?.data ?? []).filter((c) => c.targetId === productId);
       setComments(buildTree(relevant));
     } catch (error) {
-      console.error("Lỗi khi lấy comment:", error);
+      logError("ProductReview: fetchComments failed", error, { productId });
       setComments([]);
     } finally {
       setLoading(false);
@@ -100,7 +98,7 @@ export default function ProductReview({ productId, rating, slug, product, curren
       const replies = result?.data ?? [];
       setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, replies, _repliesCount: replies.length } : c)));
     } catch (error) {
-      console.error("Lỗi khi lấy replies:", error);
+      logError("ProductReview: fetchReplies failed", error, { commentId });
     }
   }, []);
 
@@ -119,7 +117,7 @@ export default function ProductReview({ productId, rating, slug, product, curren
         ),
       );
     } catch (error) {
-      console.error("Lỗi khi lấy nested replies:", error);
+      logError("ProductReview: fetchNestedReplies failed", error, { replyId, parentCommentId });
     }
   }, []);
 
@@ -146,9 +144,6 @@ export default function ProductReview({ productId, rating, slug, product, curren
     [productId, fetchReplies],
   );
 
-  const memoizedProduct = useMemo(() => product, [product]);
-  const memoizedVariant = useMemo(() => currentVariant, [currentVariant]);
-
   useEffect(() => {
     startTransition(() => {
       fetchComments();
@@ -158,7 +153,7 @@ export default function ProductReview({ productId, rating, slug, product, curren
   return (
     <div>
       <div className="rounded-lg bg-neutral-light px-6 py-6 sm:py-4 lg:py-6">
-        <RatingSummary rating={rating} slug={slug} product={memoizedProduct} currentVariant={memoizedVariant} />
+        <RatingSummary rating={rating} slug={slug} product={product} currentVariant={currentVariant} />
       </div>
       <div className="mt-6 rounded-lg bg-neutral-light px-6 py-6 sm:py-4 lg:py-6">
         <CommentSection
@@ -173,4 +168,6 @@ export default function ProductReview({ productId, rating, slug, product, curren
       </div>
     </div>
   );
-}
+};
+
+export default ProductReview;

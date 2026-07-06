@@ -2,45 +2,13 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
-import { ProductDetail } from "@/lib/types/product";
+import { ProductDetail, Price } from "@/lib/types/product";
 import AddToCartButton from "@/(client)/cart/components/AddToCartButton";
 import { useToasty } from "@/components/toast";
 import { useCart } from "../../../../hooks/useCart";
 import { useRouter } from "next/navigation";
 import QuantityControl from "@/components/shared/QuantityControl";
-
-interface ProductVariant {
-  id: string;
-  price: number;
-  images?: { imageUrl: string }[];
-  sku?: string;
-  originalPrice?: number;
-  image?: string;
-  color?: string;
-  colorValue?: string;
-  name?: string;
-  availableQuantity?: number;
-  stock?: number;
-  quantity?: number;
-  stockStatus?: "in_stock" | "out_of_stock";
-}
-
-type Price = {
-  base: number;
-  final: number;
-  discountPercentage: number;
-  hasPromotion: boolean;
-};
-
-interface VariantOptionValue {
-  value: string;
-  label?: string;
-}
-
-interface VariantOption {
-  type: string;
-  values?: VariantOptionValue[];
-}
+import type { ProductVariant, VariantOption } from "../types";
 
 interface ProductStickyFooterProps {
   product: ProductDetail;
@@ -51,7 +19,7 @@ interface ProductStickyFooterProps {
   selectedOptions?: Record<string, string>;
 }
 
-export default function ProductStickyFooter({ product, selectedVariant, selectedPrice, infoRef, availableOptions = [], selectedOptions = {} }: ProductStickyFooterProps) {
+const ProductStickyFooter = ({ product, selectedVariant, selectedPrice, infoRef, availableOptions = [], selectedOptions = {} }: ProductStickyFooterProps) => {
   const toasty = useToasty();
   const { addToCart } = useCart();
   const router = useRouter();
@@ -211,4 +179,8 @@ export default function ProductStickyFooter({ product, selectedVariant, selected
       </div>
     </div>
   );
-}
+};
+
+ProductStickyFooter.displayName = "ProductStickyFooter";
+
+export default ProductStickyFooter;

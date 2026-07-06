@@ -1,7 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useState, useEffect, useMemo, useRef, memo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { useToasty } from "@/components/toast";
 import ReviewModal from "@/(client)/(protected)/profile/orders/components/ReviewModal";
 import { ProductDetail } from "@/lib/types/product";
@@ -10,16 +10,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Popzy } from "@/components/modal";
 import ReviewSuccessModal from "./ReviewSuccessModal";
 import { getReviewPermission } from "../../_lib";
+import { logError } from "@/lib/monitoring/log-error";
+import type { ProductRating, MinimalVariant } from "../../types";
 
 interface RatingSummaryProps {
   slug: string;
-  rating: {
-    average: number;
-    total: number;
-    distribution: Record<string, number>;
-  };
+  rating: ProductRating;
   product: ProductDetail;
-  currentVariant?: { name?: string; [key: string]: unknown };
+  currentVariant?: MinimalVariant;
 }
 
 interface ReviewPermission {
@@ -52,19 +50,20 @@ const RatingSummary = memo(function RatingSummary({ slug, rating, product, curre
     setLocalRating(rating);
   }, [rating]);
 
-  const fetchProductData = async () => {
+  const fetchProductData = useCallback(async () => {
     if (!slug) return;
     setPermissionLoaded(false);
     try {
       const data = await getReviewPermission(slug);
       setPermission({ canReview: data.canReview, orderItemId: data.orderItemId });
       if (data.rating) setLocalRating(data.rating); // chỉ update khi có data mới
-    } catch {
+    } catch (error) {
+      logError("RatingSummary: getReviewPermission failed", error, { slug });
       setPermission({ canReview: false });
     } finally {
       setPermissionLoaded(true);
     }
-  };
+  }, [slug]);
 
   useEffect(() => {
     fetchProductData();
@@ -150,7 +149,7 @@ const RatingSummary = memo(function RatingSummary({ slug, rating, product, curre
         .rs-star-4 { animation: ratingStarIn .4s .27s cubic-bezier(.34,1.56,.64,1) both; }
         .rs-star-5 { animation: ratingStarIn .4s .34s cubic-bezier(.34,1.56,.64,1) both; }
         .rs-title {
-          background: linear-gradient(90deg, #9ca3af 0%, #111827 35%, #9ca3af 65%, #9ca3af 100%);
+          background: linear-gradient(90deg, rgb(var(--neutral-dark)) 0%, rgb(var(--primary)) 35%, rgb(var(--neutral-dark)) 65%, rgb(var(--neutral-dark)) 100%);
           background-size: 200% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;

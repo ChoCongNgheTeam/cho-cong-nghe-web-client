@@ -15,6 +15,7 @@ import { getProductGallery } from "../../_lib";
 import type { GalleryImage } from "../../types";
 import { heroUrl, thumbnailUrl } from "../../../../../helpers/cloudinaryImage";
 import { PoliciesBlock } from "./ProductDetailCardRight";
+import { logError } from "@/lib/monitoring/log-error";
 
 interface ProductDetailLeftProps {
   product: ProductDetail;
@@ -100,7 +101,7 @@ const ProductDetailBanner = memo(function ProductDetailBanner({ product, images,
       setGalleryLoaded(true);
       setGalleryIndex(0);
     } catch (err) {
-      console.error("Error fetching gallery:", err);
+      logError("ProductDetailBanner: getProductGallery failed", err, { slug: product.slug });
     } finally {
       setGalleryLoading(false);
     }
@@ -201,7 +202,7 @@ const ProductDetailBanner = memo(function ProductDetailBanner({ product, images,
       {/* Main Image */}
       <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-neutral-light rounded-lg transition-colors duration-300 py-6">
         <div className="relative w-full h-full flex items-center justify-center">
-          {!isExpandSlot && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill />}
+          {!isExpandSlot && mainImageUrl && <Image src={mainImageUrl} className="max-w-full max-h-full object-contain transition-opacity duration-500" alt={mainImageAlt} fill priority />}
           {!isExpandSlot && !mainImageUrl && (
             <div className="flex flex-col items-center justify-center gap-3 text-neutral-darker">
               <Images className="w-16 h-16 opacity-20" />
@@ -317,7 +318,7 @@ const ProductDetailBanner = memo(function ProductDetailBanner({ product, images,
         </div>
 
         {isExpandSlot && galleryLoaded && galleryImages.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-6 px-1 py-1 scrollbar-hide md:scrollbar-thin md:scrollbar-thumb-gray-300 md:hover:scrollbar-thumb-gray-400 scroll-smooth">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-6 px-1 py-1 scrollbar-hide md:scrollbar-thin md:scrollbar-thumb-neutral md:hover:scrollbar-thumb-neutral-dark scroll-smooth">
             {galleryImages.map((img, idx) => (
               <button
                 key={img.id}
