@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { getCartItems, addToCart as apiAddToCart, updateCartItemQuantity, removeCartItem, removeCartItems, syncGuestCart } from "./cart.actions";
-import { buildSyncPayload, clearLocalCart, generateLocalId, readLocalCart, writeLocalCart, SyncCartPayload } from "./local-cart";
-import type { CartItemWithDetails, AddToCartMeta, NewVariantData } from "./cart.types";
+import { buildSyncPayload, clearLocalCart, generateLocalId, readLocalCart, writeLocalCart } from "./local-cart";
+import type { CartItemWithDetails, AddToCartMeta, NewVariantData, SyncCartPayload } from "./cart.types";
 import { clampQty, validateQtyChange, transformApiItem } from "./cart.helpers";
+import { logError } from "@/lib/monitoring/log-error";
 
 interface CartState {
   items: CartItemWithDetails[];
@@ -65,7 +66,8 @@ export const useCartStore = create<CartStore>()(
         } else {
           set({ items: readLocalCart() });
         }
-      } catch {
+      } catch (err) {
+        logError("cart.store: refetchCart failed", err, { isAuthenticated });
         set({ items: isAuthenticated ? [] : readLocalCart() });
       } finally {
         if (!silent) set({ isLoading: false });
@@ -84,8 +86,9 @@ export const useCartStore = create<CartStore>()(
           await get().refetchCart();
           return local.length;
         }
-      } catch {
-        /* silent */
+      } catch (err) {
+        logError("cart.store: syncLocalToDB failed", err);
+        /* silent — guest cart giữ nguyên, thử sync lại lần sau */
       }
       return 0;
     },
@@ -180,7 +183,8 @@ export const useCartStore = create<CartStore>()(
       } else {
         try {
           writeLocalCart(readLocalCart().map((i) => (i.id === cartItemId ? { ...i, quantity: newQty, totalPrice: i.unitPrice * newQty } : i)));
-        } catch {
+        } catch (err) {
+          logError("cart.store: updateQuantity local write failed", err, { cartItemId, newQty });
           set({ items: snapshot });
           return false;
         }
@@ -232,7 +236,8 @@ export const useCartStore = create<CartStore>()(
               quantity: cur?.quantity ?? 1,
             }),
           );
-        } catch {
+        } catch (err) {
+          logError("cart.store: changeVariant API call failed", err, { cartItemId, newVariantId: newVariant.id });
           set({ items: snapshot });
         }
       } else {
@@ -241,7 +246,8 @@ export const useCartStore = create<CartStore>()(
             writeLocalCart(s.items);
             return {};
           });
-        } catch {
+        } catch (err) {
+          logError("cart.store: changeVariant local write failed", err, { cartItemId, newVariantId: newVariant.id });
           set({ items: snapshot });
         }
       }
@@ -258,7 +264,8 @@ export const useCartStore = create<CartStore>()(
       } else {
         try {
           writeLocalCart(readLocalCart().filter((i) => i.id !== cartItemId));
-        } catch {
+        } catch (err) {
+          logError("cart.store: removeItem local write failed", err, { cartItemId });
           set({ items: snapshot });
         }
       }
@@ -289,7 +296,8 @@ export const useCartStore = create<CartStore>()(
         try {
           const sel = new Set(selectedIds);
           writeLocalCart(readLocalCart().filter((i) => !sel.has(i.id)));
-        } catch {
+        } catch (err) {
+          logError("cart.store: removeSelectedItems local write failed", err, { selectedIds });
           set({ items: snapshot });
         }
       }

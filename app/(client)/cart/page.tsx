@@ -2,21 +2,24 @@
 import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, Minus, ShoppingCart, X, LogIn } from "lucide-react";
+import { Trash2, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import VoucherPromotionModal from "./components/VoucherPromotionModal";
 import Breadcrumb from "@/components/shared/Breadcrumb";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "../../../hooks/useAuth";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
-import { CartItemWithDetails } from "./_lib/cart.types";
+import { CartItemWithDetails } from "@/store/cart/cart.types";
 import { formatVND } from "../../../helpers";
 import { computeFinalTotalWithVoucher } from "./_lib/cartMath";
 import { useToasty } from "@/components/toast";
 import CartBottomBar from "./components/CartBottomMobile";
-import CartVariantSelector from "./components/CartVariantSelector";
+import CartItemRow from "./components/CartItemRow";
+import LoginHintSheet from "./components/LoginHintSheet";
 import PageLoader from "@/components/shared/PageLoader";
 import OrderSummary from "../(protected)/checkout/components/OrderSummary";
+
+const LOGIN_REDIRECT_INTENT_KEY = "loginRedirectIntent";
 
 export default function CartPage() {
   const router = useRouter();
@@ -70,9 +73,13 @@ export default function CartPage() {
     setShowVoucherModal(true);
   }, [user]);
 
-  // ── Quantity handlers ────────────────────────────────────────────────────
+  const handleLoginClick = useCallback(() => {
+    setShowLoginHintMobile(false);
+    sessionStorage.setItem(LOGIN_REDIRECT_INTENT_KEY, "/cart");
+    router.push("/account?tab=login");
+  }, [router]);
 
-  const LOGIN_REDIRECT_INTENT_KEY = "loginRedirectIntent";
+  // ── Quantity handlers ────────────────────────────────────────────────────
 
   const handleIncrease = useCallback(
     async (itemId: string) => {
@@ -110,6 +117,7 @@ export default function CartPage() {
     },
     [items, toast],
   );
+
   // Khi blur hoặc Enter — validate rồi gọi API
   const handleQuantityBlur = useCallback(
     async (itemId: string) => {
@@ -214,48 +222,6 @@ export default function CartPage() {
 
   const finalTotalWithVoucher = computeFinalTotalWithVoucher(finalTotal, voucherValue);
 
-  // ── Shared quantity input renderer ───────────────────────────────────────
-
-  const renderQtyInput = (item: CartItemWithDetails, size: "sm" | "md") => {
-    const h = size === "md" ? "h-8 w-8" : "h-7 w-7";
-    const inputH = size === "md" ? "h-8" : "h-7";
-    const iconSize = size === "md" ? "h-4 w-4" : "h-3 w-3";
-
-    return (
-      <div className="flex items-center border border-neutral rounded w-fit shrink-0">
-        <button
-          onClick={() => handleDecrease(item.id)}
-          disabled={item.quantity <= 1}
-          className={`flex ${h} items-center justify-center rounded-l text-neutral-darker transition hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer`}
-        >
-          <Minus className={iconSize} />
-        </button>
-
-        <input
-          type="number"
-          min={1}
-          max={item.availableQuantity}
-          // Ưu tiên local state khi đang gõ, fallback về item.quantity
-          value={quantityInputs[item.id] ?? item.quantity}
-          onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-          onBlur={() => handleQuantityBlur(item.id)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-          }}
-          className={`${inputH} w-10 border-x border-neutral text-sm font-medium text-primary bg-transparent text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-        />
-
-        <button
-          onClick={() => handleIncrease(item.id)}
-          disabled={item.quantity >= item.availableQuantity}
-          className={`flex ${h} items-center justify-center rounded-r text-neutral-darker transition hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer`}
-        >
-          <Plus className={iconSize} />
-        </button>
-      </div>
-    );
-  };
-
   // ── Loading ──────────────────────────────────────────────────────────────
 
   if (isLoading) return <PageLoader message="Đang tải giỏ hàng..." />;
@@ -317,88 +283,19 @@ export default function CartPage() {
               {/* Cart items */}
               <div className="space-y-4">
                 {items.map((item) => (
-                  <div key={item.id} className="rounded-lg bg-neutral-light p-2 sm:p-4 border border-neutral">
-                    <div className="flex gap-2 sm:gap-3 min-w-0">
-                      {/* Checkbox */}
-                      <div className="flex items-start shrink-0 pt-1">
-                        <input
-                          type="checkbox"
-                          checked={item.selected}
-                          onChange={() => toggleSelectItem(item.id)}
-                          style={{
-                            accentColor: "rgb(var(--accent-active))",
-                          }}
-                          className="h-5 w-5 cursor-pointer rounded"
-                        />
-                      </div>
-
-                      {/* Image */}
-                      <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-lg border border-neutral bg-neutral-light">
-                        {item.image ? (
-                          <Image src={item.image} alt={item.productName} fill sizes="(max-width: 640px) 64px, 80px" className="object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-neutral">
-                            <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg bg-neutral-dark" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h3 className="text-sm font-medium text-primary line-clamp-2 min-w-0 flex-1">{item.productName}</h3>
-                          <button onClick={() => handleRemoveClick(item)} className="xl:hidden shrink-0 text-neutral-darker transition hover:text-primary cursor-pointer" aria-label="Xóa sản phẩm">
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
-
-                        <div className="mb-1.5">
-                          <CartVariantSelector
-                            cartItemId={item.id}
-                            productSlug={item.productSlug}
-                            currentVariantId={item.productVariantId}
-                            productName={item.productName}
-                            colorLabel={item.colorLabel}
-                            storageLabel={item.storageLabel}
-                            storageValue={item.storageLabel.toLowerCase().replace(/\s+/g, "")}
-                            variantCode={item.variantCode}
-                            currentQuantity={item.quantity}
-                            onSuccess={() => refetchCart(true)}
-                            onUpdateItem={(patch) => updateItem(item.id, patch)}
-                          />
-                        </div>
-
-                        {/* Mobile layout */}
-                        <div className="xl:hidden flex items-center gap-1 sm:gap-3 flex-wrap">
-                          <div className="flex flex-col shrink-0">
-                            <span className="text-sm font-semibold text-promotion whitespace-nowrap">{formatVND(item.unitPrice)}</span>
-                            {item.originalPrice && item.originalPrice > item.unitPrice && (
-                              <span className="text-xs text-neutral-dark line-through whitespace-nowrap">{formatVND(item.originalPrice)}</span>
-                            )}
-                          </div>
-                          {renderQtyInput(item, "md")}
-                          <span className="text-sm font-bold text-promotion whitespace-nowrap shrink-0 ml-auto">{formatVND(item.unitPrice * item.quantity)}</span>
-                        </div>
-                      </div>
-
-                      {/* Desktop layout */}
-                      <div className="hidden xl:flex items-center gap-4 shrink-0">
-                        <div className="flex flex-col items-end w-28 shrink-0">
-                          <span className="text-base font-semibold text-promotion whitespace-nowrap">{formatVND(item.unitPrice)}</span>
-                          {item.originalPrice && item.originalPrice > item.unitPrice && (
-                            <span className="text-xs text-neutral-dark line-through whitespace-nowrap">{formatVND(item.originalPrice)}</span>
-                          )}
-                        </div>
-                        {renderQtyInput(item, "sm")}
-                        <div className="w-28 text-right shrink-0">
-                          <span className="text-base font-semibold text-promotion whitespace-nowrap">{formatVND(item.unitPrice * item.quantity)}</span>
-                        </div>
-                        <button onClick={() => handleRemoveClick(item)} className="text-neutral-darker transition hover:text-primary cursor-pointer shrink-0" aria-label="Xóa sản phẩm">
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <CartItemRow
+                    key={item.id}
+                    item={item}
+                    quantityInputValue={quantityInputs[item.id] ?? item.quantity}
+                    onToggleSelect={toggleSelectItem}
+                    onRemoveClick={handleRemoveClick}
+                    onQuantityChange={handleQuantityChange}
+                    onQuantityBlur={handleQuantityBlur}
+                    onIncrease={handleIncrease}
+                    onDecrease={handleDecrease}
+                    onVariantSuccess={() => refetchCart(true)}
+                    onUpdateItem={(id, patch) => updateItem(id, patch)}
+                  />
                 ))}
               </div>
             </div>
@@ -488,42 +385,7 @@ export default function CartPage() {
         isLoading={isDeletingAll}
       />
 
-      {/* Login hint bottom sheet (mobile) */}
-      {showLoginHintMobile && (
-        <>
-          <div className="fixed inset-0 bg-black/30 z-[9998]" onClick={() => setShowLoginHintMobile(false)} />
-          <div className="fixed bottom-0 left-0 right-0 bg-neutral-light rounded-t-2xl shadow-2xl z-[9999] flex flex-col">
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-neutral" />
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
-              <div className="flex items-center gap-2 text-primary font-semibold text-sm">Ưu đãi &amp; Voucher</div>
-              <button onClick={() => setShowLoginHintMobile(false)} className="text-neutral-dark hover:text-primary transition-colors">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex flex-col items-center px-6 py-8 gap-5 text-center">
-              <div className="w-14 h-14 rounded-full bg-accent-light flex items-center justify-center">
-                <LogIn size={24} className="text-accent" />
-              </div>
-              <div>
-                <p className="font-semibold text-primary text-sm mb-1">Bạn cần đăng nhập trước</p>
-                <p className="text-xs text-neutral-darker leading-relaxed">Vui lòng đăng nhập để có thể chọn và áp dụng voucher ưu đãi cho đơn hàng.</p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowLoginHintMobile(false);
-                  sessionStorage.setItem(LOGIN_REDIRECT_INTENT_KEY, "/cart");
-                  router.push("/account?tab=login");
-                }}
-                className="w-full py-2.5 bg-primary text-neutral-light text-sm font-semibold rounded-lg hover:bg-primary-hover transition-colors"
-              >
-                Đăng nhập ngay
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <LoginHintSheet isOpen={showLoginHintMobile} onClose={() => setShowLoginHintMobile(false)} onLoginClick={handleLoginClick} />
     </div>
   );
 }

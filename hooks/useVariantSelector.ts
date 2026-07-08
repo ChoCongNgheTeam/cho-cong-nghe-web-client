@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import apiRequest from "@/lib/api";
 import { VariantOption } from "@/(client)/cart/components/VariantDropdown";
-import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
-import { NewVariantData } from "@/store/cart/cart.types";
+import { CartItemWithDetails, NewVariantData } from "@/store/cart/cart.types";
 import { useToasty } from "@/components/toast";
+import { logError } from "@/lib/monitoring/log-error";
 import { useAuth } from "./useAuth";
 import { useCart } from "./useCart";
 
@@ -114,6 +114,7 @@ export function useVariantSelector({
   const [isFetching, setIsFetching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isChanging, setIsChanging] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   // Cache key bao gồm variantCode để refetch khi đổi RAM/storage
   const cacheKey = `${productSlug}-${currentVariantId}`;
@@ -123,6 +124,7 @@ export function useVariantSelector({
     async (forceRefresh = false) => {
       if (!forceRefresh && fetchedSlugRef.current === cacheKey) return;
       fetchedSlugRef.current = cacheKey;
+      setHasFetched(true);
 
       setIsFetching(true);
       setErrorMessage(null);
@@ -150,7 +152,8 @@ export function useVariantSelector({
         });
 
         setOptions(deduped);
-      } catch {
+      } catch (err) {
+        logError("useVariantSelector: fetchVariants failed", err, { productSlug, cacheKey });
         setErrorMessage("Có lỗi xảy ra, vui lòng thử lại");
         fetchedSlugRef.current = null;
       } finally {
@@ -165,12 +168,20 @@ export function useVariantSelector({
   }, []);
 
   useEffect(() => {
+    // Reset state khi đổi variant (cacheKey) — không phải derived state, mà đồng bộ
+    // lại "external system" (kết quả fetch trước đó không còn hợp lệ cho key mới).
+    // rule set-state-in-effect false-positive với pattern reset-on-key-change này.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOptions([]);
     setErrorMessage(null);
+    setHasFetched(false);
     fetchedSlugRef.current = null;
   }, [cacheKey]);
 
   useEffect(() => {
+    // Fetch-on-mount/dependency-change hợp lệ — rule set-state-in-effect false-positive
+    // với pattern này, xem facebook/react#34743.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchVariants();
   }, [fetchVariants]);
 
@@ -178,6 +189,7 @@ export function useVariantSelector({
     fetchedSlugRef.current = null;
     setErrorMessage(null);
     setOptions([]);
+    setHasFetched(false);
     fetchVariants(true);
   }, [fetchVariants]);
 
@@ -209,7 +221,7 @@ export function useVariantSelector({
         toast.success("Đã cập nhật phiên bản sản phẩm");
         onSuccess?.();
       } catch (err) {
-        console.error("[useVariantSelector] handleSelect error:", err);
+        logError("useVariantSelector: handleSelect failed", err, { cartItemId, variantId: variant.id });
         toast.error("Không thể đổi phiên bản, vui lòng thử lại");
         // Rollback optimistic update
         onUpdateItem?.({
@@ -231,7 +243,7 @@ export function useVariantSelector({
     isOpen,
     isChanging,
     errorMessage,
-    hasFetched: fetchedSlugRef.current === cacheKey,
+    hasFetched,
     handleRetry,
     handleToggle,
     handleSelect,

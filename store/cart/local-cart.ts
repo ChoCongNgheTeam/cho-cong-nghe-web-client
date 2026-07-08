@@ -1,4 +1,5 @@
-import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
+import { CartItemWithDetails, SyncCartPayload } from "./cart.types";
+import { logError } from "@/lib/monitoring/log-error";
 
 const LOCAL_KEY = "guest_cart";
 
@@ -10,21 +11,15 @@ function extractStorage(variantCode: string): string {
 export function readLocalCart(): CartItemWithDetails[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "[]");
-    return raw.map(
-      (
-        item: CartItemWithDetails & {
-          color?: string;
-          variantCode?: string;
-        },
-      ) => ({
-        ...item,
-        colorLabel: item.colorLabel ?? item.color ?? "",
-        storageLabel: item.storageLabel ?? extractStorage(item.variantCode ?? ""),
-        addedAt: item.addedAt ?? Date.now(),
-      }),
-    );
-  } catch {
+    const raw: CartItemWithDetails[] = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "[]");
+    return raw.map((item) => ({
+      ...item,
+      colorLabel: item.colorLabel ?? item.color ?? "",
+      storageLabel: item.storageLabel ?? extractStorage(item.variantCode ?? ""),
+      addedAt: item.addedAt ?? Date.now(),
+    }));
+  } catch (err) {
+    logError("local-cart: readLocalCart failed to parse localStorage", err);
     return [];
   }
 }
@@ -37,11 +32,6 @@ export function writeLocalCart(items: CartItemWithDetails[]): void {
 export function clearLocalCart(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(LOCAL_KEY);
-}
-
-export interface SyncCartPayload {
-  productVariantId: string;
-  quantity: number;
 }
 
 export function buildSyncPayload(items: CartItemWithDetails[]): SyncCartPayload[] {

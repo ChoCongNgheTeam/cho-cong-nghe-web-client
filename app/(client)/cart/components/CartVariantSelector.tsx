@@ -2,7 +2,7 @@
 import React from "react";
 import { useVariantSelector } from "../../../../hooks/useVariantSelector";
 import VariantDropdown from "./VariantDropdown";
-import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
+import { CartItemWithDetails } from "@/store/cart/cart.types";
 
 interface CartVariantSelectorProps {
   cartItemId: string;

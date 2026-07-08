@@ -1,4 +1,4 @@
-import { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
+import { CartItemWithDetails } from "./cart.types";
 
 export function clampQty(desired: number, availableQty: number): number {
   const clamped = Math.max(1, desired);
@@ -14,16 +14,16 @@ export function validateQtyChange(current: number, delta: number, availableQty: 
 
 export function transformApiItem(raw: CartItemWithDetails): CartItemWithDetails {
   const now = Date.now();
-  const colorLabel = (raw as CartItemWithDetails & { color?: string }).colorLabel ?? (raw as CartItemWithDetails & { color?: string }).color ?? "";
-  const storageLabel = raw.storageLabel ?? extractStorage((raw as CartItemWithDetails & { variantCode?: string }).variantCode ?? "");
+  const colorLabel = raw.colorLabel ?? raw.color ?? "";
+  const storageLabel = raw.storageLabel ?? extractStorage(raw.variantCode ?? "");
   return {
     ...raw,
     colorLabel,
     storageLabel,
     color: colorLabel,
-    unitPrice: (raw as CartItemWithDetails & { price?: { final?: number } }).price?.final ?? raw.unitPrice ?? 0,
-    originalPrice: (raw as CartItemWithDetails & { price?: { base?: number } }).price?.base ?? raw.originalPrice ?? raw.unitPrice ?? 0,
-    totalPrice: (raw as CartItemWithDetails & { totalFinalPrice?: number }).totalFinalPrice ?? raw.totalPrice ?? 0,
+    unitPrice: raw.price?.final ?? raw.unitPrice ?? 0,
+    originalPrice: raw.price?.base ?? raw.originalPrice ?? raw.unitPrice ?? 0,
+    totalPrice: raw.totalFinalPrice ?? raw.totalPrice ?? 0,
     selected: true,
     addedAt: raw.addedAt ?? now,
     createdAt: raw.createdAt ?? new Date(now).toISOString(),

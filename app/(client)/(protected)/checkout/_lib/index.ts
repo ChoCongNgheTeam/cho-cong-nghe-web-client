@@ -1,4 +1,4 @@
-import type { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
+import type { CartItemWithDetails } from "@/store/cart/cart.types";
 
 export interface Province {
   code: string;
