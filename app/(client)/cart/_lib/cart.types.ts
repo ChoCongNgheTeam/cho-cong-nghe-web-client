@@ -1,3 +1,19 @@
+// Field thật theo response GET /api/v1/cart — đối chiếu trực tiếp với API,
+// bỏ hẳn field snake_case (unit_price...) vì dữ liệu thật không bao giờ trả về dạng đó
+
+export interface VariantAttribute {
+  code: string;
+  value: string;
+}
+
+export interface CartItemPrice {
+  base: number;
+  final: number;
+  discountAmount: number;
+  discountPercentage: number;
+  hasPromotion: boolean;
+}
+
 export interface CartItemWithDetails {
   id: string;
   productVariantId: string;
@@ -5,7 +21,11 @@ export interface CartItemWithDetails {
   productName: string;
   productSlug: string;
   brandName: string;
+  brandId?: string;
+  categoryId?: string;
+  categoryPath?: string[];
   variantCode: string;
+  variantAttributes?: VariantAttribute[];
   image: string;
   // color display
   color: string; // label hiển thị, vd: "Trắng"
@@ -16,6 +36,9 @@ export interface CartItemWithDetails {
   unitPrice: number;
   originalPrice?: number;
   totalPrice: number;
+  totalBasePrice?: number;
+  totalFinalPrice?: number;
+  price?: CartItemPrice;
   // inventory
   quantity: number;
   availableQuantity: number;
@@ -25,14 +48,11 @@ export interface CartItemWithDetails {
   updatedAt: string;
   // client-side UI state
   selected: boolean;
-  brandId?: string;
-  categoryId?: string;
-  categoryPath?: string[];
-  unit_price?: number;
-  totalFinalPrice?: number;
-  price?: { base: number; final: number };
 }
 
+// TODO: API GET /cart thực tế KHÔNG trả field "image" ở cấp item — cần xem
+// useCart.ts để biết image được enrich từ đâu (gallery/variant riêng?) trước
+// khi khẳng định field này đúng hay sai.
 export interface ApiCartItem {
   id: string;
   productVariantId: string;
@@ -44,12 +64,16 @@ export interface ApiCartItem {
   categoryId: string;
   categoryPath: string[];
   variantCode: string;
+  variantAttributes?: VariantAttribute[];
   image: string;
   color: string;
   colorValue: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  totalBasePrice?: number;
+  totalFinalPrice?: number;
+  price?: CartItemPrice;
   availableQuantity: number;
   createdAt: string;
   updatedAt: string;
@@ -60,6 +84,12 @@ export interface ApiCartData {
   totalItems: number;
   totalQuantity: number;
   subtotal: number;
+  totalPromotionDiscount?: number;
+  totalVoucherDiscount?: number;
+  totalDiscount?: number;
+  finalTotal?: number;
+  isValid?: boolean;
+  errors?: string[];
 }
 
 export interface ApiResponse<T> {

@@ -1,3 +1,5 @@
+import type { CartItemWithDetails } from "@/(client)/cart/_lib/cart.types";
+
 export interface Province {
   code: string;
   name: string;
@@ -29,6 +31,9 @@ export interface SavedAddress {
   isDefault: boolean;
 }
 
+// Shape hiển thị tối giản cho CartItems.tsx — map trực tiếp từ CartItemWithDetails,
+// không còn field snake_case (trước đây unit_price/original_price chỉ tồn tại để
+// "phòng hờ" 1 API cũ không còn dùng — dữ liệu thật từ cart luôn là camelCase)
 export interface CartItem {
   id: string;
   name: string;
@@ -36,33 +41,14 @@ export interface CartItem {
   color?: string;
   colorValue?: string;
   quantity: number;
-  unit_price: number;
-  original_price?: number;
-  image?: string;
-}
-
-export interface SelectedItem {
-  id: string;
-  productName?: string;
-  product_name?: string;
-  variantCode?: string;
-  variant_name?: string;
-  quantity: number;
-  unitPrice?: number;
-  unit_price?: number;
+  unitPrice: number;
   originalPrice?: number;
-  original_price?: number;
   image?: string;
-  image_url?: string;
-  color?: string;
-  colorValue?: string;
 }
 
 export interface CheckoutData {
-  selectedItems: SelectedItem[];
-  selectedPromotions: string[];
+  selectedItems: CartItemWithDetails[];
   cartItemIds?: string[];
-  promotionValue: number;
   appliedVoucherCode: string;
   appliedVoucherValue: number;
   appliedVoucherId?: string;
@@ -77,7 +63,7 @@ export interface CheckoutData {
 export interface PreviewData {
   subtotalAmount: number;
   shippingFee: number;
-  totalPromotionDiscount: number; // ← thêm trường này
+  totalPromotionDiscount: number;
   voucherDiscount: number;
   totalAmount: number;
 }

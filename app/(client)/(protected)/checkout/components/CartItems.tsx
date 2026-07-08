@@ -1,18 +1,6 @@
 import { formatVND } from "../../../../../helpers";
 import Image from "next/image";
-import React from "react";
-
-interface CartItem {
-  id: string | number;
-  name: string;
-  variant: string;
-  color?: string;
-  colorValue?: string;
-  quantity: number;
-  unit_price: number; // final price — đã tính sale
-  original_price?: number; // giá gốc để gạch ngang
-  image?: string;
-}
+import type { CartItem } from "../_lib";
 
 interface CartItemsProps {
   items: CartItem[];
@@ -27,8 +15,8 @@ export default function CartItems({ items }: CartItemsProps) {
 
       <div className="divide-y divide-neutral border border-neutral rounded">
         {items.map((item) => {
-          // unit_price = final, chỉ check original để hiện gạch ngang
-          const hasDiscount = item.original_price != null && item.original_price > item.unit_price;
+          // unitPrice = final, chỉ check originalPrice để hiện gạch ngang
+          const hasDiscount = item.originalPrice != null && item.originalPrice > item.unitPrice;
 
           return (
             <div key={item.id} className="p-4 sm:p-5 bg-neutral-light">
@@ -53,8 +41,8 @@ export default function CartItems({ items }: CartItemsProps) {
 
                   {/* Price */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm text-promotion">{formatVND(item.unit_price)}</span>
-                    {hasDiscount && <span className="text-xs line-through text-neutral-darker">{formatVND(item.original_price!)}</span>}
+                    <span className="font-medium text-sm text-promotion">{formatVND(item.unitPrice)}</span>
+                    {hasDiscount && <span className="text-xs line-through text-neutral-darker">{formatVND(item.originalPrice!)}</span>}
                     <span className="ml-auto text-sm font-medium text-neutral-darker">x{item.quantity}</span>
                   </div>
                 </div>

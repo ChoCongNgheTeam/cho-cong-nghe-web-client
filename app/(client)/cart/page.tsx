@@ -11,6 +11,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import DeleteConfirmSidebar from "./components/DeleteConfirmSidebar";
 import { CartItemWithDetails } from "./_lib/cart.types";
 import { formatVND } from "../../../helpers";
+import { computeFinalTotalWithVoucher } from "./_lib/cartMath";
 import { useToasty } from "@/components/toast";
 import CartBottomBar from "./components/CartBottomMobile";
 import CartVariantSelector from "./components/CartVariantSelector";
@@ -44,9 +45,6 @@ export default function CartPage() {
   const [showLoginHintMobile, setShowLoginHintMobile] = useState(false);
   const toast = useToasty();
 
-  const [selectedPromotions, setSelectedPromotions] = useState<string[]>([]);
-  const [promotionValue, setPromotionValue] = useState(0);
-
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     name: string;
@@ -76,14 +74,20 @@ export default function CartPage() {
 
   const LOGIN_REDIRECT_INTENT_KEY = "loginRedirectIntent";
 
-  const handleIncrease = async (itemId: string) => {
-    const success = await updateQuantity(itemId, 1);
-    if (!success) toast.error("Số lượng vượt quá tồn kho");
-  };
+  const handleIncrease = useCallback(
+    async (itemId: string) => {
+      const success = await updateQuantity(itemId, 1);
+      if (!success) toast.error("Số lượng vượt quá tồn kho");
+    },
+    [updateQuantity, toast],
+  );
 
-  const handleDecrease = async (itemId: string) => {
-    await updateQuantity(itemId, -1);
-  };
+  const handleDecrease = useCallback(
+    async (itemId: string) => {
+      await updateQuantity(itemId, -1);
+    },
+    [updateQuantity],
+  );
 
   // Khi gõ — chỉ lưu vào local state, chưa gọi API
   const handleQuantityChange = useCallback(
@@ -92,12 +96,13 @@ export default function CartPage() {
       if (!item) return;
 
       const num = parseInt(value);
-      // Nếu vượt tồn kho thì clamp luôn, không cho nhập tiếp
-      if (!isNaN(num) && item.availableQuantity > 0 && num > item.availableQuantity) {
-        toast.error(`Chỉ còn ${item.availableQuantity} sản phẩm trong kho`);
+      // Luôn ép về availableQuantity thật — kể cả khi = 0 (hết hàng), trước đây
+      // điều kiện "> 0" khiến hết hàng lại thành KHÔNG giới hạn số lượng nhập
+      if (!isNaN(num) && num > item.availableQuantity) {
+        toast.error(item.availableQuantity > 0 ? `Chỉ còn ${item.availableQuantity} sản phẩm trong kho` : "Sản phẩm đã hết hàng");
         setQuantityInputs((prev) => ({
           ...prev,
-          [itemId]: String(item.availableQuantity),
+          [itemId]: String(Math.max(0, item.availableQuantity)),
         }));
         return;
       }
@@ -125,9 +130,9 @@ export default function CartPage() {
       if (isNaN(num) || num < 1) return;
       if (num === item.quantity) return;
 
-      // Check tồn kho
-      if (item.availableQuantity > 0 && num > item.availableQuantity) {
-        toast.error(`Chỉ còn ${item.availableQuantity} sản phẩm trong kho`);
+      // Check tồn kho — luôn ép về availableQuantity thật, kể cả khi = 0 (hết hàng)
+      if (num > item.availableQuantity) {
+        toast.error(item.availableQuantity > 0 ? `Chỉ còn ${item.availableQuantity} sản phẩm trong kho` : "Sản phẩm đã hết hàng");
         return;
       }
 
@@ -195,8 +200,6 @@ export default function CartPage() {
     const checkoutData = {
       selectedItems,
       cartItemIds: selectedItems.map((item) => item.id),
-      selectedPromotions,
-      promotionValue,
       appliedVoucherCode: voucherCode,
       appliedVoucherValue: voucherValue,
       appliedVoucherId: voucherId,
@@ -207,23 +210,9 @@ export default function CartPage() {
     };
     localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
     router.push("/checkout");
-  }, [
-    user, // ← thêm dependency
-    selectedItems,
-    selectedPromotions,
-    promotionValue,
-    voucherCode,
-    voucherValue,
-    voucherId,
-    subtotal,
-    totalDiscount,
-    finalTotal,
-    rewardPoints,
-    router,
-    toast,
-  ]);
+  }, [user, selectedItems, voucherCode, voucherValue, voucherId, subtotal, totalDiscount, finalTotal, rewardPoints, router, toast]);
 
-  const finalTotalWithVoucher = Math.max(0, finalTotal - voucherValue);
+  const finalTotalWithVoucher = computeFinalTotalWithVoucher(finalTotal, voucherValue);
 
   // ── Shared quantity input renderer ───────────────────────────────────────
 
@@ -245,7 +234,7 @@ export default function CartPage() {
         <input
           type="number"
           min={1}
-          max={item.availableQuantity > 0 ? item.availableQuantity : undefined}
+          max={item.availableQuantity}
           // Ưu tiên local state khi đang gõ, fallback về item.quantity
           value={quantityInputs[item.id] ?? item.quantity}
           onChange={(e) => handleQuantityChange(item.id, e.target.value)}
@@ -256,7 +245,11 @@ export default function CartPage() {
           className={`${inputH} w-10 border-x border-neutral text-sm font-medium text-primary bg-transparent text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
         />
 
-        <button onClick={() => handleIncrease(item.id)} className={`flex ${h} items-center justify-center rounded-r text-neutral-darker transition hover:bg-accent-light cursor-pointer`}>
+        <button
+          onClick={() => handleIncrease(item.id)}
+          disabled={item.quantity >= item.availableQuantity}
+          className={`flex ${h} items-center justify-center rounded-r text-neutral-darker transition hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer`}
+        >
           <Plus className={iconSize} />
         </button>
       </div>
@@ -419,8 +412,6 @@ export default function CartPage() {
                 selectedItemsCount={selectedItems.length}
                 appliedVoucherCode={voucherCode}
                 appliedVoucherValue={voucherValue}
-                selectedPromotions={selectedPromotions}
-                promotionValue={promotionValue}
                 onOpenVoucherModal={handleOpenVoucherModal}
                 onCheckout={handleCheckout}
                 buttonText="Xác nhận đơn"

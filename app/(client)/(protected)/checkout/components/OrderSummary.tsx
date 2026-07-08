@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { ChevronRight, Truck, Tag, Gift, LogIn, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../../../hooks/useAuth";
+import { useToasty } from "@/components/toast";
+import { computeFinalTotalWithVoucher } from "@/(client)/cart/_lib/cartMath";
 import Link from "next/link";
 
 interface OrderSummaryProps {
@@ -13,8 +15,6 @@ interface OrderSummaryProps {
   selectedItemsCount: number;
   appliedVoucherCode?: string;
   appliedVoucherValue?: number;
-  selectedPromotions?: string[];
-  promotionValue?: number;
   onOpenVoucherModal?: () => void;
   onCheckout: () => void;
   buttonText?: string;
@@ -44,12 +44,13 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToasty();
   const [showLoginHint, setShowLoginHint] = useState(false);
 
   const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
   const totalSaved = totalPromotionDiscount + appliedVoucherValue;
-  const finalTotalWithVoucher = computedTotal ?? Math.max(0, subtotal - totalPromotionDiscount - appliedVoucherValue);
+  const finalTotalWithVoucher = computedTotal ?? computeFinalTotalWithVoucher(subtotal - totalPromotionDiscount, appliedVoucherValue);
 
   const handleVoucherClick = () => {
     if (!user) {
@@ -67,11 +68,7 @@ export default function OrderSummary({
       return;
     }
     if (showTerms && !agreedToTerms) {
-      const toastDiv = document.createElement("div");
-      toastDiv.className = "fixed top-5 right-5 bg-promotion text-neutral-light px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium";
-      toastDiv.textContent = "⚠️ Vui lòng đồng ý với điều khoản dịch vụ";
-      document.body.appendChild(toastDiv);
-      setTimeout(() => toastDiv.remove(), 3000);
+      toast.warning("Vui lòng đồng ý với điều khoản dịch vụ");
       return;
     }
     onCheckout();
@@ -79,9 +76,9 @@ export default function OrderSummary({
 
   return (
     <div className="rounded-xl bg-neutral-light sticky top-4 overflow-hidden border border-neutral">
-      {/* ── Login Hint Sidebar ──────────────────────────────────────────── */}
+      {/* Login hint sidebar — hiện khi bấm voucher lúc chưa đăng nhập */}
       <div
-        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-[9999] flex flex-col transition-transform duration-300 ease-in-out ${showLoginHint ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-72 bg-neutral-light shadow-2xl z-[9999] flex flex-col transition-transform duration-300 ease-in-out ${showLoginHint ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-neutral">
           <div className="flex items-center gap-2 text-primary font-semibold text-sm">
@@ -117,7 +114,7 @@ export default function OrderSummary({
       {/* Backdrop */}
       {showLoginHint && <div className="fixed inset-0 bg-black/30 z-[9998]" onClick={() => setShowLoginHint(false)} />}
 
-      {/* ── Voucher ─────────────────────────────────────────────────────── */}
+      {/* Voucher */}
       {onOpenVoucherModal && (
         <button
           onClick={handleVoucherClick}
@@ -138,7 +135,7 @@ export default function OrderSummary({
         </button>
       )}
 
-      {/* ── Order breakdown ──────────────────────────────────────────────── */}
+      {/* Order breakdown */}
       <div className="px-4 pt-4 pb-0">
         <p className="text-sm font-semibold text-primary mb-3">Thông tin đơn hàng</p>
 
@@ -205,7 +202,7 @@ export default function OrderSummary({
         </div>
       </div>
 
-      {/* ── CTA Button ───────────────────────────────────────────────────── */}
+      {/* CTA button */}
       <button
         onClick={handleCheckoutClick}
         disabled={selectedItemsCount === 0 || (showTerms && !agreedToTerms)}
@@ -218,7 +215,7 @@ export default function OrderSummary({
         {buttonText}
       </button>
 
-      {/* ── Terms ────────────────────────────────────────────────────────── */}
+      {/* Terms */}
       {showTerms && (
         <div className="px-4 py-3 bg-accent-light border-t border-neutral">
           <label className="flex gap-2 text-xs cursor-pointer items-start">

@@ -232,7 +232,10 @@ export default function VoucherPromotionModal({
                                 </div>
                               )}
                               {(() => {
-                                const remaining = (voucher as any).remainingUses ?? (voucher.maxUses != null ? voucher.maxUses - (voucher.usesCount ?? 0) : null);
+                                // TODO: `remainingUses` chưa có trong type Voucher gốc (hooks/useVoucher.ts) —
+                                // nên bổ sung field này vào interface Voucher thay vì cast cục bộ ở đây
+                                const remaining =
+                                  (voucher as typeof voucher & { remainingUses?: number }).remainingUses ?? (voucher.maxUses != null ? voucher.maxUses - (voucher.usesCount ?? 0) : null);
                                 return remaining != null ? (
                                   <div className="flex items-center gap-1">
                                     <Users className="h-3 w-3" />

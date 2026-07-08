@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, AlertCircle, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "../../../../../../config/api.config";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StripePaymentInfo {
+export interface StripePaymentInfo {
   type: "STRIPE";
   clientSecret: string;
   publishableKey: string;
@@ -17,15 +15,38 @@ interface PaymentResultModalProps {
   isOpen: boolean;
   paymentInfo: StripePaymentInfo | null;
   onClose: () => void;
+  // TODO: chưa được gọi ở đâu trong luồng Stripe hiện tại (Stripe tự redirect qua
+  // return_url khi thành công, browser rời trang trước khi onDone có cơ hội chạy) —
+  // kiểm tra lại xem có cần cho luồng thanh toán khác không, hay bỏ hẳn ở nơi gọi
   onDone: () => void;
 }
 
-// ─── Stripe Panel ─────────────────────────────────────────────────────────────
+// Type tối giản cho đúng phần Stripe.js API đang dùng (elements + confirmPayment) —
+// thay cho any. Nếu sau này cần thêm API khác, cân nhắc cài @stripe/stripe-js chính thức.
+interface StripePaymentElement {
+  on: (event: "ready", callback: () => void) => void;
+  mount: (selector: string) => void;
+}
+
+interface StripeElements {
+  create: (type: "payment") => StripePaymentElement;
+}
+
+interface StripeInstance {
+  elements: (options: { clientSecret: string }) => StripeElements;
+  confirmPayment: (options: { elements: StripeElements; confirmParams: { return_url: string } }) => Promise<{ error?: { message?: string } }>;
+}
+
+declare global {
+  interface Window {
+    Stripe?: (publishableKey: string) => StripeInstance;
+  }
+}
 
 function StripePanel({ info }: { info: StripePaymentInfo }) {
   const mountedRef = useRef(false);
-  const stripeRef = useRef<any>(null);
-  const elementsRef = useRef<any>(null);
+  const stripeRef = useRef<StripeInstance | null>(null);
+  const elementsRef = useRef<StripeElements | null>(null);
 
   const [isReady, setIsReady] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -36,7 +57,7 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
     mountedRef.current = true;
 
     const init = async () => {
-      if (!(window as any).Stripe) {
+      if (!window.Stripe) {
         await new Promise<void>((resolve, reject) => {
           const s = document.createElement("script");
           s.src = "https://js.stripe.com/v3/";
@@ -46,7 +67,7 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
         });
       }
 
-      const stripe = (window as any).Stripe(info.publishableKey);
+      const stripe = window.Stripe!(info.publishableKey);
       stripeRef.current = stripe;
 
       const elements = stripe.elements({ clientSecret: info.clientSecret });
@@ -57,7 +78,7 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
       paymentElement.mount("#stripe-payment-element");
     };
 
-    init().catch((err) => setStripeError(err.message));
+    init().catch((err: Error) => setStripeError(err.message));
   }, [info.clientSecret, info.publishableKey]);
 
   const handleConfirm = async () => {
@@ -100,13 +121,13 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
 
       {/* Error */}
       {stripeError && (
-        <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+        <div className="flex items-start gap-2 text-sm text-promotion bg-promotion-light border border-promotion/30 rounded-lg px-3 py-2.5">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{stripeError}</span>
         </div>
       )}
 
-      {/* Confirm button */}
+      {/* Confirm button — #635bff là màu thương hiệu Stripe, giữ nguyên không theo token */}
       <button
         onClick={handleConfirm}
         disabled={isConfirming || !isReady}
@@ -122,8 +143,6 @@ function StripePanel({ info }: { info: StripePaymentInfo }) {
   );
 }
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
-
 export default function PaymentResultModal({ isOpen, paymentInfo, onClose }: PaymentResultModalProps) {
   if (!isOpen || !paymentInfo) return null;
 
@@ -133,9 +152,9 @@ export default function PaymentResultModal({ isOpen, paymentInfo, onClose }: Pay
       <div className="absolute inset-0 bg-black/50" />
 
       {/* Panel */}
-      <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90dvh] overflow-y-auto">
+      <div className="relative w-full sm:max-w-md bg-neutral-light rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90dvh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white flex items-center justify-between px-5 py-3.5 border-b border-neutral z-10">
+        <div className="sticky top-0 bg-neutral-light flex items-center justify-between px-5 py-3.5 border-b border-neutral z-10">
           <h2 className="text-sm font-semibold text-primary">Hoàn tất thanh toán</h2>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-neutral transition-colors">
             <X className="w-4 h-4 text-neutral-darker" />

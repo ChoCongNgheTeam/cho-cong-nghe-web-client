@@ -1,25 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X, MapPin, Plus, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import apiRequest from "@/lib/api";
 import { useToasty } from "@/components/toast";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface ApiAddress {
-  id: string;
-  contactName: string;
-  phone: string;
-  detailAddress: string;
-  fullAddress?: string;
-  ward?: { code: string; name: string; fullName?: string };
-  province?: { code: string; name: string; fullName?: string };
-  isDefault: boolean;
-  type?: string;
-  createdAt?: string;
-}
+import type { SavedAddress } from "../../_lib";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -31,15 +17,13 @@ interface AddressSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   selectedAddressId: string | undefined;
-  onSelect: (address: ApiAddress) => void;
+  onSelect: (address: SavedAddress) => void;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onSelect }: AddressSidebarProps) {
   const toast = useToasty();
   const router = useRouter();
-  const [addresses, setAddresses] = useState<ApiAddress[]>([]);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | undefined>(selectedAddressId);
 
@@ -67,7 +51,7 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
     const fetchAddresses = async () => {
       setLoading(true);
       try {
-        const res = await apiRequest.get<ApiResponse<ApiAddress[]>>("/addresses");
+        const res = await apiRequest.get<ApiResponse<SavedAddress[]>>("/addresses");
         const list = res?.data ?? [];
         setAddresses(list);
         if (list.length > 0) {
@@ -99,7 +83,7 @@ export default function AddressSidebar({ isOpen, onClose, selectedAddressId, onS
     router.push("/profile/addresses?redirect=checkout");
   };
 
-  const formatAddress = (addr: ApiAddress) => addr.fullAddress ?? [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
+  const formatAddress = (addr: SavedAddress) => addr.fullAddress ?? [addr.detailAddress, addr.ward?.name, addr.province?.name].filter(Boolean).join(", ");
 
   const formatType = (type?: string) => {
     if (!type) return null;

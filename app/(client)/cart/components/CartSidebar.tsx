@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { X, ChevronRight } from "lucide-react";
-import { formatNumber, formatVND } from "../../../../helpers";
+import { formatVND } from "../../../../helpers";
+import { useToasty } from "@/components/toast";
+import { computeFinalTotalWithVoucher } from "../_lib/cartMath";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -32,7 +34,6 @@ export default function CartSidebar({
   subtotal,
   totalDiscount,
   finalTotal,
-  rewardPoints,
   selectedItemsCount,
   appliedVoucherCode = "",
   appliedVoucherValue = 0,
@@ -42,20 +43,15 @@ export default function CartSidebar({
   showTerms = false,
   agreedToTerms = false,
   onTermsChange,
-  usePoints = false,
-  onTogglePoints,
 }: CartSidebarProps) {
-  const finalTotalWithVoucher = Math.max(0, finalTotal - appliedVoucherValue);
+  const toast = useToasty();
+  const finalTotalWithVoucher = computeFinalTotalWithVoucher(finalTotal, appliedVoucherValue);
 
   const handleCheckout = () => {
     if (selectedItemsCount === 0) return;
 
     if (showTerms && !agreedToTerms) {
-      const toastDiv = document.createElement("div");
-      toastDiv.className = "fixed top-5 right-5 bg-promotion text-white px-5 py-3 rounded-lg shadow-lg z-[9999] text-sm font-medium";
-      toastDiv.textContent = "⚠️ Vui lòng đồng ý với điều khoản dịch vụ";
-      document.body.appendChild(toastDiv);
-      setTimeout(() => toastDiv.remove(), 3000);
+      toast.warning("Vui lòng đồng ý với điều khoản dịch vụ");
       return;
     }
 
@@ -72,10 +68,10 @@ export default function CartSidebar({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-primary-darker/50 backdrop-blur-sm z-70 lg:hidden" onClick={onClose} />
+      <div className="fixed inset-0 bg-primary-darker/50 backdrop-blur-sm z-[70] lg:hidden" onClick={onClose} />
 
       {/* Sidebar */}
-      <div className="fixed inset-x-0 bottom-0 z-70 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-[70] lg:hidden">
         <div className="bg-neutral-light rounded-t-2xl shadow-2xl flex flex-col animate-slide-up" style={{ maxHeight: "calc(100vh - 120px)" }}>
           {/* Header - Compact */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral bg-linear-to-r from-accent/5 to-accent/10">
@@ -153,9 +149,7 @@ export default function CartSidebar({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-darker">Tổng khuyến mãi</span>
-                  <span className="font-medium text-primary">
-                    -{formatVND(totalDiscount + appliedVoucherValue)} {/* chỉ dùng để tính tổng hiển thị */}
-                  </span>
+                  <span className="font-medium text-primary">-{formatVND(totalDiscount + appliedVoucherValue)}</span>
                 </div>
 
                 <div className="flex justify-between pl-4">
