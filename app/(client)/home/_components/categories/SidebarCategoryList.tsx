@@ -66,17 +66,22 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
     });
   }, [hoveredCategory, containerRef]);
 
-  const clearHideTimer = () => {
+  const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
       hideTimerRef.current = null;
     }
-  };
+  }, []);
 
-  const scheduleHide = () => {
+  const scheduleHide = useCallback(() => {
     clearHideTimer();
     hideTimerRef.current = setTimeout(() => setHoveredCategory(null), 120);
-  };
+  }, [clearHideTimer]);
+
+  // Dọn timer khi unmount để tránh setState trên component đã unmount
+  useEffect(() => {
+    return () => clearHideTimer();
+  }, [clearHideTimer]);
 
   const handleHover = useCallback(
     async (cat: Category) => {
@@ -95,8 +100,15 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
         setLoadingId(null);
       }
     },
-    [childrenCache],
+    [childrenCache, clearHideTimer],
   );
+
+  // Đóng menu + reset flyout khi bấm vào bất kỳ link nào (root hoặc children)
+  const handleLinkClick = useCallback(() => {
+    clearHideTimer();
+    setHoveredCategory(null);
+    onClose?.();
+  }, [clearHideTimer, onClose]);
 
   const activeChildren = hoveredCategory ? (childrenCache[hoveredCategory.id] ?? []) : [];
 
@@ -122,7 +134,7 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
             {/* Header */}
             <Link
               href={`/category/${hoveredCategory.slug}`}
-              onClick={onClose}
+              onClick={handleLinkClick}
               className="flex items-center justify-between px-5 py-3 border-b border-surface-border hover:bg-accent-light transition-colors group"
             >
               <span className="text-base font-bold text-accent">{hoveredCategory.name}</span>
@@ -142,7 +154,7 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
                       {/* Child heading */}
                       <Link
                         href={`/category/${child.slug}`}
-                        onClick={onClose}
+                        onClick={handleLinkClick}
                         className="text-[13px] font-bold text-primary hover:text-accent transition-colors pb-2 border-b border-surface-border leading-snug"
                       >
                         {child.name}
@@ -150,7 +162,7 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
                       {/* Grandchildren */}
                       <div className="flex flex-col gap-1.5">
                         {child.children?.map((sub) => (
-                          <Link key={sub.id} href={`/category/${sub.slug}`} onClick={onClose} className="text-[14px] text-primary hover:text-accent transition-colors leading-snug">
+                          <Link key={sub.id} href={`/category/${sub.slug}`} onClick={handleLinkClick} className="text-[14px] text-primary hover:text-accent transition-colors leading-snug">
                             {sub.name}
                           </Link>
                         ))}
@@ -188,7 +200,7 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
                 key={cat.id}
                 href={`/category/${cat.slug}`}
                 onMouseEnter={() => handleHover(cat)}
-                onClick={onClose}
+                onClick={handleLinkClick}
                 className={`flex items-center justify-between px-3 py-2.5 transition-all border-l-[3px] group ${
                   isHovered ? "bg-accent-light border-accent" : "border-transparent hover:bg-neutral-light"
                 }`}

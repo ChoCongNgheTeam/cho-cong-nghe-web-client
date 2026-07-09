@@ -1,43 +1,37 @@
 "use client";
 
-import { memo, useState, useCallback, useEffect } from "react";
+import { memo, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
+import { useCategoryMenuStore } from "@/store/categoryMenu.store";
 
 const CategoryMegaMenu = memo(() => {
-  const [isOpen, setIsOpen] = useState(false);
+  const isOpen = useCategoryMenuStore((s) => s.isOpen);
+  const toggle = useCategoryMenuStore((s) => s.toggle);
+  const close = useCategoryMenuStore((s) => s.close);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
+  useEffect(() => setMounted(true), []);
+
+  // Tự đóng khi đổi route — vẫn giữ làm lưới an toàn
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => !prev);
-  }, []);
-
-  // Sync dispatch theo isOpen state
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("category-menu-toggle", { detail: { open: isOpen } }));
-  }, [isOpen]);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    // Không cần dispatch ở đây nữa, useEffect trên lo
-  }, []);
+    close();
+  }, [pathname, close]);
 
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [isOpen, handleClose]);
+  }, [isOpen, close]);
 
   return (
     <>
       <button
-        onClick={handleToggle}
+        onClick={toggle}
         aria-expanded={isOpen}
         aria-haspopup="true"
         className={[
@@ -58,18 +52,17 @@ const CategoryMegaMenu = memo(() => {
             strokeLinejoin="round"
           />
         </svg>
-        <span className="text-sm font-medium whitespace-nowrap">Danh mục</span>
+        <span className="text-sm font-medium whitespace-nowrap cursor-pointer">Danh mục</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"}`}>
           <path d="M6 9L12 15L18 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
-      {/* Backdrop — chỉ render sau khi mounted */}
       {mounted &&
         createPortal(
           <div
             aria-hidden="true"
-            onClick={handleClose}
+            onClick={close}
             className={["fixed inset-0 z-40 transition-opacity duration-300 bg-black/50 backdrop-blur-[2px]", isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"].join(" ")}
           />,
           document.body,

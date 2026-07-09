@@ -7,6 +7,7 @@ import { HomeSlider } from "./HomeSlider";
 import { SidebarCategoryList } from "../categories/SidebarCategoryList";
 import type { Slider } from "../../_lib/types";
 import { Category } from "@/types/category";
+import { useCategoryMenuStore } from "@/store/categoryMenu.store";
 
 const MOCK_PROMOS = [
   { id: 1, image: "https://placehold.co/280x120/e8873a/ffffff?text=Deal+1", label: "Giảm đến 50%", href: "/sale" },
@@ -37,29 +38,16 @@ interface HomeSliderSectionProps {
 }
 
 export const HomeSliderSection = memo(function HomeSliderSection({ sliders, categories }: HomeSliderSectionProps) {
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const custom = e as CustomEvent<{ open: boolean }>;
-      startTransition(() => setIsCategoryOpen(custom.detail.open));
-    };
-    window.addEventListener("category-menu-toggle", handler);
-    return () => window.removeEventListener("category-menu-toggle", handler);
-  }, []);
-
-  const handleClose = useCallback(() => setIsCategoryOpen(false), []);
+  const isCategoryOpen = useCategoryMenuStore((s) => s.isOpen);
+  const close = useCategoryMenuStore((s) => s.close);
 
   return (
     <div className="container md:py-3 pb-3">
-      {/* Mobile */}
       <div className="md:hidden">
         <HomeSlider sliders={sliders} />
       </div>
-
-      {/* Desktop 3 cột */}
       <div className="hidden md:grid gap-3" style={{ gridTemplateColumns: "180px 1fr 160px" }}>
-        <SidebarCategoryList categories={categories} isHighlighted={isCategoryOpen} onClose={handleClose} />
+        <SidebarCategoryList categories={categories} isHighlighted={isCategoryOpen} onClose={close} />
         <div className="rounded-xl overflow-hidden min-w-0">
           <HomeSlider sliders={sliders} />
         </div>
