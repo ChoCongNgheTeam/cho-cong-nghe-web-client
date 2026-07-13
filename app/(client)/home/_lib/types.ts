@@ -213,6 +213,18 @@ export interface HomeProductsData {
   bestSellingProducts: FeaturedProduct[];
 }
 
+// Category Products — tabs theo loại sản phẩm (điện thoại/laptop/điện máy/phụ kiện)
+
+export interface HomeCategoryProductGroup {
+  category: { id: string; name: string; slug: string };
+  products: FeaturedProduct[];
+}
+
+/** GET /home/category-products */
+export interface HomeCategoryProductsData {
+  groups: HomeCategoryProductGroup[];
+}
+
 /** GET /home/sale-schedule */
 export type HomeSaleScheduleData = SaleScheduleData;
 
@@ -221,4 +233,5 @@ export type HomeSaleScheduleData = SaleScheduleData;
 export interface HomePageData extends HomeStaticData, HomeProductsData {
   saleSchedule: HomeSaleScheduleData;
   rootCategories: Category[];
+  categoryProducts: HomeCategoryProductGroup[];
 }
