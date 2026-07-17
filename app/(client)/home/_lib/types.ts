@@ -199,6 +199,7 @@ export interface ApiResponse<T> {
 
 /** GET /home/static */
 export interface HomeStaticData {
+  bannersDeal: Banner[];
   sliders: Slider[];
   bannersTop: Banner[];
   bannersSection1: Banner[];

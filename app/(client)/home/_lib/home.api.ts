@@ -63,6 +63,7 @@ export async function getHomePageData(): Promise<HomePageData> {
   const rootCategories = rootCategoriesRes.status === "fulfilled" ? rootCategoriesRes.value : [];
 
   return {
+    bannersDeal: staticData?.bannersDeal ?? [],
     sliders: staticData?.sliders ?? [],
     bannersTop: staticData?.bannersTop ?? [],
     bannersSection1: staticData?.bannersSection1 ?? [],
