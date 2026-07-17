@@ -1,12 +1,12 @@
 "use client";
 
-import { memo, useState, useCallback, useRef, useEffect } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, Package } from "lucide-react";
 import Link from "next/link";
-import { fetchCategoryChildren } from "@/lib/api/header/header.api";
 import { CATEGORY_ICONS } from "@/lib/api/header/constants";
 import { Category } from "@/types/category";
+import { useCategoryHover } from "@/hooks/useCategoryHover";
 
 interface SidebarCategoryListProps {
   categories: Category[];
@@ -20,9 +20,8 @@ interface SidebarCategoryListProps {
 }
 
 export const SidebarCategoryList = memo(function SidebarCategoryList({ categories, isHighlighted = false, onClose, containerRef }: SidebarCategoryListProps) {
-  const [hoveredCategory, setHoveredCategory] = useState<Category | null>(null);
-  const [childrenCache, setChildrenCache] = useState<Record<string, Category[]>>({});
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const { hoveredCategory, activeChildren, colCount, isLoading, handleHover, clearHideTimer, scheduleHide, reset } = useCategoryHover();
+
   const [flyoutPos, setFlyoutPos] = useState<{
     top: number;
     left: number;
@@ -31,7 +30,6 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
   } | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!hoveredCategory || !rootRef.current) {
@@ -66,54 +64,11 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
     });
   }, [hoveredCategory, containerRef]);
 
-  const clearHideTimer = useCallback(() => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  }, []);
-
-  const scheduleHide = useCallback(() => {
-    clearHideTimer();
-    hideTimerRef.current = setTimeout(() => setHoveredCategory(null), 120);
-  }, [clearHideTimer]);
-
-  // Dọn timer khi unmount để tránh setState trên component đã unmount
-  useEffect(() => {
-    return () => clearHideTimer();
-  }, [clearHideTimer]);
-
-  const handleHover = useCallback(
-    async (cat: Category) => {
-      clearHideTimer();
-      setHoveredCategory(cat);
-      if (childrenCache[cat.id] !== undefined) return;
-      if (!cat._count?.children) return;
-      setLoadingId(cat.id);
-      try {
-        const children = await fetchCategoryChildren(cat.id);
-        setChildrenCache((prev) => ({ ...prev, [cat.id]: children }));
-      } catch (error) {
-        console.error("Failed to load category children:", error);
-        // có thể setChildrenCache với [] để tránh gọi lại liên tục, tuỳ ý
-      } finally {
-        setLoadingId(null);
-      }
-    },
-    [childrenCache, clearHideTimer],
-  );
-
   // Đóng menu + reset flyout khi bấm vào bất kỳ link nào (root hoặc children)
-  const handleLinkClick = useCallback(() => {
-    clearHideTimer();
-    setHoveredCategory(null);
+  const handleLinkClick = () => {
+    reset();
     onClose?.();
-  }, [clearHideTimer, onClose]);
-
-  const activeChildren = hoveredCategory ? (childrenCache[hoveredCategory.id] ?? []) : [];
-
-  // Số cột theo số children
-  const colCount = activeChildren.length <= 2 ? 2 : activeChildren.length <= 3 ? 3 : activeChildren.length <= 4 ? 4 : activeChildren.length <= 6 ? 3 : 4;
+  };
 
   const flyout =
     hoveredCategory && flyoutPos
@@ -143,7 +98,7 @@ export const SidebarCategoryList = memo(function SidebarCategoryList({ categorie
 
             {/* Body */}
             <div className="p-5">
-              {loadingId === hoveredCategory.id ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center py-10">
                   <span className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                 </div>

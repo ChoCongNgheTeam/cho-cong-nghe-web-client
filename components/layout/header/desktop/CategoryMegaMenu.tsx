@@ -1,16 +1,25 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useCategoryMenuStore } from "@/store/categoryMenu.store";
+import { CategoryHeaderDropdown } from "./CategoryHeaderDropdown";
 
 const CategoryMegaMenu = memo(() => {
   const isOpen = useCategoryMenuStore((s) => s.isOpen);
   const toggle = useCategoryMenuStore((s) => s.toggle);
   const close = useCategoryMenuStore((s) => s.close);
+  const categories = useCategoryMenuStore((s) => s.categories);
+  const fetchCategoriesOnce = useCategoryMenuStore((s) => s.fetchCategoriesOnce);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Ở Home, sidebar danh mục đã render sẵn tĩnh trong layout (SidebarCategoryList)
+  // — nút này chỉ dùng để highlight sidebar đó, KHÔNG cần dropdown riêng.
+  // Ở các trang khác không có sidebar tĩnh nên mới cần dropdown neo dưới nút.
+  const isHome = pathname === "/";
 
   useEffect(() => setMounted(true), []);
 
@@ -28,9 +37,15 @@ const CategoryMegaMenu = memo(() => {
     return () => document.removeEventListener("keydown", handler);
   }, [isOpen, close]);
 
+  // Fetch categories 1 lần khi mở lần đầu ở các trang không có sẵn categories từ SSR
+  useEffect(() => {
+    if (isOpen && !isHome) fetchCategoriesOnce();
+  }, [isOpen, isHome, fetchCategoriesOnce]);
+
   return (
     <>
       <button
+        ref={buttonRef}
         onClick={toggle}
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -67,6 +82,9 @@ const CategoryMegaMenu = memo(() => {
           />,
           document.body,
         )}
+
+      {/* Dropdown chỉ dùng cho các trang không phải Home */}
+      {isOpen && !isHome && categories.length > 0 && <CategoryHeaderDropdown categories={categories} anchorRef={buttonRef} onClose={close} />}
     </>
   );
 });
