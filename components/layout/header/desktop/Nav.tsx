@@ -11,7 +11,7 @@ import UserMenuButton from "@/components/layout/actions/UserMenuButton";
 
 const DesktopNav = memo(() => {
   return (
-    <div className="desktop-header-row hidden md:flex items-center justify-between gap-4 lg:gap-4 relative">
+    <div className="desktop-header-row hidden lg:flex items-center justify-between gap-4 relative">
       <HeaderLogo />
       <CategoryMegaMenu />
       <div className="flex-1 max-w-2xl flex flex-col gap-0.5">

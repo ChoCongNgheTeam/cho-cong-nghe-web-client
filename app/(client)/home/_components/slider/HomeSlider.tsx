@@ -99,7 +99,13 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
   return (
     <div className="flex flex-col w-full">
       {/* ── Slider area ── */}
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "21/8", minHeight: 160 }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div
+        className="relative w-full overflow-hidden aspect-[5/3] min-[480px]:aspect-[16/8] sm:aspect-[2/1] lg:aspect-[21/8]"
+        style={{ minHeight: 200 }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {" "}
         {/* Background */}
         <div
           className="absolute inset-0"
@@ -107,7 +113,6 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
             background: `linear-gradient(160deg, rgb(var(--neutral-light)) 0%, rgb(var(--accent-light)) 40%, rgb(var(--neutral-light-hover)) 70%, rgb(var(--neutral-light-active)) 100%)`,
           }}
         />
-
         {/* Layer 1: Perspective grid */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden [perspective:400px]">
           <div
@@ -143,7 +148,6 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
             />
           ))}
         </div>
-
         {/* Layer 2: Blobs */}
         <div
           className="pointer-events-none absolute inset-0"
@@ -155,7 +159,6 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
           `,
           }}
         />
-
         {/* Layer 3: Noise */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.022]"
@@ -164,7 +167,6 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
             backgroundSize: "180px 180px",
           }}
         />
-
         {/* Layer 4: Bottom fade */}
         <div
           className="pointer-events-none absolute bottom-0 left-0 right-0 z-10"
@@ -173,7 +175,6 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
             background: `linear-gradient(to bottom, transparent 0%, rgb(var(--neutral-light) / 0.6) 55%, rgb(var(--neutral-light)) 100%)`,
           }}
         />
-
         {/* Progress bar */}
         <div
           key={`prog-${current}`}
@@ -184,9 +185,8 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
             width: visible ? undefined : "0%",
           }}
         />
-
         {/* Main content */}
-        <div className="container relative z-10 grid grid-cols-[7fr_5fr] items-center h-full px-8 md:px-12 gap-6">
+        <div className="relative z-10 grid grid-cols-[7fr_5fr] items-center h-full px-5 min-[375px]:px-8 md:px-12 gap-6">
           {/* LEFT */}
           <div className="flex flex-col pl-8 md:pl-14 pr-4">
             {/* Thêm một eyebrow label phía trên title */}
@@ -317,7 +317,6 @@ export function HomeSlider({ sliders }: { sliders: Slider[] }) {
             </Link>
           </div>
         </div>
-
         {/* Arrows */}
         <button
           onClick={prev}

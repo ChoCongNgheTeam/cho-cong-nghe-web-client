@@ -109,7 +109,7 @@ const Header = () => {
           <MobileNav />
           <div className="py-1.5">
             <DesktopNav />
-            <TrendingBar className="hidden md:block" />
+            <TrendingBar className="hidden lg:block" />
           </div>
         </div>
 

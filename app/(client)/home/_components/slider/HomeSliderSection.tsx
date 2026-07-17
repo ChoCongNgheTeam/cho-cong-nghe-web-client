@@ -27,7 +27,6 @@ const PromoColumn = memo(function PromoColumn({ banners }: { banners: Banner[] }
         >
           <Image src={banner.imageUrl} alt={banner.title ?? ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          {/* <span className="absolute bottom-2 left-3 text-white text-[12px] font-semibold drop-shadow">{banner.title}</span> */}
         </Link>
       ))}
     </div>
@@ -45,11 +44,13 @@ export const HomeSliderSection = memo(function HomeSliderSection({ sliders, cate
   const close = useCategoryMenuStore((s) => s.close);
 
   return (
-    <div className="container md:py-3 pb-3">
-      <div className="md:hidden">
+    <div className="container lg:py-3 pb-3">
+      {/* Margin âm triệt tiêu đúng padding-inline của .container (0.75rem / 1rem)
+          để slider tràn sát mép màn hình ở mobile, không ảnh hưởng các section khác */}
+      <div className="lg:hidden -mx-3 min-[375px]:-mx-4">
         <HomeSlider sliders={sliders} />
       </div>
-      <div className="hidden md:grid gap-3 items-start" style={{ gridTemplateColumns: "180px 1fr 160px" }}>
+      <div className="hidden lg:grid gap-3 items-start" style={{ gridTemplateColumns: "180px 1fr 160px" }}>
         <SidebarCategoryList categories={categories} isHighlighted={isCategoryOpen} onClose={close} />
         <div className="rounded-xl overflow-hidden min-w-0">
           <HomeSlider sliders={sliders} />

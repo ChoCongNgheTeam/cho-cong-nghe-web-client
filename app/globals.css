@@ -515,48 +515,21 @@
 /* ======================================================================
    6. LAYOUT UTILITIES — .container
    ====================================================================== */
-@layer utilities {
-   .container {
-      width: 100%;
-      margin-left: auto;
-      margin-right: auto;
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-   }
+@utility container {
+   max-width: 100%;
+   margin-inline: auto;
+   padding-inline: 0.75rem;
 
    @media (min-width: 375px) {
-      .container {
-         padding-left: 1rem;
-         padding-right: 1rem;
-      }
-   }
-
-   @media (min-width: 640px) {
-      .container {
-         max-width: 640px;
-      }
-   }
-
-   @media (min-width: 768px) {
-      .container {
-         max-width: 960px;
-      }
+      padding-inline: 1rem;
    }
 
    @media (min-width: 1024px) {
-      .container {
-         max-width: 1240px;
-         padding-left: 1.5rem;
-         padding-right: 1.5rem;
-      }
-   }
-
-   @media (min-width: 1280px) {
-      .container {
-         max-width: 1240px;
-      }
+      max-width: 1240px;
+      padding-inline: 1.5rem;
    }
 }
+
 
 /* ======================================================================
    7. GLOBAL STYLES

@@ -21,7 +21,7 @@ const DesktopNav = () => {
   const avatarHref = user ? "/profile" : "/account";
 
   return (
-    <div className="flex md:hidden flex-col gap-2 py-2">
+    <div className="flex lg:hidden flex-col gap-2 py-2">
       <TrendingBar className="!block mt-0" />
 
       <div className="flex items-center justify-between px-1">
