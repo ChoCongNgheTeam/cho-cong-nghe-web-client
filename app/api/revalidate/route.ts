@@ -23,8 +23,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Body phải có dạng { tags: string[] }" }, { status: 400 });
   }
 
+  // Next.js 16: revalidateTag() bắt buộc tham số thứ 2 (profile).
+  // Dùng { expire: 0 } thay vì "max" vì đây là webhook từ BE (hệ thống ngoài) —
+  // cần data đúng ngay lập tức, không chấp nhận stale-while-revalidate.
   for (const tag of tags) {
-    revalidateTag(tag);
+    revalidateTag(tag, { expire: 0 });
   }
 
   return NextResponse.json({ revalidated: true, tags });
