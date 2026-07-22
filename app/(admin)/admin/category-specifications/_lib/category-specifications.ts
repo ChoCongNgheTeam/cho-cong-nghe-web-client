@@ -15,7 +15,7 @@ interface RemoveResponse {
   message: string;
 }
 
-// ── Categories (for selector) ─────────────────────────────────────────────
+// CATEGORIES (for selector)
 export interface CategoryOption {
   id: string;
   name: string;
@@ -33,7 +33,7 @@ export const getActiveCategories = async (): Promise<CategoriesResponse> => {
   return apiRequest.get<CategoriesResponse>("/categories");
 };
 
-// ── Category Specifications ───────────────────────────────────────────────
+// CATEGORY SPECIFICATIONS
 export const getCategorySpecs = async (categoryId: string): Promise<GetCategorySpecsResponse> => {
   return apiRequest.get<GetCategorySpecsResponse>(`/specifications/admin/category-specs/${categoryId}`);
 };

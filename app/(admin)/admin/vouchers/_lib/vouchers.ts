@@ -5,7 +5,6 @@ import {
   GetVouchersParams,
   CreateVoucherPayload,
   UpdateVoucherPayload,
-  VoucherCard,
   VoucherUsagesResponse,
   GetVoucherUsagesParams,
   VoucherUsersResponse,
@@ -13,36 +12,17 @@ import {
   UserResult,
 } from "../voucher.types";
 import { EntityOption } from "@/components/admin/shared/EntitySelect";
+import { createResourceApi, type ResourceEnvelope } from "@/lib/admin/createResourceApi";
 
-interface VoucherDetailResponse {
-  data: VoucherDetail;
-  message: string;
-}
+// ── Voucher CRUD (chuẩn — dùng factory dùng chung) ────────────────────────────
 
-interface DeletedVouchersResponse {
-  data: VoucherCard[];
-  message: string;
-}
+const voucherApi = createResourceApi<VouchersResponse, VoucherDetail, CreateVoucherPayload, UpdateVoucherPayload, GetVouchersParams>("/vouchers/admin");
 
-export const getAllVouchers = async (params?: GetVouchersParams): Promise<VouchersResponse> => {
-  return apiRequest.get<VouchersResponse>("/vouchers/admin/all", { params });
-};
-
-export const getVoucher = async (id: string): Promise<VoucherDetailResponse> => {
-  return apiRequest.get<VoucherDetailResponse>(`/vouchers/admin/${id}`);
-};
-
-export const createVoucher = async (payload: CreateVoucherPayload): Promise<VoucherDetailResponse> => {
-  return apiRequest.post<VoucherDetailResponse>("/vouchers/admin", payload);
-};
-
-export const updateVoucher = async (id: string, payload: UpdateVoucherPayload): Promise<VoucherDetailResponse> => {
-  return apiRequest.patch<VoucherDetailResponse>(`/vouchers/admin/${id}`, payload);
-};
-
-export const deleteVoucher = async (id: string): Promise<void> => {
-  await apiRequest.delete(`/vouchers/admin/${id}`);
-};
+export const getAllVouchers = voucherApi.getAll;
+export const getVoucher = (id: string) => voucherApi.getOne(id);
+export const createVoucher = voucherApi.create;
+export const updateVoucher = voucherApi.update;
+export const deleteVoucher = voucherApi.remove;
 
 export const bulkDeleteVouchers = async (ids: string[]): Promise<{ data: { count: number }; message: string }> => {
   return apiRequest.delete("/vouchers/admin/bulk", { data: { ids } });
@@ -70,8 +50,25 @@ export const assignVoucherToUsers = async (payload: { voucherId: string; userIds
 
 // ── Search helpers ────────────────────────────────────────────────────────────
 
+interface ApiProductSearchItem {
+  id: string;
+  name: string;
+  sku?: string;
+  slug?: string;
+}
+
+interface ApiCategoryItem {
+  id: string;
+  name: string;
+}
+
+interface ApiBrandItem {
+  id: string;
+  name: string;
+}
+
 export async function fetchProductSearch(term: string): Promise<EntityOption[]> {
-  const res = await apiRequest.get<{ data: any[] }>("/products", {
+  const res = await apiRequest.get<ResourceEnvelope<ApiProductSearchItem[]>>("/products", {
     params: { search: term, limit: 20 },
     noAuth: true,
   });
@@ -83,7 +80,7 @@ export async function fetchProductSearch(term: string): Promise<EntityOption[]> 
 }
 
 export async function fetchAllCategories(): Promise<EntityOption[]> {
-  const res = await apiRequest.get<{ data: any[] }>("/categories", {
+  const res = await apiRequest.get<ResourceEnvelope<ApiCategoryItem[]>>("/categories", {
     params: { limit: 200 },
     noAuth: true,
   });
@@ -91,7 +88,7 @@ export async function fetchAllCategories(): Promise<EntityOption[]> {
 }
 
 export async function fetchAllBrands(): Promise<EntityOption[]> {
-  const res = await apiRequest.get<{ data: any[] }>("/brands", {
+  const res = await apiRequest.get<ResourceEnvelope<ApiBrandItem[]>>("/brands", {
     noAuth: true,
   });
   return (res?.data ?? []).map((b) => ({ id: b.id, name: b.name }));

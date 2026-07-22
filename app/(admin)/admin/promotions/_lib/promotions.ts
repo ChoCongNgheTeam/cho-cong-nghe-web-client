@@ -1,32 +1,10 @@
-import apiRequest from "@/lib/api";
 import { Promotion, PromotionsResponse, GetPromotionsParams, CreatePromotionPayload, UpdatePromotionPayload } from "../promotion.types";
+import { createResourceApi } from "@/lib/admin/createResourceApi";
 
-interface GetPromotionResponse {
-  data: Promotion;
-  message: string;
-}
+const promotionApi = createResourceApi<PromotionsResponse, Promotion, CreatePromotionPayload, UpdatePromotionPayload, GetPromotionsParams>("/promotions/admin");
 
-interface MutatePromotionResponse {
-  data: Promotion;
-  message: string;
-}
-
-export const getAllPromotions = async (params?: GetPromotionsParams): Promise<PromotionsResponse> => {
-  return apiRequest.get<PromotionsResponse>("/promotions/admin/all", { params });
-};
-
-export const getPromotion = async (id: string): Promise<GetPromotionResponse> => {
-  return apiRequest.get<GetPromotionResponse>(`/promotions/admin/${id}`);
-};
-
-export const createPromotion = async (payload: CreatePromotionPayload): Promise<MutatePromotionResponse> => {
-  return apiRequest.post<MutatePromotionResponse>("/promotions/admin", payload);
-};
-
-export const updatePromotion = async (id: string, payload: UpdatePromotionPayload): Promise<MutatePromotionResponse> => {
-  return apiRequest.patch<MutatePromotionResponse>(`/promotions/admin/${id}`, payload);
-};
-
-export const deletePromotion = async (id: string): Promise<void> => {
-  await apiRequest.delete(`/promotions/admin/${id}`);
-};
+export const getAllPromotions = promotionApi.getAll;
+export const getPromotion = (id: string) => promotionApi.getOne(id);
+export const createPromotion = promotionApi.create;
+export const updatePromotion = promotionApi.update;
+export const deletePromotion = promotionApi.remove;

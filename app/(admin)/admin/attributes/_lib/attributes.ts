@@ -1,39 +1,25 @@
 import apiRequest from "@/lib/api";
 import { Attribute, AttributesResponse, GetAttributesParams, CreateAttributePayload, UpdateAttributePayload, CreateOptionPayload, UpdateOptionPayload, AttributeOption } from "../attribute.types";
-
-interface GetAttributeResponse {
-  data: Attribute;
-  message: string;
-}
-
-interface MutateAttributeResponse {
-  data: Attribute;
-  message: string;
-}
+import { createResourceApi } from "@/lib/admin/createResourceApi";
 
 interface MutateOptionResponse {
   data: AttributeOption & { attributeId: string };
   message: string;
 }
 
-export const getAllAttributes = async (params?: GetAttributesParams): Promise<AttributesResponse> => {
-  return apiRequest.get<AttributesResponse>("/attributes/admin/all", { params });
-};
+// ── Attribute CRUD (chuẩn — dùng factory dùng chung; module này không có delete) ──
 
-export const getAttribute = async (id: string): Promise<GetAttributeResponse> => {
-  return apiRequest.get<GetAttributeResponse>(`/attributes/admin/${id}`);
-};
+const attributeApi = createResourceApi<AttributesResponse, Attribute, CreateAttributePayload, UpdateAttributePayload, GetAttributesParams>("/attributes/admin");
 
-export const createAttribute = async (payload: CreateAttributePayload): Promise<MutateAttributeResponse> => {
-  return apiRequest.post<MutateAttributeResponse>("/attributes/admin", payload);
-};
+export const getAllAttributes = attributeApi.getAll;
+export const getAttribute = (id: string) => attributeApi.getOne(id);
+export const createAttribute = attributeApi.create;
+export const updateAttribute = attributeApi.update;
 
-export const updateAttribute = async (id: string, payload: UpdateAttributePayload): Promise<MutateAttributeResponse> => {
-  return apiRequest.patch<MutateAttributeResponse>(`/attributes/admin/${id}`, payload);
-};
+// ── Custom: toggle + options (sub-resource, không thuộc CRUD chuẩn) ───────────
 
-export const toggleAttributeActive = async (id: string): Promise<MutateAttributeResponse> => {
-  return apiRequest.patch<MutateAttributeResponse>(`/attributes/admin/${id}/toggle`, {});
+export const toggleAttributeActive = async (id: string): Promise<{ data: Attribute; message: string }> => {
+  return apiRequest.patch<{ data: Attribute; message: string }>(`/attributes/admin/${id}/toggle`, {});
 };
 
 export const createOption = async (attributeId: string, payload: CreateOptionPayload): Promise<MutateOptionResponse> => {

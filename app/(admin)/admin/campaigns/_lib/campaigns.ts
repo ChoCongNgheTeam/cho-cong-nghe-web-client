@@ -1,10 +1,6 @@
 import apiRequest from "@/lib/api";
 import { Campaign, CampaignCategory, GetCampaignsParams, CreateCampaignPayload, UpdateCampaignPayload } from "../campaign.types";
-
-interface CampaignResponse {
-  data: Campaign;
-  message: string;
-}
+import { createResourceApi } from "@/lib/admin/createResourceApi";
 
 interface CampaignMeta {
   total: number;
@@ -16,27 +12,17 @@ interface CampaignsResponse {
   message: string;
 }
 
-// ── Campaign CRUD ─────────────────────────────────────────────────────────────
+// ── Campaign CRUD (chuẩn — dùng factory dùng chung) ───────────────────────────
 
-export const getAllCampaigns = async (params?: GetCampaignsParams): Promise<CampaignsResponse> => {
-  return apiRequest.get<CampaignsResponse>("/campaigns/admin/all", { params });
-};
+const campaignApi = createResourceApi<CampaignsResponse, Campaign, CreateCampaignPayload, UpdateCampaignPayload, GetCampaignsParams>("/campaigns/admin");
 
-export const getCampaign = async (id: string): Promise<CampaignResponse> => {
-  return apiRequest.get<CampaignResponse>(`/campaigns/admin/${id}`);
-};
+export const getAllCampaigns = campaignApi.getAll;
+export const getCampaign = (id: string) => campaignApi.getOne(id);
+export const createCampaign = campaignApi.create;
+export const updateCampaign = campaignApi.update;
+export const deleteCampaign = campaignApi.remove;
 
-export const createCampaign = async (payload: CreateCampaignPayload): Promise<CampaignResponse> => {
-  return apiRequest.post<CampaignResponse>("/campaigns/admin", payload);
-};
-
-export const updateCampaign = async (id: string, payload: UpdateCampaignPayload): Promise<CampaignResponse> => {
-  return apiRequest.patch<CampaignResponse>(`/campaigns/admin/${id}`, payload);
-};
-
-export const deleteCampaign = async (id: string): Promise<void> => {
-  await apiRequest.delete(`/campaigns/admin/${id}`);
-};
+// ── Bulk delete (không thuộc CRUD chuẩn, giữ viết tay) ────────────────────────
 
 export const bulkDeleteCampaigns = async (ids: string[]): Promise<{ data: { count: number }; message: string }> => {
   return apiRequest.delete("/campaigns/admin/bulk", { data: { ids } });

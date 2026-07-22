@@ -1,23 +1,17 @@
 import apiRequest from "@/lib/api";
-import { BlogCard, BlogDetail, BlogAuthor, BlogsResponse, GetBlogsParams, CreateBlogPayload, UpdateBlogPayload } from "../blog.types";
-
-interface BlogDetailResponse {
-  data: BlogDetail;
-  message: string;
-}
+import { BlogDetail, BlogAuthor, BlogsResponse, GetBlogsParams } from "../blog.types";
+import { createResourceApi, type ResourceEnvelope } from "@/lib/admin/createResourceApi";
 
 interface BlogAuthorsResponse {
   data: BlogAuthor[];
   message: string;
 }
 
-export const getAllBlogs = async (params?: GetBlogsParams): Promise<BlogsResponse> => {
-  return apiRequest.get<BlogsResponse>("/blogs/admin/all", { params });
-};
+const blogApi = createResourceApi<BlogsResponse, BlogDetail, FormData, FormData, GetBlogsParams>("/blogs/admin");
 
-export const getBlog = async (id: string): Promise<BlogDetailResponse> => {
-  return apiRequest.get<BlogDetailResponse>(`/blogs/admin/${id}`);
-};
+export const getAllBlogs = blogApi.getAll;
+export const getBlog = (id: string) => blogApi.getOne(id);
+export const deleteBlog = blogApi.remove;
 
 export const getBlogAuthors = async (): Promise<BlogAuthorsResponse> => {
   return apiRequest.get<BlogAuthorsResponse>("/blogs/admin/authors");
@@ -31,20 +25,16 @@ export const getDeletedBlogs = async (params?: { page?: number; limit?: number; 
  * Tạo blog — dùng FormData vì có upload thumbnail.
  * KHÔNG set Content-Type thủ công — để axios tự set kèm boundary.
  */
-export const createBlog = async (formData: FormData): Promise<BlogDetailResponse> => {
-  return apiRequest.post<BlogDetailResponse>("/blogs/admin", formData);
+export const createBlog = async (formData: FormData): Promise<ResourceEnvelope<BlogDetail>> => {
+  return apiRequest.post<ResourceEnvelope<BlogDetail>>("/blogs/admin", formData);
 };
 
 /**
  * Update blog — dùng FormData.
  * KHÔNG set Content-Type thủ công — để axios tự set kèm boundary.
  */
-export const updateBlog = async (id: string, formData: FormData): Promise<BlogDetailResponse> => {
-  return apiRequest.patch<BlogDetailResponse>(`/blogs/admin/${id}`, formData);
-};
-
-export const deleteBlog = async (id: string): Promise<void> => {
-  await apiRequest.delete(`/blogs/admin/${id}`);
+export const updateBlog = async (id: string, formData: FormData): Promise<ResourceEnvelope<BlogDetail>> => {
+  return apiRequest.patch<ResourceEnvelope<BlogDetail>>(`/blogs/admin/${id}`, formData);
 };
 
 export const bulkDeleteBlogs = async (blogIds: string[]): Promise<void> => {
@@ -55,8 +45,8 @@ export const bulkUpdateBlogStatus = async (blogIds: string[], status: string): P
   await apiRequest.patch("/blogs/admin/bulk/status", { blogIds, status });
 };
 
-export const restoreBlog = async (id: string): Promise<BlogDetailResponse> => {
-  return apiRequest.post<BlogDetailResponse>(`/blogs/admin/${id}/restore`, {});
+export const restoreBlog = async (id: string): Promise<ResourceEnvelope<BlogDetail>> => {
+  return apiRequest.post<ResourceEnvelope<BlogDetail>>(`/blogs/admin/${id}/restore`, {});
 };
 
 export const hardDeleteBlog = async (id: string): Promise<void> => {
