@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, Trash2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle, ArchiveRestore } from "lucide-react";
+import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle, ArchiveRestore } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import type { ProductCard } from "./product.types";
 import {
   getAllProducts,
@@ -995,42 +996,17 @@ export default function ProductsPage() {
 
       {/* ── Delete Modal ── */}
       {deleteTarget && (
-        <Popzy
+        <ConfirmDeleteModal
           isOpen={!!deleteTarget}
           onClose={() => !deleting && setDeleteTarget(null)}
-          footer={false}
-          closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
-          content={
-            <div className="py-2">
-              <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-                <Trash2 size={22} strokeWidth={1.5} />
-              </div>
-              <h3 className="text-[16px] font-bold text-primary text-center mb-1">{(deleteTarget as any).deletedAt ? "Xóa vĩnh viễn?" : "Xóa sản phẩm?"}</h3>
-              <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xóa</p>
-              <p className="text-[14px] font-semibold text-primary text-center mb-2">"{deleteTarget.name}"</p>
-              {/* <p className="text-[12px] text-primary text-center mb-6">
-                {(deleteTarget as any).deletedAt ? "Hành động này không thể hoàn tác." : "Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục sau."}
-              </p> */}
-              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  Huỷ
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  {deleting && <Loader2 size={13} className="animate-spin" />}
-                  {deleting ? "Đang xóa..." : "Xóa sản phẩm"}
-                </button>
-              </div>
-            </div>
-          }
+          title={(deleteTarget as any).deletedAt ? "Xóa vĩnh viễn?" : "Xóa sản phẩm?"}
+          description="Bạn có chắc chắn muốn xóa"
+          itemName={deleteTarget.name}
+          warningText=""
+          onConfirm={handleDeleteConfirm}
+          loading={deleting}
+          error={deleteError}
+          confirmLabel="Xóa sản phẩm"
         />
       )}
 

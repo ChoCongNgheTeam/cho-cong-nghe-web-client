@@ -1,9 +1,7 @@
 "use client";
 import { Comment } from "../comment.types";
+import { StatusBadge } from "@/components/admin/shared/StatusBadge";
 
 export function CommentApprovalBadge({ comment }: { comment: Comment }) {
-  if (comment.isApproved) {
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-semibold text-emerald-600 bg-emerald-50">Đã duyệt</span>;
-  }
-  return <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-semibold text-orange-500 bg-orange-50">Chờ duyệt</span>;
+  return comment.isApproved ? <StatusBadge label="Đã duyệt" className="text-emerald-600 bg-emerald-50" /> : <StatusBadge label="Chờ duyệt" className="text-orange-500 bg-orange-50" />;
 }

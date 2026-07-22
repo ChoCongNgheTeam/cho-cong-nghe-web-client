@@ -12,7 +12,7 @@ import {
   GetVoucherUsersParams,
   UserResult,
 } from "../voucher.types";
-import { EntityOption } from "../components/MultiSelectDropdown";
+import { EntityOption } from "@/components/admin/shared/EntitySelect";
 
 interface VoucherDetailResponse {
   data: VoucherDetail;

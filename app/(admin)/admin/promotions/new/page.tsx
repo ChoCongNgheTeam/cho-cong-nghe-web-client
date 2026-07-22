@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Tag } from "lucide-react";
 import { createPromotion } from "../_lib/promotions";
 import { PromotionForm, DEFAULT_FORM, formToPayload, type PromotionFormData, type TargetSearchAPIs } from "../components/PromotionForm";
-import type { EntityOption } from "../components/MultiSelectDropdown";
+import type { EntityOption } from "@/components/admin/shared/EntitySelect";
 import apiRequest from "@/lib/api";
 import { useToasty } from "@/components/toast";
 import useDebouncedCallback from "../../../../../hooks/useDebouncedCallback";

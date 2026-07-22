@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Star, Clock, CheckCircle, XCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2 } from "lucide-react";
+import { Star, Clock, CheckCircle, XCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { getAllReviews, approveReview, deleteReview } from "./_lib/reviews";
 import { getReviewColumns } from "./components/TableReviews";
 import { ReviewDetailDrawer } from "./components/ReviewDetailDrawer";
@@ -416,41 +417,24 @@ export default function ReviewsAdminPage() {
 
       {/* Delete Confirm Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
-                <Trash2 size={18} />
-              </div>
-              <div>
-                <h3 className="text-[15px] font-bold text-primary">Xác nhận xóa</h3>
-                <p className="text-[12px] text-primary">Hành động này không thể hoàn tác</p>
-              </div>
-            </div>
-            <div className="bg-neutral-light rounded-xl px-3 py-2.5 space-y-1">
+        <ConfirmDeleteModal
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          title="Xác nhận xóa"
+          description=""
+          warningText="Hành động này không thể hoàn tác"
+          extra={
+            <div className="bg-neutral-light rounded-xl px-3 py-2.5 space-y-1 text-left mb-4">
               <p className="text-[12px] text-primary">
                 {deleteTarget.user?.fullName ?? "Ẩn danh"} — {deleteTarget.orderItem?.productVariant?.product?.name ?? "—"}
               </p>
-              {deleteTarget.comment && <p className="text-[12px] text-primary line-clamp-2">"{deleteTarget.comment}"</p>}
+              {deleteTarget.comment && <p className="text-[12px] text-primary line-clamp-2">&quot;{deleteTarget.comment}&quot;</p>}
             </div>
-            <div className="flex items-center gap-2 justify-end">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 text-[13px] border border-neutral rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="flex items-center gap-1.5 px-4 py-2 text-[13px] bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                Xóa
-              </button>
-            </div>
-          </div>
-        </div>
+          }
+          onConfirm={handleDeleteConfirm}
+          loading={deleting}
+          confirmLabel="Xóa"
+        />
       )}
     </div>
   );

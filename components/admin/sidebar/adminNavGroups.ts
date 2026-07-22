@@ -24,6 +24,13 @@ import {
   Link2,
   Truck,
   Layers,
+  Warehouse,
+  PackagePlus,
+  PackageMinus,
+  Building2,
+  History,
+  ClipboardCheck,
+  AlertTriangle,
 } from "lucide-react";
 import type { NavGroup } from "./types";
 
@@ -58,6 +65,20 @@ export const adminNavGroups: NavGroup[] = [
       { title: "Danh mục & Thuộc tính", href: "/admin/category-variant-attributes", icon: Link2 },
       { title: "Danh mục sản phẩm", href: "/admin/categories", icon: FolderOpen },
       { title: "Thương hiệu", href: "/admin/brands", icon: Award },
+    ],
+  },
+  {
+    label: "Kho hàng",
+    icon: Warehouse,
+    items: [
+      { title: "Tồn kho sản phẩm", href: "/admin/inventory", icon: Boxes },
+      { title: "Nhập kho", href: "/admin/inventory/stock-in", icon: PackagePlus },
+      { title: "Xuất kho", href: "/admin/inventory/stock-out", icon: PackageMinus },
+      { title: "Danh sách kho", href: "/admin/warehouses", icon: Building2 },
+      { title: "Nhà cung cấp", href: "/admin/suppliers", icon: Truck },
+      { title: "Lịch sử nhập/xuất", href: "/admin/inventory/history", icon: History },
+      { title: "Kiểm kê kho", href: "/admin/inventory/stocktake", icon: ClipboardCheck },
+      { title: "Cảnh báo tồn kho thấp", href: "/admin/inventory/alerts", icon: AlertTriangle },
     ],
   },
   {

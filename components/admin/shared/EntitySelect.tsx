@@ -1,19 +1,24 @@
 "use client";
 
 /**
- * MultiSelectDropdown.tsx
+ * EntitySelect.tsx — shared select components (gộp từ
+ * promotions/components/MultiSelectDropdown.tsx và
+ * vouchers/components/MultiSelectDropdown.tsx, 2 file này trước đây
+ * gần như y hệt nhau).
  *
  * Exports:
  *  - EntityOption          — shared type
- *  - ProductSearch         — async search via react-select + apiRequest
- *  - MultiSelectDropdown   — preloaded list (categories / brands) via react-select
+ *  - ProductSearch         — async multi-select tìm sản phẩm qua apiRequest
+ *  - MultiSelectDropdown   — multi-select với danh sách đã preload (danh mục / thương hiệu)
+ *  - SingleProductSearch   — async single-select tìm sản phẩm (có debounce)
+ *  - SingleSelectDropdown  — single-select với danh sách đã preload
  */
 
+import { useCallback } from "react";
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import apiRequest from "@/lib/api";
-import { useCallback, useRef } from "react";
-import useDebouncedCallback from "../../../../../hooks/useDebouncedCallback";
+import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 
 // ── Shared type ────────────────────────────────────────────────────────────────
 
@@ -55,7 +60,7 @@ function fromRs(o: RsOption): EntityOption {
   };
 }
 
-// ── Shared styles (matches Notification rsStyles pattern) ──────────────────────
+// ── Shared styles ────────────────────────────────────────────────────────────
 
 const rsStyles = {
   control: (b: any, s: any) => ({
@@ -217,6 +222,80 @@ async function defaultSearchProducts(term: string): Promise<RsOption[]> {
   }));
 }
 
+// ── ProductSearch (multi) ────────────────────────────────────────────────────
+
+interface ProductSearchProps {
+  selected: EntityOption[];
+  onChange: (items: EntityOption[]) => void;
+  onSearch?: (term: string) => Promise<EntityOption[]>;
+  placeholder?: string;
+  isDisabled?: boolean;
+}
+
+export function ProductSearch({ selected, onChange, onSearch, placeholder = "Tìm tên sản phẩm, SKU...", isDisabled = false }: ProductSearchProps) {
+  const loadOptions = async (inputValue: string): Promise<RsOption[]> => {
+    if (onSearch) return (await onSearch(inputValue)).map(toRs);
+    return defaultSearchProducts(inputValue);
+  };
+
+  return (
+    <AsyncSelect
+      isMulti
+      cacheOptions
+      defaultOptions={false}
+      loadOptions={loadOptions}
+      value={selected.map(toRs)}
+      onChange={(val: any) => onChange((val ?? []).map(fromRs))}
+      placeholder={placeholder}
+      isDisabled={isDisabled}
+      styles={rsStyles}
+      formatOptionLabel={(opt: any) => <ProductOptionLabel data={opt} />}
+      loadingMessage={() => "Đang tìm kiếm..."}
+      noOptionsMessage={({ inputValue }: any) => (inputValue ? `Không tìm thấy "${inputValue}"` : "Nhập để tìm sản phẩm")}
+      isClearable
+      closeMenuOnSelect={false}
+      hideSelectedOptions={false}
+      classNamePrefix="rs-product"
+      menuPosition="fixed"
+      menuPlacement="auto"
+    />
+  );
+}
+
+// ── MultiSelectDropdown (multi, preloaded options) ───────────────────────────
+
+interface MultiSelectDropdownProps {
+  selected: EntityOption[];
+  onChange: (items: EntityOption[]) => void;
+  options: EntityOption[];
+  loading?: boolean;
+  placeholder?: string;
+  isDisabled?: boolean;
+}
+
+export function MultiSelectDropdown({ selected, onChange, options, loading = false, placeholder = "Chọn...", isDisabled = false }: MultiSelectDropdownProps) {
+  return (
+    <Select
+      isMulti
+      options={options.map(toRs)}
+      value={selected.map(toRs)}
+      onChange={(val: any) => onChange((val ?? []).map(fromRs))}
+      placeholder={loading ? "Đang tải..." : placeholder}
+      isDisabled={isDisabled || loading}
+      isLoading={loading}
+      styles={rsStyles}
+      loadingMessage={() => "Đang tải..."}
+      noOptionsMessage={() => "Không có lựa chọn"}
+      isClearable
+      closeMenuOnSelect={false}
+      hideSelectedOptions={false}
+      classNamePrefix="rs-multi"
+      menuPosition="fixed"
+      menuPlacement="auto"
+    />
+  );
+}
+
 // ── SingleProductSearch ────────────────────────────────────────────────────────
 
 interface SingleProductSearchProps {
@@ -262,6 +341,7 @@ export function SingleProductSearch({ value, onChange, onSearch, placeholder = "
     />
   );
 }
+
 // ── SingleSelectDropdown ───────────────────────────────────────────────────────
 
 interface SingleSelectDropdownProps {

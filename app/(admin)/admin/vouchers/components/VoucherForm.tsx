@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2, AlertCircle, Plus, X, Info, Users, Search, UserCheck, Lock } from "lucide-react";
 import type { VoucherDetail, CreateVoucherPayload, UpdateVoucherPayload, TargetType, UserResult } from "../voucher.types";
 import { TARGET_TYPE_LABELS } from "../_lib/constants";
-import { SingleProductSearch, SingleSelectDropdown, type EntityOption } from "./MultiSelectDropdown";
+import { SingleProductSearch, SingleSelectDropdown, type EntityOption } from "@/components/admin/shared/EntitySelect";
 import { fetchProductSearch, fetchAllCategories, fetchAllBrands, searchUsers } from "../_lib/vouchers";
 import { utcToVNLocal, vnLocalToUtc } from "../../../../../helpers/timezoneHelpers";
 
@@ -365,7 +365,7 @@ export function VoucherForm({ initialData, isEdit = false, onSubmit, saving, err
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  const set = (key: keyof VoucherFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+  const set = <K extends keyof VoucherFormData>(key: K, value: VoucherFormData[K]) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const addTarget = () =>
     setForm((prev) => ({
@@ -441,7 +441,7 @@ export function VoucherForm({ initialData, isEdit = false, onSubmit, saving, err
             />
           </FormRow>
           <FormRow label="Ưu tiên" hint="Số lớn hơn = ưu tiên cao hơn">
-            <input type="number" value={form.priority} onChange={(e) => set("priority", e.target.value)} className={inputCls} />
+            <input type="number" value={form.priority} onChange={(e) => set("priority", Number(e.target.value))} className={inputCls} />
           </FormRow>
         </div>
 
@@ -455,7 +455,7 @@ export function VoucherForm({ initialData, isEdit = false, onSubmit, saving, err
         <p className="text-[11px] font-bold text-neutral-dark uppercase tracking-widest">Giảm giá</p>
 
         <FormRow label="Loại giảm giá" required>
-          <select value={form.discountType} onChange={(e) => set("discountType", e.target.value)} className={`${inputCls} cursor-pointer`}>
+          <select value={form.discountType} onChange={(e) => set("discountType", e.target.value as VoucherFormData["discountType"])} className={`${inputCls} cursor-pointer`}>
             <option value="DISCOUNT_PERCENT">Giảm theo % (phần trăm)</option>
             <option value="DISCOUNT_FIXED">Giảm tiền trực tiếp</option>
           </select>
@@ -464,7 +464,7 @@ export function VoucherForm({ initialData, isEdit = false, onSubmit, saving, err
         <div className="grid grid-cols-2 gap-4">
           <FormRow label={isPercent ? "Phần trăm giảm (%)" : "Số tiền giảm (VNĐ)"} required>
             <div className="relative">
-              <input type="number" value={form.discountValue} onChange={(e) => set("discountValue", e.target.value)} min={0} max={isPercent ? 100 : undefined} className={inputCls} required />
+              <input type="number" value={form.discountValue} onChange={(e) => set("discountValue", Number(e.target.value))} min={0} max={isPercent ? 100 : undefined} className={inputCls} required />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-neutral-dark font-medium">{isPercent ? "%" : "₫"}</span>
             </div>
           </FormRow>
@@ -476,7 +476,7 @@ export function VoucherForm({ initialData, isEdit = false, onSubmit, saving, err
           )}
 
           <FormRow label="Đơn tối thiểu (VNĐ)">
-            <input type="number" value={form.minOrderValue} onChange={(e) => set("minOrderValue", e.target.value)} min={0} className={inputCls} />
+            <input type="number" value={form.minOrderValue} onChange={(e) => set("minOrderValue", Number(e.target.value))} min={0} className={inputCls} />
           </FormRow>
         </div>
       </div>

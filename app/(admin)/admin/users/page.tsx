@@ -16,7 +16,6 @@ import {
   LogIn,
   ShoppingCart,
   RotateCcw,
-  AlertTriangle,
   X,
   Package,
   ChevronRight,
@@ -41,6 +40,7 @@ import { useToasty } from "@/components/toast";
 import { AuthContext } from "@/contexts/AuthContext";
 import apiRequest from "@/lib/api";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { ROLE_LABELS, ROLE_COLORS, STAFF_ROLES } from "./user.types";
 import MobileUserCard from "./components/MobileUserCard";
 
@@ -61,6 +61,22 @@ interface OrderSummary {
   orderStatus: string;
   paymentStatus: string;
   itemCount?: number;
+}
+
+/**
+ * Shape thật trả về từ GET /orders/admin/all — khớp với `orderSelect` +
+ * `formatOrderResponse()` phía BE (order.repository.ts). totalAmount là
+ * Prisma.Decimal nên serialize qua JSON có thể ra string, để number | string.
+ */
+interface RawOrderListItem {
+  id: string;
+  userId: string;
+  orderCode: string;
+  orderDate: string;
+  totalAmount: number | string;
+  orderStatus: string;
+  paymentStatus: string;
+  orderItems?: unknown[];
 }
 
 interface UserWithStats extends User {
@@ -218,13 +234,13 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
     const controller = new AbortController();
     const fetchOrders = async () => {
       try {
-        const res = await apiRequest.get<any>("/orders/admin/all", {
+        const res = await apiRequest.get<{ data: RawOrderListItem[] }>("/orders/admin/all", {
           params: { userId: user.id, limit: 100, page: 1 },
           signal: controller.signal,
         });
-        const rawData: any[] = res.data ?? [];
-        const filtered = rawData.filter((o: any) => !o.userId || o.userId === user.id);
-        const data: OrderSummary[] = filtered.map((o: any) => ({
+        const rawData = res.data ?? [];
+        const filtered = rawData.filter((o) => !o.userId || o.userId === user.id);
+        const data: OrderSummary[] = filtered.map((o) => ({
           id: o.id,
           orderCode: o.orderCode,
           orderDate: o.orderDate,
@@ -234,8 +250,8 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
           itemCount: o.orderItems?.length,
         }));
         setOrders(data);
-      } catch (err: any) {
-        if (err?.name === "CanceledError" || err?.name === "AbortError") return;
+      } catch (err: unknown) {
+        if ((err as Error)?.name === "CanceledError" || (err as Error)?.name === "AbortError") return;
         setError("Không thể tải đơn hàng");
       } finally {
         setLoading(false);
@@ -387,42 +403,6 @@ function UserOrderSidebar({ user, onClose }: { user: User | null; onClose: () =>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DELETE MODAL
-// ─────────────────────────────────────────────────────────────────────────────
-
-function DeleteModal({ user, onConfirm, onCancel }: { user: User; onConfirm: () => void; onCancel: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-neutral-light rounded-2xl border border-neutral shadow-xl p-6 w-full max-w-sm mx-4">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-promotion-light flex items-center justify-center">
-            <AlertTriangle size={22} className="text-promotion" />
-          </div>
-          <div>
-            <p className="text-base font-semibold text-primary">Xóa nhân viên?</p>
-            <p className="text-[13px] text-neutral-dark mt-1">
-              Bạn có chắc muốn xóa <span className="font-medium text-primary">{user.fullName || user.userName}</span>? Hành động này không thể hoàn tác.
-            </p>
-          </div>
-          <div className="flex gap-3 w-full">
-            <button
-              onClick={onCancel}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-primary bg-neutral-light border border-neutral rounded-xl hover:bg-neutral-light-active transition-all cursor-pointer"
-            >
-              Hủy
-            </button>
-            <button onClick={onConfirm} className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-promotion rounded-xl hover:bg-promotion-hover transition-all cursor-pointer">
-              Xóa
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -501,14 +481,14 @@ export default function UserPage() {
 
   const fetchUserOrderStats = async (userId: string): Promise<{ orderCount: number; totalSpent: number }> => {
     try {
-      const res = await apiRequest.get<any>("/orders/admin/all", {
+      const res = await apiRequest.get<{ data: RawOrderListItem[] }>("/orders/admin/all", {
         params: { userId, limit: 100, page: 1 },
       });
-      const rawData: any[] = res.data ?? [];
-      const userOrders = rawData.filter((o: any) => !o.userId || o.userId === userId);
+      const rawData = res.data ?? [];
+      const userOrders = rawData.filter((o) => !o.userId || o.userId === userId);
       return {
         orderCount: userOrders.length,
-        totalSpent: userOrders.reduce((sum: number, o: any) => sum + Number(o.totalAmount || 0), 0),
+        totalSpent: userOrders.reduce((sum: number, o) => sum + Number(o.totalAmount || 0), 0),
       };
     } catch {
       return { orderCount: 0, totalSpent: 0 };
@@ -726,7 +706,7 @@ export default function UserPage() {
     ...(isClientSort
       ? [
           {
-            key: "orderCount" as any,
+            key: "orderCount",
             label: "Đơn hàng",
             align: "center" as const,
             render: (row: UserWithStats) => (
@@ -829,7 +809,17 @@ export default function UserPage() {
   return (
     <div className="space-y-5 p-3 sm:p-5 bg-neutral-light h-full">
       {/* ── Modals & Sidebar ── */}
-      {deleteTarget && <DeleteModal user={deleteTarget} onConfirm={handleDeleteConfirm} onCancel={() => setDeleteTarget(null)} />}
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          title="Xóa nhân viên?"
+          description="Bạn có chắc muốn xóa"
+          itemName={deleteTarget.fullName || deleteTarget.userName}
+          onConfirm={handleDeleteConfirm}
+          confirmLabel="Xóa"
+        />
+      )}
       <UserOrderSidebar user={selectedUser} onClose={() => setSelectedUser(null)} />
 
       {/* ── Sort menu portal — fixed, thoát khỏi mọi overflow ── */}

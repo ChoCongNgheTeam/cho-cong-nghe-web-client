@@ -1,11 +1,12 @@
 import type { ProductCard } from "../product.types";
+import { StatusBadge } from "@/components/admin/shared/StatusBadge";
 
 export function ProductStatusBadge({ product }: { product: ProductCard }) {
   if (product.deletedAt) {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-500">Đã xóa</span>;
+    return <StatusBadge label="Đã xóa" className="bg-red-50 text-red-500" size="sm" shape="pill" />;
   }
   if (!product.isActive) {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-500">Ẩn</span>;
+    return <StatusBadge label="Ẩn" className="bg-orange-50 text-orange-500" size="sm" shape="pill" />;
   }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600">Hiển thị</span>;
+  return <StatusBadge label="Hiển thị" className="bg-emerald-50 text-emerald-600" size="sm" shape="pill" />;
 }

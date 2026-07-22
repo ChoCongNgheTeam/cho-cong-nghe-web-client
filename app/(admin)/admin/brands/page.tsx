@@ -9,6 +9,7 @@ import AdminTable from "@/components/admin/AdminTables";
 import { getBrandColumns } from "./components/TableBrands";
 import { usePopzy } from "@/hooks/usePopzy";
 import { Popzy } from "@/components/modal";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { StatsCard } from "@/components/admin/StatsCard";
 import Image from "next/image";
 
@@ -527,39 +528,15 @@ export default function AdminBrandsPage() {
       {openStatusId && <div className="fixed inset-0 z-10" onClick={() => setOpenStatusId(null)} />}
 
       {/* ── Delete modal ── */}
-      <Popzy
+      <ConfirmDeleteModal
         isOpen={deleteModal.isOpen}
         onClose={deleteModal.close}
-        footer={false}
-        closeMethods={["button", "overlay", "escape"]}
-        content={
-          <div className="py-2">
-            <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-              <Trash2 size={22} strokeWidth={1.5} />
-            </div>
-            <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá thương hiệu?</h3>
-            <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
-            <p className="text-[14px] font-semibold text-primary text-center mb-5">"{deletingBrand?.name}"</p>
-            <p className="text-[12px] text-promotion text-center mb-6">Hành động này không thể hoàn tác.</p>
-            {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-            <div className="flex gap-2">
-              <button
-                onClick={deleteModal.close}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Huỷ
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer"
-              >
-                {deleting ? "Đang xoá..." : "Xoá thương hiệu"}
-              </button>
-            </div>
-          </div>
-        }
+        title="Xoá thương hiệu?"
+        itemName={deletingBrand?.name}
+        onConfirm={handleDeleteConfirm}
+        loading={deleting}
+        error={deleteError}
+        confirmLabel="Xoá thương hiệu"
       />
 
       {/* ── Create modal ── */}

@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { MessageSquare, Clock, CheckCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, Trash2, CheckCheck, X, Loader2 } from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { getAllComments, approveComment, bulkApproveComments, deleteComment, getComment } from "./_lib/comments";
 import { getCommentColumns } from "./components/TableComments";
 import { CommentDetailDrawer } from "./components/CommentDetailDrawer";
-import { Comment, CommentsResponse, GetCommentsParams } from "./comment.types";
+import { Comment, CommentsResponse, GetCommentsParams, CommentTargetType } from "./comment.types";
 import { APPROVAL_TABS, TARGET_TYPE_LABELS } from "./_lib/constants";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { ReplyCommentModal } from "./components/ReplyCommentModal";
@@ -29,7 +30,7 @@ export default function CommentsAdminPage() {
 
   // Filters
   const [activeTab, setActiveTab] = useState("ALL");
-  const [targetType, setTargetType] = useState<string>("");
+  const [targetType, setTargetType] = useState<CommentTargetType | "">("");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -63,7 +64,7 @@ export default function CommentsAdminPage() {
         parentId: null,
       };
       if (activeTab !== "ALL") params.isApproved = activeTab === "true";
-      if (targetType) params.targetType = targetType as any;
+      if (targetType) params.targetType = targetType;
       if (search) params.search = search;
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
@@ -254,7 +255,7 @@ export default function CommentsAdminPage() {
               if (el) {
                 // Leo lên tr để scroll
                 const tr = el.closest("tr");
-                if (tr) (highlightRowRef as any).current = tr;
+                if (tr) highlightRowRef.current = tr;
               }
             }}
           />
@@ -315,7 +316,7 @@ export default function CommentsAdminPage() {
 
           <select
             value={targetType}
-            onChange={(e) => setTargetType(e.target.value)}
+            onChange={(e) => setTargetType(e.target.value as CommentTargetType | "")}
             className="px-3 py-2 text-[13px] border border-neutral rounded-xl outline-none focus:border-accent transition-colors cursor-pointer"
           >
             <option value="">Tất cả loại</option>
@@ -468,36 +469,17 @@ export default function CommentsAdminPage() {
       <ReplyCommentModal commentId={replyTargetId} onClose={() => setReplyTargetId(null)} onReplied={fetchComments} />
 
       {deleteTarget && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
-                <Trash2 size={18} />
-              </div>
-              <div>
-                <h3 className="text-[15px] font-bold text-primary">Xác nhận xóa</h3>
-                <p className="text-[12px] text-primary">Hành động này không thể hoàn tác</p>
-              </div>
-            </div>
-            <p className="text-[13px] text-primary bg-neutral-light rounded-xl px-3 py-2.5 line-clamp-3">"{deleteTarget.content}"</p>
-            <div className="flex items-center gap-2 justify-end">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 text-[13px] border border-neutral rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="flex items-center gap-1.5 px-4 py-2 text-[13px] bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                Xóa
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDeleteModal
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          title="Xác nhận xóa"
+          description=""
+          warningText="Hành động này không thể hoàn tác"
+          extra={<p className="text-[13px] text-primary bg-neutral-light rounded-xl px-3 py-2.5 line-clamp-3 text-left mb-4">&quot;{deleteTarget.content}&quot;</p>}
+          onConfirm={handleDeleteConfirm}
+          loading={deleting}
+          confirmLabel="Xóa"
+        />
       )}
     </div>
   );

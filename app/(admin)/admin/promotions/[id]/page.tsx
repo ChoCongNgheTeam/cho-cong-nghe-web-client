@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2, Tag, Loader2, CalendarDays, Zap, Target, BarChart3 } from "lucide-react";
 import { getPromotion, updatePromotion, deletePromotion } from "../_lib/promotions";
-import { Popzy } from "@/components/modal";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import type { Promotion } from "../promotion.types";
 import { formatDate, formatVND } from "../../../../../helpers";
 import { ACTION_TYPE_LABELS, ACTION_TYPE_COLORS, TARGET_TYPE_LABELS } from "../_lib/constants";
@@ -334,40 +334,15 @@ export default function PromotionDetailPage() {
       {/* ── TOAST THUẦN ĐÃ BỊ XOÁ ── không còn fixed bottom-6 nữa */}
 
       {/* Delete modal */}
-      <Popzy
+      <ConfirmDeleteModal
         isOpen={deleteOpen}
         onClose={() => !deleting && setDeleteOpen(false)}
-        footer={false}
-        closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
-        content={
-          <div className="py-2">
-            <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-              <Trash2 size={22} strokeWidth={1.5} />
-            </div>
-            <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá khuyến mãi?</h3>
-            <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
-            <p className="text-[14px] font-semibold text-primary text-center mb-5">"{promotion.name}"</p>
-            <p className="text-[12px] text-promotion text-center mb-6">Hành động này không thể hoàn tác.</p>
-            {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDeleteOpen(false)}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Huỷ
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                {deleting && <Loader2 size={13} className="animate-spin" />}
-                {deleting ? "Đang xoá..." : "Xoá khuyến mãi"}
-              </button>
-            </div>
-          </div>
-        }
+        title="Xoá khuyến mãi?"
+        itemName={promotion.name}
+        onConfirm={handleDeleteConfirm}
+        loading={deleting}
+        error={deleteError}
+        confirmLabel="Xoá khuyến mãi"
       />
     </div>
   );

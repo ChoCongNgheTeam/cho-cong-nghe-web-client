@@ -6,6 +6,7 @@ import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import type { Promotion, PromotionStatus } from "./promotion.types";
 import { getAllPromotions, updatePromotion, deletePromotion } from "./_lib/promotions";
 import { SORT_OPTIONS } from "./_lib/constants";
@@ -723,80 +724,34 @@ export default function PromotionsPage() {
       />
 
       {/* ── Modal: xác nhận xóa đơn ── */}
-      <Popzy
+      <ConfirmDeleteModal
         isOpen={deleteModal.isOpen}
         onClose={() => !deleting && deleteModal.close()}
-        footer={false}
-        closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
-        content={
-          <div className="py-2">
-            <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-              <Trash2 size={22} strokeWidth={1.5} />
-            </div>
-            <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá khuyến mãi?</h3>
-            <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
-            <p className="text-[14px] font-semibold text-primary text-center mb-5">"{deleteTarget?.name}"</p>
-            <p className="text-[12px] text-promotion text-center mb-6">Hành động này không thể hoàn tác.</p>
-            {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-            <div className="flex gap-2">
-              <button
-                onClick={() => deleteModal.close()}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Huỷ
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                {deleting && <Loader2 size={13} className="animate-spin" />}
-                {deleting ? "Đang xoá..." : "Xoá khuyến mãi"}
-              </button>
-            </div>
-          </div>
-        }
+        title="Xoá khuyến mãi?"
+        itemName={deleteTarget?.name}
+        onConfirm={handleDeleteConfirm}
+        loading={deleting}
+        error={deleteError}
+        confirmLabel="Xoá khuyến mãi"
       />
 
       {/* ── Modal: bulk delete ── */}
-      <Popzy
+      <ConfirmDeleteModal
         isOpen={bulkDeleteModal.isOpen}
         onClose={() => !bulkDeleting && bulkDeleteModal.close()}
-        footer={false}
-        closeMethods={bulkDeleting ? [] : ["button", "overlay", "escape"]}
-        content={
-          <div className="py-2">
-            <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-              <Trash2 size={22} strokeWidth={1.5} />
+        title={`Xoá ${selected.size} khuyến mãi?`}
+        description=""
+        extra={
+          selectedActiveCount > 0 ? (
+            <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[12px] text-center">
+              ⚠ Có {selectedActiveCount} khuyến mãi đang hoạt động trong danh sách
             </div>
-            <h3 className="text-[16px] font-bold text-primary text-center mb-2">Xoá {selected.size} khuyến mãi?</h3>
-            {selectedActiveCount > 0 && (
-              <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[12px] text-center">
-                ⚠ Có {selectedActiveCount} khuyến mãi đang hoạt động trong danh sách
-              </div>
-            )}
-            <p className="text-[12px] text-promotion text-center mb-6">Hành động này không thể hoàn tác.</p>
-            {bulkDeleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{bulkDeleteError}</div>}
-            <div className="flex gap-2">
-              <button
-                onClick={() => bulkDeleteModal.close()}
-                disabled={bulkDeleting}
-                className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Huỷ
-              </button>
-              <button
-                onClick={handleBulkDeleteConfirm}
-                disabled={bulkDeleting}
-                className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                {bulkDeleting && <Loader2 size={13} className="animate-spin" />}
-                {bulkDeleting ? "Đang xoá..." : `Xoá ${selected.size} khuyến mãi`}
-              </button>
-            </div>
-          </div>
+          ) : null
         }
+        onConfirm={handleBulkDeleteConfirm}
+        loading={bulkDeleting}
+        error={bulkDeleteError}
+        confirmLabel={`Xoá ${selected.size} khuyến mãi`}
       />
     </div>
   );

@@ -5,7 +5,7 @@ import { Plus, Trash2, ChevronDown, ChevronUp, Info, Loader2, AlertCircle } from
 import type { Promotion, PromotionActionType, TargetType } from "../promotion.types";
 import type { CreatePromotionPayload } from "../promotion.types";
 import { ACTION_TYPE_LABELS, TARGET_TYPE_LABELS } from "../_lib/constants";
-import { ProductSearch, MultiSelectDropdown, type EntityOption } from "./MultiSelectDropdown";
+import { ProductSearch, MultiSelectDropdown, type EntityOption } from "@/components/admin/shared/EntitySelect";
 import { utcToVNLocal, vnLocalToUtc } from "../../../../../helpers/timezoneHelpers";
 import { useToasty } from "@/components/toast";
 
@@ -302,7 +302,7 @@ export function promotionToForm(p: Promotion): PromotionFormData {
 }
 
 export function formToPayload(form: PromotionFormData): CreatePromotionPayload {
-  const flatTargets: { targetType: string; targetId?: string }[] = [];
+  const flatTargets: { targetType: TargetType; targetId?: string }[] = [];
   for (const t of form.targets) {
     if (t.targetType === "ALL") flatTargets.push({ targetType: "ALL" });
     else for (const e of t.entities) flatTargets.push({ targetType: t.targetType, targetId: e.id });
@@ -324,7 +324,7 @@ export function formToPayload(form: PromotionFormData): CreatePromotionPayload {
       getQuantity: r.getQuantity ? Number(r.getQuantity) : undefined,
       giftProductVariantId: r.giftProductVariantId || undefined,
     })),
-    targets: flatTargets as any,
+    targets: flatTargets,
   };
 }
 
