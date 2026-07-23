@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Plus, RefreshCw, Ticket, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Plus, RefreshCw, Ticket, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
-import type { VoucherCard } from "./voucher.types";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
+import type { VoucherCard, DiscountType } from "./voucher.types";
 import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_lib/vouchers";
 import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getVoucherColumns } from "./components/TableVouchers";
@@ -51,8 +52,8 @@ export default function VouchersPage() {
   const [activeTab, setActiveTab] = useState<TabType>("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [discountTypeFilter, setDiscountTypeFilter] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [discountTypeFilter, setDiscountTypeFilter] = useState<DiscountType | "">("");
+  const [sortBy, setSortBy] = useState<"createdAt" | "code" | "discountValue" | "usesCount" | "priority">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -96,15 +97,15 @@ export default function VouchersPage() {
         page,
         limit: pageSize,
         search: search || undefined,
-        discountType: (discountTypeFilter as any) || undefined,
-        sortBy: sortBy as any,
+        discountType: discountTypeFilter || undefined,
+        sortBy,
         sortOrder,
         ...tabToParams(activeTab),
       });
       setVouchers(res.data);
       setMeta(res.meta);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách voucher");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể tải danh sách voucher");
     } finally {
       setLoading(false);
     }
@@ -150,8 +151,8 @@ export default function VouchersPage() {
         const res = await updateVoucher(voucher.id, { isActive: !voucher.isActive });
         setVouchers((prev) => prev.map((v) => (v.id === voucher.id ? { ...v, ...res.data } : v)));
         fetchVouchers();
-      } catch (e: any) {
-        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      } catch (e: unknown) {
+        alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
     [fetchVouchers],
@@ -171,8 +172,8 @@ export default function VouchersPage() {
         return next;
       });
       fetchVouchers();
-    } catch (e: any) {
-      setDeleteError(e?.message ?? "Không thể xoá voucher");
+    } catch (e: unknown) {
+      setDeleteError((e as Error)?.message ?? "Không thể xoá voucher");
     } finally {
       setDeleting(false);
     }
@@ -185,8 +186,8 @@ export default function VouchersPage() {
       await bulkDeleteVouchers([...selected]);
       setSelected(new Set());
       fetchVouchers();
-    } catch (e: any) {
-      alert(e?.message ?? "Không thể xoá các voucher đã chọn");
+    } catch (e: unknown) {
+      alert((e as Error)?.message ?? "Không thể xoá các voucher đã chọn");
     } finally {
       setBulkDeleting(false);
     }
@@ -274,39 +275,26 @@ export default function VouchersPage() {
           <div className="w-px h-5 bg-neutral mx-1" />
 
           {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm mã, mô tả..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  setSearch("");
-                  resetPage();
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <SearchBox
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={(v) => {
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setSearch("");
+              resetPage();
+            }}
+            placeholder="Tìm mã, mô tả..."
+          />
 
           {/* Discount type filter */}
           <select
             value={discountTypeFilter}
             onChange={(e) => {
-              setDiscountTypeFilter(e.target.value);
+              setDiscountTypeFilter(e.target.value as DiscountType | "");
               resetPage();
             }}
             className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"

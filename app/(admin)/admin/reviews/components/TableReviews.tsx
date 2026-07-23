@@ -1,9 +1,10 @@
 import { Eye, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { AdminColumn } from "@/components/admin/AdminTables";
+import { selectColumn, sttColumn, RowActionButton } from "@/components/admin/columns/adminColumns";
 import { Review, ReviewStatus } from "../review.types";
 import { ReviewStatusBadge } from "./ReviewStatusBadge";
 import { StarRating } from "./StarRating";
-import { formatDate } from "../../../../../helpers";
+import { formatDate } from "@/helpers";
 
 interface GetReviewColumnsParams {
   page: number;
@@ -25,29 +26,8 @@ function Avatar({ user }: { user: Review["user"] }) {
 
 export function getReviewColumns({ page, pageSize, selected, toggleOne, onViewClick, onApproveClick, onDeleteClick }: GetReviewColumnsParams): AdminColumn<Review>[] {
   return [
-    {
-      key: "_select",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (review) => (
-        <input
-          type="checkbox"
-          checked={selected.has(review.id)}
-          onChange={(e) => {
-            e.stopPropagation();
-            toggleOne(review.id);
-          }}
-          className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-        />
-      ),
-    },
-    {
-      key: "_stt",
-      label: "STT",
-      width: "w-14",
-      render: (_, idx) => (page - 1) * pageSize + idx + 1,
-    },
+    selectColumn<Review>((r) => r.id, selected, toggleOne),
+    sttColumn<Review>(page, pageSize),
     {
       key: "user",
       label: "Người dùng",
@@ -102,37 +82,21 @@ export function getReviewColumns({ page, pageSize, selected, toggleOne, onViewCl
       align: "right",
       render: (review) => (
         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            title="Xem"
-            onClick={() => onViewClick(review.id)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
-          >
+          <RowActionButton title="Xem" onClick={() => onViewClick(review.id)}>
             <Eye size={14} />
-          </button>
+          </RowActionButton>
           {review.isApproved !== "APPROVED" ? (
-            <button
-              title="Duyệt"
-              onClick={() => onApproveClick(review, "APPROVED")}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-emerald-50 hover:text-emerald-600 transition-colors cursor-pointer"
-            >
+            <RowActionButton title="Duyệt" variant="success" onClick={() => onApproveClick(review, "APPROVED")}>
               <CheckCircle size={14} />
-            </button>
+            </RowActionButton>
           ) : (
-            <button
-              title="Từ chối"
-              onClick={() => onApproveClick(review, "REJECTED")}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-            >
+            <RowActionButton title="Từ chối" variant="danger" onClick={() => onApproveClick(review, "REJECTED")}>
               <XCircle size={14} />
-            </button>
+            </RowActionButton>
           )}
-          <button
-            title="Xoá"
-            onClick={() => onDeleteClick(review)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-          >
+          <RowActionButton title="Xoá" variant="danger" onClick={() => onDeleteClick(review)}>
             <Trash2 size={14} />
-          </button>
+          </RowActionButton>
         </div>
       ),
     },

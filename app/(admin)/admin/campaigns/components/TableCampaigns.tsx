@@ -1,10 +1,10 @@
-import { Eye, Pencil, Trash2, ChevronDown } from "lucide-react";
-import Link from "next/link";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { AdminColumn } from "@/components/admin/AdminTables";
+import { selectColumn, sttColumn, statusDropdownColumn, RowActionButton } from "@/components/admin/columns/adminColumns";
 import { Campaign } from "../campaign.types";
 import { getCampaignStatus } from "./CampaignStatusBadge";
 import { CAMPAIGN_TYPE_LABELS, CAMPAIGN_TYPE_COLORS } from "../_lib/constants";
-import { formatDate } from "../../../../../helpers";
+import { formatDate } from "@/helpers";
 
 interface GetCampaignColumnsParams {
   page: number;
@@ -25,29 +25,8 @@ const STATUS_DROPDOWN = [
 
 export function getCampaignColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick, prefix }: GetCampaignColumnsParams): AdminColumn<Campaign>[] {
   return [
-    {
-      key: "_select",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (campaign) => (
-        <input
-          type="checkbox"
-          checked={selected.has(campaign.id)}
-          onChange={(e) => {
-            e.stopPropagation();
-            toggleOne(campaign.id);
-          }}
-          className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-        />
-      ),
-    },
-    {
-      key: "_stt",
-      label: "STT",
-      width: "w-14",
-      render: (_, idx) => (page - 1) * pageSize + idx + 1,
-    },
+    selectColumn<Campaign>((c) => c.id, selected, toggleOne),
+    sttColumn<Campaign>(page, pageSize),
     {
       key: "name",
       label: "Tên chiến dịch",
@@ -86,49 +65,19 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
         </div>
       ),
     },
-    {
-      key: "isActive",
-      label: "Trạng thái",
-      render: (campaign) => {
-        const status = getCampaignStatus(campaign);
-        const canToggle = status.value !== "expired";
-        const isOpen = openStatusId === campaign.id;
-
-        return (
-          <div className="relative inline-block">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (canToggle) setOpenStatusId(isOpen ? null : campaign.id);
-              }}
-              disabled={!canToggle}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-medium transition-colors ${status.color} ${canToggle ? "cursor-pointer" : "cursor-default opacity-80"}`}
-            >
-              {status.label}
-              {canToggle && <ChevronDown size={11} />}
-            </button>
-            {isOpen && canToggle && (
-              <div className="absolute z-20 left-0 top-full mt-1 w-44 bg-neutral-light border border-neutral rounded-xl shadow-lg overflow-hidden">
-                {STATUS_DROPDOWN.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const current = campaign.isActive ? "active" : "inactive";
-                      if (opt.value !== current) onToggleActive(campaign);
-                      setOpenStatusId(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-[12px] font-medium hover:bg-neutral-light-active transition-colors cursor-pointer ${opt.color}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        );
+    statusDropdownColumn<Campaign>({
+      getId: (c) => c.id,
+      getCurrentValue: (c) => (c.isActive ? "active" : "inactive"),
+      getCurrentDisplay: (c) => {
+        const status = getCampaignStatus(c);
+        return { label: status.label, color: status.color };
       },
-    },
+      options: STATUS_DROPDOWN,
+      openId: openStatusId,
+      setOpenId: setOpenStatusId,
+      onChange: onToggleActive,
+      isDisabled: (c) => getCampaignStatus(c).value === "expired",
+    }),
     {
       key: "_actions",
       label: "Hành động",
@@ -138,30 +87,15 @@ export function getCampaignColumns({ page, pageSize, selected, openStatusId, tog
         const canDelete = !campaign.isActive || status.value === "expired";
         return (
           <div className="flex items-center justify-end gap-2">
-            <Link
-              href={`${prefix}/campaigns/${campaign.id}`}
-              title="Xem"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-            >
+            <RowActionButton href={`${prefix}/campaigns/${campaign.id}`} title="Xem">
               <Eye size={14} />
-            </Link>
-            <Link
-              href={`${prefix}/campaigns/${campaign.id}?edit=true`}
-              title="Chỉnh sửa"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-            >
+            </RowActionButton>
+            <RowActionButton href={`${prefix}/campaigns/${campaign.id}?edit=true`} title="Chỉnh sửa">
               <Pencil size={14} />
-            </Link>
-            <button
-              title={canDelete ? "Xoá" : "Tắt chiến dịch trước khi xóa"}
-              onClick={() => canDelete && onDeleteClick(campaign)}
-              disabled={!canDelete}
-              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                canDelete ? "text-neutral-dark hover:bg-promotion-light hover:text-promotion cursor-pointer" : "text-neutral-dark/25 cursor-not-allowed"
-              }`}
-            >
+            </RowActionButton>
+            <RowActionButton title={canDelete ? "Xoá" : "Tắt chiến dịch trước khi xóa"} variant="danger" disabled={!canDelete} onClick={() => onDeleteClick(campaign)}>
               <Trash2 size={14} />
-            </button>
+            </RowActionButton>
           </div>
         );
       },

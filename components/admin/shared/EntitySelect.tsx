@@ -17,6 +17,7 @@
 import { useCallback } from "react";
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
+import type { StylesConfig, MultiValue, SingleValue } from "react-select";
 import apiRequest from "@/lib/api";
 import useDebouncedCallback from "@/hooks/useDebouncedCallback";
 
@@ -62,8 +63,8 @@ function fromRs(o: RsOption): EntityOption {
 
 // ── Shared styles ────────────────────────────────────────────────────────────
 
-const rsStyles = {
-  control: (b: any, s: any) => ({
+const rsStyles: StylesConfig<RsOption, boolean> = {
+  control: (b, s) => ({
     ...b,
     minHeight: "42px",
     borderRadius: "0.75rem",
@@ -75,27 +76,27 @@ const rsStyles = {
     cursor: "text",
     flexWrap: "wrap",
   }),
-  valueContainer: (b: any) => ({
+  valueContainer: (b) => ({
     ...b,
     padding: "4px 8px",
     gap: "4px",
     flexWrap: "wrap",
   }),
-  multiValue: (b: any) => ({
+  multiValue: (b) => ({
     ...b,
     backgroundColor: "color-mix(in srgb, var(--color-accent, #0ea5e9) 12%, transparent)",
     borderRadius: "0.5rem",
     padding: "0 2px",
     margin: 0,
   }),
-  multiValueLabel: (b: any) => ({
+  multiValueLabel: (b) => ({
     ...b,
     color: "var(--color-accent-hover, #0369a1)",
     fontSize: "12px",
     fontWeight: 500,
     padding: "2px 4px",
   }),
-  multiValueRemove: (b: any) => ({
+  multiValueRemove: (b) => ({
     ...b,
     color: "var(--color-accent-hover, #0369a1)",
     borderRadius: "0 0.5rem 0.5rem 0",
@@ -105,19 +106,19 @@ const rsStyles = {
       color: "#fff",
     },
   }),
-  input: (b: any) => ({
+  input: (b) => ({
     ...b,
     color: "var(--color-primary, #111827)",
     fontSize: "13px",
     margin: 0,
     padding: "2px 0",
   }),
-  placeholder: (b: any) => ({
+  placeholder: (b) => ({
     ...b,
     color: "var(--color-neutral-dark, #9ca3af)",
     fontSize: "13px",
   }),
-  menu: (b: any) => ({
+  menu: (b) => ({
     ...b,
     borderRadius: "0.75rem",
     border: "1px solid var(--color-neutral, #e5e7eb)",
@@ -127,12 +128,12 @@ const rsStyles = {
     backgroundColor: "var(--color-neutral-light, #fff)",
     marginTop: "6px",
   }),
-  menuList: (b: any) => ({
+  menuList: (b) => ({
     ...b,
     padding: "4px",
     maxHeight: "260px",
   }),
-  option: (b: any, s: any) => ({
+  option: (b, s) => ({
     ...b,
     borderRadius: "0.5rem",
     padding: "6px 10px",
@@ -143,27 +144,27 @@ const rsStyles = {
     fontWeight: s.isSelected ? 500 : 400,
     "&:active": { backgroundColor: "var(--color-neutral-hover, #e5e7eb)" },
   }),
-  loadingMessage: (b: any) => ({
+  loadingMessage: (b) => ({
     ...b,
     color: "var(--color-neutral-darker, #6b7280)",
     fontSize: "13px",
     padding: "12px 16px",
   }),
-  noOptionsMessage: (b: any) => ({
+  noOptionsMessage: (b) => ({
     ...b,
     color: "var(--color-neutral-darker, #6b7280)",
     fontSize: "13px",
     padding: "12px 16px",
   }),
   indicatorSeparator: () => ({ display: "none" }),
-  dropdownIndicator: (b: any, s: any) => ({
+  dropdownIndicator: (b, s) => ({
     ...b,
     color: s.isFocused ? "var(--color-accent-hover, #0369a1)" : "var(--color-neutral-darker, #9ca3af)",
     padding: "0 8px",
     transition: "color 0.15s, transform 0.2s",
     transform: s.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
   }),
-  clearIndicator: (b: any) => ({
+  clearIndicator: (b) => ({
     ...b,
     color: "var(--color-neutral-darker, #9ca3af)",
     padding: "0 4px",
@@ -207,15 +208,24 @@ function ProductOptionLabel({ data }: { data: RsOption }) {
   );
 }
 
-async function defaultSearchProducts(term: string): Promise<RsOption[]> {
+interface ApiProductListItem {
+  id: string;
+  name: string;
+  sku?: string;
+  slug?: string;
+  thumbnail?: string;
+  price?: { base?: number };
+}
+
+async function defaultSearchProducts(term: string): Promise<EntityOption[]> {
   if (!term.trim()) return [];
-  const res = await apiRequest.get<{ data: any[] }>("/products", {
+  const res = await apiRequest.get<{ data: ApiProductListItem[] }>("/products", {
     params: { search: term, limit: 20 },
     noAuth: true,
   });
   return (res?.data ?? []).map((p) => ({
-    value: p.id,
-    label: p.name,
+    id: p.id,
+    name: p.name,
     meta: p.sku ?? p.slug ?? undefined,
     thumbnail: p.thumbnail,
     price: p.price?.base,
@@ -234,24 +244,24 @@ interface ProductSearchProps {
 
 export function ProductSearch({ selected, onChange, onSearch, placeholder = "Tìm tên sản phẩm, SKU...", isDisabled = false }: ProductSearchProps) {
   const loadOptions = async (inputValue: string): Promise<RsOption[]> => {
-    if (onSearch) return (await onSearch(inputValue)).map(toRs);
-    return defaultSearchProducts(inputValue);
+    const searchFn = onSearch ?? defaultSearchProducts;
+    return (await searchFn(inputValue)).map(toRs);
   };
 
   return (
-    <AsyncSelect
+    <AsyncSelect<RsOption, true>
       isMulti
       cacheOptions
       defaultOptions={false}
       loadOptions={loadOptions}
       value={selected.map(toRs)}
-      onChange={(val: any) => onChange((val ?? []).map(fromRs))}
+      onChange={(val: MultiValue<RsOption>) => onChange((val ?? []).map(fromRs))}
       placeholder={placeholder}
       isDisabled={isDisabled}
       styles={rsStyles}
-      formatOptionLabel={(opt: any) => <ProductOptionLabel data={opt} />}
+      formatOptionLabel={(opt: RsOption) => <ProductOptionLabel data={opt} />}
       loadingMessage={() => "Đang tìm kiếm..."}
-      noOptionsMessage={({ inputValue }: any) => (inputValue ? `Không tìm thấy "${inputValue}"` : "Nhập để tìm sản phẩm")}
+      noOptionsMessage={({ inputValue }: { inputValue: string }) => (inputValue ? `Không tìm thấy "${inputValue}"` : "Nhập để tìm sản phẩm")}
       isClearable
       closeMenuOnSelect={false}
       hideSelectedOptions={false}
@@ -275,11 +285,11 @@ interface MultiSelectDropdownProps {
 
 export function MultiSelectDropdown({ selected, onChange, options, loading = false, placeholder = "Chọn...", isDisabled = false }: MultiSelectDropdownProps) {
   return (
-    <Select
+    <Select<RsOption, true>
       isMulti
       options={options.map(toRs)}
       value={selected.map(toRs)}
-      onChange={(val: any) => onChange((val ?? []).map(fromRs))}
+      onChange={(val: MultiValue<RsOption>) => onChange((val ?? []).map(fromRs))}
       placeholder={loading ? "Đang tải..." : placeholder}
       isDisabled={isDisabled || loading}
       isLoading={loading}
@@ -315,27 +325,27 @@ export function SingleProductSearch({ value, onChange, onSearch, placeholder = "
       if (!inputValue.trim()) return [];
       try {
         const results = await debouncedSearch(inputValue);
-        return onSearch ? (results as EntityOption[]).map(toRs) : (results as RsOption[]);
+        return results.map(toRs);
       } catch {
         return [];
       }
     },
-    [debouncedSearch, onSearch],
+    [debouncedSearch],
   );
 
   return (
-    <AsyncSelect
+    <AsyncSelect<RsOption, false>
       cacheOptions
       defaultOptions={false}
       loadOptions={loadOptions}
       value={value ? toRs(value) : null}
-      onChange={(opt: any) => onChange(opt ? fromRs(opt) : null)}
+      onChange={(opt: SingleValue<RsOption>) => onChange(opt ? fromRs(opt) : null)}
       placeholder={placeholder}
       isDisabled={isDisabled}
       styles={rsStyles}
-      formatOptionLabel={(opt: any) => <ProductOptionLabel data={opt} />}
+      formatOptionLabel={(opt: RsOption) => <ProductOptionLabel data={opt} />}
       loadingMessage={() => "Đang tìm kiếm..."}
-      noOptionsMessage={({ inputValue }: any) => (inputValue ? `Không tìm thấy "${inputValue}"` : "Nhập để tìm sản phẩm")}
+      noOptionsMessage={({ inputValue }: { inputValue: string }) => (inputValue ? `Không tìm thấy "${inputValue}"` : "Nhập để tìm sản phẩm")}
       isClearable
       classNamePrefix="rs-product-single"
     />
@@ -355,10 +365,10 @@ interface SingleSelectDropdownProps {
 
 export function SingleSelectDropdown({ value, onChange, options, loading = false, placeholder = "Chọn...", isDisabled = false }: SingleSelectDropdownProps) {
   return (
-    <Select
+    <Select<RsOption, false>
       options={options.map(toRs)}
       value={value ? toRs(value) : null}
-      onChange={(opt: any) => onChange(opt ? fromRs(opt) : null)}
+      onChange={(opt: SingleValue<RsOption>) => onChange(opt ? fromRs(opt) : null)}
       placeholder={loading ? "Đang tải..." : placeholder}
       isDisabled={isDisabled || loading}
       isLoading={loading}

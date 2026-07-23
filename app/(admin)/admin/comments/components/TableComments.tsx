@@ -1,9 +1,10 @@
-import { Eye, Trash2, CheckCircle, XCircle, Reply, MessageCircle, ExternalLink } from "lucide-react";
+import { Eye, Trash2, CheckCircle, XCircle, MessageCircle } from "lucide-react";
 import { AdminColumn } from "@/components/admin/AdminTables";
+import { selectColumn, sttColumn, RowActionButton } from "@/components/admin/columns/adminColumns";
 import { Comment } from "../comment.types";
 import { CommentApprovalBadge } from "./CommentApprovalBadge";
 import { TARGET_TYPE_LABELS, TARGET_TYPE_COLORS } from "../_lib/constants";
-import { formatDate } from "../../../../../helpers";
+import { formatDate } from "@/helpers";
 import { TbMessageCircleCheck } from "react-icons/tb";
 
 interface GetCommentColumnsParams {
@@ -49,29 +50,8 @@ function TargetCell({ comment }: { comment: Comment }) {
 
 export function getCommentColumns({ page, pageSize, selected, toggleOne, onViewClick, onApproveClick, onDeleteClick, onReplyClick }: GetCommentColumnsParams): AdminColumn<Comment>[] {
   return [
-    {
-      key: "_select",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (comment) => (
-        <input
-          type="checkbox"
-          checked={selected.has(comment.id)}
-          onChange={(e) => {
-            e.stopPropagation();
-            toggleOne(comment.id);
-          }}
-          className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-        />
-      ),
-    },
-    {
-      key: "_stt",
-      label: "STT",
-      width: "w-14",
-      render: (_, idx) => (page - 1) * pageSize + idx + 1,
-    },
+    selectColumn<Comment>((c) => c.id, selected, toggleOne),
+    sttColumn<Comment>(page, pageSize),
     {
       key: "user",
       label: "Người dùng",
@@ -95,7 +75,7 @@ export function getCommentColumns({ page, pageSize, selected, toggleOne, onViewC
         </div>
       ),
     },
-    // ── Cột mới: Đối tượng (blog / sản phẩm) ────────────────────────────────
+    // Đối tượng (blog / sản phẩm)
     {
       key: "targetName",
       label: "Đối tượng",
@@ -117,13 +97,11 @@ export function getCommentColumns({ page, pageSize, selected, toggleOne, onViewC
       align: "right",
       render: (comment) => (
         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            title="Xem"
-            onClick={() => onViewClick(comment.id)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors cursor-pointer"
-          >
+          <RowActionButton title="Xem" onClick={() => onViewClick(comment.id)}>
             <Eye size={14} />
-          </button>
+          </RowActionButton>
+
+          {/* Reply — có badge số lượng, giữ custom vì RowActionButton không hỗ trợ badge overlay */}
           {comment.parentId === null || comment.parentId === undefined ? (
             <button
               title={comment.repliesCount ? `${comment.repliesCount} phản hồi` : "Phản hồi"}
@@ -142,30 +120,18 @@ export function getCommentColumns({ page, pageSize, selected, toggleOne, onViewC
           ) : null}
 
           {!comment.isApproved ? (
-            <button
-              title="Duyệt"
-              onClick={() => onApproveClick(comment, true)}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-emerald-50 hover:text-emerald-600 transition-colors cursor-pointer"
-            >
+            <RowActionButton title="Duyệt" variant="success" onClick={() => onApproveClick(comment, true)}>
               <CheckCircle size={14} />
-            </button>
+            </RowActionButton>
           ) : (
-            <button
-              title="Từ chối"
-              onClick={() => onApproveClick(comment, false)}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-orange-50 hover:text-orange-500 transition-colors cursor-pointer"
-            >
+            <RowActionButton title="Từ chối" variant="warning" onClick={() => onApproveClick(comment, false)}>
               <XCircle size={14} />
-            </button>
+            </RowActionButton>
           )}
 
-          <button
-            title="Xoá"
-            onClick={() => onDeleteClick(comment)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-          >
+          <RowActionButton title="Xoá" variant="danger" onClick={() => onDeleteClick(comment)}>
             <Trash2 size={14} />
-          </button>
+          </RowActionButton>
         </div>
       ),
     },

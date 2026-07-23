@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Plus, RefreshCw, Tag, Trash2, Upload, X, XCircle, Loader2, CalendarDays, ChevronDown, Star } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Plus, RefreshCw, Tag, Trash2, Upload, X, XCircle, Loader2, Star } from "lucide-react";
 import { Brand, GetBrandsParams } from "./brand.types";
 import { createBrand, deleteBrand, getAllBrands, updateBrand } from "./_lib/brands";
 import AdminPagination from "@/components/admin/AdminPagination";
@@ -10,6 +10,9 @@ import { getBrandColumns } from "./components/TableBrands";
 import { usePopzy } from "@/hooks/usePopzy";
 import { Popzy } from "@/components/modal";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
+import { SortDropdown } from "@/components/admin/shared/SortDropdown";
+import { DateRangeFilterPopover } from "@/components/admin/shared/DateRangeFilterPopover";
 import { StatsCard } from "@/components/admin/StatsCard";
 import Image from "next/image";
 
@@ -25,103 +28,6 @@ interface Meta {
 }
 
 // ── Date filter popover ────────────────────────────────────────────────────────
-function DateFilterPopover({ dateFrom, dateTo, onApply, onClear }: { dateFrom: string; dateTo: string; onApply: (from: string, to: string) => void; onClear: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [from, setFrom] = useState(dateFrom);
-  const [to, setTo] = useState(dateTo);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setFrom(dateFrom);
-    setTo(dateTo);
-  }, [dateFrom, dateTo]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const hasFilter = !!dateFrom || !!dateTo;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-[13px] transition-colors cursor-pointer ${
-          hasFilter ? "border-accent bg-accent/5 text-accent font-medium" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active"
-        }`}
-      >
-        <CalendarDays size={14} />
-        Ngày tạo
-        {hasFilter && (
-          <span
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-              setOpen(false);
-            }}
-            className="ml-1 hover:text-promotion cursor-pointer"
-          >
-            <X size={11} />
-          </span>
-        )}
-        <ChevronDown size={11} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-2 z-30 bg-neutral-light border border-neutral rounded-xl shadow-lg p-4 w-72 space-y-3">
-          <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Lọc theo ngày tạo</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[11px] text-primary block mb-1">Từ ngày</label>
-              <input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-primary block mb-1">Đến ngày</label>
-              <input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="w-full px-2 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={() => {
-                onClear();
-                setFrom("");
-                setTo("");
-                setOpen(false);
-              }}
-              className="flex-1 px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary hover:bg-neutral-light-active transition-colors cursor-pointer"
-            >
-              Xoá lọc
-            </button>
-            <button
-              onClick={() => {
-                onApply(from, to);
-                setOpen(false);
-              }}
-              className="flex-1 px-3 py-1.5 text-[12px] bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer font-medium"
-            >
-              Áp dụng
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AdminBrandsPage() {
   // ── Data ──────────────────────────────────────────────────────────────────────
@@ -180,8 +86,8 @@ export default function AdminBrandsPage() {
       const res = await getAllBrands(params);
       setBrands(res.data);
       setMeta(res.meta as Meta);
-    } catch (err: any) {
-      setError(err?.message || "Không thể tải danh sách thương hiệu");
+    } catch (err: unknown) {
+      setError((err as Error)?.message || "Không thể tải danh sách thương hiệu");
     } finally {
       setLoading(false);
     }
@@ -226,8 +132,8 @@ export default function AdminBrandsPage() {
       const res = await updateBrand(brand.id, { isActive: !brand.isActive });
       setBrands((prev) => prev.map((b) => (b.id === brand.id ? res.data : b)));
       fetchBrands();
-    } catch (err: any) {
-      setError(err?.message || "Không thể cập nhật trạng thái");
+    } catch (err: unknown) {
+      setError((err as Error)?.message || "Không thể cập nhật trạng thái");
     }
   };
 
@@ -246,8 +152,8 @@ export default function AdminBrandsPage() {
       deleteModal.close();
       setDeletingBrand(null);
       fetchBrands();
-    } catch (err: any) {
-      setDeleteError(err?.message || "Không thể xoá thương hiệu");
+    } catch (err: unknown) {
+      setDeleteError((err as Error)?.message || "Không thể xoá thương hiệu");
     } finally {
       setDeleting(false);
     }
@@ -292,8 +198,8 @@ export default function AdminBrandsPage() {
       createModal.close();
       if (newPreviewUrl) URL.revokeObjectURL(newPreviewUrl);
       fetchBrands();
-    } catch (err: any) {
-      setCreateError(err?.message || "Không thể tạo thương hiệu");
+    } catch (err: unknown) {
+      setCreateError((err as Error)?.message || "Không thể tạo thương hiệu");
     } finally {
       setCreating(false);
     }
@@ -379,62 +285,42 @@ export default function AdminBrandsPage() {
           <div className="w-px h-5 bg-neutral mx-1" />
 
           {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm thương hiệu..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  setSearch("");
-                  resetPage();
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <SearchBox
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={(v) => {
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setSearch("");
+              resetPage();
+            }}
+            placeholder="Tìm thương hiệu..."
+          />
 
           {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value as SortBy);
+          <SortDropdown
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortByChange={(v) => {
+              setSortBy(v as SortBy);
               resetPage();
             }}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-          >
-            <option value="name">Tên</option>
-            <option value="createdAt">Ngày tạo</option>
-            <option value="productCount">Sản phẩm</option>
-          </select>
-
-          <select
-            value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value as SortOrder);
+            onSortOrderChange={(v) => {
+              setSortOrder(v);
               resetPage();
             }}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-          >
-            <option value="asc">A → Z</option>
-            <option value="desc">Z → A</option>
-          </select>
+            options={[
+              { value: "name", label: "Tên" },
+              { value: "createdAt", label: "Ngày tạo" },
+              { value: "productCount", label: "Sản phẩm" },
+            ]}
+          />
 
           {/* Date filter */}
-          <DateFilterPopover
+          <DateRangeFilterPopover
             dateFrom={dateFrom}
             dateTo={dateTo}
             onApply={(from, to) => {

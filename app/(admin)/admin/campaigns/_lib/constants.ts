@@ -16,7 +16,7 @@ export const CAMPAIGN_TYPE_COLORS: Record<CampaignType, string> = {
   FLASH_SALE: "text-red-600 bg-red-50",
 };
 
-export const STATUS_TABS = [
+export const STATUS_TABS: { value: "ALL" | "active" | "inactive" | "upcoming" | "expired"; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "active", label: "Đang hoạt động" },
   { value: "inactive", label: "Tạm dừng" },

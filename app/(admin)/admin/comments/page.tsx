@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { MessageSquare, Clock, CheckCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
 import { getAllComments, approveComment, bulkApproveComments, deleteComment, getComment } from "./_lib/comments";
 import { getCommentColumns } from "./components/TableComments";
 import { CommentDetailDrawer } from "./components/CommentDetailDrawer";
@@ -19,7 +20,7 @@ export default function CommentsAdminPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ─── Highlight từ notification ────────────────────────────────────────────
+  // HIGHLIGHT TỪ NOTIFICATION
   const highlightId = searchParams.get("commentId");
   const highlightRowRef = useRef<HTMLTableRowElement | null>(null);
   const hasHandledHighlight = useRef(false);
@@ -52,7 +53,7 @@ export default function CommentsAdminPage() {
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ─── Fetch ────────────────────────────────────────────────────────────────
+  // FETCH
   const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
@@ -86,7 +87,7 @@ export default function CommentsAdminPage() {
     setSelected(new Set());
   }, [activeTab, targetType, search, dateFrom, dateTo, sortOrder]);
 
-  // ─── Highlight: tìm đúng trang rồi jump ──────────────────────────────────
+  // HIGHLIGHT: TÌM ĐÚNG TRANG RỒI JUMP
   useEffect(() => {
     if (!highlightId || hasHandledHighlight.current) return;
 
@@ -132,7 +133,7 @@ export default function CommentsAdminPage() {
     jumpToComment();
   }, [highlightId]);
 
-  // ─── Sau khi data load xong → scroll + mở drawer ─────────────────────────
+  // SAU KHI DATA LOAD XONG → SCROLL + MỞ DRAWER
   useEffect(() => {
     if (!highlightId || loading || !data) return;
     if (!data.data.some((c) => c.id === highlightId)) return;
@@ -159,19 +160,19 @@ export default function CommentsAdminPage() {
     return () => clearTimeout(timer);
   }, [highlightId, loading, data]);
 
-  // ─── Search debounce ──────────────────────────────────────────────────────
+  // SEARCH DEBOUNCE
   const handleSearchInput = (val: string) => {
     setSearchInput(val);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => setSearch(val), 400);
   };
 
-  // ─── Stats ────────────────────────────────────────────────────────────────
+  // STATS
   const total = data?.pagination.total ?? 0;
   const approved = data?.data.filter((c) => c.isApproved).length ?? 0;
   const pending = data?.data.filter((c) => !c.isApproved).length ?? 0;
 
-  // ─── Selection ───────────────────────────────────────────────────────────
+  // SELECTION
   const toggleOne = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
@@ -184,7 +185,7 @@ export default function CommentsAdminPage() {
     setSelected(selected.size === data.data.length ? new Set() : new Set(data.data.map((c) => c.id)));
   };
 
-  // ─── Actions ─────────────────────────────────────────────────────────────
+  // ACTIONS
   const handleApproveOne = async (comment: Comment, isApproved: boolean) => {
     await approveComment(comment.id, isApproved);
     fetchComments();
@@ -216,7 +217,7 @@ export default function CommentsAdminPage() {
     }
   };
 
-  // ─── Table columns ────────────────────────────────────────────────────────
+  // TABLE COLUMNS
   const columns = getCommentColumns({
     page,
     pageSize: PAGE_SIZE,
@@ -230,7 +231,7 @@ export default function CommentsAdminPage() {
 
   const allSelected = !!data && data.data.length > 0 && selected.size === data.data.length;
 
-  // ─── rowClassName: inject highlight + gắn ref qua callback ref ───────────
+  // ROWCLASSNAME: INJECT HIGHLIGHT + GẮN REF QUA CALLBACK REF
   // AdminTable dùng rowClassName(row, idx) => string
   // Ref phải gán qua một trick: dùng một hidden div bên ngoài table rồi
   // scrollIntoView, hoặc dùng custom rowRef prop.
@@ -304,13 +305,17 @@ export default function CommentsAdminPage() {
 
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
-            <input
+          <div className="flex-1 min-w-[200px] max-w-xs">
+            <SearchBox
               value={searchInput}
-              onChange={(e) => handleSearchInput(e.target.value)}
+              onChange={handleSearchInput}
+              onSubmit={(v) => {
+                if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                setSearch(v);
+              }}
+              onClear={() => handleSearchInput("")}
               placeholder="Tìm nội dung..."
-              className="w-full pl-8 pr-3 py-2 text-[13px] border border-neutral rounded-xl outline-none focus:border-accent transition-colors"
+              widthClassName="w-full"
             />
           </div>
 

@@ -7,6 +7,7 @@ import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
 import type { ProductCard } from "./product.types";
 import {
   getAllProducts,
@@ -105,8 +106,8 @@ function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowSto
 }
 
 function getRowScore(p: ProductCard): number {
-  if ((p as any).stockWarning === "out_of_stock") return 0;
-  if ((p as any).stockWarning === "low_stock") return 1;
+  if (p.stockWarning === "out_of_stock") return 0;
+  if (p.stockWarning === "low_stock") return 1;
   if (p.isFeatured) return 2;
   return 3;
 }
@@ -255,8 +256,8 @@ export default function ProductsPage() {
       }
       setProducts(res.data);
       setMeta(res.meta);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách sản phẩm");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể tải danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -286,7 +287,7 @@ export default function ProductsPage() {
 
   // ── Row className ─────────────────────────────────────────────────────────
   const getRowClassName = (product: ProductCard) => {
-    const w = (product as any).stockWarning;
+    const w = product.stockWarning;
     if (w === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
     if (w === "low_stock") return "hover:bg-amber-50";
     return "";
@@ -388,12 +389,12 @@ export default function ProductsPage() {
     setDeleting(true);
     setDeleteError(null);
     try {
-      (deleteTarget as any).deletedAt ? await hardDeleteProduct(deleteTarget.id) : await softDeleteProduct(deleteTarget.id);
+      deleteTarget.deletedAt ? await hardDeleteProduct(deleteTarget.id) : await softDeleteProduct(deleteTarget.id);
       setDeleteTarget(null);
       fetchProducts();
       fetchStats();
-    } catch (e: any) {
-      setDeleteError(e?.message ?? "Không thể xóa sản phẩm");
+    } catch (e: unknown) {
+      setDeleteError((e as Error)?.message ?? "Không thể xóa sản phẩm");
     } finally {
       setDeleting(false);
     }
@@ -414,8 +415,8 @@ export default function ProductsPage() {
       setSelected(new Set());
       fetchProducts();
       fetchStats();
-    } catch (e: any) {
-      setError(e?.message ?? "Thao tác thất bại");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Thao tác thất bại");
     } finally {
       setBulkLoading(false);
     }
@@ -599,29 +600,18 @@ export default function ProductsPage() {
 
           <div className="w-px h-5 bg-neutral mx-1" />
 
-          {/* Search — NEW: dùng handleSearchChange với debounce, bỏ onKeyDown Enter */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={(e) => {
-                // Vẫn giữ Enter để search ngay lập tức (không cần chờ debounce)
-                if (e.key === "Enter") {
-                  if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm tên, slug..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary cursor-pointer">
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          {/* Search — dùng handleSearchChange với debounce, Enter vẫn search ngay */}
+          <SearchBox
+            value={searchInput}
+            onChange={handleSearchChange}
+            onSubmit={(v) => {
+              if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={handleClearSearch}
+            placeholder="Tìm tên, slug..."
+          />
 
           {/* Sort */}
           {activeTab !== "deleted" && activeTab !== "low_stock" && (
@@ -999,7 +989,7 @@ export default function ProductsPage() {
         <ConfirmDeleteModal
           isOpen={!!deleteTarget}
           onClose={() => !deleting && setDeleteTarget(null)}
-          title={(deleteTarget as any).deletedAt ? "Xóa vĩnh viễn?" : "Xóa sản phẩm?"}
+          title={deleteTarget.deletedAt ? "Xóa vĩnh viễn?" : "Xóa sản phẩm?"}
           description="Bạn có chắc chắn muốn xóa"
           itemName={deleteTarget.name}
           warningText=""

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Star, Clock, CheckCircle, XCircle, Search, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
+import { Star, Clock, CheckCircle, XCircle, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
 import { getAllReviews, approveReview, deleteReview } from "./_lib/reviews";
 import { getReviewColumns } from "./components/TableReviews";
 import { ReviewDetailDrawer } from "./components/ReviewDetailDrawer";
@@ -258,13 +259,17 @@ export default function ReviewsAdminPage() {
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
-            <input
+          <div className="flex-1 min-w-[200px] max-w-xs">
+            <SearchBox
               value={searchInput}
-              onChange={(e) => handleSearchInput(e.target.value)}
+              onChange={handleSearchInput}
+              onSubmit={(v) => {
+                if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                setSearch(v);
+              }}
+              onClear={() => handleSearchInput("")}
               placeholder="Tìm nội dung nhận xét..."
-              className="w-full pl-8 pr-3 py-2 text-[13px] border border-neutral rounded-xl outline-none focus:border-accent transition-colors"
+              widthClassName="w-full"
             />
           </div>
 

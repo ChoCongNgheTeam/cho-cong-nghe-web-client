@@ -23,7 +23,7 @@ export const STATUS_TABS = [
   { value: "upcoming", label: "Sắp diễn ra" },
 ] as const;
 
-export const SORT_OPTIONS = [
+export const SORT_OPTIONS: { value: "createdAt" | "code" | "discountValue" | "usesCount" | "priority"; label: string }[] = [
   { value: "createdAt", label: "Ngày tạo" },
   { value: "code", label: "Mã voucher" },
   { value: "discountValue", label: "Giá trị giảm" },

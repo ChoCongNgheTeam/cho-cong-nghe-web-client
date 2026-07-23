@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
 import type { Campaign, CampaignType } from "./campaign.types";
 import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_lib/campaigns";
 import { SORT_OPTIONS, TYPE_OPTIONS } from "./_lib/constants";
@@ -38,7 +39,7 @@ const STATUS_TABS = [
   { value: "upcoming", label: "Sắp diễn ra" },
   { value: "expired", label: "Đã kết thúc" },
   { value: "inactive", label: "Tạm dừng" },
-];
+] as const;
 
 type SortField = "createdAt" | "name" | "startDate" | "endDate";
 
@@ -52,7 +53,7 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState<"ALL" | "active" | "inactive" | "upcoming" | "expired">("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(undefined);
@@ -93,7 +94,7 @@ export default function CampaignsPage() {
         sortOrder,
         // Gửi status param lên BE — BE sẽ filter đúng active/upcoming/expired/inactive
         // ALL → không gửi status (BE trả tất cả)
-        ...(activeTab !== "ALL" ? { status: activeTab as any } : {}),
+        ...(activeTab !== "ALL" ? { status: activeTab } : {}),
       });
       setCampaigns(res.data);
       setMeta(res.meta as CampaignMeta);
@@ -112,8 +113,8 @@ export default function CampaignsPage() {
           upcoming: counts.upcoming,
         }));
       }
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách chiến dịch");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể tải danh sách chiến dịch");
     } finally {
       setLoading(false);
     }
@@ -139,7 +140,7 @@ export default function CampaignsPage() {
 
   // Single-select: bấm lại tab đang active → reset về ALL
   const handleSelectTab = useCallback(
-    (tab: string) => {
+    (tab: "ALL" | "active" | "inactive" | "upcoming" | "expired") => {
       setActiveTab((prev) => (prev === tab ? "ALL" : tab));
       resetPage();
     },
@@ -164,8 +165,8 @@ export default function CampaignsPage() {
         const res = await updateCampaign(campaign.id, { isActive: !campaign.isActive });
         setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? res.data : c)));
         fetchCampaigns();
-      } catch (e: any) {
-        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      } catch (e: unknown) {
+        alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
     [fetchCampaigns],
@@ -184,8 +185,8 @@ export default function CampaignsPage() {
         return n;
       });
       fetchCampaigns();
-    } catch (e: any) {
-      setDeleteError(e?.message ?? "Không thể xoá chiến dịch");
+    } catch (e: unknown) {
+      setDeleteError((e as Error)?.message ?? "Không thể xoá chiến dịch");
     } finally {
       setDeleting(false);
     }
@@ -207,8 +208,8 @@ export default function CampaignsPage() {
       await bulkDeleteCampaigns([...selected]);
       setSelected(new Set());
       fetchCampaigns();
-    } catch (e: any) {
-      alert(e?.message ?? "Không thể xoá các chiến dịch đã chọn");
+    } catch (e: unknown) {
+      alert((e as Error)?.message ?? "Không thể xoá các chiến dịch đã chọn");
     } finally {
       setBulkDeleting(false);
     }
@@ -288,33 +289,20 @@ export default function CampaignsPage() {
           <div className="w-px h-5 bg-neutral mx-1" />
 
           {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm tên, mô tả..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  setSearch("");
-                  resetPage();
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <SearchBox
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={(v) => {
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setSearch("");
+              resetPage();
+            }}
+            placeholder="Tìm tên, mô tả..."
+          />
 
           {/* Type filter */}
           <select

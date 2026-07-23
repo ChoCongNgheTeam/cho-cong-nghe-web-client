@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Plus, RefreshCw, Tag, Loader2, XCircle, X, Layers, CheckCircle2 } from "lucide-react";
+import { Plus, RefreshCw, Tag, Loader2, XCircle, X, Layers, CheckCircle2 } from "lucide-react";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
+import { SortDropdown } from "@/components/admin/shared/SortDropdown";
 import type { Attribute, CreateOptionPayload, UpdateOptionPayload } from "./attribute.types";
 import { getAllAttributes, toggleAttributeActive, createAttribute, updateAttribute, createOption, updateOption, getAttribute } from "./_lib/attributes";
 import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
@@ -62,8 +64,8 @@ export default function AttributesPage() {
       });
       setAttrs(res.data);
       setMeta(res.meta as Meta);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách thuộc tính");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể tải danh sách thuộc tính");
     } finally {
       setLoading(false);
     }
@@ -106,8 +108,8 @@ export default function AttributesPage() {
         setAttrs((prev) => prev.map((a) => (a.id === attr.id ? res.data : a)));
         // Refresh meta counts
         fetchAttrs();
-      } catch (e: any) {
-        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      } catch (e: unknown) {
+        alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
     [fetchAttrs],
@@ -154,9 +156,9 @@ export default function AttributesPage() {
 
           fetchAttrs(); // refresh bảng
         }
-      } catch (e: any) {
-        setFormError(e?.message ?? "Có lỗi xảy ra khi lưu thuộc tính");
-        toast.error(e?.message ?? "Lưu thuộc tính thất bại");
+      } catch (e: unknown) {
+        setFormError((e as Error)?.message ?? "Có lỗi xảy ra khi lưu thuộc tính");
+        toast.error((e as Error)?.message ?? "Lưu thuộc tính thất bại");
       } finally {
         setFormSaving(false);
       }
@@ -281,61 +283,37 @@ export default function AttributesPage() {
           <div className="w-px h-5 bg-neutral mx-1" />
 
           {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm tên hoặc code..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  setSearch("");
-                  resetPage();
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <SearchBox
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={(v) => {
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setSearch("");
+              resetPage();
+            }}
+            placeholder="Tìm tên hoặc code..."
+          />
 
           {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value as "createdAt" | "name" | "code");
+          <SortDropdown
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortByChange={(v) => {
+              setSortBy(v as "createdAt" | "name" | "code");
               resetPage();
             }}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value as "asc" | "desc");
+            onSortOrderChange={(v) => {
+              setSortOrder(v);
               resetPage();
             }}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-          >
-            <option value="desc">Mới nhất</option>
-            <option value="asc">Cũ nhất</option>
-          </select>
+            options={SORT_OPTIONS}
+            ascLabel="Cũ nhất"
+            descLabel="Mới nhất"
+          />
 
           {hasActiveFilters && (
             <button

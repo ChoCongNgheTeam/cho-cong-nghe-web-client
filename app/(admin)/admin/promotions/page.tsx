@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Plus, RefreshCw, Zap, Clock, XCircle, Loader2, Trash2, X, Tag, CalendarDays, ChevronDown, ArrowUpDown, ShieldAlert, EyeOff } from "lucide-react";
+import { Plus, RefreshCw, Zap, Clock, XCircle, Loader2, Trash2, X, Tag, CalendarDays, ChevronDown, ArrowUpDown, ShieldAlert, EyeOff } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
 import type { Promotion, PromotionStatus } from "./promotion.types";
 import { getAllPromotions, updatePromotion, deletePromotion } from "./_lib/promotions";
 import { SORT_OPTIONS } from "./_lib/constants";
@@ -148,8 +149,8 @@ export default function PromotionsPage() {
           upcoming: (res.meta as PromotionMeta).statusCounts.upcoming,
         }));
       }
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách khuyến mãi");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể tải danh sách khuyến mãi");
     } finally {
       setLoading(false);
     }
@@ -206,8 +207,8 @@ export default function PromotionsPage() {
         const res = await updatePromotion(promotion.id, { isActive: !promotion.isActive });
         setPromotions((prev) => prev.map((p) => (p.id === promotion.id ? res.data : p)));
         fetchPromotions();
-      } catch (e: any) {
-        setError(e?.message ?? "Không thể cập nhật trạng thái");
+      } catch (e: unknown) {
+        setError((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
     [fetchPromotions],
@@ -251,8 +252,8 @@ export default function PromotionsPage() {
         return next;
       });
       fetchPromotions();
-    } catch (e: any) {
-      setDeleteError(e?.message ?? "Không thể xóa khuyến mãi");
+    } catch (e: unknown) {
+      setDeleteError((e as Error)?.message ?? "Không thể xóa khuyến mãi");
     } finally {
       setDeleting(false);
     }
@@ -267,8 +268,8 @@ export default function PromotionsPage() {
       bulkDeleteModal.close();
       setSelected(new Set());
       fetchPromotions();
-    } catch (e: any) {
-      setBulkDeleteError(e?.message ?? "Không thể xóa một số khuyến mãi");
+    } catch (e: unknown) {
+      setBulkDeleteError((e as Error)?.message ?? "Không thể xóa một số khuyến mãi");
     } finally {
       setBulkDeleting(false);
     }
@@ -280,8 +281,8 @@ export default function PromotionsPage() {
       await Promise.all(targets.map((p) => updatePromotion(p.id, { isActive: false })));
       setSelected(new Set());
       fetchPromotions();
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể vô hiệu hóa");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể vô hiệu hóa");
     }
   }, [selected, promotions, fetchPromotions]);
 
@@ -368,33 +369,20 @@ export default function PromotionsPage() {
           <div className="w-px h-5 bg-neutral mx-1" />
 
           {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm tên, mô tả..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  setSearch("");
-                  resetPage();
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <SearchBox
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={(v) => {
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setSearch("");
+              resetPage();
+            }}
+            placeholder="Tìm tên, mô tả..."
+          />
 
           {/* Sort dropdown */}
           <div ref={sortRef} className="relative">

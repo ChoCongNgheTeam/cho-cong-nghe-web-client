@@ -1,10 +1,10 @@
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 import { AdminColumn } from "@/components/admin/AdminTables";
+import { selectColumn, sttColumn, RowActionButton } from "@/components/admin/columns/adminColumns";
 import type { ProductCard } from "../product.types";
 import { ProductStatusCell } from "./ProductStatusCell";
-import { formatVND, formatDate } from "../../../../../helpers";
+import { formatVND, formatDate } from "@/helpers";
 
 interface GetProductColumnsParams {
   page: number;
@@ -20,33 +20,8 @@ interface GetProductColumnsParams {
 export function getProductColumns({ page, pageSize, selected, toggleOne, onStatusChange, onDeleteClick, href, isStaff = false }: GetProductColumnsParams): AdminColumn<ProductCard>[] {
   return [
     // Ẩn checkbox bulk-select với staff (không có bulk action)
-    ...(!isStaff
-      ? [
-          {
-            key: "_select",
-            label: "",
-            width: "w-10",
-            align: "center" as const,
-            render: (product: ProductCard) => (
-              <input
-                type="checkbox"
-                checked={selected.has(product.id)}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  toggleOne(product.id);
-                }}
-                className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-              />
-            ),
-          },
-        ]
-      : []),
-    {
-      key: "_stt",
-      label: "STT",
-      width: "w-14",
-      render: (_, idx) => (page - 1) * pageSize + idx + 1,
-    },
+    ...(!isStaff ? [selectColumn<ProductCard>((p) => p.id, selected, toggleOne)] : []),
+    sttColumn<ProductCard>(page, pageSize),
     {
       key: "name",
       label: "Sản phẩm",
@@ -156,37 +131,22 @@ export function getProductColumns({ page, pageSize, selected, toggleOne, onStatu
       render: (product) => (
         <div className="flex items-center justify-end gap-1.5">
           {/* Xem chi tiết — staff xem nhưng href trỏ đúng prefix /staff */}
-          <Link
-            href={href(`/products/${product.id}`)}
-            title="Xem"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
-          >
+          <RowActionButton href={href(`/products/${product.id}`)} title="Xem">
             <Eye size={14} />
-          </Link>
+          </RowActionButton>
 
           {/* Edit — chỉ admin */}
           {!isStaff && !product.deletedAt && (
-            <Link
-              href={href(`/products/${product.id}/edit`)}
-              title="Chỉnh sửa"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent/10 hover:text-accent transition-colors"
-            >
+            <RowActionButton href={href(`/products/${product.id}/edit`)} title="Chỉnh sửa">
               <Pencil size={14} />
-            </Link>
+            </RowActionButton>
           )}
 
           {/* Xóa — chỉ admin */}
           {!isStaff && (
-            <button
-              title={product.deletedAt ? "Xóa vĩnh viễn" : "Xóa"}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteClick(product);
-              }}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-            >
+            <RowActionButton title={product.deletedAt ? "Xóa vĩnh viễn" : "Xóa"} variant="danger" onClick={() => onDeleteClick(product)}>
               <Trash2 size={14} />
-            </button>
+            </RowActionButton>
           )}
         </div>
       ),

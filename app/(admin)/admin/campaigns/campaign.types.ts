@@ -42,6 +42,8 @@ export interface GetCampaignsParams {
   search?: string;
   type?: CampaignType;
   isActive?: boolean;
+  /** Lọc theo trạng thái tổng hợp (giống promotion): active/inactive/expired/upcoming */
+  status?: "active" | "inactive" | "upcoming" | "expired";
   sortBy?: "name" | "createdAt" | "startDate" | "endDate" | "publishedAt";
   sortOrder?: "asc" | "desc";
   includeDeleted?: boolean;

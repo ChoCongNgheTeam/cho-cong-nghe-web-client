@@ -1,10 +1,10 @@
-import { Eye, Pencil, Trash2, ChevronDown } from "lucide-react";
-import Link from "next/link";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { AdminColumn } from "@/components/admin/AdminTables";
+import { selectColumn, sttColumn, statusDropdownColumn, RowActionButton } from "@/components/admin/columns/adminColumns";
 import { VoucherCard } from "../voucher.types";
 import { getVoucherStatus } from "./VoucherStatusBadge";
 import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from "../_lib/constants";
-import { formatDate, formatVND } from "../../../../../helpers";
+import { formatDate, formatVND } from "@/helpers";
 
 interface GetVoucherColumnsParams {
   page: number;
@@ -25,29 +25,8 @@ const STATUS_DROPDOWN = [
 
 export function getVoucherColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onToggleActive, onDeleteClick, href }: GetVoucherColumnsParams): AdminColumn<VoucherCard>[] {
   return [
-    {
-      key: "_select",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (voucher) => (
-        <input
-          type="checkbox"
-          checked={selected.has(voucher.id)}
-          onChange={(e) => {
-            e.stopPropagation();
-            toggleOne(voucher.id);
-          }}
-          className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-        />
-      ),
-    },
-    {
-      key: "_stt",
-      label: "STT",
-      width: "w-14",
-      render: (_, idx) => (page - 1) * pageSize + idx + 1,
-    },
+    selectColumn<VoucherCard>((v) => v.id, selected, toggleOne),
+    sttColumn<VoucherCard>(page, pageSize),
     {
       key: "code",
       label: "Mã voucher",
@@ -97,78 +76,37 @@ export function getVoucherColumns({ page, pageSize, selected, openStatusId, togg
         </div>
       ),
     },
-    {
-      key: "isActive",
-      label: "Trạng thái",
-      render: (voucher) => {
-        const status = getVoucherStatus(voucher);
-        const canToggle = status.value !== "expired" && status.value !== "exhausted";
-        const isOpen = openStatusId === voucher.id;
-
-        return (
-          <div className="relative inline-block">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (canToggle) setOpenStatusId(isOpen ? null : voucher.id);
-              }}
-              disabled={!canToggle}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-medium transition-colors ${status.color} ${canToggle ? "cursor-pointer" : "cursor-default opacity-80"}`}
-            >
-              {status.label}
-              {canToggle && <ChevronDown size={11} />}
-            </button>
-            {isOpen && canToggle && (
-              <div className="absolute z-20 left-0 top-full mt-1 w-44 bg-neutral-light border border-neutral rounded-xl shadow-lg overflow-hidden">
-                {STATUS_DROPDOWN.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const current = voucher.isActive ? "active" : "inactive";
-                      if (opt.value !== current) onToggleActive(voucher);
-                      setOpenStatusId(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-[12px] font-medium hover:bg-neutral-light-active cursor-pointer ${opt.color}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        );
+    statusDropdownColumn<VoucherCard>({
+      getId: (v) => v.id,
+      getCurrentValue: (v) => (v.isActive ? "active" : "inactive"),
+      getCurrentDisplay: (v) => {
+        const status = getVoucherStatus(v);
+        return { label: status.label, color: status.color };
       },
-    },
+      options: STATUS_DROPDOWN,
+      openId: openStatusId,
+      setOpenId: setOpenStatusId,
+      onChange: onToggleActive,
+      isDisabled: (v) => {
+        const status = getVoucherStatus(v);
+        return status.value === "expired" || status.value === "exhausted";
+      },
+    }),
     {
       key: "_actions",
       label: "Hành động",
       align: "right",
       render: (voucher) => (
         <div className="flex items-center justify-end gap-2">
-          <Link
-            // href={`/admin/vouchers/${voucher.id}`}
-            href={href(`/vouchers/${voucher.id}`)}
-            title="Xem"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-          >
+          <RowActionButton href={href(`/vouchers/${voucher.id}`)} title="Xem">
             <Eye size={14} />
-          </Link>
-          <Link
-            // href={`/admin/vouchers/${voucher.id}?edit=true`}
-            href={href(`/vouchers/${voucher.id}?edit=true`)}
-            title="Chỉnh sửa"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-          >
+          </RowActionButton>
+          <RowActionButton href={href(`/vouchers/${voucher.id}?edit=true`)} title="Chỉnh sửa">
             <Pencil size={14} />
-          </Link>
-          <button
-            title="Xoá"
-            onClick={() => onDeleteClick(voucher)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-          >
+          </RowActionButton>
+          <RowActionButton title="Xoá" variant="danger" onClick={() => onDeleteClick(voucher)}>
             <Trash2 size={14} />
-          </button>
+          </RowActionButton>
         </div>
       ),
     },
