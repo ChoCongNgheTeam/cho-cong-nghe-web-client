@@ -1,70 +1,97 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Plus, RefreshCw, Megaphone, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/modal";
 import { SearchBox } from "@/components/admin/shared/SearchBox";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import type { Campaign, CampaignType } from "./campaign.types";
-import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns } from "./_lib/campaigns";
-import { SORT_OPTIONS, TYPE_OPTIONS } from "./_lib/constants";
+import { getAllCampaigns, updateCampaign, deleteCampaign, bulkDeleteCampaigns, type CampaignsResponse, type CampaignStatusCounts } from "./_lib/campaigns";
+import { SORT_OPTIONS, TYPE_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getCampaignColumns } from "./components/TableCampaigns";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { getCampaignStatus } from "./components/CampaignStatusBadge";
 import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
-
-interface CampaignMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  statusCounts: { ALL: number; active: number; inactive: number; upcoming: number; expired: number };
-}
-
-const DEFAULT_META: CampaignMeta = {
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 1,
-  statusCounts: { ALL: 0, active: 0, inactive: 0, upcoming: 0, expired: 0 },
-};
-
-const STATUS_TABS = [
-  { value: "ALL", label: "Tất cả" },
-  { value: "active", label: "Đang hoạt động" },
-  { value: "upcoming", label: "Sắp diễn ra" },
-  { value: "expired", label: "Đã kết thúc" },
-  { value: "inactive", label: "Tạm dừng" },
-] as const;
+import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 
 type SortField = "createdAt" | "name" | "startDate" | "endDate";
+type StatusTab = "ALL" | "active" | "inactive" | "upcoming" | "expired";
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+interface CampaignExtraParams {
+  type?: CampaignType;
+  status?: "active" | "inactive" | "upcoming" | "expired";
+}
+
+const DEFAULT_STATUS_COUNTS: CampaignStatusCounts = { ALL: 0, active: 0, inactive: 0, upcoming: 0, expired: 0 };
 
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [meta, setMeta] = useState<CampaignMeta>(DEFAULT_META);
-  // ALL count riêng — không thay đổi khi filter tab
-  const [cachedCounts, setCachedCounts] = useState<CampaignMeta["statusCounts"]>(DEFAULT_META.statusCounts);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [activeTab, setActiveTab] = useState<"ALL" | "active" | "inactive" | "upcoming" | "expired">("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  // Filter đặc thù module
+  const [activeTab, setActiveTab] = useState<StatusTab>("ALL");
   const [typeFilter, setTypeFilter] = useState<CampaignType | undefined>(undefined);
-  const [sortBy, setSortBy] = useState<SortField>("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  // ALL count riêng — không đổi khi filter tab, chỉ đồng bộ lại mỗi khi có meta mới
+  const [cachedCounts, setCachedCounts] = useState<CampaignStatusCounts>(DEFAULT_STATUS_COUNTS);
+
+  const extraParams = useMemo<CampaignExtraParams>(
+    () => ({
+      ...(typeFilter ? { type: typeFilter } : {}),
+      ...(activeTab !== "ALL" ? { status: activeTab } : {}),
+    }),
+    [typeFilter, activeTab],
+  );
+
+  const {
+    data: campaigns,
+    setData: setCampaigns,
+    meta,
+    loading,
+    error,
+    refetch: fetchCampaigns,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<Campaign, SortField, CampaignExtraParams, CampaignsResponse["meta"]>({
+    fetchFn: getAllCampaigns,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultMeta: { page: 1, limit: 20, total: 0, totalPages: 1, statusCounts: DEFAULT_STATUS_COUNTS },
+    extraParams,
+    getId: (c) => c.id,
+  });
+
+  // Đồng bộ cachedCounts mỗi khi có meta mới (giữ ALL không đổi khi đang lọc theo tab con)
+  useEffect(() => {
+    if (activeTab === "ALL") {
+      setCachedCounts(meta.statusCounts);
+    } else {
+      setCachedCounts((prev) => ({
+        ...prev,
+        active: meta.statusCounts.active,
+        inactive: meta.statusCounts.inactive,
+        expired: meta.statusCounts.expired,
+        upcoming: meta.statusCounts.upcoming,
+      }));
+    }
+  }, [meta, activeTab]);
+
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -80,51 +107,6 @@ export default function CampaignsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchCampaigns = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAllCampaigns({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        type: typeFilter,
-        sortBy,
-        sortOrder,
-        // Gửi status param lên BE — BE sẽ filter đúng active/upcoming/expired/inactive
-        // ALL → không gửi status (BE trả tất cả)
-        ...(activeTab !== "ALL" ? { status: activeTab } : {}),
-      });
-      setCampaigns(res.data);
-      setMeta(res.meta as CampaignMeta);
-
-      // cachedCounts: ALL luôn giữ tổng thực
-      const counts = (res.meta as CampaignMeta).statusCounts;
-      if (activeTab === "ALL") {
-        setCachedCounts(counts);
-      } else {
-        // Giữ ALL từ lần fetch trước, update các count con
-        setCachedCounts((prev) => ({
-          ...prev,
-          active: counts.active,
-          inactive: counts.inactive,
-          expired: counts.expired,
-          upcoming: counts.upcoming,
-        }));
-      }
-    } catch (e: unknown) {
-      setError((e as Error)?.message ?? "Không thể tải danh sách chiến dịch");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, activeTab, search, typeFilter, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
-
-  const resetPage = useCallback(() => setPage(1), []);
   const hasSortFilter = sortBy !== "createdAt" || sortOrder !== "desc";
   const hasActiveFilters = !!(search || activeTab !== "ALL" || typeFilter);
 
@@ -136,28 +118,16 @@ export default function CampaignsPage() {
     setSortBy("createdAt");
     setSortOrder("desc");
     resetPage();
-  }, [resetPage]);
+  }, [resetPage, setSearch, setSearchInput, setSortBy, setSortOrder]);
 
   // Single-select: bấm lại tab đang active → reset về ALL
   const handleSelectTab = useCallback(
-    (tab: "ALL" | "active" | "inactive" | "upcoming" | "expired") => {
+    (tab: StatusTab) => {
       setActiveTab((prev) => (prev === tab ? "ALL" : tab));
       resetPage();
     },
     [resetPage],
   );
-
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === campaigns.length ? new Set() : new Set(campaigns.map((c) => c.id))));
-  }, [campaigns]);
 
   const handleToggleActive = useCallback(
     async (campaign: Campaign) => {
@@ -169,7 +139,7 @@ export default function CampaignsPage() {
         alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
-    [fetchCampaigns],
+    [fetchCampaigns, setCampaigns],
   );
 
   const handleDeleteConfirm = useCallback(async () => {
@@ -190,7 +160,7 @@ export default function CampaignsPage() {
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, fetchCampaigns]);
+  }, [deleteTarget, fetchCampaigns, setSelected]);
 
   const handleBulkDelete = useCallback(async () => {
     if (selected.size === 0) return;
@@ -213,9 +183,9 @@ export default function CampaignsPage() {
     } finally {
       setBulkDeleting(false);
     }
-  }, [selected, campaigns, fetchCampaigns]);
+  }, [selected, campaigns, fetchCampaigns, setSelected]);
 
-  const columns = useCallback(
+  const columns = useMemo(
     () =>
       getCampaignColumns({
         page,
@@ -228,7 +198,7 @@ export default function CampaignsPage() {
         onDeleteClick: setDeleteTarget,
         prefix,
       }),
-    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, setDeleteTarget, prefix],
+    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, prefix],
   );
 
   return (
@@ -271,7 +241,7 @@ export default function CampaignsPage() {
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {STATUS_TABS.map((tab) => {
             const isActive = activeTab === tab.value;
-            const count = cachedCounts[tab.value as keyof typeof cachedCounts] ?? 0;
+            const count = cachedCounts[tab.value];
             return (
               <button
                 key={tab.value}
@@ -415,7 +385,7 @@ export default function CampaignsPage() {
             )}
             {search && (
               <span className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded-md font-medium">
-                "{search}"
+                &quot;{search}&quot;
                 <button
                   onClick={() => {
                     setSearch("");
@@ -491,7 +461,7 @@ export default function CampaignsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns()} data={campaigns} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={campaigns} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
         {/* Pagination */}
@@ -532,44 +502,18 @@ export default function CampaignsPage() {
         )}
       </div>
 
-      {/* Delete Modal */}
-      {deleteTarget && (
-        <Popzy
-          isOpen={!!deleteTarget}
-          onClose={() => !deleting && setDeleteTarget(null)}
-          footer={false}
-          closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
-          content={
-            <div className="py-2">
-              <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-                <Trash2 size={22} strokeWidth={1.5} />
-              </div>
-              <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá chiến dịch?</h3>
-              <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
-              <p className="text-[14px] font-semibold text-primary text-center mb-5">"{deleteTarget.name}"</p>
-              <p className="text-[12px] text-promotion text-center mb-6">Chiến dịch sẽ được chuyển vào thùng rác.</p>
-              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active cursor-pointer disabled:opacity-50"
-                >
-                  Huỷ
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  {deleting && <Loader2 size={13} className="animate-spin" />}
-                  {deleting ? "Đang xoá..." : "Xoá chiến dịch"}
-                </button>
-              </div>
-            </div>
-          }
-        />
-      )}
+      {/* Delete modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Xoá chiến dịch?"
+        itemName={deleteTarget?.name}
+        warningText="Chiến dịch sẽ được chuyển vào thùng rác."
+        onConfirm={handleDeleteConfirm}
+        loading={deleting}
+        error={deleteError}
+        confirmLabel="Xoá chiến dịch"
+      />
     </div>
   );
 }

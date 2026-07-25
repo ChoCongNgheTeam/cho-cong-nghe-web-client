@@ -19,6 +19,7 @@ export interface BrandsMeta {
   limit: number;
   total: number;
   totalPages: number;
+  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number; FEATURED: number };
 }
 
 export interface BrandsResponse {

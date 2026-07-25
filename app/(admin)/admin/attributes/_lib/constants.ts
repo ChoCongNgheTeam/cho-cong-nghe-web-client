@@ -1,4 +1,4 @@
-export const STATUS_TABS = [
+export const STATUS_TABS: { value: "ALL" | "ACTIVE" | "INACTIVE"; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "ACTIVE", label: "Đang hoạt động" },
   { value: "INACTIVE", label: "Tạm dừng" },

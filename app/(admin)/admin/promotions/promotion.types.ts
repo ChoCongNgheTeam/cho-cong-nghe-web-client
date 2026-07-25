@@ -46,7 +46,7 @@ export interface PromotionsMeta {
    limit: number;
    total: number;
    totalPages: number;
-   statusCounts: { [key: string]: number };
+   statusCounts: { ALL: number; active: number; inactive: number; expired: number; upcoming: number };
 }
 
 export interface PromotionsResponse {

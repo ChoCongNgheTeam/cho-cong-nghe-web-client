@@ -1,4 +1,4 @@
-export const REVIEW_STATUS_TABS = [
+export const REVIEW_STATUS_TABS: { value: "ALL" | "PENDING" | "APPROVED" | "REJECTED"; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "PENDING", label: "Chờ duyệt" },
   { value: "APPROVED", label: "Đã duyệt" },

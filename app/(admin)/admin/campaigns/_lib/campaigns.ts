@@ -2,11 +2,23 @@ import apiRequest from "@/lib/api";
 import { Campaign, CampaignCategory, GetCampaignsParams, CreateCampaignPayload, UpdateCampaignPayload } from "../campaign.types";
 import { createResourceApi } from "@/lib/admin/createResourceApi";
 
-interface CampaignMeta {
-  total: number;
+export interface CampaignStatusCounts {
+  ALL: number;
+  active: number;
+  inactive: number;
+  upcoming: number;
+  expired: number;
 }
 
-interface CampaignsResponse {
+export interface CampaignMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusCounts: CampaignStatusCounts;
+}
+
+export interface CampaignsResponse {
   data: Campaign[];
   meta: CampaignMeta;
   message: string;

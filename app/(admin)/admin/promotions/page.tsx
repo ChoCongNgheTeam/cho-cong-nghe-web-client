@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Plus, RefreshCw, Zap, Clock, XCircle, Loader2, Trash2, X, Tag, CalendarDays, ChevronDown, ArrowUpDown, ShieldAlert, EyeOff } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
@@ -8,15 +8,14 @@ import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { SearchBox } from "@/components/admin/shared/SearchBox";
-import type { Promotion, PromotionStatus } from "./promotion.types";
+import type { Promotion, PromotionStatus, PromotionsResponse } from "./promotion.types";
 import { getAllPromotions, updatePromotion, deletePromotion } from "./_lib/promotions";
 import { SORT_OPTIONS } from "./_lib/constants";
 import { getPromotionColumns } from "./components/TablePromotions";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { useAdminRouter } from "../../../../hooks/useAdminRouter";
 import { useAdminHref } from "../../../../hooks/useAdminHref";
-
-// ─── Hook ──────────────────────────────────────────────────────────────────────
+import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 
 function usePopzy() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,26 +24,16 @@ function usePopzy() {
   return { isOpen, open, close };
 }
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-
-interface PromotionMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  statusCounts: { ALL: number; active: number; inactive: number; expired: number; upcoming: number };
-}
-
-const DEFAULT_META: PromotionMeta = {
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 1,
-  statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
-};
-
-// "ALL" = no filter; other values are single-select status filters
+// "ALL" = không lọc; các giá trị khác là single-select status filter
 type FilterTab = "ALL" | PromotionStatus;
+type SortBy = "createdAt" | "name" | "priority" | "startDate" | "endDate";
+type StatusCounts = PromotionsResponse["meta"]["statusCounts"];
+
+interface PromotionExtraParams {
+  dateFrom?: string;
+  dateTo?: string;
+  status?: PromotionStatus;
+}
 
 const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
@@ -54,42 +43,83 @@ const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "inactive", label: "Không hoạt động" },
 ];
 
-type SortBy = "createdAt" | "name" | "priority" | "startDate" | "endDate";
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
+const DEFAULT_STATUS_COUNTS: StatusCounts = { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 };
 
 export default function PromotionsPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [meta, setMeta] = useState<PromotionMeta>(DEFAULT_META);
-  // Cache statusCounts riêng — chỉ update khi fetch không có filter status
-  // để tab "Tất cả" luôn hiện đúng tổng, không bị thay đổi khi lọc tab khác
-  const [cachedCounts, setCachedCounts] = useState<PromotionMeta["statusCounts"]>(DEFAULT_META.statusCounts);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // ── Filters ───────────────────────────────────────────────────────────────
-  // Single-select status: "ALL" means no filter
+  // Filter đặc thù module
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  // Cache statusCounts riêng — chỉ update ALL khi fetch không có filter status,
+  // để tab "Tất cả" luôn hiện đúng tổng, không bị đổi khi lọc tab khác
+  const [cachedCounts, setCachedCounts] = useState<StatusCounts>(DEFAULT_STATUS_COUNTS);
+
+  const extraParams = useMemo<PromotionExtraParams>(
+    () => ({
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      status: activeTab !== "ALL" ? activeTab : undefined,
+    }),
+    [dateFrom, dateTo, activeTab],
+  );
+
+  const {
+    data: promotions,
+    setData: setPromotions,
+    meta,
+    loading,
+    error,
+    setError,
+    refetch: fetchPromotions,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<Promotion, SortBy, PromotionExtraParams, PromotionsResponse["meta"]>({
+    fetchFn: getAllPromotions,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultMeta: { page: 1, limit: 20, total: 0, totalPages: 1, statusCounts: DEFAULT_STATUS_COUNTS },
+    extraParams,
+    getId: (p) => p.id,
+  });
+
+  // Đồng bộ cachedCounts mỗi khi có meta mới
+  useEffect(() => {
+    if (activeTab === "ALL") {
+      setCachedCounts(meta.statusCounts);
+    } else {
+      setCachedCounts((prev) => ({
+        ...prev,
+        active: meta.statusCounts.active,
+        inactive: meta.statusCounts.inactive,
+        expired: meta.statusCounts.expired,
+        upcoming: meta.statusCounts.upcoming,
+      }));
+    }
+  }, [meta, activeTab]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // ── Selection ─────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
-  // ── Modals ────────────────────────────────────────────────────────────────
+  // Modals
   const deleteModal = usePopzy();
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -104,8 +134,8 @@ export default function PromotionsPage() {
 
   const adminRouter = useAdminRouter();
   const href = useAdminHref();
+  void adminRouter;
 
-  // ── Outside click ─────────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
@@ -115,59 +145,10 @@ export default function PromotionsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchPromotions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAllPromotions({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        sortBy,
-        sortOrder,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        status: activeTab !== "ALL" ? activeTab : undefined,
-      });
-      setPromotions(res.data);
-      setMeta(res.meta as PromotionMeta);
-      // BE luôn trả statusCounts đầy đủ (active/inactive/expired/upcoming)
-      // NHƯNG statusCounts.ALL = tổng theo filter hiện tại, không phải tổng thực
-      // → chỉ update cachedCounts khi không có filter status
-      // → khi đang filter tab, giữ nguyên cachedCounts cũ để "Tất cả" không bị đổi
-      if (activeTab === "ALL") {
-        setCachedCounts((res.meta as PromotionMeta).statusCounts);
-      } else {
-        // Vẫn update các count con (active/inactive/expired/upcoming) từ BE
-        // nhưng giữ nguyên ALL từ lần fetch trước
-        setCachedCounts((prev) => ({
-          ...prev,
-          active: (res.meta as PromotionMeta).statusCounts.active,
-          inactive: (res.meta as PromotionMeta).statusCounts.inactive,
-          expired: (res.meta as PromotionMeta).statusCounts.expired,
-          upcoming: (res.meta as PromotionMeta).statusCounts.upcoming,
-        }));
-      }
-    } catch (e: unknown) {
-      setError((e as Error)?.message ?? "Không thể tải danh sách khuyến mãi");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo]);
-
-  useEffect(() => {
-    fetchPromotions();
-  }, [fetchPromotions]);
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const resetPage = useCallback(() => setPage(1), []);
-
   const hasDateFilter = !!dateFrom || !!dateTo;
   const hasSortFilter = sortBy !== "createdAt" || sortOrder !== "desc";
   const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL");
 
-  // Single-select tab: clicking active tab resets to ALL; otherwise switch
   const handleSelectTab = useCallback(
     (tab: FilterTab) => {
       setActiveTab((prev) => (prev === tab ? "ALL" : tab));
@@ -185,22 +166,8 @@ export default function PromotionsPage() {
     setSortBy("createdAt");
     setSortOrder("desc");
     resetPage();
-  }, [resetPage]);
+  }, [resetPage, setSearch, setSearchInput, setSortBy, setSortOrder]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === promotions.length ? new Set() : new Set(promotions.map((p) => p.id))));
-  }, [promotions]);
-
-  // ── Toggle active ─────────────────────────────────────────────────────────
   const handleToggleActive = useCallback(
     async (promotion: Promotion) => {
       try {
@@ -211,10 +178,9 @@ export default function PromotionsPage() {
         setError((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
-    [fetchPromotions],
+    [fetchPromotions, setPromotions, setError],
   );
 
-  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDeleteClick = useCallback(
     (promotion: Promotion) => {
       setDeleteError(null);
@@ -257,9 +223,8 @@ export default function PromotionsPage() {
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, deleteModal, fetchPromotions]);
+  }, [deleteTarget, deleteModal, fetchPromotions, setSelected]);
 
-  // ── Bulk ──────────────────────────────────────────────────────────────────
   const handleBulkDeleteConfirm = useCallback(async () => {
     setBulkDeleting(true);
     setBulkDeleteError(null);
@@ -273,7 +238,7 @@ export default function PromotionsPage() {
     } finally {
       setBulkDeleting(false);
     }
-  }, [selected, bulkDeleteModal, fetchPromotions]);
+  }, [selected, bulkDeleteModal, fetchPromotions, setSelected]);
 
   const handleBulkDeactivate = useCallback(async () => {
     try {
@@ -284,10 +249,9 @@ export default function PromotionsPage() {
     } catch (e: unknown) {
       setError((e as Error)?.message ?? "Không thể vô hiệu hóa");
     }
-  }, [selected, promotions, fetchPromotions]);
+  }, [selected, promotions, fetchPromotions, setSelected, setError]);
 
-  // ── Columns ───────────────────────────────────────────────────────────────
-  const columns = useCallback(
+  const columns = useMemo(
     () =>
       getPromotionColumns({
         page,
@@ -300,18 +264,14 @@ export default function PromotionsPage() {
         onDeleteClick: handleDeleteClick,
         href,
       }),
-    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, handleDeleteClick],
+    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, handleDeleteClick, href],
   );
 
   const selectedActiveCount = [...selected].filter((id) => promotions.find((p) => p.id === id)?.isActive).length;
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -336,7 +296,7 @@ export default function PromotionsPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatsCard label="Tổng khuyến mãi" value={cachedCounts.ALL} sub="Tất cả chương trình" icon={<Tag size={18} />} valueClassName="text-accent" />
         <StatsCard label="Đang hoạt động" value={cachedCounts.active} sub="Đang được áp dụng" icon={<Zap size={18} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
@@ -344,14 +304,14 @@ export default function PromotionsPage() {
         <StatsCard label="Đã hết hạn" value={cachedCounts.expired} sub="Vượt quá ngày kết thúc" icon={<XCircle size={18} />} valueClassName="text-primary" iconClassName="text-primary" />
       </div>
 
-      {/* ── Main table card ── */}
+      {/* Main table card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
-          {/* Status tabs — single-select, combinable with other filters */}
+          {/* Status tabs — single-select, combinable với filter khác */}
           {STATUS_TABS.map((tab) => {
             const isActive = activeTab === tab.value;
-            const count = cachedCounts[tab.value as keyof typeof cachedCounts] ?? 0;
+            const count = cachedCounts[tab.value];
             return (
               <button
                 key={tab.value}
@@ -522,7 +482,6 @@ export default function PromotionsPage() {
             )}
           </div>
 
-          {/* Clear all filters */}
           {(hasActiveFilters || hasSortFilter) && (
             <button
               onClick={handleClearAllFilters}
@@ -533,7 +492,7 @@ export default function PromotionsPage() {
           )}
         </div>
 
-        {/* ── Active filter summary (combinable indicator) ── */}
+        {/* Active filter summary */}
         {hasActiveFilters && (
           <div className="px-5 py-2 bg-accent/3 border-b border-neutral flex items-center gap-2 flex-wrap text-[11px] text-neutral-dark">
             <span className="font-medium text-primary">Đang lọc:</span>
@@ -553,7 +512,7 @@ export default function PromotionsPage() {
             )}
             {search && (
               <span className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded-md font-medium">
-                "{search}"
+                &quot;{search}&quot;
                 <button
                   onClick={() => {
                     setSearch("");
@@ -585,7 +544,7 @@ export default function PromotionsPage() {
           </div>
         )}
 
-        {/* ── Bulk action bar ── */}
+        {/* Bulk action bar */}
         {selected.size > 0 && (
           <div className="px-5 py-2.5 bg-accent/5 border-b border-accent/20 flex items-center gap-3 flex-wrap">
             <span className="text-[12px] font-semibold text-accent">Đã chọn {selected.size} khuyến mãi</span>
@@ -609,7 +568,7 @@ export default function PromotionsPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
@@ -637,10 +596,10 @@ export default function PromotionsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns()} data={promotions} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={promotions} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -678,7 +637,7 @@ export default function PromotionsPage() {
         )}
       </div>
 
-      {/* ── Modal: cảnh báo active ── */}
+      {/* Modal: cảnh báo active */}
       <Popzy
         isOpen={activeWarningModal.isOpen}
         onClose={activeWarningModal.close}
@@ -691,7 +650,7 @@ export default function PromotionsPage() {
             </div>
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Khuyến mãi đang hoạt động!</h3>
             <p className="text-[13px] text-primary/60 text-center mb-1">Khuyến mãi</p>
-            <p className="text-[14px] font-semibold text-primary text-center mb-3">"{activeDeleteTarget?.name}"</p>
+            <p className="text-[14px] font-semibold text-primary text-center mb-3">&quot;{activeDeleteTarget?.name}&quot;</p>
             <p className="text-[13px] text-primary/60 text-center mb-6">đang được áp dụng cho khách hàng. Bạn có chắc chắn muốn xóa không?</p>
             <div className="flex gap-2">
               <button
@@ -711,7 +670,7 @@ export default function PromotionsPage() {
         }
       />
 
-      {/* ── Modal: xác nhận xóa đơn ── */}
+      {/* Modal: xác nhận xóa đơn */}
       <ConfirmDeleteModal
         isOpen={deleteModal.isOpen}
         onClose={() => !deleting && deleteModal.close()}
@@ -723,7 +682,7 @@ export default function PromotionsPage() {
         confirmLabel="Xoá khuyến mãi"
       />
 
-      {/* ── Modal: bulk delete ── */}
+      {/* Modal: bulk delete */}
       <ConfirmDeleteModal
         isOpen={bulkDeleteModal.isOpen}
         onClose={() => !bulkDeleting && bulkDeleteModal.close()}

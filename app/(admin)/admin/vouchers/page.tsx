@@ -1,79 +1,87 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Plus, RefreshCw, Ticket, Loader2, XCircle, X, Trash2, Zap, Clock, CheckCircle2, ArrowUpDown, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/modal";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { SearchBox } from "@/components/admin/shared/SearchBox";
-import type { VoucherCard, DiscountType } from "./voucher.types";
+import type { VoucherCard, DiscountType, VouchersResponse } from "./voucher.types";
 import { getAllVouchers, updateVoucher, deleteVoucher, bulkDeleteVouchers } from "./_lib/vouchers";
 import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getVoucherColumns } from "./components/TableVouchers";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { useAdminHref } from "../../../../hooks/useAdminHref";
+import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
+type VoucherStatus = "active" | "inactive" | "expired" | "upcoming";
+type TabType = VoucherStatus | "ALL";
+type SortBy = "createdAt" | "code" | "discountValue" | "usesCount" | "priority";
 
-interface VoucherMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  statusCounts: { ALL: number; active: number; inactive: number; expired: number; upcoming: number };
+interface VoucherExtraParams {
+  discountType?: DiscountType;
+  status?: VoucherStatus;
 }
 
-const DEFAULT_META: VoucherMeta = {
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 1,
-  statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
-};
-
-type VoucherStatus = "active" | "inactive" | "expired" | "upcoming" | "ALL";
-type TabType = VoucherStatus | "ALL";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function VouchersPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────────
-  const [vouchers, setVouchers] = useState<VoucherCard[]>([]);
-  const [meta, setMeta] = useState<VoucherMeta>(DEFAULT_META);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // ── Filters ───────────────────────────────────────────────────────────────────
+  // Filter đặc thù module
   const [activeTab, setActiveTab] = useState<TabType>("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
   const [discountTypeFilter, setDiscountTypeFilter] = useState<DiscountType | "">("");
-  const [sortBy, setSortBy] = useState<"createdAt" | "code" | "discountValue" | "usesCount" | "priority">("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+
+  const extraParams = useMemo<VoucherExtraParams>(
+    () => ({
+      ...(discountTypeFilter ? { discountType: discountTypeFilter } : {}),
+      ...(activeTab !== "ALL" ? { status: activeTab } : {}),
+    }),
+    [discountTypeFilter, activeTab],
+  );
+
+  const {
+    data: vouchers,
+    setData: setVouchers,
+    meta,
+    loading,
+    error,
+    refetch: fetchVouchers,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<VoucherCard, SortBy, VoucherExtraParams, VouchersResponse["meta"]>({
+    fetchFn: getAllVouchers,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultMeta: { page: 1, limit: 20, total: 0, totalPages: 1, statusCounts: { ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 }, ALL: 0, active: 0, inactive: 0, expired: 0, upcoming: 0 },
+    extraParams,
+    getId: (v) => v.id,
+  });
 
   // Sort dropdown
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<VoucherCard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const href = useAdminHref();
 
-  // ── Close dropdown on outside click ──────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
@@ -81,42 +89,6 @@ export default function VouchersPage() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  // ── Tab → query params ────────────────────────────────────────────────────────
-  const tabToParams = (tab: VoucherStatus) => {
-    if (tab === "ALL") return {};
-    return { status: tab };
-  };
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
-  const fetchVouchers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAllVouchers({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        discountType: discountTypeFilter || undefined,
-        sortBy,
-        sortOrder,
-        ...tabToParams(activeTab),
-      });
-      setVouchers(res.data);
-      setMeta(res.meta);
-    } catch (e: unknown) {
-      setError((e as Error)?.message ?? "Không thể tải danh sách voucher");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, activeTab, discountTypeFilter, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchVouchers();
-  }, [fetchVouchers]);
-
-  // ── Helpers ───────────────────────────────────────────────────────────────────
-  const resetPage = useCallback(() => setPage(1), []);
 
   const hasSortFilter = sortBy !== "createdAt" || sortOrder !== "desc";
   const hasActiveFilters = !!(search || activeTab !== "ALL" || discountTypeFilter);
@@ -129,22 +101,8 @@ export default function VouchersPage() {
     setSortBy("createdAt");
     setSortOrder("desc");
     resetPage();
-  }, [resetPage]);
+  }, [resetPage, setSearch, setSearchInput, setSortBy, setSortOrder]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === vouchers.length ? new Set() : new Set(vouchers.map((v) => v.id))));
-  }, [vouchers]);
-
-  // ── Toggle active ─────────────────────────────────────────────────────────────
   const handleToggleActive = useCallback(
     async (voucher: VoucherCard) => {
       try {
@@ -155,10 +113,9 @@ export default function VouchersPage() {
         alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
-    [fetchVouchers],
+    [fetchVouchers, setVouchers],
   );
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -177,7 +134,7 @@ export default function VouchersPage() {
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, fetchVouchers]);
+  }, [deleteTarget, fetchVouchers, setSelected]);
 
   const handleBulkDelete = useCallback(async () => {
     if (!selected.size) return;
@@ -191,10 +148,9 @@ export default function VouchersPage() {
     } finally {
       setBulkDeleting(false);
     }
-  }, [selected, fetchVouchers]);
+  }, [selected, fetchVouchers, setSelected]);
 
-  // ── Columns ───────────────────────────────────────────────────────────────────
-  const columns = useCallback(
+  const columns = useMemo(
     () =>
       getVoucherColumns({
         page,
@@ -207,16 +163,12 @@ export default function VouchersPage() {
         onDeleteClick: setDeleteTarget,
         href,
       }),
-    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, setDeleteTarget, href],
+    [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, href],
   );
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -241,7 +193,7 @@ export default function VouchersPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatsCard label="Tổng voucher" value={meta.statusCounts.ALL} sub="Tất cả mã giảm giá" icon={<Ticket size={16} />} />
         <StatsCard label="Đang hoạt động" value={meta.statusCounts.active} sub="Có thể sử dụng" icon={<CheckCircle2 size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
@@ -249,9 +201,9 @@ export default function VouchersPage() {
         <StatsCard label="Tạm dừng" value={meta.statusCounts.inactive} sub="Tạm thời không dùng" icon={<Zap size={16} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
       </div>
 
-      {/* ── Main card ── */}
+      {/* Main card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar: 1 row ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {/* Status tabs */}
           {STATUS_TABS.map((tab) => (
@@ -267,7 +219,7 @@ export default function VouchersPage() {
             >
               {tab.label}
               <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"}`}>
-                {meta.statusCounts[tab.value as keyof typeof meta.statusCounts] ?? 0}
+                {meta.statusCounts[tab.value]}
               </span>
             </button>
           ))}
@@ -381,7 +333,7 @@ export default function VouchersPage() {
           <span className="ml-auto text-[12px] text-primary">{meta.total} voucher</span>
         </div>
 
-        {/* ── Selection bar ── */}
+        {/* Selection bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} voucher</span>
@@ -399,7 +351,7 @@ export default function VouchersPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
@@ -427,10 +379,10 @@ export default function VouchersPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns()} data={vouchers} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={vouchers} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -468,44 +420,18 @@ export default function VouchersPage() {
         )}
       </div>
 
-      {/* ── Delete Modal ── */}
-      {deleteTarget && (
-        <Popzy
-          isOpen={!!deleteTarget}
-          onClose={() => !deleting && setDeleteTarget(null)}
-          footer={false}
-          closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
-          content={
-            <div className="py-2">
-              <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-                <Trash2 size={22} strokeWidth={1.5} />
-              </div>
-              <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá voucher?</h3>
-              <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
-              <p className="text-[14px] font-bold text-primary text-center font-mono mb-5">"{deleteTarget.code}"</p>
-              <p className="text-[12px] text-promotion text-center mb-6">Voucher sẽ được chuyển vào thùng rác.</p>
-              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] font-medium text-primary hover:bg-neutral-light-active cursor-pointer disabled:opacity-50"
-                >
-                  Huỷ
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  {deleting && <Loader2 size={13} className="animate-spin" />}
-                  {deleting ? "Đang xoá..." : "Xoá voucher"}
-                </button>
-              </div>
-            </div>
-          }
-        />
-      )}
+      {/* Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Xoá voucher?"
+        itemName={deleteTarget?.code}
+        warningText="Voucher sẽ được chuyển vào thùng rác."
+        onConfirm={handleDeleteConfirm}
+        loading={deleting}
+        error={deleteError}
+        confirmLabel="Xoá voucher"
+      />
     </div>
   );
 }

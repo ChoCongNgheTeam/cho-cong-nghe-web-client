@@ -1,46 +1,100 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { MessageSquare, Clock, CheckCircle, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2 } from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, SlidersHorizontal, ChevronDown, ChevronUp, CheckCheck, X, Loader2, XCircle } from "lucide-react";
 import AdminTable from "@/components/admin/AdminTables";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { SearchBox } from "@/components/admin/shared/SearchBox";
 import { getAllComments, approveComment, bulkApproveComments, deleteComment, getComment } from "./_lib/comments";
 import { getCommentColumns } from "./components/TableComments";
 import { CommentDetailDrawer } from "./components/CommentDetailDrawer";
-import { Comment, CommentsResponse, GetCommentsParams, CommentTargetType } from "./comment.types";
+import { Comment, CommentsPagination, GetCommentsParams, CommentTargetType } from "./comment.types";
 import { APPROVAL_TABS, TARGET_TYPE_LABELS } from "./_lib/constants";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { ReplyCommentModal } from "./components/ReplyCommentModal";
+import { useAdminListPage, type AdminListFetchResult } from "@/hooks/admin/useAdminListPage";
 
 const PAGE_SIZE = 20;
+
+type ApprovalTab = "ALL" | "true" | "false";
+
+interface CommentExtraParams {
+  isApproved?: boolean;
+  targetType?: CommentTargetType;
+  dateFrom?: string;
+  dateTo?: string;
+  parentId: null;
+}
+
+/**
+ * BE hiện trả `pagination` thay vì `meta` cho module này (không đồng nhất với
+ * các module khác) — adapter này chỉ ánh xạ lại tên field để dùng chung được
+ * `useAdminListPage`. Khi BE đồng bộ tên field, xoá adapter này và gọi thẳng
+ * `getAllComments`.
+ */
+async function fetchCommentsAdapted(params: GetCommentsParams & { page: number; limit: number; sortBy: "createdAt"; sortOrder: "asc" | "desc" }): Promise<AdminListFetchResult<Comment, CommentsPagination>> {
+  const res = await getAllComments(params);
+  return { data: res.data, meta: res.pagination };
+}
 
 export default function CommentsAdminPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // HIGHLIGHT TỪ NOTIFICATION
+  // Highlight từ notification
   const highlightId = searchParams.get("commentId");
   const highlightRowRef = useRef<HTMLTableRowElement | null>(null);
   const hasHandledHighlight = useRef(false);
 
-  const [data, setData] = useState<CommentsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-
-  // Filters
-  const [activeTab, setActiveTab] = useState("ALL");
+  // Filters đặc thù module
+  const [activeTab, setActiveTab] = useState<ApprovalTab>("ALL");
   const [targetType, setTargetType] = useState<CommentTargetType | "">("");
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // Selection
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const extraParams = useMemo<CommentExtraParams>(
+    () => ({
+      ...(activeTab !== "ALL" ? { isApproved: activeTab === "true" } : {}),
+      ...(targetType ? { targetType } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+      parentId: null,
+    }),
+    [activeTab, targetType, dateFrom, dateTo],
+  );
+
+  const {
+    data: comments,
+    setData: setComments,
+    meta,
+    loading,
+    error,
+    refetch: fetchComments,
+    page,
+    setPage,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<Comment, "createdAt", CommentExtraParams, CommentsPagination>({
+    fetchFn: fetchCommentsAdapted,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultPageSize: PAGE_SIZE,
+    defaultMeta: { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 },
+    extraParams,
+    getId: (c) => c.id,
+  });
+
   const [bulkLoading, setBulkLoading] = useState(false);
 
   // Drawer / Modal
@@ -53,53 +107,28 @@ export default function CommentsAdminPage() {
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // FETCH
-  const fetchComments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: GetCommentsParams = {
-        page,
-        limit: PAGE_SIZE,
-        sortBy: "createdAt",
-        sortOrder,
-        parentId: null,
-      };
-      if (activeTab !== "ALL") params.isApproved = activeTab === "true";
-      if (targetType) params.targetType = targetType;
-      if (search) params.search = search;
-      if (dateFrom) params.dateFrom = dateFrom;
-      if (dateTo) params.dateTo = dateTo;
+  // Search debounce
+  const handleSearchInput = useCallback(
+    (val: string) => {
+      setSearchInput(val);
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+      searchTimeout.current = setTimeout(() => setSearch(val), 400);
+    },
+    [setSearch, setSearchInput],
+  );
 
-      const res = await getAllComments(params);
-      setData(res);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, activeTab, targetType, search, dateFrom, dateTo, sortOrder]);
-
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
-
-  // Reset page khi filter thay đổi
-  useEffect(() => {
-    setPage(1);
-    setSelected(new Set());
-  }, [activeTab, targetType, search, dateFrom, dateTo, sortOrder]);
-
-  // HIGHLIGHT: TÌM ĐÚNG TRANG RỒI JUMP
+  // Highlight: tìm đúng trang rồi jump
   useEffect(() => {
     if (!highlightId || hasHandledHighlight.current) return;
 
     const jumpToComment = async () => {
       try {
-        // Xác nhận comment tồn tại
         const res = await getComment(highlightId);
         if (!res?.data) return;
 
         hasHandledHighlight.current = true;
 
-        // Scan từng page (sort desc, no filter) để tìm trang chứa comment
+        // Scan từng page (sort desc, không filter) để tìm trang chứa comment
         let foundPage = 1;
         for (let p = 1; p <= 100; p++) {
           const scan = await getAllComments({
@@ -131,14 +160,13 @@ export default function CommentsAdminPage() {
     };
 
     jumpToComment();
-  }, [highlightId]);
+  }, [highlightId, setSearch, setSearchInput, setSortOrder, setPage]);
 
-  // SAU KHI DATA LOAD XONG → SCROLL + MỞ DRAWER
+  // Sau khi data load xong → scroll + mở drawer
   useEffect(() => {
-    if (!highlightId || loading || !data) return;
-    if (!data.data.some((c) => c.id === highlightId)) return;
+    if (!highlightId || loading) return;
+    if (!comments.some((c) => c.id === highlightId)) return;
 
-    // Scroll vào row
     requestAnimationFrame(() => {
       highlightRowRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -146,7 +174,6 @@ export default function CommentsAdminPage() {
       });
     });
 
-    // Mở drawer xem chi tiết
     setOpenDrawerId(highlightId);
 
     // Xóa ?commentId khỏi URL sau 4s
@@ -158,42 +185,25 @@ export default function CommentsAdminPage() {
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [highlightId, loading, data]);
+  }, [highlightId, loading, comments, searchParams, router]);
 
-  // SEARCH DEBOUNCE
-  const handleSearchInput = (val: string) => {
-    setSearchInput(val);
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => setSearch(val), 400);
-  };
+  // Stats — tính trên trang hiện tại (BE chưa trả tổng riêng approved/pending)
+  const total = meta.total;
+  const approved = comments.filter((c) => c.isApproved).length;
+  const pending = comments.filter((c) => !c.isApproved).length;
 
-  // STATS
-  const total = data?.pagination.total ?? 0;
-  const approved = data?.data.filter((c) => c.isApproved).length ?? 0;
-  const pending = data?.data.filter((c) => !c.isApproved).length ?? 0;
+  const handleApprovalChange = useCallback((id: string, isApproved: boolean) => setComments((prev) => prev.map((c) => (c.id === id ? { ...c, isApproved } : c))), [setComments]);
 
-  // SELECTION
-  const toggleOne = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  // Actions
+  const handleApproveOne = useCallback(
+    async (comment: Comment, isApproved: boolean) => {
+      await approveComment(comment.id, isApproved);
+      fetchComments();
+    },
+    [fetchComments],
+  );
 
-  const toggleAll = () => {
-    if (!data) return;
-    setSelected(selected.size === data.data.length ? new Set() : new Set(data.data.map((c) => c.id)));
-  };
-
-  // ACTIONS
-  const handleApproveOne = async (comment: Comment, isApproved: boolean) => {
-    await approveComment(comment.id, isApproved);
-    fetchComments();
-  };
-
-  const handleApprovalChange = (id: string, isApproved: boolean) => setData((prev) => (prev ? { ...prev, data: prev.data.map((c) => (c.id === id ? { ...c, isApproved } : c)) } : prev));
-
-  const handleBulkApprove = async () => {
+  const handleBulkApprove = useCallback(async () => {
     if (!selected.size) return;
     setBulkLoading(true);
     try {
@@ -203,9 +213,9 @@ export default function CommentsAdminPage() {
     } finally {
       setBulkLoading(false);
     }
-  };
+  }, [selected, fetchComments, setSelected]);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
@@ -215,55 +225,57 @@ export default function CommentsAdminPage() {
     } finally {
       setDeleting(false);
     }
-  };
+  }, [deleteTarget, fetchComments]);
 
-  // TABLE COLUMNS
-  const columns = getCommentColumns({
-    page,
-    pageSize: PAGE_SIZE,
-    selected,
-    toggleOne,
-    onViewClick: (id) => setOpenDrawerId(id),
-    onApproveClick: handleApproveOne,
-    onDeleteClick: (comment) => setDeleteTarget(comment),
-    onReplyClick: (id) => setReplyTargetId(id),
-  });
+  const handleClearAdvancedFilters = useCallback(() => {
+    setDateFrom("");
+    setDateTo("");
+  }, []);
 
-  const allSelected = !!data && data.data.length > 0 && selected.size === data.data.length;
+  // Table columns
+  const columns = useMemo(
+    () =>
+      getCommentColumns({
+        page,
+        pageSize: PAGE_SIZE,
+        selected,
+        toggleOne,
+        onViewClick: (id) => setOpenDrawerId(id),
+        onApproveClick: handleApproveOne,
+        onDeleteClick: (comment) => setDeleteTarget(comment),
+        onReplyClick: (id) => setReplyTargetId(id),
+      }),
+    [page, selected, toggleOne, handleApproveOne],
+  );
 
-  // ROWCLASSNAME: INJECT HIGHLIGHT + GẮN REF QUA CALLBACK REF
-  // AdminTable dùng rowClassName(row, idx) => string
-  // Ref phải gán qua một trick: dùng một hidden div bên ngoài table rồi
-  // scrollIntoView, hoặc dùng custom rowRef prop.
-  // Cách sạch nhất với AdminTable hiện tại: wrap data rows qua custom render
-  // bằng cách thêm 1 cột ẩn để gắn ref — KHÔNG cần sửa AdminTable.
-  // Ta dùng rowClassName để style, còn scroll thì dùng document.getElementById.
+  const allSelected = comments.length > 0 && selected.size === comments.length;
 
-  const rowClassName = (row: Comment) => (row.id === highlightId ? "ring-2 ring-inset ring-accent bg-accent/10 !hover:bg-accent/10" : "");
+  const rowClassName = useCallback((row: Comment) => (row.id === highlightId ? "ring-2 ring-inset ring-accent bg-accent/10 !hover:bg-accent/10" : ""), [highlightId]);
 
-  // Gán id cho row để scroll bằng getElementById (không cần sửa AdminTable)
-  // Trick: thêm 1 cột width-0 render 1 element có id
-  const columnsWithRef = [
-    {
-      key: "_highlight_anchor",
-      label: "",
-      width: "w-0 p-0 overflow-hidden",
-      render: (row: Comment) =>
-        row.id === highlightId ? (
-          <span
-            id={`comment-row-${row.id}`}
-            ref={(el) => {
-              if (el) {
-                // Leo lên tr để scroll
-                const tr = el.closest("tr");
-                if (tr) highlightRowRef.current = tr;
-              }
-            }}
-          />
-        ) : null,
-    },
-    ...columns,
-  ];
+  // Gán id cho row để scroll bằng getElementById — thêm 1 cột ẩn width-0 render ref
+  const columnsWithRef = useMemo(
+    () => [
+      {
+        key: "_highlight_anchor",
+        label: "",
+        width: "w-0 p-0 overflow-hidden",
+        render: (row: Comment) =>
+          row.id === highlightId ? (
+            <span
+              id={`comment-row-${row.id}`}
+              ref={(el) => {
+                if (el) {
+                  const tr = el.closest("tr");
+                  if (tr) highlightRowRef.current = tr;
+                }
+              }}
+            />
+          ) : null,
+      },
+      ...columns,
+    ],
+    [columns, highlightId],
+  );
 
   return (
     <div className="min-h-screen bg-neutral-light">
@@ -293,7 +305,10 @@ export default function CommentsAdminPage() {
           {APPROVAL_TABS.map((tab) => (
             <button
               key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
+              onClick={() => {
+                setActiveTab(tab.value);
+                resetPage();
+              }}
               className={`px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
                 activeTab === tab.value ? "border-accent text-accent" : "border-transparent text-primary hover:text-primary"
               }`}
@@ -312,8 +327,12 @@ export default function CommentsAdminPage() {
               onSubmit={(v) => {
                 if (searchTimeout.current) clearTimeout(searchTimeout.current);
                 setSearch(v);
+                resetPage();
               }}
-              onClear={() => handleSearchInput("")}
+              onClear={() => {
+                handleSearchInput("");
+                resetPage();
+              }}
               placeholder="Tìm nội dung..."
               widthClassName="w-full"
             />
@@ -321,7 +340,10 @@ export default function CommentsAdminPage() {
 
           <select
             value={targetType}
-            onChange={(e) => setTargetType(e.target.value as CommentTargetType | "")}
+            onChange={(e) => {
+              setTargetType(e.target.value as CommentTargetType | "");
+              resetPage();
+            }}
             className="px-3 py-2 text-[13px] border border-neutral rounded-xl outline-none focus:border-accent transition-colors cursor-pointer"
           >
             <option value="">Tất cả loại</option>
@@ -344,7 +366,10 @@ export default function CommentsAdminPage() {
           </button>
 
           <button
-            onClick={() => setSortOrder((v) => (v === "desc" ? "asc" : "desc"))}
+            onClick={() => {
+              setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+              resetPage();
+            }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral text-[13px] text-primary hover:border-accent hover:text-accent transition-colors cursor-pointer"
           >
             {sortOrder === "desc" ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
@@ -360,7 +385,10 @@ export default function CommentsAdminPage() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  resetPage();
+                }}
                 className="px-2.5 py-1.5 text-[13px] border border-neutral rounded-lg outline-none focus:border-accent transition-colors"
               />
             </div>
@@ -369,23 +397,21 @@ export default function CommentsAdminPage() {
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  resetPage();
+                }}
                 className="px-2.5 py-1.5 text-[13px] border border-neutral rounded-lg outline-none focus:border-accent transition-colors"
               />
             </div>
             {(dateFrom || dateTo) && (
-              <button
-                onClick={() => {
-                  setDateFrom("");
-                  setDateTo("");
-                }}
-                className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer"
-              >
+              <button onClick={handleClearAdvancedFilters} className="flex items-center gap-1 text-[12px] text-primary hover:text-accent transition-colors cursor-pointer">
                 <X size={12} /> Xóa lọc
               </button>
             )}
           </div>
         )}
+
         {/* Bulk action bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-4 py-2.5 bg-accent/5 border border-accent/20 rounded-xl">
@@ -406,18 +432,29 @@ export default function CommentsAdminPage() {
           </div>
         )}
 
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-3 px-4 py-3 bg-promotion-light border border-promotion/30 rounded-xl">
+            <XCircle size={16} className="text-promotion shrink-0" />
+            <p className="text-[13px] text-promotion">{error}</p>
+            <button onClick={fetchComments} className="ml-auto text-[12px] font-medium text-promotion hover:underline cursor-pointer">
+              Thử lại
+            </button>
+          </div>
+        )}
+
         {/* Table */}
         <div className="rounded-xl overflow-hidden">
-          {data && data.data.length > 0 && (
+          {comments.length > 0 && (
             <div className="px-4 py-2.5 flex items-center gap-2">
               <input type="checkbox" checked={allSelected} onChange={toggleAll} className="w-3.5 h-3.5 rounded accent-accent cursor-pointer" />
-              <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${data.data.length} bình luận trên trang`}</span>
+              <span className="text-[12px] text-primary">{allSelected ? "Bỏ chọn tất cả" : `Chọn tất cả ${comments.length} bình luận trên trang`}</span>
             </div>
           )}
 
           <AdminTable
             columns={columnsWithRef}
-            data={data?.data ?? []}
+            data={comments}
             loading={loading}
             emptyText="Không có bình luận nào"
             onRowClick={(comment) => setOpenDrawerId(comment.id)}
@@ -427,10 +464,10 @@ export default function CommentsAdminPage() {
         </div>
 
         {/* Pagination */}
-        {data && data.pagination.totalPages > 1 && (
+        {meta.totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-[12px] text-primary">
-              Trang {data.pagination.page} / {data.pagination.totalPages} · {data.pagination.total} bình luận
+              Trang {meta.page} / {meta.totalPages} · {meta.total} bình luận
             </p>
             <div className="flex items-center gap-1.5">
               <button
@@ -441,7 +478,7 @@ export default function CommentsAdminPage() {
                 Trước
               </button>
 
-              {Array.from({ length: Math.min(5, data.pagination.totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, meta.totalPages) }, (_, i) => {
                 const pg = i + 1;
                 return (
                   <button
@@ -457,7 +494,7 @@ export default function CommentsAdminPage() {
               })}
 
               <button
-                disabled={page >= data.pagination.totalPages}
+                disabled={page >= meta.totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="px-3 py-1.5 text-[13px] border border-neutral rounded-lg text-primary hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >

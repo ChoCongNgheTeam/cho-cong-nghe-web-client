@@ -1,82 +1,78 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Plus, RefreshCw, Tag, Loader2, XCircle, X, Layers, CheckCircle2 } from "lucide-react";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { SearchBox } from "@/components/admin/shared/SearchBox";
 import { SortDropdown } from "@/components/admin/shared/SortDropdown";
-import type { Attribute, CreateOptionPayload, UpdateOptionPayload } from "./attribute.types";
+import type { Attribute, AttributesResponse, CreateOptionPayload, UpdateOptionPayload } from "./attribute.types";
 import { getAllAttributes, toggleAttributeActive, createAttribute, updateAttribute, createOption, updateOption, getAttribute } from "./_lib/attributes";
 import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
 import { getAttributeColumns } from "./components/TableAttributes";
 import { AttributeForm, DEFAULT_FORM, attrToForm, formToCreatePayload, formToUpdatePayload, type AttributeFormData } from "./components/AttributeForm";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 import { toast } from "sonner";
 
-interface Meta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number };
+type SortBy = "createdAt" | "name" | "code" | "optionCount";
+type ActiveTab = "ALL" | "ACTIVE" | "INACTIVE";
+
+interface AttributeExtraParams {
+  isActive?: boolean;
 }
 
 export default function AttributesPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────────
-  const [attrs, setAttrs] = useState<Attribute[]>([]);
-  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0 } });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Filter đặc thù module
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ALL");
 
-  // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"createdAt" | "name" | "code">("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const extraParams = useMemo<AttributeExtraParams>(
+    () => ({
+      ...(activeTab === "ACTIVE" ? { isActive: true } : activeTab === "INACTIVE" ? { isActive: false } : {}),
+    }),
+    [activeTab],
+  );
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const {
+    data: attrs,
+    setData: setAttrs,
+    meta,
+    loading,
+    error,
+    refetch: fetchAttrs,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<Attribute, SortBy, AttributeExtraParams, AttributesResponse["meta"]>({
+    fetchFn: getAllAttributes,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultMeta: { page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0 } },
+    extraParams,
+    getId: (a) => a.id,
+  });
+
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
-  // ── Slide-over ────────────────────────────────────────────────────────────────
+  // Slide-over
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Attribute | null>(null);
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
-  // ── Fetch (server-side filter/sort/pagination) ────────────────────────────────
-  const fetchAttrs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const isActiveParam = activeTab === "ACTIVE" ? true : activeTab === "INACTIVE" ? false : undefined;
-      const res = await getAllAttributes({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        isActive: isActiveParam,
-        sortBy,
-        sortOrder,
-      });
-      setAttrs(res.data);
-      setMeta(res.meta as Meta);
-    } catch (e: unknown) {
-      setError((e as Error)?.message ?? "Không thể tải danh sách thuộc tính");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, activeTab, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchAttrs();
-  }, [fetchAttrs]);
-
-  // Reset page khi filter thay đổi
-  const resetPage = useCallback(() => setPage(1), []);
 
   const hasActiveFilters = search || activeTab !== "ALL";
 
@@ -85,37 +81,23 @@ export default function AttributesPage() {
     setSearchInput("");
     setActiveTab("ALL");
     setPage(1);
-  }, []);
+  }, [setSearch, setSearchInput, setPage]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === attrs.length ? new Set() : new Set(attrs.map((a) => a.id))));
-  }, [attrs]);
-
-  // ── Toggle active ─────────────────────────────────────────────────────────────
+  // Toggle active — cập nhật lạc quan ngay trong bảng, rồi refetch để đồng bộ lại activeCounts
   const handleToggleActive = useCallback(
     async (attr: Attribute) => {
       try {
         const res = await toggleAttributeActive(attr.id);
         setAttrs((prev) => prev.map((a) => (a.id === attr.id ? res.data : a)));
-        // Refresh meta counts
         fetchAttrs();
       } catch (e: unknown) {
         alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
-    [fetchAttrs],
+    [fetchAttrs, setAttrs],
   );
 
-  // ── Form handlers ─────────────────────────────────────────────────────────────
+  // Form handlers
   const handleOpenCreate = useCallback(() => {
     setEditTarget(null);
     setFormError(null);
@@ -135,26 +117,17 @@ export default function AttributesPage() {
 
       try {
         if (editTarget) {
-          // === CHỈNH SỬA ===
           const payload = formToUpdatePayload(form);
           const res = await updateAttribute(editTarget.id, payload);
-
-          // Cập nhật lại danh sách và editTarget
           setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? res.data : a)));
           setEditTarget(res.data);
-
-          // Đóng form + thông báo thành công
           setFormOpen(false);
         } else {
-          // === TẠO MỚI ===
           const payload = formToCreatePayload(form);
           await createAttribute(payload);
-
-          // Đóng form + thông báo + refresh danh sách
           setFormOpen(false);
           toast.success("Thêm thuộc tính thành công!");
-
-          fetchAttrs(); // refresh bảng
+          fetchAttrs();
         }
       } catch (e: unknown) {
         setFormError((e as Error)?.message ?? "Có lỗi xảy ra khi lưu thuộc tính");
@@ -163,10 +136,10 @@ export default function AttributesPage() {
         setFormSaving(false);
       }
     },
-    [editTarget, fetchAttrs],
+    [editTarget, fetchAttrs, setAttrs],
   );
 
-  // ── Option handlers ───────────────────────────────────────────────────────────
+  // Option handlers
   const handleAddOption = useCallback(
     async (payload: CreateOptionPayload) => {
       if (!editTarget) return;
@@ -175,7 +148,7 @@ export default function AttributesPage() {
       setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? updated.data : a)));
       setEditTarget(updated.data);
     },
-    [editTarget],
+    [editTarget, setAttrs],
   );
 
   const handleUpdateOption = useCallback(
@@ -186,11 +159,11 @@ export default function AttributesPage() {
       setAttrs((prev) => prev.map((a) => (a.id === editTarget.id ? updated.data : a)));
       setEditTarget(updated.data);
     },
-    [editTarget],
+    [editTarget, setAttrs],
   );
 
-  // ── Columns ───────────────────────────────────────────────────────────────────
-  const columns = useCallback(
+  // Columns
+  const columns = useMemo(
     () =>
       getAttributeColumns({
         page,
@@ -205,10 +178,10 @@ export default function AttributesPage() {
     [page, pageSize, selected, openStatusId, toggleOne, handleToggleActive, handleEditClick],
   );
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // Render
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -234,7 +207,7 @@ export default function AttributesPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatsCard label="Tổng thuộc tính" value={meta.activeCounts.ALL} sub="Tất cả attributes" icon={<Tag size={16} />} />
         <StatsCard
@@ -256,9 +229,9 @@ export default function AttributesPage() {
         />
       </div>
 
-      {/* ── Main card ── */}
+      {/* Main card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar: 1 row ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {/* Status tabs */}
           {STATUS_TABS.map((tab) => {
@@ -303,7 +276,7 @@ export default function AttributesPage() {
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSortByChange={(v) => {
-              setSortBy(v as "createdAt" | "name" | "code");
+              setSortBy(v as SortBy);
               resetPage();
             }}
             onSortOrderChange={(v) => {
@@ -327,7 +300,7 @@ export default function AttributesPage() {
           <span className="ml-auto text-[12px] text-primary">{meta.total} thuộc tính</span>
         </div>
 
-        {/* ── Selection bar ── */}
+        {/* Selection bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thuộc tính</span>
@@ -337,7 +310,7 @@ export default function AttributesPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
@@ -365,10 +338,10 @@ export default function AttributesPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns()} data={attrs} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={attrs} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -406,7 +379,7 @@ export default function AttributesPage() {
         )}
       </div>
 
-      {/* ── Slide-over: Create / Edit ── */}
+      {/* Slide-over: Create / Edit */}
       {formOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-40" onClick={() => !formSaving && setFormOpen(false)} />

@@ -72,7 +72,17 @@ interface StatusDropdownColumnParams<T> {
  * để đổi trạng thái), thay pattern viết tay lặp lại (state `openStatusId` +
  * dropdown) ở TableBrands, TableAttributes, TablePromotions...
  */
-export function statusDropdownColumn<T>({ label = "Trạng thái", getId, getCurrentValue, getCurrentDisplay, options, openId, setOpenId, onChange, isDisabled }: StatusDropdownColumnParams<T>): AdminColumn<T> {
+export function statusDropdownColumn<T>({
+  label = "Trạng thái",
+  getId,
+  getCurrentValue,
+  getCurrentDisplay,
+  options,
+  openId,
+  setOpenId,
+  onChange,
+  isDisabled,
+}: StatusDropdownColumnParams<T>): AdminColumn<T> {
   return {
     key: "_status",
     label,

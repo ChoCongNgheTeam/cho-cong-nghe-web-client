@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { Plus, RefreshCw, Tag, Trash2, Upload, X, XCircle, Loader2, Star } from "lucide-react";
-import { Brand, GetBrandsParams } from "./brand.types";
+import { Brand, BrandsResponse } from "./brand.types";
 import { createBrand, deleteBrand, getAllBrands, updateBrand } from "./_lib/brands";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
@@ -14,44 +14,69 @@ import { SearchBox } from "@/components/admin/shared/SearchBox";
 import { SortDropdown } from "@/components/admin/shared/SortDropdown";
 import { DateRangeFilterPopover } from "@/components/admin/shared/DateRangeFilterPopover";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 import Image from "next/image";
 
 type SortBy = "name" | "createdAt" | "productCount";
-type SortOrder = "asc" | "desc";
+type ActiveTab = "ALL" | "ACTIVE" | "INACTIVE" | "FEATURED";
 
-interface Meta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number; FEATURED: number };
+interface BrandExtraParams {
+  isActive?: boolean;
+  isFeatured?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-// ── Date filter popover ────────────────────────────────────────────────────────
-// ── Main page ──────────────────────────────────────────────────────────────────
+// Main page
 export default function AdminBrandsPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────────
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [meta, setMeta] = useState<Meta>({ page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0, FEATURED: 0 } });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  // Filter đặc thù module (không thuộc hook chung)
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const extraParams = useMemo<BrandExtraParams>(
+    () => ({
+      ...(activeTab === "ACTIVE" ? { isActive: true } : activeTab === "INACTIVE" ? { isActive: false } : {}),
+      ...(activeTab === "FEATURED" ? { isFeatured: true } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    }),
+    [activeTab, dateFrom, dateTo],
+  );
+
+  const {
+    data: brands,
+    meta,
+    loading,
+    error,
+    refetch: fetchBrands,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+  } = useAdminListPage<Brand, SortBy, BrandExtraParams, BrandsResponse["meta"]>({
+    fetchFn: getAllBrands,
+    defaultSortBy: "name",
+    defaultMeta: { page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0, FEATURED: 0 } },
+    extraParams,
+    getId: (b) => b.id,
+  });
+
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
-  // ── Modals ────────────────────────────────────────────────────────────────────
+  // Modals
   const deleteModal = usePopzy();
   const [deletingBrand, setDeletingBrand] = useState<Brand | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -67,73 +92,24 @@ export default function AdminBrandsPage() {
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [newPreviewUrl, setNewPreviewUrl] = useState<string | null>(null);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
-  const fetchBrands = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params: GetBrandsParams = {
-        page,
-        limit: pageSize,
-        ...(search ? { search } : {}),
-        ...(activeTab === "ACTIVE" ? { isActive: true } : activeTab === "INACTIVE" ? { isActive: false } : {}),
-        ...(activeTab === "FEATURED" ? { isFeatured: true } : {}),
-        ...(dateFrom ? { dateFrom } : {}),
-        ...(dateTo ? { dateTo } : {}),
-        sortBy,
-        sortOrder,
-      };
-      const res = await getAllBrands(params);
-      setBrands(res.data);
-      setMeta(res.meta as Meta);
-    } catch (err: unknown) {
-      setError((err as Error)?.message || "Không thể tải danh sách thương hiệu");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, activeTab, dateFrom, dateTo, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchBrands();
-    setSelected(new Set());
-  }, [fetchBrands]);
-
-  const resetPage = useCallback(() => setPage(1), []);
-
   const hasActiveFilters = search || activeTab !== "ALL" || dateFrom || dateTo;
 
-  const handleClearAllFilters = useCallback(() => {
+  const handleClearAllFilters = () => {
     setSearch("");
     setSearchInput("");
     setActiveTab("ALL");
     setDateFrom("");
     setDateTo("");
     setPage(1);
-  }, []);
-
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const toggleAll = () => {
-    const next = new Set(selected);
-    const allChecked = brands.length > 0 && brands.every((b) => selected.has(b.id));
-    if (allChecked) brands.forEach((b) => next.delete(b.id));
-    else brands.forEach((b) => next.add(b.id));
-    setSelected(next);
   };
 
-  const toggleOne = (id: string) => {
-    const next = new Set(selected);
-    next.has(id) ? next.delete(id) : next.add(id);
-    setSelected(next);
-  };
-
-  // ── Actions ───────────────────────────────────────────────────────────────────
+  // Actions
   const handleToggleActive = async (brand: Brand) => {
     try {
-      const res = await updateBrand(brand.id, { isActive: !brand.isActive });
-      setBrands((prev) => prev.map((b) => (b.id === brand.id ? res.data : b)));
+      await updateBrand(brand.id, { isActive: !brand.isActive });
       fetchBrands();
     } catch (err: unknown) {
-      setError((err as Error)?.message || "Không thể cập nhật trạng thái");
+      setDeleteError((err as Error)?.message || "Không thể cập nhật trạng thái");
     }
   };
 
@@ -159,7 +135,7 @@ export default function AdminBrandsPage() {
     }
   };
 
-  // ── Create ────────────────────────────────────────────────────────────────────
+  // Create
   const openCreateModal = () => {
     setNewName("");
     setNewDescription("");
@@ -172,7 +148,7 @@ export default function AdminBrandsPage() {
     createModal.open();
   };
 
-  const handleCreateImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCreateImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (newPreviewUrl) URL.revokeObjectURL(newPreviewUrl);
@@ -205,7 +181,7 @@ export default function AdminBrandsPage() {
     }
   };
 
-  // ── Columns ───────────────────────────────────────────────────────────────────
+  // Columns
   const columns = getBrandColumns({
     page,
     pageSize,
@@ -217,17 +193,17 @@ export default function AdminBrandsPage() {
     onDeleteClick: handleDeleteClick,
   });
 
-  const TABS = [
+  const TABS: { label: string; value: ActiveTab; count: number }[] = [
     { label: "Tất cả", value: "ALL", count: meta.activeCounts.ALL },
     { label: "Hoạt động", value: "ACTIVE", count: meta.activeCounts.ACTIVE },
     { label: "Không hoạt động", value: "INACTIVE", count: meta.activeCounts.INACTIVE },
     { label: "Nổi bật", value: "FEATURED", count: meta.activeCounts.FEATURED },
   ];
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // Render
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -253,7 +229,7 @@ export default function AdminBrandsPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatsCard label="Tổng thương hiệu" value={meta.activeCounts.ALL} sub="Tất cả thương hiệu" icon={<Tag size={16} />} />
         <StatsCard label="Đang hoạt động" value={meta.activeCounts.ACTIVE} sub="Khách hàng có thể xem" icon={<Tag size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
@@ -261,9 +237,9 @@ export default function AdminBrandsPage() {
         <StatsCard label="Nổi bật" value={meta.activeCounts.FEATURED} sub="Hiển thị trang chủ" icon={<Star size={16} />} valueClassName="text-amber-500" iconClassName="text-amber-500" />
       </div>
 
-      {/* ── Main card ── */}
+      {/* Main card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar: 1 row ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {/* Tabs */}
           {TABS.map((tab) => (
@@ -347,7 +323,7 @@ export default function AdminBrandsPage() {
           <span className="ml-auto text-[12px] text-primary">{meta.total} thương hiệu</span>
         </div>
 
-        {/* ── Selection bar ── */}
+        {/* Selection bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thương hiệu</span>
@@ -360,7 +336,7 @@ export default function AdminBrandsPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
@@ -390,15 +366,15 @@ export default function AdminBrandsPage() {
         ) : (
           <AdminTable<Brand> columns={columns} data={brands} rowKey="id" className="mx-0" rowClassName={(brand) => (selected.has(brand.id) ? "bg-accent/5" : "")} />
         )}
-        {/* ── Pagination ── */}
 
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral">
             <AdminPagination
-              currentPage={meta.page} // ← từ BE, không phải state page
+              currentPage={meta.page}
               totalPages={meta.totalPages}
               total={meta.total}
-              pageSize={pageSize} // ← dùng state pageSize, không phải meta.limit
+              pageSize={pageSize}
               onPageChange={setPage}
               onPageSizeChange={(size) => {
                 setPageSize(size);
@@ -413,7 +389,7 @@ export default function AdminBrandsPage() {
 
       {openStatusId && <div className="fixed inset-0 z-10" onClick={() => setOpenStatusId(null)} />}
 
-      {/* ── Delete modal ── */}
+      {/* Delete modal */}
       <ConfirmDeleteModal
         isOpen={deleteModal.isOpen}
         onClose={deleteModal.close}
@@ -425,7 +401,7 @@ export default function AdminBrandsPage() {
         confirmLabel="Xoá thương hiệu"
       />
 
-      {/* ── Create modal ── */}
+      {/* Create modal */}
       <Popzy
         isOpen={createModal.isOpen}
         onClose={createModal.close}
