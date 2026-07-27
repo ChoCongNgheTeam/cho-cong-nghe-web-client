@@ -14,6 +14,6 @@ export const APPROVAL_TABS = [
   { value: "ALL", label: "Tất cả" },
   { value: "true", label: "Đã duyệt" },
   { value: "false", label: "Chờ duyệt" },
-];
+] as const;
 
 export const SORT_OPTIONS = [{ value: "createdAt", label: "Ngày tạo" }];

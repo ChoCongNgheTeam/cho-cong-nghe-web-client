@@ -1,21 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle, ArchiveRestore } from "lucide-react";
+import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
 import { Popzy } from "@/components/modal";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { SearchBox } from "@/components/admin/shared/SearchBox";
-import type { ProductCard } from "./product.types";
+import type { ProductCard, ProductMeta, GetProductsParams } from "./product.types";
 import {
   getAllProducts,
   getDeletedProducts,
   softDeleteProduct,
   hardDeleteProduct,
-  restoreProduct,
-  toggleProductActive,
   bulkAction,
   getAdminProductStats,
   getCategories,
@@ -35,10 +33,9 @@ import { StockAlertBanner } from "./components/StockAlertBanner";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { ImportButton } from "@/components/admin/ImportButton";
 import { useAdminHref } from "../../../../hooks/useAdminHref";
+import { useAdminListPage, type AdminListFetchResult } from "@/hooks/admin/useAdminListPage";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS_TABS = [
   { value: "ALL", label: "Tất cả" },
@@ -63,16 +60,13 @@ type SortKey = `${(typeof SORT_OPTIONS)[number]["value"]}_${(typeof SORT_OPTIONS
 type SortValue = (typeof SORT_OPTIONS)[number]["value"];
 type SortOrder = (typeof SORT_OPTIONS)[number]["order"];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
+type ActiveTab = "ALL" | "active" | "inactive" | "low_stock" | "featured" | "deleted";
 
-interface ProductMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  statusCounts: Record<string, number>;
+interface ProductExtraParams {
+  activeTab: ActiveTab;
+  dateFrom?: string;
+  dateTo?: string;
+  categoryId?: string;
 }
 
 const DEFAULT_META: ProductMeta = {
@@ -83,9 +77,7 @@ const DEFAULT_META: ProductMeta = {
   statusCounts: { ALL: 0, active: 0, inactive: 0, outOfStock: 0, featured: 0 },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowStockProductInfo[], outOfStockProducts: LowStockProductInfo[]): ProductCard[] {
   const lowMap = new Map(lowStockProducts.map((p) => [p.id, p]));
@@ -130,71 +122,137 @@ function lowStockToCard(p: LowStockProductInfo, warning: "out_of_stock" | "low_s
   } as ProductCard;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+function tabToParams(tab: ActiveTab) {
+  if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
+  if (tab === "inactive") return { isActive: false, inStock: undefined, isFeatured: undefined };
+  if (tab === "featured") return { isActive: undefined, inStock: undefined, isFeatured: true };
+  return { isActive: undefined, inStock: undefined, isFeatured: undefined };
+}
+
+/**
+ * fetchFn cho useAdminListPage — branch theo activeTab vì mỗi tab gọi 1 API
+ * khác nhau (hoặc không gọi gì cả với "low_stock", data tab đó lấy từ `stats`
+ * thay vì từ hook — xem `sortedProducts` bên dưới).
+ */
+async function fetchProductsAdapted(
+  params: { page: number; limit: number; search?: string; sortBy: SortValue; sortOrder: SortOrder } & ProductExtraParams,
+): Promise<AdminListFetchResult<ProductCard, ProductMeta>> {
+  const { activeTab, page, limit, search, sortBy, sortOrder, dateFrom, dateTo, categoryId } = params;
+
+  if (activeTab === "low_stock") {
+    // Không fetch thật — sortedProducts dùng dữ liệu từ `stats` cho tab này
+    return { data: [], meta: DEFAULT_META };
+  }
+
+  if (activeTab === "deleted") {
+    return getDeletedProducts({ page, limit, search });
+  }
+
+  const apiParams: GetProductsParams = {
+    page,
+    limit,
+    search,
+    sortBy,
+    sortOrder,
+    dateFrom,
+    dateTo,
+    categoryId,
+    ...tabToParams(activeTab),
+  };
+  return getAllProducts(apiParams);
+}
+
 // PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ProductsPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────
-  const [products, setProducts] = useState<ProductCard[]>([]);
-  const [meta, setMeta] = useState<ProductMeta>(DEFAULT_META);
-  const [stats, setStats] = useState<AdminProductStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");
+  const href = useAdminHref();
 
-  // ── Query params ──────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("createdAt_desc");
+  // Filter đặc thù module
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
-
-  // ── Category ──────────────────────────────────────────────────────────────
   const [categoryId, setCategoryId] = useState<string>("");
+
+  const extraParams = useMemo<ProductExtraParams>(
+    () => ({
+      activeTab,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      categoryId: categoryId || undefined,
+    }),
+    [activeTab, dateFrom, dateTo, categoryId],
+  );
+
+  const {
+    data: products,
+    setData: setProducts,
+    meta,
+    loading,
+    error,
+    setError,
+    refetch: fetchProducts,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+  } = useAdminListPage<ProductCard, SortValue, ProductExtraParams, ProductMeta>({
+    fetchFn: fetchProductsAdapted,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultMeta: DEFAULT_META,
+    extraParams,
+    getId: (p) => p.id,
+  });
+
+  // sortKey chỉ để hiển thị UI (dropdown gộp 2 field) — nguồn thật vẫn là sortBy/sortOrder của hook
+  const sortKey = `${sortBy}_${sortOrder}` as SortKey;
+
+  // Stats (fetch riêng, không qua hook)
+  const [stats, setStats] = useState<AdminProductStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Category
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  // NEW: search trong dropdown category
   const [categorySearch, setCategorySearch] = useState("");
 
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
-
-  // NEW: debounce ref cho search sản phẩm
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Selection ─────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  // ── Delete modal ──────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<ProductCard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // ── Bulk action ───────────────────────────────────────────────────────────
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkActionType, setBulkActionType] = useState<BulkAction | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
 
-  const href = useAdminHref();
-
-  const { user } = useAuth();
-  const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");
-
-  // ── Close dropdowns on outside click ─────────────────────────────────────
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDatePicker(false);
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
       if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
         setShowCategoryDropdown(false);
-        setCategorySearch(""); // reset search khi đóng
+        setCategorySearch("");
       }
     };
     document.addEventListener("mousedown", handler);
@@ -207,71 +265,24 @@ export default function ProductsPage() {
       .catch(() => {});
   }, []);
 
-  const [sortBy, sortOrder] = sortKey.split("_") as [SortValue, SortOrder];
-
-  const tabToParams = (tab: string) => {
-    if (tab === "active") return { isActive: true, inStock: undefined, isFeatured: undefined };
-    if (tab === "inactive") return { isActive: false, inStock: undefined, isFeatured: undefined };
-    if (tab === "featured") return { isActive: undefined, inStock: undefined, isFeatured: true };
-    return { isActive: undefined, inStock: undefined, isFeatured: undefined };
-  };
-
-  // ── Fetch stats ───────────────────────────────────────────────────────────
+  // Fetch stats
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
       const res = await getAdminProductStats();
       setStats(res.data);
     } catch {
-      // silent
+      // silent — không có stats vẫn dùng được trang, chỉ mất số liệu
     } finally {
       setStatsLoading(false);
     }
   }, []);
 
-  // ── Fetch products ────────────────────────────────────────────────────────
-  const fetchProducts = useCallback(async () => {
-    if (activeTab === "low_stock") {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      let res;
-      if (activeTab === "deleted") {
-        res = await getDeletedProducts({ page, limit: pageSize, search: search || undefined });
-      } else {
-        res = await getAllProducts({
-          page,
-          limit: pageSize,
-          search: search || undefined,
-          sortBy,
-          sortOrder,
-          dateFrom: dateFrom || undefined,
-          dateTo: dateTo || undefined,
-          categoryId: categoryId || undefined,
-          ...tabToParams(activeTab),
-        });
-      }
-      setProducts(res.data);
-      setMeta(res.meta);
-    } catch (e: unknown) {
-      setError((e as Error)?.message ?? "Không thể tải danh sách sản phẩm");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, activeTab, search, sortBy, sortOrder, dateFrom, dateTo, categoryId]);
-
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  // ── Derived data ──────────────────────────────────────────────────────────
+  // Derived data
   const outOfStockProducts = useMemo(() => stats?.outOfStockProducts ?? [], [stats]);
   const lowStockProducts = useMemo(() => stats?.lowStockProducts ?? [], [stats]);
 
@@ -285,7 +296,6 @@ export default function ProductsPage() {
     return injectAndSortProducts(products, lowStockProducts, outOfStockProducts);
   }, [products, lowStockProducts, outOfStockProducts, activeTab]);
 
-  // ── Row className ─────────────────────────────────────────────────────────
   const getRowClassName = (product: ProductCard) => {
     const w = product.stockWarning;
     if (w === "out_of_stock") return "bg-red-50/60 hover:bg-red-50";
@@ -293,15 +303,12 @@ export default function ProductsPage() {
     return "";
   };
 
-  // ── Misc helpers ──────────────────────────────────────────────────────────
-  const resetPage = useCallback(() => setPage(1), []);
-
-  const handleTabChange = (tab: string) => {
+  // Misc helpers
+  const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
     resetPage();
   };
 
-  // NEW: debounce search — tự động gọi API sau 400ms, không cần Enter
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -326,7 +333,9 @@ export default function ProductsPage() {
   };
 
   const handleSortChange = (key: SortKey) => {
-    setSortKey(key);
+    const [value, order] = key.split("_") as [SortValue, SortOrder];
+    setSortBy(value);
+    setSortOrder(order);
     setShowSortDropdown(false);
     resetPage();
   };
@@ -340,7 +349,8 @@ export default function ProductsPage() {
     setCategoryId("");
     setCategorySearch("");
     setActiveTab("ALL");
-    setSortKey("createdAt_desc");
+    setSortBy("createdAt");
+    setSortOrder("desc");
     resetPage();
   };
 
@@ -353,32 +363,24 @@ export default function ProductsPage() {
   const hasSortFilter = sortKey !== "createdAt_desc";
   const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL" || categoryId);
 
-  // NEW: filtered categories cho dropdown search
   const filteredCategories = useMemo(() => (categorySearch ? categories.filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase())) : categories), [categories, categorySearch]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-  }, []);
-
+  // Selection — custom vì phải chọn theo `sortedProducts` (bao gồm cả sản
+  // phẩm ảo được inject cho tab "low_stock"), không phải data thô của hook.
   const toggleAll = useCallback(() => {
     setSelected((prev) => (prev.size === sortedProducts.length ? new Set() : new Set(sortedProducts.map((p) => p.id))));
-  }, [sortedProducts]);
+  }, [sortedProducts, setSelected]);
 
-  // ── Status change — optimistic ────────────────────────────────────────────
+  // Status change — optimistic
   const handleStatusChange = useCallback(
     (productId: string, updates: { isActive?: boolean; isFeatured?: boolean }) => {
       setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updates } : p)));
       fetchStats();
     },
-    [fetchStats],
+    [fetchStats, setProducts],
   );
 
-  // ── Delete ────────────────────────────────────────────────────────────────
+  // Delete
   const handleDeleteClick = useCallback((product: ProductCard) => {
     setDeleteTarget(product);
     setDeleteError(null);
@@ -400,7 +402,7 @@ export default function ProductsPage() {
     }
   }, [deleteTarget, fetchProducts, fetchStats]);
 
-  // ── Bulk ──────────────────────────────────────────────────────────────────
+  // Bulk
   const openBulkAction = (action: BulkAction) => {
     setBulkActionType(action);
     setShowBulkModal(true);
@@ -420,9 +422,9 @@ export default function ProductsPage() {
     } finally {
       setBulkLoading(false);
     }
-  }, [bulkActionType, selected, fetchProducts, fetchStats]);
+  }, [bulkActionType, selected, fetchProducts, fetchStats, setSelected, setError]);
 
-  // ── Columns ───────────────────────────────────────────────────────────────
+  // Columns
   const columns = useMemo(
     () =>
       getProductColumns({
@@ -435,10 +437,10 @@ export default function ProductsPage() {
         href,
         isStaff,
       }),
-    [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick],
+    [page, pageSize, selected, toggleOne, handleStatusChange, handleDeleteClick, href, isStaff],
   );
 
-  // ── Tab count ─────────────────────────────────────────────────────────────
+  // Tab count — ưu tiên `stats` (chính xác toàn hệ thống), fallback về meta.statusCounts của trang hiện tại
   const getTabCount = (tabValue: string) => {
     if (!stats) return meta.statusCounts[tabValue] ?? 0;
     if (tabValue === "ALL") return stats.total;
@@ -452,13 +454,10 @@ export default function ProductsPage() {
 
   const showBanner = !statsLoading && (lowStockProducts.length > 0 || outOfStockProducts.length > 0);
 
-  // ─────────────────────────────────────────────────────────────────────────
   // RENDER
-  // ─────────────────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -499,8 +498,7 @@ export default function ProductsPage() {
               onImport={importProducts}
               onDownloadTemplate={downloadImportTemplate}
               disabled={loading}
-              onSuccess={(result) => {
-                // Sau import xong → reload lại data + stats
+              onSuccess={() => {
                 fetchProducts();
                 fetchStats();
               }}
@@ -517,7 +515,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* ── Stats cards ── */}
+      {/* Stats cards */}
       <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-6 gap-3">
         <StatsCard label="Tổng sản phẩm" value={statsLoading ? "..." : (stats?.total ?? 0)} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
         <StatsCard
@@ -562,16 +560,16 @@ export default function ProductsPage() {
         />
       </div>
 
-      {/* ── Stock Alert Banner ── */}
+      {/* Stock Alert Banner */}
       {showBanner && (
         <div className="px-6 pb-4 min-w-0 w-full">
           <StockAlertBanner lowStockProducts={lowStockProducts} outOfStockProducts={outOfStockProducts} />
         </div>
       )}
 
-      {/* ── Main table card ── */}
+      {/* Main table card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {/* Status tabs */}
           {STATUS_TABS.map((tab) => {
@@ -581,7 +579,7 @@ export default function ProductsPage() {
             return (
               <button
                 key={tab.value}
-                onClick={() => handleTabChange(tab.value)}
+                onClick={() => handleTabChange(tab.value as ActiveTab)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
                   isActive ? (isLowStockTab ? "bg-amber-600 text-white" : "bg-accent text-white") : "text-primary hover:bg-neutral-light-active"
                 }`}
@@ -725,7 +723,7 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* Category filter — NEW: có ô search bên trong dropdown */}
+          {/* Category filter */}
           {activeTab !== "deleted" && activeTab !== "low_stock" && (
             <div ref={categoryRef} className="relative">
               <button
@@ -751,7 +749,6 @@ export default function ProductsPage() {
 
               {showCategoryDropdown && (
                 <div className="absolute top-full left-0 mt-1.5 w-56 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden max-h-72 flex flex-col">
-                  {/* Header + Search input — sticky */}
                   <div className="sticky top-0 bg-neutral-light border-b border-neutral shrink-0">
                     <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-primary uppercase tracking-wider">Lọc theo danh mục</p>
                     <div className="relative px-2 pb-2">
@@ -771,9 +768,7 @@ export default function ProductsPage() {
                     </div>
                   </div>
 
-                  {/* Danh sách cuộn */}
                   <div className="overflow-y-auto">
-                    {/* "Tất cả" — chỉ hiện khi chưa search */}
                     {!categorySearch && (
                       <button
                         onClick={() => {
@@ -808,8 +803,7 @@ export default function ProductsPage() {
                       </button>
                     ))}
 
-                    {/* Không tìm thấy */}
-                    {filteredCategories.length === 0 && <p className="px-3 py-4 text-[12px] text-primary/40 text-center">Không tìm thấy "{categorySearch}"</p>}
+                    {filteredCategories.length === 0 && <p className="px-3 py-4 text-[12px] text-primary/40 text-center">Không tìm thấy &quot;{categorySearch}&quot;</p>}
                   </div>
                 </div>
               )}
@@ -829,7 +823,7 @@ export default function ProductsPage() {
           <span className="ml-auto text-[12px] text-primary">{activeTab === "low_stock" ? `${sortedProducts.length} sản phẩm` : `${meta.total} sản phẩm`}</span>
         </div>
 
-        {/* ── Bulk action bar ── */}
+        {/* Bulk action bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20 flex-wrap">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} sản phẩm</span>
@@ -881,7 +875,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Error banner ── */}
+        {/* Error banner */}
         {error && (
           <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion/20">
             <span className="text-[12px] text-promotion">{error}</span>
@@ -891,7 +885,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Legend row ── */}
+        {/* Legend row */}
         {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && activeTab !== "deleted" && activeTab !== "low_stock" && (
           <div className="flex items-center gap-4 px-5 py-2 border-b border-neutral bg-neutral-light-active/30 text-[11px] text-primary">
             {lowStockProducts.length > 0 && (
@@ -909,7 +903,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Note tab Tồn kho thấp ── */}
+        {/* Note tab Tồn kho thấp */}
         {activeTab === "low_stock" && (
           <div className="flex items-center gap-3 px-5 py-2.5 border-b border-amber-200 bg-amber-50/50 text-[12px] text-amber-800">
             <AlertTriangle size={13} className="shrink-0 text-amber-500" />
@@ -920,7 +914,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-accent" />
@@ -946,7 +940,7 @@ export default function ProductsPage() {
           <AdminTable columns={columns} data={sortedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} rowClassName={getRowClassName} />
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && activeTab !== "low_stock" && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -984,7 +978,7 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* ── Delete Modal ── */}
+      {/* Delete Modal */}
       {deleteTarget && (
         <ConfirmDeleteModal
           isOpen={!!deleteTarget}
@@ -1000,7 +994,7 @@ export default function ProductsPage() {
         />
       )}
 
-      {/* ── Bulk Modal ── */}
+      {/* Bulk Modal */}
       <Popzy
         isOpen={showBulkModal}
         onClose={() => !bulkLoading && setShowBulkModal(false)}

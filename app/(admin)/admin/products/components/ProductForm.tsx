@@ -581,10 +581,22 @@ function BasePriceInput({ value, onChange, error }: { value: number; onChange: (
 // QUANTITY CELL
 // ─────────────────────────────────────────────────────────────────────────────
 
-function QuantityCell({ existingQuantity, addQuantity, onChangeAdd }: { existingQuantity: number; addQuantity: string; onChangeAdd: (v: string) => void }) {
+function QuantityCell({ existingQuantity, addQuantity, onChangeAdd, isEdit }: { existingQuantity: number; addQuantity: string; onChangeAdd: (v: string) => void; isEdit: boolean }) {
   const addNum = Math.max(0, Number(addQuantity) || 0);
   const total = existingQuantity + addNum;
   const hasAdd = addNum > 0;
+
+  if (isEdit) {
+    return (
+      <div className="flex flex-col gap-1 min-w-[110px]">
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-light-active border border-neutral">
+          <span className="text-[10px] text-neutral-dark whitespace-nowrap">Tồn kho:</span>
+          <span className="text-[11px] font-semibold text-primary tabular-nums ml-auto">{existingQuantity}</span>
+        </div>
+        <p className="text-[9px] text-neutral-dark/70 leading-tight">Quản lý tại module Kho hàng</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-1.5 min-w-[110px]">
@@ -638,6 +650,7 @@ function VariantTable({
   onRemove,
   errors,
   productName,
+  isEdit,
 }: {
   variants: VariantForm[];
   template: CategoryTemplate | null;
@@ -650,6 +663,7 @@ function VariantTable({
   onRemove: (key: string) => void;
   errors: Record<string, string>;
   productName: string;
+  isEdit: boolean;
 }) {
   const [bulkQty, setBulkQty] = useState("");
   const allChecked = variants.length > 0 && selectedKeys.size === variants.length;
@@ -689,34 +703,26 @@ function VariantTable({
       {someChecked && (
         <div className="flex items-center gap-2 px-3 py-2.5 bg-primary rounded-lg flex-wrap">
           <span className="text-[12px] font-semibold text-neutral-light">{selectedKeys.size} dòng</span>
-          <div className="w-px h-4 bg-neutral-light/20" />
-          <span className="text-[11px] text-neutral-light/50">+Thêm tồn kho</span>
-          <input
-            value={bulkQty}
-            onChange={(e) => setBulkQty(e.target.value)}
-            type="number"
-            placeholder="0"
-            className="w-[70px] px-2.5 py-1 text-[12px] border border-neutral-light/15 rounded-md bg-neutral-light/10 text-neutral-light placeholder:text-neutral-light/30 focus:outline-none focus:border-neutral-light/40"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              selectedKeys.forEach((k) => onUpdate(k, "addQuantity", bulkQty));
-              setBulkQty("");
-            }}
-            className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-neutral-light text-primary hover:bg-neutral-light-active cursor-pointer transition-colors"
-          >
-            Áp dụng
-          </button>
-          {template && productName.trim() && (
+          {!isEdit && (
             <>
               <div className="w-px h-4 bg-neutral-light/20" />
+              <span className="text-[11px] text-neutral-light/50">+Thêm tồn kho</span>
+              <input
+                value={bulkQty}
+                onChange={(e) => setBulkQty(e.target.value)}
+                type="number"
+                placeholder="0"
+                className="w-[70px] px-2.5 py-1 text-[12px] border border-neutral-light/15 rounded-md bg-neutral-light/10 text-neutral-light placeholder:text-neutral-light/30 focus:outline-none focus:border-neutral-light/40"
+              />
               <button
                 type="button"
-                onClick={() => variants.filter((v) => selectedKeys.has(v._key)).forEach((v) => autoSKU(v))}
-                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md bg-neutral-light/15 hover:bg-neutral-light/25 text-neutral-light cursor-pointer transition-colors"
+                onClick={() => {
+                  selectedKeys.forEach((k) => onUpdate(k, "addQuantity", bulkQty));
+                  setBulkQty("");
+                }}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-neutral-light text-primary hover:bg-neutral-light-active cursor-pointer transition-colors"
               >
-                <Sparkles size={11} /> SKU tự động
+                Áp dụng
               </button>
             </>
           )}
@@ -794,7 +800,7 @@ function VariantTable({
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    <QuantityCell existingQuantity={v.existingQuantity} addQuantity={v.addQuantity} onChangeAdd={(val) => onUpdate(v._key, "addQuantity", val)} />
+                    <QuantityCell existingQuantity={v.existingQuantity} addQuantity={v.addQuantity} onChangeAdd={(val) => onUpdate(v._key, "addQuantity", val)} isEdit={isEdit} />{" "}
                   </td>
                   <td className="px-3 py-2 text-center">
                     <button
@@ -1935,6 +1941,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                   onRemove={removeVariant}
                   errors={errors}
                   productName={name}
+                  isEdit={isEdit}
                 />
               ) : (
                 <div className="flex items-center justify-center py-8 text-[13px] text-neutral-dark rounded-lg border-2 border-dashed border-neutral">

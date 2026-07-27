@@ -142,6 +142,7 @@ export function useAdminListPage<T, SortByT extends string = string, ExtraParams
     meta,
     loading,
     error,
+    setError,
     refetch,
     // paging
     page,
