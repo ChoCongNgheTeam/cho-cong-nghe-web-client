@@ -203,6 +203,7 @@ export interface HomeStaticData {
   sliders: Slider[];
   bannersTop: Banner[];
   bannersSection1: Banner[];
+  bannersPopup: Banner[];
   featuredCategories: FeaturedCategory[];
   activeCampaigns: Campaign[];
   blogs: BlogPagination;

@@ -31,6 +31,7 @@ import {
   History,
   ClipboardCheck,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import type { NavGroup } from "./types";
 
@@ -90,6 +91,7 @@ export const adminNavGroups: NavGroup[] = [
       { title: "Voucher", href: "/admin/vouchers", icon: Ticket },
       { title: "Lịch sử dùng voucher", href: "/admin/vouchers/usages", icon: FileText },
       { title: "Voucher riêng tư", href: "/admin/vouchers/private-users", icon: Users },
+      { title: "Vòng quay may mắn", href: "/admin/spin-prizes", icon: Sparkles },
     ],
   },
   {

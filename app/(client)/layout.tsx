@@ -6,6 +6,7 @@ import ScrollBarTop from "@/components/ui/ScrollBarTop";
 import BackToTopButton from "@/components/ui/BackToTopButton";
 import ZaloButton from "@/components/ui/ZaloButton";
 import FloatingDock from "@/components/ui/FloatingDock";
+import SpinWheelButton from "@/components/spin/SpinWheelButton";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <FloatingDock>
         <ZaloButton />
         <ChatButton />
+        <SpinWheelButton />
         <BackToTopButton />
       </FloatingDock>
     </div>
