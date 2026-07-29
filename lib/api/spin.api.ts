@@ -19,6 +19,10 @@ export interface SpinResult {
   voucherCode: string | null;
 }
 
+// KHÔNG cần đăng nhập — dùng để quyết định ẩn/hiện nút vòng quay ngay lúc trang chủ
+// vừa load, kể cả với khách vãng lai (khác với /spin/status vốn bắt buộc login).
+export const getSpinAvailable = (): Promise<{ data: { available: boolean }; message: string }> => apiRequest.get("/spin/available");
+
 export const getSpinStatus = (): Promise<{ data: SpinStatus; message: string }> => apiRequest.get("/spin/status");
 
 export const spinWheel = (): Promise<{ data: SpinResult; message: string }> => apiRequest.post("/spin", {});

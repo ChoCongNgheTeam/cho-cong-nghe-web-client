@@ -1,6 +1,6 @@
 "use client";
 import { X, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChatBubble } from "./ChatBubble";
 import { ChatInput, type ChatInputHandle } from "./chat/ChatInput";
@@ -16,16 +16,17 @@ const NORMAL_H = 540;
 const MAX_W = 580;
 const MAX_H = 700;
 
-// FAB POSITIONING — đồng bộ với FloatingDock (ZaloButton + BackToTopButton).
-// Quy ước chung cho cả 3 nút nổi: breakpoint 768px, right 8px(mobile)/16px(desktop).
-// ChatButton nằm NGOÀI <FloatingDock> vì cần z-index cao hơn panel chat khi mở
-// (làm nút đóng nổi trên panel fullscreen ở mobile). Bottom offset tính thủ công để
-// luôn nằm phía trên 2 nút trong dock (Zalo + BackToTop), không chồng.
+// FAB POSITIONING — ChatButton nằm NGOÀI <FloatingDock> vì cần z-index cao hơn panel chat
+// khi mở (làm nút đóng nổi trên panel fullscreen ở mobile), nên KHÔNG hưởng layout flex
+// tự động của dock. Thay vì đoán offset bằng số cứng (dễ vỡ mỗi khi dock đổi số lượng nút
+// — đã từng gây lỗi 2 lần), giờ tự ĐO vị trí thật của #floating-dock (ResizeObserver) rồi
+// đặt ChatButton ngay phía trên nó — luôn đúng dù dock có bao nhiêu nút, kể cả khi 1 nút
+// trong dock ẩn/hiện linh động (như SpinWheelButton) sau khi đã mount.
+const DOCK_GAP = 12; // khoảng cách giữa ChatButton và mép trên của dock
 const BTN_SIZE = 48;
 const FAB_RIGHT_MOBILE = 8; // = dock's right-2
 const FAB_RIGHT_DESKTOP = 16; // = dock's md:right-4
-const BTN_BOTTOM_MOBILE = 200; // trên ZaloButton (160px) + BackToTop (100px), cách đều 60px
-const BTN_BOTTOM_DESKTOP = 125; // trên ZaloButton (72px) + BackToTop (24px), cách đều ~50px
+const FALLBACK_BOTTOM = 140; // dùng tạm trước khi đo được lần đầu, tránh nháy vị trí sai
 
 type PanelState = "closed" | "normal" | "maximized";
 
@@ -34,6 +35,7 @@ export default function ChatButton() {
   const [hasUnread, setHasUnread] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [dockOffset, setDockOffset] = useState(FALLBACK_BOTTOM);
 
   const isOpen = panelState !== "closed";
   const isMaximized = panelState === "maximized";
@@ -62,6 +64,29 @@ export default function ChatButton() {
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Đo vị trí thật của #floating-dock để đặt ChatButton ngay phía trên nó — tự cập nhật
+  // khi dock đổi chiều cao (vd SpinWheelButton ẩn/hiện sau khi fetch xong lúc mount) hoặc
+  // khi xoay màn hình/đổi kích thước cửa sổ. Dùng useLayoutEffect để đo trước khi paint,
+  // tránh nháy vị trí sai lúc đầu.
+  useLayoutEffect(() => {
+    const dockEl = document.getElementById("floating-dock");
+    if (!dockEl) return;
+
+    const measure = () => {
+      const rect = dockEl.getBoundingClientRect();
+      setDockOffset(Math.max(0, Math.round(window.innerHeight - rect.top + DOCK_GAP)));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(dockEl);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   useEffect(() => {
@@ -119,7 +144,7 @@ export default function ChatButton() {
   const btnStyle: React.CSSProperties = {
     position: "fixed",
     right: mobile ? FAB_RIGHT_MOBILE : FAB_RIGHT_DESKTOP,
-    bottom: mobile ? `calc(${BTN_BOTTOM_MOBILE}px + env(safe-area-inset-bottom))` : BTN_BOTTOM_DESKTOP,
+    bottom: dockOffset,
     width: BTN_SIZE,
     height: BTN_SIZE,
     zIndex: 10000,

@@ -81,7 +81,11 @@ export default function PromoPopup({ banners }: PromoPopupProps) {
       <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={handleClose} />
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-neutral-light">
-          <button onClick={handleClose} aria-label="Đóng" className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer">
+          <button
+            onClick={handleClose}
+            aria-label="Đóng"
+            className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer"
+          >
             <X size={16} />
           </button>
 
@@ -99,7 +103,10 @@ export default function PromoPopup({ banners }: PromoPopupProps) {
           )}
 
           <div className="px-5 pb-5">
-            <button onClick={handleViewGift} className="w-full flex items-center justify-center gap-2 py-3 bg-accent hover:bg-accent/90 text-white text-[14px] font-bold rounded-xl transition-colors cursor-pointer">
+            <button
+              onClick={handleViewGift}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-accent hover:bg-accent/90 text-white text-[14px] font-bold rounded-xl transition-colors cursor-pointer"
+            >
               <Gift size={16} />
               Xem quà tặng
             </button>

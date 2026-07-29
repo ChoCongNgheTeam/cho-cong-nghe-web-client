@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import LoginHintSheet from "@/cart/components/LoginHintSheet";
-import { getSpinStatus, type SpinStatus } from "@/lib/api/spin.api";
+import { getSpinStatus, getSpinAvailable, type SpinStatus } from "@/lib/api/spin.api";
 import SpinWheelModal from "./SpinWheelModal";
 
 export const OPEN_SPIN_WHEEL_EVENT = "ccnshop:open-spin-wheel";
@@ -14,10 +14,21 @@ export default function SpinWheelButton() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  // null = chưa xác định xong (không render gì để tránh nháy nút rồi biến mất) — matches
+  // đúng thiết kế ban đầu: "ẩn hoàn toàn nếu chưa có chương trình", tự check ngay lúc load trang,
+  // dùng /spin/available (không cần đăng nhập) nên khách vãng lai cũng được áp dụng.
+  const [available, setAvailable] = useState<boolean | null>(null);
+
   const [showLoginHint, setShowLoginHint] = useState(false);
   const [showWheel, setShowWheel] = useState(false);
   const [status, setStatus] = useState<SpinStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
+
+  useEffect(() => {
+    getSpinAvailable()
+      .then((res) => setAvailable(res.data.available))
+      .catch(() => setAvailable(false));
+  }, []);
 
   const openWheel = useCallback(async () => {
     // AuthContext vẫn đang xác nhận phiên đăng nhập (vd vừa load trang, đang refresh token) —
@@ -56,18 +67,20 @@ export default function SpinWheelButton() {
 
   return (
     <>
-      <button
-        onClick={openWheel}
-        disabled={authLoading}
-        aria-label="Vòng quay may mắn"
-        className="w-12 h-12 rounded-full flex items-center justify-center
-          bg-gradient-to-br from-accent to-orange-500 text-white
-          shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)]
-          hover:scale-105 active:scale-95 transition-all duration-300 animate-pulse
-          disabled:opacity-60 disabled:cursor-not-allowed disabled:animate-none"
-      >
-        <Sparkles size={22} />
-      </button>
+      {available && (
+        <button
+          onClick={openWheel}
+          disabled={authLoading}
+          aria-label="Vòng quay may mắn"
+          className="w-12 h-12 rounded-full flex items-center justify-center
+            bg-gradient-to-br from-accent to-orange-500 text-white
+            shadow-[0_8px_30px_rgb(0,0,0,0.14)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.20)]
+            hover:scale-105 active:scale-95 transition-all duration-300 animate-pulse
+            disabled:opacity-60 disabled:cursor-not-allowed disabled:animate-none"
+        >
+          <Sparkles size={22} />
+        </button>
+      )}
 
       <LoginHintSheet isOpen={showLoginHint} onClose={() => setShowLoginHint(false)} onLoginClick={handleLoginClick} />
 
