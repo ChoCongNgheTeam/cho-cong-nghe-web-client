@@ -5,7 +5,7 @@ import { Bot, ArrowUpRight, MapPin, Phone } from "lucide-react";
 import type { RecentOrder } from "../dashboard.types";
 import { formatDate, formatVND } from "../../../../../helpers";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// HELPERS
 
 const fmtVND = (v: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -22,7 +22,7 @@ const fmtDate = (iso: string) =>
     minute: "2-digit",
   }).format(new Date(iso));
 
-// ─── Status configs ───────────────────────────────────────────────────────────
+// STATUS CONFIGS
 
 const ORDER_STATUS: Record<string, { label: string; cls: string }> = {
   REQUEST_PENDING: {
@@ -58,14 +58,19 @@ const PAYMENT_STATUS: Record<string, { label: string; cls: string }> = {
   REFUND_PENDING: { label: "Chờ HT", cls: "text-yellow-500" },
 };
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// MAIN
+
+interface RecentOrdersTableUser {
+  role?: string;
+  permissions?: { canViewOrders?: boolean };
+}
 
 interface RecentOrdersTableProps {
   orders: RecentOrder[];
   title?: string;
   emptyMessage?: string;
   href: (path: string) => string;
-  user: any;
+  user: RecentOrdersTableUser | null | undefined;
 }
 
 export function RecentOrdersTable({ orders, title = "Đơn hàng gần đây", emptyMessage = "Chưa có đơn hàng nào", href, user }: RecentOrdersTableProps) {

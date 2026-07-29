@@ -34,7 +34,7 @@ function Skeleton() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// PAGE
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<DashboardPeriod>("month");
@@ -52,7 +52,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-neutral-light-active">
       <div className="px-6 py-3 space-y-2.5">
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
@@ -76,10 +76,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Loading ── */}
+        {/* Loading */}
         {isLoading && <Skeleton />}
 
-        {/* ── Content ── */}
+        {/* Content */}
         {dashboard && (
           <div className="space-y-2.5">
             {dashboard.chatbotPendingOrders.length > 0 && <ChatbotPendingBanner orders={dashboard.chatbotPendingOrders} />}
@@ -97,7 +97,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── Error ── */}
+        {/* Error */}
         {!isLoading && !dashboard && (
           <div className="flex flex-col items-center justify-center py-16 text-primary-light">
             <LayoutDashboard className="w-8 h-8 mb-2 opacity-30" />

@@ -1,21 +1,13 @@
-// ─── Types ────────────────────────────────────────────────────────────────────
+// TYPES
 
 import apiRequest from "@/lib/api";
 
-export type NotificationType =
-  | "WELCOME_VOUCHER"
-  | "VOUCHER_EXPIRING"
-  | "VOUCHER_ASSIGNED"
-  | "CAMPAIGN_PROMOTION"
-  | "ORDER_STATUS"
-  | "USER_INACTIVE"
-  | "COMMENT_NEW"
-  | "REVIEW_NEW";
+export type NotificationType = "WELCOME_VOUCHER" | "VOUCHER_EXPIRING" | "VOUCHER_ASSIGNED" | "CAMPAIGN_PROMOTION" | "ORDER_STATUS" | "USER_INACTIVE" | "COMMENT_NEW" | "REVIEW_NEW";
 
 export type NotificationChannel = "IN_APP" | "EMAIL" | "PUSH";
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED";
 
-// ─── Notification data payloads theo từng type ────────────────────────────────
+// NOTIFICATION DATA PAYLOADS THEO TỪNG TYPE
 
 export interface OrderStatusData {
   orderCode: string;
@@ -52,7 +44,7 @@ export interface NotificationDataMap {
   REVIEW_NEW: ReviewData;
 }
 
-// ─── Core Notification interface ──────────────────────────────────────────────
+// CORE NOTIFICATION INTERFACE
 
 export interface Notification<T extends NotificationType = NotificationType> {
   id: string;
@@ -60,9 +52,7 @@ export interface Notification<T extends NotificationType = NotificationType> {
   type: T;
   title: string;
   body: string;
-  data?: T extends keyof NotificationDataMap
-    ? NotificationDataMap[T]
-    : Record<string, unknown>;
+  data?: T extends keyof NotificationDataMap ? NotificationDataMap[T] : Record<string, unknown>;
   channel: NotificationChannel;
   status: NotificationStatus;
   isRead: boolean;
@@ -96,18 +86,16 @@ export interface SendCampaignResponse {
   data: { sentTo: number };
 }
 
-// ─── User APIs ────────────────────────────────────────────────────────────────
+// USER APIS
 
 export const getMyNotifications = (page = 1, limit = 20) =>
   apiRequest.get<NotificationListResponse>("/notifications", {
     params: { page, limit },
   });
 
-export const markAsRead = (id: string) =>
-  apiRequest.patch<{ message: string }>(`/notifications/${id}/read`);
+export const markAsRead = (id: string) => apiRequest.patch<{ message: string }>(`/notifications/${id}/read`);
 
-export const markAllAsRead = () =>
-  apiRequest.patch<{ message: string }>("/notifications/read-all");
+export const markAllAsRead = () => apiRequest.patch<{ message: string }>("/notifications/read-all");
 
 export const saveFcmToken = (token: string, device?: "web" | "ios" | "android") =>
   apiRequest.post<{ message: string }>("/notifications/fcm-token", {
@@ -115,10 +103,8 @@ export const saveFcmToken = (token: string, device?: "web" | "ios" | "android") 
     device,
   });
 
-export const deleteFcmToken = (token: string) =>
-  apiRequest.delete<{ message: string }>("/notifications/fcm-token", { token });
+export const deleteFcmToken = (token: string) => apiRequest.delete<{ message: string }>("/notifications/fcm-token", { token });
 
-// ─── Admin APIs ───────────────────────────────────────────────────────────────
+// ADMIN APIS
 
-export const sendCampaign = (payload: SendCampaignPayload) =>
-  apiRequest.post<SendCampaignResponse>("/notifications/admin/campaign", payload);
+export const sendCampaign = (payload: SendCampaignPayload) => apiRequest.post<SendCampaignResponse>("/notifications/admin/campaign", payload);

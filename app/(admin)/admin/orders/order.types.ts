@@ -1,9 +1,9 @@
-// ─── Enums ────────────────────────────────────────────────────────────────────
+// ENUMS
 
 export type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 export type PaymentStatus = "UNPAID" | "PAID" | "REFUND_PENDING" | "REFUNDED";
-// ─── Entities ─────────────────────────────────────────────────────────────────
+// ENTITIES
 
 export interface OrderUser {
   id: string;
@@ -62,23 +62,23 @@ export interface Order {
   voucherId: string | null;
   voucherCode?: string | null;
   shippingAddressId: string | null;
-  // ── Shipping snapshot (lưu trực tiếp trên order) ──
+  // SHIPPING SNAPSHOT (LƯU TRỰC TIẾP TRÊN ORDER)
   shippingContactName: string;
   shippingPhone: string;
   shippingProvince: string;
   shippingWard: string;
   shippingDetail: string;
-  // ── Money ──
+  // MONEY
   subtotalAmount: string;
   shippingFee: string;
   voucherDiscount: string;
   totalAmount: string;
-  // ── Status ──
+  // STATUS
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   orderDate: string;
   updatedAt: string;
-  // ── Relations ──
+  // RELATIONS
   user: OrderUser;
   paymentMethod: PaymentMethod;
   voucher: null | { id: string; code: string };

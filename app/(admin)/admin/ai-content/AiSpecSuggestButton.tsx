@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { Sparkles, Loader2, Check, X, Info, AlertCircle, ChevronDown, ChevronUp, Wand2 } from "lucide-react";
 import apiRequest from "@/lib/api";
 
-// ─── Types ───────────────────────────────────────────────────
+// TYPES
 
 interface SpecItem {
   id: string; // specificationId
@@ -46,7 +46,7 @@ interface AiSpecSuggestButtonProps {
   onApply: (updates: Record<string, string>) => void;
 }
 
-// ─── Utils ───────────────────────────────────────────────────
+// UTILS
 
 const scoreColor = (count: number, total: number) => {
   const pct = total > 0 ? count / total : 0;
@@ -55,7 +55,7 @@ const scoreColor = (count: number, total: number) => {
   return "text-neutral-dark";
 };
 
-// ─── Preview Modal ───────────────────────────────────────────
+// PREVIEW MODAL
 
 function PreviewModal({
   suggestions,
@@ -210,7 +210,7 @@ function PreviewModal({
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────
+// MAIN COMPONENT
 
 export function AiSpecSuggestButton({ productName, categoryId, specGroups, specs, onApply }: AiSpecSuggestButtonProps) {
   const [loading, setLoading] = useState(false);
@@ -256,7 +256,7 @@ export function AiSpecSuggestButton({ productName, categoryId, specGroups, specs
         { timeout: 60_000 },
       );
 
-      const raw = (res as any)?.data?.suggestions ?? {};
+      const raw = res.data.suggestions;
 
       // Build SuggestionResult array — chỉ include field có giá trị (not null)
       const results: SuggestionResult[] = [];
@@ -282,8 +282,8 @@ export function AiSpecSuggestButton({ productName, categoryId, specGroups, specs
 
       setSuggestions(results);
       setShowPreview(true);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể gợi ý thông số. Vui lòng thử lại.");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể gợi ý thông số. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }

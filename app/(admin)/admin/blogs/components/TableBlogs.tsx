@@ -1,11 +1,11 @@
 import { Eye, Pencil, Trash2, ChevronDown } from "lucide-react";
-import Link from "next/link";
 import { AdminColumn } from "@/components/admin/AdminTables";
+import { selectColumn, sttColumn, RowActionButton } from "@/components/admin/columns/adminColumns";
 import { BlogCard } from "../blog.types";
 import { BlogStatusBadge } from "./BlogStatusBadge";
 import { BLOG_TYPE_LABELS, BLOG_TYPE_COLORS } from "../_lib/constants";
 import type { BlogType } from "../blog.types";
-import { formatDate, formatNumber } from "../../../../../helpers";
+import { formatDate, formatNumber } from "@/helpers";
 
 interface GetBlogColumnsParams {
   page: number;
@@ -27,29 +27,8 @@ const STATUS_DROPDOWN = [
 
 export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleOne, setOpenStatusId, onChangeStatus, onDeleteClick, prefix }: GetBlogColumnsParams): AdminColumn<BlogCard>[] {
   return [
-    {
-      key: "_select",
-      label: "",
-      width: "w-10",
-      align: "center",
-      render: (blog) => (
-        <input
-          type="checkbox"
-          checked={selected.has(blog.id)}
-          onChange={(e) => {
-            e.stopPropagation();
-            toggleOne(blog.id);
-          }}
-          className="w-3.5 h-3.5 rounded accent-accent cursor-pointer"
-        />
-      ),
-    },
-    {
-      key: "_stt",
-      label: "STT",
-      width: "w-14",
-      render: (_, idx) => (page - 1) * pageSize + idx + 1,
-    },
+    selectColumn<BlogCard>((b) => b.id, selected, toggleOne),
+    sttColumn<BlogCard>(page, pageSize),
     {
       key: "title",
       label: "Bài viết",
@@ -111,6 +90,9 @@ export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleO
       ),
     },
     {
+      // Status: giữ custom (không dùng statusDropdownColumn factory) vì hiển thị
+      // qua component <BlogStatusBadge> riêng + luôn liệt kê đủ 3 option (không
+      // ẩn option hiện tại, chỉ làm mờ) — khác pattern chuẩn của factory.
       key: "status",
       label: "Trạng thái",
       render: (blog) => {
@@ -155,27 +137,15 @@ export function getBlogColumns({ page, pageSize, selected, openStatusId, toggleO
       align: "right",
       render: (blog) => (
         <div className="flex items-center justify-end gap-2">
-          <Link
-            href={`${prefix}/blogs/${blog.id}`}
-            title="Xem chi tiết"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-          >
+          <RowActionButton href={`${prefix}/blogs/${blog.id}`} title="Xem chi tiết">
             <Eye size={14} />
-          </Link>
-          <Link
-            href={`${prefix}/blogs/${blog.id}?edit=true`}
-            title="Chỉnh sửa"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-accent-light hover:text-accent transition-colors"
-          >
+          </RowActionButton>
+          <RowActionButton href={`${prefix}/blogs/${blog.id}?edit=true`} title="Chỉnh sửa">
             <Pencil size={14} />
-          </Link>
-          <button
-            title="Xoá"
-            onClick={() => onDeleteClick(blog)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:bg-promotion-light hover:text-promotion transition-colors cursor-pointer"
-          >
+          </RowActionButton>
+          <RowActionButton title="Xoá" variant="danger" onClick={() => onDeleteClick(blog)}>
             <Trash2 size={14} />
-          </button>
+          </RowActionButton>
         </div>
       ),
     },

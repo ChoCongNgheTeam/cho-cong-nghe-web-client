@@ -4,72 +4,93 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Search, Plus, RefreshCw, BookOpen, Loader2, XCircle, Filter, ChevronDown, ChevronUp, X, Trash2, Eye, FileText, Archive } from "lucide-react";
 import Link from "next/link";
 import AdminTable from "@/components/admin/AdminTables";
-import { Popzy } from "@/components/modal";
-import type { BlogCard, BlogAuthor } from "./blog.types";
+import AdminPagination from "@/components/admin/AdminPagination";
+import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
+import type { BlogCard, BlogAuthor, BlogPagination, GetBlogsParams, BlogStatus } from "./blog.types";
 import { getAllBlogs, deleteBlog, bulkDeleteBlogs, bulkUpdateBlogStatus, getBlogAuthors } from "./_lib/blogs";
 import { BLOG_STATUS_TABS, SORT_OPTIONS } from "./_lib/constants";
 import { getBlogColumns } from "./components/TableBlogs";
 import { StatsCard } from "@/components/admin/StatsCard";
-import { formatNumber } from "../../../../helpers";
+import { formatNumber } from "@/helpers";
 import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
+import { useAdminListPage, type AdminListFetchResult } from "@/hooks/admin/useAdminListPage";
+
+type ActiveTab = "ALL" | BlogStatus;
+type SortBy = "publishedAt" | "createdAt" | "updatedAt" | "viewCount" | "title";
+
+interface BlogExtraParams {
+  status?: BlogStatus;
+  authorId?: string;
+}
+
+/**
+ * BE hiện trả `pagination` thay vì `meta` cho module này (không đồng nhất với
+ * các module khác) — adapter này chỉ ánh xạ lại tên field để dùng chung được
+ * `useAdminListPage`. Khi BE đồng bộ tên field, xoá adapter này và gọi thẳng
+ * `getAllBlogs`.
+ */
+async function fetchBlogsAdapted(params: GetBlogsParams & { page: number; limit: number; sortBy: SortBy; sortOrder: "asc" | "desc" }): Promise<AdminListFetchResult<BlogCard, BlogPagination>> {
+  const res = await getAllBlogs(params);
+  return { data: res.data, meta: res.pagination };
+}
 
 export default function BlogsPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────────
-  const [allBlogs, setAllBlogs] = useState<BlogCard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalFromServer, setTotalFromServer] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-
   const [authors, setAuthors] = useState<BlogAuthor[]>([]);
 
-  // ── Pagination ────────────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
-
-  // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  // Filter đặc thù module
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ALL");
   const [showFilters, setShowFilters] = useState(false);
   const [authorFilter, setAuthorFilter] = useState("");
-  const [sortBy, setSortBy] = useState("publishedAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const extraParams = useMemo<BlogExtraParams>(
+    () => ({
+      status: activeTab !== "ALL" ? activeTab : undefined,
+      authorId: authorFilter || undefined,
+    }),
+    [activeTab, authorFilter],
+  );
+
+  const {
+    data: allBlogs,
+    setData: setAllBlogs,
+    meta,
+    loading,
+    error,
+    refetch: fetchBlogs,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<BlogCard, SortBy, BlogExtraParams, BlogPagination>({
+    fetchFn: fetchBlogsAdapted,
+    defaultSortBy: "publishedAt",
+    defaultSortOrder: "desc",
+    defaultPageSize: 12,
+    defaultMeta: { page: 1, limit: 12, total: 0, totalPages: 1 },
+    extraParams,
+    getId: (b) => b.id,
+  });
+
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<BlogCard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const prefix = useAdminPrefix();
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────────
-  const fetchBlogs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAllBlogs({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        status: activeTab !== "ALL" ? (activeTab as any) : undefined,
-        authorId: authorFilter || undefined,
-        sortBy: sortBy as any,
-        sortOrder,
-      });
-      setAllBlogs(res.data);
-      setTotalFromServer(res.pagination.total);
-      setTotalPages(res.pagination.totalPages);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách bài viết");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, activeTab, authorFilter, sortBy, sortOrder]);
 
   const fetchAuthors = useCallback(async () => {
     try {
@@ -81,22 +102,19 @@ export default function BlogsPage() {
   }, []);
 
   useEffect(() => {
-    fetchBlogs();
-  }, [fetchBlogs]);
-  useEffect(() => {
     fetchAuthors();
   }, [fetchAuthors]);
 
-  // ── Stats (approximate từ server total + page data) ───────────────────────────
+  // Stats (approximate từ server total + page data)
   const stats = useMemo(
     () => ({
-      total: totalFromServer,
+      total: meta.total,
       published: allBlogs.filter((b) => b.status === "PUBLISHED").length,
       draft: allBlogs.filter((b) => b.status === "DRAFT").length,
       archived: allBlogs.filter((b) => b.status === "ARCHIVED").length,
       views: allBlogs.reduce((sum, b) => sum + b.viewCount, 0),
     }),
-    [allBlogs, totalFromServer],
+    [allBlogs, meta.total],
   );
 
   const hasActiveFilters = search || activeTab !== "ALL" || authorFilter;
@@ -106,47 +124,35 @@ export default function BlogsPage() {
     setSearchInput("");
     setActiveTab("ALL");
     setAuthorFilter("");
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage, setSearch, setSearchInput]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === allBlogs.length ? new Set() : new Set(allBlogs.map((b) => b.id))));
-  }, [allBlogs]);
-
-  // ── Change status ─────────────────────────────────────────────────────────────
-  const handleChangeStatus = useCallback(async (blog: BlogCard, status: string) => {
-    try {
-      await bulkUpdateBlogStatus([blog.id], status);
-      setAllBlogs((prev) => prev.map((b) => (b.id === blog.id ? { ...b, status: status as any } : b)));
-    } catch (e: any) {
-      alert(e?.message ?? "Không thể cập nhật trạng thái");
-    }
-  }, []);
+  const handleChangeStatus = useCallback(
+    async (blog: BlogCard, status: string) => {
+      try {
+        await bulkUpdateBlogStatus([blog.id], status);
+        setAllBlogs((prev) => prev.map((b) => (b.id === blog.id ? { ...b, status: status as BlogStatus } : b)));
+      } catch (e: unknown) {
+        alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
+      }
+    },
+    [setAllBlogs],
+  );
 
   const handleBulkStatus = useCallback(
     async (status: string) => {
       if (!selected.size) return;
       try {
         await bulkUpdateBlogStatus([...selected], status);
-        setAllBlogs((prev) => prev.map((b) => (selected.has(b.id) ? { ...b, status: status as any } : b)));
+        setAllBlogs((prev) => prev.map((b) => (selected.has(b.id) ? { ...b, status: status as BlogStatus } : b)));
         setSelected(new Set());
-      } catch (e: any) {
-        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      } catch (e: unknown) {
+        alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
-    [selected],
+    [selected, setAllBlogs, setSelected],
   );
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -160,12 +166,12 @@ export default function BlogsPage() {
         next.delete(deleteTarget.id);
         return next;
       });
-    } catch (e: any) {
-      setDeleteError(e?.message ?? "Không thể xoá bài viết");
+    } catch (e: unknown) {
+      setDeleteError((e as Error)?.message ?? "Không thể xoá bài viết");
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget]);
+  }, [deleteTarget, setAllBlogs, setSelected]);
 
   const handleBulkDelete = useCallback(async () => {
     if (!selected.size) return;
@@ -174,14 +180,13 @@ export default function BlogsPage() {
       await bulkDeleteBlogs([...selected]);
       setAllBlogs((prev) => prev.filter((b) => !selected.has(b.id)));
       setSelected(new Set());
-    } catch (e: any) {
-      alert(e?.message ?? "Không thể xoá bài viết");
+    } catch (e: unknown) {
+      alert((e as Error)?.message ?? "Không thể xoá bài viết");
     } finally {
       setBulkDeleting(false);
     }
-  }, [selected]);
+  }, [selected, setAllBlogs, setSelected]);
 
-  // ── Columns ───────────────────────────────────────────────────────────────────
   const columns = useMemo(
     () =>
       getBlogColumns({
@@ -195,12 +200,12 @@ export default function BlogsPage() {
         onDeleteClick: setDeleteTarget,
         prefix,
       }),
-    [page, pageSize, selected, openStatusId, toggleOne, handleChangeStatus],
+    [page, pageSize, selected, openStatusId, toggleOne, handleChangeStatus, prefix],
   );
 
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -225,20 +230,16 @@ export default function BlogsPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatsCard label="Tổng bài viết" value={stats.total} sub="Tất cả bài viết" icon={<BookOpen size={16} />} />
-
         <StatsCard label="Đã đăng" value={stats.published} sub="Đang hiển thị" icon={<Eye size={16} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
-
         <StatsCard label="Nháp" value={stats.draft} sub="Chưa công khai" icon={<FileText size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
-
         <StatsCard label="Lưu trữ" value={stats.archived} sub="Không còn sử dụng" icon={<Archive size={16} />} valueClassName="text-gray-500" iconClassName="text-gray-500" />
-
         <StatsCard label="Tổng lượt xem" value={formatNumber(stats.views)} sub="Tổng số lượt truy cập" icon={<Eye size={16} />} valueClassName="text-purple-600" iconClassName="text-purple-600" />
       </div>
 
-      {/* ── Main card ── */}
+      {/* Main card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
         {/* Toolbar */}
         <div className="px-5 py-4 space-y-3 border-b border-neutral">
@@ -249,7 +250,7 @@ export default function BlogsPage() {
                 key={tab.value}
                 onClick={() => {
                   setActiveTab(tab.value);
-                  setPage(1);
+                  resetPage();
                 }}
                 className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer transition-all ${activeTab === tab.value ? "bg-accent text-white" : "text-primary hover:bg-neutral-light-active"}`}
               >
@@ -268,7 +269,7 @@ export default function BlogsPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     setSearch(searchInput);
-                    setPage(1);
+                    resetPage();
                   }
                 }}
                 placeholder="Tìm tiêu đề, nội dung..."
@@ -279,7 +280,7 @@ export default function BlogsPage() {
                   onClick={() => {
                     setSearchInput("");
                     setSearch("");
-                    setPage(1);
+                    resetPage();
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
                 >
@@ -290,7 +291,7 @@ export default function BlogsPage() {
             <button
               onClick={() => {
                 setSearch(searchInput);
-                setPage(1);
+                resetPage();
               }}
               className="px-3 py-2 bg-accent text-white text-[13px] font-medium rounded-xl hover:bg-accent/90 cursor-pointer"
             >
@@ -310,7 +311,7 @@ export default function BlogsPage() {
                 <X size={13} /> Xoá lọc
               </button>
             )}
-            <span className="ml-auto text-[12px] text-primary">{totalFromServer} bài viết</span>
+            <span className="ml-auto text-[12px] text-primary">{meta.total} bài viết</span>
           </div>
 
           {/* Row 3: Expanded filters */}
@@ -322,7 +323,7 @@ export default function BlogsPage() {
                   value={authorFilter}
                   onChange={(e) => {
                     setAuthorFilter(e.target.value);
-                    setPage(1);
+                    resetPage();
                   }}
                   className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
                 >
@@ -339,8 +340,8 @@ export default function BlogsPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
+                    setSortBy(e.target.value as SortBy);
+                    resetPage();
                   }}
                   className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
                 >
@@ -357,7 +358,7 @@ export default function BlogsPage() {
                   value={sortOrder}
                   onChange={(e) => {
                     setSortOrder(e.target.value as "asc" | "desc");
-                    setPage(1);
+                    resetPage();
                   }}
                   className="w-full px-3 py-1.5 text-[12px] border border-neutral rounded-lg text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
                 >
@@ -426,8 +427,8 @@ export default function BlogsPage() {
           <AdminTable columns={columns} data={allBlogs} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
-        {/* Pagination */}
-        {!loading && !error && allBlogs.length > 0 && (
+        {/* Pagination — trước đây bị comment-out, không có cách xem trang 2 trở đi. Bổ sung lại. */}
+        {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-primary">Hiển thị</span>
@@ -435,7 +436,7 @@ export default function BlogsPage() {
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
-                  setPage(1);
+                  resetPage();
                 }}
                 className="px-2 py-1 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none cursor-pointer"
               >
@@ -445,51 +446,37 @@ export default function BlogsPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-[12px] text-primary">/ {totalFromServer} bài viết</span>
+              <span className="text-[12px] text-primary">/ {meta.total} bài viết</span>
             </div>
-            {/* <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} /> */}
+            <AdminPagination
+              currentPage={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                resetPage();
+              }}
+              pageSizeOptions={[12, 24, 50]}
+              siblingCount={1}
+            />
           </div>
         )}
       </div>
 
       {/* Delete Modal */}
-      {deleteTarget && (
-        <Popzy
-          isOpen={!!deleteTarget}
-          onClose={() => !deleting && setDeleteTarget(null)}
-          footer={false}
-          closeMethods={deleting ? [] : ["button", "overlay", "escape"]}
-          content={
-            <div className="py-2">
-              <div className="w-12 h-12 rounded-2xl bg-promotion-light flex items-center justify-center text-promotion mx-auto mb-4">
-                <Trash2 size={22} strokeWidth={1.5} />
-              </div>
-              <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá bài viết?</h3>
-              <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc muốn xoá</p>
-              <p className="text-[14px] font-semibold text-primary text-center mb-5 line-clamp-2">"{deleteTarget.title}"</p>
-              <p className="text-[12px] text-promotion text-center mb-6">Bài viết sẽ được chuyển vào thùng rác.</p>
-              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer disabled:opacity-50"
-                >
-                  Huỷ
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  disabled={deleting}
-                  className="flex-1 px-4 py-2.5 bg-promotion hover:bg-promotion/90 disabled:opacity-60 text-white text-[13px] font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  {deleting && <Loader2 size={13} className="animate-spin" />}
-                  {deleting ? "Đang xoá..." : "Xoá bài viết"}
-                </button>
-              </div>
-            </div>
-          }
-        />
-      )}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Xoá bài viết?"
+        itemName={deleteTarget?.title}
+        warningText="Bài viết sẽ được chuyển vào thùng rác."
+        onConfirm={handleDeleteConfirm}
+        loading={deleting}
+        error={deleteError}
+        confirmLabel="Xoá bài viết"
+      />
     </div>
   );
 }

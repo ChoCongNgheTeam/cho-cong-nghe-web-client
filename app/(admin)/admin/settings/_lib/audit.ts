@@ -1,6 +1,6 @@
 import apiRequest from "@/lib/api";
 
-/* ─── Types ─── */
+// TYPES
 export type AuditSeverity = "INFO" | "WARNING" | "CRITICAL";
 export type AuditAction = "CREATE" | "READ" | "UPDATE" | "DELETE" | "RESTORE" | "LOGIN" | "LOGOUT" | "LOGIN_FAILED" | "PERMISSION_CHANGE" | "BULK_ACTION" | "EXPORT" | "SETTINGS_CHANGE";
 
@@ -77,7 +77,7 @@ export interface GetLoginHistoryParams {
   limit?: number;
 }
 
-/* ─── API ─── */
+// API
 
 export const getAuditLogs = async (params?: GetAuditLogsParams): Promise<PaginatedResponse<AuditLog>> => {
   return apiRequest.get("/audit/logs", { params });

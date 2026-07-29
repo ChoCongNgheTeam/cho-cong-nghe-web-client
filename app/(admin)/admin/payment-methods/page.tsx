@@ -11,7 +11,7 @@ import { StatsCard } from "@/components/admin/StatsCard";
 // Các phương thức không phụ thuộc tích hợp bên thứ 3 → luôn khả dụng
 const ALWAYS_ON_METHODS = new Set(["COD"]);
 
-// ── Toggle ────────────────────────────────────────────────────────────────────
+// TOGGLE
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" onClick={() => onChange(!value)} className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${value ? "bg-accent" : "bg-neutral"}`}>
@@ -20,7 +20,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
-// ── Badge tĩnh cho COD ────────────────────────────────────────────────────────
+// BADGE TĨNH CHO COD
 function AlwaysOnBadge() {
   return (
     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 select-none shrink-0">
@@ -33,7 +33,7 @@ function AlwaysOnBadge() {
 const inputCls =
   "w-full px-3 py-2 text-[13px] bg-neutral-light border border-neutral rounded-xl text-primary placeholder:text-primary/60 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all";
 
-// ── Form state ────────────────────────────────────────────────────────────────
+// FORM STATE
 interface MethodForm {
   name: string;
   code: string;
@@ -57,7 +57,7 @@ function methodToForm(m: PaymentMethod): MethodForm {
   };
 }
 
-// ── Modal form ────────────────────────────────────────────────────────────────
+// MODAL FORM
 function MethodFormModal({
   isOpen,
   onClose,
@@ -164,7 +164,7 @@ function MethodFormModal({
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// PAGE
 export default function PaymentMethodsPage() {
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,8 +184,8 @@ export default function PaymentMethodsPage() {
     try {
       const res = await getAllPaymentMethods();
       setMethods(res.data);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải phương thức thanh toán");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể tải phương thức thanh toán");
     } finally {
       setLoading(false);
     }
@@ -209,8 +209,8 @@ export default function PaymentMethodsPage() {
       const res = await createPaymentMethod(payload);
       setMethods((prev) => [res.data, ...prev]);
       setCreateOpen(false);
-    } catch (e: any) {
-      setCreateError(e?.message ?? "Không thể tạo phương thức");
+    } catch (e: unknown) {
+      setCreateError((e as Error)?.message ?? "Không thể tạo phương thức");
     } finally {
       setCreating(false);
     }
@@ -230,8 +230,8 @@ export default function PaymentMethodsPage() {
         const res = await updatePaymentMethod(editTarget.id, payload);
         setMethods((prev) => prev.map((m) => (m.id === editTarget.id ? res.data : m)));
         setEditTarget(null);
-      } catch (e: any) {
-        setEditError(e?.message ?? "Không thể cập nhật");
+      } catch (e: unknown) {
+        setEditError((e as Error)?.message ?? "Không thể cập nhật");
       } finally {
         setEditing(false);
       }
@@ -247,8 +247,8 @@ export default function PaymentMethodsPage() {
         isActive: !method.isActive,
       });
       setMethods((prev) => prev.map((m) => (m.id === method.id ? res.data : m)));
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể cập nhật trạng thái");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể cập nhật trạng thái");
     }
   }, []);
 
@@ -256,14 +256,14 @@ export default function PaymentMethodsPage() {
 
   return (
     <div className="space-y-5 p-5 bg-neutral-light min-h-full">
-      {/* ── Stats ── */}
+      {/* STATS */}
       <div className="grid grid-cols-3 gap-4">
         <StatsCard label="Tổng" value={methods.length} sub="Phương thức đã cấu hình" icon={<CreditCard size={18} />} valueClassName="text-accent" />
         <StatsCard label="Đang hoạt động" value={activeCount} sub="Khách hàng có thể chọn" icon={<CheckCircle size={18} />} valueClassName="text-emerald-600" iconClassName="text-emerald-600" />
         <StatsCard label="Tạm dừng" value={methods.length - activeCount} sub="Đã bị vô hiệu hóa" icon={<PauseCircle size={18} />} valueClassName="text-orange-500" iconClassName="text-orange-500" />
       </div>
 
-      {/* ── Main card ── */}
+      {/* MAIN CARD */}
       <div className="bg-neutral-light border border-neutral rounded-xl">
         {/* Toolbar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral">

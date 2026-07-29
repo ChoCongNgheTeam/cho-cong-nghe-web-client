@@ -8,13 +8,13 @@ import { usePopzy } from "@/hooks/usePopzy";
 import { useToasty } from "@/components/toast";
 import { Popzy } from "@/components/modal";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// CONSTANTS
 const typeColor: Record<MediaType, string> = {
   SLIDER: "bg-accent-light text-accent border border-accent/30",
   BANNER: "bg-promotion-light text-promotion border border-promotion/30",
 };
 
-// ─── Form State ───────────────────────────────────────────────────────────────
+// FORM STATE
 interface FormState {
   type: MediaType;
   position: MediaPosition;
@@ -39,7 +39,7 @@ const defaultForm: FormState = {
   imagePreview: null,
 };
 
-// ─── Media Form Component ─────────────────────────────────────────────────────
+// MEDIA FORM COMPONENT
 function MediaForm({ initial, onSubmit, loading }: { initial?: Partial<FormState & { imageUrl?: string }>; onSubmit: (fd: FormData) => Promise<void>; loading: boolean }) {
   const [form, setForm] = useState<FormState>(() => ({
     ...defaultForm,
@@ -204,7 +204,7 @@ function MediaForm({ initial, onSubmit, loading }: { initial?: Partial<FormState
   );
 }
 
-// ─── Delete Confirm Content ───────────────────────────────────────────────────
+// DELETE CONFIRM CONTENT
 function DeleteConfirmContent({ item, onConfirm, onCancel }: { item: Media; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div className="space-y-4">
@@ -243,7 +243,7 @@ function DeleteConfirmContent({ item, onConfirm, onCancel }: { item: Media; onCo
   );
 }
 
-// ─── Reorder Content ──────────────────────────────────────────────────────────
+// REORDER CONTENT
 function ReorderContent({ item, onConfirm, onCancel }: { item: Media; onConfirm: (order: number) => void; onCancel: () => void }) {
   const [val, setVal] = useState(String(item.order));
 
@@ -281,7 +281,7 @@ function ReorderContent({ item, onConfirm, onCancel }: { item: Media; onConfirm:
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// MAIN PAGE
 export default function MediaAdminPage() {
   const { success, error: toastError } = useToasty();
 
@@ -306,7 +306,7 @@ export default function MediaAdminPage() {
   const [filterPosition, setFilterPosition] = useState<MediaPosition | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // ── Fetch ──
+  // FETCH
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -323,7 +323,7 @@ export default function MediaAdminPage() {
     fetchAll();
   }, [fetchAll]);
 
-  // ── Filtered ──
+  // FILTERED
   const filtered = mediaList.filter((m) => {
     if (filterType !== "ALL" && m.type !== filterType) return false;
     if (filterPosition !== "ALL" && m.position !== filterPosition) return false;
@@ -331,7 +331,7 @@ export default function MediaAdminPage() {
     return true;
   });
 
-  // ── Create ──
+  // CREATE
   const handleCreate = async (fd: FormData) => {
     setFormLoading(true);
     try {
@@ -346,7 +346,7 @@ export default function MediaAdminPage() {
     }
   };
 
-  // ── Update ──
+  // UPDATE
   const handleUpdate = async (fd: FormData) => {
     if (!editTarget) return;
     setFormLoading(true);
@@ -363,7 +363,7 @@ export default function MediaAdminPage() {
     }
   };
 
-  // ── Delete ──
+  // DELETE
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
@@ -377,7 +377,7 @@ export default function MediaAdminPage() {
     }
   };
 
-  // ── Reorder ──
+  // REORDER
   const handleReorder = async (newOrder: number) => {
     if (!reorderTarget) return;
     try {
@@ -391,7 +391,7 @@ export default function MediaAdminPage() {
     }
   };
 
-  // ── Toggle Active ──
+  // TOGGLE ACTIVE
   const handleToggleActive = async (item: Media) => {
     try {
       await toggleMediaActive(item.id, !item.isActive);
@@ -402,19 +402,19 @@ export default function MediaAdminPage() {
     }
   };
 
-  // ── Open edit modal ──
+  // OPEN EDIT MODAL
   const openEdit = (item: Media) => {
     setEditTarget(item);
     editModal.open();
   };
 
-  // ── Open delete modal ──
+  // OPEN DELETE MODAL
   const openDelete = (item: Media) => {
     setDeleteTarget(item);
     deleteModal.open();
   };
 
-  // ── Open reorder modal ──
+  // OPEN REORDER MODAL
   const openReorder = (item: Media) => {
     setReorderTarget(item);
     reorderModal.open();
@@ -423,7 +423,7 @@ export default function MediaAdminPage() {
   return (
     <div className="min-h-screen bg-neutral-light">
       <div className="px-6 py-10">
-        {/* ── Header ── */}
+        {/* HEADER */}
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-primary">Quản lý Media</h1>
@@ -442,7 +442,7 @@ export default function MediaAdminPage() {
           </button>
         </div>
 
-        {/* ── Filters ── */}
+        {/* FILTERS */}
         <div className="mb-5 flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative">
@@ -501,7 +501,7 @@ export default function MediaAdminPage() {
           )}
         </div>
 
-        {/* ── Table ── */}
+        {/* TABLE */}
         <div className="overflow-hidden rounded-xl border border-neutral bg-neutral-light shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -637,7 +637,7 @@ export default function MediaAdminPage() {
           </div>
         </div>
 
-        {/* ── Stats bar ── */}
+        {/* STATS BAR */}
         {!loading && (
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-primary">
             <span>
@@ -655,7 +655,7 @@ export default function MediaAdminPage() {
         )}
       </div>
 
-      {/* ── Modal: Create ── */}
+      {/* MODAL: CREATE */}
       <Popzy
         isOpen={createModal.isOpen}
         onClose={createModal.close}
@@ -668,7 +668,7 @@ export default function MediaAdminPage() {
         closeMethods={["button", "overlay", "escape"]}
       />
 
-      {/* ── Modal: Edit ── */}
+      {/* MODAL: EDIT */}
       <Popzy
         isOpen={editModal.isOpen}
         onClose={() => {
@@ -699,7 +699,7 @@ export default function MediaAdminPage() {
         closeMethods={["button", "overlay", "escape"]}
       />
 
-      {/* ── Modal: Delete ── */}
+      {/* MODAL: DELETE */}
       <Popzy
         isOpen={deleteModal.isOpen}
         onClose={() => {

@@ -1,33 +1,27 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Search, Filter, CalendarDays, Eye, Package, RefreshCw, Plus, X, ChevronDown } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo, useRef, type FormEvent } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { Search, Filter, CalendarDays, Eye, Package, RefreshCw, Plus, X, ChevronDown, Ban, ShoppingCart, Clock, CheckCircle, Truck } from "lucide-react";
+import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import type { Order, OrderStatus, PaymentStatus } from "./order.types";
-import { cancelOrder, exportOrders, getAllOrders, updatePaymentStatus } from "./_lib/orders";
+import { cancelOrder, exportOrders, getAllOrders, updatePaymentStatus, type OrdersResponse, type GetAllOrdersParams } from "./_lib/orders";
 import { STATUS_TABS } from "./_lib/constants";
 import { OrderStatusCell, PaymentStatusCell, PaymentBadge, TableSkeleton } from "./components";
-import { formatDate, formatVND } from "../../../../helpers";
-import Link from "next/link";
+import { formatDate, formatVND } from "@/helpers";
 import { Popzy } from "@/components/modal";
-import { Ban, ShoppingCart, Clock, CheckCircle, Truck } from "lucide-react";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { PaymentMethodCell } from "./components/PaymentMethodCell";
 import { useAdminPrefix } from "@/contexts/AdminPrefixContext";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../../../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { STAFF_ROLES } from "@/types/staff-permissions.types";
+import { useAdminListPage, type AdminListFetchResult } from "@/hooks/admin/useAdminListPage";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-interface OrderMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  statusCounts: Record<string, number>;
-}
+// TYPES
+
+type OrderMeta = OrdersResponse["meta"];
 
 const DEFAULT_META: OrderMeta = {
   page: 1,
@@ -44,10 +38,7 @@ const DEFAULT_META: OrderMeta = {
   },
 };
 
-const PAYMENT_STATUS_OPTIONS: {
-  value: PaymentStatus | "ALL";
-  label: string;
-}[] = [
+const PAYMENT_STATUS_OPTIONS: { value: PaymentStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "PAID", label: "Đã thanh toán" },
   { value: "UNPAID", label: "Chưa thanh toán" },
@@ -55,40 +46,93 @@ const PAYMENT_STATUS_OPTIONS: {
   { value: "REFUND_PENDING", label: "Chờ hoàn tiền" },
 ];
 
+interface OrderExtraParams {
+  activeTab: string;
+  paymentFilter: PaymentStatus | "ALL";
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+/**
+ * fetchFn cho useAdminListPage. Giữ nguyên hành vi gốc: sau khi fetch, nếu
+ * đang ở tab "ALL" thì đẩy đơn PENDING lên đầu (sort theo ngày cũ nhất trước);
+ * nếu đang ở tab "PENDING" thì sort toàn bộ theo ngày cũ nhất trước.
+ * Module này không có sort UI nên sortBy/sortOrder từ hook không được dùng.
+ */
+async function fetchOrdersAdapted(params: { page: number; limit: number; search?: string } & OrderExtraParams): Promise<AdminListFetchResult<Order, OrderMeta>> {
+  const { page, limit, search, activeTab, paymentFilter, dateFrom, dateTo } = params;
+
+  const apiParams: GetAllOrdersParams = {
+    page,
+    limit,
+    status: activeTab === "ALL" ? undefined : activeTab,
+    search: search || undefined,
+    paymentStatus: paymentFilter === "ALL" ? undefined : paymentFilter,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  };
+  const res = await getAllOrders(apiParams);
+
+  const sorted =
+    activeTab === "PENDING"
+      ? [...res.data].sort((a, b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime())
+      : activeTab === "ALL"
+        ? [
+            ...res.data.filter((o) => o.orderStatus === "PENDING").sort((a, b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime()),
+            ...res.data.filter((o) => o.orderStatus !== "PENDING"),
+          ]
+        : res.data;
+
+  return { data: sorted, meta: res.meta };
+}
+
 export default function OrdersPage() {
   const pathname = usePathname();
   const prevPathname = useRef(pathname);
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ─── Highlight từ notification ────────────────────────────────────────────
+  // Highlight từ notification
   const highlightCode = searchParams.get("highlight");
 
-  // ─── Data state ──────────────────────────────────────────────────────────────
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [meta, setMeta] = useState<OrderMeta>(DEFAULT_META);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // ─── Query params ─────────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // Filter đặc thù module
   const [activeTab, setActiveTab] = useState("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-
-  // Bộ lọc thanh toán
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "ALL">("ALL");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
-
-  // Lọc theo ngày
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
 
-  // ─── Cancel modal ─────────────────────────────────────────────────────────────
+  const extraParams = useMemo<OrderExtraParams>(() => ({ activeTab, paymentFilter, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }), [activeTab, paymentFilter, dateFrom, dateTo]);
+
+  const {
+    data: orders,
+    setData: setOrders,
+    meta,
+    loading,
+    error,
+    setError,
+    refetch: fetchOrders,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+  } = useAdminListPage<Order, "orderDate", OrderExtraParams, OrderMeta>({
+    fetchFn: fetchOrdersAdapted,
+    defaultSortBy: "orderDate",
+    defaultMeta: DEFAULT_META,
+    extraParams,
+    getId: (o) => o.id,
+  });
+
+  // Cancel modal
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
@@ -96,10 +140,10 @@ export default function OrdersPage() {
 
   const [globalCounts, setGlobalCounts] = useState<Record<string, number>>(DEFAULT_META.statusCounts);
 
-  const { user } = useAuth(); // ← thêm
+  const { user } = useAuth();
   const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");
 
-  // ─── Close dropdowns khi click ngoài ─────────────────────────────────────────
+  // Close dropdowns khi click ngoài
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) setShowFilterDropdown(false);
@@ -109,7 +153,7 @@ export default function OrdersPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Thay toàn bộ useEffect highlight bằng cái này:
+  // Highlight từ notification: cuộn tới + xoá query param sau 3s
   useEffect(() => {
     if (!highlightCode || loading || orders.length === 0) return;
 
@@ -128,67 +172,27 @@ export default function OrdersPage() {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [highlightCode, loading, orders]);
-
-  // ─── Fetch ────────────────────────────────────────────────────────────────────
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAllOrders({
-        page,
-        limit: pageSize,
-        status: activeTab === "ALL" ? undefined : activeTab,
-        search: search || undefined,
-        paymentStatus: paymentFilter === "ALL" ? undefined : paymentFilter,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-      });
-      const sorted =
-        activeTab === "PENDING"
-          ? [...res.data].sort((a, b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime())
-          : activeTab === "ALL"
-            ? [
-                ...res.data.filter((o) => o.orderStatus === "PENDING").sort((a, b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime()),
-                ...res.data.filter((o) => o.orderStatus !== "PENDING"),
-              ]
-            : res.data;
-      setOrders(sorted);
-      setMeta(res.meta);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách đơn hàng");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, activeTab, search, paymentFilter, dateFrom, dateTo]);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  }, [highlightCode, loading, orders, searchParams, router]);
 
   const fetchGlobalCounts = useCallback(async () => {
     try {
       const res = await getAllOrders({ page: 1, limit: 1 });
       setGlobalCounts(res.meta.statusCounts);
-    } catch {}
+    } catch {
+      /* silent */
+    }
   }, []);
 
   useEffect(() => {
     fetchGlobalCounts();
-  }, []);
+  }, [fetchGlobalCounts]);
 
-  const handlePaymentMethodChange = useCallback((orderId: string, newMethod: { id: string; name: string }) => {
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? {
-              ...o,
-              paymentMethod: { ...o.paymentMethod, ...newMethod },
-            }
-          : o,
-      ),
-    );
-  }, []);
+  const handlePaymentMethodChange = useCallback(
+    (orderId: string, newMethod: { id: string; name: string }) => {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentMethod: { ...o.paymentMethod, ...newMethod } } : o)));
+    },
+    [setOrders],
+  );
 
   // Refetch khi navigate về list từ detail
   useEffect(() => {
@@ -197,24 +201,21 @@ export default function OrdersPage() {
     if (wasOnDetail) fetchOrders();
   }, [pathname, fetchOrders]);
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────────
-  const resetPage = () => setPage(1);
+  // Helpers
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     resetPage();
   };
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     setSearch(searchInput);
     resetPage();
   };
-
   const handlePaymentFilterChange = (val: PaymentStatus | "ALL") => {
     setPaymentFilter(val);
     setShowFilterDropdown(false);
     resetPage();
   };
-
   const handleApplyDate = () => {
     setShowDatePicker(false);
     resetPage();
@@ -229,22 +230,28 @@ export default function OrdersPage() {
   const hasPaymentFilter = paymentFilter !== "ALL";
   const hasDateFilter = !!dateFrom || !!dateTo;
 
-  const handleStatusChange = useCallback(async (orderId: string, newStatus: OrderStatus) => {
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus } : o)));
-    // Tự động chuyển thanh toán → PAID khi đơn hoàn tất
-    if (newStatus === "DELIVERED") {
-      try {
-        await updatePaymentStatus(orderId, "PAID");
-        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "PAID" } : o)));
-      } catch {
-        // silent — trạng thái sẽ đồng bộ lại khi refetch
+  const handleStatusChange = useCallback(
+    async (orderId: string, newStatus: OrderStatus) => {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus } : o)));
+      // Tự động chuyển thanh toán → PAID khi đơn hoàn tất
+      if (newStatus === "DELIVERED") {
+        try {
+          await updatePaymentStatus(orderId, "PAID");
+          setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "PAID" } : o)));
+        } catch {
+          // silent — trạng thái sẽ đồng bộ lại khi refetch
+        }
       }
-    }
-  }, []);
+    },
+    [setOrders],
+  );
 
-  const handlePaymentStatusChange = useCallback((orderId: string, newPaymentStatus: PaymentStatus) => {
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: newPaymentStatus } : o)));
-  }, []);
+  const handlePaymentStatusChange = useCallback(
+    (orderId: string, newPaymentStatus: PaymentStatus) => {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: newPaymentStatus } : o)));
+    },
+    [setOrders],
+  );
 
   const handleCancelRequest = useCallback((orderId: string) => {
     setCancelTargetId(orderId);
@@ -258,13 +265,13 @@ export default function OrdersPage() {
       handleStatusChange(cancelTargetId, "CANCELLED");
       setCancelTargetId(null);
       fetchOrders();
-      fetchGlobalCounts(); // ← thêm ở đây
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể hủy đơn hàng. Vui lòng thử lại.");
+      fetchGlobalCounts();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể hủy đơn hàng. Vui lòng thử lại.");
     } finally {
       setCancelling(false);
     }
-  }, [cancelTargetId, handleStatusChange, fetchOrders, fetchGlobalCounts]);
+  }, [cancelTargetId, handleStatusChange, fetchOrders, fetchGlobalCounts, setError]);
 
   return (
     <div className="space-y-5 p-5 bg-neutral-light h-full">
@@ -322,6 +329,7 @@ export default function OrdersPage() {
               />
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/50" />
             </form>
+
             {/* Bộ lọc thanh toán */}
             <div ref={filterRef} className="relative">
               <button
@@ -362,6 +370,7 @@ export default function OrdersPage() {
                 </div>
               )}
             </div>
+
             {/* Lọc theo ngày */}
             <div ref={dateRef} className="relative">
               <button
@@ -419,6 +428,7 @@ export default function OrdersPage() {
                 </div>
               )}
             </div>
+
             {!isStaff && (
               <ExportButton
                 onExport={(fmt) =>
@@ -433,7 +443,7 @@ export default function OrdersPage() {
                 }
                 label="Export"
                 disabled={loading}
-                onSuccess={(count, fmt) => toast.success(`Đã export đơn hàng dạng ${fmt.toUpperCase()}`)}
+                onSuccess={(_count, fmt) => toast.success(`Đã export đơn hàng dạng ${fmt.toUpperCase()}`)}
                 onError={(err) => toast.error(err)}
               />
             )}
@@ -508,10 +518,7 @@ export default function OrdersPage() {
                     <tr
                       key={order.id}
                       id={`admin-order-row-${order.id}`}
-                      className={`
-                            border-b border-neutral transition-all duration-700
-                            ${isHighlighted ? "bg-accent/10 shadow-[inset_0_0_0_2px_var(--color-accent)]" : "hover:bg-neutral-light-active/60"}
-                          `}
+                      className={`border-b border-neutral transition-all duration-700 ${isHighlighted ? "bg-accent/10 shadow-[inset_0_0_0_2px_var(--color-accent)]" : "hover:bg-neutral-light-active/60"}`}
                     >
                       <td className="px-3 py-2.5">
                         <span className="text-[12px] text-primary">{rowNum}</span>

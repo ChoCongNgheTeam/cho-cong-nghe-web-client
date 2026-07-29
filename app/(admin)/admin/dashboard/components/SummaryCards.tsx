@@ -3,7 +3,7 @@
 import { TrendingUp, TrendingDown, ShoppingCart, Users, Package, Bot } from "lucide-react";
 import type { DashboardSummary } from "../dashboard.types";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// HELPERS
 
 export const formatVNDShort = (value: number) => {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}T`;
@@ -21,7 +21,7 @@ export const formatVNDFull = (value: number) =>
 
 const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
-// ─── Sparkline ────────────────────────────────────────────────────────────────
+// SPARKLINE
 
 function Sparkline({ data, color = "currentColor", opacity = 0.5 }: { data: number[]; color?: string; opacity?: number }) {
   if (!data || data.length < 2) return null;
@@ -56,7 +56,7 @@ function Sparkline({ data, color = "currentColor", opacity = 0.5 }: { data: numb
   );
 }
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
+// CARD
 
 interface StatCardProps {
   label: string;
@@ -142,7 +142,7 @@ function StatCard({ label, value, subLabel, change, icon, iconCls, alert, primar
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// MAIN
 
 export function SummaryCards({ summary }: { summary: DashboardSummary }) {
   const cards: StatCardProps[] = [

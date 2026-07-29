@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen">
       <div className="px-6 py-3 space-y-2.5">
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center shrink-0">

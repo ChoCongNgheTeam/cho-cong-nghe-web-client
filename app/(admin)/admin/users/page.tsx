@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, type ReactNode, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -32,7 +32,7 @@ import {
 import { exportUsers, getAllUsers, type GetUsersQuery } from "./_lib/get-all-users";
 import { updateActiveUser } from "./_lib/update-active-user";
 import { deleteUser } from "./_lib/delete-user";
-import type { User, UserRole } from "./user.types";
+import type { User } from "./user.types";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { StatsCard } from "@/components/admin/StatsCard";
 import AdminTable, { type AdminColumn } from "@/components/admin/AdminTables";
@@ -43,10 +43,9 @@ import { ExportButton } from "@/components/admin/ExportButton";
 import { ConfirmDeleteModal } from "@/components/admin/shared/ConfirmDeleteModal";
 import { ROLE_LABELS, ROLE_COLORS, STAFF_ROLES } from "./user.types";
 import MobileUserCard from "./components/MobileUserCard";
+import { useAdminListPage, type AdminListFetchResult, type AdminListMeta } from "@/hooks/admin/useAdminListPage";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // TYPES
-// ─────────────────────────────────────────────────────────────────────────────
 
 type FilterTab = "ALL" | "ACTIVE" | "BLOCKED" | "ADMIN" | "STAFF";
 type SortField = "createdAt" | "fullName" | "email" | "role" | "orderCount" | "totalSpent";
@@ -84,15 +83,12 @@ interface UserWithStats extends User {
   totalSpent?: number;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
+interface UserExtraParams {
+  activeTab: FilterTab;
+  dateFilter?: string;
+}
 
-// const roleColor: Record<UserRole, string> = {
-//   ADMIN: "bg-purple-100 text-purple-800 border-purple-200",
-//   STAFF: "bg-blue-100 text-blue-800 border-blue-200",
-//   CUSTOMER: "bg-emerald-100 text-emerald-800 border-emerald-200",
-// };
+// CONSTANTS
 
 const STATUS_TABS: { value: FilterTab; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
@@ -105,7 +101,7 @@ const STATUS_TABS: { value: FilterTab; label: string }[] = [
 const SORT_OPTIONS: {
   value: SortField;
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }[] = [
   { value: "createdAt", label: "Ngày tạo" },
   { value: "fullName", label: "Họ tên" },
@@ -125,7 +121,7 @@ const SORT_OPTIONS: {
 
 const CLIENT_SIDE_SORT_FIELDS: SortField[] = ["orderCount", "totalSpent"];
 
-const ORDER_STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+const ORDER_STATUS_CONFIG: Record<string, { label: string; icon: ReactNode; className: string }> = {
   PENDING: {
     label: "Chờ xác nhận",
     icon: <CircleDashed size={12} />,
@@ -159,9 +155,7 @@ const PAYMENT_STATUS_CONFIG: Record<string, { label: string; className: string }
   REFUNDED: { label: "Hoàn tiền", className: "text-violet-600" },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function normalizeRole(role?: string): string {
   return (role ?? "").toUpperCase();
@@ -198,9 +192,79 @@ function formatOrderDate(iso: string) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+async function fetchUserOrderStats(userId: string): Promise<{ orderCount: number; totalSpent: number }> {
+  try {
+    const res = await apiRequest.get<{ data: RawOrderListItem[] }>("/orders/admin/all", {
+      params: { userId, limit: 100, page: 1 },
+    });
+    const rawData = res.data ?? [];
+    const userOrders = rawData.filter((o) => !o.userId || o.userId === userId);
+    return {
+      orderCount: userOrders.length,
+      totalSpent: userOrders.reduce((sum: number, o) => sum + Number(o.totalAmount || 0), 0),
+    };
+  } catch {
+    return { orderCount: 0, totalSpent: 0 };
+  }
+}
+
+/**
+ * fetchFn cho useAdminListPage. Giữ nguyên logic gốc: khi sort theo
+ * orderCount/totalSpent (CLIENT_SIDE_SORT_FIELDS) — BE không hỗ trợ sort theo
+ * 2 field này — phải tải 100 user, tự fetch order-stats từng người, tự sort
+ * và tự cắt trang phía client. Các sort field khác thì để BE xử lý bình thường.
+ */
+async function fetchUsersAdapted(
+  params: { page: number; limit: number; search?: string; sortBy: SortField; sortOrder: SortDir } & UserExtraParams,
+): Promise<AdminListFetchResult<UserWithStats, AdminListMeta>> {
+  const { page, limit, search, sortBy, sortOrder, activeTab, dateFilter } = params;
+  const isClientSort = CLIENT_SIDE_SORT_FIELDS.includes(sortBy);
+
+  const query: GetUsersQuery = {
+    page,
+    limit: isClientSort ? 100 : limit,
+    sortBy: (isClientSort ? "createdAt" : sortBy) as GetUsersQuery["sortBy"],
+    sortOrder: isClientSort ? "desc" : sortOrder,
+  };
+  if (search) query.search = search;
+  if (activeTab === "ACTIVE") query.isActive = true;
+  if (activeTab === "BLOCKED") query.isActive = false;
+  if (activeTab === "ADMIN") query.role = "ADMIN";
+
+  const res = await getAllUsers(query);
+  const normalized: UserWithStats[] = res.data.map((u) => ({ ...u }));
+  const filtered = dateFilter ? normalized.filter((u) => u.createdAt?.slice(0, 10) === dateFilter) : normalized;
+
+  if (isClientSort) {
+    const statsResults = await Promise.all(filtered.map((u) => fetchUserOrderStats(u.id)));
+    filtered.forEach((u, i) => {
+      u.orderCount = statsResults[i].orderCount;
+      u.totalSpent = statsResults[i].totalSpent;
+    });
+    filtered.sort((a, b) => {
+      const fieldA = sortBy === "orderCount" ? (a.orderCount ?? 0) : (a.totalSpent ?? 0);
+      const fieldB = sortBy === "orderCount" ? (b.orderCount ?? 0) : (b.totalSpent ?? 0);
+      return sortOrder === "desc" ? fieldB - fieldA : fieldA - fieldB;
+    });
+    const start = (page - 1) * limit;
+    const paginated = filtered.slice(start, start + limit);
+    return {
+      data: paginated,
+      meta: { page, total: filtered.length, totalPages: Math.max(Math.ceil(filtered.length / limit), 1) },
+    };
+  }
+
+  return {
+    data: filtered,
+    meta: {
+      page,
+      total: dateFilter ? filtered.length : res.pagination.total,
+      totalPages: dateFilter ? Math.max(Math.ceil(filtered.length / limit), 1) : res.pagination.totalPages,
+    },
+  };
+}
+
 // ORDER STATUS BADGE
-// ─────────────────────────────────────────────────────────────────────────────
 
 function OrderStatusBadge({ status }: { status: string }) {
   const cfg = ORDER_STATUS_CONFIG[status] ?? {
@@ -216,9 +280,7 @@ function OrderStatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // USER ORDER SIDEBAR
-// ─────────────────────────────────────────────────────────────────────────────
 
 function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => void }) {
   const router = useRouter();
@@ -259,7 +321,7 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
     };
     fetchOrders();
     return () => controller.abort();
-  }, [user.id]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -269,7 +331,7 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
     };
     setTimeout(() => document.addEventListener("mousedown", handleClickOutside), 100);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -277,7 +339,7 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, []);
 
   const totalSpent = orders.reduce((s, o) => s + o.totalAmount, 0);
 
@@ -402,9 +464,7 @@ function UserOrderSidebar({ user, onClose }: { user: User | null; onClose: () =>
   return <UserOrderSidebarInner key={user.id} user={user} onClose={onClose} />;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function UserPage() {
   const router = useRouter();
@@ -416,25 +476,13 @@ export default function UserPage() {
   const ONLINE_IDS = new Set<string>([]);
   const ORDERING_IDS = new Set<string>([]);
 
-  const [users, setUsers] = useState<UserWithStats[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [showSortMenu, setShowSortMenu] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const [stats, setStats] = useState<StatsMap>({
     ALL: 0,
     ACTIVE: 0,
@@ -443,7 +491,45 @@ export default function UserPage() {
     STAFF: 0,
   });
 
-  // ── Sort dropdown: fixed positioning ──
+  const extraParams: UserExtraParams = { activeTab, dateFilter: dateFilter || undefined };
+
+  const {
+    data: users,
+    setData: setUsers,
+    meta,
+    loading: listLoading,
+    error,
+    refetch: fetchUsers,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy: sortField,
+    setSortBy: setSortField,
+    sortOrder: sortDir,
+    setSortOrder: setSortDir,
+  } = useAdminListPage<UserWithStats, SortField, UserExtraParams, AdminListMeta>({
+    fetchFn: fetchUsersAdapted,
+    defaultSortBy: "createdAt",
+    defaultSortOrder: "desc",
+    defaultMeta: { page: 1, total: 0, totalPages: 1 },
+    extraParams,
+    getId: (u) => u.id,
+  });
+
+  const total = meta.total;
+  const totalPages = meta.totalPages;
+  const isClientSort = CLIENT_SIDE_SORT_FIELDS.includes(sortField);
+  // isClientSort tự fetch order-stats cho 100 dòng → coi như 1 dạng loading phụ để hiện skeleton/hint
+  const statsLoading = listLoading && isClientSort;
+  const loading = listLoading;
+
+  // Sort dropdown: fixed positioning
   const sortBtnRef = useRef<HTMLButtonElement>(null);
   const [sortMenuPos, setSortMenuPos] = useState({
     top: 0,
@@ -463,82 +549,9 @@ export default function UserPage() {
     setShowSortMenu((v) => !v);
   };
 
-  const isClientSort = CLIENT_SIDE_SORT_FIELDS.includes(sortField);
-
-  const buildQuery = useCallback((): GetUsersQuery => {
-    const q: GetUsersQuery = {
-      page,
-      limit: isClientSort ? 100 : pageSize,
-      sortBy: (isClientSort ? "createdAt" : sortField) as GetUsersQuery["sortBy"],
-      sortOrder: isClientSort ? "desc" : sortDir,
-    };
-    if (search) q.search = search;
-    if (activeTab === "ACTIVE") q.isActive = true;
-    if (activeTab === "BLOCKED") q.isActive = false;
-    if (activeTab === "ADMIN") q.role = "ADMIN";
-    return q;
-  }, [page, pageSize, sortField, sortDir, search, activeTab, isClientSort]);
-
-  const fetchUserOrderStats = async (userId: string): Promise<{ orderCount: number; totalSpent: number }> => {
-    try {
-      const res = await apiRequest.get<{ data: RawOrderListItem[] }>("/orders/admin/all", {
-        params: { userId, limit: 100, page: 1 },
-      });
-      const rawData = res.data ?? [];
-      const userOrders = rawData.filter((o) => !o.userId || o.userId === userId);
-      return {
-        orderCount: userOrders.length,
-        totalSpent: userOrders.reduce((sum: number, o) => sum + Number(o.totalAmount || 0), 0),
-      };
-    } catch {
-      return { orderCount: 0, totalSpent: 0 };
-    }
-  };
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getAllUsers(buildQuery());
-      const normalized: UserWithStats[] = res.data.map((u) => ({ ...u }));
-
-      const filtered = dateFilter ? normalized.filter((u) => u.createdAt?.slice(0, 10) === dateFilter) : normalized;
-
-      if (isClientSort) {
-        setStatsLoading(true);
-        const statsResults = await Promise.all(filtered.map((u) => fetchUserOrderStats(u.id)));
-        filtered.forEach((u, i) => {
-          u.orderCount = statsResults[i].orderCount;
-          u.totalSpent = statsResults[i].totalSpent;
-        });
-        filtered.sort((a, b) => {
-          const fieldA = sortField === "orderCount" ? (a.orderCount ?? 0) : (a.totalSpent ?? 0);
-          const fieldB = sortField === "orderCount" ? (b.orderCount ?? 0) : (b.totalSpent ?? 0);
-          return sortDir === "desc" ? fieldB - fieldA : fieldA - fieldB;
-        });
-        const start = (page - 1) * pageSize;
-        const paginated = filtered.slice(start, start + pageSize);
-        setUsers(paginated);
-        setTotal(filtered.length);
-        setTotalPages(Math.max(Math.ceil(filtered.length / pageSize), 1));
-        setStatsLoading(false);
-      } else {
-        setUsers(filtered);
-        setTotal(dateFilter ? filtered.length : res.pagination.total);
-        setTotalPages(dateFilter ? Math.max(Math.ceil(filtered.length / pageSize), 1) : res.pagination.totalPages);
-      }
-    } catch {
-      setError("Không thể tải danh sách người dùng");
-    } finally {
-      setLoading(false);
-    }
-  }, [buildQuery, dateFilter, pageSize, isClientSort, sortField, sortDir, page]);
-
-  const fetchStats = useCallback(async () => {
+  const fetchStats = async () => {
     try {
       const [all, active, admin] = await Promise.all([getAllUsers({ limit: 1 }), getAllUsers({ limit: 1, isActive: true }), getAllUsers({ limit: 1, role: "ADMIN" })]);
-      // Staff count = total - admin - customer (estimate), hoặc gọi BE với từng role
-      // Nếu BE hỗ trợ role filter cho STAFF group thì gọi thêm 1 request
       setStats({
         ALL: all.pagination.total,
         ACTIVE: active.pagination.total,
@@ -549,23 +562,21 @@ export default function UserPage() {
     } catch (e) {
       console.error("fetchStats error:", e);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     setSearch(searchInput);
-    setPage(1);
+    resetPage();
   };
   const handleTabChange = (tab: FilterTab) => {
     setActiveTab(tab);
-    setPage(1);
+    resetPage();
   };
   const handleSortChange = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -574,7 +585,7 @@ export default function UserPage() {
       setSortDir(CLIENT_SIDE_SORT_FIELDS.includes(field) ? "desc" : "asc");
     }
     setShowSortMenu(false);
-    setPage(1);
+    resetPage();
   };
   const handleClearFilters = () => {
     setSearch("");
@@ -583,7 +594,7 @@ export default function UserPage() {
     setActiveTab("ALL");
     setSortField("createdAt");
     setSortDir("desc");
-    setPage(1);
+    resetPage();
   };
 
   function isBlockAllowed(u: User): boolean {
@@ -632,17 +643,16 @@ export default function UserPage() {
     }
     const user = deleteTarget;
     setDeleteTarget(null);
-    const oldUsers = [...users];
     setUsers((prev) => prev.filter((u) => u.id !== user.id));
     setLoadingId(user.id);
     try {
       await deleteUser(user.id);
-      setTotal((t) => t - 1);
       fetchStats();
       success("Xóa nhân viên thành công!");
+      fetchUsers();
     } catch {
-      setUsers(oldUsers);
       toastError("Xóa nhân viên thất bại.");
+      fetchUsers();
     } finally {
       setLoadingId(null);
     }
@@ -808,7 +818,7 @@ export default function UserPage() {
 
   return (
     <div className="space-y-5 p-3 sm:p-5 bg-neutral-light h-full">
-      {/* ── Modals & Sidebar ── */}
+      {/* Modals & Sidebar */}
       {deleteTarget && (
         <ConfirmDeleteModal
           isOpen={!!deleteTarget}
@@ -822,13 +832,10 @@ export default function UserPage() {
       )}
       <UserOrderSidebar user={selectedUser} onClose={() => setSelectedUser(null)} />
 
-      {/* ── Sort menu portal — fixed, thoát khỏi mọi overflow ── */}
+      {/* Sort menu portal — fixed, thoát khỏi mọi overflow */}
       {showSortMenu && (
         <>
-          {/* Backdrop để đóng menu */}
           <div className="fixed inset-0 z-[998]" onClick={() => setShowSortMenu(false)} />
-
-          {/* Menu — hiện phía TRÊN button bằng translateY(-100%) */}
           <div
             style={{
               position: "fixed",
@@ -839,12 +846,10 @@ export default function UserPage() {
             }}
             className="bg-neutral-light border border-neutral rounded-xl shadow-xl overflow-hidden"
           >
-            {/* Note (để trên cùng vì menu mở ngược) */}
             <div className="px-3 py-2 border-b border-neutral bg-amber-50/60">
               <p className="text-[10px] text-amber-600 leading-relaxed">⚠ Xếp hạng theo hoạt động sẽ tải dữ liệu đơn hàng của toàn bộ người dùng — có thể mất vài giây.</p>
             </div>
 
-            {/* Nhóm sort nâng cao */}
             <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral bg-neutral-light-active/60 flex items-center gap-1.5">
               <TrendingUp size={10} />
               Xếp hạng theo hoạt động
@@ -866,7 +871,6 @@ export default function UserPage() {
               </button>
             ))}
 
-            {/* Nhóm sort thường */}
             <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-t border-b border-neutral">Sắp xếp thông thường</div>
             {SORT_OPTIONS.filter((o) => !CLIENT_SIDE_SORT_FIELDS.includes(o.value)).map((opt) => (
               <button
@@ -885,7 +889,7 @@ export default function UserPage() {
         </>
       )}
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-accent-light flex items-center justify-center">
@@ -929,7 +933,7 @@ export default function UserPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <StatsCard label="Tổng người dùng" value={stats.ALL} sub="Tất cả tài khoản" icon={<UserIcon size={18} />} valueClassName="text-accent" />
         <StatsCard label="Hoạt động" value={stats.ACTIVE} sub="Đang hoạt động bình thường" icon={<UserIcon size={18} />} valueClassName="text-emerald-600" />
@@ -937,11 +941,11 @@ export default function UserPage() {
         <StatsCard label="Admin" value={stats.ADMIN} sub="Quyền quản trị viên" icon={<UserIcon size={18} />} valueClassName="text-purple-600" />
       </div>
 
-      {/* ── Main card ── */}
+      {/* Main card */}
       <div className="bg-neutral-light border border-neutral rounded-xl">
-        {/* ── Toolbar ── */}
+        {/* Toolbar */}
         <div className="border-b border-neutral">
-          {/* Hàng 1: Tabs — scroll ngang nếu cần, không bị squeeze */}
+          {/* Hàng 1: Tabs */}
           <div className="flex items-center gap-1 px-3 sm:px-4 pt-2.5 pb-2 overflow-x-auto scrollbar-thin">
             {STATUS_TABS.map((tab) => (
               <button
@@ -962,7 +966,6 @@ export default function UserPage() {
 
           {/* Hàng 2: Search + Sort + Date + Count */}
           <div className="flex items-center gap-2 px-3 sm:px-4 pb-2.5 flex-wrap sm:flex-nowrap">
-            {/* Search — full width trên mobile, fixed width trên desktop */}
             <form onSubmit={handleSearch} className="relative w-full sm:w-52 shrink-0">
               <input
                 value={searchInput}
@@ -973,9 +976,7 @@ export default function UserPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-dark" />
             </form>
 
-            {/* Sort + Date nằm cùng hàng trên mobile */}
             <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-              {/* Sort button */}
               <button
                 ref={sortBtnRef}
                 onClick={handleSortToggle}
@@ -989,14 +990,13 @@ export default function UserPage() {
                 <ChevronDown size={11} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
               </button>
 
-              {/* Date */}
               <div className="relative flex-1 sm:flex-none">
                 <input
                   type="date"
                   value={dateFilter}
                   onChange={(e) => {
                     setDateFilter(e.target.value);
-                    setPage(1);
+                    resetPage();
                   }}
                   className="w-full sm:w-auto pl-8 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent transition-all cursor-pointer"
                 />
@@ -1004,10 +1004,8 @@ export default function UserPage() {
               </div>
             </div>
 
-            {/* Spacer — chỉ hiện trên desktop */}
             <div className="hidden sm:block flex-1" />
 
-            {/* Loading + Count */}
             {statsLoading && (
               <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-accent shrink-0">
                 <Loader2 size={12} className="animate-spin" />
@@ -1018,7 +1016,7 @@ export default function UserPage() {
           </div>
         </div>
 
-        {/* ── Sub-toolbar ── */}
+        {/* Sub-toolbar */}
         {hasFilter && (
           <div className="flex items-center justify-between px-3 sm:px-4 py-1.5 border-b border-neutral bg-neutral-light-active/40 flex-wrap gap-2">
             <div className="flex items-center gap-3">
@@ -1043,7 +1041,7 @@ export default function UserPage() {
           </div>
         )}
 
-        {/* ── Error banner ── */}
+        {/* Error banner */}
         {error && (
           <div className="flex items-center justify-between px-5 py-3 bg-promotion-light border-b border-promotion-light-active">
             <span className="text-[12px] text-promotion">{error}</span>
@@ -1053,7 +1051,7 @@ export default function UserPage() {
           </div>
         )}
 
-        {/* ── Hint ── */}
+        {/* Hint */}
         <div className="px-4 py-2 border-b border-neutral bg-accent/5 flex items-center gap-1.5">
           <Package size={11} className="text-accent/70" />
           <span className="text-[11px] text-accent/80">Click vào tên người dùng để xem lịch sử đơn hàng</span>
@@ -1095,7 +1093,7 @@ export default function UserPage() {
           />
         </div>
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         <div className="px-3 sm:px-5 py-3 border-t border-neutral">
           <AdminPagination
             currentPage={page}
@@ -1105,7 +1103,7 @@ export default function UserPage() {
             onPageChange={setPage}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setPage(1);
+              resetPage();
             }}
             pageSizeOptions={[10, 20, 50]}
             siblingCount={1}

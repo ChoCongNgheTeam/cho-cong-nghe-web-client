@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Select from "react-select";
+import type { StylesConfig, MultiValue } from "react-select";
 import { sendCampaign } from "./_lib/notification.api";
 import { Bell, Send, Loader2, Users, Target, AlertCircle, CheckCircle2, Megaphone } from "lucide-react";
 import { getAllUsers } from "../users/_lib/get-all-users";
@@ -13,8 +14,8 @@ interface UserOption {
   isActive: boolean;
 }
 
-const rsStyles = {
-  control: (b: any, s: any) => ({
+const rsStyles: StylesConfig<UserOption, true> = {
+  control: (b, s) => ({
     ...b,
     minHeight: "42px",
     borderRadius: "0.75rem",
@@ -26,27 +27,27 @@ const rsStyles = {
     cursor: "text",
     flexWrap: "wrap",
   }),
-  valueContainer: (b: any) => ({
+  valueContainer: (b) => ({
     ...b,
     padding: "4px 8px",
     gap: "4px",
     flexWrap: "wrap",
   }),
-  multiValue: (b: any) => ({
+  multiValue: (b) => ({
     ...b,
     backgroundColor: "color-mix(in srgb, var(--color-accent, #0ea5e9) 12%, transparent)",
     borderRadius: "0.5rem",
     padding: "0 2px",
     margin: 0,
   }),
-  multiValueLabel: (b: any) => ({
+  multiValueLabel: (b) => ({
     ...b,
     color: "var(--color-accent-hover, #0369a1)",
     fontSize: "12px",
     fontWeight: 500,
     padding: "2px 4px",
   }),
-  multiValueRemove: (b: any) => ({
+  multiValueRemove: (b) => ({
     ...b,
     color: "var(--color-accent-hover, #0369a1)",
     borderRadius: "0 0.5rem 0.5rem 0",
@@ -56,19 +57,19 @@ const rsStyles = {
       color: "#fff",
     },
   }),
-  input: (b: any) => ({
+  input: (b) => ({
     ...b,
     color: "var(--color-primary, #111827)",
     fontSize: "13px",
     margin: 0,
     padding: "2px 0",
   }),
-  placeholder: (b: any) => ({
+  placeholder: (b) => ({
     ...b,
     color: "var(--color-neutral-dark, #9ca3af)",
     fontSize: "13px",
   }),
-  menu: (b: any) => ({
+  menu: (b) => ({
     ...b,
     borderRadius: "0.75rem",
     border: "1px solid var(--color-neutral, #e5e7eb)",
@@ -78,12 +79,12 @@ const rsStyles = {
     backgroundColor: "var(--color-neutral-light, #fff)",
     marginTop: "6px",
   }),
-  menuList: (b: any) => ({
+  menuList: (b) => ({
     ...b,
     padding: "4px",
     maxHeight: "260px",
   }),
-  option: (b: any, s: any) => ({
+  option: (b, s) => ({
     ...b,
     borderRadius: "0.5rem",
     padding: "6px 10px",
@@ -94,27 +95,27 @@ const rsStyles = {
     fontWeight: s.isSelected ? 500 : 400,
     "&:active": { backgroundColor: "var(--color-neutral-hover, #e5e7eb)" },
   }),
-  loadingMessage: (b: any) => ({
+  loadingMessage: (b) => ({
     ...b,
     color: "var(--color-neutral-darker, #6b7280)",
     fontSize: "13px",
     padding: "12px 16px",
   }),
-  noOptionsMessage: (b: any) => ({
+  noOptionsMessage: (b) => ({
     ...b,
     color: "var(--color-neutral-darker, #6b7280)",
     fontSize: "13px",
     padding: "12px 16px",
   }),
   indicatorSeparator: () => ({ display: "none" }),
-  dropdownIndicator: (b: any, s: any) => ({
+  dropdownIndicator: (b, s) => ({
     ...b,
     color: s.isFocused ? "var(--color-accent-hover, #0369a1)" : "var(--color-neutral-darker, #9ca3af)",
     padding: "0 8px",
     transition: "color 0.15s, transform 0.2s",
     transform: s.selectProps.menuIsOpen ? "rotate(180deg)" : "rotate(0deg)",
   }),
-  clearIndicator: (b: any) => ({
+  clearIndicator: (b) => ({
     ...b,
     color: "var(--color-neutral-darker, #9ca3af)",
     padding: "0 4px",
@@ -192,8 +193,8 @@ export default function NotificationAdmin() {
       setTitle("");
       setBody("");
       setSelectedUsers([]);
-    } catch (e: any) {
-      setError(e?.message ?? "Gửi thất bại, vui lòng thử lại.");
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Gửi thất bại, vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -279,11 +280,11 @@ export default function NotificationAdmin() {
                 isMulti
                 options={userOptions}
                 value={selectedUsers}
-                onChange={(val: any) => setSelectedUsers(val ? [...val] : [])}
+                onChange={(val: MultiValue<UserOption>) => setSelectedUsers(val ? [...val] : [])}
                 isLoading={usersLoading}
                 placeholder="Tìm tên, email người dùng..."
                 styles={rsStyles}
-                formatOptionLabel={(opt: any) => <UserOptionLabel data={opt} />}
+                formatOptionLabel={(opt: UserOption) => <UserOptionLabel data={opt} />}
                 loadingMessage={() => "Đang tải..."}
                 noOptionsMessage={() => "Không có người dùng"}
                 isClearable

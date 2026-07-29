@@ -12,7 +12,7 @@ export const BLOG_STATUS_COLORS: Record<string, string> = {
   ARCHIVED: "text-neutral-dark bg-neutral-light-active",
 };
 
-export const BLOG_STATUS_TABS = [
+export const BLOG_STATUS_TABS: { value: "ALL" | "PUBLISHED" | "DRAFT" | "ARCHIVED"; label: string }[] = [
   { value: "ALL", label: "Tất cả" },
   { value: "PUBLISHED", label: "Đã đăng" },
   { value: "DRAFT", label: "Nháp" },
@@ -47,7 +47,7 @@ export const BLOG_TYPE_TABS = [
   { value: "KHUYEN_MAI", label: "Khuyến mãi" },
 ];
 
-export const SORT_OPTIONS = [
+export const SORT_OPTIONS: { value: "publishedAt" | "createdAt" | "updatedAt" | "viewCount" | "title"; label: string }[] = [
   { value: "publishedAt", label: "Ngày đăng" },
   { value: "createdAt", label: "Ngày tạo" },
   { value: "updatedAt", label: "Cập nhật" },

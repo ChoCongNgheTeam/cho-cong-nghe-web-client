@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Upload, FileSpreadsheet, Download, Check, X, AlertCircle, Info, Loader2, ChevronDown, ChevronUp, Wand2, Merge, FileWarning, ArrowRight } from "lucide-react";
 import apiRequest from "@/lib/api";
 
-// ─── Types ───────────────────────────────────────────────────
+// TYPES
 
 interface SpecForm {
   specificationId: string;
@@ -58,7 +58,7 @@ interface SpecImportPanelProps {
   onApply: (updates: Record<string, { value: string; isHighlight?: boolean }>) => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────
+// HELPERS
 
 const scoreColor = (n: number, total: number) => {
   const p = total > 0 ? n / total : 0;
@@ -134,7 +134,7 @@ function FileDropZone({ onFile, loading }: { onFile: (f: File) => void; loading:
   );
 }
 
-// ─── Merge Preview Modal ─────────────────────────────────────
+// MERGE PREVIEW MODAL
 
 function MergePreviewModal({
   rows,
@@ -301,7 +301,7 @@ function MergePreviewModal({
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────
+// MAIN COMPONENT
 
 export function SpecImportPanel({ productName, categoryId, specGroups, specs, onApply }: SpecImportPanelProps) {
   const [open, setOpen] = useState(false);
@@ -326,7 +326,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
   // Current values lookup
   const currentValueMap = Object.fromEntries(specs.map((s) => [s.specificationId, s.value]));
 
-  // ─── Download template ────────────────────────────────────
+  // DOWNLOAD TEMPLATE
   const handleDownloadTemplate = async () => {
     try {
       const blob = await apiRequest.get<Blob>(`/ai-content/spec-template`, {
@@ -360,12 +360,12 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
       a.remove();
 
       window.URL.revokeObjectURL(url);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Download failed:", e);
-      alert(e.message || "Không tải được file");
+      alert((e as Error).message || "Không tải được file");
     }
   };
-  // ─── Handle file upload ───────────────────────────────────
+  // Handle file upload
   const handleFile = useCallback(
     async (file: File) => {
       setImporting(true);
@@ -381,10 +381,9 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
         // Browser tự set "multipart/form-data; boundary=xxxxx" — nếu override
         // thủ công sẽ mất boundary → busboy crash "Boundary not found".
         const res = await apiRequest.post<{ data: ImportResult }>("/ai-content/import-specifications", fd);
-        const result = (res as any)?.data as ImportResult;
-        setImportResult(result);
-      } catch (e: any) {
-        setImportError(e?.message ?? "Không thể đọc file. Vui lòng kiểm tra format.");
+        setImportResult(res.data);
+      } catch (e: unknown) {
+        setImportError((e as Error)?.message ?? "Không thể đọc file. Vui lòng kiểm tra format.");
       } finally {
         setImporting(false);
       }
@@ -392,7 +391,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
     [categoryId],
   );
 
-  // ─── Handle AI suggest ────────────────────────────────────
+  // Handle AI suggest
   const handleAiSuggest = useCallback(async () => {
     if (!productName.trim()) return;
     setAiLoading(true);
@@ -402,7 +401,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
     const allItems = specGroups.flatMap((g) => g.items);
 
     try {
-      const res = await apiRequest.post<any>(
+      const res = await apiRequest.post<{ data: { suggestions: Record<string, string | null>; filledCount: number } }>(
         "/ai-content/suggest-specifications",
         {
           productName: productName.trim(),
@@ -417,15 +416,15 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
         },
         { timeout: 60_000 },
       );
-      setAiSuggestions((res as any)?.data?.suggestions ?? {});
-    } catch (e: any) {
-      setAiError(e?.message ?? "Không thể gợi ý thông số");
+      setAiSuggestions(res.data.suggestions);
+    } catch (e: unknown) {
+      setAiError((e as Error)?.message ?? "Không thể gợi ý thông số");
     } finally {
       setAiLoading(false);
     }
   }, [productName, categoryId, specGroups]);
 
-  // ─── Build merge rows & open preview ─────────────────────
+  // BUILD MERGE ROWS & OPEN PREVIEW
   const buildMergeRows = useCallback(
     (importRows: ParsedSpecRow[] | null, aiRows: Record<string, string | null> | null) => {
       const allIds = new Set<string>([...(importRows ?? []).map((r) => r.spec_id), ...Object.keys(aiRows ?? {}).filter((k) => aiRows?.[k])]);
@@ -527,7 +526,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
             </div>
 
             <div className="p-4 space-y-3">
-              {/* ─── IMPORT TAB ─── */}
+              {/* IMPORT TAB */}
               {tab === "import" && (
                 <>
                   {/* Download template button */}
@@ -585,7 +584,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
                 </>
               )}
 
-              {/* ─── AI TAB ─── */}
+              {/* AI TAB */}
               {tab === "ai" && (
                 <>
                   {!productName.trim() ? (
@@ -639,7 +638,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
                 </>
               )}
 
-              {/* ─── APPLY BUTTON (bottom, always visible when has data) ─── */}
+              {/* APPLY BUTTON (bottom, always visible when has data) */}
               {hasData && (
                 <div className="pt-1 border-t border-neutral">
                   <button

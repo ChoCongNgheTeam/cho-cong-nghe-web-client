@@ -1,6 +1,6 @@
 import apiRequest from "@/lib/api";
 
-/* ─── Types ─── */
+// TYPES
 export type SettingDataType = "STRING" | "BOOLEAN" | "NUMBER" | "JSON";
 
 export interface SettingEntry {
@@ -29,7 +29,7 @@ export interface UpdateSettingsResponse {
   message: string;
 }
 
-/* ─── Domain types ─── */
+// DOMAIN TYPES
 
 export interface GeneralSettings {
   site_name: string;
@@ -115,7 +115,7 @@ export interface NotificationAdminSettings {
   wallet_recharge: boolean;
 }
 
-/* ─── Helper: merge BE cast-object vào defaults ─── */
+// HELPER: MERGE BE CAST-OBJECT VÀO DEFAULTS
 export function parseSettings<T extends object>(data: CastSettingsObject, defaults: T): T {
   const result = { ...defaults };
   for (const key of Object.keys(defaults) as (keyof T)[]) {
@@ -127,7 +127,7 @@ export function parseSettings<T extends object>(data: CastSettingsObject, defaul
   return result;
 }
 
-/* ─── API ─── */
+// API
 
 export const getSettings = async (group: string): Promise<GetSettingsResponse> => {
   return apiRequest.get<GetSettingsResponse>(`/settings/${group}`);
@@ -190,7 +190,7 @@ export const resetSettings = async (group: string): Promise<{ message: string }>
   return apiRequest.post<{ message: string }>(`/settings/${group}/reset`, {});
 };
 
-/* ─── Notification preferences (per-user) ─── */
+// NOTIFICATION PREFERENCES (PER-USER)
 export interface NotifPreferences {
   notifEmail: boolean;
   notifPush: boolean;

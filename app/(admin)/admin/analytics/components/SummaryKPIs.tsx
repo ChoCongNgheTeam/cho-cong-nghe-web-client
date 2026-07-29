@@ -13,7 +13,7 @@ const fmtVNDShort = (v: number) => {
 const fmtNum = (v: number) => new Intl.NumberFormat("vi-VN").format(v);
 const fmtPct = (v: number) => `${v.toFixed(1)}%`;
 
-// ─── ChangePill ───────────────────────────────────────────────────────────────
+// CHANGEPILL
 
 function ChangePill({ change }: { change?: number }) {
   if (change === undefined) return null;
@@ -27,7 +27,7 @@ function ChangePill({ change }: { change?: number }) {
   );
 }
 
-// ─── KPICard ──────────────────────────────────────────────────────────────────
+// KPICARD
 
 interface KPICardProps {
   label: string;
@@ -77,7 +77,7 @@ function KPICard({ label, value, sub, icon, iconBg, change, primary, danger }: K
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// MAIN
 
 export function SummaryKPIs({ summary }: { summary: AnalyticsSummary }) {
   return (

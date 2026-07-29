@@ -1,86 +1,78 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Search, Plus, RefreshCw, SlidersHorizontal, Loader2, XCircle, X, Filter, Check, AlertCircle } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Plus, RefreshCw, SlidersHorizontal, Loader2, XCircle, X, Filter, Check } from "lucide-react";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
-import type { Specification } from "./specification.types";
+import { SearchBox } from "@/components/admin/shared/SearchBox";
+import { SortDropdown } from "@/components/admin/shared/SortDropdown";
+import type { Specification, SpecificationsResponse } from "./specification.types";
 import { getAllSpecifications, toggleSpecificationActive, createSpecification, updateSpecification } from "./_lib/specifications";
-import { SORT_OPTIONS, STATUS_TABS } from "./_lib/constants";
+import { SORT_OPTIONS } from "./_lib/constants";
 import { getSpecificationColumns } from "./components/TableSpecifications";
 import { SpecificationForm, DEFAULT_FORM, specToForm, formToCreatePayload, formToUpdatePayload, type SpecificationFormData } from "./components/SpecificationForm";
 import { StatsCard } from "@/components/admin/StatsCard";
+import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 
-interface Meta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  activeCounts: { ALL: number; ACTIVE: number; INACTIVE: number; FILTERABLE: number };
+type SortBy = "sortOrder" | "name" | "group" | "createdAt";
+type ActiveTab = "ALL" | "ACTIVE" | "INACTIVE" | "FILTERABLE";
+
+interface SpecificationExtraParams {
+  isActive?: boolean;
+  isFilterable?: boolean;
 }
-type SortBy = "sortOrder" | "name" | "createdAt";
+
 export default function SpecificationsPage() {
-  // ── Data ──────────────────────────────────────────────────────────────────────
-  const [specs, setSpecs] = useState<Specification[]>([]);
-  const [meta, setMeta] = useState<Meta>({
-    page: 1,
-    limit: 20,
-    total: 0,
-    totalPages: 1,
-    activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0, FILTERABLE: 0 },
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ALL");
+
+  const extraParams = useMemo<SpecificationExtraParams>(
+    () => ({
+      ...(activeTab === "ACTIVE" ? { isActive: true } : activeTab === "INACTIVE" ? { isActive: false } : {}),
+      ...(activeTab === "FILTERABLE" ? { isFilterable: true } : {}),
+    }),
+    [activeTab],
+  );
+
+  const {
+    data: specs,
+    setData: setSpecs,
+    meta,
+    loading,
+    error,
+    refetch: fetchSpecs,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetPage,
+    search,
+    setSearch,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    selected,
+    setSelected,
+    toggleOne,
+    toggleAll,
+  } = useAdminListPage<Specification, SortBy, SpecificationExtraParams, SpecificationsResponse["meta"]>({
+    fetchFn: getAllSpecifications,
+    defaultSortBy: "sortOrder",
+    defaultSortOrder: "asc",
+    defaultMeta: { page: 1, limit: 20, total: 0, totalPages: 1, activeCounts: { ALL: 0, ACTIVE: 0, INACTIVE: 0, FILTERABLE: 0 } },
+    extraParams,
+    getId: (s) => s.id,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // ── Filters ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("sortOrder");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
-  // ── Slide-over ────────────────────────────────────────────────────────────────
+  // Slide-over
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Specification | null>(null);
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
-  // ── Fetch (server-side) ───────────────────────────────────────────────────────
-  const fetchSpecs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const isActiveParam = activeTab === "ACTIVE" ? true : activeTab === "INACTIVE" ? false : undefined;
-      const isFilterableParam = activeTab === "FILTERABLE" ? true : undefined;
-      const res = await getAllSpecifications({
-        page,
-        limit: pageSize,
-        search: search || undefined,
-        isActive: isActiveParam,
-        isFilterable: isFilterableParam,
-        sortBy,
-        sortOrder,
-      });
-      setSpecs(res.data);
-      setMeta(res.meta);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể tải danh sách thông số");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, activeTab, sortBy, sortOrder]);
-
-  useEffect(() => {
-    fetchSpecs();
-  }, [fetchSpecs]);
-
-  const resetPage = useCallback(() => setPage(1), []);
 
   const hasActiveFilters = search || activeTab !== "ALL";
 
@@ -89,36 +81,21 @@ export default function SpecificationsPage() {
     setSearchInput("");
     setActiveTab("ALL");
     setPage(1);
-  }, []);
+  }, [setSearch, setSearchInput, setPage]);
 
-  // ── Selection ─────────────────────────────────────────────────────────────────
-  const toggleOne = useCallback((id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleAll = useCallback(() => {
-    setSelected((prev) => (prev.size === specs.length ? new Set() : new Set(specs.map((s) => s.id))));
-  }, [specs]);
-
-  // ── Toggle active ─────────────────────────────────────────────────────────────
   const handleToggleActive = useCallback(
     async (spec: Specification) => {
       try {
         const res = await toggleSpecificationActive(spec.id);
         setSpecs((prev) => prev.map((s) => (s.id === spec.id ? res.data : s)));
         fetchSpecs();
-      } catch (e: any) {
-        alert(e?.message ?? "Không thể cập nhật trạng thái");
+      } catch (e: unknown) {
+        alert((e as Error)?.message ?? "Không thể cập nhật trạng thái");
       }
     },
-    [fetchSpecs],
+    [fetchSpecs, setSpecs],
   );
 
-  // ── Form handlers ─────────────────────────────────────────────────────────────
   const handleOpenCreate = useCallback(() => {
     setEditTarget(null);
     setFormError(null);
@@ -146,17 +123,16 @@ export default function SpecificationsPage() {
           fetchSpecs();
         }
         setFormOpen(false);
-      } catch (e: any) {
-        setFormError(e?.message ?? "Có lỗi xảy ra");
+      } catch (e: unknown) {
+        setFormError((e as Error)?.message ?? "Có lỗi xảy ra");
       } finally {
         setFormSaving(false);
       }
     },
-    [editTarget, fetchSpecs],
+    [editTarget, fetchSpecs, setSpecs],
   );
 
-  // ── Columns ───────────────────────────────────────────────────────────────────
-  const columns = useCallback(
+  const columns = useMemo(
     () =>
       getSpecificationColumns({
         page,
@@ -173,16 +149,15 @@ export default function SpecificationsPage() {
 
   // Tab config gộp STATUS + FILTERABLE vào 1 hàng
   const TABS = [
-    { label: "Tất cả", value: "ALL", count: meta.activeCounts.ALL },
-    { label: "Hoạt động", value: "ACTIVE", count: meta.activeCounts.ACTIVE },
-    { label: "Không hoạt động", value: "INACTIVE", count: meta.activeCounts.INACTIVE },
-    { label: "Có thể lọc", value: "FILTERABLE", count: meta.activeCounts.FILTERABLE },
+    { label: "Tất cả", value: "ALL" as const, count: meta.activeCounts.ALL },
+    { label: "Hoạt động", value: "ACTIVE" as const, count: meta.activeCounts.ACTIVE },
+    { label: "Không hoạt động", value: "INACTIVE" as const, count: meta.activeCounts.INACTIVE },
+    { label: "Có thể lọc", value: "FILTERABLE" as const, count: meta.activeCounts.FILTERABLE },
   ];
 
-  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-neutral-light">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -208,7 +183,7 @@ export default function SpecificationsPage() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatsCard label="Tổng thông số" value={meta.activeCounts.ALL} sub="Tất cả thông số" icon={<SlidersHorizontal size={16} />} />
         <StatsCard
@@ -223,9 +198,9 @@ export default function SpecificationsPage() {
         <StatsCard label="Có thể lọc" value={meta.activeCounts.FILTERABLE} sub="Hiển thị trong bộ lọc" icon={<Filter size={16} />} valueClassName="text-blue-600" iconClassName="text-blue-600" />
       </div>
 
-      {/* ── Main card ── */}
+      {/* Main card */}
       <div className="mx-6 bg-neutral-light border border-neutral rounded-2xl overflow-hidden shadow-sm mb-8">
-        {/* ── Toolbar: 1 row ── */}
+        {/* Toolbar */}
         <div className="px-5 py-3 border-b border-neutral flex items-center gap-2 flex-wrap">
           {/* Tabs */}
           {TABS.map((tab) => (
@@ -247,61 +222,37 @@ export default function SpecificationsPage() {
           <div className="w-px h-5 bg-neutral mx-1" />
 
           {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  resetPage();
-                }
-              }}
-              placeholder="Tìm tên hoặc key..."
-              className="pl-9 pr-8 py-2 text-[13px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all w-52"
-            />
-            {searchInput && (
-              <button
-                onClick={() => {
-                  setSearchInput("");
-                  setSearch("");
-                  resetPage();
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary cursor-pointer"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <SearchBox
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={(v) => {
+              setSearch(v);
+              resetPage();
+            }}
+            onClear={() => {
+              setSearchInput("");
+              setSearch("");
+              resetPage();
+            }}
+            placeholder="Tìm tên hoặc key..."
+          />
 
           {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value as SortBy);
+          <SortDropdown
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortByChange={(v) => {
+              setSortBy(v as SortBy);
               resetPage();
             }}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value as "asc" | "desc");
+            onSortOrderChange={(v) => {
+              setSortOrder(v);
               resetPage();
             }}
-            className="px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer"
-          >
-            <option value="asc">Tăng dần</option>
-            <option value="desc">Giảm dần</option>
-          </select>
+            options={SORT_OPTIONS}
+            ascLabel="Tăng dần"
+            descLabel="Giảm dần"
+          />
 
           {hasActiveFilters && (
             <button
@@ -315,7 +266,7 @@ export default function SpecificationsPage() {
           <span className="ml-auto text-[12px] text-primary">{meta.total} thông số</span>
         </div>
 
-        {/* ── Selection bar ── */}
+        {/* Selection bar */}
         {selected.size > 0 && (
           <div className="flex items-center gap-3 px-5 py-2.5 bg-accent/5 border-b border-accent/20">
             <span className="text-[12px] text-accent font-medium">Đã chọn {selected.size} thông số</span>
@@ -325,7 +276,7 @@ export default function SpecificationsPage() {
           </div>
         )}
 
-        {/* ── Table ── */}
+        {/* Table */}
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <XCircle size={36} className="text-promotion opacity-50" />
@@ -353,10 +304,10 @@ export default function SpecificationsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns()} data={specs} selectable selectedIds={selected} onToggleAll={toggleAll} />
+          <AdminTable columns={columns} data={specs} selectable selectedIds={selected} onToggleAll={toggleAll} />
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {!loading && !error && meta.total > 0 && (
           <div className="px-5 py-4 border-t border-neutral flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -394,7 +345,7 @@ export default function SpecificationsPage() {
         )}
       </div>
 
-      {/* ── Slide-over: Create / Edit ── */}
+      {/* Slide-over: Create / Edit */}
       {formOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-40" onClick={() => !formSaving && setFormOpen(false)} />

@@ -4,7 +4,7 @@
 
 import type { TimeGranularity } from "../analytics.types";
 
-// ─── Auto-detect granularity theo range ───────────────────────────────────────
+// AUTO-DETECT GRANULARITY THEO RANGE
 // Mirror đúng logic BE (analytics.validation.ts) để FE và BE luôn nhất quán
 export function autoGranularity(from: string, to: string): TimeGranularity {
   const diffDays = (new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
@@ -23,7 +23,7 @@ export function getValidGranularities(from: string, to: string): TimeGranularity
   return ["week", "month"];
 }
 
-// ─── Granularity ──────────────────────────────────────────────────────────────
+// GRANULARITY
 
 const GRANULARITY_LABELS: Record<TimeGranularity, string> = {
   day: "Ngày",
@@ -56,7 +56,7 @@ export function GranularitySelector({ value, onChange, from, to }: GranularitySe
   );
 }
 
-// ─── Quick Range ──────────────────────────────────────────────────────────────
+// QUICK RANGE
 
 export type QuickRange = "7d" | "30d" | "90d" | "ytd" | "custom";
 

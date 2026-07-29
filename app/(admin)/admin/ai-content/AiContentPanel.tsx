@@ -104,9 +104,9 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
         focusKeyword: keyword.trim(),
         contentType: mode === "product" ? "product" : "blog",
       });
-      setResult((res as any).data);
-    } catch (e: any) {
-      setError(e?.message ?? "Không thể phân tích SEO");
+      setResult(res.data);
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? "Không thể phân tích SEO");
     } finally {
       setLoading(false);
     }
@@ -221,35 +221,35 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
     setError(null);
     setResult(null);
     try {
-      let res: any;
+      let res: { data: GeneratedContent };
       if (isProduct) {
         if (productId) {
-          res = await apiRequest.post(
+          res = await apiRequest.post<{ data: GeneratedContent }>(
             "/ai-content/product-description",
             { productId, focusKeyword: keyword.trim(), tone, targetLength: length, additionalNotes: notes.trim() || undefined },
             { timeout: 180_000, signal: abortRef.current.signal },
           );
         } else {
-          res = await apiRequest.post(
+          res = await apiRequest.post<{ data: GeneratedContent }>(
             "/ai-content/product-description-from-name",
             { productName: productName!.trim(), focusKeyword: keyword.trim(), tone, targetLength: length, additionalNotes: notes.trim() || undefined },
             { timeout: 180_000, signal: abortRef.current.signal },
           );
         }
       } else {
-        res = await apiRequest.post(
+        res = await apiRequest.post<{ data: GeneratedContent }>(
           "/ai-content/blog",
           { title: blogTitle.trim(), focusKeyword: keyword.trim(), blogType: blogType || "TIN_MOI", targetLength: length, additionalNotes: notes.trim() || undefined },
           { timeout: 180_000, signal: abortRef.current.signal },
         );
       }
-      setResult((res as any)?.data ?? res);
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
-      if (e?.message?.includes("quá thời gian") || e?.message?.includes("timeout")) {
+      setResult(res.data);
+    } catch (e: unknown) {
+      if ((e as Error)?.name === "AbortError") return;
+      if ((e as Error)?.message?.includes("quá thời gian") || (e as Error)?.message?.includes("timeout")) {
         setError("OpenAI mất quá nhiều thời gian phản hồi. Thử chọn độ dài ngắn hơn hoặc thử lại.");
       } else {
-        setError(e?.message ?? "Không thể tạo nội dung. Vui lòng thử lại.");
+        setError((e as Error)?.message ?? "Không thể tạo nội dung. Vui lòng thử lại.");
       }
     } finally {
       setLoading(false);
@@ -311,7 +311,7 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Phong cách</label>
             <select
               value={tone}
-              onChange={(e) => setTone(e.target.value as any)}
+              onChange={(e) => setTone(e.target.value as "professional" | "friendly" | "enthusiastic")}
               className="w-full px-2.5 py-2 text-[12px] border border-neutral rounded-xl bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
             >
               <option value="friendly">Thân thiện</option>
@@ -324,7 +324,7 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
           <label className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Độ dài</label>
           <select
             value={length}
-            onChange={(e) => setLength(e.target.value as any)}
+            onChange={(e) => setLength(e.target.value as "short" | "medium" | "long")}
             className="w-full px-2.5 py-2 text-[12px] border border-neutral rounded-xl bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
           >
             <option value="short">{isProduct ? "Ngắn (~150 từ)" : "Ngắn (~400 từ)"}</option>
