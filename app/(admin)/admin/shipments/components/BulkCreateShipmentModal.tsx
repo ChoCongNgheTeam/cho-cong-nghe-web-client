@@ -9,7 +9,7 @@ import { useAdminListPage } from "@/hooks/admin/useAdminListPage";
 import { formatDate, formatVND } from "@/helpers";
 import { getEligibleOrders, createBulkShipments } from "../_lib/shipments";
 import { PROVIDER_OPTIONS, ENABLED_PROVIDERS, ORDER_STATUS_OPTIONS_FOR_PICKER } from "../_lib/constants";
-import type { EligibleOrder, EligibleOrdersMeta, ShippingProviderCode, BulkCreateShipmentResultItem } from "../shipment.types";
+import type { EligibleOrder, EligibleOrdersMeta, GetEligibleOrdersParams, ShippingProviderCode, BulkCreateShipmentResultItem } from "../shipment.types";
 
 interface BulkCreateShipmentModalProps {
   isOpen: boolean;
@@ -19,14 +19,15 @@ interface BulkCreateShipmentModalProps {
 }
 
 interface EligibleExtraParams {
-  orderStatus?: string;
+  orderStatus?: GetEligibleOrdersParams["orderStatus"];
 }
 
-const selectCls = "px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer";
+const selectCls =
+  "px-3 py-2 text-[12px] border border-neutral rounded-xl text-primary bg-neutral-light focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all cursor-pointer";
 
 export function BulkCreateShipmentModal({ isOpen, onClose, onDone }: BulkCreateShipmentModalProps) {
   const [orderStatus, setOrderStatus] = useState<string>("");
-  const extraParams = useMemo<EligibleExtraParams>(() => ({ orderStatus: orderStatus || undefined }), [orderStatus]);
+  const extraParams = useMemo<EligibleExtraParams>(() => ({ orderStatus: (orderStatus || undefined) as EligibleExtraParams["orderStatus"] }), [orderStatus]);
 
   const {
     data: orders,
