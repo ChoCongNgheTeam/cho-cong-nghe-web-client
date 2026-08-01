@@ -32,6 +32,9 @@ import {
   ClipboardCheck,
   AlertTriangle,
   Sparkles,
+  PackageCheck,
+  Cog,
+  Lightbulb,
 } from "lucide-react";
 import type { NavGroup } from "./types";
 
@@ -52,6 +55,14 @@ export const adminNavGroups: NavGroup[] = [
       { title: "Danh sách đơn hàng", href: "/admin/orders", icon: ShoppingCart },
       { title: "Phương thức thanh toán", href: "/admin/payment-methods", icon: Wallet },
       { title: "Danh sách người dùng", href: "/admin/users", icon: Users },
+    ],
+  },
+  {
+    label: "Vận chuyển",
+    icon: PackageCheck,
+    items: [
+      { title: "Vận đơn", href: "/admin/shipments", icon: PackageCheck },
+      { title: "Nhà vận chuyển", href: "/admin/shipping-providers", icon: Cog },
     ],
   },
   {
@@ -103,6 +114,11 @@ export const adminNavGroups: NavGroup[] = [
       { title: "Đánh giá sản phẩm", href: "/admin/reviews", icon: Star },
       { title: "Media (Slider/Banner)", href: "/admin/media", icon: ImageIcon },
     ],
+  },
+  {
+    label: "AI & Gợi ý",
+    icon: Lightbulb,
+    items: [{ title: "Hiệu suất gợi ý sản phẩm", href: "/admin/recommendations", icon: Lightbulb }],
   },
   {
     label: "Hệ thống",
