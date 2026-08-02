@@ -10,3 +10,4 @@ export { MiddleBanners } from "./banners/MiddleBanners";
 export { SeasonalSale } from "./sales/SeasonalSale";
 export { TrustBadges } from "./TrustBadges";
 export { BlogSection } from "./HomeBlogSection";
+export { RecommendedForYou } from "./products/RecommendedForYou";

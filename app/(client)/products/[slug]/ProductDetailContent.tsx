@@ -3,6 +3,9 @@
 import { useRef, useState, useEffect, useCallback, startTransition, useMemo, memo } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 
+import BoughtTogetherSection from "../components/product-detail/BoughtTogetherSection";
+import { trackProductView } from "@/lib/recommendation";
+
 import ProductDetailBanner from "../components/product-detail/ProductDetailBanner";
 import ProductDetailRight from "../components/product-detail/ProductDetailCardRight";
 import ProductDetailSection from "../components/product-detail/ProductSpecifications";
@@ -98,6 +101,7 @@ const StaticSections = memo(function StaticSections({
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={suggestRef}>
         <div className="container !px-0">
           <ProductDetailSuggest slug={slug} />
+          <BoughtTogetherSection productId={product.id} />
         </div>
       </div>
       <TrustBadges className="!bg-gray-400/10" />
@@ -187,6 +191,10 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    trackProductView(product.id, "DETAIL");
+  }, [product.id]);
 
   // handleOptionChange không còn depend selectedOptions
   // Đọc giá trị latest qua selectedOptionsRef thay vì closure

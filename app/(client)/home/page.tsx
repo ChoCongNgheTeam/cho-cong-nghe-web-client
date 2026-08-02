@@ -1,5 +1,18 @@
 import { getHomePageData } from "./_lib/home.api";
-import { HomeSliderSection, TopBanners, FeaturedCategories, FeaturedProducts, MiddleBanners, BestSellers, BlogSection, TrustBadges, HotSaleOnline, SeasonalSale, HeroBanner } from "./_components";
+import {
+  HomeSliderSection,
+  TopBanners,
+  FeaturedCategories,
+  FeaturedProducts,
+  MiddleBanners,
+  BestSellers,
+  BlogSection,
+  TrustBadges,
+  HotSaleOnline,
+  SeasonalSale,
+  HeroBanner,
+  RecommendedForYou,
+} from "./_components";
 import { CategoryProducts } from "./_components/products/CategoryProducts";
 import PromoPopup from "@/components/promo/PromoPopup";
 
@@ -32,6 +45,7 @@ export default async function HomePage() {
       <FeaturedProducts products={featuredProducts} />
       <HeroBanner />
       <BestSellers products={bestSellingProducts} />
+      <RecommendedForYou />
       <CategoryProducts groups={categoryProducts} />
       <MiddleBanners middleBanner={bannersSection1} />
       <SeasonalSale campaigns={activeCampaigns} />
