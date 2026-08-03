@@ -1,4 +1,4 @@
-import apiRequest from "@/lib/api";
+import apiRequest, { getAccessToken } from "@/lib/api";
 import { hasPersonalizationConsent } from "@/lib/cookie-consent";
 import { getOrCreateAnonId } from "@/lib/anon-id";
 import type { Product } from "@/components/product/types";
@@ -69,23 +69,48 @@ export async function getForYouProducts(limit = 12): Promise<ForYouResult> {
   return { products, algorithmById };
 }
 
-/** Ghi nhận lượt xem sản phẩm — dùng làm tín hiệu cho "Có thể bạn thích" của khách vãng lai. */
+/**
+ * "Đã xem gần đây" — widget sidebar trang chủ (dưới danh mục). Cùng quy tắc
+ * cá nhân hoá như getForYouProducts: khách chưa đăng nhập + chưa đồng ý cookie
+ * cá nhân hoá thì không gửi sessionId → BE trả về mảng rỗng (không có gì để
+ * dựa vào) → component tự hiện banner fallback thay vào chỗ đó.
+ */
+export async function getRecentlyViewedProducts(limit = 4, excludeProductId?: string): Promise<Product[]> {
+  const loggedIn = !!getAccessToken();
+  const sessionId = !loggedIn && hasPersonalizationConsent() ? getOrCreateAnonId() : undefined;
+
+  if (!loggedIn && !sessionId) return []; // guest chưa đồng ý cá nhân hoá — không có gì để tra, khỏi gọi BE
+
+  const res = await apiRequest.get<RecommendedIdsResponse>("/recommendation/recently-viewed", { params: { limit, sessionId, excludeProductId } });
+  return resolveProductCards(res.data.map((p) => p.id));
+}
+
+/**
+ * Ghi nhận lượt xem sản phẩm — dùng làm tín hiệu cho "Có thể bạn thích".
+ * - Khách ĐÃ đăng nhập: luôn ghi (đây là hoạt động gắn với tài khoản, không
+ *   phải cookie tracking ẩn danh) — apiRequest tự đính Bearer token vì KHÔNG
+ *   truyền noAuth, BE dùng req.user.id.
+ * - Khách CHƯA đăng nhập: chỉ ghi nếu đã đồng ý mục "cá nhân hoá" trong cookie
+ *   consent, dùng sessionId ẩn danh.
+ */
 export async function trackProductView(productId: string, source?: RecommendationSource): Promise<void> {
-  if (!hasPersonalizationConsent()) return; // tôn trọng lựa chọn từ chối cá nhân hoá
+  const loggedIn = !!getAccessToken();
+  if (!loggedIn && !hasPersonalizationConsent()) return;
 
   try {
-    await apiRequest.post("/recommendation/view-event", { productId, sessionId: getOrCreateAnonId(), source }, { noAuth: true });
+    await apiRequest.post("/recommendation/view-event", { productId, sessionId: loggedIn ? undefined : getOrCreateAnonId(), source });
   } catch {
     // fire-and-forget — lỗi tracking không nên ảnh hưởng trải nghiệm xem sản phẩm
   }
 }
 
-/** Ghi nhận click vào 1 sản phẩm được gợi ý — dùng để tính CTR ở trang admin. */
+/** Ghi nhận click vào 1 sản phẩm được gợi ý — dùng để tính CTR ở trang admin. Cùng quy tắc gate như trackProductView. */
 export async function trackRecommendationClick(productId: string, algorithm: RecommendationAlgorithm): Promise<void> {
-  if (!hasPersonalizationConsent()) return;
+  const loggedIn = !!getAccessToken();
+  if (!loggedIn && !hasPersonalizationConsent()) return;
 
   try {
-    await apiRequest.post("/recommendation/click", { productId, algorithm }, { noAuth: true });
+    await apiRequest.post("/recommendation/click", { productId, algorithm });
   } catch {
     // fire-and-forget
   }

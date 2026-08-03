@@ -20,6 +20,7 @@ export default async function HomePage() {
   const {
     bannersDeal,
     sliders,
+    bannersSidebar,
     rootCategories,
     featuredCategories,
     bannersTop,
@@ -38,7 +39,7 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen bg-neutral-light">
       <PromoPopup banners={bannersPopup} />
-      <HomeSliderSection sliders={sliders} categories={rootCategories} bannersDeal={bannersDeal} />
+      <HomeSliderSection sliders={sliders} categories={rootCategories} bannersDeal={bannersDeal} bannersSidebar={bannersSidebar} />
       {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
       <TopBanners topBanner={bannersTop} />
       <FeaturedCategories featuredCategories={featuredCategories} />
