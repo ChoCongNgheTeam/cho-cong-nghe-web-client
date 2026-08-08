@@ -12,15 +12,19 @@ interface RecentlyViewedSidebarProps {
   fallbackBanners: Banner[];
 }
 
+// Chiều cao CỐ ĐỊNH cho cả 3 trạng thái (tải/list/banner) — không "tự khớp"
+// theo chiều cao slider bên cạnh (từng bị lỗi tràn box khi có ≥3 sản phẩm, xem
+// giải thích ở PR review) — cứ hiển thị đủ ~2 dòng, dư ra thì cuộn bên trong.
+const WIDGET_HEIGHT = "h-[132px]";
+
 /**
  * Đặt ngay dưới <SidebarCategoryList /> trong cùng cột sidebar (xem
  * HomeSliderSection.tsx) — lấp khoảng trống bên dưới danh mục.
  *
  * 3 trạng thái:
- *  1. Đang tải xong, có lịch sử xem → 3-4 dòng sản phẩm nhỏ (ảnh + tên + giá)
- *  2. Không có lịch sử (chưa đăng nhập + chưa đồng ý cookie cá nhân hoá, hoặc
- *     chưa xem sản phẩm nào) → hiện banner tĩnh (fallbackBanners[0])
- *  3. Không có cả lịch sử lẫn banner fallback → ẩn hẳn, không để trống xấu
+ *  1. Có lịch sử xem → list nhỏ (ảnh + tên + giá), cuộn dọc nếu nhiều hơn khung hiện
+ *  2. Không có lịch sử → banner tĩnh (fallbackBanners[0])
+ *  3. Không có cả 2 → ẩn hẳn, không để trống xấu
  */
 export function RecentlyViewedSidebar({ fallbackBanners }: RecentlyViewedSidebarProps) {
   const [products, setProducts] = useState<Product[] | null>(null); // null = đang tải
@@ -43,26 +47,28 @@ export function RecentlyViewedSidebar({ fallbackBanners }: RecentlyViewedSidebar
 
   const fallbackBanner = fallbackBanners.find((b) => b.imageUrl);
 
-  // Đang tải — giữ chỗ, tránh nháy layout
+  // Đang tải — giữ đúng chỗ, tránh nháy layout
   if (products === null) {
-    return <div className="flex-1 rounded-xl bg-neutral-light animate-pulse min-h-[120px]" />;
+    return <div className={`${WIDGET_HEIGHT} rounded-xl bg-neutral-light animate-pulse`} />;
   }
 
   if (products.length > 0) {
     return (
-      <div className="flex-1 flex flex-col bg-surface border border-surface-border rounded-xl overflow-hidden">
-        <div className="px-3 py-2.5 border-b border-surface-border">
+      <div className={`${WIDGET_HEIGHT} flex flex-col bg-surface border border-surface-border rounded-xl overflow-hidden`}>
+        <div className="px-3 py-2 border-b border-surface-border shrink-0">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">Đã xem gần đây</span>
         </div>
-        <div className="flex-1 flex flex-col divide-y divide-surface-border overflow-y-auto">
+        {/* min-h-0 BẮT BUỘC ở đây — thiếu dòng này thì overflow-y-auto không cuộn được,
+            div này sẽ phình cao theo đúng số lượng sản phẩm thay vì bị giới hạn bởi cha. */}
+        <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-surface-border [scrollbar-width:thin]">
           {products.map((product) => (
-            <Link key={product.id} href={`/products/${product.slug}`} className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-neutral-light transition-colors">
-              <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-neutral-light shrink-0">
-                {product.thumbnail && <Image src={product.thumbnail} alt={product.name} fill className="object-cover" sizes="40px" />}
+            <Link key={product.id} href={`/products/${product.slug}`} className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-light transition-colors">
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-neutral-light shrink-0">
+                {product.thumbnail && <Image src={product.thumbnail} alt={product.name} fill className="object-cover" sizes="32px" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[12px] text-primary leading-snug line-clamp-2">{product.name}</p>
-                <p className="text-[12px] font-semibold text-accent mt-0.5">{product.price.final.toLocaleString("vi-VN")}đ</p>
+                <p className="text-[11px] text-primary leading-snug line-clamp-1">{product.name}</p>
+                <p className="text-[11px] font-semibold text-accent">{product.price.final.toLocaleString("vi-VN")}đ</p>
               </div>
             </Link>
           ))}
@@ -74,7 +80,7 @@ export function RecentlyViewedSidebar({ fallbackBanners }: RecentlyViewedSidebar
   if (!fallbackBanner) return null;
 
   return (
-    <Link href={fallbackBanner.linkUrl ?? "#"} className="flex-1 relative rounded-xl overflow-hidden min-h-[120px] border border-surface-border group">
+    <Link href={fallbackBanner.linkUrl ?? "#"} className={`${WIDGET_HEIGHT} relative block rounded-xl overflow-hidden border border-surface-border group`}>
       <Image src={fallbackBanner.imageUrl!} alt={fallbackBanner.title ?? ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="180px" />
     </Link>
   );
