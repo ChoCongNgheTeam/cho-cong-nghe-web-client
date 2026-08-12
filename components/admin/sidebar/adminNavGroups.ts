@@ -35,6 +35,7 @@ import {
   PackageCheck,
   Cog,
   Lightbulb,
+  TrendingUp,
 } from "lucide-react";
 import type { NavGroup } from "./types";
 
@@ -118,7 +119,10 @@ export const adminNavGroups: NavGroup[] = [
   {
     label: "AI & Gợi ý",
     icon: Lightbulb,
-    items: [{ title: "Hiệu suất gợi ý sản phẩm", href: "/admin/recommendations", icon: Lightbulb }],
+    items: [
+      { title: "Hiệu suất gợi ý sản phẩm", href: "/admin/recommendations", icon: Lightbulb },
+      { title: "Dự báo xu hướng", href: "/admin/trend-forecast", icon: TrendingUp },
+    ],
   },
   {
     label: "Hệ thống",
