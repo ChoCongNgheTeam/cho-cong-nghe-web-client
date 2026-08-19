@@ -8,11 +8,22 @@ interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[];
+  /**
+   * Một số trình duyệt áp CSP script-src cho MỌI thẻ <script> kể cả
+   * type="application/ld+json". Breadcrumb được nhiều trang "use client" import
+   * và render trực tiếp — không thể tự await headers() ở đây (sẽ biến nó thành
+   * async Server Component và vỡ build khi render từ Client Component). Nơi gọi
+   * là Server Component/layout thì nên đọc `headers().get("x-nonce")` và truyền
+   * xuống qua prop này; nếu bỏ trống, JSON-LD breadcrumb có thể bị CSP chặn ở
+   * các trang "use client" (chỉ ảnh hưởng SEO structured data, không ảnh hưởng
+   * chức năng breadcrumb hiển thị).
+   */
+  nonce?: string;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://example.com";
 
-export default function Breadcrumb({ items }: BreadcrumbProps) {
+export default function Breadcrumb({ items, nonce }: BreadcrumbProps) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -27,7 +38,12 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
     <>
       {/* JSON-LD cho Google */}
-      <Script id="breadcrumb-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <Script
+        id="breadcrumb-jsonld"
+        type="application/ld+json"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* UI breadcrumb */}
       <nav aria-label="breadcrumb" className="text-blue-600 mb-3">

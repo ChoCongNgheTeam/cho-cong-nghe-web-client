@@ -3,6 +3,9 @@
 import { useRef, useState, useEffect, useCallback, startTransition, useMemo, memo } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 
+import BoughtTogetherSection from "../components/product-detail/BoughtTogetherSection";
+import { trackProductView } from "@/lib/recommendation";
+
 import ProductDetailBanner from "../components/product-detail/ProductDetailBanner";
 import ProductDetailRight from "../components/product-detail/ProductDetailCardRight";
 import ProductDetailSection from "../components/product-detail/ProductSpecifications";
@@ -98,6 +101,7 @@ const StaticSections = memo(function StaticSections({
       <div className="bg-gray-400/10 pt-4 sm:pt-6" ref={suggestRef}>
         <div className="container !px-0">
           <ProductDetailSuggest slug={slug} />
+          <BoughtTogetherSection productId={product.id} />
         </div>
       </div>
       <TrustBadges className="!bg-gray-400/10" />
@@ -110,7 +114,8 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   const tabBarRef = useRef<HTMLDivElement>(null);
 
   // useProductSections giờ return stable object (useMemo deps=[])
-  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, scrollToSection, layoutChangingRef } = useProductSections(stickyBarRef, tabBarRef);
+  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, scrollToSection, layoutChangingRef } =
+    useProductSections(stickyBarRef, tabBarRef);
 
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -188,6 +193,10 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    trackProductView(product.id, "DETAIL");
+  }, [product.id]);
+
   // handleOptionChange không còn depend selectedOptions
   // Đọc giá trị latest qua selectedOptionsRef thay vì closure
   const handleOptionChange = useCallback(
@@ -242,7 +251,11 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
                 `}
               >
                 {tab.label}
-                <span data-indicator className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full transition-opacity duration-200" style={{ opacity: tab.id === "info" ? 1 : 0 }} />
+                <span
+                  data-indicator
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full transition-opacity duration-200"
+                  style={{ opacity: tab.id === "info" ? 1 : 0 }}
+                />
               </button>
             ))}
           </div>
@@ -259,7 +272,12 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit">
             {/* Bỏ key={currentVariant?.id} — tránh unmount/remount toàn bộ component */}
-            <ProductDetailBanner product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
+            <ProductDetailBanner
+              product={product}
+              selectedVariant={currentVariant}
+              images={variantImages}
+              onColorChange={handleColorChangeFromGallery}
+            />
           </div>
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-16 lg:h-fit">
@@ -290,7 +308,14 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
         suggestRef={suggestRef}
       />
 
-      <ProductStickyFooter product={product} selectedVariant={currentVariant} selectedPrice={price} infoRef={infoRef} availableOptions={availableOptions} selectedOptions={selectedOptions} />
+      <ProductStickyFooter
+        product={product}
+        selectedVariant={currentVariant}
+        selectedPrice={price}
+        infoRef={infoRef}
+        availableOptions={availableOptions}
+        selectedOptions={selectedOptions}
+      />
     </div>
   );
 }

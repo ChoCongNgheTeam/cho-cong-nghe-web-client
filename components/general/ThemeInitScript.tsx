@@ -24,7 +24,9 @@ const THEME_INIT_SCRIPT = `
  * chèn HTML thẳng vào stream SSR, không đi qua reconciliation của React nên
  * không bị runtime kiểm tra/cảnh báo. Hành vi chống flash giữ nguyên như cũ.
  */
-export default function ThemeInitScript() {
-  useServerInsertedHTML(() => <script id="theme-init" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />);
+export default function ThemeInitScript({ nonce }: { nonce?: string }) {
+  // nonce phải khớp với nonce trong header CSP (sinh bởi middleware.ts) — thiếu nó
+  // thì trình duyệt sẽ chặn script này dưới CSP script-src 'nonce-...' 'strict-dynamic'.
+  useServerInsertedHTML(() => <script id="theme-init" nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />);
   return null;
 }

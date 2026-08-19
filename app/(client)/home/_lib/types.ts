@@ -204,6 +204,8 @@ export interface HomeStaticData {
   bannersTop: Banner[];
   bannersSection1: Banner[];
   bannersPopup: Banner[];
+  // Banner fallback cho widget "Đã xem gần đây" ở sidebar trang chủ (module recommendation) — dùng khi chưa có lịch sử xem để hiện.
+  bannersSidebar: Banner[];
   featuredCategories: FeaturedCategory[];
   activeCampaigns: Campaign[];
   blogs: BlogPagination;

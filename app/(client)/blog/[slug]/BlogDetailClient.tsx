@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useEffect, useCallback } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import BlogCategoryBar from "../components/BlogCategoryBar";
 import BlogCommentSection from "./BlogCommentSection";
 import { getBlogComments, getBlogReplies, postBlogComment } from "../_lib/blog-comments";
@@ -64,7 +65,13 @@ export default function BlogDetailClient({ blog }: Props) {
 
   const contentSections = useMemo(() => extractHeadingList(blog.content), [blog.content]);
   const excerpt = useMemo(() => createExcerptFromHtml(blog.content), [blog.content]);
-  const articleHtml = blog.content?.trim() ? blog.content : "<p>Nội dung bài viết đang được cập nhật.</p>";
+  // Nội dung bài blog được render cho MỌI khách truy cập public — dù do admin soạn,
+  // vẫn phải sanitize (rủi ro: tài khoản admin/CMS bị compromise, hoặc lỗ hổng ở
+  // CKEditor upload cho phép chèn HTML thô) để nhất quán với ProductDescription.tsx.
+  const articleHtml = useMemo(() => {
+    const raw = blog.content?.trim() ? blog.content : "<p>Nội dung bài viết đang được cập nhật.</p>";
+    return DOMPurify.sanitize(raw);
+  }, [blog.content]);
   const publishedAtLabel = formatDateTime(blog.publishedAt || blog.createdAt);
 
   const [comments, setComments] = useState<BlogComment[]>([]);
@@ -135,13 +142,23 @@ export default function BlogDetailClient({ blog }: Props) {
       />
 
       <section className="mb-8">
-        <BlogCategoryBar active={blog.category?.slug} className="gap-5 border-b border-neutral pb-2 text-[14px]" itemClassName="pb-1 font-medium" />
+        <BlogCategoryBar
+          active={blog.category?.slug}
+          className="gap-5 border-b border-neutral pb-2 text-[14px]"
+          itemClassName="pb-1 font-medium"
+        />
       </section>
 
       <section className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="overflow-hidden rounded-xl bg-neutral-light lg:col-span-5">
           <div className="relative aspect-[5/4] w-full">
-            <Image src={blog.thumbnail || "/images/avatar.png"} alt={blog.title} fill className="object-cover" sizes="(min-width: 1024px) 520px, 100vw" />
+            <Image
+              src={blog.thumbnail || "/images/avatar.png"}
+              alt={blog.title}
+              fill
+              className="object-cover"
+              sizes="(min-width: 1024px) 520px, 100vw"
+            />
           </div>
         </div>
 
@@ -162,7 +179,9 @@ export default function BlogDetailClient({ blog }: Props) {
                 type="button"
                 onClick={() => setFontSize("small")}
                 className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-                  fontSize === "small" ? "border-primary bg-primary text-white" : "border-neutral bg-white text-primary hover:border-primary-light"
+                  fontSize === "small"
+                    ? "border-primary bg-primary text-white"
+                    : "border-neutral bg-white text-primary hover:border-primary-light"
                 }`}
               >
                 Nhỏ
@@ -171,7 +190,9 @@ export default function BlogDetailClient({ blog }: Props) {
                 type="button"
                 onClick={() => setFontSize("base")}
                 className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-                  fontSize === "base" ? "border-primary bg-primary text-white" : "border-neutral bg-white text-primary hover:border-primary-light"
+                  fontSize === "base"
+                    ? "border-primary bg-primary text-white"
+                    : "border-neutral bg-white text-primary hover:border-primary-light"
                 }`}
               >
                 Vừa
@@ -180,7 +201,9 @@ export default function BlogDetailClient({ blog }: Props) {
                 type="button"
                 onClick={() => setFontSize("large")}
                 className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${
-                  fontSize === "large" ? "border-primary bg-primary text-white" : "border-neutral bg-white text-primary hover:border-primary-light"
+                  fontSize === "large"
+                    ? "border-primary bg-primary text-white"
+                    : "border-neutral bg-white text-primary hover:border-primary-light"
                 }`}
               >
                 Lớn

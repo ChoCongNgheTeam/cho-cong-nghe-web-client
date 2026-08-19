@@ -2,6 +2,7 @@
 import { memo, useMemo } from "react";
 import { User } from "lucide-react";
 import Image from "next/image";
+import DOMPurify from "isomorphic-dompurify";
 import { cleanContent, renderMarkdown, parseProductCards } from "@/helpers/chatMarkdown";
 import { StructuredProductCard, ProductCardGrid } from "./ProductCards";
 import type { Message, ProductCard } from "@/types/chat";
@@ -40,8 +41,12 @@ function useParsedBubbleContent(msg: Message): ParsedBubbleContent {
       }
     }
 
-    const html = isUser ? msg.content : renderMarkdown(msg.content);
-    const introHtml = introText ? renderMarkdown(introText) : "";
+    // renderMarkdown() build HTML bằng regex thay thế, không tự sanitize — nội dung
+    // này đến từ backend AI (có thể bị prompt-injection hoặc backend bị compromise),
+    // nên bắt buộc DOMPurify trước khi đưa vào dangerouslySetInnerHTML, giống cách
+    // ProductDescription.tsx đã làm với mô tả sản phẩm.
+    const html = isUser ? msg.content : DOMPurify.sanitize(renderMarkdown(msg.content));
+    const introHtml = introText ? DOMPurify.sanitize(renderMarkdown(introText)) : "";
 
     return { html, introHtml, productCards };
   }, [msg.role, msg.content, msg.products]);
@@ -55,11 +60,17 @@ function MessageBubbleImpl({ msg, isNew }: { msg: Message; isNew?: boolean }) {
   return (
     <div className={`flex items-end gap-1.5 ${isUser ? "flex-row-reverse" : "flex-row"} ${isNew ? "chat-msg-enter" : ""}`}>
       <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center ${isUser ? "bg-accent/20" : "bg-accent/10"} mb-1`}>
-        {isUser ? <User size={12} className="text-accent" /> : <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={16} height={16} className="object-contain rounded-full" />}
+        {isUser ? (
+          <User size={12} className="text-accent" />
+        ) : (
+          <Image src="/images/Robot-mascot-v2.png" alt="Mascot" width={16} height={16} className="object-contain rounded-full" />
+        )}
       </div>
 
       {isUser ? (
-        <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm whitespace-pre-wrap">{msg.content}</div>
+        <div className="max-w-[82%] px-3 py-2 rounded-2xl text-[12.5px] leading-relaxed chat-bubble bg-accent text-white rounded-br-sm whitespace-pre-wrap">
+          {msg.content}
+        </div>
       ) : hasStructuredProducts ? (
         <div className="flex-1 min-w-[240px] flex flex-col gap-1.5">
           {introHtml && (

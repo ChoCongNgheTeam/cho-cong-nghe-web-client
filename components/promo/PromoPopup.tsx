@@ -80,7 +80,7 @@ export default function PromoPopup({ banners }: PromoPopupProps) {
     <>
       <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={handleClose} />
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-neutral-light">
+        <div className="relative w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-light">
           <button
             onClick={handleClose}
             aria-label="Đóng"
@@ -90,8 +90,8 @@ export default function PromoPopup({ banners }: PromoPopupProps) {
           </button>
 
           {banner.imageUrl && (
-            <div className="relative w-full aspect-[4/5] max-h-[70vh]">
-              <Image src={banner.imageUrl} alt={banner.title ?? "Khuyến mãi"} fill className="object-cover" priority />
+            <div className="relative w-full aspect-[1500/1024] max-h-[80vh]">
+              <Image src={banner.imageUrl} alt={banner.title ?? "Khuyến mãi"} fill className="object-contain" priority />
             </div>
           )}
 

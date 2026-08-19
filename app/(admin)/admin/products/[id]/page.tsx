@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import DOMPurify from "isomorphic-dompurify";
 import {
   ArrowLeft,
   Pencil,
@@ -154,7 +155,10 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="bg-neutral-light border border-neutral rounded-xl overflow-hidden">
-      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-5 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer"
+      >
         <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">{title}</p>
         {open ? <ChevronUp size={14} className="text-primary" /> : <ChevronDown size={14} className="text-primary" />}
       </button>
@@ -191,7 +195,9 @@ function UserAvatar({ user }: { user: { fullName: string; avatarImage?: string |
   return user.avatarImage ? (
     <Image src={user.avatarImage} alt={user.fullName} width={28} height={28} className="rounded-full object-cover shrink-0" unoptimized />
   ) : (
-    <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[13px] font-bold shrink-0">{user.fullName?.[0]?.toUpperCase() ?? "U"}</div>
+    <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[13px] font-bold shrink-0">
+      {user.fullName?.[0]?.toUpperCase() ?? "U"}
+    </div>
   );
 }
 
@@ -382,12 +388,25 @@ function ReviewsTab({ productId }: { productId: string }) {
 // INFO SECTION — collapsible card dùng trong tab "Thông tin sản phẩm"
 // ─────────────────────────────────────────────────────────────────────────────
 
-function InfoSection({ title, children, defaultOpen = true, action }: { title: string; children: React.ReactNode; defaultOpen?: boolean; action?: React.ReactNode }) {
+function InfoSection({
+  title,
+  children,
+  defaultOpen = true,
+  action,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  action?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border border-neutral rounded-xl overflow-hidden bg-neutral-light">
       {/* Header — click để toggle */}
-      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-light-active transition-colors cursor-pointer"
+      >
         <p className="text-[13px] font-semibold text-primary uppercase tracking-wider">{title}</p>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           {action}
@@ -526,7 +545,10 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-neutral-light">
       {/* Breadcrumb */}
       <div className="flex items-center gap-3 px-6 pt-5 pb-3">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer"
+        >
           <ArrowLeft size={14} /> Quay lại
         </button>
         <span className="text-primary">/</span>
@@ -575,8 +597,20 @@ export default function ProductDetailPage() {
               {selectedImages.length > 1 && (
                 <div className="px-3 py-2 flex gap-1.5 overflow-x-auto scrollbar-thin">
                   {selectedImages.slice(0, 5).map((img) => (
-                    <div key={img.id} className="w-10 h-10 rounded-md overflow-hidden border border-neutral shrink-0 bg-neutral-light-active">
-                      {img.imageUrl && <Image src={img.imageUrl} alt={img.altText ?? img.color} width={40} height={40} className="object-contain" unoptimized />}
+                    <div
+                      key={img.id}
+                      className="w-10 h-10 rounded-md overflow-hidden border border-neutral shrink-0 bg-neutral-light-active"
+                    >
+                      {img.imageUrl && (
+                        <Image
+                          src={img.imageUrl}
+                          alt={img.altText ?? img.color}
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                          unoptimized
+                        />
+                      )}
                     </div>
                   ))}
                   {selectedImages.length > 5 && (
@@ -610,7 +644,14 @@ export default function ProductDetailPage() {
               {[
                 { label: "Thương hiệu", value: product.brand.name },
                 { label: "Danh mục", value: <span className="font-mono text-[13px] text-accent">{product.category.slug}</span> },
-                { label: "Variant display", value: <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-light-active text-primary">{product.variantDisplay}</span> },
+                {
+                  label: "Variant display",
+                  value: (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-light-active text-primary">
+                      {product.variantDisplay}
+                    </span>
+                  ),
+                },
                 {
                   label: "Đánh giá",
                   value: (
@@ -642,7 +683,9 @@ export default function ProductDetailPage() {
             {/* Highlight specs */}
             {highlightSpecs.length > 0 && (
               <div className="bg-neutral-light border border-neutral rounded-xl p-4 space-y-2">
-                <p className="text-[13px] font-semibold text-primary uppercase tracking-wider mb-2">Thông số nổi bật ({highlightSpecs.length})</p>
+                <p className="text-[13px] font-semibold text-primary uppercase tracking-wider mb-2">
+                  Thông số nổi bật ({highlightSpecs.length})
+                </p>
                 {highlightSpecs.map((s) => (
                   <div key={s.specificationId} className="flex items-center justify-between text-[12px]">
                     <span className="text-primary">{s.specification.name}</span>
@@ -688,7 +731,9 @@ export default function ProductDetailPage() {
                   {defaultVariant && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13px] font-semibold bg-accent/10 text-accent">
                       <ShoppingCart size={10} />
-                      {priceRange.min === priceRange.max ? formatVND(priceRange.min) : `${formatVND(priceRange.min)} – ${formatVND(priceRange.max)}`}
+                      {priceRange.min === priceRange.max
+                        ? formatVND(priceRange.min)
+                        : `${formatVND(priceRange.min)} – ${formatVND(priceRange.max)}`}
                     </span>
                   )}
                   <span className="text-[13px] text-primary">
@@ -747,7 +792,10 @@ export default function ProductDetailPage() {
                       defaultOpen={false}
                       action={
                         !isDeleted && !isStaff && !product.description ? (
-                          <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
+                          <Link
+                            href={`/admin/products/${product.id}/edit`}
+                            className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer"
+                          >
                             <Pencil size={11} /> Thêm mô tả
                           </Link>
                         ) : undefined
@@ -759,7 +807,7 @@ export default function ProductDetailPage() {
                           prose-headings:text-primary prose-headings:font-semibold
                           prose-p:text-primary/90 prose-strong:text-primary
                           prose-a:text-accent prose-code:text-accent prose-code:bg-neutral-light-active prose-code:px-1 prose-code:rounded"
-                          dangerouslySetInnerHTML={{ __html: product.description }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
                         />
                       ) : (
                         <p className="text-[13px] italic text-primary">Chưa có mô tả</p>
@@ -772,7 +820,10 @@ export default function ProductDetailPage() {
                       defaultOpen={true}
                       action={
                         !isDeleted && !isStaff ? (
-                          <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer">
+                          <Link
+                            href={`/admin/products/${product.id}/edit`}
+                            className="flex items-center gap-1 text-[12px] text-accent hover:underline cursor-pointer"
+                          >
                             <Pencil size={11} /> Sửa
                           </Link>
                         ) : undefined
@@ -850,9 +901,13 @@ export default function ProductDetailPage() {
             </div>
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá sản phẩm?</h3>
             <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc chắn muốn xoá</p>
-            <p className="text-[14px] font-semibold text-primary text-center mb-2">"{product.name}"</p>
+            <p className="text-[14px] font-semibold text-primary text-center mb-2">&quot;{product.name}&quot;</p>
             <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được chuyển vào thùng rác.</p>
-            {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
+            {deleteError && (
+              <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">
+                {deleteError}
+              </div>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={deleteModal.close}
@@ -886,9 +941,13 @@ export default function ProductDetailPage() {
               <ArchiveRestore size={22} strokeWidth={1.5} />
             </div>
             <h3 className="text-[16px] font-bold text-primary text-center mb-1">Khôi phục sản phẩm?</h3>
-            <p className="text-[14px] font-semibold text-primary text-center mb-5">"{product.name}"</p>
+            <p className="text-[14px] font-semibold text-primary text-center mb-5">&quot;{product.name}&quot;</p>
             <p className="text-[12px] text-primary text-center mb-6">Sản phẩm sẽ được khôi phục nhưng vẫn ở trạng thái ẩn.</p>
-            {restoreError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{restoreError}</div>}
+            {restoreError && (
+              <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">
+                {restoreError}
+              </div>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={restoreModal.close}

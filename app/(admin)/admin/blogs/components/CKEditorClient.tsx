@@ -52,9 +52,18 @@ interface CKEditorClientProps {
   uploadFolder?: string;
 }
 
-export default function CKEditorClient({ value, onChange, placeholder = "Nhập nội dung...", minHeight = 400, uploadFolder = "products" }: CKEditorClientProps) {
+export default function CKEditorClient({
+  value,
+  onChange,
+  placeholder = "Nhập nội dung...",
+  minHeight = 400,
+  uploadFolder = "products",
+}: CKEditorClientProps) {
   return (
-    <div className="ck-editor-wrapper rounded-xl overflow-hidden border border-neutral" style={{ "--ck-min-height": `${minHeight}px` } as React.CSSProperties}>
+    <div
+      className="ck-editor-wrapper rounded-xl overflow-hidden border border-neutral"
+      style={{ "--ck-min-height": `${minHeight}px` } as React.CSSProperties}
+    >
       <style>{`
         .ck-editor-wrapper .ck-editor__editable {
           min-height: ${minHeight}px;
@@ -170,6 +179,16 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
             shouldNotGroupWhenFull: false,
           },
 
+          // @ts-ignore — Trên 1 số môi trường (đã thấy khác biệt Windows vs Linux
+          // trong quá trình dev), TypeScript không nhận diện đúng type augmentation
+          // của plugin Heading từ package `ckeditor5` khi dùng pnpm (chi tiết: pnpm
+          // tạo symlink/junction cho node_modules khác cách npm hoist, có thể khiến
+          // TS resolve 2 physical copy khác nhau của cùng 1 package, làm declaration
+          // merging cho `EditorConfig` không áp dụng). Dùng @ts-ignore (không phải
+          // sẽ tự báo "unused directive" ở máy không gặp lỗi, còn @ts-ignore thì an
+          // toàn ở cả 2 trường hợp. Đây THUẦN TÚY là lỗi type-checking, không phải
+          // bug runtime — `heading` là config hợp lệ 100% của plugin Heading khi
+          // CKEditor chạy thật.
           heading: {
             options: [
               { model: "paragraph", title: "Đoạn văn", class: "ck-heading_paragraph" },
@@ -181,7 +200,16 @@ export default function CKEditorClient({ value, onChange, placeholder = "Nhập 
           },
 
           image: {
-            toolbar: ["imageStyle:inline", "imageStyle:block", "imageStyle:side", "|", "toggleImageCaption", "imageTextAlternative", "|", "resizeImage"],
+            toolbar: [
+              "imageStyle:inline",
+              "imageStyle:block",
+              "imageStyle:side",
+              "|",
+              "toggleImageCaption",
+              "imageTextAlternative",
+              "|",
+              "resizeImage",
+            ],
           },
 
           table: {

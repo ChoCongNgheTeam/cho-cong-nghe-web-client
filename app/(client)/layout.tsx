@@ -7,6 +7,7 @@ import BackToTopButton from "@/components/ui/BackToTopButton";
 import ZaloButton from "@/components/ui/ZaloButton";
 import FloatingDock from "@/components/ui/FloatingDock";
 import SpinWheelButton from "@/components/spin/SpinWheelButton";
+import CookieConsentBanner from "@/components/cookie-consent/CookieConsentBanner";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <SpinWheelButton />
         <BackToTopButton />
       </FloatingDock>
+
+      <CookieConsentBanner />
     </div>
   );
 }

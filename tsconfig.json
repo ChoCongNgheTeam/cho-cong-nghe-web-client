@@ -23,5 +23,14 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts", "**/*.mts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // e2e/ dùng @playwright/test — package này CHƯA được cài mặc định (xem
+    // TEST_PLAN.md mục 5.3). Loại khỏi tsconfig gốc để "npm run typecheck" không
+    // vỡ trước khi bạn cài Playwright; e2e/tsconfig.json xử lý typecheck riêng
+    // cho thư mục này sau khi `npm install -D @playwright/test`.
+    "e2e",
+    // playwright.config.ts import trực tiếp @playwright/test — cùng lý do trên.
+    "playwright.config.ts"
+  ]
 }

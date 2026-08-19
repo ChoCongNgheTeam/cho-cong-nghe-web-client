@@ -1,6 +1,14 @@
 import apiRequest from "@/lib/api";
 import { fetchRootCategories } from "@/lib/api/header/header.api";
-import type { ApiResponse, HomeStaticData, HomeProductsData, HomeSaleScheduleData, HomeCategoryProductsData, HomePageData, SaleByDateApiResponse } from "./types";
+import type {
+  ApiResponse,
+  HomeStaticData,
+  HomeProductsData,
+  HomeSaleScheduleData,
+  HomeCategoryProductsData,
+  HomePageData,
+  SaleByDateApiResponse,
+} from "./types";
 import { logError } from "@/lib/monitoring/log-error";
 
 export const HOME_CACHE_TAGS = {
@@ -68,6 +76,7 @@ export async function getHomePageData(): Promise<HomePageData> {
     bannersTop: staticData?.bannersTop ?? [],
     bannersSection1: staticData?.bannersSection1 ?? [],
     bannersPopup: staticData?.bannersPopup ?? [],
+    bannersSidebar: staticData?.bannersSidebar ?? [],
     featuredCategories: staticData?.featuredCategories ?? [],
     activeCampaigns: staticData?.activeCampaigns ?? [],
     blogs: staticData?.blogs ?? { data: [], page: 1, limit: 0, total: 0, totalPages: 0 },

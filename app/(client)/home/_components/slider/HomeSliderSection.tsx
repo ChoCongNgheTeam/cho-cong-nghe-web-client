@@ -8,6 +8,7 @@ import { SidebarCategoryList } from "../categories/SidebarCategoryList";
 import type { Slider, Banner } from "../../_lib/types";
 import { Category } from "@/types/category";
 import { useCategoryMenuStore } from "@/store/categoryMenu.store";
+import { RecentlyViewedSidebar } from "../categories/RecentlyViewedSidebar";
 
 const PromoColumn = memo(function PromoColumn({ banners }: { banners: Banner[] }) {
   const validBanners = banners?.filter((b): b is Banner & { imageUrl: string } => Boolean(b.imageUrl)) ?? [];
@@ -25,7 +26,12 @@ const PromoColumn = memo(function PromoColumn({ banners }: { banners: Banner[] }
           href={banner.linkUrl ?? "#"}
           className="relative h-[92px] rounded-xl overflow-hidden group border border-surface-border hover:border-accent transition-all hover:shadow-md"
         >
-          <Image src={banner.imageUrl} alt={banner.title ?? ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+          <Image
+            src={banner.imageUrl}
+            alt={banner.title ?? ""}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </Link>
       ))}
@@ -37,9 +43,15 @@ interface HomeSliderSectionProps {
   sliders: Slider[];
   categories: Category[];
   bannersDeal: Banner[];
+  bannersSidebar: Banner[];
 }
 
-export const HomeSliderSection = memo(function HomeSliderSection({ sliders, categories, bannersDeal }: HomeSliderSectionProps) {
+export const HomeSliderSection = memo(function HomeSliderSection({
+  sliders,
+  categories,
+  bannersDeal,
+  bannersSidebar,
+}: HomeSliderSectionProps) {
   const isCategoryOpen = useCategoryMenuStore((s) => s.isOpen);
   const close = useCategoryMenuStore((s) => s.close);
 
@@ -51,7 +63,12 @@ export const HomeSliderSection = memo(function HomeSliderSection({ sliders, cate
         <HomeSlider sliders={sliders} />
       </div>
       <div className="hidden lg:grid gap-3 items-start" style={{ gridTemplateColumns: "180px 1fr 160px" }}>
-        <SidebarCategoryList categories={categories} isHighlighted={isCategoryOpen} onClose={close} />
+        <div className="flex flex-col gap-3 self-stretch">
+          <div className="shrink-0">
+            <SidebarCategoryList categories={categories} isHighlighted={isCategoryOpen} onClose={close} />
+          </div>
+          <RecentlyViewedSidebar fallbackBanners={bannersSidebar} />
+        </div>
         <div className="rounded-xl overflow-hidden min-w-0">
           <HomeSlider sliders={sliders} />
         </div>
