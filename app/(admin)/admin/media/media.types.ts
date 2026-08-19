@@ -1,6 +1,7 @@
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type MediaType = "SLIDER" | "BANNER";
-export type MediaPosition = "HOME_DEAL" | "HOME_TOP" | "BELOW_SLIDER" | "HOME_SECTION_1" | "HOME_SECTION_2" | "HOME_POPUP" | "SIDEBAR_BOTTOM";
+export type MediaPosition =
+  "HOME_DEAL" | "HOME_TOP" | "BELOW_SLIDER" | "HOME_SECTION_1" | "HOME_SECTION_2" | "HOME_POPUP" | "SIDEBAR_BOTTOM";
 
 export interface Media {
   id: string;
@@ -26,7 +27,15 @@ export interface ApiResponse<T> {
 }
 
 export const MEDIA_TYPES: MediaType[] = ["SLIDER", "BANNER"];
-export const MEDIA_POSITIONS: MediaPosition[] = ["HOME_DEAL", "HOME_TOP", "BELOW_SLIDER", "HOME_SECTION_1", "HOME_SECTION_2", "HOME_POPUP", "SIDEBAR_BOTTOM"];
+export const MEDIA_POSITIONS: MediaPosition[] = [
+  "HOME_DEAL",
+  "HOME_TOP",
+  "BELOW_SLIDER",
+  "HOME_SECTION_1",
+  "HOME_SECTION_2",
+  "HOME_POPUP",
+  "SIDEBAR_BOTTOM",
+];
 
 export const positionLabel: Record<MediaPosition, string> = {
   HOME_DEAL: "Home Deal",

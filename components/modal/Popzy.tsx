@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import DOMPurify from "isomorphic-dompurify";
 import { PopzyOptions, PopzyButtonConfig } from "./types";
 
 interface PopzyProps extends PopzyOptions {
@@ -43,7 +44,8 @@ export default function Popzy({
     const target = scrollLockTarget();
     const hasScrollbar =
       target === document.body || target === document.documentElement
-        ? document.documentElement.scrollHeight > document.documentElement.clientHeight || document.body.scrollHeight > document.body.clientHeight
+        ? document.documentElement.scrollHeight > document.documentElement.clientHeight ||
+          document.body.scrollHeight > document.body.clientHeight
         : target.scrollHeight > target.clientHeight;
 
     if (hasScrollbar) {
@@ -92,8 +94,14 @@ export default function Popzy({
   if (typeof window === "undefined" || !isOpen) return null;
 
   return createPortal(
-    <div ref={backdropRef} onClick={handleBackdropClick} className={`fixed inset-0 z-9999 flex items-center justify-center bg-black/70 opacity-100 visible transition-opacity duration-300`}>
-      <div className={`relative w-[min(600px,90%)] p-5 rounded-xl bg-neutral-light border border-neutral shadow-2xl scale-100 transition-transform duration-300 ${cssClass}`}>
+    <div
+      ref={backdropRef}
+      onClick={handleBackdropClick}
+      className={`fixed inset-0 z-9999 flex items-center justify-center bg-black/70 opacity-100 visible transition-opacity duration-300`}
+    >
+      <div
+        className={`relative w-[min(600px,90%)] p-5 rounded-xl bg-neutral-light border border-neutral shadow-2xl scale-100 transition-transform duration-300 ${cssClass}`}
+      >
         {allowButtonClose && (
           <button
             onClick={onClose}
@@ -102,7 +110,13 @@ export default function Popzy({
             &times;
           </button>
         )}
-        <div className="max-h-[80vh] overflow-y-auto pr-1 scrollbar-thin">{typeof content === "string" ? <div dangerouslySetInnerHTML={{ __html: content }} /> : content}</div>
+        <div className="max-h-[80vh] overflow-y-auto pr-1 scrollbar-thin">
+          {/* Popzy là modal DÙNG CHUNG toàn app — hiện tại mọi call site đều truyền
+              content dạng JSX (tự escape qua React), nhưng nhánh string vẫn tồn tại
+              cho use case tương lai. Sanitize phòng thủ để không ai vô tình mở lại
+              lỗ XSS nếu sau này có nơi truyền content là chuỗi HTML thô/dữ liệu người dùng. */}
+          {typeof content === "string" ? <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} /> : content}
+        </div>
         {footer && (
           <div className="flex justify-end gap-2 pt-5 border-t border-neutral mt-4">
             {footerButtons.map((button, index) => (

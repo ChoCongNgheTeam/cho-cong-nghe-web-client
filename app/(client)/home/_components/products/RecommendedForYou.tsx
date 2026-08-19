@@ -47,7 +47,17 @@ export function RecommendedForYou() {
           </div>
 
           <div className="px-3 md:px-5 py-4">
-            <Slidezy items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }} gap={16} speed={300} loop={false} nav={false} mobileNav="none" controls={{ mobile: false, tablet: false, lg: true, desktop: true }} slideBy={1} draggable={true}>
+            <Slidezy
+              items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }}
+              gap={16}
+              speed={300}
+              loop={false}
+              nav={false}
+              mobileNav="none"
+              controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
+              slideBy={1}
+              draggable={true}
+            >
               {products.map((product, index) => (
                 <div key={product.id} onClick={() => trackRecommendationClick(product.id, algorithmById[product.id] ?? "FALLBACK")}>
                   <ProductCard product={product} index={index} />

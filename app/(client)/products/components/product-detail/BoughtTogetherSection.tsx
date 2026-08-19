@@ -39,7 +39,17 @@ export default function BoughtTogetherSection({ productId }: { productId: string
     <div className="w-full px-3 sm:px-6 lg:px-12 py-5 lg:py-10 bg-neutral-light rounded-xl mt-4">
       <h2 className="text-base sm:text-lg md:text-2xl font-semibold text-primary mb-4 sm:mb-6 md:mb-8">Khách hàng cũng mua</h2>
 
-      <Slidezy items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }} gap={16} speed={300} loop={false} nav={false} mobileNav="none" controls={{ mobile: false, tablet: false, lg: true, desktop: true }} slideBy={1} draggable={true}>
+      <Slidezy
+        items={{ mobile: 2, tablet: 2, lg: 3, desktop: 4 }}
+        gap={16}
+        speed={300}
+        loop={false}
+        nav={false}
+        mobileNav="none"
+        controls={{ mobile: false, tablet: false, lg: true, desktop: true }}
+        slideBy={1}
+        draggable={true}
+      >
         {products.map((product, index) => (
           <div key={product.id} onClick={() => trackRecommendationClick(product.id, "BOUGHT_TOGETHER")}>
             <ProductCard product={product} index={index} />

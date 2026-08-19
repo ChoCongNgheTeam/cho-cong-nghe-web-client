@@ -26,7 +26,12 @@ const PromoColumn = memo(function PromoColumn({ banners }: { banners: Banner[] }
           href={banner.linkUrl ?? "#"}
           className="relative h-[92px] rounded-xl overflow-hidden group border border-surface-border hover:border-accent transition-all hover:shadow-md"
         >
-          <Image src={banner.imageUrl} alt={banner.title ?? ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+          <Image
+            src={banner.imageUrl}
+            alt={banner.title ?? ""}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </Link>
       ))}
@@ -41,7 +46,12 @@ interface HomeSliderSectionProps {
   bannersSidebar: Banner[];
 }
 
-export const HomeSliderSection = memo(function HomeSliderSection({ sliders, categories, bannersDeal, bannersSidebar }: HomeSliderSectionProps) {
+export const HomeSliderSection = memo(function HomeSliderSection({
+  sliders,
+  categories,
+  bannersDeal,
+  bannersSidebar,
+}: HomeSliderSectionProps) {
   const isCategoryOpen = useCategoryMenuStore((s) => s.isOpen);
   const close = useCategoryMenuStore((s) => s.close);
 

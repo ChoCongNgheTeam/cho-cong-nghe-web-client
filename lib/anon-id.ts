@@ -28,7 +28,8 @@ export function getOrCreateAnonId(): string {
   const existing = readCookie(ANON_ID_COOKIE);
   if (existing) return existing;
 
-  const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `anon-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const id =
+    typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `anon-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   writeCookie(ANON_ID_COOKIE, id, ANON_ID_MAX_AGE_DAYS);
   return id;

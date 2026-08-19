@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Pencil, Loader2, XCircle, Trash2, Eye, Clock, BarChart2, User, Calendar } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 import { Popzy } from "@/components/modal";
 import { getBlog, updateBlog, deleteBlog } from "../_lib/blogs";
 import { BlogForm, blogToForm } from "../components/BlogForm";
@@ -105,7 +106,10 @@ export default function BlogDetailPage() {
     <div className="min-h-screen bg-neutral-light">
       {/* Breadcrumb */}
       <div className="flex items-center gap-3 px-6 pt-5 pb-3 flex-wrap">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer"
+        >
           <ArrowLeft size={14} /> Quay lại
         </button>
         <span className="text-neutral-dark text-[13px]">/</span>
@@ -143,7 +147,9 @@ export default function BlogDetailPage() {
               </div>
             </div>
 
-            {blog.thumbnail && <img src={blog.thumbnail} alt={blog.title} className="w-full aspect-video rounded-xl object-cover border border-neutral" />}
+            {blog.thumbnail && (
+              <img src={blog.thumbnail} alt={blog.title} className="w-full aspect-video rounded-xl object-cover border border-neutral" />
+            )}
 
             <div>
               <h2 className="text-[14px] font-bold text-primary leading-snug line-clamp-3">{blog.title}</h2>
@@ -215,7 +221,10 @@ export default function BlogDetailPage() {
                     <Pencil size={13} /> Chỉnh sửa
                   </Link>
                 ) : (
-                  <Link href={href(`/blogs/${blog.id}`)} className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[12px] text-primary hover:bg-neutral-light-active">
+                  <Link
+                    href={href(`/blogs/${blog.id}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-neutral rounded-lg text-[12px] text-primary hover:bg-neutral-light-active"
+                  >
                     <Eye size={13} /> Xem
                   </Link>
                 )}
@@ -241,7 +250,9 @@ export default function BlogDetailPage() {
                     <img src={blog.author.avatarImage} alt="" className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                      <span className="text-[11px] font-bold text-accent">{(blog.author.fullName ?? blog.author.email)[0].toUpperCase()}</span>
+                      <span className="text-[11px] font-bold text-accent">
+                        {(blog.author.fullName ?? blog.author.email)[0].toUpperCase()}
+                      </span>
                     </div>
                   )}
                   <div>
@@ -262,7 +273,7 @@ export default function BlogDetailPage() {
                     [&_a]:text-accent
                     [&_table]:block [&_table]:overflow-x-auto
                   "
-                  dangerouslySetInnerHTML={{ __html: blog.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blog.content) }}
                 />
               </div>
             )}
@@ -284,9 +295,13 @@ export default function BlogDetailPage() {
               </div>
               <h3 className="text-[16px] font-bold text-primary text-center mb-1">Xoá bài viết?</h3>
               <p className="text-[13px] text-primary/60 text-center mb-1">Bạn có chắc muốn xoá</p>
-              <p className="text-[14px] font-semibold text-primary text-center mb-5 line-clamp-2">"{blog.title}"</p>
+              <p className="text-[14px] font-semibold text-primary text-center mb-5 line-clamp-2">&quot;{blog.title}&quot;</p>
               <p className="text-[12px] text-promotion text-center mb-6">Bài viết sẽ được chuyển vào thùng rác.</p>
-              {deleteError && <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">{deleteError}</div>}
+              {deleteError && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-promotion-light border border-promotion/30 text-promotion text-[12px] text-center">
+                  {deleteError}
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={() => setDeleteOpen(false)}

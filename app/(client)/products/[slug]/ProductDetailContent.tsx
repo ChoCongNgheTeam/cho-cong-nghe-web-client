@@ -114,7 +114,8 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
   const tabBarRef = useRef<HTMLDivElement>(null);
 
   // useProductSections giờ return stable object (useMemo deps=[])
-  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, scrollToSection, layoutChangingRef } = useProductSections(stickyBarRef, tabBarRef);
+  const { breadcrumbRef, infoRef, specificationsRef, articleRef, reviewsRef, suggestRef, scrollToSection, layoutChangingRef } =
+    useProductSections(stickyBarRef, tabBarRef);
 
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -250,7 +251,11 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
                 `}
               >
                 {tab.label}
-                <span data-indicator className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full transition-opacity duration-200" style={{ opacity: tab.id === "info" ? 1 : 0 }} />
+                <span
+                  data-indicator
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full transition-opacity duration-200"
+                  style={{ opacity: tab.id === "info" ? 1 : 0 }}
+                />
               </button>
             ))}
           </div>
@@ -267,7 +272,12 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 py-6">
           <div className="w-full lg:w-[60%] lg:sticky lg:top-16 lg:h-fit">
             {/* Bỏ key={currentVariant?.id} — tránh unmount/remount toàn bộ component */}
-            <ProductDetailBanner product={product} selectedVariant={currentVariant} images={variantImages} onColorChange={handleColorChangeFromGallery} />
+            <ProductDetailBanner
+              product={product}
+              selectedVariant={currentVariant}
+              images={variantImages}
+              onColorChange={handleColorChangeFromGallery}
+            />
           </div>
           <div className="w-full lg:w-[40%]">
             <div className="lg:sticky lg:top-16 lg:h-fit">
@@ -298,7 +308,14 @@ export function ProductDetailContent({ product, slug }: ProductDetailContentProp
         suggestRef={suggestRef}
       />
 
-      <ProductStickyFooter product={product} selectedVariant={currentVariant} selectedPrice={price} infoRef={infoRef} availableOptions={availableOptions} selectedOptions={selectedOptions} />
+      <ProductStickyFooter
+        product={product}
+        selectedVariant={currentVariant}
+        selectedPrice={price}
+        infoRef={infoRef}
+        availableOptions={availableOptions}
+        selectedOptions={selectedOptions}
+      />
     </div>
   );
 }

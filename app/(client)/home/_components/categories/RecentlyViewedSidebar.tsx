@@ -62,7 +62,11 @@ export function RecentlyViewedSidebar({ fallbackBanners }: RecentlyViewedSidebar
             div này sẽ phình cao theo đúng số lượng sản phẩm thay vì bị giới hạn bởi cha. */}
         <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-surface-border [scrollbar-width:thin]">
           {products.map((product) => (
-            <Link key={product.id} href={`/products/${product.slug}`} className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-light transition-colors">
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-light transition-colors"
+            >
               <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-neutral-light shrink-0">
                 {product.thumbnail && <Image src={product.thumbnail} alt={product.name} fill className="object-cover" sizes="32px" />}
               </div>
@@ -80,8 +84,17 @@ export function RecentlyViewedSidebar({ fallbackBanners }: RecentlyViewedSidebar
   if (!fallbackBanner) return null;
 
   return (
-    <Link href={fallbackBanner.linkUrl ?? "#"} className={`${WIDGET_HEIGHT} relative block rounded-xl overflow-hidden border border-surface-border group`}>
-      <Image src={fallbackBanner.imageUrl!} alt={fallbackBanner.title ?? ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="180px" />
+    <Link
+      href={fallbackBanner.linkUrl ?? "#"}
+      className={`${WIDGET_HEIGHT} relative block rounded-xl overflow-hidden border border-surface-border group`}
+    >
+      <Image
+        src={fallbackBanner.imageUrl!}
+        alt={fallbackBanner.title ?? ""}
+        fill
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
+        sizes="180px"
+      />
     </Link>
   );
 }

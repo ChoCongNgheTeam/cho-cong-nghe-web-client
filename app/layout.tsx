@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
@@ -17,10 +18,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ChoCongNghe - Điện thoại, Laptop, Phụ kiện & Điện lạnh chính hãng",
-  description: "Chuyên cung cấp điện thoại, laptop, phụ kiện công nghệ và thiết bị điện lạnh chính hãng. Giá cả cạnh tranh, bảo hành uy tín, giao hàng nhanh chóng toàn quốc.",
+  description:
+    "Chuyên cung cấp điện thoại, laptop, phụ kiện công nghệ và thiết bị điện lạnh chính hãng. Giá cả cạnh tranh, bảo hành uy tín, giao hàng nhanh chóng toàn quốc.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Nonce được middleware.ts sinh ra ngẫu nhiên mỗi request và forward qua header
+  // "x-nonce" — bắt buộc phải gắn vào MỌI <script> tự viết tay (kể cả next/script)
+  // để chúng chạy được dưới CSP script-src 'nonce-...' 'strict-dynamic'. Thiếu nonce
+  // ở bất kỳ script nào bên dưới -> trình duyệt sẽ chặn nó âm thầm (không lỗi JS).
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
@@ -30,11 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        <ThemeInitScript />
+        <ThemeInitScript nonce={nonce} />
 
         {/* ── Google Analytics ── */}
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-L1GEXYJQKK" strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-L1GEXYJQKK" strategy="afterInteractive" nonce={nonce} />
+        <Script id="google-analytics" strategy="afterInteractive" nonce={nonce}>
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

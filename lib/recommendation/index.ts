@@ -81,7 +81,9 @@ export async function getRecentlyViewedProducts(limit = 4, excludeProductId?: st
 
   if (!loggedIn && !sessionId) return []; // guest chưa đồng ý cá nhân hoá — không có gì để tra, khỏi gọi BE
 
-  const res = await apiRequest.get<RecommendedIdsResponse>("/recommendation/recently-viewed", { params: { limit, sessionId, excludeProductId } });
+  const res = await apiRequest.get<RecommendedIdsResponse>("/recommendation/recently-viewed", {
+    params: { limit, sessionId, excludeProductId },
+  });
   return resolveProductCards(res.data.map((p) => p.id));
 }
 

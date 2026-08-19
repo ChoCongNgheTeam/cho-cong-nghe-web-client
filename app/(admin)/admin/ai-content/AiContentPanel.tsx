@@ -1,7 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Loader2, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, RefreshCw, ClipboardCopy, ArrowDownToLine, Clock } from "lucide-react";
+import {
+  Sparkles,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  AlertCircle,
+  Info,
+  RefreshCw,
+  ClipboardCopy,
+  ArrowDownToLine,
+  Clock,
+} from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 import apiRequest from "@/lib/api";
 
 type Mode = "blog" | "product";
@@ -33,7 +46,8 @@ interface AiContentPanelProps {
 }
 
 const scoreColor = (score: number) => (score >= 80 ? "text-emerald-600" : score >= 60 ? "text-yellow-600" : "text-red-500");
-const scoreBg = (score: number) => (score >= 80 ? "bg-emerald-50 border-emerald-200" : score >= 60 ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200");
+const scoreBg = (score: number) =>
+  score >= 80 ? "bg-emerald-50 border-emerald-200" : score >= 60 ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200";
 const scoreLabel = (score: number) => (score >= 80 ? "Tốt" : score >= 60 ? "Trung bình" : "Cần cải thiện");
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
@@ -44,7 +58,10 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
         <span className={`text-[11px] font-semibold ${scoreColor(value)}`}>{value}/100</span>
       </div>
       <div className="h-1.5 bg-neutral-light-active rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-500 ${value >= 80 ? "bg-emerald-500" : value >= 60 ? "bg-yellow-400" : "bg-red-400"}`} style={{ width: `${value}%` }} />
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${value >= 80 ? "bg-emerald-500" : value >= 60 ? "bg-yellow-400" : "bg-red-400"}`}
+          style={{ width: `${value}%` }}
+        />
       </div>
     </div>
   );
@@ -168,7 +185,10 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
             <div className="space-y-1.5">
               <p className="text-[11px] font-semibold text-neutral-dark uppercase tracking-wider">Gợi ý cải thiện</p>
               {result.suggestions.map((s, i) => (
-                <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-neutral-light border border-neutral text-[11px] text-primary">
+                <div
+                  key={i}
+                  className="flex items-start gap-2 px-3 py-2 rounded-lg bg-neutral-light border border-neutral text-[11px] text-primary"
+                >
                   <Info size={11} className="mt-0.5 shrink-0 text-accent" />
                   {s}
                 </div>
@@ -190,7 +210,19 @@ function SeoCheckerTab({ mode, currentTitle, currentContent }: { mode: Mode; cur
   );
 }
 
-function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode: Mode; productId?: string; productName?: string; blogType?: string; onApply: (content: string) => void }) {
+function GenerateTab({
+  mode,
+  productId,
+  productName,
+  blogType,
+  onApply,
+}: {
+  mode: Mode;
+  productId?: string;
+  productName?: string;
+  blogType?: string;
+  onApply: (content: string) => void;
+}) {
   const [keyword, setKeyword] = useState("");
   const [tone, setTone] = useState<"professional" | "friendly" | "enthusiastic">("friendly");
   const [length, setLength] = useState<"short" | "medium" | "long">("medium");
@@ -232,14 +264,26 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         } else {
           res = await apiRequest.post<{ data: GeneratedContent }>(
             "/ai-content/product-description-from-name",
-            { productName: productName!.trim(), focusKeyword: keyword.trim(), tone, targetLength: length, additionalNotes: notes.trim() || undefined },
+            {
+              productName: productName!.trim(),
+              focusKeyword: keyword.trim(),
+              tone,
+              targetLength: length,
+              additionalNotes: notes.trim() || undefined,
+            },
             { timeout: 180_000, signal: abortRef.current.signal },
           );
         }
       } else {
         res = await apiRequest.post<{ data: GeneratedContent }>(
           "/ai-content/blog",
-          { title: blogTitle.trim(), focusKeyword: keyword.trim(), blogType: blogType || "TIN_MOI", targetLength: length, additionalNotes: notes.trim() || undefined },
+          {
+            title: blogTitle.trim(),
+            focusKeyword: keyword.trim(),
+            blogType: blogType || "TIN_MOI",
+            targetLength: length,
+            additionalNotes: notes.trim() || undefined,
+          },
           { timeout: 180_000, signal: abortRef.current.signal },
         );
       }
@@ -341,7 +385,11 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder={isProduct ? "VD: Nhấn mạnh pin trâu, phù hợp dân văn phòng..." : "VD: Tập trung vào so sánh với các đối thủ, có số liệu thực tế..."}
+          placeholder={
+            isProduct
+              ? "VD: Nhấn mạnh pin trâu, phù hợp dân văn phòng..."
+              : "VD: Tập trung vào so sánh với các đối thủ, có số liệu thực tế..."
+          }
           rows={2}
           className="w-full px-3 py-2 text-[12px] border border-neutral rounded-xl bg-neutral-light text-primary placeholder:text-neutral-dark/50 focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
         />
@@ -430,7 +478,10 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
           {showPreview && (
             <div
               className="px-3 py-3 rounded-xl border border-neutral bg-neutral-light text-[12px] text-primary leading-relaxed max-h-48 overflow-y-auto prose prose-sm"
-              dangerouslySetInnerHTML={{ __html: result.content }}
+              // result.content do AI (Fireworks) sinh ra — cùng rủi ro prompt-injection
+              // như chat bubble (xem MessageBubble.tsx), nên bắt buộc sanitize dù người
+              // xem chỉ là admin, để tránh admin bị XSS qua chính nội dung AI đề xuất.
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.content) }}
             />
           )}
 
@@ -466,7 +517,10 @@ function GenerateTab({ mode, productId, productName, blogType, onApply }: { mode
             <div className="space-y-1.5">
               <p className="text-[10px] font-semibold text-neutral-dark uppercase tracking-wider">Gợi ý cải thiện</p>
               {result.seoScore.suggestions.slice(0, 3).map((s, i) => (
-                <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-neutral-light border border-neutral text-[11px] text-primary">
+                <div
+                  key={i}
+                  className="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-neutral-light border border-neutral text-[11px] text-primary"
+                >
                   <Info size={10} className="mt-0.5 shrink-0 text-accent" />
                   {s}
                 </div>
@@ -485,7 +539,11 @@ export function AiContentPanel({ mode, productId, productName, blogType, current
 
   return (
     <div className="rounded-2xl border border-accent/30 bg-accent/[0.03] overflow-hidden">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-accent/5 transition-colors cursor-pointer">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-accent/5 transition-colors cursor-pointer"
+      >
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center">
             <Sparkles size={14} className="text-accent" />

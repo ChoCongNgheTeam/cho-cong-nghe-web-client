@@ -6,4 +6,5 @@ import type { TrendForecastListResponse, GenerateForecastPayload } from "../tren
 
 export const getTrendForecasts = (): Promise<TrendForecastListResponse> => apiRequest.get<TrendForecastListResponse>("/trend-forecast");
 
-export const generateTrendForecast = (payload?: GenerateForecastPayload): Promise<TrendForecastListResponse> => apiRequest.post<TrendForecastListResponse>("/trend-forecast/generate", payload);
+export const generateTrendForecast = (payload?: GenerateForecastPayload): Promise<TrendForecastListResponse> =>
+  apiRequest.post<TrendForecastListResponse>("/trend-forecast/generate", payload);

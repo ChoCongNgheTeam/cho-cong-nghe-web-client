@@ -41,15 +41,20 @@ export default function CookieConsentBanner() {
           <div className="flex-1 min-w-0">
             <p className="text-[13px] sm:text-sm font-semibold text-primary">Cookie & trải nghiệm mua sắm</p>
             <p className="text-[12px] sm:text-[13px] text-neutral-500 mt-1 leading-relaxed">
-              Cookie được sử dụng nhằm ghi nhận các thiết lập cần thiết để website hoạt động ổn định và hỗ trợ trải nghiệm mua sắm thuận tiện hơn. Việc từ chối một số loại cookie có thể ảnh hưởng đến
-              một số chức năng của website.
+              Cookie được sử dụng nhằm ghi nhận các thiết lập cần thiết để website hoạt động ổn định và hỗ trợ trải nghiệm mua sắm thuận
+              tiện hơn. Việc từ chối một số loại cookie có thể ảnh hưởng đến một số chức năng của website.
             </p>
 
             {expanded && (
               <div className="mt-3 space-y-2.5 border-t border-surface-border pt-3">
                 {CATEGORIES.map((c) => (
                   <label key={c.key} className="flex items-start gap-2.5 cursor-pointer">
-                    <input type="checkbox" checked={choices[c.key]} onChange={() => toggle(c.key)} className="mt-0.5 w-4 h-4 rounded accent-accent cursor-pointer shrink-0" />
+                    <input
+                      type="checkbox"
+                      checked={choices[c.key]}
+                      onChange={() => toggle(c.key)}
+                      className="mt-0.5 w-4 h-4 rounded accent-accent cursor-pointer shrink-0"
+                    />
                     <span className="text-[12px] sm:text-[13px] text-primary">{c.label}</span>
                   </label>
                 ))}
@@ -70,11 +75,17 @@ export default function CookieConsentBanner() {
                 Chỉ cần thiết
               </button>
               {!expanded ? (
-                <button onClick={() => setExpanded(true)} className="px-4 py-2 text-[13px] font-medium text-accent hover:underline cursor-pointer">
+                <button
+                  onClick={() => setExpanded(true)}
+                  className="px-4 py-2 text-[13px] font-medium text-accent hover:underline cursor-pointer"
+                >
                   Tuỳ chỉnh
                 </button>
               ) : (
-                <button onClick={() => save(choices)} className="px-4 py-2 rounded-xl border border-accent text-[13px] font-semibold text-accent hover:bg-accent/10 transition-colors cursor-pointer">
+                <button
+                  onClick={() => save(choices)}
+                  className="px-4 py-2 rounded-xl border border-accent text-[13px] font-semibold text-accent hover:bg-accent/10 transition-colors cursor-pointer"
+                >
                   Lưu lựa chọn của tôi
                 </button>
               )}

@@ -47,7 +47,11 @@ export function getTrendForecastColumns({ page, pageSize }: GetTrendForecastColu
       key: "generatedAt",
       label: "Thời gian tạo",
       align: "right",
-      render: (item) => <span className="text-[12px] text-neutral-dark whitespace-nowrap">{new Date(item.generatedAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}</span>,
+      render: (item) => (
+        <span className="text-[12px] text-neutral-dark whitespace-nowrap">
+          {new Date(item.generatedAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}
+        </span>
+      ),
     },
   ];
 }

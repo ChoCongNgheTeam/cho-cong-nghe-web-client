@@ -61,7 +61,9 @@ export default function TrendForecastPage() {
           </div>
           <div>
             <h1 className="text-[20px] font-bold text-primary">Dự báo xu hướng</h1>
-            <p className="text-[12px] text-primary">AI phân tích tìm kiếm &amp; đơn hàng để gợi ý nhập hàng, chạy khuyến mãi theo xu hướng</p>
+            <p className="text-[12px] text-primary">
+              AI phân tích tìm kiếm &amp; đơn hàng để gợi ý nhập hàng, chạy khuyến mãi theo xu hướng
+            </p>
           </div>
         </div>
 
@@ -97,13 +99,29 @@ export default function TrendForecastPage() {
         </div>
       </div>
 
-      <p className="px-6 -mt-2 pb-3 text-[11px] text-neutral-dark">Lưu ý: tạo dự báo mới sẽ thay thế toàn bộ dự báo hiện tại, dựa trên dữ liệu tìm kiếm &amp; bán hàng trong {days} ngày gần nhất.</p>
+      <p className="px-6 -mt-2 pb-3 text-[11px] text-neutral-dark">
+        Lưu ý: tạo dự báo mới sẽ thay thế toàn bộ dự báo hiện tại, dựa trên dữ liệu tìm kiếm &amp; bán hàng trong {days} ngày gần nhất.
+      </p>
 
       {/* Stats */}
       <div className="px-6 pb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatsCard label="Tổng số dự báo" value={forecasts.length} sub={latestPeriod} icon={<ListChecks size={16} />} />
-        <StatsCard label="Điểm trung bình" value={avgScore} sub="Trên thang 0–100" icon={<TrendingUp size={16} />} valueClassName="text-accent" iconClassName="text-accent" />
-        <StatsCard label="Cần nhập hàng gấp" value={hotCount} sub="Điểm dự báo ≥ 80" icon={<Flame size={16} />} valueClassName="text-promotion" iconClassName="text-promotion" />
+        <StatsCard
+          label="Điểm trung bình"
+          value={avgScore}
+          sub="Trên thang 0–100"
+          icon={<TrendingUp size={16} />}
+          valueClassName="text-accent"
+          iconClassName="text-accent"
+        />
+        <StatsCard
+          label="Cần nhập hàng gấp"
+          value={hotCount}
+          sub="Điểm dự báo ≥ 80"
+          icon={<Flame size={16} />}
+          valueClassName="text-promotion"
+          iconClassName="text-promotion"
+        />
         <StatsCard label="Khoảng phân tích gần nhất" value={latestPeriod} sub="Của lần tạo dự báo gần nhất" icon={<Sparkles size={16} />} />
       </div>
 
@@ -125,7 +143,11 @@ export default function TrendForecastPage() {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Lightbulb size={36} className="text-primary opacity-30" />
             <p className="text-[13px] text-primary">Chưa có dự báo nào</p>
-            <button onClick={handleGenerate} disabled={generating} className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer disabled:opacity-60">
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="px-4 py-2 rounded-lg bg-accent text-white text-[13px] cursor-pointer disabled:opacity-60"
+            >
               Tạo dự báo đầu tiên
             </button>
           </div>
