@@ -216,7 +216,7 @@ export interface Stocktake {
   items: StocktakeItem[];
 }
 
-export interface StocktakesMeta extends InventoryMeta {}
+export type StocktakesMeta = InventoryMeta;
 
 export interface StocktakesResponse {
   data: Stocktake[];

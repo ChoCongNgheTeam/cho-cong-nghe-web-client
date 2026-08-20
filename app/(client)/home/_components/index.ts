@@ -4,6 +4,7 @@ export { HeroBanner } from "./banners/HeroBanner";
 export { TopBanners } from "./banners/TopBanners";
 export { FeaturedCategories } from "./categories/FeaturedCategories";
 export { HotSaleOnline } from "./sales/HotSaleOnline";
+export { HotSaleOnlineLazy } from "./sales/HotSaleOnlineLazy";
 export { BestSellers } from "./products/BestSellers";
 export { FeaturedProducts } from "./products/FeaturedProducts";
 export { MiddleBanners } from "./banners/MiddleBanners";

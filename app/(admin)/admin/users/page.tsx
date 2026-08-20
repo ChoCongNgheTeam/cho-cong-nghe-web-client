@@ -345,7 +345,10 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 opacity-100 pointer-events-auto" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 opacity-100 pointer-events-auto"
+        onClick={onClose}
+      />
       <div
         ref={sidebarRef}
         className="fixed top-0 right-0 z-50 h-full w-[420px] max-w-[95vw] bg-neutral-light border-l border-neutral shadow-2xl flex flex-col transition-transform duration-300 ease-out translate-x-0"
@@ -353,7 +356,11 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral bg-neutral-light shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center shrink-0 overflow-hidden">
-              {user.avatarImage ? <img src={user.avatarImage} alt={user.fullName} className="w-full h-full object-cover" /> : <UserIcon size={16} className="text-accent" />}
+              {user.avatarImage ? (
+                <img src={user.avatarImage} alt={user.fullName} className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon size={16} className="text-accent" />
+              )}
             </div>
             <div className="min-w-0">
               <p className="text-[13px] font-semibold text-primary truncate">{user.fullName || user.userName || "—"}</p>
@@ -375,8 +382,14 @@ function UserOrderSidebarInner({ user, onClose }: { user: User; onClose: () => v
           </div>
           {!loading && !error && (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-primary/50 bg-neutral-light-active px-2 py-0.5 rounded-full border border-neutral">{orders.length} đơn</span>
-              {orders.length > 0 && <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/20">{formatCurrency(totalSpent)}</span>}
+              <span className="text-[11px] text-primary/50 bg-neutral-light-active px-2 py-0.5 rounded-full border border-neutral">
+                {orders.length} đơn
+              </span>
+              {orders.length > 0 && (
+                <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/20">
+                  {formatCurrency(totalSpent)}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -551,7 +564,11 @@ export default function UserPage() {
 
   const fetchStats = async () => {
     try {
-      const [all, active, admin] = await Promise.all([getAllUsers({ limit: 1 }), getAllUsers({ limit: 1, isActive: true }), getAllUsers({ limit: 1, role: "ADMIN" })]);
+      const [all, active, admin] = await Promise.all([
+        getAllUsers({ limit: 1 }),
+        getAllUsers({ limit: 1, isActive: true }),
+        getAllUsers({ limit: 1, role: "ADMIN" }),
+      ]);
       setStats({
         ALL: all.pagination.total,
         ACTIVE: active.pagination.total,
@@ -566,7 +583,6 @@ export default function UserPage() {
 
   useEffect(() => {
     fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = (e: FormEvent) => {
@@ -672,12 +688,22 @@ export default function UserPage() {
       key: "fullName",
       label: "Người dùng",
       render: (row) => (
-        <div className="flex items-center gap-3 min-w-0 cursor-pointer group/name" onClick={() => setSelectedUser(row)} title="Xem đơn hàng">
+        <div
+          className="flex items-center gap-3 min-w-0 cursor-pointer group/name"
+          onClick={() => setSelectedUser(row)}
+          title="Xem đơn hàng"
+        >
           <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center shrink-0 overflow-hidden">
-            {row.avatarImage ? <img src={row.avatarImage} alt={row.fullName} className="w-full h-full object-cover" /> : <UserIcon size={15} className="text-accent" />}
+            {row.avatarImage ? (
+              <img src={row.avatarImage} alt={row.fullName} className="w-full h-full object-cover" />
+            ) : (
+              <UserIcon size={15} className="text-accent" />
+            )}
           </div>
           <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="text-[13px] font-medium text-primary truncate group-hover/name:text-accent transition-colors">{row.fullName || "—"}</span>
+            <span className="text-[13px] font-medium text-primary truncate group-hover/name:text-accent transition-colors">
+              {row.fullName || "—"}
+            </span>
             <span className="text-[11px] text-neutral-dark truncate">{row.userName || "—"}</span>
           </div>
           {ONLINE_IDS.has(row.id) && (
@@ -708,7 +734,9 @@ export default function UserPage() {
       label: "Vai trò",
       align: "center",
       render: (row) => (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${ROLE_COLORS[row.role] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}>
+        <span
+          className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${ROLE_COLORS[row.role] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}
+        >
           {ROLE_LABELS[row.role] ?? row.role}
         </span>
       ),
@@ -748,7 +776,9 @@ export default function UserPage() {
                 interactive ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
               ].join(" ")}
             >
-              <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${row.isActive ? "translate-x-5" : "translate-x-0"}`} />
+              <div
+                className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${row.isActive ? "translate-x-5" : "translate-x-0"}`}
+              />
             </div>
             {isLoadingRow && <Loader2 size={13} className="animate-spin text-accent ml-2" />}
           </div>
@@ -790,7 +820,9 @@ export default function UserPage() {
               title={canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"}
               className={[
                 "w-7 h-7 flex items-center justify-center rounded-lg transition-all",
-                canEdit ? "text-primary hover:bg-accent-light hover:text-accent cursor-pointer" : "text-neutral-active opacity-40 cursor-not-allowed",
+                canEdit
+                  ? "text-primary hover:bg-accent-light hover:text-accent cursor-pointer"
+                  : "text-neutral-active opacity-40 cursor-not-allowed",
               ].join(" ")}
             >
               <Pencil size={14} />
@@ -804,7 +836,9 @@ export default function UserPage() {
                 title={canDelete ? "Xóa nhân viên" : "Không có quyền xóa"}
                 className={[
                   "w-7 h-7 flex items-center justify-center rounded-lg transition-all",
-                  canDelete && !isLoadingRow ? "text-primary hover:bg-promotion-light hover:text-promotion cursor-pointer" : "text-neutral-active opacity-40 cursor-not-allowed",
+                  canDelete && !isLoadingRow
+                    ? "text-primary hover:bg-promotion-light hover:text-promotion cursor-pointer"
+                    : "text-neutral-active opacity-40 cursor-not-allowed",
                 ].join(" ")}
               >
                 {isLoadingRow ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -847,7 +881,9 @@ export default function UserPage() {
             className="bg-neutral-light border border-neutral rounded-xl shadow-xl overflow-hidden"
           >
             <div className="px-3 py-2 border-b border-neutral bg-amber-50/60">
-              <p className="text-[10px] text-amber-600 leading-relaxed">⚠ Xếp hạng theo hoạt động sẽ tải dữ liệu đơn hàng của toàn bộ người dùng — có thể mất vài giây.</p>
+              <p className="text-[10px] text-amber-600 leading-relaxed">
+                ⚠ Xếp hạng theo hoạt động sẽ tải dữ liệu đơn hàng của toàn bộ người dùng — có thể mất vài giây.
+              </p>
             </div>
 
             <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-b border-neutral bg-neutral-light-active/60 flex items-center gap-1.5">
@@ -871,7 +907,9 @@ export default function UserPage() {
               </button>
             ))}
 
-            <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-t border-b border-neutral">Sắp xếp thông thường</div>
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-dark uppercase tracking-wider border-t border-b border-neutral">
+              Sắp xếp thông thường
+            </div>
             {SORT_OPTIONS.filter((o) => !CLIENT_SIDE_SORT_FIELDS.includes(o.value)).map((opt) => (
               <button
                 key={opt.value}
@@ -935,10 +973,34 @@ export default function UserPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <StatsCard label="Tổng người dùng" value={stats.ALL} sub="Tất cả tài khoản" icon={<UserIcon size={18} />} valueClassName="text-accent" />
-        <StatsCard label="Hoạt động" value={stats.ACTIVE} sub="Đang hoạt động bình thường" icon={<UserIcon size={18} />} valueClassName="text-emerald-600" />
-        <StatsCard label="Bị khóa" value={stats.BLOCKED} sub="Tài khoản bị khóa" icon={<UserIcon size={18} />} valueClassName="text-promotion" />
-        <StatsCard label="Admin" value={stats.ADMIN} sub="Quyền quản trị viên" icon={<UserIcon size={18} />} valueClassName="text-purple-600" />
+        <StatsCard
+          label="Tổng người dùng"
+          value={stats.ALL}
+          sub="Tất cả tài khoản"
+          icon={<UserIcon size={18} />}
+          valueClassName="text-accent"
+        />
+        <StatsCard
+          label="Hoạt động"
+          value={stats.ACTIVE}
+          sub="Đang hoạt động bình thường"
+          icon={<UserIcon size={18} />}
+          valueClassName="text-emerald-600"
+        />
+        <StatsCard
+          label="Bị khóa"
+          value={stats.BLOCKED}
+          sub="Tài khoản bị khóa"
+          icon={<UserIcon size={18} />}
+          valueClassName="text-promotion"
+        />
+        <StatsCard
+          label="Admin"
+          value={stats.ADMIN}
+          sub="Quyền quản trị viên"
+          icon={<UserIcon size={18} />}
+          valueClassName="text-purple-600"
+        />
       </div>
 
       {/* Main card */}
@@ -957,7 +1019,12 @@ export default function UserPage() {
                 ].join(" ")}
               >
                 {tab.label}
-                <span className={["ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold", activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary"].join(" ")}>
+                <span
+                  className={[
+                    "ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-semibold",
+                    activeTab === tab.value ? "bg-white/20 text-white" : "bg-neutral-light-active text-primary",
+                  ].join(" ")}
+                >
                   {stats[tab.value] ?? 0}
                 </span>
               </button>
@@ -982,10 +1049,20 @@ export default function UserPage() {
                 onClick={handleSortToggle}
                 className={[
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap",
-                  isClientSort ? "border-accent bg-accent-light text-accent" : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active",
+                  isClientSort
+                    ? "border-accent bg-accent-light text-accent"
+                    : "border-neutral bg-neutral-light text-primary hover:bg-neutral-light-active",
                 ].join(" ")}
               >
-                {isClientSort ? sortField === "orderCount" ? <ShoppingCart size={13} /> : <DollarSign size={13} /> : <ArrowUpDown size={13} />}
+                {isClientSort ? (
+                  sortField === "orderCount" ? (
+                    <ShoppingCart size={13} />
+                  ) : (
+                    <DollarSign size={13} />
+                  )
+                ) : (
+                  <ArrowUpDown size={13} />
+                )}
                 {SORT_OPTIONS.find((o) => o.value === sortField)?.label ?? "Sắp xếp"}
                 <ChevronDown size={11} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
               </button>

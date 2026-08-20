@@ -1,7 +1,22 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Upload, FileSpreadsheet, Download, Check, X, AlertCircle, Info, Loader2, ChevronDown, ChevronUp, Wand2, Merge, FileWarning, ArrowRight } from "lucide-react";
+import {
+  Upload,
+  FileSpreadsheet,
+  Download,
+  Check,
+  X,
+  AlertCircle,
+  Info,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Wand2,
+  Merge,
+  FileWarning,
+  ArrowRight,
+} from "lucide-react";
 import apiRequest from "@/lib/api";
 
 // TYPES
@@ -118,7 +133,11 @@ function FileDropZone({ onFile, loading }: { onFile: (f: File) => void; loading:
         className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all
         ${dragging ? "bg-accent/15" : "bg-neutral-light-active"}`}
       >
-        {loading ? <Loader2 size={20} className="text-accent animate-spin" /> : <Upload size={20} className={dragging ? "text-accent" : "text-neutral-dark"} />}
+        {loading ? (
+          <Loader2 size={20} className="text-accent animate-spin" />
+        ) : (
+          <Upload size={20} className={dragging ? "text-accent" : "text-neutral-dark"} />
+        )}
       </div>
       <div className="text-center">
         <p className="text-[13px] font-semibold text-primary">{loading ? "Đang phân tích file..." : "Kéo thả hoặc click để chọn file"}</p>
@@ -194,7 +213,11 @@ function MergePreviewModal({
               <p className="text-[11px] text-neutral-dark truncate max-w-[240px]">{productName}</p>
             </div>
           </div>
-          <button type="button" onClick={onCancel} className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:text-primary hover:bg-neutral-light-active cursor-pointer">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-dark hover:text-primary hover:bg-neutral-light-active cursor-pointer"
+          >
             <X size={14} />
           </button>
         </div>
@@ -229,7 +252,11 @@ function MergePreviewModal({
             <span className="text-[11px] text-neutral-dark">
               {selected.size}/{rows.length}
             </span>
-            <button type="button" onClick={() => toggleAll(selected.size < rows.length)} className="text-[10px] font-medium text-accent hover:underline cursor-pointer">
+            <button
+              type="button"
+              onClick={() => toggleAll(selected.size < rows.length)}
+              className="text-[10px] font-medium text-accent hover:underline cursor-pointer"
+            >
               {selected.size < rows.length ? "Chọn tất cả" : "Bỏ hết"}
             </button>
           </div>
@@ -252,16 +279,37 @@ function MergePreviewModal({
                       className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all
                         ${isSel ? (row.isOverwrite ? "border-yellow-200 bg-yellow-50/40" : "border-emerald-200 bg-emerald-50/40") : "border-neutral bg-neutral-light-active/40 opacity-55"}`}
                     >
-                      <input type="checkbox" checked={isSel} onChange={() => toggle(row.specificationId)} className="mt-0.5 w-3.5 h-3.5 accent-accent cursor-pointer shrink-0" />
+                      <input
+                        type="checkbox"
+                        checked={isSel}
+                        onChange={() => toggle(row.specificationId)}
+                        className="mt-0.5 w-3.5 h-3.5 accent-accent cursor-pointer shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[12px] font-semibold text-primary">{row.name}</span>
                           {row.unit && <span className="text-[10px] text-neutral-dark">({row.unit})</span>}
                           {/* Source badge */}
-                          {row.source === "import" && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 font-medium">file</span>}
-                          {row.source === "ai" && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent font-medium">AI</span>}
-                          {row.source === "both" && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 font-medium">file+AI</span>}
-                          {row.isOverwrite && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-yellow-100 border border-yellow-200 text-yellow-700 font-medium">ghi đè</span>}
+                          {row.source === "import" && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 font-medium">
+                              file
+                            </span>
+                          )}
+                          {row.source === "ai" && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent font-medium">
+                              AI
+                            </span>
+                          )}
+                          {row.source === "both" && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 font-medium">
+                              file+AI
+                            </span>
+                          )}
+                          {row.isOverwrite && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-yellow-100 border border-yellow-200 text-yellow-700 font-medium">
+                              ghi đè
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
                           {row.isOverwrite && (
@@ -283,7 +331,11 @@ function MergePreviewModal({
 
         {/* Footer */}
         <div className="flex gap-2.5 px-5 py-4 border-t border-neutral shrink-0">
-          <button type="button" onClick={onCancel} className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 border border-neutral rounded-xl text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer"
+          >
             Hủy bỏ
           </button>
           <button
@@ -344,7 +396,7 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
       }
 
       // 📄 Lấy filename từ header nếu backend có gửi
-      let fileName = "spec-template.xlsx";
+      const fileName = "spec-template.xlsx";
 
       // ⚠️ fetch wrapper của bạn chưa expose headers
       // nếu muốn lấy header → cần sửa apiRequest (optional)
@@ -427,7 +479,10 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
   // BUILD MERGE ROWS & OPEN PREVIEW
   const buildMergeRows = useCallback(
     (importRows: ParsedSpecRow[] | null, aiRows: Record<string, string | null> | null) => {
-      const allIds = new Set<string>([...(importRows ?? []).map((r) => r.spec_id), ...Object.keys(aiRows ?? {}).filter((k) => aiRows?.[k])]);
+      const allIds = new Set<string>([
+        ...(importRows ?? []).map((r) => r.spec_id),
+        ...Object.keys(aiRows ?? {}).filter((k) => aiRows?.[k]),
+      ]);
 
       const rows: MergedPreviewRow[] = [];
 
@@ -487,7 +542,11 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
     <>
       <div className="rounded-2xl border border-neutral bg-neutral-light overflow-hidden">
         {/* Header toggle */}
-        <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-neutral-light-active transition-colors cursor-pointer">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-neutral-light-active transition-colors cursor-pointer"
+        >
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-neutral-light-active flex items-center justify-center">
               <Upload size={13} className="text-neutral-dark" />
@@ -498,7 +557,11 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {hasData && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/15 text-accent">{mergeCount} gợi ý sẵn sàng</span>}
+            {hasData && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/15 text-accent">
+                {mergeCount} gợi ý sẵn sàng
+              </span>
+            )}
             {open ? <ChevronUp size={15} className="text-neutral-dark" /> : <ChevronDown size={15} className="text-neutral-dark" />}
           </div>
         </button>
@@ -554,17 +617,27 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
                   {importResult && (
                     <div className="space-y-2">
                       {/* Parse result summary */}
-                      <div className={`px-4 py-3 rounded-xl border ${importResult.validRows.length > 0 ? "border-emerald-200 bg-emerald-50" : "border-yellow-200 bg-yellow-50"}`}>
+                      <div
+                        className={`px-4 py-3 rounded-xl border ${importResult.validRows.length > 0 ? "border-emerald-200 bg-emerald-50" : "border-yellow-200 bg-yellow-50"}`}
+                      >
                         <div className="flex items-center justify-between">
                           <p className="text-[12px] font-semibold text-primary">Kết quả phân tích</p>
-                          <span className={`text-[11px] font-semibold ${importResult.validRows.length > 0 ? "text-emerald-700" : "text-yellow-700"}`}>
+                          <span
+                            className={`text-[11px] font-semibold ${importResult.validRows.length > 0 ? "text-emerald-700" : "text-yellow-700"}`}
+                          >
                             {importResult.validRows.length}/{importResult.parsed.totalRows} dòng hợp lệ
                           </span>
                         </div>
                         <div className="flex gap-3 mt-1.5 flex-wrap">
                           <span className="text-[10px] text-neutral-dark">✅ {importResult.validRows.length} hợp lệ</span>
-                          {importResult.parsed.skippedCount > 0 && <span className="text-[10px] text-yellow-600">⏭️ {importResult.parsed.skippedCount} bỏ qua</span>}
-                          {importResult.invalidSpecIds.length > 0 && <span className="text-[10px] text-red-500">❌ {importResult.invalidSpecIds.length} spec_id không khớp danh mục</span>}
+                          {importResult.parsed.skippedCount > 0 && (
+                            <span className="text-[10px] text-yellow-600">⏭️ {importResult.parsed.skippedCount} bỏ qua</span>
+                          )}
+                          {importResult.invalidSpecIds.length > 0 && (
+                            <span className="text-[10px] text-red-500">
+                              ❌ {importResult.invalidSpecIds.length} spec_id không khớp danh mục
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -572,7 +645,10 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
                       {importResult.parsed.errors.length > 0 && (
                         <div className="space-y-1">
                           {importResult.parsed.errors.map((e, i) => (
-                            <div key={i} className="flex items-start gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-[11px] text-yellow-700">
+                            <div
+                              key={i}
+                              className="flex items-start gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-50 border border-yellow-200 text-[11px] text-yellow-700"
+                            >
                               <FileWarning size={11} className="mt-0.5 shrink-0" />
                               {e}
                             </div>
@@ -663,7 +739,9 @@ export function SpecImportPanel({ productName, categoryId, specGroups, specs, on
       </div>
 
       {/* Merge Preview Modal */}
-      {mergeRows && mergeRows.length > 0 && <MergePreviewModal rows={mergeRows} productName={productName} onConfirm={handleConfirmApply} onCancel={() => setMergeRows(null)} />}
+      {mergeRows && mergeRows.length > 0 && (
+        <MergePreviewModal rows={mergeRows} productName={productName} onConfirm={handleConfirmApply} onCancel={() => setMergeRows(null)} />
+      )}
     </>
   );
 }

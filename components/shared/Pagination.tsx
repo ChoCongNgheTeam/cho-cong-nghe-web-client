@@ -17,7 +17,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     }
     const half = Math.floor(maxVisible / 2);
     let start = Math.max(2, currentPage - half + 1);
-    let end = Math.min(totalPages - 1, start + maxVisible - 3);
+    const end = Math.min(totalPages - 1, start + maxVisible - 3);
     if (end - start < maxVisible - 3) start = Math.max(2, end - (maxVisible - 3) + 1);
 
     const pages: (number | "...")[] = [1];
@@ -34,7 +34,12 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   return (
     <div className="flex items-center justify-center gap-1 pt-3 sm:pt-4">
       {/* Prev */}
-      <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`} aria-label="Trang trước">
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`}
+        aria-label="Trang trước"
+      >
         ‹
       </button>
 
@@ -79,7 +84,12 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       </div>
 
       {/* Next */}
-      <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`} aria-label="Trang sau">
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`${btnBase} w-8 h-8 sm:w-9 sm:h-9 text-base`}
+        aria-label="Trang sau"
+      >
         ›
       </button>
     </div>

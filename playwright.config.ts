@@ -16,12 +16,19 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 2,
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    // Next.js dev mode (đặc biệt Turbopack) compile route LẦN ĐẦU khi có request,
+    // cộng với trang chủ fetch nhiều dữ liệu (products, categories, sale schedule...)
+    // — tổng thời gian dễ vượt 30s mặc định, nhất là khi nhiều worker chạy song
+    // song tranh CPU. Nâng lên 60s cho mỗi action riêng lẻ để tránh false-negative
+    // do máy chậm/cold-start, không phải do bug thật.
+    actionTimeout: 60_000,
+    navigationTimeout: 60_000,
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
@@ -31,7 +38,7 @@ export default defineConfig({
   // ở BASE_URL — tiện cho local dev, nhưng trên CI nên start server ở 1 step
   // riêng (build production trước) để test chạy trên bundle thật, không phải dev mode.
   webServer: {
-    command: "npm run dev",
+    command: "pnpm dev",
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

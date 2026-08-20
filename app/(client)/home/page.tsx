@@ -8,7 +8,7 @@ import {
   BestSellers,
   BlogSection,
   TrustBadges,
-  HotSaleOnline,
+  HotSaleOnlineLazy,
   SeasonalSale,
   HeroBanner,
   RecommendedForYou,
@@ -40,7 +40,7 @@ export default async function HomePage() {
     <main className="min-h-screen bg-neutral-light">
       <PromoPopup banners={bannersPopup} />
       <HomeSliderSection sliders={sliders} categories={rootCategories} bannersDeal={bannersDeal} bannersSidebar={bannersSidebar} />
-      {hasSale && <HotSaleOnline saleSchedule={saleSchedule} />}
+      {hasSale && <HotSaleOnlineLazy saleSchedule={saleSchedule} />}
       <TopBanners topBanner={bannersTop} />
       <FeaturedCategories featuredCategories={featuredCategories} />
       <FeaturedProducts products={featuredProducts} />
