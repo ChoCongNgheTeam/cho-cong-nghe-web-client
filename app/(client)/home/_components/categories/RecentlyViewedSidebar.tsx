@@ -72,7 +72,14 @@ export function RecentlyViewedSidebar({ fallbackBanners }: RecentlyViewedSidebar
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] text-primary leading-snug line-clamp-1">{product.name}</p>
-                <p className="text-[11px] font-semibold text-accent">{product.price.final.toLocaleString("vi-VN")}đ</p>
+                {/* BE có thể trả product.price tồn tại nhưng .final undefined/null cho 1 số
+                    sản phẩm edge-case (đã ngừng bán, hết chương trình giá...) — đây CHÍNH LÀ
+                    nguyên nhân crash production thật đã xảy ra (TypeError: Cannot read
+                    properties of undefined (reading 'toLocaleString')). Optional chaining +
+                    fallback để không crash cả sidebar chỉ vì 1 sản phẩm thiếu dữ liệu giá. */}
+                {typeof product.price?.final === "number" && (
+                  <p className="text-[11px] font-semibold text-accent">{product.price.final.toLocaleString("vi-VN")}đ</p>
+                )}
               </div>
             </Link>
           ))}

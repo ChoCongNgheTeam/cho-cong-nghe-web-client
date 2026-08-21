@@ -7,7 +7,14 @@ interface HeroBannerProps {
   alt?: string;
 }
 
-export function HeroBanner({ image = "https://clickbuy.com.vn/uploads/media/657-GNxxO.png", href = "/sale", alt = "Banner khuyến mãi" }: HeroBannerProps) {
+// Default href trước đây là "/sale" — route KHÔNG tồn tại (route thật là
+// /flash-sale), gây 404 mỗi lần user bấm banner vì HeroBanner được gọi ở
+// page.tsx KHÔNG truyền href, luôn dùng default này 100% các lần render.
+export function HeroBanner({
+  image = "https://clickbuy.com.vn/uploads/media/657-GNxxO.png",
+  href = "/flash-sale",
+  alt = "Banner khuyến mãi",
+}: HeroBannerProps) {
   return (
     <div className="container pb-2">
       <Link href={href} className="relative block w-full overflow-hidden rounded-xl group" style={{ height: "clamp(56px, 8vw, 110px)" }}>

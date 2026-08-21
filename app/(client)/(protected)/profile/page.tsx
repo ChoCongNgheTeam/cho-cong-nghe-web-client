@@ -88,7 +88,9 @@ function LogoutModal({ isLoggingOut, onConfirm, onCancel }: { isLoggingOut: bool
 
         {/* Text */}
         <p style={{ textAlign: "center", fontWeight: 600, fontSize: 16, color: "#111827", margin: "0 0 6px" }}>Đăng xuất?</p>
-        <p style={{ textAlign: "center", fontSize: 13, color: "#6B7280", lineHeight: 1.6, margin: "0 0 1.25rem" }}>Bạn sẽ cần đăng nhập lại để tiếp tục mua sắm.</p>
+        <p style={{ textAlign: "center", fontSize: 13, color: "#6B7280", lineHeight: 1.6, margin: "0 0 1.25rem" }}>
+          Bạn sẽ cần đăng nhập lại để tiếp tục mua sắm.
+        </p>
 
         {/* Buttons */}
         <div style={{ display: "flex", gap: 10 }}>
@@ -189,7 +191,10 @@ export default function ProfilePage() {
             <p className="font-semibold text-primary truncate">{user.fullName || "Người dùng"}</p>
             <p className="text-sm text-primary opacity-60">{user.phone}</p>
           </div>
-          <Link href="/profile/editProfile" className="flex items-center gap-1 text-xs text-accent font-medium shrink-0 border border-accent rounded-lg px-2 py-1">
+          <Link
+            href="/profile/edit-profile"
+            className="flex items-center gap-1 text-xs text-accent font-medium shrink-0 border border-accent rounded-lg px-2 py-1"
+          >
             <Pencil className="w-3 h-3" />
             Sửa
           </Link>
@@ -255,7 +260,7 @@ export default function ProfilePage() {
         <div className="rounded-xl overflow-hidden shadow-sm">
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
             <p className="text-sm font-semibold text-primary">Thông tin cá nhân</p>
-            <Link href="/profile/editProfile" className="text-xs text-accent font-medium flex items-center gap-1">
+            <Link href="/profile/edit-profile" className="text-xs text-accent font-medium flex items-center gap-1">
               Chỉnh sửa <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
@@ -290,7 +295,7 @@ export default function ProfilePage() {
               <InfoRow label="Email" value={user.email || "Chưa có"} />
             </div>
             <div className="pt-8 space-y-3">
-              <Link href="/profile/editProfile" className="block">
+              <Link href="/profile/edit-profile" className="block">
                 <button className="w-full flex items-center justify-center gap-2 bg-primary text-neutral-light hover:bg-primary-hover font-semibold px-6 py-3 text-base rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer">
                   <Pencil size={18} />
                   Chỉnh sửa thông tin

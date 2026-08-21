@@ -88,8 +88,27 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         <div>
-          <p className="text-[10px] sm:text-[11px] text-neutral-400 line-through min-h-[14px]">{hasPromotion ? formatVND(product.price.base) : ""}</p>
-          <p className="text-xs sm:text-sm font-semibold text-promotion">{formatVND(hasPromotion ? product.price.final : product.price.base)}</p>
+          {/* product.price?.base/.final — cùng lớp lỗi đã gây crash production thật
+              ở RecentlyViewedSidebar.tsx (product.price tồn tại nhưng .base/.final
+              undefined cho sản phẩm edge-case). ProductCard dùng ở khắp site
+              (trang chủ, category, search, recommendation...) nên đây là điểm rủi
+              ro cao nhất nếu không guard. formatVND() không nhận undefined (type
+              string|number) và luôn trả string kể cả input rác (NaN ₫) — nên PHẢI
+              kiểm tra number hợp lệ TRƯỚC khi gọi, không thể dựa vào formatVND tự
+              xử lý undefined. */}
+          {typeof product.price?.base === "number" && (
+            <p className="text-[10px] sm:text-[11px] text-neutral-400 line-through min-h-[14px]">
+              {hasPromotion ? formatVND(product.price.base) : ""}
+            </p>
+          )}
+          {(() => {
+            const displayPrice = hasPromotion ? product.price?.final : product.price?.base;
+            return typeof displayPrice === "number" ? (
+              <p className="text-xs sm:text-sm font-semibold text-promotion">{formatVND(displayPrice)}</p>
+            ) : (
+              <p className="text-xs sm:text-sm font-semibold text-promotion">Liên hệ</p>
+            );
+          })()}
         </div>
 
         {/* ── Rating — WishlistHeart đã lên trên, chỉ còn rating ── */}

@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
           {/* Edit button */}
           <div className="pt-6 sm:pt-8">
-            <Link href="/profile/editProfile" className="block">
+            <Link href="/profile/edit-profile" className="block">
               <button
                 className="
                 w-full sm:w-auto sm:mx-auto sm:flex

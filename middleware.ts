@@ -16,7 +16,15 @@ const IMG_SRC = `img-src 'self' data: blob: https:`;
 // trong *.googleapis.com), và trang địa chỉ dùng public API
 // provinces.open-api.vn. Mỗi khi thêm tích hợp mới gọi domain ngoài, CSP sẽ
 // ÂM THẦM chặn (không throw lỗi JS rõ ràng) — nhớ thêm domain vào đây.
-const CONNECT_SRC_EXTRA = ["https://www.google-analytics.com", "https://www.google.com", "https://provinces.open-api.vn"].join(" ");
+const CONNECT_SRC_EXTRA = [
+  "https://www.google-analytics.com",
+  "https://www.google.com",
+  "https://provinces.open-api.vn",
+  // vercel.live widget cần gọi API/websocket riêng ngoài việc chỉ hiện iframe
+  // (xem ghi chú frame-src bên dưới) — thêm luôn ở đây để tránh phải quay lại vá
+  // lần 2 khi phát hiện thêm 1 CSP violation khác từ cùng 1 widget.
+  "https://vercel.live",
+].join(" ");
 
 function getApiOrigin(): string {
   try {
@@ -44,11 +52,20 @@ function buildCsp(nonce: string): string {
   return [
     `default-src 'self'`,
     scriptSrc,
-    `style-src 'self' 'unsafe-inline'`,
+    // accounts.google.com: Google Identity Services (nút đăng nhập Google) tự
+    // load stylesheet riêng (https://accounts.google.com/gsi/style) — thiếu domain
+    // này khiến nút Google Sign-In hiển thị không đúng style dù vẫn hoạt động.
+    `style-src 'self' 'unsafe-inline' https://accounts.google.com`,
     IMG_SRC,
     `font-src 'self' data:`,
     `connect-src 'self' ${apiOrigin} https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com ${CONNECT_SRC_EXTRA}`.trim(),
-    `frame-src 'self' https://accounts.google.com https://www.facebook.com`,
+    // vercel.live: Vercel tự động chèn widget Live Feedback/Toolbar vào mọi
+    // deployment (production lẫn preview) qua iframe — đây là hạ tầng của chính
+    // Vercel, không phải code của app, nhưng vẫn cần whitelist nếu không muốn nó
+    // bị CSP âm thầm chặn (không ảnh hưởng chức năng chính của site, chỉ là công
+    // cụ debug/feedback của Vercel, nhưng chặn nó sẽ tạo noise CSP error liên tục
+    // trong Console, dễ nhầm là bug thật).
+    `frame-src 'self' https://accounts.google.com https://www.facebook.com https://vercel.live`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
