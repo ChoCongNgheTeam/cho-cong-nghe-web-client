@@ -13,6 +13,17 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // 🔴 Lớp phòng thủ thứ 2 chống crash production ERR_REQUIRE_ESM (xem
+  // pnpm-workspace.yaml — đã pin jsdom về 24.1.0 để loại bỏ dependency ESM gây
+  // lỗi). serverExternalPackages báo cho Next.js KHÔNG cố bundle/transform các
+  // package này, mà để Node.js tự require() thật ở runtime — đây là cách chính
+  // thức Next.js khuyến nghị cho package có dependency native/ESM phức tạp như
+  // jsdom. Không thể verify 100% trong môi trường dev local (bug gốc CŨNG không
+  // xuất hiện ở local/preview, chỉ crash trên Vercel production thật — đây là
+  // đặc điểm đã biết của lớp lỗi này), nên thêm cấu hình này làm lớp bảo vệ bổ
+  // sung độc lập với việc pin version, đề phòng trường hợp Next.js compiler vẫn
+  // cố bundle jsdom vì lý do khác.
+  serverExternalPackages: ["jsdom", "isomorphic-dompurify"],
   async headers() {
     return [
       {
