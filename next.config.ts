@@ -10,6 +10,14 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  // same-origin-allow-popups (không phải "same-origin" mặc định nghiêm ngặt hơn):
+  // cho phép cửa sổ popup (Google Sign-In ux_mode: "popup" ở hooks/useGoogleLogin.ts)
+  // giao tiếp lại qua window.postMessage() sau khi user đăng nhập xong, đồng thời
+  // vẫn giữ cô lập COOP cho các tương tác cross-origin khác (chống tabnabbing).
+  // Thiếu header này, trình duyệt áp COOP mặc định nghiêm ngặt hơn và chặn hẳn
+  // postMessage từ popup — đã xác nhận qua log lỗi thật trên production
+  // ("Cross-Origin-Opener-Policy policy would block the window.postMessage call").
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
 ];
 
 const nextConfig: NextConfig = {

@@ -23,8 +23,11 @@ export function CartAuthSync() {
     }
     if (hasSyncedRef.current) return;
     hasSyncedRef.current = true;
-    syncLocalToDB().then((n) => {
-      if (n > 0) console.info(`[Cart] synced ${n} guest items`);
+    syncLocalToDB().then(() => {
+      // Đã xoá console.info debug lộ ra Console production ("[Cart] synced N
+      // guest items") — chỉ là log debug lúc phát triển, không phục vụ chức năng,
+      // không cần thiết phải lộ chi tiết nội bộ (số lượng item đồng bộ) cho người
+      // dùng cuối xem qua DevTools.
     });
   }, [auth?.loading, auth?.isAuthenticated, setAuth, refetchCart, syncLocalToDB]);
 

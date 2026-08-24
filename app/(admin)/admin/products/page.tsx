@@ -1,7 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Search, Plus, RefreshCw, Package, CheckCircle2, EyeOff, Loader2, X, Star, ArrowUpDown, ChevronDown, CalendarDays, AlertTriangle } from "lucide-react";
+import {
+  Search,
+  Plus,
+  RefreshCw,
+  Package,
+  CheckCircle2,
+  EyeOff,
+  Loader2,
+  X,
+  Star,
+  ArrowUpDown,
+  ChevronDown,
+  CalendarDays,
+  AlertTriangle,
+} from "lucide-react";
 import Link from "next/link";
 import AdminPagination from "@/components/admin/AdminPagination";
 import AdminTable from "@/components/admin/AdminTables";
@@ -34,6 +48,7 @@ import { ExportButton } from "@/components/admin/ExportButton";
 import { ImportButton } from "@/components/admin/ImportButton";
 import { useAdminHref } from "../../../../hooks/useAdminHref";
 import { useAdminListPage, type AdminListFetchResult } from "@/hooks/admin/useAdminListPage";
+import { useToasty } from "@/components/toast";
 
 // CONSTANTS
 
@@ -79,7 +94,11 @@ const DEFAULT_META: ProductMeta = {
 
 // HELPERS
 
-function injectAndSortProducts(products: ProductCard[], lowStockProducts: LowStockProductInfo[], outOfStockProducts: LowStockProductInfo[]): ProductCard[] {
+function injectAndSortProducts(
+  products: ProductCard[],
+  lowStockProducts: LowStockProductInfo[],
+  outOfStockProducts: LowStockProductInfo[],
+): ProductCard[] {
   const lowMap = new Map(lowStockProducts.map((p) => [p.id, p]));
   const outMap = new Map(outOfStockProducts.map((p) => [p.id, p]));
 
@@ -168,6 +187,7 @@ export default function ProductsPage() {
   const { user } = useAuth();
   const isStaff = (STAFF_ROLES as readonly string[]).includes(user?.role ?? "");
   const href = useAdminHref();
+  const toast = useToasty();
 
   // Filter đặc thù module
   const [activeTab, setActiveTab] = useState<ActiveTab>("ALL");
@@ -363,7 +383,10 @@ export default function ProductsPage() {
   const hasSortFilter = sortKey !== "createdAt_desc";
   const hasActiveFilters = !!(search || hasDateFilter || activeTab !== "ALL" || categoryId);
 
-  const filteredCategories = useMemo(() => (categorySearch ? categories.filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase())) : categories), [categories, categorySearch]);
+  const filteredCategories = useMemo(
+    () => (categorySearch ? categories.filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase())) : categories),
+    [categories, categorySearch],
+  );
 
   // Selection — custom vì phải chọn theo `sortedProducts` (bao gồm cả sản
   // phẩm ảo được inject cho tab "low_stock"), không phải data thô của hook.
@@ -489,7 +512,7 @@ export default function ProductsPage() {
             }
             label="Export"
             disabled={loading}
-            onSuccess={(count, fmt) => console.log(`Đã export ${count} biến thể dạng ${fmt.toUpperCase()}`)}
+            onSuccess={(count, fmt) => toast.success(`Đã export ${count} biến thể dạng ${fmt.toUpperCase()}`)}
             onError={(err) => setError(err)}
           />
 
@@ -517,7 +540,13 @@ export default function ProductsPage() {
 
       {/* Stats cards */}
       <div className="px-6 pb-5 grid grid-cols-2 lg:grid-cols-6 gap-3">
-        <StatsCard label="Tổng sản phẩm" value={statsLoading ? "..." : (stats?.total ?? 0)} sub="Tất cả sản phẩm" icon={<Package size={18} />} valueClassName="text-accent" />
+        <StatsCard
+          label="Tổng sản phẩm"
+          value={statsLoading ? "..." : (stats?.total ?? 0)}
+          sub="Tất cả sản phẩm"
+          icon={<Package size={18} />}
+          valueClassName="text-accent"
+        />
         <StatsCard
           label="Đang hiển thị"
           value={statsLoading ? "..." : (stats?.active ?? 0)}
@@ -581,13 +610,21 @@ export default function ProductsPage() {
                 key={tab.value}
                 onClick={() => handleTabChange(tab.value as ActiveTab)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
-                  isActive ? (isLowStockTab ? "bg-amber-600 text-white" : "bg-accent text-white") : "text-primary hover:bg-neutral-light-active"
+                  isActive
+                    ? isLowStockTab
+                      ? "bg-amber-600 text-white"
+                      : "bg-accent text-white"
+                    : "text-primary hover:bg-neutral-light-active"
                 }`}
               >
                 {tab.label}
                 <span
                   className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${
-                    isActive ? "bg-white/20 text-white" : isLowStockTab && count > 0 ? "bg-amber-100 text-amber-700" : "bg-neutral-light-active text-primary"
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : isLowStockTab && count > 0
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-neutral-light-active text-primary"
                   }`}
                 >
                   {count}
@@ -637,7 +674,9 @@ export default function ProductsPage() {
               </button>
               {showSortDropdown && (
                 <div className="absolute top-full left-0 mt-1.5 w-52 bg-neutral-light border border-neutral rounded-xl shadow-lg z-20 overflow-hidden">
-                  <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">Sắp xếp theo</p>
+                  <p className="px-3 py-2 text-[10px] font-semibold text-primary uppercase tracking-wider border-b border-neutral">
+                    Sắp xếp theo
+                  </p>
                   {SORT_OPTIONS.map((opt) => {
                     const key = `${opt.value}_${opt.order}` as SortKey;
                     return (
@@ -705,7 +744,10 @@ export default function ProductsPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={handleClearDate} className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer">
+                    <button
+                      onClick={handleClearDate}
+                      className="flex-1 py-1.5 rounded-lg border border-neutral text-[12px] text-primary hover:bg-neutral-light-active cursor-pointer"
+                    >
                       Xóa
                     </button>
                     <button
@@ -761,7 +803,10 @@ export default function ProductsPage() {
                         className="w-full pl-7 pr-3 py-1.5 text-[12px] border border-neutral rounded-lg bg-neutral-light text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
                       />
                       {categorySearch && (
-                        <button onClick={() => setCategorySearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary cursor-pointer">
+                        <button
+                          onClick={() => setCategorySearch("")}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/40 hover:text-primary cursor-pointer"
+                        >
                           <X size={11} />
                         </button>
                       )}
@@ -803,7 +848,9 @@ export default function ProductsPage() {
                       </button>
                     ))}
 
-                    {filteredCategories.length === 0 && <p className="px-3 py-4 text-[12px] text-primary/40 text-center">Không tìm thấy &quot;{categorySearch}&quot;</p>}
+                    {filteredCategories.length === 0 && (
+                      <p className="px-3 py-4 text-[12px] text-primary/40 text-center">Không tìm thấy &quot;{categorySearch}&quot;</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -820,7 +867,9 @@ export default function ProductsPage() {
             </button>
           )}
 
-          <span className="ml-auto text-[12px] text-primary">{activeTab === "low_stock" ? `${sortedProducts.length} sản phẩm` : `${meta.total} sản phẩm`}</span>
+          <span className="ml-auto text-[12px] text-primary">
+            {activeTab === "low_stock" ? `${sortedProducts.length} sản phẩm` : `${meta.total} sản phẩm`}
+          </span>
         </div>
 
         {/* Bulk action bar */}
@@ -908,8 +957,8 @@ export default function ProductsPage() {
           <div className="flex items-center gap-3 px-5 py-2.5 border-b border-amber-200 bg-amber-50/50 text-[12px] text-amber-800">
             <AlertTriangle size={13} className="shrink-0 text-amber-500" />
             <span>
-              Gồm <strong>{outOfStockProducts.length} sản phẩm hết hàng</strong> (đỏ) và <strong>{lowStockProducts.length} sản phẩm sắp hết</strong> (vàng, tồn kho ≤ 5). Cập nhật tồn kho để xóa khỏi
-              danh sách này.
+              Gồm <strong>{outOfStockProducts.length} sản phẩm hết hàng</strong> (đỏ) và{" "}
+              <strong>{lowStockProducts.length} sản phẩm sắp hết</strong> (vàng, tồn kho ≤ 5). Cập nhật tồn kho để xóa khỏi danh sách này.
             </span>
           </div>
         )}
@@ -923,10 +972,17 @@ export default function ProductsPage() {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Package size={36} className="text-primary opacity-30" />
             <p className="text-[13px] text-primary">
-              {activeTab === "low_stock" ? "Không có sản phẩm nào có tồn kho thấp 🎉" : hasActiveFilters ? "Không có kết quả phù hợp" : "Chưa có sản phẩm nào"}
+              {activeTab === "low_stock"
+                ? "Không có sản phẩm nào có tồn kho thấp 🎉"
+                : hasActiveFilters
+                  ? "Không có kết quả phù hợp"
+                  : "Chưa có sản phẩm nào"}
             </p>
             {hasActiveFilters && activeTab !== "low_stock" && (
-              <button onClick={handleClearAllFilters} className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer">
+              <button
+                onClick={handleClearAllFilters}
+                className="px-4 py-2 rounded-lg border border-neutral text-[13px] text-primary hover:bg-neutral-light-active cursor-pointer"
+              >
                 Xóa bộ lọc
               </button>
             )}
@@ -937,7 +993,14 @@ export default function ProductsPage() {
             )}
           </div>
         ) : (
-          <AdminTable columns={columns} data={sortedProducts} selectable selectedIds={selected} onToggleAll={toggleAll} rowClassName={getRowClassName} />
+          <AdminTable
+            columns={columns}
+            data={sortedProducts}
+            selectable
+            selectedIds={selected}
+            onToggleAll={toggleAll}
+            rowClassName={getRowClassName}
+          />
         )}
 
         {/* Pagination */}

@@ -90,7 +90,11 @@ export function useCheckoutAddress({ authLoading, skipDefaultFetch }: UseCheckou
       const defaultAddr = list.find((a) => a.isDefault) ?? list[0];
       if (defaultAddr) {
         setSelectedSavedAddress(defaultAddr);
-        setProvinceCode(defaultAddr.province.code);
+        // Địa chỉ đã lưu cũ (trước khi hệ thống chuẩn hoá 2-tier/3-tier) có thể
+        // thiếu province.code hợp lệ — trim() để loại cả trường hợp whitespace-only
+        // (truthy trong JS, "" ?? guard vẫn không bắt được), tránh gọi getWards
+        // với code rỗng gây CORS/404 noise trong Console.
+        setProvinceCode(defaultAddr.province.code?.trim() ?? "");
         setWardCode(defaultAddr.ward.code);
         const { houseNumber: hn, streetName: sn } = splitDetailAddress(defaultAddr.detailAddress);
         setHouseNumber(hn);
@@ -151,7 +155,7 @@ export function useCheckoutAddress({ authLoading, skipDefaultFetch }: UseCheckou
 
   const handleSelectSavedAddress = useCallback((addr: SavedAddress) => {
     setSelectedSavedAddress(addr);
-    setProvinceCode(addr.province.code);
+    setProvinceCode(addr.province.code?.trim() ?? "");
     setWardCode(addr.ward.code);
     const { houseNumber: hn, streetName: sn } = splitDetailAddress(addr.detailAddress);
     setHouseNumber(hn);

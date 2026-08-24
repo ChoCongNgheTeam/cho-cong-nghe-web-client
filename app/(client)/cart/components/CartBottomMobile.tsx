@@ -63,7 +63,9 @@ export default function CartBottomBar({
       {showPanel && <div className="fixed inset-0 bg-black/40 z-[-1]" onClick={() => togglePanel(false)} />}
 
       {/* Expanded panel */}
-      <div className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${showPanel ? "max-h-[70vh]" : "max-h-0"}`}>
+      <div
+        className={`bg-neutral-light border-t border-neutral overflow-hidden transition-all duration-300 ease-in-out ${showPanel ? "max-h-[70vh]" : "max-h-0"}`}
+      >
         <div className="overflow-y-auto max-h-[70vh]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral">
@@ -111,7 +113,17 @@ export default function CartBottomBar({
               {summaryRows.map((row, i) => (
                 <div key={i} className={`flex justify-between ${row.indent ? "pl-4" : ""}`}>
                   <span className={row.indent ? "text-neutral-dark text-xs" : "text-neutral-darker"}>{row.label}</span>
-                  <span className={row.highlight ? "text-xl font-bold text-promotion" : row.indent ? "text-primary text-sm font-medium" : "font-medium text-primary"}>{row.value}</span>
+                  <span
+                    className={
+                      row.highlight
+                        ? "text-xl font-bold text-promotion"
+                        : row.indent
+                          ? "text-primary text-sm font-medium"
+                          : "font-medium text-primary"
+                    }
+                  >
+                    {row.value}
+                  </span>
                 </div>
               ))}
             </div>
@@ -142,7 +154,7 @@ export default function CartBottomBar({
             />
             <span className="text-xs text-neutral-darker leading-relaxed">
               Tôi đồng ý với{" "}
-              <Link href="/terms" className="text-accent underline">
+              <Link href="/policies/terms-of-service" className="text-accent underline">
                 điều khoản đặt hàng
               </Link>{" "}
               của cửa hàng
@@ -152,19 +164,28 @@ export default function CartBottomBar({
 
         {/* Dòng 2: Giá + nút đặt hàng */}
         <div className="flex items-center gap-2">
-          <button onClick={() => togglePanel(!showPanel)} className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition">
+          <button
+            onClick={() => togglePanel(!showPanel)}
+            className="flex-1 flex items-center justify-end gap-2 min-w-0 py-1 rounded-lg hover:bg-neutral transition"
+          >
             <div className="flex flex-col items-end min-w-0">
               <span className="text-base font-bold text-promotion whitespace-nowrap">{formatVND(finalTotal)}</span>
               {totalSaved > 0 && <span className="text-xs text-neutral-darker whitespace-nowrap">Tiết kiệm {formatVND(totalSaved)}</span>}
             </div>
-            {showPanel ? <ChevronDown className="h-4 w-4 text-neutral-darker shrink-0" /> : <ChevronUp className="h-4 w-4 text-neutral-darker shrink-0" />}
+            {showPanel ? (
+              <ChevronDown className="h-4 w-4 text-neutral-darker shrink-0" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-neutral-darker shrink-0" />
+            )}
           </button>
 
           <button
             onClick={onAction}
             disabled={actionDisabled}
             className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition shadow-lg ${
-              actionDisabled ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50" : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"
+              actionDisabled
+                ? "cursor-not-allowed bg-neutral text-neutral-dark opacity-50"
+                : "bg-primary-dark text-neutral-light hover:bg-accent-hover active:scale-[0.98]"
             }`}
           >
             {actionLabel}

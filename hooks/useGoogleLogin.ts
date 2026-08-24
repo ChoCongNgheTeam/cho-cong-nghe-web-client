@@ -34,6 +34,16 @@ interface UseGoogleLoginOptions {
 export function useGoogleLogin({ onSuccess, onError, onLoadingChange }: UseGoogleLoginOptions) {
   const buttonRef = useRef<HTMLDivElement | null>(null);
 
+  // BUG THẬT đã xảy ra: LoginForm.tsx truyền onError dạng inline arrow function
+  // ("(msg) => setErrors(...)"), tạo lại mỗi lần render → handleCredential
+  // (useCallback phụ thuộc onError) đổi reference mỗi render → effect bên dưới
+  // chạy lại → gọi initialize() lặp lại (đúng warning "[GSI_LOGGER]: ... called
+  // multiple times" trên production). Thay vì bắt MỌI caller tương lai phải nhớ
+  // tự useCallback 3 hàm này (dễ quên, đã quên 1 lần rồi), dùng ref pattern để
+  // effect khởi tạo Google script CHỈ chạy đúng 1 lần lúc mount, luôn gọi được
+  // bản callback MỚI NHẤT qua ref mà không cần đưa vào dependency array.
+  const handleCredentialRef = useRef<(response: { credential: string }) => void>(() => {});
+
   const handleCredential = useCallback(
     async (response: { credential: string }) => {
       onLoadingChange(true);
@@ -49,6 +59,10 @@ export function useGoogleLogin({ onSuccess, onError, onLoadingChange }: UseGoogl
     [onSuccess, onError, onLoadingChange],
   );
 
+  // Luôn cập nhật ref với bản handleCredential mới nhất — KHÔNG trigger effect
+  // load script bên dưới chạy lại, vì ref không nằm trong dependency array.
+  handleCredentialRef.current = handleCredential;
+
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
       console.error("Thiếu NEXT_PUBLIC_GOOGLE_CLIENT_ID trong .env");
@@ -58,7 +72,9 @@ export function useGoogleLogin({ onSuccess, onError, onLoadingChange }: UseGoogl
     const init = () => {
       window.google?.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredential,
+        // Gọi qua ref để luôn dùng bản mới nhất của handleCredential (đóng gói
+        // onSuccess/onError/onLoadingChange hiện tại) mà không cần re-init.
+        callback: (response) => handleCredentialRef.current(response),
         auto_select: false,
         cancel_on_tap_outside: true,
         ux_mode: "popup",
@@ -91,7 +107,10 @@ export function useGoogleLogin({ onSuccess, onError, onLoadingChange }: UseGoogl
         document.body.removeChild(script);
       }
     };
-  }, [handleCredential]);
+     
+    // lúc mount (xem giải thích ref pattern phía trên) — KHÔNG thêm handleCredential
+    // vào đây, đó chính là bug đã gây initialize() lặp lại trên production.
+  }, []);
 
   const prompt = useCallback(() => {
     if (!window.google) {
