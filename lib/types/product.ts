@@ -97,7 +97,8 @@ export type ProductDetail = {
   highlights: Highlight[];
   canReview: boolean;
   orderItemId: string | null;
-  specGroups?: SpecificationGroup[];
+  highlightGroups?: SpecificationGroup[];
+  specGroups?: { groupName: string; items: { name: string; value: string; unit?: string }[] }[];
   price: Price;
   availablePromotions?: Promotion[];
 };

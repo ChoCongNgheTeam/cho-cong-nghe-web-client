@@ -209,7 +209,7 @@ function SearchProductModal({
     setSelecting(item.id);
     setBlockedId(null);
     try {
-      const res = await apiRequest.get<{ data: ProductDetail }>(`/products/slug/${item.slug}`, { noAuth: true });
+      const res = await apiRequest.get<{ data: ProductDetail }>(`/products/slug/${item.slug}/compare`, { noAuth: true });
       if (res?.data) {
         const detail = res.data;
         if (lockedCategorySlug) {

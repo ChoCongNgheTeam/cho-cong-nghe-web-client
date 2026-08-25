@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { CheckCircle2, Copy, CheckCheck, Landmark, Banknote, Package, MapPin, Tag, ChevronDown, ChevronUp } from "lucide-react";
 import apiRequest from "@/lib/api";
@@ -50,6 +50,10 @@ interface OrderData {
   bankHolder?: string | null;
 }
 
+// Poll mỗi 4s, dừng sau 15 phút để tránh giữ interval mãi mãi nếu user để tab mở lâu
+const POLL_INTERVAL_MS = 4000;
+const POLL_TIMEOUT_MS = 15 * 60 * 1000;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function CopyBtn({ text }: { text: string }) {
@@ -73,7 +77,9 @@ function InfoRow({ label, value, highlight, copy = false }: { label: string; val
     <div className="flex items-center justify-between py-2.5 border-b border-neutral last:border-0">
       <span className="text-sm text-neutral-darker shrink-0 w-36">{label}</span>
       <div className="flex items-center min-w-0 text-right">
-        <span className={`text-sm break-all ${highlight ? "font-bold text-accent-dark text-base" : "font-medium text-primary"}`}>{value}</span>
+        <span className={`text-sm break-all ${highlight ? "font-bold text-accent-dark text-base" : "font-medium text-primary"}`}>
+          {value}
+        </span>
         {copy && <CopyBtn text={value} />}
       </div>
     </div>
@@ -101,15 +107,25 @@ export default function OrderPaymentPage() {
   const [error, setError] = useState<string | null>(null);
   const [showItems, setShowItems] = useState(false);
 
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollStartedAtRef = useRef<number | null>(null);
+
+  const fetchOrder = useCallback(async () => {
+    if (!orderCode) return null;
+    const res = await apiRequest.get<{
+      success: boolean;
+      data: OrderData;
+    }>(`/orders/by-code/${orderCode}/payment-info`);
+    return res?.success ? res.data : null;
+  }, [orderCode]);
+
+  // Initial load
   useEffect(() => {
     if (!orderCode) return;
     (async () => {
       try {
-        const res = await apiRequest.get<{
-          success: boolean;
-          data: OrderData;
-        }>(`/orders/by-code/${orderCode}/payment-info`);
-        if (res?.success && res.data) setData(res.data);
+        const order = await fetchOrder();
+        if (order) setData(order);
         else setError("Không tìm thấy thông tin đơn hàng.");
       } catch {
         setError("Có lỗi xảy ra khi tải thông tin đơn hàng.");
@@ -117,7 +133,43 @@ export default function OrderPaymentPage() {
         setLoading(false);
       }
     })();
-  }, [orderCode]);
+  }, [orderCode, fetchOrder]);
+
+  // Poll trạng thái thanh toán — chỉ áp dụng cho chuyển khoản ngân hàng, vì đây là
+  // luồng duy nhất user không được redirect thẳng về sau khi thanh toán (họ quét QR
+  // bằng app ngân hàng riêng). MoMo/VNPay/ZaloPay/Stripe đã biết kết quả ngay qua returnHandler.
+  const isBankTransferPending = data?.paymentMethodCode?.toUpperCase().includes("BANK_TRANSFER") && data.paymentStatus !== "PAID";
+
+  useEffect(() => {
+    if (!isBankTransferPending) return;
+
+    pollStartedAtRef.current = Date.now();
+
+    pollTimerRef.current = setInterval(async () => {
+      // Quá thời gian poll tối đa thì dừng, tránh giữ interval vô thời hạn nếu user để tab mở lâu
+      if (pollStartedAtRef.current && Date.now() - pollStartedAtRef.current > POLL_TIMEOUT_MS) {
+        if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+        return;
+      }
+
+      try {
+        const order = await fetchOrder();
+        if (order) {
+          setData(order);
+          if (order.paymentStatus === "PAID" && pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+          }
+        }
+      } catch {
+        // Bỏ qua lỗi 1 lần poll, thử lại ở lần tiếp theo — không hiển thị lỗi cho user
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    };
+     
+  }, [isBankTransferPending, fetchOrder]);
 
   if (loading) {
     return (
@@ -145,6 +197,7 @@ export default function OrderPaymentPage() {
 
   const isBankTransfer = data.paymentMethodCode.toUpperCase().includes("BANK_TRANSFER");
   const isCOD = data.paymentMethodCode.toUpperCase().includes("COD");
+  const isPaid = data.paymentStatus === "PAID";
   const total = Number(data.totalAmount);
   const shipping = Number(data.shippingFee);
   const voucher = Number(data.voucherDiscount);
@@ -157,7 +210,9 @@ export default function OrderPaymentPage() {
             <CheckCircle2 className="w-8 h-8 text-accent" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-primary">Đặt hàng thành công 🎉</h1>
+            <h1 className="text-lg font-bold text-primary">
+              {isBankTransfer && isPaid ? "Thanh toán thành công 🎉" : "Đặt hàng thành công 🎉"}
+            </h1>
             <div className="flex items-center justify-center gap-1 mt-1">
               <span className="text-sm text-neutral-darker">Mã đơn hàng:</span>
               <span className="text-sm font-semibold text-primary">#{data.orderCode}</span>
@@ -170,14 +225,18 @@ export default function OrderPaymentPage() {
           </div>
         </div>
 
-        {/* ── Bank Transfer Info ── */}
-        {isBankTransfer && (
+        {/* ── Bank Transfer Info (ẩn ngay khi webhook xác nhận đã thanh toán) ── */}
+        {isBankTransfer && !isPaid && (
           <div className="bg-neutral-light-active rounded-2xl shadow-sm overflow-hidden border border-neutral">
             <SectionHeader icon={Landmark} title="Thông tin chuyển khoản" />
             <div className="p-5 space-y-4">
               {data.bankTransferQrUrl && (
                 <div className="flex flex-col items-center gap-2">
-                  <img src={data.bankTransferQrUrl} alt="QR chuyển khoản" className="w-52 h-52 rounded-xl border border-neutral object-contain" />
+                  <img
+                    src={data.bankTransferQrUrl}
+                    alt="QR chuyển khoản"
+                    className="w-52 h-52 rounded-xl border border-neutral object-contain"
+                  />
                   <p className="text-xs text-neutral-darker">Quét mã QR để chuyển khoản nhanh</p>
                 </div>
               )}
@@ -196,12 +255,26 @@ export default function OrderPaymentPage() {
                 </p>
               </div>
 
+              <div className="flex items-center justify-center gap-2 text-xs text-neutral-darker">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral border-t-accent" />
+                <span>Đang chờ xác nhận thanh toán...</span>
+              </div>
+
               {data.bankTransferExpiredAt && (
                 <p className="text-xs text-neutral-darker text-center">
-                  Hết hạn lúc: <span className="font-medium text-primary">{new Date(data.bankTransferExpiredAt).toLocaleString("vi-VN")}</span>
+                  Hết hạn lúc:{" "}
+                  <span className="font-medium text-primary">{new Date(data.bankTransferExpiredAt).toLocaleString("vi-VN")}</span>
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── Bank Transfer Confirmed ── */}
+        {isBankTransfer && isPaid && (
+          <div className="bg-accent-light border border-accent rounded-2xl p-4 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
+            <p className="text-sm text-accent-dark font-medium">Đã nhận được thanh toán chuyển khoản của bạn.</p>
           </div>
         )}
 
@@ -209,7 +282,10 @@ export default function OrderPaymentPage() {
         <div className="bg-neutral-light-active rounded-2xl shadow-sm overflow-hidden border border-neutral">
           <SectionHeader icon={Package} title="Chi tiết đơn hàng" />
 
-          <button onClick={() => setShowItems((v) => !v)} className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-neutral transition-colors border-b border-neutral cursor-pointer">
+          <button
+            onClick={() => setShowItems((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-neutral transition-colors border-b border-neutral cursor-pointer"
+          >
             <span className="text-sm text-neutral-darker">{data.orderItems.length} sản phẩm</span>
             <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
               <span>{formatVND(total)}</span>
@@ -228,7 +304,9 @@ export default function OrderPaymentPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-primary line-clamp-1">{item.productVariant.product.name}</p>
-                    <p className="text-xs text-neutral-darker mt-0.5">{item.productVariant.variantAttributes.map((a) => a.attributeOption.value).join(" / ")}</p>
+                    <p className="text-xs text-neutral-darker mt-0.5">
+                      {item.productVariant.variantAttributes.map((a) => a.attributeOption.value).join(" / ")}
+                    </p>
                     <div className="flex items-center justify-between mt-1.5">
                       <span className="text-xs text-neutral-darker">x{item.quantity}</span>
                       <span className="text-sm font-semibold text-primary">{formatVND(Number(item.unitPrice))}</span>
@@ -273,13 +351,15 @@ export default function OrderPaymentPage() {
               <span className="font-normal text-neutral-darker mx-1.5">•</span>
               {data.shippingPhone}
             </p>
-            <p className="text-sm text-neutral-darker mt-1 leading-relaxed">{[data.shippingDetail, data.shippingWard, data.shippingProvince].filter(Boolean).join(", ")}</p>
+            <p className="text-sm text-neutral-darker mt-1 leading-relaxed">
+              {[data.shippingDetail, data.shippingWard, data.shippingProvince].filter(Boolean).join(", ")}
+            </p>
           </div>
         </div>
 
         {/* ── Action Buttons ── */}
         <div className="space-y-3 pb-4">
-          {isBankTransfer && (
+          {isBankTransfer && !isPaid && (
             <button
               onClick={() => router.push("/profile/orders")}
               className="w-full bg-accent hover:bg-accent-hover active:bg-accent-active text-white font-semibold py-3.5 rounded-xl transition-colors text-sm cursor-pointer"
@@ -290,7 +370,9 @@ export default function OrderPaymentPage() {
           <button
             onClick={() => router.push("/profile/orders")}
             className={`w-full font-semibold py-3.5 rounded-xl transition-colors text-sm cursor-pointer ${
-              isBankTransfer ? "border border-neutral text-neutral-darker hover:bg-neutral" : "bg-primary-dark text-neutral-light hover:bg-primary-dark-hover active:bg-accent-active"
+              isBankTransfer && !isPaid
+                ? "border border-neutral text-neutral-darker hover:bg-neutral"
+                : "bg-primary-dark text-neutral-light hover:bg-primary-dark-hover active:bg-accent-active"
             }`}
           >
             Xem đơn hàng

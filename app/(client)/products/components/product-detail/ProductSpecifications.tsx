@@ -19,7 +19,7 @@ export default memo(function ProductDetailSection({ slug, product }: ProductDeta
 
   const modalRef = useRef<ProductSpecsModalRef>(null);
 
-  const specifications: SpecificationGroup[] = product?.specGroups ?? [];
+  const specifications: SpecificationGroup[] = product?.highlightGroups ?? [];
 
   const openDialog = async () => {
     if (!slug) return;
