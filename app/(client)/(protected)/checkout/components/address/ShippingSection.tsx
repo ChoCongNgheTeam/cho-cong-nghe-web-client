@@ -93,7 +93,11 @@ export default function ShippingSection({
     }),
     option: (base, state) => ({
       ...base,
-      backgroundColor: state.isSelected ? "rgb(var(--primary))" : state.isFocused ? "rgb(var(--neutral-light-active))" : "rgb(var(--neutral-light))",
+      backgroundColor: state.isSelected
+        ? "rgb(var(--primary))"
+        : state.isFocused
+          ? "rgb(var(--neutral-light-active))"
+          : "rgb(var(--neutral-light))",
       color: state.isSelected ? "rgb(var(--neutral-light))" : "rgb(var(--primary))",
       fontSize: "0.875rem",
       cursor: "pointer",
@@ -174,7 +178,11 @@ export default function ShippingSection({
   const renderManualForm = () => (
     <div className="space-y-4">
       {savedAddresses.length > 0 && (
-        <button type="button" onClick={onBackToSaved} className="text-sm text-neutral-darker hover:text-primary flex items-center gap-1 transition-colors cursor-pointer">
+        <button
+          type="button"
+          onClick={onBackToSaved}
+          className="text-sm text-neutral-darker hover:text-primary flex items-center gap-1 transition-colors cursor-pointer"
+        >
           ← Dùng địa chỉ đã lưu
         </button>
       )}
@@ -209,7 +217,9 @@ export default function ShippingSection({
             maxLength={10}
           />
           {touchedPhone && !isValidPhone(contactPhone) && (
-            <p className="text-promotion text-xs mt-1">{contactPhone.length === 0 ? "Vui lòng nhập số điện thoại" : "Số điện thoại không hợp lệ (VD: 0901234567)"}</p>
+            <p className="text-promotion text-xs mt-1">
+              {contactPhone.length === 0 ? "Vui lòng nhập số điện thoại" : "Số điện thoại không hợp lệ (VD: 0901234567)"}
+            </p>
           )}
         </div>
       </div>
@@ -275,7 +285,9 @@ export default function ShippingSection({
             onBlur={() => setTouchedHouse(true)}
             placeholder="VD: 42, 42B, Lô 5, Căn hộ 08"
           />
-          {touchedHouse && addressInvalidChar(houseNumber) && <p className="text-promotion text-xs mt-1">Chỉ được nhập chữ, số và các ký tự / , .</p>}
+          {touchedHouse && addressInvalidChar(houseNumber) && (
+            <p className="text-promotion text-xs mt-1">Chỉ được nhập chữ, số và các ký tự / , .</p>
+          )}
         </div>
 
         <div>
@@ -289,7 +301,9 @@ export default function ShippingSection({
             onBlur={() => setTouchedStreet(true)}
             placeholder="VD: Nguyễn Trãi, KDC Vạn Phúc"
           />
-          {touchedStreet && addressInvalidChar(streetName) && <p className="text-promotion text-xs mt-1">Chỉ được nhập chữ, số và các ký tự / , .</p>}
+          {touchedStreet && addressInvalidChar(streetName) && (
+            <p className="text-promotion text-xs mt-1">Chỉ được nhập chữ, số và các ký tự / , .</p>
+          )}
         </div>
       </div>
 
@@ -298,11 +312,23 @@ export default function ShippingSection({
         <span className="text-sm text-neutral-darker">Bạn có muốn lưu địa chỉ này không?</span>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-1.5 text-sm cursor-pointer text-primary">
-            <input type="radio" name={`save-addr-${instanceId}`} checked={wantSaveAddress === false} onChange={() => onWantSaveAddressChange(false)} className="accent-accent cursor-pointer" />
+            <input
+              type="radio"
+              name={`save-addr-${instanceId}`}
+              checked={wantSaveAddress === false}
+              onChange={() => onWantSaveAddressChange(false)}
+              className="accent-accent cursor-pointer"
+            />
             Không
           </label>
           <label className="flex items-center gap-1.5 text-sm cursor-pointer text-primary">
-            <input type="radio" name={`save-addr-${instanceId}`} checked={wantSaveAddress === true} onChange={() => onWantSaveAddressChange(true)} className="accent-accent cursor-pointer" />
+            <input
+              type="radio"
+              name={`save-addr-${instanceId}`}
+              checked={wantSaveAddress === true}
+              onChange={() => onWantSaveAddressChange(true)}
+              className="accent-accent cursor-pointer"
+            />
             Có
           </label>
         </div>
@@ -310,23 +336,11 @@ export default function ShippingSection({
     </div>
   );
 
-  // Empty state
-  const renderEmpty = () => (
-    <div className="flex flex-col items-center justify-center py-4 gap-3">
-      <p className="text-sm text-neutral-dark">Chưa có địa chỉ nào được lưu</p>
-      <button type="button" onClick={onShowManualForm} className="text-sm text-accent hover:underline flex items-center gap-1 cursor-pointer">
-        <Plus size={14} />
-        Thêm địa chỉ mới
-      </button>
-    </div>
-  );
-
   // Quyết định hiển thị view nào
   const renderContent = () => {
-    // Show manual form when explicitly requested
-    if (showManualForm) return renderManualForm();
-    // No saved addresses → show empty + option to add
-    if (savedAddresses.length === 0) return renderEmpty();
+    // Show manual form when explicitly requested, hoặc khi chưa có địa chỉ nào được lưu —
+    // đỡ 1 cú click "Thêm địa chỉ mới" thừa vì đằng nào cũng phải điền form.
+    if (showManualForm || savedAddresses.length === 0) return renderManualForm();
     // Has saved addresses → show list
     return renderSavedList();
   };
