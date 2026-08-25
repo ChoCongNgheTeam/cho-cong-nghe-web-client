@@ -7,12 +7,9 @@ interface HeroBannerProps {
   alt?: string;
 }
 
-// Default href trước đây là "/sale" — route KHÔNG tồn tại (route thật là
-// /flash-sale), gây 404 mỗi lần user bấm banner vì HeroBanner được gọi ở
-// page.tsx KHÔNG truyền href, luôn dùng default này 100% các lần render.
 export function HeroBanner({
-  image = "https://clickbuy.com.vn/uploads/media/657-GNxxO.png",
-  href = "/flash-sale",
+  image = "https://res.cloudinary.com/da3eksemd/image/upload/v1787551151/media/jzum1nypdca04ufbsxen.png",
+  href = "/category/iphone-17-series",
   alt = "Banner khuyến mãi",
 }: HeroBannerProps) {
   return (
