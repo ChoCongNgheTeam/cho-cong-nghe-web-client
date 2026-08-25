@@ -15,7 +15,10 @@ export const fetchRootCategories = async (): Promise<Category[]> => {
 };
 
 export const fetchCategoryChildren = async (categoryId: string): Promise<Category[]> => {
-  const res = await apiRequest.get<{ data: Category[] }>(`/categories/${categoryId}/children`, { noAuth: true, next: { revalidate: 3600 } });
+  const res = await apiRequest.get<{ data: Category[] }>(`/categories/${categoryId}/children`, {
+    noAuth: true,
+    next: { revalidate: 3600 },
+  });
   return res?.data ?? [];
 };
 
@@ -25,7 +28,7 @@ export const fetchTrendingKeywords = async (): Promise<TrendingKeyword[]> => {
 };
 
 export const resolveSearchCategory = async (term: string): Promise<string | null> => {
-  const res = await apiRequest.get<{ data: { slug: string } | null }>("/categories/resolve", { params: { q: slugify(term) }, noAuth: true });
+  const res = await apiRequest.get<{ data: { slug: string } | null }>("/categories/resolve", { params: { q: term }, noAuth: true });
   return res?.data?.slug ?? null;
 };
 

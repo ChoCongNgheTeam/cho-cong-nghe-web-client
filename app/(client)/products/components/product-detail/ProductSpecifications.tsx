@@ -19,7 +19,7 @@ export default memo(function ProductDetailSection({ slug, product }: ProductDeta
 
   const modalRef = useRef<ProductSpecsModalRef>(null);
 
-  const specifications: SpecificationGroup[] = product?.highlightGroups ?? [];
+  const specifications: SpecificationGroup[] = product?.specGroups ?? [];
 
   const openDialog = async () => {
     if (!slug) return;
@@ -52,7 +52,10 @@ export default memo(function ProductDetailSection({ slug, product }: ProductDeta
             <h3 className="text-base sm:text-xl font-semibold text-primary">Thông số kỹ thuật</h3>
 
             {specifications.length > 0 && (
-              <button onClick={openDialog} className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer">
+              <button
+                onClick={openDialog}
+                className="text-xs sm:text-sm font-medium text-accent underline underline-offset-2 hover:opacity-75 transition-opacity active:scale-95 cursor-pointer"
+              >
                 Xem tất cả
               </button>
             )}
@@ -62,7 +65,13 @@ export default memo(function ProductDetailSection({ slug, product }: ProductDeta
           <div className="space-y-6 w-full lg:w-[95%] xl:w-[90%] mx-auto">
             {specifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-neutral-dark gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-10 h-10 opacity-30"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -103,7 +112,13 @@ export default memo(function ProductDetailSection({ slug, product }: ProductDeta
         </div>
       </div>
 
-      <ProductSpecsModal ref={modalRef} specifications={modalSpecs} isLoading={loadingModal} productName={modalProductName} productImage={modalProductImage} />
+      <ProductSpecsModal
+        ref={modalRef}
+        specifications={modalSpecs}
+        isLoading={loadingModal}
+        productName={modalProductName}
+        productImage={modalProductImage}
+      />
     </>
   );
 });

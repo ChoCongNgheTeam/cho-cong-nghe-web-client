@@ -35,7 +35,15 @@ function calcDiscount(origin: number, base: number): number {
 }
 
 // ── Sticky Compare Header ────────────────────────────────────────────────
-function StickyCompareHeader({ products, maxSlots, onRemove }: { products: ProductDetail[]; maxSlots: number; onRemove: (id: string) => void }) {
+function StickyCompareHeader({
+  products,
+  maxSlots,
+  onRemove,
+}: {
+  products: ProductDetail[];
+  maxSlots: number;
+  onRemove: (id: string) => void;
+}) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -73,7 +81,13 @@ function StickyCompareHeader({ products, maxSlots, onRemove }: { products: Produ
                       <Link href={`/products/${product.slug}`}>
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border border-neutral cursor-pointer bg-neutral-light">
                           {product.currentVariant.images?.[0]?.imageUrl ? (
-                            <Image src={product.currentVariant.images[0].imageUrl} alt={product.name} width={40} height={40} className="w-full h-full object-contain" />
+                            <Image
+                              src={product.currentVariant.images[0].imageUrl}
+                              alt={product.name}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-contain"
+                            />
                           ) : (
                             <div className="w-full h-full bg-neutral" />
                           )}
@@ -137,9 +151,10 @@ function SearchProductModal({
     abortRef.current = new AbortController();
     setIsSearching(true);
     try {
-      const res = await apiRequest.get<{ data: SearchResult[] }>("/products", {
-        params: { search: q, limit: 8 },
+      const res = await apiRequest.get<{ data: SearchResult[] }>("/search", {
+        params: { q, limit: 8 },
         noAuth: true,
+        signal: abortRef.current.signal,
       });
       const raw = res?.data ?? [];
       const items = raw.filter((item, index, self) => self.findIndex((t) => t.id === item.id) === index);
@@ -229,7 +244,9 @@ function SearchProductModal({
             {lockedCategorySlug ? (
               <div className="flex items-center flex-wrap gap-1.5 mt-1">
                 <span className="text-xs text-neutral-dark">Danh mục:</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-neutral px-2 py-0.5 rounded-md">{lockedCategorySlug}</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-neutral px-2 py-0.5 rounded-md">
+                  {lockedCategorySlug}
+                </span>
                 <span className="text-xs text-neutral-dark">— chỉ so sánh sản phẩm cùng danh mục</span>
               </div>
             ) : (
@@ -293,7 +310,11 @@ function SearchProductModal({
                   const isDisabled = isAdded || isBlocked || !!selecting;
 
                   return (
-                    <li key={item.id} style={{ animationDelay: `${i * 30}ms` }} className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both">
+                    <li
+                      key={item.id}
+                      style={{ animationDelay: `${i * 30}ms` }}
+                      className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
+                    >
                       <button
                         disabled={isDisabled}
                         onClick={() => handleSelect(item)}
@@ -312,23 +333,39 @@ function SearchProductModal({
                           {isFetching ? (
                             <div className="w-4 h-4 border-2 border-neutral border-t-primary rounded-full animate-spin" />
                           ) : item.thumbnail ? (
-                            <Image src={item.thumbnail} alt={item.name} width={44} height={44} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
+                            <Image
+                              src={item.thumbnail}
+                              alt={item.name}
+                              width={44}
+                              height={44}
+                              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                            />
                           ) : (
                             <div className="w-full h-full bg-neutral rounded-xl" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-primary font-medium truncate leading-snug group-hover:text-accent-hover transition-colors">{item.name}</p>
+                          <p className="text-[13px] text-primary font-medium truncate leading-snug group-hover:text-accent-hover transition-colors">
+                            {item.name}
+                          </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[12px] font-semibold text-primary">{formatVND(item.price.base)}</span>
-                            {discount > 0 && <span className="text-[10px] font-medium text-white bg-promotion px-1.5 py-0.5 rounded-md">-{discount}%</span>}
+                            {discount > 0 && (
+                              <span className="text-[10px] font-medium text-white bg-promotion px-1.5 py-0.5 rounded-md">-{discount}%</span>
+                            )}
                             {!item.inStock && <span className="text-[10px] text-neutral-darker">Hết hàng</span>}
                           </div>
                         </div>
 
-                        {isAdded && <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-neutral text-neutral-darker">Đã thêm</span>}
-                        {isBlocked && <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">Khác danh mục</span>}
+                        {isAdded && (
+                          <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-neutral text-neutral-darker">Đã thêm</span>
+                        )}
+                        {isBlocked && (
+                          <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
+                            Khác danh mục
+                          </span>
+                        )}
                         {isFetching && <span className="text-[10px] text-neutral-dark shrink-0">Đang tải…</span>}
                       </button>
                     </li>
@@ -352,17 +389,25 @@ type CompareRow = {
 const ROWS: CompareRow[] = [
   {
     label: "Thương hiệu",
-    render: (p) => <span className="inline-flex items-center px-2 py-1 rounded-lg text-[11px] sm:text-[12px] font-medium bg-neutral text-primary">{p.brand.name}</span>,
+    render: (p) => (
+      <span className="inline-flex items-center px-2 py-1 rounded-lg text-[11px] sm:text-[12px] font-medium bg-neutral text-primary">
+        {p.brand.name}
+      </span>
+    ),
   },
   {
     label: "Giá bán",
     render: (p) => (
       <div className="flex flex-col items-center gap-1">
-        <span className="text-[13px] sm:text-[15px] font-bold tracking-tight text-primary">{formatVND(p.price.hasPromotion ? p.price.final : p.price.base)}</span>
+        <span className="text-[13px] sm:text-[15px] font-bold tracking-tight text-primary">
+          {formatVND(p.price.hasPromotion ? p.price.final : p.price.base)}
+        </span>
         {p.price.hasPromotion && (
           <div className="flex items-center gap-1 flex-wrap justify-center">
             <span className="text-[10px] text-neutral-darker line-through">{formatVND(p.price.base)}</span>
-            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md">-{p.price.discountPercentage}%</span>
+            <span className="text-[10px] font-semibold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md">
+              -{p.price.discountPercentage}%
+            </span>
           </div>
         )}
       </div>
@@ -426,7 +471,7 @@ function collectSpecKeys(products: ProductDetail[]): string[] {
   const seen = new Set<string>();
   const keys: string[] = [];
   for (const p of products) {
-    for (const g of p.highlightGroups ?? []) {
+    for (const g of p.specGroups ?? []) {
       for (const item of g.items) {
         if (!seen.has(item.name)) {
           seen.add(item.name);
@@ -439,7 +484,7 @@ function collectSpecKeys(products: ProductDetail[]): string[] {
 }
 
 function getSpecValue(p: ProductDetail, name: string): string | null {
-  for (const g of p.highlightGroups ?? []) {
+  for (const g of p.specGroups ?? []) {
     for (const item of g.items) {
       if (item.name === name) {
         return item.value + (item.unit ? ` ${item.unit}` : "");
@@ -454,7 +499,15 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 sm:py-24 gap-5 text-center px-4">
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-neutral">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-dark opacity-60">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="text-neutral-dark opacity-60"
+        >
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="3" y="14" width="7" height="7" rx="1.5" />
@@ -479,9 +532,16 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────
 export default function ComparePage() {
-  const { items, rootCategorySlug, remove, add, clear, maxCompare } = useCompareStore();
+  const { items, rootCategorySlug, remove, add, clear, maxCompare, refreshItems } = useCompareStore();
   const isMobile = useIsMobile();
   const MAX_SLOTS = maxCompare(isMobile);
+
+  // Đồng bộ lại data mới nhất cho các sản phẩm đã lưu trong localStorage — tránh
+  // hiển thị data cũ (thiếu field) nếu sản phẩm đã được admin cập nhật sau khi thêm vào compare.
+  useEffect(() => {
+    refreshItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [stickyHeaderVisible, setStickyHeaderVisible] = useState(false);
@@ -524,7 +584,10 @@ export default function ComparePage() {
           </p>
         </div>
         {items.length > 0 && (
-          <button onClick={clear} className="inline-flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-primary transition-colors group self-start sm:self-auto">
+          <button
+            onClick={clear}
+            className="inline-flex items-center gap-1.5 text-[12px] text-neutral-dark hover:text-primary transition-colors group self-start sm:self-auto"
+          >
             <Trash2 size={13} className="opacity-60 group-hover:opacity-100 transition-opacity" />
             Xóa tất cả
           </button>
@@ -598,7 +661,9 @@ export default function ComparePage() {
                             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200 border border-neutral group-hover:border-accent/30 group-hover:bg-accent-light">
                               <Plus size={13} className="text-neutral-dark group-hover:text-accent transition-colors" />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker group-hover:text-primary transition-colors">Thêm</span>
+                            <span className="text-[10px] sm:text-[11px] font-medium text-neutral-darker group-hover:text-primary transition-colors">
+                              Thêm
+                            </span>
                           </button>
                         </div>
                       )}
@@ -609,7 +674,10 @@ export default function ComparePage() {
 
               <tbody>
                 {ROWS.map((row, i) => (
-                  <tr key={row.label} className={`border-t border-neutral/60 transition-colors ${i % 2 !== 0 ? "bg-neutral-light-active" : "bg-transparent"}`}>
+                  <tr
+                    key={row.label}
+                    className={`border-t border-neutral/60 transition-colors ${i % 2 !== 0 ? "bg-neutral-light-active" : "bg-transparent"}`}
+                  >
                     <td className="px-2 sm:px-5 py-3 sm:py-4 align-middle">
                       <span className="text-[9px] sm:text-[11px] font-medium text-neutral-darker whitespace-nowrap">{row.label}</span>
                     </td>
@@ -624,7 +692,9 @@ export default function ComparePage() {
                 {specKeys.length > 0 && (
                   <tr className="border-t-2 border-neutral">
                     <td colSpan={MAX_SLOTS + 1} className="px-2 sm:px-5 py-3 bg-neutral">
-                      <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-neutral-darker">Thông số kỹ thuật</span>
+                      <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-neutral-darker">
+                        Thông số kỹ thuật
+                      </span>
                     </td>
                   </tr>
                 )}
@@ -638,7 +708,11 @@ export default function ComparePage() {
                       const val = p ? getSpecValue(p, key) : null;
                       return (
                         <td key={j} className="text-center px-2 sm:px-4 py-2.5 sm:py-3 align-middle">
-                          {val ? <span className="text-[10px] sm:text-[12px] font-semibold text-primary">{val}</span> : <span className="text-neutral-dark/30 text-base">—</span>}
+                          {val ? (
+                            <span className="text-[10px] sm:text-[12px] font-semibold text-primary">{val}</span>
+                          ) : (
+                            <span className="text-neutral-dark/30 text-base">—</span>
+                          )}
                         </td>
                       );
                     })}
@@ -652,7 +726,10 @@ export default function ComparePage() {
 
       {/* ── Footer ── */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-5 sm:mt-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-[13px] text-neutral-darker hover:text-primary transition-colors group self-center sm:self-auto">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-[13px] text-neutral-darker hover:text-primary transition-colors group self-center sm:self-auto"
+        >
           <ArrowLeft size={14} className="transition-transform duration-150 group-hover:-translate-x-0.5" />
           Tiếp tục mua sắm
         </Link>
@@ -668,7 +745,13 @@ export default function ComparePage() {
       </div>
 
       {/* ── Modal ── */}
-      <SearchProductModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSelect={(p) => add(p, isMobile)} excludeIds={items.map((p) => p.id)} lockedCategorySlug={rootCategorySlug} />
+      <SearchProductModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSelect={(p) => add(p, isMobile)}
+        excludeIds={items.map((p) => p.id)}
+        lockedCategorySlug={rootCategorySlug}
+      />
     </div>
   );
 }

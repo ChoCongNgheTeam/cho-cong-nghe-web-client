@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ProductDetail } from "@/lib/types/product";
+import apiRequest from "@/lib/api";
 
 interface Category {
   id: string;
@@ -25,6 +26,7 @@ interface CompareStore {
   clear: () => void;
   isInCompare: (id: string) => boolean;
   isSameCategory: (product: ProductDetail) => boolean;
+  refreshItems: () => Promise<void>;
 }
 
 function getRootSlug(category: Category | null): string | null {
@@ -86,6 +88,22 @@ export const useCompareStore = create<CompareStore>()(
         const { rootCategorySlug } = get();
         if (!rootCategorySlug) return true;
         return getRootSlug(product.category) === rootCategorySlug;
+      },
+
+      refreshItems: async () => {
+        const { items } = get();
+        if (items.length === 0) return;
+
+        const results = await Promise.allSettled(
+          items.map((p) => apiRequest.get<{ data: ProductDetail }>(`/products/slug/${p.slug}`, { noAuth: true })),
+        );
+
+        set((s) => ({
+          items: s.items.map((old, i) => {
+            const r = results[i];
+            return r.status === "fulfilled" && r.value?.data ? r.value.data : old;
+          }),
+        }));
       },
     }),
     {

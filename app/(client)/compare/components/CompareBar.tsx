@@ -41,7 +41,9 @@ function AddSlot() {
     }
     setLoading(true);
     try {
-      const res = await apiRequest.get<{ data: { items: ProductDetail[] } }>(`/products?search=${encodeURIComponent(q)}&limit=5`, { noAuth: true });
+      const res = await apiRequest.get<{ data: { items: ProductDetail[] } }>(`/products?search=${encodeURIComponent(q)}&limit=5`, {
+        noAuth: true,
+      });
       setResults(res?.data?.items ?? []);
     } catch {
       setResults([]);
@@ -106,12 +108,18 @@ function AddSlot() {
           </div>
           <div className="max-h-48 overflow-y-auto">
             {loading && <p className="text-[11px] text-neutral-dark text-center py-4">Đang tìm...</p>}
-            {!loading && query && results.length === 0 && <p className="text-[11px] text-neutral-dark text-center py-4">Không tìm thấy sản phẩm</p>}
+            {!loading && query && results.length === 0 && (
+              <p className="text-[11px] text-neutral-dark text-center py-4">Không tìm thấy sản phẩm</p>
+            )}
             {!loading && !query && <p className="text-[11px] text-neutral-dark text-center py-4">Nhập tên sản phẩm để tìm</p>}
             {results.map((p) => {
               const thumb = p.currentVariant.images?.[0]?.imageUrl;
               return (
-                <button key={p.id} onClick={() => handleSelect(p)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral transition-colors border-b border-neutral last:border-0">
+                <button
+                  key={p.id}
+                  onClick={() => handleSelect(p)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral transition-colors border-b border-neutral last:border-0"
+                >
                   {thumb && <Image src={thumb} alt={p.name} width={28} height={28} className="object-contain flex-shrink-0" />}
                   <span className="text-xs text-primary text-left line-clamp-2">{p.name}</span>
                 </button>
@@ -146,7 +154,10 @@ export default function CompareBar() {
           {items.map((p) => {
             const thumb = p.currentVariant.images?.[0]?.imageUrl;
             return (
-              <div key={p.id} className="relative flex-shrink-0 w-[120px] h-16 rounded-xl border border-neutral bg-neutral-light flex flex-col items-center justify-center gap-1 px-2">
+              <div
+                key={p.id}
+                className="relative flex-shrink-0 w-[120px] h-16 rounded-xl border border-neutral bg-neutral-light flex flex-col items-center justify-center gap-1 px-2"
+              >
                 {thumb && <Image src={thumb} alt={p.name} width={28} height={28} className="object-contain" />}
                 <span className="text-[10px] text-primary text-center leading-tight line-clamp-2 max-w-full">{p.name}</span>
                 <button
