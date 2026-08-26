@@ -7,9 +7,9 @@ import { useToasty } from "@/components/toast";
 import Link from "next/link";
 import { handleLoginSubmit } from "./LoginHandler";
 import { SocialLoginButtons } from "./SocialLoginButtons";
+import { EmailOtpLogin } from "./EmailOtpLogin";
 import type { User as AuthUser } from "./types";
 import { useGoogleLogin } from "../../../../../hooks/useGoogleLogin";
-import { useFacebookLogin } from "../../../../../hooks/useFacebookLogin";
 import { validatePassword, validateUserName } from "../validators";
 
 interface LoginFormProps {
@@ -61,8 +61,6 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
     onLoadingChange: setGoogleLoading,
   });
 
-  const { login: facebookLogin } = useFacebookLogin();
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
@@ -98,9 +96,15 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
   return (
     <div className="sm:pr-0 md:pr-8 lg:pr-10 lg:px-0">
       <h1 className="text-2xl mb-3 text-primary text-center">Đăng nhập</h1>
-      <p className="text-base text-neutral-darker mb-5 md:hidden lg:block">Chào mừng bạn đã trở lại. Đăng nhập để nhận thêm các ưu đãi và các phần thưởng hấp dẫn khác</p>
+      <p className="text-base text-neutral-darker mb-5 md:hidden lg:block">
+        Chào mừng bạn đã trở lại. Đăng nhập để nhận thêm các ưu đãi và các phần thưởng hấp dẫn khác
+      </p>
 
-      {errors.general && <div className="mb-4 p-2.5 bg-promotion-light border border-promotion text-promotion-dark rounded-lg text-base">{errors.general}</div>}
+      {errors.general && (
+        <div className="mb-4 p-2.5 bg-promotion-light border border-promotion text-promotion-dark rounded-lg text-base">
+          {errors.general}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4 md:mt-4">
         <div>
@@ -156,7 +160,13 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
 
         <div className="flex sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <label className="flex items-center cursor-pointer">
-            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="mr-2 w-4 h-4 accent-accent cursor-pointer" disabled={isAnyLoading} />
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="mr-2 w-4 h-4 accent-accent cursor-pointer"
+              disabled={isAnyLoading}
+            />
             <span className="text-base text-primary">Nhớ mật khẩu</span>
           </label>
           <Link href="/forgot-password" className="text-base text-primary hover:text-primary-hover hover:underline">
@@ -182,7 +192,10 @@ const LoginForm = ({ returnUrl = "/" }: LoginFormProps) => {
         </div>
 
         <div ref={buttonRef} className="hidden" aria-hidden="true" />
-        <SocialLoginButtons onGoogleLogin={googlePrompt} onFacebookLogin={facebookLogin} onAppleLogin={() => {}} googleLoading={googleLoading} disabled={isAnyLoading} />
+        <div className="space-y-3">
+          <SocialLoginButtons onGoogleLogin={googlePrompt} googleLoading={googleLoading} disabled={isAnyLoading} />
+          <EmailOtpLogin onSuccess={handleLoginSuccess} onError={(msg) => setErrors({ general: msg })} disabled={isAnyLoading} />
+        </div>
       </form>
     </div>
   );
