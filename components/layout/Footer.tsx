@@ -36,7 +36,9 @@ const Footer = () => {
       <div className="bg-gray-800 py-2 md:py-4 lg:py-4">
         <div className="container">
           <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2">Hệ thống ChoCongNghe trên toàn quốc</h2>
-          <p className="text-gray-300 text-[11px] sm:text-sm">Bao gồm Cửa hàng chính hãng, Trung tâm bảo hành và hệ thống chi nhánh toàn quốc.</p>
+          <p className="text-gray-300 text-[11px] sm:text-sm">
+            Bao gồm Cửa hàng chính hãng, Trung tâm bảo hành và hệ thống chi nhánh toàn quốc.
+          </p>
         </div>
       </div>
 
@@ -190,15 +192,15 @@ const Footer = () => {
                 },
                 {
                   label: "Chính sách đổi trả",
-                  href: "/policies/Return",
+                  href: "/policies/return",
                 },
                 {
                   label: "Chính sách bảo mật",
-                  href: "/policies/Privacy",
+                  href: "/policies/privacy",
                 },
                 {
                   label: "Chính sách trả góp",
-                  href: "/policies/Installment",
+                  href: "/policies/installment",
                 },
                 {
                   label: "Chính sách khui hộp sản phẩm",
@@ -206,27 +208,27 @@ const Footer = () => {
                 },
                 {
                   label: "Chính sách giao hàng & lắp đặt",
-                  href: "/policies/Delivery",
+                  href: "/policies/delivery",
                 },
                 {
                   label: "Chính sách mạng di động ChoCongNghe",
-                  href: "/policies/MobileNetwork",
+                  href: "/policies/mobileNetwork",
                 },
                 {
                   label: "Chính sách thu thập & xử lý dữ liệu cá nhân",
-                  href: "/policies/DataPrivacy",
+                  href: "/policies/dataPrivacy",
                 },
                 {
                   label: "Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu",
-                  href: "/policies/Technical-support",
+                  href: "/policies/technical-support",
                 },
                 {
                   label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
-                  href: "/policies/DeliveryInstallation",
+                  href: "/policies/deliveryInstallation",
                 },
                 {
                   label: "Chính sách chương trình khách hàng thân thiết",
-                  href: "/policies/Loyalty",
+                  href: "/policies/loyalty",
                 },
               ].map((item) => (
                 <li key={item.label}>
@@ -309,7 +311,11 @@ const Footer = () => {
               <p>Địa chỉ trụ sở: 50/22 Gò Dầu, Phường Tân Quý, Quận Tân Phú, TP. Hồ Chí Minh</p>
             </div>
             <div className="flex items-center gap-3">
-              <img src="https://webmedia.com.vn/images/2021/09/logo-da-thong-bao-bo-cong-thuong-mau-xanh.png" alt="Đã thông báo Bộ Công Thương" className="h-12" />
+              <img
+                src="https://webmedia.com.vn/images/2021/09/logo-da-thong-bao-bo-cong-thuong-mau-xanh.png"
+                alt="Đã thông báo Bộ Công Thương"
+                className="h-12"
+              />
             </div>
           </div>
         </div>
