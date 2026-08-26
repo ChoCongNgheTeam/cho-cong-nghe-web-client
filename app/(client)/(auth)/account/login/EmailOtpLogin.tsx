@@ -78,8 +78,7 @@ export function EmailOtpLogin({ onSuccess, onError, disabled }: EmailOtpLoginPro
     }
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerify = async () => {
     if (code.length !== 6) {
       setLocalError("Vui lòng nhập đủ 6 số");
       return;
@@ -161,8 +160,12 @@ export function EmailOtpLogin({ onSuccess, onError, disabled }: EmailOtpLoginPro
   }
 
   // ── Step: otp — nhập mã 6 số vừa nhận ──
+  // Không dùng thẻ <form> ở đây — component này được render bên trong
+  // <form> của LoginForm (login user/password), lồng <form> trong <form>
+  // là HTML không hợp lệ và khiến submit rơi nhầm vào form ngoài cùng
+  // (gây navigate tới /account? theo GET mặc định, không gọi API nào cả).
   return (
-    <form onSubmit={handleVerify} className="border border-neutral rounded-lg p-4 space-y-3 bg-neutral-light">
+    <div className="border border-neutral rounded-lg p-4 space-y-3 bg-neutral-light">
       <p className="text-sm text-neutral-darker">
         Mã xác thực đã được gửi tới <span className="font-medium text-primary">{email}</span>
       </p>
@@ -173,6 +176,12 @@ export function EmailOtpLogin({ onSuccess, onError, disabled }: EmailOtpLoginPro
           type="text"
           value={code}
           onChange={(e) => handleCodeChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleVerify();
+            }
+          }}
           placeholder="000000"
           inputMode="numeric"
           maxLength={6}
@@ -211,13 +220,14 @@ export function EmailOtpLogin({ onSuccess, onError, disabled }: EmailOtpLoginPro
       </div>
 
       <button
-        type="submit"
+        type="button"
+        onClick={handleVerify}
         disabled={isAnyLoading || code.length !== 6}
         className="w-full bg-primary-dark text-neutral-light py-2.5 rounded-lg font-medium hover:bg-primary-hover transition cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {verifyLoading && <Loader2 className="w-4 h-4 animate-spin" />}
         {verifyLoading ? "Đang xác thực..." : "Xác nhận & Đăng nhập"}
       </button>
-    </form>
+    </div>
   );
 }
