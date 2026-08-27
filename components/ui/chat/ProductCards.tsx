@@ -7,17 +7,24 @@ import { logError } from "@/lib/monitoring/log-error";
 import type { Product, ProductCard as ProductCardType, Variant } from "@/types/chat";
 
 function StructuredProductCardImpl({ product }: { product: Product }) {
-  const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(price);
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(price);
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0]?.id || product.defaultVariantId || "");
 
   const { addToCart } = useCart();
   const { toast } = useToasty();
 
-  const priceDisplay = product.priceMin === product.priceMax ? formatPrice(product.priceMin) : `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax)}`;
+  const priceDisplay =
+    product.priceMin === product.priceMax
+      ? formatPrice(product.priceMin)
+      : `${formatPrice(product.priceMin)} - ${formatPrice(product.priceMax)}`;
 
   const originalPriceDisplay = product.originalPriceMin ? formatPrice(product.originalPriceMin) : "";
   const hasDiscount = !!(product.originalPriceMin && product.originalPriceMin > product.priceMin);
-  const discountPercent = hasDiscount && product.originalPriceMin ? Math.round(((product.originalPriceMin - product.priceMin) / product.originalPriceMin) * 100) : 0;
+  const discountPercent =
+    hasDiscount && product.originalPriceMin
+      ? Math.round(((product.originalPriceMin - product.priceMin) / product.originalPriceMin) * 100)
+      : 0;
 
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
@@ -50,7 +57,11 @@ function StructuredProductCardImpl({ product }: { product: Product }) {
     <div className="bg-white border border-neutral rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
       <div className="flex gap-2.5 p-2.5">
         <div className="w-[76px] shrink-0 bg-neutral-50 rounded-lg flex items-center justify-center p-1.5 relative border border-black/5">
-          {hasDiscount && <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg z-10 shadow-sm">-{discountPercent}%</div>}
+          {hasDiscount && (
+            <div className="absolute -top-1 -left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg z-10 shadow-sm">
+              -{discountPercent}%
+            </div>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={product.thumbnail} alt={product.name} className="w-full h-[64px] object-contain mix-blend-multiply" loading="lazy" />
           {!product.inStock && (
@@ -76,7 +87,7 @@ function StructuredProductCardImpl({ product }: { product: Product }) {
 
           {product.variants && product.variants.length > 0 ? (
             <div className="flex flex-col gap-1.5 mt-2">
-              <select
+              {/* <select
                 value={selectedVariant}
                 onChange={(e) => setSelectedVariant(e.target.value)}
                 className="w-full text-[11.5px] font-medium px-2.5 py-1.5 rounded-lg border border-neutral bg-neutral-50 text-gray-900 focus:outline-none focus:border-accent appearance-none cursor-pointer shadow-sm"
@@ -92,7 +103,7 @@ function StructuredProductCardImpl({ product }: { product: Product }) {
                     {v.label}
                   </option>
                 ))}
-              </select>
+              </select> */}
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleAddToCart}
@@ -192,7 +203,9 @@ function ProductCardGridImpl({ cards }: { cards: ProductCardType[] }) {
 
               <div className="flex items-center justify-between gap-2 mt-1.5">
                 {card.promo ? (
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">{card.promo}</span>
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                    {card.promo}
+                  </span>
                 ) : (
                   <span></span>
                 )}

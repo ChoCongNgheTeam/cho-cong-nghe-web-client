@@ -8,13 +8,14 @@ export default function About() {
         <p className="text-[12px] uppercase tracking-[0.3em] text-accent mb-2">ChoCongNghe</p>
         <h1 className="text-[24px] font-bold text-primary mb-3">Giới thiệu về ChoCongNghe Shop</h1>
         <p className="text-primary max-w-2xl mx-auto">
-          ChoCongNghe là nền tảng thương mại điện tử chuyên biệt về thiết kế và phân phối các sản phẩm công nghệ thông minh, tối ưu cho trải nghiệm mua sắm trực tuyến trong kỷ nguyên số.
+          ChoCongNghe là nền tảng thương mại điện tử chuyên biệt về thiết kế và phân phối các sản phẩm công nghệ thông minh, tối ưu cho trải
+          nghiệm mua sắm trực tuyến trong kỷ nguyên số.
         </p>
       </div>
 
       <section className="mb-8">
         <h2 className="font-bold text-primary mb-4 text-center">Nhận diện thương hiệu</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 ">
           <div
             className="rounded-lg p-4 flex items-center justify-center"
             style={{
@@ -24,9 +25,9 @@ export default function About() {
           >
             <Image src="/logo-ccn.png" alt="Logo ChoCongNghe" width={200} height={200} className="h-auto w-40 sm:w-48" priority />
           </div>
-          <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
+          {/* <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
             <Image src="/welcome.png" alt="Hình ảnh mẫu 1" width={360} height={240} className="h-auto w-full rounded-md" />
-          </div>
+          </div> */}
           <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
             <Image src="/images/avatar.png" alt="Hình ảnh mẫu 2" width={360} height={240} className="h-auto w-full rounded-md" />
           </div>
@@ -36,10 +37,13 @@ export default function About() {
       <section className="mb-8">
         <h2 className="font-bold text-primary mb-2">1. Tổng quan</h2>
         <p className="mb-3 text-primary">
-          Với mục tiêu xây dựng một hệ sinh thái mua sắm hiện đại, tiện lợi và đáng tin cậy, ChoCongNghe mang đến cho khách hàng cơ hội tiếp cận những thiết kế công nghệ tiên tiến nhất thông qua giao
-          diện trực quan và quy trình thanh toán tối giản.
+          Với mục tiêu xây dựng một hệ sinh thái mua sắm hiện đại, tiện lợi và đáng tin cậy, ChoCongNghe mang đến cho khách hàng cơ hội tiếp
+          cận những thiết kế công nghệ tiên tiến nhất thông qua giao diện trực quan và quy trình thanh toán tối giản.
         </p>
-        <p className="text-primary">Dự án được phát triển theo định hướng lấy người dùng làm trung tâm, đồng thời đảm bảo khả năng mở rộng linh hoạt để đáp ứng nhu cầu tăng trưởng dài hạn.</p>
+        <p className="text-primary">
+          Dự án được phát triển theo định hướng lấy người dùng làm trung tâm, đồng thời đảm bảo khả năng mở rộng linh hoạt để đáp ứng nhu
+          cầu tăng trưởng dài hạn.
+        </p>
       </section>
 
       <section className="mb-8">
@@ -77,7 +81,11 @@ export default function About() {
           <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
             <p className="font-semibold text-primary mb-2">Khách hàng</p>
             <ul className="space-y-2">
-              {["Khám phá nhanh các thiết bị công nghệ thông minh.", "So sánh lựa chọn rõ ràng với thông tin minh bạch.", "Trải nghiệm thanh toán gọn gàng và bảo mật."].map((item) => (
+              {[
+                "Khám phá nhanh các thiết bị công nghệ thông minh.",
+                "So sánh lựa chọn rõ ràng với thông tin minh bạch.",
+                "Trải nghiệm thanh toán gọn gàng và bảo mật.",
+              ].map((item) => (
                 <li key={item} className="flex gap-2">
                   <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                   <p className="text-primary">{item}</p>
@@ -88,7 +96,11 @@ export default function About() {
           <div className="rounded-lg border border-neutral-light bg-neutral-light p-4">
             <p className="font-semibold text-primary mb-2">Quản trị viên</p>
             <ul className="space-y-2">
-              {["Quản lý kho hàng và danh mục hiệu quả.", "Theo dõi doanh thu và dữ liệu khách hàng khoa học.", "Vận hành linh hoạt với hệ thống báo cáo rõ ràng."].map((item) => (
+              {[
+                "Quản lý kho hàng và danh mục hiệu quả.",
+                "Theo dõi doanh thu và dữ liệu khách hàng khoa học.",
+                "Vận hành linh hoạt với hệ thống báo cáo rõ ràng.",
+              ].map((item) => (
                 <li key={item} className="flex gap-2">
                   <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                   <p className="text-primary">{item}</p>
@@ -133,8 +145,8 @@ export default function About() {
       <section>
         <h2 className="font-bold text-primary mb-2">5. Sứ mệnh</h2>
         <p className="text-primary">
-          ChoCongNghe hướng tới việc trở thành nền tảng mua sắm thông minh, nơi kết nối giữa giá trị sản phẩm và nhu cầu thực tế của người tiêu dùng, đồng thời thúc đẩy sự phát triển của thương mại
-          điện tử trong ngành công nghệ.
+          ChoCongNghe hướng tới việc trở thành nền tảng mua sắm thông minh, nơi kết nối giữa giá trị sản phẩm và nhu cầu thực tế của người
+          tiêu dùng, đồng thời thúc đẩy sự phát triển của thương mại điện tử trong ngành công nghệ.
         </p>
       </section>
 

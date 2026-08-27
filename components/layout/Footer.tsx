@@ -153,11 +153,11 @@ const Footer = () => {
                 { label: "Tin tức khuyến mãi", href: "/policies/news" },
                 {
                   label: "Giới thiệu máy đổi trả",
-                  href: "/policies/exchangeIntro",
+                  href: "/policies/exchange-intro",
                 },
                 {
                   label: "Hướng dẫn mua hàng & thanh toán online",
-                  href: "/policies/shoppingGuide",
+                  href: "/policies/shopping-guide",
                 },
                 {
                   label: "Đại lý ủy quyền và TTBH ủy quyền của Apple",
@@ -212,11 +212,11 @@ const Footer = () => {
                 },
                 {
                   label: "Chính sách mạng di động ChoCongNghe",
-                  href: "/policies/mobileNetwork",
+                  href: "/policies/mobile-network",
                 },
                 {
                   label: "Chính sách thu thập & xử lý dữ liệu cá nhân",
-                  href: "/policies/dataPrivacy",
+                  href: "/policies/data-privacy",
                 },
                 {
                   label: "Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu",
@@ -224,7 +224,7 @@ const Footer = () => {
                 },
                 {
                   label: "Chính sách giao hàng & lắp đặt Điện máy, Gia dụng",
-                  href: "/policies/deliveryInstallation",
+                  href: "/policies/delivery-installation",
                 },
                 {
                   label: "Chính sách chương trình khách hàng thân thiết",
